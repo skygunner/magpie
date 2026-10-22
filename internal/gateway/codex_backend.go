@@ -73,7 +73,6 @@ func (s *Server) codexBackend(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	var err error
 	switch {
 	case r.Method == http.MethodGet && rest == "/models":
 		s.codexModels(w, r)
@@ -94,12 +93,12 @@ func (s *Server) codexBackend(w http.ResponseWriter, r *http.Request) {
 		s.alphaSearchBody(w, r, body)
 		return
 	case r.Method == http.MethodPost && (rest == "/responses" || rest == "/responses/compact"):
-		var model string
-		body, model, err = requestModel(body)
+		body, model, sent, err := requestModel(body)
 		if err != nil {
 			writeError(w, provider.Responses, 400, err.Error())
 			return
 		}
+		r = keepSentModel(r, sent)
 		// a thread's title, where Settings sends it (#705) — the request
 		// still on Codex's own model, through its sign-in, when it says
 		// nothing of them

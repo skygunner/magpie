@@ -49,3 +49,33 @@ func TestClosestByNameFirst(t *testing.T) {
 		t.Fatalf("Closest = %v", got)
 	}
 }
+
+// The refusal for an unknown model names the id the client sent, not the
+// id the gateway goes by when it differs (a found group's auto/<model> as
+// group/auto-<slug>, dashes for dots): that one exists nowhere a client
+// can look — not in /v1/models, not in magpie groups — so a search of the
+// error string finds nothing (#3150, xiachaoxia-glitch). An id the gateway
+// keeps as it is echoes as before.
+func TestUnknownModelNamesTheIdSent(t *testing.T) {
+	fresh(t)
+	serveOn(t, "opencode-zen-free", "k", []string{"deepseek-v4.1-flash-free"}, &keyed{})
+	s := New()
+	for _, c := range []struct{ sent, not string }{
+		{"auto/deepseek-v4.1-flash", "group/auto-deepseek-v4-1-flash"},
+		{"nosuchgroup/foo", ""},
+	} {
+		code, body := postAs(t, s, "", `{"model":"`+c.sent+`","messages":[{"role":"user","content":"hi"}]}`)
+		if code != http.StatusNotFound {
+			t.Fatalf("%s: %d %s", c.sent, code, body)
+		}
+		if !strings.Contains(body, `no model \"`+c.sent+`\"`) {
+			t.Fatalf("%s: the id sent isn't named: %s", c.sent, body)
+		}
+		if c.not != "" && strings.Contains(body, c.not) {
+			t.Fatalf("%s: the synthesized id is named: %s", c.sent, body)
+		}
+	}
+	if _, body := postAs(t, s, "", `{"model":"auto/deepseek-v4.1-flash","messages":[{"role":"user","content":"hi"}]}`); !strings.Contains(body, "did you mean opencode-zen-free/deepseek-v4.1-flash-free") {
+		t.Fatalf("the suggestions are gone: %s", body)
+	}
+}

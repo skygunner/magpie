@@ -1269,7 +1269,7 @@ func (s *Server) countTokens(w http.ResponseWriter, r *http.Request) {
 	}
 	var err error
 	var model string
-	body, model, err = requestModel(body)
+	body, model, _, err = requestModel(body)
 	if err != nil {
 		writeError(w, provider.Anthropic, 400, err.Error())
 		return
@@ -1437,11 +1437,12 @@ func (s *Server) handle(from provider.Protocol) http.HandlerFunc {
 		}
 		var err error
 		var model string
-		body, model, err = requestModel(body)
+		body, model, sent, err := requestModel(body)
 		if err != nil {
 			writeError(w, from, 400, err.Error())
 			return
 		}
+		r = keepSentModel(r, sent)
 		// Codex with magpie as its provider: spawn_agent names every
 		// model a subagent may be put on, not only Codex's first five
 		// (Gearclickist on Discord)
@@ -1527,11 +1528,13 @@ func (s *Server) gemini(w http.ResponseWriter, r *http.Request) {
 		writeError(w, provider.Gemini, 400, err.Error())
 		return
 	}
+	sent := model
 	model, err = validateModel(model)
 	if err != nil {
 		writeError(w, provider.Gemini, 400, err.Error())
 		return
 	}
+	r = keepSentModel(r, sent)
 	var stream bool
 	switch method {
 	case "generateContent":
@@ -1780,7 +1783,15 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 			turnedAway()
 			return
 		}
-		msg := unknownModel(call.Model, "")
+		// the id the client sent, when the gateway goes by another
+		// spelling of it (a found group's auto/<model> as
+		// group/auto-<slug>): the refusal names what was asked for, an
+		// id the client can search its own logs for (#3150)
+		refused := call.Model
+		if sent := sentModelOf(r); sent != "" {
+			refused = sent
+		}
+		msg := unknownModel(refused, "")
 		if g, ok := provider.DisabledGroup(asked); ok {
 			call.Error = "group switched off"
 			msg = fmt.Sprintf("the routing group %s is switched off in Magpie, so %q is not served; switch it on again on Magpie's Routing page to use it", g.Name, call.Model)
@@ -6349,23 +6360,48 @@ func unflat(id string) string {
 	return id
 }
 
-// requestModel checks the envelope without restricting vendor-specific fields.
-// Only a model with surrounding whitespace needs its body rewritten.
-func requestModel(body []byte) ([]byte, string, error) {
+// requestModel checks the envelope without restricting vendor-specific
+// fields. Only a model with surrounding whitespace needs its body
+// rewritten. It also gives back the model as the client sent it, which
+// keepSentModel holds for a refusal to name: the gateway takes a found
+// group's auto/<model> to group/auto-<slug> (validateModel), an id nothing
+// outside magpie can search for or copy back (#3150).
+func requestModel(body []byte) ([]byte, string, string, error) {
 	var q struct {
 		Model string `json:"model"`
 	}
 	if err := decodeRequest(body, &q); err != nil {
-		return nil, "", err
+		return nil, "", "", err
 	}
 	model, err := validateModel(q.Model)
 	if err != nil {
-		return nil, "", err
+		return nil, "", "", err
 	}
 	if model != q.Model {
 		body = withModel(body, model)
 	}
-	return body, model, nil
+	return body, model, q.Model, nil
+}
+
+// sentModelKey is the model id as the client sent it, kept when the
+// gateway took it to another spelling, so an unknown-model refusal names
+// what was asked for (#3150).
+type sentModelKey struct{}
+
+// keepSentModel is r with sent held as the model the client sent, when
+// that differs from the one the gateway goes by.
+func keepSentModel(r *http.Request, sent string) *http.Request {
+	if sent == "" {
+		return r
+	}
+	return r.WithContext(context.WithValue(r.Context(), sentModelKey{}, sent))
+}
+
+// sentModelOf is the model id the client sent, "" when the gateway goes by
+// the id as it is.
+func sentModelOf(r *http.Request) string {
+	s, _ := r.Context().Value(sentModelKey{}).(string)
+	return s
 }
 
 func modelOf(body []byte) string {
