@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,7 +25,8 @@ const retrieveTimeout = 3 * time.Minute
 // share. Neither is a chat, so neither is translated: the body goes to the
 // model's provider at its OpenAI-style base + path as the agent sent it,
 // the model id the provider's own, and the vendor's answer comes back as
-// it said it. The call is recorded and its tokens counted like a turn's.
+// it said it, with missing embedding indices filled in. The call is
+// recorded and its tokens counted like a turn's.
 func (s *Server) retrieve(path, operation string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, admitted := s.requestBody(w, r, provider.Chat)
@@ -246,11 +248,40 @@ func (s *Server) serveRetrieval(w http.ResponseWriter, r *http.Request, path, op
 			return
 		}
 		s.record(call)
+		if path == "/embeddings" && code == http.StatusOK {
+			b = embeddingIndices(b)
+		}
 		w.Header().Set("Content-Type", req.answerType(got))
 		w.WriteHeader(code)
 		w.Write(b)
 		return
 	}
+}
+
+// embeddingIndices fills indices omitted by vendors that leave zero values
+// out of JSON; raw values preserve the vectors' precision and encoding.
+func embeddingIndices(body []byte) []byte {
+	var reply map[string]json.RawMessage
+	if json.Unmarshal(body, &reply) != nil {
+		return body
+	}
+	var data []map[string]json.RawMessage
+	if json.Unmarshal(reply["data"], &data) != nil {
+		return body
+	}
+	changed := false
+	for i, item := range data {
+		if item != nil && (len(item["index"]) == 0 || bytes.Equal(bytes.TrimSpace(item["index"]), []byte("null"))) {
+			item["index"] = json.RawMessage(strconv.Itoa(i))
+			changed = true
+		}
+	}
+	if !changed {
+		return body
+	}
+	reply["data"], _ = json.Marshal(data)
+	out, _ := json.Marshal(reply)
+	return out
 }
 
 // resolveRetrievalModel also finds a preset plan's embedding model by its
