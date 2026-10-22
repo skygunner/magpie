@@ -150,3 +150,26 @@ func TestChatTidyToolCallNames(t *testing.T) {
 		t.Fatalf("got %q", out)
 	}
 }
+
+// The null the mimo models put in their last delta's tool_calls says no
+// call was made: the frame is mended without it and the reply keeps its
+// finish_reason "stop". Read as a call made, a narration-only reply ended
+// "tool_calls" with no call anywhere in the stream, and a client watching
+// for dropped calls asked again and again (#3259, mawag). A real call
+// before it still ends "tool_calls", as chattidy has it.
+func TestChatTidyNullToolCalls(t *testing.T) {
+	var tidy chatTidy
+	last := `data: {"choices":[{"index":0,"delta":{"content":null,"role":null,"tool_calls":null,"reasoning_content":null},"finish_reason":"stop"}]}` + "\n"
+	out := string(tidy.write([]byte(last)))
+	if strings.Contains(out, `"tool_calls"`) || !strings.Contains(out, `"finish_reason":"stop"`) {
+		t.Fatalf("the last frame: %q", out)
+	}
+
+	tidy = chatTidy{}
+	call := `data: {"choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"name":"grep","arguments":"{}"}}]}}]}` + "\n"
+	tidy.write([]byte(call))
+	out = string(tidy.write([]byte(last)))
+	if !strings.Contains(out, `"finish_reason":"tool_calls"`) {
+		t.Fatalf("a reply that made a call: %q", out)
+	}
+}

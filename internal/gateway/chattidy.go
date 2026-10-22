@@ -31,7 +31,12 @@ import (
 // tests delta.tool_calls for being there, not for holding any) closes its
 // text block on each one, so each piece of text after it opened a block
 // of its own and a reply read a word to a line ("我来 / 看 / 一下 / …");
-// the empty list is left out.
+// the empty list is left out. So is the null the mimo models put there in
+// their last frame ("tool_calls": null beside finish_reason "stop"),
+// which read as a call made: a narration-only reply ended
+// finish_reason "tool_calls" with no call anywhere in the stream, and a
+// client watching for dropped calls asked again and again (#3259,
+// mawag).
 //
 // And Mistral sends a reasoning model's thinking (GLM on api.mistral.ai)
 // as typed parts: "content": [{"type": "thinking", "thinking": [{"type":
@@ -163,7 +168,7 @@ func (t *chatTidy) line(line []byte) []byte {
 			delete(delta, "reasoning_content")
 			inDelta = true
 		}
-		if calls, ok := delta["tool_calls"]; ok && string(calls) == "[]" {
+		if calls, ok := delta["tool_calls"]; ok && (string(calls) == "[]" || string(calls) == "null") {
 			delete(delta, "tool_calls")
 			inDelta = true
 		} else if ok {
