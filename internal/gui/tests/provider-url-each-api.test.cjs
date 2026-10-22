@@ -71,6 +71,10 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         for (let i = 0; i < 60 && posts.filter((p) => p.path === "/api/provider/save").length < n; i++) await page.waitForTimeout(50);
         const all = posts.filter((p) => p.path === "/api/provider/save");
         assert.equal(all.length, n, "saved");
+        // The save also refreshes state. Do not navigate while that request
+        // is still in flight: WebKit reports its cancellation as a page error.
+        await ed.waitFor({ state: "detached" });
+        await page.locator("#status.ok").waitFor({ state: "visible" });
         return all[n - 1].body;
       };
       const addNew = async (name) => {
