@@ -104,4 +104,44 @@
 
 ## Milestone 日志
 
-（执行时逐条追加，含状态与证据链接）
+执行环境结论（本机跑上游测试的两个必要条件）：
+`GOTOOLCHAIN=go1.26.8`（1.27 的 encoding/json 行为差异让 TestMarshalRawIsEncodingJSON/
+FuzzMarshalRaw 在 main 上红）+ `umask 022`（本机默认 0027 让 TestWriteAtomicReadOnlyHardLink/
+TestProgram 红）。TestPluginSOCKSProxy 红是已知 #2207（本机 Bun 1.4.3）。
+上游 PR 创建被 GitHub 权限阻止（README 10-09 起只允许 collaborator 开 PR；
+实测 `gh pr create` 报 CreatePullRequest 权限错误），所有修复走"fork 分支 + issue 留言"路径。
+
+- **M0-M2 完成**：索引 succeeded；1438 issues 分诊；main=87d703c5；基线全量 ok。
+- **M3 完成** #3251/#3276（Volcengine/Ark 重置时间）：分支 `fix/volcengine-resets`
+  commit e6c2b6fb——resetsWhen 接受 ±HHMM/±HH:MM 裸偏移+时区缩写；月度措辞信任到
+  longestMonthly(35d) 并同步放宽 failQuota 封顶。TestResetsWritten ark 用例 +
+  TestMonthlyWrittenResetRestsTheMonth 红转绿；67 ok 全量。issue 留言：
+  https://github.com/yetone/magpie/issues/3251#issuecomment-6342260029 、
+  https://github.com/yetone/magpie/issues/3276#issuecomment-6342270787
+- **额外**：立案 #3280（TestClaudeClientCacheAbsentUnchanged 在 bash-as-sh 机器上红，
+  harness echo 不解释 \n；含二分定位与修复方向）。后立 #3284（TestOpenCodeSessionOnEveryCall
+  全量负载红一次，单跑/包内绿）。
+- **M4 完成** #3258/#3255（共享文件夹双读）：分支 `fix/shared-session-folder`
+  commit 4c3d6e2——piFiles 在 PiDir 与 OmpDir 同文件夹时返回空（#2932 sameFolder
+  先例，omp 属主读一次）；qoderFiles 同理去 qoder-cn。TestSharedFolderReadOnce
+  （named+linked×2 对）红转绿；620 包内全绿；全量 67 ok。留言：
+  https://github.com/yetone/magpie/issues/3258#issuecomment-6342495758 、
+  https://github.com/yetone/magpie/issues/3255#issuecomment-6342498748
+- **M5 完成** #3259（mimo `tool_calls:null` 被当已调用）：分支 `fix/null-tool-calls`
+  commit d2abf49——chattidy 把 null 与 [] 同样对待。TestChatTidyNullToolCalls
+  （报告者原始帧）红转绿；全量 67 ok。留言：
+  https://github.com/yetone/magpie/issues/3259#issuecomment-6342839037
+- **M6 完成** #3176（订阅 provider 的 rest-cap 被丢）：分支 `fix/account-rest-cap`
+  commit c41b6fe——withPicks 补 RestCap/QuotaRest/QuotaResetAt（第三个是同类 sibling）。
+  TestAccountKeepsItsRests 红转绿（含 AlsoOn）；全量 67 ok。留言：
+  https://github.com/yetone/magpie/issues/3176#issuecomment-6343065990
+- **M7 完成** #3150（404 报合成 auto id）：分支 `fix/unknown-model-sent-id`（worktree
+  /tmp/magpie-probe）——requestModel 返回原始 id，keepSentModel 经 request context
+  带到 404 站点（subagentPickKey 同款先例），refusal 回显客户端发来的 id。
+  TestUnknownModelNamesTheIdSent 红转绿。
+- **M8 等 reportter 回复** #3148：Qoder IDE product.json 身份值未知（另一应用的值
+  要从该应用本身来），已在 issue 请报告者提供：
+  https://github.com/yetone/magpie/issues/3148#issuecomment-6342963529
+- **跳过（有现成 patch 等 maintainer 取）**：#3141（JoeyWu f9d7eac9）、#3188（wtj-0527
+  c7db44bc）——重复移植价值低。
+- **main 已修、issue 未关**：#3151（e6568888）、#2949（b641868e）——待留言后由维护者关闭。
