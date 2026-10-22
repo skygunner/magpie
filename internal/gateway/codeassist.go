@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -792,6 +793,24 @@ func plainSchema(raw json.RawMessage) json.RawMessage {
 					out["type"] = "object"
 				case out["items"] != nil:
 					out["type"] = "array"
+				}
+			}
+			// items and its bounds belong to the array half. A type union
+			// folds to its first member, so ["string", "array"] beside
+			// items became a string carrying items — and Antigravity holds
+			// Schema.items to type array, a 400 before anything was
+			// answered (#3121, MurmuredVelpro). A union with an array half
+			// takes it when the array keywords are there; a schema with no
+			// array half loses them.
+			if out["items"] != nil || out["minItems"] != nil || out["maxItems"] != nil {
+				if out["type"] != "array" {
+					if t, ok := x["type"].([]any); ok && slices.Contains(t, "array") {
+						out["type"] = "array"
+					} else {
+						delete(out, "items")
+						delete(out, "minItems")
+						delete(out, "maxItems")
+					}
 				}
 			}
 			if req, ok := out["required"].([]any); ok {
