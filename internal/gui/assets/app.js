@@ -9155,9 +9155,16 @@ function drawEditor(p, presetID) {
         // A URL then typed for the protocol it was carried to is that
         // protocol's own, and the carried one goes back where it was typed,
         // so a URL can be typed for each protocol in turn (#1231).
-        const from = apiField[draft.api], to = apiField[v];
-        carried = null;
-        if (!draft[to] && draft[from] && draft[from] !== (p?.[from] || "")) {
+        let from = apiField[draft.api];
+        const to = apiField[v];
+        // Undo the last carry so every conversion starts from what was typed.
+        if (carried) {
+          draft[from] = p?.[from] || "";
+          draft[carried.from] = carried.value;
+          from = carried.from;
+          carried = null;
+        }
+        if (from !== to && !draft[to] && draft[from] && draft[from] !== (p?.[from] || "")) {
           carried = { from, value: draft[from] };
           draft[to] = respellURL(draft[from], v);
           draft[from] = p?.[from] || "";

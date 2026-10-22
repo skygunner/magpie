@@ -5,8 +5,9 @@
 // spelled as that API wants it (#73, #105). Typed over there, the new URL is
 // that API's own and the first goes back to the API it was typed for: both
 // are saved. Left as it was carried, it is a move, as before. For a new
-// provider and a saved one, in English and Chinese, Chromium and WebKit, at
-// a narrow window too.
+// provider and a saved one, in all five languages, Chromium and WebKit, at
+// a narrow window too. A round trip through Gemini retains the original
+// spelling instead of carrying its /v1beta back to Anthropic (#3233).
 const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const path = require("node:path");
@@ -29,7 +30,19 @@ function serve(lang, posts) {
     if (url.pathname === "/api/providers") return json(providers);
     if (url.pathname === "/api/groups") return json({ groups: [] });
     if (url.pathname.startsWith("/api/provider/")) {
-      posts.push({ path: url.pathname, body: route.request().postDataJSON() });
+      const body = route.request().postDataJSON();
+      posts.push({ path: url.pathname, body });
+      if (url.pathname === "/api/provider/detect") return json({ results: [
+        { protocol: "chat", base: ROOT + "/v1", ok: true, status: 200 },
+        { protocol: "responses", base: ROOT + "/v1", ok: true, status: 200 },
+        { protocol: "anthropic", base: ROOT, ok: true, status: 200 },
+        { protocol: "gemini", base: ROOT + "/v1beta", ok: true, status: 200 },
+      ] });
+      if (url.pathname === "/api/provider/save") {
+        let saved = providers.providers.find((p) => p.id === body.id);
+        if (!saved) providers.providers.push(saved = { ...base });
+        for (const key of ["id", "name", "chat", "responses", "anthropic", "gemini", "decide", "baseAPI"]) saved[key] = body[key];
+      }
       return json(providers);
     }
     if (url.pathname.startsWith("/api/")) return json({});
@@ -39,7 +52,7 @@ function serve(lang, posts) {
 }
 
 for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"])) {
-  for (const [lang, width] of [["en", 900], ["zh", 900], ["en", 440]]) {
+  for (const [lang, width] of ["en", "zh", "zh-TW", "ja", "de"].flatMap((lang) => [900, 440].map((width) => [lang, width]))) {
     test(`${engine} ${lang} ${width}px: a Base URL for each API, typed in turn, is saved`, async (t) => {
       const browser = await (engine === "webkit" ? webkit.launch() : chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || "chromium" }));
       const page = await (await browser.newContext({ viewport: { width, height: 760 }, reducedMotion: "reduce" })).newPage();
@@ -48,8 +61,8 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       const errors = [], posts = [];
       page.on("pageerror", (e) => errors.push(e.message));
       await page.route("**/*", serve(lang, posts));
-      const zh = lang === "zh";
-      const L = { add: zh ? "添加" : "Add", save: zh ? "保存" : "Save" };
+      const [add, save] = { en: ["Add", "Save"], zh: ["添加", "保存"], "zh-TW": ["新增", "儲存"], ja: ["追加", "保存"], de: ["Hinzufügen", "Speichern"] }[lang];
+      const L = { add, save };
       const ed = page.locator(".editor");
       const baseURL = ed.locator(".base-url");
       const api = (v) => ed.locator(`.segs .opt[data-api="${v}"]`).click();
@@ -106,6 +119,54 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       body = await sent(3);
       assert.equal(body.chat, ROOT + "/v2");
       assert.equal(body.anthropic, ROOT + "/claude");
+      // A URL carried through several APIs is always converted from the
+      // original spelling. Returning to its original tab restores it exactly.
+      await addNew("Round trip");
+      await api("anthropic");
+      await baseURL.fill(ROOT + "/v1");
+      for (const protocol of ["gemini", "responses", "openai", "decide", "anthropic"]) await api(protocol);
+      assert.equal(await baseURL.inputValue(), ROOT + "/v1", "Anthropic round trip must not inherit Gemini's /v1beta (#3233)");
+      await press(L.add);
+      body = await sent(4);
+      assert.equal(body.anthropic, ROOT + "/v1");
+      for (const key of ["chat", "responses", "gemini", "decide"]) assert.equal(body[key] || "", "", key + " was only visited");
+      await page.goto("http://magpie.test/?view=providers");
+      await page.locator(`#providers .row[data-id="${body.id}"]`).click();
+      await baseURL.waitFor();
+      assert.equal(await baseURL.inputValue(), ROOT + "/v1", "reopening uses the saved Anthropic spelling");
+      for (const protocol of ["gemini", "responses", "openai", "anthropic"]) await api(protocol);
+      assert.equal(await baseURL.inputValue(), ROOT + "/v1", "saved URL stays on its own protocol");
+
+      // Typing over the carried URL after more than one switch restores
+      // the first input, rather than the last protocol's converted spelling.
+      await addNew("Two endpoints");
+      await api("anthropic");
+      await baseURL.fill(ROOT + "/claude");
+      await api("gemini");
+      await api("responses");
+      await baseURL.fill(ROOT + "/responses");
+      await api("anthropic");
+      assert.equal(await baseURL.inputValue(), ROOT + "/claude", "typing at the destination restores the original protocol (#1231)");
+      await press(L.add);
+      body = await sent(5);
+      assert.equal(body.anthropic, ROOT + "/claude");
+      assert.equal(body.responses, ROOT + "/responses");
+      assert.equal(body.gemini || "", "");
+      // Detection supplies independent, normalized addresses. Visiting tabs
+      // after taking them must not change the Anthropic or Gemini endpoint.
+      await page.goto("http://magpie.test/?view=providers");
+      await page.locator('#providers .row[data-id="plain"]').click();
+      await baseURL.waitFor();
+      await api("anthropic");
+      await baseURL.fill(ROOT + "/v1");
+      await ed.locator(".detect-row > button").first().click();
+      await ed.locator(".detect-acts button").first().click();
+      for (const protocol of ["gemini", "responses", "openai", "anthropic"]) await api(protocol);
+      assert.equal(await baseURL.inputValue(), ROOT);
+      await press(L.save);
+      body = await sent(6);
+      assert.equal(body.anthropic, ROOT);
+      assert.equal(body.gemini, ROOT + "/v1beta");
       assert.deepEqual(errors, []);
     });
   }
