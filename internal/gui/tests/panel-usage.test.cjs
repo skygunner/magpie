@@ -419,9 +419,13 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       }
 
       // the window opened from the panel: the Requests tab, on that provider and agent
-      const w2 = await open("http://magpie.test/?view=usage&tab=requests&provider=relay&agent=codex", { width: 1100, height: 700 }, (asked.length = 0, asked), opened);
+      const windowAsked = [];
+      const w2 = await open("http://magpie.test/?view=usage&tab=requests&provider=relay&agent=codex", { width: 1100, height: 700 }, windowAsked, opened);
       await w2.locator("#ledWrap, #ledDash").first().waitFor({ state: "attached" });
-      await settled(asked, (q) => q.get("provider") === "relay" && q.get("agent") === "codex");
+      await settled(windowAsked, (q) => q.get("provider") === "relay" && q.get("agent") === "codex");
+      // The still-open panel may poll after the window’s filtered request.
+      await p.evaluate(async () => { await fetch("/api/usage/requests?period=today&limit=1"); });
+      await settled(windowAsked, (q) => q.get("provider") === "relay" && q.get("agent") === "codex");
       assert.equal(await w2.locator("#usageTab .opt.on").textContent(), lang === "zh" ? "请求" : "Requests");
       assert(!/provider=|tab=/.test(w2.url()), "the address is clean: " + w2.url());
       // Every distinct chart color has a named legend row, with the rest grouped.
