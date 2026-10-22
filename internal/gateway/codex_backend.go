@@ -2523,7 +2523,7 @@ func forVendor(p provider.Provider, body []byte) []byte {
 				delete(it, "encrypted_function_args")
 				raw, _ = marshalPlain(it)
 			}
-			if string(it["type"]) == `"agent_message"` {
+			if string(it["type"]) == `"agent_message"` && (p.Account == nil || p.Account.Agent != "copilot") {
 				var item map[string]any
 				if json.Unmarshal(raw, &item) == nil {
 					if message, ok := provider.PlainAgentMessage(item); ok {
