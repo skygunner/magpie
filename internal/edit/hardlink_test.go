@@ -120,6 +120,11 @@ func TestWriteAtomicReadOnlyHardLink(t *testing.T) {
 	if err := os.WriteFile(other, []byte("old\n"), 0o444); err != nil {
 		t.Fatal(err)
 	}
+	// Creation applies umask; the write preserves the mode actually on disk.
+	before, err := os.Stat(other)
+	if err != nil {
+		t.Fatal(err)
+	}
 	p := filepath.Join(d, "models.yml")
 	hardLink(t, other, p)
 	if err := WriteAtomic(p, []byte("new\n")); err != nil {
@@ -128,8 +133,10 @@ func TestWriteAtomicReadOnlyHardLink(t *testing.T) {
 	if got := read(t, p); got != "new\n" {
 		t.Fatalf("got %q", got)
 	}
-	if st, _ := os.Stat(p); st.Mode().Perm() != 0o444 {
-		t.Errorf("mode %v", st.Mode().Perm())
+	if after, err := os.Stat(p); err != nil {
+		t.Fatal(err)
+	} else if after.Mode().Perm() != before.Mode().Perm() {
+		t.Errorf("mode %v, was %v", after.Mode().Perm(), before.Mode().Perm())
 	}
 }
 
