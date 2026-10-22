@@ -20,6 +20,9 @@ import (
 // (/api/state took 4s, resolving each agent's models anew); outside one,
 // and after a write, it is built again.
 func TestHoldBuildsOnce(t *testing.T) {
+	Changed() // a previous run may have kept the same test key
+	defer func(d time.Duration) { heldFor = d }(heldFor)
+	heldFor = time.Hour // expiry is not what this test measures
 	n := 0
 	build := func() int { n++; return n }
 	heldOf("t", build)
@@ -168,6 +171,8 @@ func TestHeldGoesWithAPluginChange(t *testing.T) {
 // the agents read settings.json for every model of every agent), and a
 // setting saved meanwhile is seen at once.
 func TestHoldReadsSettingsOnce(t *testing.T) {
+	defer func(d time.Duration) { heldFor = d }(heldFor)
+	heldFor = time.Hour                      // expiry is not what this test measures
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir()) // a run starts from no files, not the last run's
 	defer Hold()()
 	if _, ok := VisibleTo("held-agent"); ok {
@@ -224,6 +229,8 @@ func TestHoldSeesWrites(t *testing.T) {
 // account written meanwhile has them built again, and a caller changing
 // its list changes no one else's.
 func TestHoldBuildsProvidersOnce(t *testing.T) {
+	defer func(d time.Duration) { heldFor = d }(heldFor)
+	heldFor = time.Hour                      // expiry is not what this test measures
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir()) // a run starts from no files, not the last run's
 	// nor from the plugins' list an earlier test's folder had: seen last,
 	// it reads as changed here, and the change, told in the background,
@@ -305,6 +312,8 @@ func TestCursorKeychainReadOnce(t *testing.T) {
 // and a move written meanwhile, even one read from the file as it was
 // before, is seen at once.
 func TestHoldReadsMigrationsOnce(t *testing.T) {
+	defer func(d time.Duration) { heldFor = d }(heldFor)
+	heldFor = time.Hour                      // expiry is not what this test measures
 	t.Setenv("XDG_CONFIG_HOME", t.TempDir()) // a run starts from no files, not the last run's
 	defer Hold()()
 	if Moved("held-sub") {
