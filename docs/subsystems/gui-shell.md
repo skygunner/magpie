@@ -34,6 +34,16 @@ three.
 
 ## Constraints and failure behavior
 
+Before `magpie web` replaces its process with an updated binary,
+[`Web.Wait`](../../internal/gui/web.go) stops serving gateway requests,
+settles the plugin host and waits
+for its child processes to be reaped. `exec` keeps the process ID but
+discards the goroutines that wait for those children; leaving a host alive
+would leave a zombie under the new version. The existing plugin shutdown
+grace period still lets token renewal finish before a forced stop.
+`TestWebReexecReapsPluginHost` exercises a real Linux `exec` with both a
+normally exiting Bun host and one that needs to be killed.
+
 ### Allowance card refreshes
 
 A card refresh applies only the requested account from the API's full

@@ -94,6 +94,7 @@ func newWireHost(tb testing.TB, in *wireIn) (*host, *io.PipeWriter) {
 		cmd: &exec.Cmd{}, in: in,
 		calls:    map[int64]*call{},
 		dead:     make(chan struct{}),
+		reaped:   make(chan struct{}),
 		slots:    make(chan struct{}, callLimit()),
 		streams:  make(chan struct{}, streamLimit()),
 		out:      make(chan writeReq, callLimit()),
