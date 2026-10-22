@@ -515,8 +515,8 @@ func objectPairs(raw []byte) orderedJSON {
 }
 
 // piModelJSON is one of magpie's models as an entry of Pi's models.json.
-// native asks it on the API its provider speaks natively (a model's own
-// api and baseUrl); without it the model is left on the provider's
+// native selects the model's preferred gateway API (its own api and
+// baseUrl); without it the model is left on the provider's
 // openai-completions (Pencil, pencil.go).
 func piModelJSON(m catalog.Model, gw string, native bool) map[string]any {
 	// reasoning lets Pi offer its thinking levels for the model: as
@@ -543,6 +543,8 @@ func piModelJSON(m catalog.Model, gw string, native bool) map[string]any {
 		if gateway.AdaptiveThinking(m.ID) {
 			e["compat"] = map[string]any{"forceAdaptiveThinking": true}
 		}
+	case slices.Contains(m.APIs, string(provider.Gemini)):
+		e["api"], e["baseUrl"] = "google-generative-ai", gw+"/v1beta"
 	}
 	if m.Images {
 		e["input"] = []string{"text", "image"}
