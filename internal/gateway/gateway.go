@@ -4758,6 +4758,26 @@ func (s *Server) passthrough(w http.ResponseWriter, r *http.Request, p provider.
 		}
 		return w.Write(b)
 	}
+	// #3197: a severed data line must not become a malformed SSE event.
+	var pending []byte
+	rawWrite := write
+	if sse {
+		write = func(b []byte) (int, error) {
+			pending = append(pending, b...)
+			i := bytes.LastIndexByte(pending, '\n')
+			// shortcut: lines over the sniffer's 1 MiB bound pass through;
+			// revisit if clients need severed oversized events repaired too.
+			if len(pending) > 1<<20 {
+				i = len(pending) - 1
+			}
+			if i < 0 {
+				return len(b), nil
+			}
+			_, err := rawWrite(pending[:i+1])
+			pending = append(pending[:0], pending[i+1:]...)
+			return len(b), err
+		}
+	}
 	// apart is what goes before an event magpie appends: a blank line,
 	// after the line still pending if the upstream's last write stopped
 	// inside one
@@ -4868,6 +4888,14 @@ func (s *Server) passthrough(w http.ResponseWriter, r *http.Request, p provider.
 	if phases != nil {
 		write(phases.flush())
 	}
+	if len(pending) > 0 && (rerr == nil || rerr == io.EOF) {
+		if _, err := rawWrite(pending); err != nil {
+			return res.StatusCode, "", true
+		}
+		if f != nil {
+			f.Flush()
+		}
+	}
 	if sse {
 		sniff.drain()
 	}
@@ -4910,10 +4938,12 @@ func (s *Server) passthrough(w http.ResponseWriter, r *http.Request, p provider.
 			failed = p.Name + ": " + errEndedShort.Error()
 		}
 		if failed != "" {
-			// what is appended begins after a blank line: the event still
-			// pending is left to stand, and the failure is read as an
-			// event of its own (TestPassthroughStreamEndsOnLineEnd)
+			// Finished upstream lines stand; the error is an event of its
+			// own after the unfinished line was discarded on read failure.
 			w.Write(append(apart(), streamFailure(proto, failed)...))
+			if proto == provider.Chat && rerr != nil && rerr != io.EOF {
+				w.Write([]byte("data: [DONE]\n\n"))
+			}
 			if f != nil {
 				f.Flush()
 			}
