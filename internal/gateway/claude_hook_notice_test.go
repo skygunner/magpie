@@ -106,3 +106,52 @@ func TestAgentNoticeLeavesTheUsersWords(t *testing.T) {
 		}
 	}
 }
+
+// The resume path must deliver completed tasks before handing over results,
+// including a notification sharing a text block with hooks or a user message.
+func TestClaudeTaskNotificationGoesOnWithTheResults(t *testing.T) {
+	for _, c := range []struct {
+		name, role, text, want string
+	}{
+		{"system", "system", taskNotification, taskNotification},
+		{"with results", "", taskNotification, taskNotification},
+		{"user", "user", taskNotification, taskNotification},
+		{"developer", "developer", taskNotification, taskNotification},
+		{"hooks", "system", "PreToolUse:Bash hook additional context: ignore me\n\n" + taskNotification + "\n\n<total_tokens>10 tokens left</total_tokens>", taskNotification},
+		{"two notices", "system", taskNotification + "\n\n" + goalCheckIn, taskNotification + "\n\n" + strings.Split(goalCheckIn, "\n<system-reminder>")[0]},
+		{"user then notice", "system", "The user sent a new message while you were working:\nalso tell me the date\n\n" + taskNotification + "\n\n<total_tokens>10 tokens left</total_tokens>", taskNotification + "\n\nalso tell me the date"},
+		{"notice then user", "system", taskNotification + "\n\nThe user sent a new message while you were working:\nalso tell me the date\n\n<total_tokens>10 tokens left</total_tokens>", taskNotification + "\n\nalso tell me the date"},
+		{"incomplete", "system", "<task-notification>unfinished", ""},
+		{"ordinary user", "user", "the task is done", "the task is done"},
+		{"ordinary system", "system", "the task is done", ""},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			body := hookCallStart + `{"role":` + quote(c.role) + `,"content":[{"type":"text","text":` + quote(c.text) + `}]}]}`
+			if c.role == "" {
+				body = strings.TrimSuffix(hookCallStart, "]},") + `,{"type":"text","text":` + quote(c.text) + `}]}]}`
+			}
+			got, said, early := continuing(t, body)
+			if resultText(got) != "hi" {
+				t.Fatalf("tool result changed: %q", resultText(got))
+			}
+			if text := strings.Join(said, "\n\n"); text != c.want {
+				t.Fatalf("run was told %q, want %q", text, c.want)
+			}
+			for _, answered := range early {
+				if answered {
+					t.Fatal("result delivered before notification was queued")
+				}
+			}
+		})
+	}
+}
+
+func TestClaudeTaskNoticeWithoutResultsIsNotRequeued(t *testing.T) {
+	req := parsed(t, `{"model":"claude-sonnet-5","max_tokens":64,"messages":[{"role":"user","content":`+quote(taskNotification)+`}]}`)
+	if got := saidWithResults(req.Messages); got != "" {
+		t.Fatalf("requeued without results: %q", got)
+	}
+	if got := promptText(t, req); !strings.Contains(got, taskNotification) {
+		t.Fatalf("fresh prompt lost notification: %s", got)
+	}
+}

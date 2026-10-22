@@ -3254,7 +3254,8 @@ func (r *subscriptionRun) untold(tools []Tool) (int, string) {
 // 2.1.296 sends them as one {role: "system"} message after the results,
 // with a message the user sent mid-turn among them (midTurnSaid): only
 // those words are the user's. A system message is never the user's
-// otherwise.
+// otherwise. Complete task notifications are still delivered to the run,
+// without the hook notices and token counts around them (#3020).
 func saidWithResults(msgs []Message) string {
 	i := len(msgs)
 	for i > 0 && msgs[i-1].Role != "assistant" {
@@ -3270,9 +3271,11 @@ func saidWithResults(msgs []Message) string {
 				results = true
 			case p.Kind != Text || !results || captions:
 			case midTurnHead.MatchString(p.Text):
-				said = append(said, midTurnSaid(p.Text)...)
-			case m.Role == "system" || m.Role == "developer":
-			case !agentNotice(p.Text):
+				said = append(said, taskNotices.FindAllString(p.Text, -1)...)
+				said = append(said, midTurnSaid(taskNotices.ReplaceAllString(p.Text, ""))...)
+			case m.Role == "system" || m.Role == "developer" || agentNotice(p.Text):
+				said = append(said, taskNotices.FindAllString(p.Text, -1)...)
+			default:
 				said = append(said, p.Text)
 			}
 		}
@@ -3284,6 +3287,9 @@ func saidWithResults(msgs []Message) string {
 }
 
 var (
+	// A completed task's notice must reach a waiting run even among the
+	// hook notices or mid-turn words that share its system message (#3020).
+	taskNotices = regexp.MustCompile(`(?s)<task-notification>.*?</task-notification>`)
 	// midTurnHead heads a message the user sent while a tool ran, as
 	// Claude Code tells its model one: "The user sent a new message while
 	// you were working:" (2.1.296), "The user sent the following message:"

@@ -554,6 +554,17 @@ hook's output, or nothing (the run's Claude Code doesn't show a bare
 without marking it `[user message]`. A reminder with other words in it is
 still the user's, as #872's was.
 
+A completed background task's `<task-notification>…</task-notification>`
+must also reach the run waiting on tool results (#3020). `saidWithResults`
+keeps complete notification blocks from the system/developer message or
+an agent notice (`taskNotices`), including multiple blocks and a block
+sharing text with a mid-turn user message. Hook notices and token counts
+around them stay out; the user's mid-turn words are extracted separately.
+The notifications and words are queued before the results, using the same
+`continueWith` acknowledgement. Requests without results are not requeued;
+a new run is told the notification in its ordinary prompt.
+
+
 Where the result ends is said by the message's parts alone. A tool whose
 output says "Do not use tools." has it told as its output, inside the
 result. The words of a message that holds images (pi-ai's "Attached
