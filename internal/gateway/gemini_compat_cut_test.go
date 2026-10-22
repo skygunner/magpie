@@ -1,10 +1,13 @@
 package gateway
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/yetone/magpie/internal/provider"
@@ -157,5 +160,73 @@ func TestGeminiCompatFinishAfterPartialLine(t *testing.T) {
 	j := strings.LastIndex(body[:i], "data: ")
 	if j < 0 || !strings.HasSuffix(body[:j], "\n\n") {
 		t.Errorf("the finish_reason began inside the line still pending: %q", body)
+	}
+}
+
+// Gemini rejects Ollama's runner options at the top level, but a tool's
+// parameter named options and another Chat vendor's extensions must survive.
+func TestGeminiCompatRelayLeavesOutOllamaOptions(t *testing.T) {
+	for _, stream := range []bool{true, false} {
+		for _, c := range []struct {
+			name, model, options string
+			keep                 bool
+		}{
+			{"runner", "models/gemini-3.8-flash", `{"num_ctx":1048576}`, false},
+			{"empty", "models/gemini-3.8-flash", `{}`, false},
+			{"null", "models/gemini-3.8-flash", `null`, false},
+			{"absent", "models/gemini-3.8-flash", ``, false},
+			{"other-vendor", "kimi-k3", `{"num_ctx":1048576}`, true},
+		} {
+			t.Run(c.name+"/stream="+strconv.FormatBool(stream), func(t *testing.T) {
+				fresh(t)
+				var mu sync.Mutex
+				var sent map[string]json.RawMessage
+				up := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					var body map[string]json.RawMessage
+					if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+						http.Error(w, err.Error(), http.StatusBadRequest)
+						return
+					}
+					mu.Lock()
+					sent = body
+					mu.Unlock()
+					if _, has := body["options"]; has && !c.keep {
+						http.Error(w, `{"error":{"code":400,"message":"Invalid JSON payload received. Unknown name \"options\": Cannot find field.","status":"INVALID_ARGUMENT"}}`, http.StatusBadRequest)
+						return
+					}
+					if stream {
+						w.Header().Set("Content-Type", "text/event-stream")
+						io.WriteString(w, `data: {"choices":[{"index":0,"delta":{"role":"assistant","content":"hi there"}}],"model":"`+c.model+`","object":"chat.completion.chunk"}`+"\n\n"+strings.ReplaceAll(compatStop, "models/gemini-4-argon", c.model)+compatDone)
+					} else {
+						w.Header().Set("Content-Type", "application/json")
+						io.WriteString(w, `{"choices":[{"index":0,"message":{"role":"assistant","content":"hi there"},"finish_reason":"stop"}],"model":"`+c.model+`","object":"chat.completion"}`)
+					}
+				}))
+				defer up.Close()
+				if err := provider.Save(provider.Provider{ID: "up", Name: "UP", Key: "k", Models: []string{c.model}, Chat: up.URL + "/v1beta/openai"}); err != nil {
+					t.Fatal(err)
+				}
+				ask := `{"model":"up/` + c.model + `","stream":` + strconv.FormatBool(stream) + `,"messages":[{"role":"user","content":"hi"}],"max_tokens":8,"tools":[{"type":"function","function":{"name":"run","parameters":{"type":"object","properties":{"options":{"type":"string"}}}}}]`
+				if c.options != "" {
+					ask += `,"options":` + c.options
+				}
+				code, body := post(t, "/v1/chat/completions", ask+`}`)
+				if code != 200 || !strings.Contains(body, `"content":"hi there"`) {
+					t.Fatalf("status %d: %s", code, body)
+				}
+				mu.Lock()
+				defer mu.Unlock()
+				_, has := sent["options"]
+				if has != c.keep {
+					t.Errorf("upstream options=%s, keep=%v", sent["options"], c.keep)
+				}
+				if c.keep && string(sent["options"]) != c.options {
+					t.Errorf("changed other vendor's options: %s", sent["options"])
+				}
+				if !strings.Contains(string(sent["messages"]), `"hi"`) || string(sent["max_tokens"]) != "8" || !strings.Contains(string(sent["tools"]), `"options":{"type":"string"}`) {
+					t.Errorf("lost ordinary request fields or the nested options parameter: %s", sent)
+				}
+			})
+		}
 	}
 }

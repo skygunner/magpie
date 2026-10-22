@@ -4260,10 +4260,15 @@ func (s *Server) passthrough(w http.ResponseWriter, r *http.Request, p provider.
 			// turns the whole request away for (#1462)
 			body = foldReasoningAliases(withReasoningOnToolTurns(body))
 		}
+		compat := geminiCompat(p.Host(), model)
+		if compat {
+			// Gemini rejects Ollama's top-level runner settings (#3097).
+			body = withoutFields(body, "options")
+		}
 		// Gemini's thought signatures, which came to the client in its
 		// calls' ids, go back where Gemini wants them; another upstream
 		// gets the calls' own ids (#687)
-		body = chatCallSignatures(body, geminiCompat(p.Host(), model))
+		body = chatCallSignatures(body, compat)
 		if p.Preset == "mistral" || p.Host() == "api.mistral.ai" {
 			// an earlier turn's reasoning_content, which Mistral turns
 			// away, as the thinking part it takes (#494)
