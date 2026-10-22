@@ -266,7 +266,13 @@ others' state. A gateway key held to some accounts is asked only on those
 (`allowedCandidates`), and refused 403 when none of them serves the model.
 `TestDecisionProviderKeysFailOver`.
 [`embeddings.go`](../../internal/gateway/embeddings.go) relays retrieval
-bodies and options (`serveRetrieval`), and
+bodies and options (`serveRetrieval`). A successful embeddings reply fills
+only missing or null `data[i].index` with the item's position
+(`embeddingIndices`, #3302), keeping existing indices, vector precision,
+base64 vectors and unknown fields. Rerank and other retrieval replies are
+unchanged. Tests: `TestEmbeddingsSupplyMissingIndices` and
+`TestEmbeddingIndicesPreserveOtherAnswers`.
+The same path serves
 [`transcribe.go`](../../internal/gateway/transcribe.go) speech-to-text's
 multipart forms through it as sent, rewriting only the model and a masked
 prompt under the form's own boundary (#2053), [`draw.go`](../../internal/gateway/draw.go) sends images

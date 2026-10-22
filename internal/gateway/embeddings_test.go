@@ -108,6 +108,56 @@ func TestEmbeddingsGoToTheModelsProvider(t *testing.T) {
 	}
 }
 
+func TestEmbeddingsSupplyMissingIndices(t *testing.T) {
+	fresh(t)
+	const reply = `{"object":"list","model":"embed-1","extra":9007199254740993,"data":[{"object":"embedding","embedding":[0.1234567890123456789,1e-25]},{"object":"embedding","index":null,"embedding":"AACAPw=="},{"object":"embedding","index":7,"embedding":[-0.2]},{"object":"embedding","index":0,"embedding":[0.3]}],"usage":{"prompt_tokens":5}}`
+	up := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, reply)
+	}))
+	t.Cleanup(up.Close)
+	if err := provider.Save(provider.Provider{ID: "embed", Name: "Embed", Chat: up.URL + "/v1", Key: "key", Models: []string{"embed-1"}}); err != nil {
+		t.Fatal(err)
+	}
+	s := New()
+	for _, path := range []string{"/v1/embeddings", "/embeddings"} {
+		code, raw := postRetrieval(t, s, path, `{"model":"embed/embed-1","input":["a","b","c","d"]}`)
+		var answer struct {
+			Data []struct {
+				Index *int `json:"index"`
+			} `json:"data"`
+		}
+		if code != 200 || json.Unmarshal([]byte(raw), &answer) != nil || len(answer.Data) != 4 {
+			t.Fatalf("%s: %d %s", path, code, raw)
+		}
+		for i, want := range []int{0, 1, 7, 0} {
+			if got := answer.Data[i].Index; got == nil || *got != want {
+				t.Errorf("%s data[%d].index = %v, want %d", path, i, got, want)
+			}
+		}
+		for _, keep := range []string{`"extra":9007199254740993`, `"embedding":[0.1234567890123456789,1e-25]`, `"embedding":"AACAPw=="`, `"usage":{"prompt_tokens":5}`} {
+			if !strings.Contains(raw, keep) {
+				t.Errorf("%s lost %s: %s", path, keep, raw)
+			}
+		}
+	}
+	// The shared retrieval path must leave a rerank answer alone.
+	if code, raw := postRetrieval(t, s, "/v1/rerank", `{"model":"embed/embed-1","query":"q","documents":["a"]}`); code != 200 || raw != reply {
+		t.Fatalf("rerank changed: %d %s", code, raw)
+	}
+}
+
+func TestEmbeddingIndicesPreserveOtherAnswers(t *testing.T) {
+	for _, body := range []string{
+		`{"data": [{"index": 1, "embedding": [0.1]}, {"index": 0, "embedding": [0.2]}]}`,
+		`{"data":[null]}`, `{"data":null}`, `{"data":{}}`, `{"data":["bad"]}`,
+		`{"error":{"message":"no embeddings"}}`, `not json`, `null`,
+	} {
+		if got := string(embeddingIndices([]byte(body))); got != body {
+			t.Errorf("changed %s to %s", body, got)
+		}
+	}
+}
+
 func TestVolcengineEmbeddingResponses(t *testing.T) {
 	type response struct {
 		Object string `json:"object"`
