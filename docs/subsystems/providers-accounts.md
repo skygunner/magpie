@@ -286,3 +286,10 @@ real `~/.codex`, `~/.claude`, `~/.config/gcloud` or `~/.config/magpie` files.
 Vertex AI's tests send Vertex AI, Google's token endpoint and IAM Credentials
 to a server of their own (`VertexForTest`). Check a change
 against real accounts in a sandbox HOME, as [Code standards](../code-standards.md#acceptance-criteria) describes.
+
+The provider editor saves output limits and compaction thresholds through
+`SetModelOutputs` and `SetModelCompacts`. A limit for a model retired from the
+catalog may be carried through unchanged or removed; adding or changing a limit
+still requires a model the provider serves. An invalid limit rejects the whole
+limit update, preserving other providers' limits (#3305,
+`TestEditorKeepsRetiredModelLimits`).

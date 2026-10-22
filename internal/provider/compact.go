@@ -168,7 +168,7 @@ func CompactsOf(providerID string) map[string]int {
 
 // SetModelCompacts makes a provider's thresholds cs, by model id, "*" for
 // all of them, as its editor's Compact at says: those it leaves out are
-// taken away, and every one set has to be a model the provider serves, as
+// taken away. New or changed values must name a model the provider serves, as
 // for a reply limit (SetModelOutputs). Codex's and Claude Code's lists are
 // written again when anything changed.
 func SetModelCompacts(providerID string, cs map[string]int) error {
@@ -176,6 +176,7 @@ func SetModelCompacts(providerID string, cs map[string]int) error {
 	if err != nil {
 		return err
 	}
+	s := settings.Load()
 	for model, n := range cs {
 		if n < 0 {
 			return errorf("a compaction threshold is a number of tokens, not %d", n)
@@ -183,11 +184,11 @@ func SetModelCompacts(providerID string, cs map[string]int) error {
 		if err := settings.CheckModelKey("a compaction threshold", p.ID+"/"+model); err != nil {
 			return err
 		}
-		if model != "*" && n > 0 && !p.serves(model) {
+		// A retired model may keep its saved limit through an editor save.
+		if model != "*" && n > 0 && s.ModelCompacts[p.ID+"/"+model] != n && !p.serves(model) {
 			return errorf("%s has no model %s (magpie provider %s lists them)", p.ID, model, p.ID)
 		}
 	}
-	s := settings.Load()
 	changed := false
 	for k := range s.ModelCompacts {
 		if model, ok := strings.CutPrefix(k, p.ID+"/"); ok && cs[model] <= 0 {
