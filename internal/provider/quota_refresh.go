@@ -184,12 +184,9 @@ func cacheCards(kept, got []SubscriptionQuota, seq uint64, partial bool) []Subsc
 }
 
 // mergeCards is the cards of kept with each of got in place of the one of
-// its provider and account, or after them when it is new. Nothing kept,
-// nothing is: the next read reads every card.
+// its provider and account, or after them when it is new. An empty cache
+// starts with these cards; only a whole-page read advances its timestamp.
 func mergeCards(kept, got []SubscriptionQuota) []SubscriptionQuota {
-	if kept == nil {
-		return nil
-	}
 	out := slices.Clone(kept)
 	for _, g := range got {
 		i := slices.IndexFunc(out, func(q SubscriptionQuota) bool {

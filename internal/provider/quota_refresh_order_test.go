@@ -279,3 +279,58 @@ func TestRefreshUsageKeepsNewerSubscription(t *testing.T) {
 		})
 	}
 }
+
+// #3139: a successful first card refresh is fresh even before the page
+// has ever fetched the full list. It must not fall back to a dated disk copy.
+func TestFirstClaudeCardRefreshStaysFresh(t *testing.T) {
+	isolateRefreshes(t)
+	out, _ := claudeUsageCards(t, "Current session: 37% used", nil)
+	ctx := context.Background()
+	check := func(want float64) {
+		t.Helper()
+		q := cardOf(CachedCards(time.Now()), "claude", "a@example.com")
+		if q == nil || q.Error != "" || q.AsOf != nil || q.ReadAt == nil || len(q.Windows) != 1 || q.Windows[0].Used != want {
+			t.Fatalf("single refresh: %+v, want fresh %.0f%%", q, want)
+		}
+	}
+	RefreshUsage(ctx, "claude", "a@example.com")
+	check(37)
+	out.Store("Current session: 38% used")
+	RefreshUsage(ctx, "claude", "a@example.com")
+	check(37)          // the CLI's minimum refresh interval still holds
+	retryClaudeUsage() // advance the retry clock, not a real 30-second sleep
+	RefreshUsage(ctx, "claude", "a@example.com")
+	check(38)
+	c := &subscriptionUsageCache
+	c.Lock()
+	at := c.at
+	c.Unlock()
+	if !at.IsZero() {
+		t.Fatal("a single card refresh marked the whole page fresh")
+	}
+	AskUsage()
+	SubscriptionUsage(Asked(ctx))
+	check(38)
+	out.Store("Current session: 39% used")
+	retryClaudeUsage()
+	RefreshUsage(ctx, "claude", "a@example.com")
+	check(39)
+}
+
+func TestQuotaMergeStartsWithNoCards(t *testing.T) {
+	q := SubscriptionQuota{Provider: "fixture", User: "a", readSeq: 2}
+	for _, partial := range []bool{false, true} {
+		t.Run(fmt.Sprintf("partial=%t", partial), func(t *testing.T) {
+			var kept, got []SubscriptionQuota
+			if partial {
+				got = []SubscriptionQuota{q}
+			} else {
+				kept = []SubscriptionQuota{q} // newer than an empty whole-page read
+			}
+			out := cacheCards(kept, got, 1, partial)
+			if len(out) != 1 || out[0].Provider != q.Provider {
+				t.Fatalf("lost the card while merging into nil: %+v", out)
+			}
+		})
+	}
+}
