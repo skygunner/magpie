@@ -15610,13 +15610,19 @@ function renderQuotas(lazy) {
 // account's full or brief is remembered by provider and account
 // (magpie.usageAccounts), for the window and the panel alike; a provider
 // opened before that (magpie.usageOpen) starts with every account in full.
-let usageOpen = new Set(), usageAccts = {};
+// The accounts the card's button opened are remembered too
+// (magpie.usageAcctsOpened), so that its fold puts those back in brief,
+// and only those (WuSix on Discord: with both accounts in brief, 展开 opened
+// both and 收起其余账号 folded only the second).
+let usageOpen = new Set(), usageAccts = {}, usageByMore = new Set();
 try { usageOpen = new Set(JSON.parse(localStorage.getItem("magpie.usageOpen") || "[]")); } catch {}
 try { usageAccts = JSON.parse(localStorage.getItem("magpie.usageAccounts") || "{}") || {}; } catch {}
+try { usageByMore = new Set(JSON.parse(localStorage.getItem("magpie.usageAcctsOpened") || "[]")); } catch {}
 addEventListener("storage", (e) => {
-  if (e.key !== "magpie.usageOpen" && e.key !== "magpie.usageAccounts") return;
+  if (e.key !== "magpie.usageOpen" && e.key !== "magpie.usageAccounts" && e.key !== "magpie.usageAcctsOpened") return;
   try { usageOpen = new Set(JSON.parse(localStorage.getItem("magpie.usageOpen") || "[]")); } catch {}
   try { usageAccts = JSON.parse(localStorage.getItem("magpie.usageAccounts") || "{}") || {}; } catch {}
+  try { usageByMore = new Set(JSON.parse(localStorage.getItem("magpie.usageAcctsOpened") || "[]")); } catch {}
   renderQuotas();
 });
 function usageShown(subs) {
@@ -15631,9 +15637,16 @@ function usageAcctOpen(q, subs) {
   if (typeof v === "boolean") return v;
   return usageOpen.has(q.provider) || q === usageShown(subs);
 }
-function setUsageAccts(list, open) {
-  for (const q of list) usageAccts[usageAcctKey(q)] = typeof open === "function" ? open(q) : open;
+// setUsageAccts: the accounts in list in full (open true) or in brief;
+// byMore: true when the card's button opened them, false when it or
+// anything else did (an account's own fold, a menu bar cell asking for it)
+function setUsageAccts(list, open, byMore = false) {
+  for (const q of list) {
+    usageAccts[usageAcctKey(q)] = typeof open === "function" ? open(q) : open;
+    if (byMore) usageByMore.add(usageAcctKey(q)); else usageByMore.delete(usageAcctKey(q));
+  }
   try { localStorage.setItem("magpie.usageAccounts", JSON.stringify(usageAccts)); } catch {}
+  try { localStorage.setItem("magpie.usageAcctsOpened", JSON.stringify([...usageByMore])); } catch {}
   renderQuotas();
 }
 // A card of a provider's keys shows the first three, and any in full,
@@ -15707,20 +15720,28 @@ function keysSum(subs) {
   return balanceAmount(subs[0], total);
 }
 // the card's button: the accounts in brief (or, in the panel, left out) in
-// full, or every one but the one in sight back in brief
+// full, its count the ones it opens; or, every one in full, the ones it
+// opened back in brief (none of them: every one but the one in sight). An
+// account's own fold leaves the button's count and fold as they are.
 function usageMore(subs, cls) {
   const closed = subs.filter((q) => !usageAcctOpen(q, subs));
   const panel = mode === "panel";
   // the panel draws the one in sight when none is in full
   const n = closed.length - (panel && closed.length === subs.length ? 1 : 0);
-  const b = el("button", cls, n
-    ? t(panel ? (n === 1 ? "Show 1 more account" : "Show {n} more accounts") : (n === 1 ? "Show 1 more account in full" : "Show {n} more accounts in full"), { n })
-    : t(panel ? "Show fewer accounts" : "Show the other accounts in brief"));
+  const pick = usageShown(subs);
+  const opened = subs.filter((q) => usageByMore.has(usageAcctKey(q)));
+  const fold = opened.length ? opened : subs.filter((q) => q !== pick);
+  // with none in full, "the other" accounts would be all of them
+  const label = n
+    ? (panel ? (n === 1 ? "Show 1 more account" : "Show {n} more accounts")
+      : n === subs.length ? "Show all {n} accounts in full"
+      : (n === 1 ? "Show 1 more account in full" : "Show {n} more accounts in full"))
+    : (panel ? "Show fewer accounts" : fold.length === subs.length ? "Show every account in brief" : "Show the other accounts in brief");
+  const b = el("button", cls, t(label, { n }));
   b.type = "button";
   b.setAttribute("aria-expanded", String(!n));
   b.onclick = () => {
-    const pick = usageShown(subs);
-    if (n) setUsageAccts(closed, true); else setUsageAccts(subs, (q) => q === pick);
+    if (n) setUsageAccts(closed, true, true); else setUsageAccts(fold, false);
     if (!panel) backToReader($("#view-usage"));
   };
   return b;
@@ -23762,20 +23783,41 @@ const barLifted = () => {
   readerScrolls(250);
   barDrag = null;
 };
+// The middle button's autoscroll (Windows) is the reader's scroll: put back,
+// each of its scrolls twitched the page (#2767). From a trusted middle press,
+// the view it lands in follows it and lets go of what a click held, till it
+// ends as Chromium ends it: the next press (only its pointerup arrives), a
+// key, blur, or the lift after moving past 15px. More in gui-shell.md.
+let panning = null; // { v, from: [x, y], far, lifted }
+const panEnds = () => { panning = null; };
 addEventListener("pointerdown", (e) => {
   downAt = [e.clientX, e.clientY];
+  panEnds();
+  if (e.button === 1 && e.isTrusted) {
+    const pv = e.target instanceof Element ? e.target.closest(".view") : null;
+    if (pv && !pv.hidden && pv.scrollHeight > pv.clientHeight) { panning = { v: pv, from: downAt, far: false, lifted: false }; held = null; }
+  }
   const v = e.target;
   const bar = v instanceof Element && v.classList.contains("view") ? v.offsetWidth - v.clientWidth : 0;
   barDrag = v instanceof Element && v.classList.contains("view") && !v.hidden && bar > 0 &&
     e.clientX >= v.getBoundingClientRect().right - bar ? v : null;
   if (barDrag) held = null;
 }, { capture: true, passive: true });
-addEventListener("pointerup", barLifted, { capture: true, passive: true });
+addEventListener("pointerup", (e) => {
+  barLifted();
+  if (!panning) return;
+  if (panning.lifted || e.button !== 1 || panning.far || Math.hypot(e.clientX - panning.from[0], e.clientY - panning.from[1]) > 15) panEnds();
+  else panning.lifted = true;
+}, { capture: true, passive: true });
 addEventListener("pointercancel", barLifted, { capture: true, passive: true });
 addEventListener("pointermove", (e) => {
+  if (panning && !panning.lifted && Math.hypot(e.clientX - panning.from[0], e.clientY - panning.from[1]) > 15) panning.far = true;
   if (e.buttons && downAt && Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 6) readerScrolls(250);
 }, { capture: true, passive: true });
+addEventListener("keyup", panEnds, true);
+addEventListener("blur", panEnds);
 addEventListener("keydown", (e) => {
+  panEnds();
   const typing = e.target.closest?.("input, textarea, select, [contenteditable]");
   if (e.key === "Tab" || (!typing && SCROLL_KEYS.has(e.key))) readerScrolls(400);
   if (e.isTrusted && e.key === "Enter") keyboardFocus(e);
@@ -23784,6 +23826,9 @@ addEventListener("keyup", (e) => {
   if (e.isTrusted && e.key === " " && !e.target.closest?.("input, textarea, select, [contenteditable]")) keyboardFocus(e);
 }, true);
 const readerAt = new WeakMap();
+// what had the focus when the reader last scrolled a view themselves: they
+// took it out of sight, and it isn't brought back (backToReader)
+const scrolledFrom = new WeakMap();
 // Where the reader is is a number, the view's scrollTop, unless the view
 // names a part of itself to keep in place (keepInView): a part under others
 // that redraw on their own (the Routing page's groups, under the live stage
@@ -23824,9 +23869,11 @@ function backToReader(v) {
   if (pinned != null) readerAt.set(v, want);
   if (Math.abs(v.scrollTop - want) < 0.5) return;
   v.scrollTop = want;
-  // a field focused out of sight still comes into view, no further than needed
+  // a field focused out of sight still comes into view, no further than needed,
+  // unless the reader scrolled it away (scrolledFrom): else a middle press's
+  // button, left behind by the autoscroll, pulled the page back to it.
   const f = document.activeElement;
-  if (f && f !== document.body && v.contains(f)) {
+  if (f && f !== document.body && f !== scrolledFrom.get(v) && v.contains(f)) {
     const r = f.getBoundingClientRect(), b = v.getBoundingClientRect();
     if (r.bottom > b.bottom || r.top < b.top) { readerScrolls(1000); guardUntil = purposeUntil; f.scrollIntoView({ block: "nearest" }); }
   }
@@ -24007,7 +24054,8 @@ for (const v of document.querySelectorAll(".view")) {
   v.tabIndex = -1;
   v.addEventListener("scroll", () => {
     if (v.hidden) return;
-    if (performance.now() < purposeUntil || barDrag === v) { fitRoom(v); readerLeaves(v); return; }
+    if (panning?.v === v) readerScrolls(250);
+    if (performance.now() < purposeUntil || barDrag === v) { fitRoom(v); readerLeaves(v); scrolledFrom.set(v, document.activeElement); return; }
     const from = v.scrollTop;
     if (held?.v === v) hold(held);
     else backToReader(v);
