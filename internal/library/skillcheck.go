@@ -192,24 +192,30 @@ func apiGet(u string) ([]byte, int, bool, error) {
 
 // hashDir is a hash of a skill's files, their names and what's in them,
 // as copyDir copies them.
-func hashDir(dir string) string { return hashFiles(dir, false) }
+func hashDir(dir string) string { return hashFiles(dir, true) }
 
-// hashFiles is hashDir, leaving aside the .DS_Store files Finder leaves in
-// a folder it shows when noFinder is set. A folder unchanged since it was
-// last hashed isn't read again (treememo.go).
-func hashFiles(dir string, noFinder bool) string {
-	return rememberedHash(dir, noFinder)
+// hashFiles leaves file managers' metadata out when noMetadata is set.
+// Otherwise it keeps the old formula for hashes recorded before #1072.
+// A folder unchanged since it was last hashed isn't read again (treememo.go).
+func hashFiles(dir string, noMetadata bool) string {
+	return rememberedHash(dir, noMetadata)
 }
 
 // hashWalk walks dir as hashFiles reads it, stamping each file and link
 // it would hash (treememo.go); with read, it also hashes their bytes. ok
 // is false when it can't be walked, or a file can't be read.
-func hashWalk(dir string, noFinder, read bool) (hash, stamp string, settled, ok bool) {
+func hashWalk(dir string, noMetadata, read bool) (hash, stamp string, settled, ok bool) {
 	h := sha256.New()
 	st := newStamper()
 	err := filepath.WalkDir(dir, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
+		}
+		if noMetadata && p != dir && skipInSkill(d.Name()) {
+			if d.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
 		}
 		rel, _ := filepath.Rel(dir, p)
 		rel = filepath.ToSlash(rel)
@@ -228,7 +234,7 @@ func hashWalk(dir string, noFinder, read bool) (hash, stamp string, settled, ok 
 				t, _ := os.Readlink(p)
 				fmt.Fprintf(h, "link %s %s\n", rel, filepath.ToSlash(t))
 			}
-		case d.Type().IsRegular() && rel != marker && !(noFinder && d.Name() == ".DS_Store"):
+		case d.Type().IsRegular() && rel != marker:
 			fi, err := d.Info()
 			if err != nil {
 				return err
@@ -450,7 +456,7 @@ func checkSkill(s *Skill, f *fetcher, asked map[string]*commit, limited *atomic.
 	if have == "" {
 		have = hashDir(skillDir(s.Name)) // installed before magpie kept it
 	}
-	if theirs := hashDir(from); theirs == "" || theirs != have {
+	if theirs := hashDir(from); theirs == "" || (theirs != have && hashFiles(from, false) != have) {
 		c.Status, c.URL = "update", history
 		return c, "", ""
 	}

@@ -445,7 +445,7 @@ func checkGitSkill(s *Skill, f *fetcher, asked map[string]string) (SkillCheck, s
 	if have == "" {
 		have = hashDir(skillDir(s.Name))
 	}
-	if theirs := hashDir(from); theirs == "" || theirs != have {
+	if theirs := hashDir(from); theirs == "" || (theirs != have && hashFiles(from, false) != have) {
 		c.Status = "update"
 		return c, "", ""
 	}
