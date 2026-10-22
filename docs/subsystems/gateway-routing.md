@@ -838,6 +838,8 @@ outside the offered namespaces and native OpenAI/ChatGPT replies stay unchanged
 `TestNativeRelayLeavesOtherCallsBe`). A following plaintext `agent_message`
 becomes a user message before that vendor is asked, retaining its sender,
 recipient, text and images through `provider.PlainAgentMessage` (also used by
-Grok). Sealed or unsupported task content is left opaque. OpenAI/ChatGPT and a
+Grok). Copilot retains native agent messages, including its web search
+(`TestCopilotUltraSubagentWithWebSearch`). Sealed or unsupported task content
+is left opaque. OpenAI/ChatGPT and a
 Codex-as-sent provider keep their original request path
 (`TestNativeRelayPlainAgentMessage`, `TestCodexSealedAgentHandoffNativePassthrough`).
