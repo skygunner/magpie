@@ -34,6 +34,19 @@ three.
 
 ## Constraints and failure behavior
 
+### Settings model picks
+
+A new image-recognition, Codex title, description or composer-prediction
+pick must name a model or group in `provider.Served`, including unlisted
+providers. Image generation uses the same `imageGens` list as its picker,
+which includes subscription image models absent from the chat catalog.
+`Handler` rejects an unknown or empty model name under a known provider
+with 400, leaving the saved settings untouched. Re-sending an already
+saved pick keeps it even when it is no longer available, so another
+Settings save does not force a replacement. Automatic and Off retain
+their existing meanings. See `TestSettingsModelsMustBeServed` and
+`TestImageGenCodexOneEntry` in [`internal/gui`](../../internal/gui).
+
 ### Allowance card refreshes
 
 A card refresh applies only the requested account from the API's full
