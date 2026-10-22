@@ -18,16 +18,30 @@ import (
 // OpenAI's, which MiMo's API follows.
 const mimoSchemaRefusal = `{"error":{"message":"text.format type 'json_schema' is not supported, only 'text' and 'json_object' are allowed.","type":"invalid_request_error","param":null,"code":"400"}}`
 
+// sensenovaSchemaRefusal is SenseNova's backend turning a schema away
+// (Jason's deployment, 2026-10-20: Codex's thread_title). Its words name no
+// format field at all — it is the guided-decoding compiler that failed —
+// and it takes a JSON object, its docs' one structured mode. The message is
+// the deployment's, word for word; the envelope is SenseNova's own.
+const sensenovaSchemaRefusal = `{"error":{"code":"400","message":"sensenova: guided_grammar '{\"$schema\":\"https://json-schema.org/draft/2020-12/schema\",\"additionalProperties\":false,\"properties\":{\"description\":{\"minLength\":1,\"type\":\"string\"},\"title\":{\"maxLength\":36,\"minLength\":1,\"type\":\"string\"}},\"required\":[\"title\",\"description\"],\"type\":\"object\"}' has compile_grammar_error: No module named 'xgrammar'","param":null,"type":"invalid_request_error"}}`
+
+// sensenovaProbe is the request the deployment gives to reproduce it, an
+// instructions field as Codex sends one and the schema Codex's thread title
+// carries.
+const sensenovaProbe = `{"model":"sensenova/sensenova-6.8-flash-lite","stream":true,"reasoning":{"effort":"low"},"instructions":"You are Codex.","input":"A user chat: How do I make my Kubernetes Pod stop CrashLoopBackOff?","text":{"format":{"type":"json_schema","name":"response","strict":true,"schema":{"$schema":"https://json-schema.org/draft/2020-12/schema","additionalProperties":false,"properties":{"description":{"minLength":1,"type":"string"},"title":{"maxLength":36,"minLength":1,"type":"string"}},"required":["title","description"],"type":"object"}}}}`
+
 // mimoProbe is the request #2126 gives to reproduce it, with an
 // instructions field as Codex sends one.
 const mimoProbe = `{"model":"xiaomi/mimo-v2.6-flash","stream":true,"reasoning":{"effort":"low"},"instructions":"You are Codex.","input":"Return a JSON object whose ok field is true.","text":{"format":{"type":"json_schema","name":"compat_probe","strict":true,"schema":{"type":"object","properties":{"ok":{"type":"boolean"}},"required":["ok"],"additionalProperties":false}}}}`
 
 // formatRefuser answers as an upstream that takes no json_schema, and with
-// object no json_object either: Responses, Chat and Anthropic Messages.
+// object no json_object either: Responses, Chat and Anthropic Messages. A
+// refusal of its own replaces MiMo's words.
 type formatRefuser struct {
-	mu     sync.Mutex
-	bodies []map[string]any
-	object bool
+	mu      sync.Mutex
+	bodies  []map[string]any
+	object  bool
+	refusal string
 }
 
 func (v *formatRefuser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -57,6 +71,10 @@ func (v *formatRefuser) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		if v.object {
 			io.WriteString(w, `{"error":{"message":"This response_format type is unavailable now","type":"invalid_request_error","param":null,"code":"invalid_request_error"}}`)
+			return
+		}
+		if v.refusal != "" {
+			io.WriteString(w, v.refusal)
 			return
 		}
 		io.WriteString(w, mimoSchemaRefusal)
@@ -202,4 +220,61 @@ func TestPassthroughFormatRefusedChatAndAnthropic(t *testing.T) {
 			t.Fatalf("system = %s", sys)
 		}
 	})
+}
+
+// SenseNova's backend refuses a schema its guided-decoding compiler cannot
+// hold, in words that name no format field (Jason's deployment, 2026-10-20:
+// Codex's thread_title). It takes a JSON object, its docs' one structured
+// mode, so the schema is asked as a JSON object, in the instructions, and
+// so from then on. Before, the 400 went to the client and every title and
+// description Codex asked of it failed.
+func TestPassthroughSchemaRefusedAsGrammarErrorAskedAsObject(t *testing.T) {
+	fresh(t)
+	up := &formatRefuser{refusal: sensenovaSchemaRefusal}
+	srv := httptest.NewServer(up)
+	t.Cleanup(srv.Close)
+	if err := provider.Save(provider.Provider{ID: "sensenova", Name: "SenseNova", Key: "sn-k", Models: []string{"sensenova-6.8-flash-lite"}, Responses: srv.URL + "/v1"}); err != nil {
+		t.Fatal(err)
+	}
+	h := New().Handler()
+	for turn := range 2 {
+		rec := httptest.NewRecorder()
+		h.ServeHTTP(rec, httptest.NewRequest("POST", "/v1/responses", strings.NewReader(sensenovaProbe)))
+		if rec.Code != 200 || !strings.Contains(rec.Body.String(), `ok`) {
+			t.Fatalf("turn %d: status %d: %s", turn, rec.Code, rec.Body.String())
+		}
+		bodies := up.all()
+		want := 2
+		if turn == 1 {
+			want = 3
+		}
+		if len(bodies) != want {
+			t.Fatalf("turn %d: %d requests, want %d: the refusal wasn't remembered", turn, len(bodies), want)
+		}
+		last := bodies[len(bodies)-1]
+		text, _ := last["text"].(map[string]any)
+		if jsonOf(text["format"]) != `{"type":"json_object"}` {
+			t.Fatalf("turn %d: text.format = %s, want json_object", turn, jsonOf(text["format"]))
+		}
+		ins, _ := last["instructions"].(string)
+		if !strings.HasPrefix(ins, "You are Codex.\n\n") || !strings.Contains(ins, "matching this JSON schema") || !strings.Contains(ins, `"title"`) {
+			t.Fatalf("turn %d: schema not told in the instructions: %q", turn, ins)
+		}
+		if last["input"] != "A user chat: How do I make my Kubernetes Pod stop CrashLoopBackOff?" {
+			t.Fatalf("turn %d: input changed: %s", turn, jsonOf(last["input"]))
+		}
+	}
+}
+
+func TestGrammarFormatRefusalStatus(t *testing.T) {
+	for _, body := range []string{sensenovaSchemaRefusal, `{"error":{"message":"compile_grammar_error: compiler unavailable"}}`, `{"error":{"message":"guided_grammar is unsupported"}}`} {
+		for _, status := range []int{200, 400, 401, 403, 422, 429, 500, 502} {
+			if got, want := refusesFormat(status, []byte(body)), status == 400 || status == 422; got != want {
+				t.Errorf("status %d body %s: refusesFormat=%v, want %v", status, body, got, want)
+			}
+		}
+	}
+	if refusesFormat(400, []byte(`{"error":{"message":"invalid API key"}}`)) {
+		t.Fatal("unrelated 400 treated as a format refusal")
+	}
 }

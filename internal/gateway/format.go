@@ -147,8 +147,11 @@ func (r *Request) inSystem() *Request {
 func formatRefused(model string) string { return "response_format:" + model }
 
 // formatRefusal is an upstream's 400 naming the field structured output is
-// asked for in, in any API's words.
-var formatRefusal = regexp.MustCompile(`(?i)response_format|json_schema|json_object|output_config\.format|text\.format|structured.output|response_?mime_?type|response_?json_?schema|response_?schema`)
+// asked for in, in any API's words — SenseNova's guided-decoding backend
+// says "guided_grammar … compile_grammar_error: No module named
+// 'xgrammar'" over a schema it was handed (its own field names name no
+// format at all).
+var formatRefusal = regexp.MustCompile(`(?i)response_format|json_schema|json_object|output_config\.format|text\.format|structured.output|response_?mime_?type|response_?json_?schema|response_?schema|guided_grammar|compile_grammar`)
 
 // refusesFormat is whether an upstream's answer turned the request away
 // over its format.
