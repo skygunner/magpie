@@ -37,3 +37,31 @@ func TestPlainSchemaKeepsOnlyWhatAntigravityTakes(t *testing.T) {
 		t.Errorf("got %s", b)
 	}
 }
+
+// A type union beside items keeps its array half: folded to its first
+// member, ["string", "array"] with items became a string carrying items,
+// and Antigravity holds Schema.items to type array — a 400 before anything
+// was answered, on every turn that carried the tool (biomcp's search,
+// #3121, rgoliveira). A union with no array half loses the array keywords
+// rather than carrying them on another type.
+func TestPlainSchemaUnionBesideItemsKeepsTheArrayHalf(t *testing.T) {
+	disease := `{"type":["string","array"],"items":{"type":"string","minLength":1,"maxLength":256},"minItems":1,"maxItems":3,"minLength":1,"maxLength":256,"uniqueItems":true}`
+	var got map[string]any
+	if err := json.Unmarshal(plainSchema(json.RawMessage(disease)), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got["type"] != "array" || got["items"] == nil || got["minItems"] != float64(1) || got["maxItems"] != float64(3) {
+		b, _ := json.Marshal(got)
+		t.Fatalf("the union folded wrong: %s", b)
+	}
+	// a union with no array half: the string stands, items goes
+	plain := `{"type":["string","null"],"items":{"type":"string"}}`
+	got = nil
+	if err := json.Unmarshal(plainSchema(json.RawMessage(plain)), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got["type"] != "string" || got["nullable"] != true || got["items"] != nil {
+		b, _ := json.Marshal(got)
+		t.Fatalf("the non-array union kept array keywords: %s", b)
+	}
+}
