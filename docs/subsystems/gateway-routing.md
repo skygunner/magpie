@@ -805,3 +805,22 @@ go test -tags nogui ./internal/provider -run 'TestGroup|TestCodexCreditsSwitch|T
 
 The gateway's `TestMain` gives the package a home of its own, so these tests
 never read real providers or accounts.
+||||||| parent of b1ae66c7 (gateway: preserve plaintext Codex collaboration through native relays (#3183))
+
+Kimi tool schema normalization follows local `$ref` chains before adding a
+missing type. It adds the type only at the final target, preserving intermediate
+reference schemas (including a format or description); dangling and cyclic chains
+remain unchanged (#3205, `TestKimiToolRefTypesRefChain`). Other providers retain
+the original schema (`TestKimiToolRefTypes`).
+
+Third-party native Responses relays mark calls to offered namespaced tools with
+`encrypted_function_args: []` when the upstream supplied no encryption marker,
+as translated replies do. Existing encryption markers are preserved; calls
+outside the offered namespaces and native OpenAI/ChatGPT replies stay unchanged
+(#3183, `TestNativeRelayNamespacedCallSaysUnsealed`,
+`TestNativeRelayLeavesOtherCallsBe`). A following plaintext `agent_message`
+becomes a user message before that vendor is asked, retaining its sender,
+recipient, text and images through `provider.PlainAgentMessage` (also used by
+Grok). Sealed or unsupported task content is left opaque. OpenAI/ChatGPT and a
+Codex-as-sent provider keep their original request path
+(`TestNativeRelayPlainAgentMessage`, `TestCodexSealedAgentHandoffNativePassthrough`).
