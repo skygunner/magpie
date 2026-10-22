@@ -144,4 +144,27 @@ TestProgram 红）。TestPluginSOCKSProxy 红是已知 #2207（本机 Bun 1.4.3�
   https://github.com/yetone/magpie/issues/3148#issuecomment-6342963529
 - **跳过（有现成 patch 等 maintainer 取）**：#3141（JoeyWu f9d7eac9）、#3188（wtj-0527
   c7db44bc）——重复移植价值低。
-- **main 已修、issue 未关**：#3151（e6568888）、#2949（b641868e）——待留言后由维护者关闭。
+- **main 已修、issue 未关（已留言指认修复 commit）**：#3151（e6568888）、#2949（b641868e）、
+  #3143+#3144（88119d4f，10-21 修复，晚于本计划的 issue 快照——教训：动手前先
+  `git log --grep` 并在**全仓库**搜 issue 关键词，不能只看标题分诊）。
+- **M10 放弃** #3144：动手时发现 main 已修（见上），kept 表补充属冗余，已撤销。
+- **M12 完成** #3213（per-model queue 503 歇整账号）：分支 `fix/queue-model-rest`
+  commit 1b9f089——queuedWords 措辞匹配 + restAfterMarked 双点收窄（计数与休息 key
+  都走 restID）。TestQueuedModelRestsAlone 红转绿；全量 67 ok。留言：
+  https://github.com/yetone/magpie/issues/3213#issuecomment-6343670538
+- **不修（附原因）**：#3263（需逐 agent 真实客户端抓包）；#3077（usage 记录语义的
+  产品设计，留给 owner）；#3147（已向报告者要 conversations/*.db 脱敏样本，见
+  issue 留言）；#3148（已向报告者要 Qoder IDE product.json 值）；#3131（属社区插件
+  仓库 magpie-community/plugins，已指路）；#3269/#3260（Windows 平台题，无 Windows
+  环境验证，标准要求在对应平台实测）；#3141/#3188/#3274/#3090（已有现成 patch 等
+  maintainer 采用，重复移植无价值）。
+
+## 终验收（2026-10-22）
+
+- 8 个分支全部推送 fork（7 个修复 + dev）；工作区干净；每分支只含各自目标文件。
+- 每个修复分支的 head 都有独立的全量 `go test -tags nogui ./... -timeout 45m` 记录
+  （M3 66 ok，其余 67 ok），红项全部为 main 预存且有 issue 号（#2207、#3280、#3284），
+  commit body 均已如实记录。红→绿验证：每个新测试都在还原旧代码后跑出真实 FAIL。
+- 临时物清理：/tmp/magpie-bisect、/tmp/magpie-probe worktree 已删；调试测试文件
+  （zz_probe/zz_debug）已删；无遗留 debug 输出。
+- docker1 未用到（无需测试容器）。
