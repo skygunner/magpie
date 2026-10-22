@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/tidwall/gjson"
@@ -120,21 +121,88 @@ func setJSONBytes(raw []byte, keyPath string, value any) ([]byte, error) {
 		if !r.Exists() {
 			continue
 		}
+		if i < len(parts) && r.IsArray() {
+			// A numeric key under an array indexes it.
+			return setArrayElem(raw, stripped, r, keyPath, parts[i:], value)
+		}
 		if i == len(parts) || !r.IsObject() {
 			// Exact key exists (replace value), or an ancestor exists but is a
 			// scalar (replace it with the nested object we need).
-			return splice(raw, r.Index, len(r.Raw), marshalAt(raw, r.Index, nest(parts[i:], value)))
+			v, err := nest(parts[i:], value, keyPath)
+			if err != nil {
+				return nil, err
+			}
+			return splice(raw, r.Index, len(r.Raw), marshalAt(raw, r.Index, v))
 		}
-		return insertKey(raw, stripped, r.Index, unescapeKey(parts[i]), nest(parts[i+1:], value))
+		v, err := nest(parts[i+1:], value, keyPath)
+		if err != nil {
+			return nil, err
+		}
+		return insertKey(raw, stripped, r.Index, unescapeKey(parts[i]), v)
 	}
-	return insertKey(raw, stripped, 0, unescapeKey(parts[0]), nest(parts[1:], value))
+	v, err := nest(parts[1:], value, keyPath)
+	if err != nil {
+		return nil, err
+	}
+	return insertKey(raw, stripped, 0, unescapeKey(parts[0]), v)
 }
 
-func nest(parts []string, value any) any {
+// setArrayElem writes into the array r at the numeric key that heads parts:
+// the element at an index the array has is replaced (a longer key path would
+// have matched it above), one at its length is appended, anything past that
+// is refused.
+func setArrayElem(raw, stripped []byte, r gjson.Result, keyPath string, parts []string, value any) ([]byte, error) {
+	idx, ok := arrayIndex(parts[0])
+	if !ok {
+		return nil, fmt.Errorf("key %q in %q addresses an array: want a numeric index", unescapeKey(parts[0]), keyPath)
+	}
+	n := len(r.Array())
+	if idx < n {
+		// An existing element would have matched a longer prefix above; only
+		// a key gjson cannot read as an index (a leading zero) lands here.
+		return nil, fmt.Errorf("cannot address element %d in %q", idx, keyPath)
+	}
+	if idx > n {
+		return nil, fmt.Errorf("index %d in %q is past the end of the array (length %d)", idx, keyPath, n)
+	}
+	v, err := nest(parts[1:], value, keyPath)
+	if err != nil {
+		return nil, err
+	}
+	return insertElem(raw, r, v)
+}
+
+// arrayIndex is a key path's part as an array index: a plain decimal number.
+func arrayIndex(part string) (int, bool) {
+	if part == "" {
+		return 0, false
+	}
+	for i := 0; i < len(part); i++ {
+		if part[i] < '0' || part[i] > '9' {
+			return 0, false
+		}
+	}
+	n, err := strconv.Atoi(part)
+	if err != nil {
+		return 0, false
+	}
+	return n, true
+}
+
+func nest(parts []string, value any, keyPath string) (any, error) {
 	for i := len(parts) - 1; i >= 0; i-- {
+		if idx, ok := arrayIndex(parts[i]); ok {
+			// A numeric part builds an array. Every container here is being
+			// created empty, so an index other than 0 is past its end.
+			if idx != 0 {
+				return nil, fmt.Errorf("index %d in %q is past the end of the array being created (length 0)", idx, keyPath)
+			}
+			value = []any{value}
+			continue
+		}
 		value = map[string]any{unescapeKey(parts[i]): value}
 	}
-	return value
+	return value, nil
 }
 
 // splitPath splits a key path at its dots, as gjson does: a dot escaped
@@ -199,6 +267,33 @@ func insertKey(raw, stripped []byte, from int, key string, value any) ([]byte, e
 		return splice(raw, open, close-open+1, []byte("{\n"+kv+"\n"+base+"}"))
 	}
 	return splice(raw, open+1, 0, []byte("\n"+kv+","))
+}
+
+// insertElem appends without rewriting the existing elements or comments.
+func insertElem(raw []byte, r gjson.Result, value any) ([]byte, error) {
+	at, sep := r.Index+1, ""
+	items := r.Array()
+	if len(items) > 0 {
+		last := items[len(items)-1]
+		at, sep = last.Index+len(last.Raw), ","
+		// A trailing comma is blanked by jsonc; use it as the separator.
+		if j := nextToken(raw, at); j < r.Index+len(r.Raw)-1 && raw[j] == ',' {
+			at, sep = j+1, ""
+		}
+	}
+	if bytes.IndexByte(raw, '\n') < 0 {
+		v, _ := json.Marshal(value)
+		return splice(raw, at, 0, []byte(sep+string(v)))
+	}
+	base := lineIndent(raw, r.Index)
+	unit := indentUnit(raw, r.Index, base)
+	child := base + unit
+	v, _ := json.MarshalIndent(value, child, unit)
+	ins := sep + "\n" + child + string(v)
+	if len(items) == 0 && !bytes.Contains(raw[r.Index+1:r.Index+len(r.Raw)-1], []byte("\n")) {
+		ins += "\n" + base
+	}
+	return splice(raw, at, 0, []byte(ins))
 }
 
 // marshalAt renders value with indentation matching the line that holds pos.
