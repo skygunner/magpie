@@ -7,6 +7,13 @@ doesn't speak the agent's API, the gateway translates. When an upstream
 fails before any of the reply is sent, the gateway moves to the next
 candidate.
 
+Provider rests are saved as absolute deadlines and reasons in `rests.json`
+beside `providers.json` ([`rest_store.go`](../../internal/gateway/rest_store.go)).
+A restart or update preserves the remaining `quota-rest` wait. A manual
+unrest, successful answer, or allowance renewal removes the saved rest; an
+expired rest is ignored when loading (a recent rate limit is kept for its
+backoff ladder). `TestQuotaRestSurvivesGatewayRestart` covers this.
+
 This page covers how a request is routed. Plugins that change requests and
 replies are in [Gateway middleware](gateway-middleware.md). Subscriptions
 served by a plugin are in [Provider and plugin ownership](provider-plugins.md).

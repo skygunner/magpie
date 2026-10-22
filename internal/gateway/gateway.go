@@ -426,6 +426,7 @@ type Server struct {
 // New makes a gateway.
 func New() *Server {
 	redact.SetKeyPath(filepath.Join(settings.Dir(), "redact.key"))
+	loadRests()
 	return &Server{
 		// a request counted against a MaxRPM waits for room in its minute
 		// first (rpm.go); the ChatGPT backend is spoken to over HTTP/1.1

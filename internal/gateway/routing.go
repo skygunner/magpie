@@ -134,20 +134,29 @@ func unforbid(f forbidden) {
 	}
 	routed.Unlock()
 	restingUntil.Lock()
+	changed := false
 	if until, ok := restingUntil.m[f.rest.Key]; ok && until.Equal(f.rest.Until) {
 		delete(restingUntil.m, f.rest.Key)
 		delete(restingUntil.note, f.rest.Key)
+		changed = true
 	}
 	restingUntil.Unlock()
+	if changed {
+		saveRests()
+	}
 }
 
 // clearRest wakes a candidate that just answered, whether it was tried after
 // a provider rest or after a model-specific rest.
 func clearRest(key string) {
 	restingUntil.Lock()
+	_, changed := restingUntil.m[key]
 	delete(restingUntil.m, key)
 	delete(restingUntil.note, key)
 	restingUntil.Unlock()
+	if changed {
+		saveRests()
+	}
 }
 
 // How long a candidate sits out, by why it failed.
@@ -506,12 +515,17 @@ type Rest struct {
 // is lifted; a key's other rests aren't noted by it.
 func renewed(agent, user string) {
 	restingUntil.Lock()
-	defer restingUntil.Unlock()
+	changed := false
 	for k, r := range restingUntil.note {
 		if r.agent == agent && strings.EqualFold(r.user, user) && (r.Why == failQuota || r.By == "window") {
 			delete(restingUntil.m, k)
 			delete(restingUntil.note, k)
+			changed = true
 		}
+	}
+	restingUntil.Unlock()
+	if changed {
+		saveRests()
 	}
 }
 
@@ -546,8 +560,8 @@ func narrowWhenRead(c candidate, r Rest) {
 	}
 	id, rid := c.restKey(), c.restID()
 	restingUntil.Lock()
-	defer restingUntil.Unlock()
 	if now, ok := restingUntil.note[id]; !ok || now.Why != failQuota || !restingUntil.m[id].Equal(r.Until) {
+		restingUntil.Unlock()
 		return
 	}
 	delete(restingUntil.m, id)
@@ -557,6 +571,8 @@ func narrowWhenRead(c candidate, r Rest) {
 		restingUntil.m[rid] = r.Until
 		restingUntil.note[rid] = r
 	}
+	restingUntil.Unlock()
+	saveRests()
 }
 
 // keyAllowance and staleKeyAllowance are provider.KeyAllowance and
@@ -575,10 +591,13 @@ func RestOf(key string) (Rest, bool) { return restOf(key) }
 // wasn't resting.
 func (s *Server) Unrest(key string) bool {
 	restingUntil.Lock()
-	defer restingUntil.Unlock()
 	_, ok := restingUntil.m[key]
 	delete(restingUntil.m, key)
 	delete(restingUntil.note, key)
+	restingUntil.Unlock()
+	if ok {
+		saveRests()
+	}
 	return ok
 }
 
@@ -587,7 +606,6 @@ func (s *Server) Unrest(key string) bool {
 // asked again for all of them. It returns how many it lifted.
 func (s *Server) UnrestAll(key string) int {
 	restingUntil.Lock()
-	defer restingUntil.Unlock()
 	n := 0
 	for k := range restingUntil.m {
 		if k == key || strings.HasPrefix(k, key+"/") {
@@ -595,6 +613,10 @@ func (s *Server) UnrestAll(key string) int {
 			delete(restingUntil.note, k)
 			n++
 		}
+	}
+	restingUntil.Unlock()
+	if n > 0 {
+		saveRests()
 	}
 	return n
 }
@@ -1048,6 +1070,7 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
 		restingUntil.note[id] = r
 	}
 	restingUntil.Unlock()
+	saveRests()
 	if unread && id == c.restKey() && id != c.restID() {
 		narrowing.Add(1)
 		go narrowWhenRead(c, r)
