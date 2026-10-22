@@ -6,6 +6,7 @@ import (
 	"slices"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -224,4 +225,33 @@ func TestPiCallsReadOnlyWhatWasAppended(t *testing.T) {
 		t.Fatal(err)
 	}
 	read("written over", 0, 8, 9, 10)
+}
+
+// #3306: the reported hidden-reasoning tool call already includes reasoning
+// in output. Both readers must retain its breakdown without adding it twice.
+func TestPiCallsReasoning(t *testing.T) {
+	for _, agent := range []string{"pi", "omp"} {
+		for _, tc := range []struct {
+			name, reasoning string
+			want            int
+		}{
+			{"reported", `,"reasoning":151`, 151},
+			{"zero", `,"reasoning":0`, 0},
+			{"absent", "", 0},
+		} {
+			t.Run(agent+"/"+tc.name, func(t *testing.T) {
+				st := &callFile{Agent: agent, Session: "reasoning"}
+				piCallsBegin(st, file{agent: agent, key: agent + ":reasoning"})
+				line := `{"type":"message","id":"reply","timestamp":"2026-10-23T08:00:00Z","message":{"role":"assistant","provider":"relay","model":"gemini-3.8-flash-high","content":[{"type":"toolCall"}],"durationMs":7594,"ttft":7360,"usage":{"input":3327,"output":300,"cacheRead":41350,"cacheWrite":0REASONING}}}`
+				readPiCallLine(st, []byte(strings.ReplaceAll(line, "REASONING", tc.reasoning)))
+				if len(st.Calls) != 1 {
+					t.Fatalf("calls: %+v", st.Calls)
+				}
+				c := st.Calls[0]
+				if c.Reasoning != tc.want || c.Tokens != (Tokens{Input: 3327, Output: 300, CacheRead: 41350}) || c.Millis != 7594 || c.TTFT != 7360 {
+					t.Fatalf("call: %+v", c)
+				}
+			})
+		}
+	}
 }

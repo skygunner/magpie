@@ -98,6 +98,7 @@ func piFilesIn(dir, sessionDir string) []file {
 }
 
 type piUsage struct {
+	Reasoning  int `json:"reasoning"` // already included in output
 	Input      int `json:"input"`
 	Output     int `json:"output"`
 	CacheRead  int `json:"cacheRead"`

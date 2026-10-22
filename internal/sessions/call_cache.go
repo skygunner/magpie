@@ -40,10 +40,11 @@ import (
 // call's own time.
 // v14: Codex calls keep the thread that made the request.
 // v15: Codex calls keep the compaction marker independently of its duration.
+// v16: Pi and omp calls keep reasoning already counted inside output (#3306).
 // What each version names is what a cache of the one before it cannot serve:
 // the version is part of the directory's name, so a cache written by an older
 // one is never read (pruneCalls).
-const callCacheVersion = "calls-v15"
+const callCacheVersion = "calls-v16"
 const maxKeptCalls = 131072
 const maxKeptFiles = 64
 
