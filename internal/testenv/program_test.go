@@ -30,7 +30,8 @@ func TestProgram(t *testing.T) {
 			t.Fatalf("ran again: %q %v", out, err)
 		}
 		fi, err := os.Stat(p)
-		if err != nil || fi.Mode().Perm() != 0o755 {
+		// umask may remove group and other bits; the owner can still run it.
+		if err != nil || fi.Mode().Perm()&0o700 != 0o700 {
 			t.Fatalf("mode: %v %v", fi, err)
 		}
 		first = fi
