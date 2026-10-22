@@ -7,7 +7,7 @@
 // to min(360px,70vh) and scrolls, as its siblings (.sess-menu,
 // .lan-address-menu) already did. This opens the picker with enough accounts
 // to overflow, checks the menu stays inside the viewport and scrolls to the
-// last row, and that a click still picks it. English and Chinese, Chromium
+// last row, and that a click still picks it. All five languages, Chromium
 // and WebKit; no backend, the API is faked here.
 const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
@@ -25,7 +25,7 @@ const quotas = Array.from({ length: N }, (_, i) => ({
   user: `acct${i}@b.c`, plan: "Max", windows: [{ name: "5-hour", used: i }],
 }));
 
-function server(lang, posts) {
+function server(lang, posts, saveReady, recordSave) {
   let cur = {
     theme: "light", lang, tray: "panel", quotaLeft: false, currency: "usd",
     dock: false, dockWindow: false, proxy: "", redact: false, redactPersonal: false, redactWords: [],
@@ -45,7 +45,9 @@ function server(lang, posts) {
     if (url.pathname === "/api/settings") {
       if (req.method() === "POST") {
         const body = req.postDataJSON();
+        await saveReady;
         posts.push(body);
+        recordSave();
         cur = { ...cur, ...body, trayUsage: (body.trayUsages || [])[0] || "" };
       }
       return json(cur);
@@ -63,8 +65,8 @@ function server(lang, posts) {
 const VIEWPORT = { width: 900, height: 600 };
 
 for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"])) {
-  for (const lang of ["en", "zh"]) {
-    test(`${engine} ${lang}: a quota picker taller than the window clamps and scrolls`, async (t) => {
+  for (const lang of ["en", "zh", "zh-TW", "ja", "de"]) {
+    test(`${engine} ${lang}: a quota picker taller than the window clamps and scrolls`, { timeout: 30000 }, async (t) => {
       const browser = await (engine === "webkit" ? webkit.launch() : chromium.launch({ channel: "chromium" }));
       const page = await (await browser.newContext({ viewport: VIEWPORT, reducedMotion: "reduce" })).newPage();
       t.after(async () => {
@@ -76,8 +78,14 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       });
       page.setDefaultTimeout(5000);
       const errors = [], posts = [];
+      // Hold recording until after the click: the save can arrive later on
+      // a busy runner, and clicking does not mean it has been persisted.
+      let releaseSave, recordSave;
+      const saveReady = new Promise((resolve) => { releaseSave = resolve; });
+      const saved = new Promise((resolve) => { recordSave = resolve; });
+      t.after(releaseSave);
       page.on("pageerror", (e) => errors.push(e.message));
-      await page.route("**/*", server(lang, posts));
+      await page.route("**/*", server(lang, posts, saveReady, recordSave));
       await page.goto("http://magpie.test/?view=usage");
       await page.locator("#prefs").click();
       await openPart(page, "usage");
@@ -106,9 +114,10 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       assert.ok(scrolled, "scrolling the menu moves it, so the last rows are reachable");
       await last.click();
       await page.keyboard.press("Escape");
-      const saved = posts.at(-1)?.trayUsages;
-      assert.ok(Array.isArray(saved) && saved.length === 1 && /acct\d+@b\.c$/.test(saved[0]),
-        `the last account was picked and saved: ${JSON.stringify(saved)}`);
+      releaseSave();
+      await saved;
+      const picked = posts.at(-1)?.trayUsages;
+      assert.deepEqual(picked, [`claude|acct${N - 1}@b.c`], "the last account was picked and saved");
       assert.deepEqual(errors, []);
     });
   }
