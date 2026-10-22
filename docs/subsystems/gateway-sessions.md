@@ -311,7 +311,11 @@ too ("usage" and omp's "model_usage" entries, a compaction's, a branch
 summary's and a tool result's usage, on the model and provider in use);
 the provider `magpie` (or `dial`) is magpie's entry, a failed call has no
 usage, and a fork's copy of its parent's entries (written before its
-header) is the parent's. The other agents the Sessions page reads (Cline,
+header) is the parent's. Their `usage.reasoning` is retained separately,
+already inside `output`; hidden reasoning without text timing makes decode
+speed unavailable instead of counting reasoning after the first content
+(#3306, `TestPiCallsReasoning`). Request cache v16 rebuilds older rows.
+The other agents the Sessions page reads (Cline,
 Qoder, Grok, Droid, Cursor, Hermes, Alma) have no reader yet (#1607). The
 Context page reads the gateway's own traces, so it shows none of these
 calls. Verification: `TestMiniMaxCodeCalls`, `TestKimiCode*` (the

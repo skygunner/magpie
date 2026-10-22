@@ -166,14 +166,15 @@ func piCall(st *callFile, agent string, l piCallLine, provider, model string) (C
 		return Call{}, false
 	}
 	c := Call{
-		Agent:    agent,
-		Time:     at,
-		Session:  st.Session,
-		Model:    st.str(model),
-		Upstream: st.str(provider),
-		Tokens:   u.tokens(),
-		Millis:   max(millis, 0),
-		TTFT:     max(ttft, 0),
+		Agent:     agent,
+		Time:      at,
+		Session:   st.Session,
+		Model:     st.str(model),
+		Upstream:  st.str(provider),
+		Tokens:    u.tokens(),
+		Reasoning: u.Reasoning,
+		Millis:    max(millis, 0),
+		TTFT:      max(ttft, 0),
 	}
 	if c.Tokens.zero() {
 		return Call{}, false
