@@ -67,7 +67,18 @@ func expandHome(p string) string {
 	return p
 }
 
-func piFiles() []file { return piFilesIn(PiDir(), piSessionDir()) }
+// piFiles are Pi's session files. None when Pi's folder is omp's
+// ($PI_CODING_AGENT_DIR pointing at ~/.omp/agent, by name, a link, or a
+// letter's case Windows ignores): the folder is omp's, and omp's listing
+// reads its sessions once, as omp's (#3258). Listed as Pi's as well, a
+// session spelled differently under the two names was counted twice, and
+// one refresh took each path twice and closed a nil channel (#3255).
+func piFiles() []file {
+	if sameFolder(PiDir(), OmpDir()) {
+		return nil
+	}
+	return piFilesIn(PiDir(), piSessionDir())
+}
 
 // piFilesIn are the sessions in a Pi folder, and in the folder it was told
 // to keep them in ("" for none).

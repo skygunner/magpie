@@ -29,3 +29,16 @@ func QoderDir(id string) string {
 	home, _ := os.UserHomeDir()
 	return filepath.Join(home, dir)
 }
+
+// qoderFiles are Qoder's and Qoder CN's session files. Qoder CN's are none
+// when its folder is Qoder's ($QODERCN_CONFIG_DIR beside $QODER_CONFIG_DIR
+// on one folder, a link, or a letter's case Windows ignores): the folder's
+// sessions are read once, as Qoder's (#3258). Listed as both's, a session
+// spelled differently under the two names was counted twice.
+func qoderFiles() []file {
+	fs := ccFiles("qoder", QoderDir("qoder"))
+	if !sameFolder(QoderDir("qoder"), QoderDir("qoder-cn")) {
+		fs = append(fs, ccFiles("qoder-cn", QoderDir("qoder-cn"))...)
+	}
+	return fs
+}
