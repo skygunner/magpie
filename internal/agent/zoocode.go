@@ -58,7 +58,11 @@ const zooExtension = "zoocodeorganization.zoo-code"
 var noticeZoo = newNotice("Zoo Code reads magpie's profile when it starts — run Developer: Reload Window in VS Code to use this.")
 
 func zooCode(home, cfg string) *Agent {
-	return zooCodeAt(vscodeUserDir(vscodeStable, home, cfg), filepath.Join(home, ".vscode", "extensions"))
+	exts := filepath.Join(home, ".vscode", "extensions")
+	if data := vscodePortable(vscodeStable); data != "" {
+		exts = filepath.Join(data, "extensions")
+	}
+	return zooCodeAt(vscodeUserDir(vscodeStable, home, cfg), exts)
 }
 
 // zooCodeImportPath is the file magpie has Zoo Code import, in the VS Code

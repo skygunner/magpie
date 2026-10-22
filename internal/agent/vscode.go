@@ -124,6 +124,9 @@ func vscodium(home, cfg string) *Agent { return vscodeOf(vscodiumKind, home, cfg
 func vscodeOf(k vscodeKind, home, cfg string) *Agent {
 	if k.exts != "" {
 		k.extDir = filepath.Join(home, k.exts, "extensions")
+		if data := vscodePortable(k); data != "" {
+			k.extDir = filepath.Join(data, "extensions")
+		}
 	}
 	return vscodeKindAt(k, vscodeUserDir(k, home, cfg))
 }
@@ -131,6 +134,9 @@ func vscodeOf(k vscodeKind, home, cfg string) *Agent {
 // vscodeUserDir is the User folder of the VS Code k, where its settings.json
 // is: its extensions' (Zoo Code's) settings too.
 func vscodeUserDir(k vscodeKind, home, cfg string) string {
+	if data := vscodePortable(k); data != "" {
+		return filepath.Join(data, "user-data", "User")
+	}
 	switch runtime.GOOS {
 	case "darwin":
 		cfg = filepath.Join(home, "Library", "Application Support")
@@ -141,6 +147,47 @@ func vscodeUserDir(k vscodeKind, home, cfg string) string {
 		}
 	}
 	return filepath.Join(cfg, k.folder, "User")
+}
+
+// Portable archives use data beside the launcher (Scoop persists this folder).
+func vscodePortable(k vscodeKind) string {
+	bin, err := proc.Look(k.bin)
+	if err != nil {
+		return ""
+	}
+	bin, err = filepath.EvalSymlinks(bin)
+	if err != nil || !strings.EqualFold(filepath.Base(filepath.Dir(bin)), "bin") {
+		return ""
+	}
+	app := filepath.Dir(filepath.Dir(bin))
+	productPath := filepath.Join(app, "resources", "app", "product.json")
+	if runtime.GOOS == "darwin" {
+		productPath = filepath.Join(app, "product.json")
+	}
+	b, err := os.ReadFile(productPath)
+	if err != nil || !json.Valid(b) {
+		return ""
+	}
+	product := gjson.ParseBytes(b)
+	// Installed builds and another editor's code launcher aren't this archive.
+	if product.Get("target").Exists() || product.Get("applicationName").String() != k.bin {
+		return ""
+	}
+	data := filepath.Join(app, "data")
+	if runtime.GOOS == "darwin" {
+		name := product.Get("portable").String()
+		if name == "" {
+			name = k.bin + "-portable-data"
+		}
+		data = filepath.Clean(filepath.Join(app, "..", "..", "..", "..", name))
+	}
+	if override := appdir.Getenv("VSCODE_PORTABLE"); override != "" {
+		data = override
+	}
+	if isDir(data) {
+		return data
+	}
+	return ""
 }
 
 func vscodeAt(dir string) *Agent { return vscodeKindAt(vscodeStable, dir) }

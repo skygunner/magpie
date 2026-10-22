@@ -119,6 +119,18 @@ something else shows up as drift.
 
 - Pi, OmO, Prime Agent and StepCode write a Gemini-capable model as `google-generative-ai` at the gateway's `/v1beta` (`piModelJSON` in [`agents.go`](../../internal/agent/agents.go)). `magpieModels` in [`route.go`](../../internal/agent/route.go) includes Gemini and Code Assist capabilities when no native Chat, Responses or Messages API was selected; this includes a plugin model declaring `@ai-sdk/google`. Pi's Google SDK takes the version path from `baseUrl`. Requests keep going through the gateway and the plugin's sign-in and fetch, with the gateway's usual translation where needed. A normal model sync updates existing entries. Routing groups retain their existing API choice, and Pencil remains on Chat.
 
+VS Code archive builds use their portable data when present (`vscodePortable`
+in [`vscode.go`](../../internal/agent/vscode.go)): `data` beside the installation,
+or the macOS app’s sibling portable folder, with `VSCODE_PORTABLE` taking
+precedence. The launcher’s product metadata must identify that build and have
+no installer `target`. Symlinked launchers, including Scoop’s `current`, resolve
+to the installation. Settings, model lists and profiles all use `user-data/User`
+there; VSCodium’s Copilot Chat and Zoo Code read its `extensions`. Ordinary
+installations retain their usual config paths. Existing files accidentally
+written to the ordinary folder are not moved or deleted. `TestVSCodePortableWritesItsProfiles`
+covers connect, sync and disconnect in the portable folder and neighboring
+non-portable cases.
+
 ## Verification
 
 ```sh

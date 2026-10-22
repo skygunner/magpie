@@ -32,6 +32,8 @@ var Vars = []string{
 	"CLAUDE_CONFIG_DIR", "CODEX_HOME", "COPILOT_HOME",
 	// Claude Code's temp folder, the images its sessions were given
 	"CLAUDE_CODE_TMPDIR",
+	// VS Code portable archives, whose data can live apart from their launcher
+	"VSCODE_PORTABLE",
 	// Zed, or a fork of it that keeps its settings (ZedG)
 	"MAGPIE_ZED_BIN", "MAGPIE_ZED_CONFIG_DIR", "MAGPIE_ZED_PROCESS_NAMES",
 	// Codex's state database, when it is kept apart from CODEX_HOME
