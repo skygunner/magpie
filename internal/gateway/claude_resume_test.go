@@ -58,7 +58,7 @@ func newScriptHarness(t *testing.T, reply, start string) *resumeHarness {
 	dir, logs := t.TempDir(), t.TempDir()
 	script := `#!/bin/sh
 log=` + logs + `/$$
-echo "args $*" > $log
+printf 'args %s\n' "$*" > "$log"
 sid=s$$
 prev=
 for a in "$@"; do
@@ -72,22 +72,22 @@ case " $* " in
      file="$CLAUDE_CONFIG_DIR/projects/$proj/$sid.jsonl" ;;
 esac
 ` + start + `
-echo '{"type":"system","subtype":"init","session_id":"'$sid'"}'
+printf '%s\n' '{"type":"system","subtype":"init","session_id":"'$sid'"}'
 while read -r line; do
   case $line in *'"type":"control_request"'*)
-    echo "control $line" >> $log
+    printf 'control %s\n' "$line" >> "$log"
     # acknowledged as Claude Code does: initialize, a settings change
     id=$(printf '%s' "$line" | sed 's/.*"request_id":"\([^"]*\)".*/\1/')
-    echo '{"type":"control_response","response":{"subtype":"success","request_id":"'$id'"}}'
+    printf '%s\n' '{"type":"control_response","response":{"subtype":"success","request_id":"'$id'"}}'
     continue ;;
   esac
-  echo "told $line" >> $log
-  if [ -n "$file" ]; then echo "$line" >> "$file"; fi
-  echo '{"type":"stream_event","event":{"type":"message_start","message":{"id":"m","model":"claude-sonnet-5","usage":{"input_tokens":1}}}}'
-  echo '{"type":"stream_event","event":{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":` + strconv.Quote(reply) + `}}}'
-  echo '{"type":"stream_event","event":{"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":1}}}'
-  echo '{"type":"stream_event","event":{"type":"message_stop"}}'
-  echo '{"type":"result","subtype":"success","is_error":false,"result":""}'
+  printf 'told %s\n' "$line" >> "$log"
+  if [ -n "$file" ]; then printf '%s\n' "$line" >> "$file"; fi
+  printf '%s\n' '{"type":"stream_event","event":{"type":"message_start","message":{"id":"m","model":"claude-sonnet-5","usage":{"input_tokens":1}}}}'
+  printf '%s\n' '{"type":"stream_event","event":{"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":` + strconv.Quote(reply) + `}}}'
+  printf '%s\n' '{"type":"stream_event","event":{"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":1}}}'
+  printf '%s\n' '{"type":"stream_event","event":{"type":"message_stop"}}'
+  printf '%s\n' '{"type":"result","subtype":"success","is_error":false,"result":""}'
 done
 `
 	testenv.Program(t, filepath.Join(dir, "claude"), script)

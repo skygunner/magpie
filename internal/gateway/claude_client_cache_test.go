@@ -283,12 +283,32 @@ func TestClaudeClientCacheAbsentUnchanged(t *testing.T) {
 	if w.Header().Get("X-Magpie-Cache-Marks-Dropped") != "" {
 		t.Fatal("ordinary header changed")
 	}
-	for _, log := range h.runs() {
+	runs := h.runs()
+	if len(runs) != 1 {
+		t.Fatalf("ordinary request started %d runs, want 1", len(runs))
+	}
+	for _, log := range runs {
 		if !strings.Contains(log, "cache-disabled 0") || strings.Contains(log, "apply_flag_settings") {
 			t.Fatalf("ordinary environment/settings changed: %s", log)
 		}
-		if !strings.Contains(log, "\"cache_control\":{\"ttl\":\"1h\",\"type\":\"ephemeral\"},\"text\":\"\\u003cexternal_system_instructions\\u003e\nshared\n\\u003c/external_system_instructions\\u003e\n\n\"") {
-			t.Fatalf("ordinary prompt changed: %s", log)
+		_, raw, _ := strings.Cut(log, "\ntold ")
+		var turn struct {
+			Message struct {
+				Content []struct {
+					Text         string
+					CacheControl map[string]string `json:"cache_control"`
+				}
+			}
+		}
+		if err := json.Unmarshal([]byte(raw), &turn); err != nil {
+			t.Fatalf("ordinary prompt is not JSON: %v: %s", err, raw)
+		}
+		if len(turn.Message.Content) == 0 {
+			t.Fatal("ordinary prompt has no content")
+		}
+		block := turn.Message.Content[0]
+		if block.Text != "<external_system_instructions>\nshared\n</external_system_instructions>\n\n" || block.CacheControl["ttl"] != "1h" || block.CacheControl["type"] != "ephemeral" {
+			t.Fatalf("ordinary prompt changed: %+v", block)
 		}
 	}
 }
