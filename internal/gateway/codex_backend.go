@@ -2420,12 +2420,12 @@ func boundCallIDs(body []byte) []byte {
 // openai_base_url), or CC Switch's table so named for remote compaction.
 // Under any other name Codex leaves them out itself (client.rs, !is_openai).
 var openaiOnly = [][]byte{[]byte(`"internal_chat_message_metadata_passthrough"`),
-	[]byte(`"encrypted_function_args"`), []byte(`"stream_options"`), []byte(`"configuration_update"`)}
+	[]byte(`"encrypted_function_args"`), []byte(`"stream_options"`), []byte(`"configuration_update"`), []byte(`"agent_message"`)}
 
 // forVendor is a Responses request as Codex sends it to a provider not
 // OpenAI's: without its messages' internal metadata, a call's
 // encrypted_function_args, stream_options' reasoning_summary_delivery and
-// configuration_update items.
+// configuration_update items; plain agent_message items become user messages.
 // A relay that checks it is Codex's turned the lot away ("invalid codex
 // request", #292). OpenAI's API and the ChatGPT backend get it as it came;
 // so does anything else, byte for byte, when none of them is in it.
@@ -2472,6 +2472,15 @@ func forVendor(p provider.Provider, body []byte) []byte {
 				delete(it, "encrypted_function_args")
 				raw, _ = marshalPlain(it)
 			}
+			if string(it["type"]) == `"agent_message"` {
+				var item map[string]any
+				if json.Unmarshal(raw, &item) == nil {
+					if message, ok := provider.PlainAgentMessage(item); ok {
+						raw, _ = marshalPlain(message)
+						changed = true
+					}
+				}
+			}
 			out = append(out, raw)
 		}
 		if changed {
@@ -2506,7 +2515,7 @@ func forVendorChanges(body []byte) bool {
 		if len(it) == 0 || it[0] != '{' {
 			return false
 		}
-		if string(memberOrNil(it, "type")) == `"configuration_update"` {
+		if typ := string(memberOrNil(it, "type")); typ == `"configuration_update"` || typ == `"agent_message"` {
 			return true
 		}
 		_, meta := memberOf(it, "internal_chat_message_metadata_passthrough")
