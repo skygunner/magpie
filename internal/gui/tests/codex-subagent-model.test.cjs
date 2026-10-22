@@ -189,8 +189,13 @@ for (const engine of engines) {
           await page.goto("http://magpie.test/?view=routing");
           await page.locator(".rt-days .rt-day").nth(1).click();
           await page.locator(".rt-req").nth(1).waitFor();
-          await page.locator(".rt-req").nth(i).evaluate((e) => e.click());
-          await page.waitForTimeout(300);
+          // A busy page can draw the chosen story after the old 300ms wait.
+          await page.locator(".rt-req").nth(i).evaluate((e) => {
+            const pick = e.onclick;
+            e.onclick = () => setTimeout(() => pick.call(e), 600);
+            e.click();
+          });
+          await page.waitForFunction((said) => document.querySelector(".rt-steps")?.textContent.includes(said), said);
           const story = await page.locator(".rt-steps").textContent();
           assert(story.includes(said), `${said}\nnot in\n${story}`);
           // nothing says ChatGPT served the model the lead asked for
