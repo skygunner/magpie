@@ -16,6 +16,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 
 	"github.com/yetone/magpie/internal/agent"
 	"github.com/yetone/magpie/internal/catalog"
@@ -852,16 +853,9 @@ func (m model) viewList() string {
 	var b strings.Builder
 	b.WriteString(m.header())
 	b.WriteString("\n\n")
-	// the rows around the one picked, as many as fit — a machine with more
-	// agents than the terminal has rows would otherwise scroll the highlight
-	// off and freeze the page, as the library page did (#2220)
-	visible := max(3, m.h-7)
-	start := 0
-	if m.row >= visible {
-		start = m.row - visible + 1
-	}
-	end := min(len(m.agents), start+visible)
-	for i := start; i < end; i++ {
+	rows := make([]string, len(m.agents))
+	extra := 0
+	for i := range m.agents {
 		a := m.agents[i]
 		sel := i == m.row
 		marker := "  "
@@ -874,6 +868,8 @@ func (m model) viewList() string {
 			name = sNameOn.Render(padRight(a.Name, nameW))
 		}
 		line := pad + marker + name + "  "
+		var details []string
+		focus := 0
 		for j, f := range a.Fields {
 			v := m.values[i][f.Key]
 			if v == "" && f.Quiet && !(sel && j == m.col) {
@@ -888,13 +884,28 @@ func (m model) viewList() string {
 			default:
 				cell = sValue.Render(v)
 			}
+			label := ""
 			if j > 0 || f.Label != "model" {
-				line += sMuted.Render(" " + f.Label)
+				label = sMuted.Render(" " + f.Label)
 			}
-			line += cell + " "
+			line += label + cell + " "
+			if sel {
+				wrapped := ansi.Wrap(label+cell, max(1, m.w-4), "")
+				for _, part := range strings.Split(wrapped, "\n") {
+					details = append(details, pad+"  "+part)
+				}
+				if j == m.col {
+					focus = len(details) - 1
+				}
+			}
 		}
 		if i < len(m.failover) && m.failover[i] != "" {
 			line += sMuted.Render(" · " + m.failover[i])
+			if sel {
+				for _, part := range strings.Split(ansi.Wrap(sMuted.Render(" · "+m.failover[i]), max(1, m.w-4), ""), "\n") {
+					details = append(details, pad+"  "+part)
+				}
+			}
 		}
 		if sel {
 			p := tilde(a.Path)
@@ -902,8 +913,30 @@ func (m model) viewList() string {
 				line += strings.Repeat(" ", room) + sFaint.Render(p)
 			}
 		}
+		if m.w > 0 && lipgloss.Width(line) > m.w {
+			if sel {
+				// Keep the selected field in view without adding a scrolling state.
+				count := max(1, max(3, m.h-7)-2)
+				first := max(0, focus-count+1)
+				last := min(len(details), first+count)
+				heading := pad + marker + name + " …"
+				line = ansi.Truncate(heading, m.w, "…") + "\n" + strings.Join(details[first:last], "\n") + "\n" + ansi.Truncate(pad+"  "+tilde(a.Path), m.w, "…")
+			} else {
+				line = ansi.Truncate(line, m.w, "…")
+			}
+		}
+		rows[i] = line
+		if sel {
+			extra = strings.Count(line, "\n")
+		}
+	}
+	// Expanded fields take terminal lines from the surrounding agent rows.
+	visible := max(1, max(3, m.h-7)-extra)
+	start := min(len(rows), max(0, m.row-visible+1))
+	end := min(len(rows), start+visible)
+	for _, line := range rows[start:end] {
 		b.WriteString(line)
-		b.WriteString("\n")
+		b.WriteByte('\n')
 	}
 	return strings.TrimRight(b.String(), "\n")
 }
