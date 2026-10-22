@@ -823,3 +823,9 @@ go test -tags nogui ./internal/provider -run 'TestGroup|TestCodexCreditsSwitch|T
 
 The gateway's `TestMain` gives the package a home of its own, so these tests
 never read real providers or accounts.
+
+Kimi tool schema normalization follows local `$ref` chains before adding a
+missing type. It adds the type only at the final target, preserving intermediate
+reference schemas (including a format or description); dangling and cyclic chains
+remain unchanged (#3205, `TestKimiToolRefTypesRefChain`). Other providers retain
+the original schema (`TestKimiToolRefTypes`).
