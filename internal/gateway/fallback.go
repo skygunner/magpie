@@ -1011,6 +1011,7 @@ var restingUntil = struct {
 	sync.Mutex
 	m    map[string]time.Time
 	note map[string]Rest // why each rests
+	from string          // configuration directory whose rests were loaded
 }{m: map[string]time.Time{}, note: map[string]Rest{}}
 
 func (s *Server) resting(id string) bool {
