@@ -211,13 +211,21 @@ var (
 	resetsWords = regexp.MustCompile(`(?i)limit reached\|(\d{10})\b`)
 	// resetsWhen: a 429 that says in words when the account is back, as
 	// WorkBuddy's do in both its builds (#1669): "将在 2026-10-11 20:16:02
-	// UTC+8重置", "your usage will reset at 2026-10-11 12:37:53 UTC+8, ...".
-	// Only the reset phrasing right beside a whole date and time with its
-	// offset is read, and the offset must be followed by what follows it
-	// there (重置, or a comma or full stop), so a refusal cut short after
-	// "UTC" or "UTC+" isn't read as UTC: another vendor's date in passing
-	// ("deprecated on …"), or one with no offset, is not a reset time.
-	resetsWhen = regexp.MustCompile(`(?i)(?:\bresets? at|将在|将于)\s*(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2}):(\d{2})\s*(?:UTC|GMT)([+-])(\d{1,2})(?::?(\d{2}))?(?:\s*(?:重置|[,.;，。；]))`)
+	// UTC+8重置", "your usage will reset at 2026-10-11 12:37:53 UTC+8, ...",
+	// and as Ark's monthly one does (#3251, #3276 wyx1818): "It will reset at
+	// 2026-10-25 23:59:59 +0800 CST." — the offset standing as its own
+	// number, with the zone's name after it. Only the reset phrasing right
+	// beside a whole date and time with its offset is read, and the offset
+	// must be followed by what follows it there (the zone's name, 重置, or a
+	// comma or full stop), so a refusal cut short after the offset isn't
+	// read as UTC: another vendor's date in passing ("deprecated on …"), or
+	// one with no offset, is not a reset time.
+	resetsWhen = regexp.MustCompile(`(?i)(?:\bresets? at|将在|将于)\s*(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{2}):(\d{2})\s*(?:UTC|GMT)?([+-])(\d{1,2})(?::?(\d{2}))?(?:\s*[A-Z]{2,5})?(?:\s*(?:重置|[,.;，。；]))`)
+	// monthlyWords: a refusal that says the allowance it used up is a
+	// month's, as Ark's monthly 429 does ("You have exceeded the monthly
+	// usage quota"), so the reset time it writes is believed as far off as
+	// a month, past the week a written reset is held to otherwise.
+	monthlyWords = regexp.MustCompile(`(?i)monthly|月度|每月|本月`)
 	// otherModels: a refusal that says the account's other models still
 	// answer ("切换其他模型", "switch to the other models"): its limit is
 	// the model's, and the model alone rests
@@ -767,14 +775,23 @@ func spanWritten(m [][]byte) time.Duration {
 // longestWritten is the furthest off a reset time written in words is
 // believed: WorkBuddy's frequency limits come back within the day, and a
 // time further off than a week is more likely a misreading than a reset.
+// A refusal that says its allowance is a month's (monthlyWords) is believed
+// as far as longestMonthly.
 const longestWritten = 7 * 24 * time.Hour
 
-// resetsWritten is how long until the time a refusal names in words
-// (resetsWhen), read in the offset it is written with. Zero when there is
-// none, it isn't a real date, it has passed, or it is over longestWritten
-// off.
+// longestMonthly is the furthest off a monthly allowance's written reset is
+// believed, and the longest an account out of one sits out: a month's
+// window, and days over.
+const longestMonthly = 35 * 24 * time.Hour
+
+// resetsWritten is how long until the time a 429 says the account is back
+// (resetsWhen). Zero when it says none, it isn't a real date, it has
+// passed, or it is over longestWritten off — over longestMonthly when the
+// same refusal says its allowance is a month's (monthlyWords), as a month's
+// reset can honestly be that far off.
 func resetsWritten(body []byte, now time.Time) time.Duration {
-	m := resetsWhen.FindSubmatch(wordsOf(body))
+	words := wordsOf(body)
+	m := resetsWhen.FindSubmatch(words)
 	if m == nil {
 		return 0
 	}
@@ -797,7 +814,11 @@ func resetsWritten(body []byte, now time.Time) time.Duration {
 	if t.Year() != y || int(t.Month()) != mo || t.Day() != d || t.Hour() != h || t.Minute() != mi || t.Second() != sec {
 		return 0
 	}
-	if w := t.Sub(now); w > 0 && w <= longestWritten {
+	believed := longestWritten
+	if monthlyWords.Match(words) {
+		believed = longestMonthly
+	}
+	if w := t.Sub(now); w > 0 && w <= believed {
 		return w
 	}
 	return 0
@@ -876,7 +897,13 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
 			// asked again every hour, whatever rest the user set)
 			d, r.By = w, "retry-after"
 		}
-		d = min(d, longestQuota)
+		// a month's allowance is out for as long as a month, so its rest
+		// is held to that, not the week's cap (monthlyWords, #3251)
+		longest := longestQuota
+		if monthlyWords.Match(wordsOf(body)) {
+			longest = longestMonthly
+		}
+		d = min(d, longest)
 	case failRate:
 		d, r.By, r.Failures = s.rateRest(c, header, body, sharedPool, now)
 		// rate limited with quota left: to the back, where the order sinks

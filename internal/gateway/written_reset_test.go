@@ -17,10 +17,17 @@ import (
 	"github.com/yetone/magpie/internal/testenv"
 )
 
-// WorkBuddy's two refusals, as Natsumeretsu quoted them (#1669).
+// WorkBuddy's two refusals, as Natsumeretsu quoted them (#1669), and
+// Volcengine Ark's monthly one, as its two reporters quoted it (#3251,
+// #3276 wyx1818): the offset stands as its own number, with the zone's
+// name after it.
 const (
 	wbZh = "WorkBuddy：您的使用量已超出频率限制，将在 2026-10-11 20:16:02 UTC+8重置，您也可以切换其他模型继续使用。"
 	wbEn = "WorkBuddy AI: usage exceeds frequency limit, but don't worry, your usage will reset at 2026-10-11 12:37:53 UTC+8, alternatively, you can switch to the other models to continue using it."
+	// arkMonthly resets 2026-10-25 23:59:59 +0800, as #3251's curl did;
+	// arkLater is #3276's, resetting 2026-10-31.
+	arkMonthly = `{"error":{"code":"AccountQuotaExceeded","type":"TooManyRequests","message":"You have exceeded the monthly usage quota. It will reset at 2026-10-25 23:59:59 +0800 CST."}}`
+	arkLater   = `{"error":{"code":"AccountQuotaExceeded","message":"You have exceeded the monthly usage quota. It will reset at 2026-10-31 23:59:59 +0800 CST."}}`
 )
 
 // escaped is msg as a vendor's JSON error whose encoder escapes what
@@ -85,6 +92,17 @@ func TestResetsWritten(t *testing.T) {
 		// another vendor's date in passing is no reset
 		{"deprecated", "This model will be deprecated on 2026-10-12 00:00:00 UTC+8, please switch to the other models.", at("2026-10-11 10:00:00"), 0},
 		{"retry after", "Too many requests, retry after 2026-10-11 12:37:53 UTC+8.", at("2026-10-11 10:00:00"), 0},
+		// Ark's monthly refusal: the offset as its own number, with the
+		// zone's name after it, believed as far off as a month (#3251,
+		// #3276 wyx1818)
+		{"ark monthly +0800 CST", arkMonthly, at("2026-10-22 16:52:00"), 3*24*time.Hour + 7*time.Hour + 7*time.Minute + 59*time.Second},
+		{"ark monthly, 9 days off", arkLater, at("2026-10-22 12:00:00"), 9*24*time.Hour + 11*time.Hour + 59*time.Minute + 59*time.Second},
+		{"ark monthly +08:00", strings.Replace(arkMonthly, "+0800 CST", "+08:00", 1), at("2026-10-22 16:52:00"), 3*24*time.Hour + 7*time.Hour + 7*time.Minute + 59*time.Second},
+		{"ark cut after the offset", arkMonthly[:strings.Index(arkMonthly, "+0800")+5], at("2026-10-22 16:52:00"), 0},
+		// a bare offset without the zone's name reads the same
+		{"en bare +0800", strings.Replace(wbEn, "UTC+8", "+0800", 1), at("2026-10-11 10:00:00"), 2*time.Hour + 37*time.Minute + 53*time.Second},
+		// and a non-monthly refusal keeps the week's guard
+		{"en bare +0800, 9 days off", strings.Replace(strings.Replace(wbEn, "UTC+8", "+0800", 1), "2026-10-11 12:37:53", "2026-10-20 12:37:53", 1), at("2026-10-11 10:00:00"), 0},
 	} {
 		if got := resetsWritten([]byte(c.body), c.now); got != c.want {
 			t.Errorf("%s: %v, want %v (%q)", c.name, got, c.want, c.body)
@@ -168,6 +186,46 @@ func TestWrittenResetRestsUntilThen(t *testing.T) {
 		}
 		clearRest(k.restKey())
 	}
+}
+
+// Ark's monthly 429 rests the key until the month's reset it names, past
+// the week a written reset is otherwise held to and past the week's rest
+// cap (#3251, #3276 wyx1818): the member stops being retried every
+// quotaRest until then. A refusal without the month's words keeps the
+// week's guard, resting the fallback quarter of an hour.
+func TestMonthlyWrittenResetRestsTheMonth(t *testing.T) {
+	old := allowances
+	defer func() { allowances = old }()
+	allowances = func(string) map[string]provider.Allowance { return nil }
+	s := &Server{}
+	cst := time.FixedZone("", 8*3600)
+	c := candidate{p: provider.Provider{ID: "volcengine"}, model: "deepseek-v4.1-flash", rest: "volcengine#k"}
+	near := func(d, want time.Duration) bool { return d > want-time.Minute && d <= want }
+
+	back := 9*24*time.Hour + 12*time.Hour
+	at := time.Now().Add(back).In(cst).Format("2006-01-02 15:04:05")
+	monthly := []byte(`{"error":{"code":"AccountQuotaExceeded","type":"TooManyRequests","message":"You have exceeded the monthly usage quota. It will reset at ` + at + ` +0800 CST."}}`)
+	if f := failure(429, monthly); f != failQuota {
+		t.Fatalf("read as %s", f)
+	}
+	clearRest(c.restKey())
+	r := s.restAfter(c, 429, http.Header{}, monthly)
+	if r.Why != failQuota || r.By != "resets" || !near(time.Until(r.Until), back) {
+		t.Fatalf("rests %v by %s (%s), want %v", time.Until(r.Until), r.By, r.Why, back)
+	}
+
+	// the same time in a refusal that doesn't say the allowance is a
+	// month's: not believed past the week, so the fallback rest
+	clearRest(c.restKey())
+	weekly := []byte(`{"error":{"message":"your usage will reset at ` + at + ` +0800."}}`)
+	r = s.restAfter(c, 429, http.Header{}, weekly)
+	if r.By == "resets" {
+		t.Fatalf("a non-monthly reset 9 days off is believed: rests %v by %s", time.Until(r.Until), r.By)
+	}
+	if !near(time.Until(r.Until), quotaRest) {
+		t.Fatalf("rests %v by %s (%s), want the %v fallback", time.Until(r.Until), r.By, r.Why, quotaRest)
+	}
+	clearRest(c.restKey())
 }
 
 // A rate limit whose refusal names when it's back rests until then, as far
