@@ -839,3 +839,15 @@ Lines exceeding the sniffer's 1 MiB bound pass through without buffering.
 Verification: `TestPassthroughChatSeveredMidLine`,
 `TestPassthroughChatSeveredAtLineEnd`, `TestPassthroughResponsesBigLastEvent`,
 `TestNativeStreamFailureAccounting`, `TestGeminiCompatRelayEndedShort`.
+
+Third-party native Responses relays mark calls to offered namespaced tools with
+`encrypted_function_args: []` when the upstream supplied no encryption marker,
+as translated replies do. Existing encryption markers are preserved; calls
+outside the offered namespaces and native OpenAI/ChatGPT replies stay unchanged
+(#3183, `TestNativeRelayNamespacedCallSaysUnsealed`,
+`TestNativeRelayLeavesOtherCallsBe`). A following plaintext `agent_message`
+becomes a user message before that vendor is asked, retaining its sender,
+recipient, text and images through `provider.PlainAgentMessage` (also used by
+Grok). Sealed or unsupported task content is left opaque. OpenAI/ChatGPT and a
+Codex-as-sent provider keep their original request path
+(`TestNativeRelayPlainAgentMessage`, `TestCodexSealedAgentHandoffNativePassthrough`).

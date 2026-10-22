@@ -179,7 +179,7 @@ var grokTools = map[string]bool{"function": true, "web_search": true, "x_search"
 // would Codex's compaction summary, sent without tools (#378). A Codex
 // agent_message (a subagent's task, or its reply in the lead's history),
 // which the backend turns away with 422 "unknown item type", goes as the
-// user's message, its sender and recipient said first (grokAgentMessage).
+// user's message, its sender and recipient said first (PlainAgentMessage).
 func grokBody(body []byte) []byte { return grokShaped(body, false) }
 
 // grokPluginBody is grokBody for the Grok plugin, but a tool_choice "none"
@@ -245,7 +245,7 @@ func grokShaped(body []byte, keepNone bool) []byte {
 	}
 	input, _ := m["input"].([]any)
 	for i, it := range input {
-		if msg, ok := grokAgentMessage(it); ok {
+		if msg, ok := PlainAgentMessage(it); ok {
 			input[i], it = msg, msg
 			dirty = true
 		}
@@ -269,14 +269,14 @@ func grokShaped(body []byte, keepNone bool) []byte {
 	return b
 }
 
-// grokAgentMessage is a plain Codex agent_message as the user's message
-// Grok's backend takes: "From <author> to <recipient>" first, then its text
+// PlainAgentMessage is a plain Codex agent_message as a Responses user
+// message: "From <author> to <recipient>" first, then its text
 // and images as they came, in its place among the input. One sealed
 // (encrypted_content on it or on a part), empty, or with a part of another
 // kind is left as it is: magpie reads no sealed task, and the gateway's
 // guard for one (hasSealedAgentMessage) still sees it. The plugin does the
 // same (@magpie-community/opencode-grok-auth 0.1.11, plugins#61).
-func grokAgentMessage(it any) (map[string]any, bool) {
+func PlainAgentMessage(it any) (map[string]any, bool) {
 	im, ok := it.(map[string]any)
 	if !ok || im["type"] != "agent_message" {
 		return nil, false
