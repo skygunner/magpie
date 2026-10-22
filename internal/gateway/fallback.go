@@ -1047,6 +1047,14 @@ func quotaSaid(msg string) bool {
 // key, or this way — words another provider, or key, may not answer with.
 var unservedWords = regexp.MustCompile(`(?i)model.{0,80}(not (supported|accessible|available|found|enabled|allowed)|unsupported|does ?n[o']t exist|unknown|invalid)|(no such|unknown|invalid|unsupported) model|model_not_found|模型.{0,12}(不存在|不支持|无权|未开通)`)
 
+// queuedWords are how a vendor answers that it queued the request for the
+// model it names — that model's own queue is congested (Qoder's 503
+// "Qoder queued the request for <model> (this plan's queue: p3); try
+// again in 30s", #3213, liubai0106). The account's other models are not
+// in that queue and still answer, so the model alone rests, as a refusal
+// over the model alone does (modelRefused).
+var queuedWords = regexp.MustCompile(`(?i)queued the request for`)
+
 // modelRefused says the vendor turned the request away over its model
 // alone — not one this key's plan, or this key, may use: SenseNova's 403
 // "model is not available in the current token plan" for

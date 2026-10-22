@@ -888,6 +888,11 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
 	// a model the key's plan doesn't serve rests alone, counted by itself
 	// (#1235): the key's other models are still served
 	unserved := why == failOther && (modelRefused(status, body) || codeAssistModelMissing(c.p, status, body))
+	// a 5xx that says it queued the request for the model it names is that
+	// model's own congestion (queuedWords, #3213): the account's other
+	// models are not in that queue and still answer, so the model alone
+	// rests too
+	queued := why == failOther && status >= 500 && queuedWords.Match(wordsOf(body))
 	r := Rest{Why: why, Status: status, By: "cooldown"}
 	// a failure counted past the account's, for its model alone (below)
 	modelBackoff := false
@@ -972,7 +977,7 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
 			return r
 		}
 		counted := c.restKey()
-		if unserved {
+		if unserved || queued {
 			counted = c.restID()
 		}
 		routed.Lock()
@@ -985,7 +990,7 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
 		// account's, a sibling answered since it last did, so the failure
 		// is the model's: it climbs its own ladder and rests alone. A
 		// candidate naming no model has no sibling to tell apart
-		if !unserved && c.model != "" {
+		if !unserved && !queued && c.model != "" {
 			routed.failures[c.restID()]++
 			if own := routed.failures[c.restID()]; own > n {
 				n, modelBackoff = own, true
@@ -1032,7 +1037,7 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
 	// a refusal that names its reset and points to the account's other
 	// models is the model's limit: the others still answer (WorkBuddy's
 	// "您也可以切换其他模型继续使用", #1669)
-	if pooled || unserved || modelBackoff || why == failQuota && resetsWhen.Match(wordsOf(body)) && otherModels.Match(wordsOf(body)) {
+	if pooled || unserved || queued || modelBackoff || why == failQuota && resetsWhen.Match(wordsOf(body)) && otherModels.Match(wordsOf(body)) {
 		id = c.restID()
 	}
 	// Cline's daily limit of one free model is that model's: its others,
