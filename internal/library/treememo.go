@@ -62,27 +62,27 @@ type treeMemo struct {
 
 var memo = struct {
 	sync.Mutex
-	hashes map[string]hashMemo    // dir and noFinder: the folder's hash
+	hashes map[string]hashMemo    // dir and noMetadata: the folder's hash
 	trees  map[[2]string]treeMemo // two folders: whether they hold the same
 }{hashes: map[string]hashMemo{}, trees: map[[2]string]treeMemo{}}
 
-// rememberedHash is hashFiles(dir, noFinder): the hash found before, while
+// rememberedHash is hashFiles(dir, noMetadata): the hash found before, while
 // a walk finds dir as it was then, else read. A folder hashed for the
 // first time is walked once, as before the memo.
-func rememberedHash(dir string, noFinder bool) string {
-	key := fmt.Sprintf("%t\x00%s", noFinder, dir)
+func rememberedHash(dir string, noMetadata bool) string {
+	key := fmt.Sprintf("%t\x00%s", noMetadata, dir)
 	memo.Lock()
 	m, hit := memo.hashes[key]
 	memo.Unlock()
 	if hit {
-		if _, stamp, _, ok := hashWalk(dir, noFinder, false); ok && stamp == m.stamp {
+		if _, stamp, _, ok := hashWalk(dir, noMetadata, false); ok && stamp == m.stamp {
 			return m.hash
 		}
 		memo.Lock()
 		delete(memo.hashes, key)
 		memo.Unlock()
 	}
-	h, stamp, settled, ok := hashWalk(dir, noFinder, true)
+	h, stamp, settled, ok := hashWalk(dir, noMetadata, true)
 	if !ok {
 		return ""
 	}

@@ -19,6 +19,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"time"
 )
 
@@ -137,7 +138,7 @@ func copiedAt(p string) (time.Time, bool) {
 
 // changedAt is when anything in the folder last changed: the newest time
 // of what is in it, a file or a folder (one taken away changes its
-// folder's), leaving aside magpie's mark and what Finder or version
+// folder's), leaving aside magpie's mark and what file managers or version
 // control keep in it. An incomplete walk can't establish when it changed.
 func changedAt(dir string) (time.Time, error) {
 	var at time.Time
@@ -164,7 +165,11 @@ func changedAt(dir string) (time.Time, error) {
 }
 
 func skipInSkill(name string) bool {
-	return name == marker || name == ".git" || name == ".DS_Store"
+	switch strings.ToLower(name) {
+	case marker, ".git", ".ds_store", "desktop.ini", "thumbs.db":
+		return true
+	}
+	return false
 }
 
 // keepLibrarySkill copies the library's skill to the backups before an
@@ -179,7 +184,7 @@ func keepLibrarySkill(name, lib string) (string, error) {
 
 // mirrorDir makes the folder to hold what from does: its files written
 // over to's, and what to has that from doesn't taken away, leaving aside
-// magpie's mark and what Finder or version control keep. File by file, so
+// magpie's mark and what file managers or version control keep. File by file, so
 // a library skill that is a folder of the user's stays that folder.
 func mirrorDir(from, to string) error {
 	err := filepath.WalkDir(from, func(p string, d fs.DirEntry, err error) error {

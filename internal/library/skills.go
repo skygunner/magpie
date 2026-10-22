@@ -307,14 +307,15 @@ func copyIsFresh(p, lib string, untouched bool) (bool, error) {
 	if lib == "" {
 		return false, nil
 	}
-	if h, ok := markedHash(p); ok {
+	if h, ok := markedHash(p); ok && h == lib {
 		if untouched {
-			return h == lib, nil
+			return true, nil
 		}
 		if made, ok := copiedAt(p); ok && !at.After(made) {
-			return h == lib, nil
+			return true, nil
 		}
 	}
+	// A mark from an older version may include file managers' metadata.
 	h := hashDir(p)
 	return h != "" && h == lib, nil
 }
@@ -2130,10 +2131,13 @@ func copyDir(from, to string) error {
 		}
 		rel, _ := filepath.Rel(from, p)
 		dst := filepath.Join(to, rel)
-		if d.IsDir() {
-			if d.Name() == ".git" && p != from {
+		if p != from && skipInSkill(d.Name()) {
+			if d.IsDir() {
 				return filepath.SkipDir
 			}
+			return nil
+		}
+		if d.IsDir() {
 			return os.MkdirAll(dst, 0o755)
 		}
 		if d.Type()&fs.ModeSymlink != 0 {
@@ -2297,7 +2301,7 @@ func treeOf(root string) (tree, bool) {
 			}
 			return nil
 		}
-		if n := d.Name(); n == ".DS_Store" || n == marker || n == ".git" {
+		if skipInSkill(d.Name()) {
 			if d.IsDir() {
 				return filepath.SkipDir
 			}
