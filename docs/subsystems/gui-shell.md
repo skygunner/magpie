@@ -104,6 +104,11 @@ Redrawing the cards preserves their refresh controls and any running turn.
 The reply updates the reading immediately; the icon then finishes its
 current full turn before stopping (no rotation under reduced motion).
 
+A custom balance part with a percent follows the same Left/Used display in
+the Usage page and tray panel: Left complements the reported used share in
+both the figure and meter, while the warning colour still reflects usage.
+Money and count balances keep the reported figure (`balance-quota-left.test.cjs`).
+
 ### Streamed output speed
 
 Usage rows and aggregates use `Record.Decode` and `DecodeOf` in

@@ -17075,14 +17075,14 @@ function panelBalances(bals) {
     const parts = balanceShown(q) || [{ text: q.balance }];
     for (const [i, p] of parts.entries()) {
       let amount;
-      if (!i && !p.label) card.append(amount = el("b", "pq-amt", p.text));
+      if (!i && !p.label) card.append(amount = el("b", "pq-amt", balanceText(p)));
       else if (!i) {
         amount = el("span", "pq-lead");
-        amount.append(el("b", "pq-amt", p.text), el("span", "", p.label));
+        amount.append(el("b", "pq-amt", balanceText(p)), el("span", "", p.label));
         card.append(amount);
       } else {
         amount = el("span", "pq-sub pq-bp");
-        amount.append(el("span", "", p.label || ""), el("b", "", p.text));
+        amount.append(el("span", "", p.label || ""), el("b", "", balanceText(p)));
         card.append(amount);
       }
       // an amount the reply hadn't, "—": why, on hover (#1993)
@@ -17890,7 +17890,7 @@ function balanceRow(sub, why, when = true) {
   if (!parts?.length) b.append(el("span", "", t("Balance")), el("b", "", sub.balance));
   for (const [i, p] of (parts || []).entries()) {
     const row = el("div", "bal-part" + (i ? "" : " lead"));
-    row.append(el("span", "", p.label || (i ? "" : t("Balance"))), el("b", "", p.text));
+    row.append(el("span", "", p.label || (i ? "" : t("Balance"))), el("b", "", balanceText(p)));
     // an amount the reply hadn't, "—": why, on hover (#1993)
     if (p.error) row.title = p.error;
     if (p.percent != null) row.append(balanceMeter(p.percent));
@@ -17911,14 +17911,18 @@ function balanceShown(q) {
   return [{ text: q.balance }, ...q.balanceSplit.map((p) => ({ ...p, label: t(p.label) }))];
 }
 
-// balanceMeter: a balance field's percent, as a meter.
+// Warn by usage even when the bar shows what is left.
 function balanceMeter(percent) {
-  const share = Math.max(0, Math.min(100, percent));
-  const track = el("div", "quota-track" + (share >= 90 ? " full" : ""));
+  const used = Math.max(0, Math.min(100, percent));
+  const track = el("div", "quota-track" + (used >= 90 ? " full" : ""));
   const fill = el("i");
-  fill.style.width = share + "%";
+  fill.style.width = (quotaLeft ? 100 - used : used) + "%";
   track.append(fill);
   return track;
+}
+
+function balanceText(p) {
+  return p.percent == null || !quotaLeft ? p.text : quotaText({ used: p.percent });
 }
 
 // readWhen: when a card's figures were read, quietly under them: "As of
