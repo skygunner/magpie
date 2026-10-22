@@ -829,3 +829,13 @@ missing type. It adds the type only at the final target, preserving intermediate
 reference schemas (including a format or description); dangling and cyclic chains
 remain unchanged (#3205, `TestKimiToolRefTypesRefChain`). Other providers retain
 the original schema (`TestKimiToolRefTypes`).
+
+A native SSE relay holds its unfinished line until the newline arrives. A clean
+end forwards that final line unchanged; a read failure discards it before adding
+the protocol error, so a severed JSON fragment cannot hide the error from the
+client (#3197). A severed Chat stream then ends with `[DONE]`; a clean but
+incomplete Gemini-compatible Chat reply retains its error-only ending.
+Lines exceeding the sniffer's 1 MiB bound pass through without buffering.
+Verification: `TestPassthroughChatSeveredMidLine`,
+`TestPassthroughChatSeveredAtLineEnd`, `TestPassthroughResponsesBigLastEvent`,
+`TestNativeStreamFailureAccounting`, `TestGeminiCompatRelayEndedShort`.
