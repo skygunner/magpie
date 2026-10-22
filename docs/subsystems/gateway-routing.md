@@ -115,6 +115,8 @@ recorded as a prediction failure (`noPrediction`).
 
 ## Constraints and failure behavior
 
+- A tool root refused with Kimi/Moonshot's `tools.function.parameters.type is required and must be "object"` is retried with the existing object-root repair (`rootUnionRefusal`, `objectRootsBody`, `objectRootsReq` in [`object_root.go`](../../internal/gateway/object_root.go)), including roots with properties but no union or type (#2923). Chat, Messages and Responses clients share this repair on relayed or translated Chat/Responses requests. The accepted shape is remembered for that provider, model and upstream protocol while the gateway runs; an upstream that accepts the original schema keeps it. Nested property types, required fields and other root constraints remain. `TestKimiUntypedToolRoot`, `TestKimiRootRefusalWordings`.
+
 - Overlapping failures for the same rest key keep the later deadline and
   its reason (`restAfterMarked` in [`routing.go`](../../internal/gateway/routing.go),
   #3289). This holds for both an account's rest and a single model's rest.

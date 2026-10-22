@@ -24,8 +24,8 @@ import (
 // folded, and so from then on for that model.
 
 // rootUnionRefusal is an upstream refusing a tool's parameters for a
-// union at their root.
-var rootUnionRefusal = regexp.MustCompile(`(?i)tool parameter root must be an object type|does not support oneOf, allOf, or anyOf at the top level|schema must have type .object. and not have .oneOf.|schema must be a JSON Schema of .type: \\?"object\\?".`)
+// union or missing object type at their root.
+var rootUnionRefusal = regexp.MustCompile(`(?i)tool parameter root must be an object type|does not support oneOf, allOf, or anyOf at the top level|schema must have type .object. and not have .oneOf.|schema must be a JSON Schema of .type: \\?"object\\?".|tools\.function\.parameters\.type is required and must be \\?"object\\?"`)
 
 // rootUnionRefused is how unfit remembers model refusing one.
 func rootUnionRefused(model string) string { return "root union\x00" + model }
@@ -39,7 +39,7 @@ func (s *Server) foldsRoots(p provider.Provider, model string, proto provider.Pr
 // objectRootsBody is a Chat or Responses body whose function tools'
 // parameters have an object root, and whether any was changed.
 func objectRootsBody(proto provider.Protocol, body []byte) ([]byte, bool) {
-	if (proto != provider.Chat && proto != provider.Responses) || !bytes.Contains(body, []byte(`Of"`)) {
+	if proto != provider.Chat && proto != provider.Responses {
 		return body, false
 	}
 	dec := json.NewDecoder(bytes.NewReader(body))
@@ -91,8 +91,12 @@ func foldTools(proto provider.Protocol, tools []any) bool {
 func objectRootsReq(req *Request) (*Request, bool) {
 	var tools []Tool
 	for i, t := range req.Tools {
-		s := objectSchema(t.Schema)
-		if bytes.Equal(s, t.Schema) {
+		var schema map[string]any
+		if decodeJSON(t.Schema, &schema) != nil || schema == nil || !provider.ObjectRoot(schema) {
+			continue
+		}
+		s, err := json.Marshal(schema)
+		if err != nil {
 			continue
 		}
 		if tools == nil {
