@@ -139,6 +139,13 @@ written to the ordinary folder are not moved or deleted. `TestVSCodePortableWrit
 covers connect, sync and disconnect in the portable folder and neighboring
 non-portable cases.
 
+Claude Code's prompt-history fallback for `LastUsed` skips slash commands
+and the bare `exit` and `quit` records it writes on leaving a session.
+Those local commands do not advance the use timestamp used by Drift's
+`bypassed` check. Codex's history keeps its existing slash-command filter;
+bare words are still prompts there. `TestClaudeLastUsedSkipsExit` covers
+the reported history, and the Drift tests retain real prompt detection.
+
 ## Verification
 
 ```sh
