@@ -34,13 +34,28 @@ three.
 
 ## Constraints and failure behavior
 
-Before `magpie web` replaces its process with an updated binary,
-[`Web.Wait`](../../internal/gui/web.go) stops serving gateway requests,
-settles the plugin host and waits
-for its child processes to be reaped. `exec` keeps the process ID but
+### Browser-mode shutdown
+
+`magpie web` and `magpie serve --web` drain and exit successfully on SIGINT
+and SIGTERM. [`webContext`](../../internal/cli/signals.go) asks only for
+those in `caught`, so signals ignored when the command starts stay ignored;
+if neither is caught, it registers no signal context. The global probe
+handler leaves these commands to finish while they drain. SIGHUP still
+terminates the process after probe cleanup.
+
+[`Web.Wait`](../../internal/gui/web.go) closes the page, stops serving
+gateway requests, settles the plugin host and waits for its children to be
+reaped, on cancellation and the page's Quit or restart-to-update alike.
+The gateway's existing drain deadline applies (normally two seconds);
+another process's gateway is not stopped. A cancelled context suppresses
+an update restart. Only a page-requested update replaces the process with
+the existing arguments and run key. `exec` keeps the process ID but
 discards the goroutines that wait for those children; leaving a host alive
 would leave a zombie under the new version. The existing plugin shutdown
 grace period still lets token renewal finish before a forced stop.
+`TestWebShutdown` runs both commands as isolated processes, including
+ignored signals and SIGHUP, and holds a real gateway request across each
+graceful stop to verify it answers before exit.
 `TestWebReexecReapsPluginHost` exercises a real Linux `exec` with both a
 normally exiting Bun host and one that needs to be killed.
 

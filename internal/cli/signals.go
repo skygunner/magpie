@@ -38,7 +38,8 @@ func endProbesOnSignal() {
 		for s := range sigs {
 			// asked before the probes are ended, which can take a moment
 			// the command may spend finishing, and stop asking
-			handled := s == os.Interrupt && interrupts.Load() > 0
+			handled := s == os.Interrupt && interrupts.Load() > 0 ||
+				(s == os.Interrupt || s == syscall.SIGTERM) && webStops.Load() > 0
 			proc.EndProbes()
 			if !handled {
 				provider.FlushServed() // a gateway's last answers, noted and not yet written
@@ -91,6 +92,30 @@ func ownSignals() {
 
 // interrupts counts the commands ending themselves on Ctrl+C.
 var interrupts atomic.Int32
+
+// webStops counts browser commands draining on SIGINT or SIGTERM.
+var webStops atomic.Int32
+
+// webContext keeps inherited ignored signals ignored. With neither stop
+// signal caught, no NotifyContext is made: an empty list catches all signals.
+func webContext() (context.Context, context.CancelFunc) {
+	var sigs []os.Signal
+	for _, s := range caught {
+		if s == os.Interrupt || s == syscall.SIGTERM {
+			sigs = append(sigs, s)
+		}
+	}
+	if len(sigs) == 0 {
+		return context.WithCancel(context.Background())
+	}
+	webStops.Add(1)
+	ctx, stop := signal.NotifyContext(context.Background(), sigs...)
+	var once sync.Once
+	return ctx, func() {
+		stop()
+		once.Do(func() { webStops.Add(-1) })
+	}
+}
 
 // interruptContext is signal.NotifyContext(…, os.Interrupt), for a command
 // that ends itself on Ctrl+C rather than being ended by it.

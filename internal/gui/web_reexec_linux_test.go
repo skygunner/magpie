@@ -61,28 +61,23 @@ export const Fixture = async () => {
 		webReexec.Store(true)
 		w := &Web{srv: &http.Server{}, quit: make(chan struct{})}
 		close(w.quit)
-		t.Fatalf("reexec returned: %v", w.Wait())
-	case "after":
-		if _, err := os.Stat(os.Getenv("MAGPIE_TEST_HOST_PID") + ".drained"); err != nil {
-			t.Error("gateway backend was not drained before reexec:", err)
-		}
-		b, err := os.ReadFile(os.Getenv("MAGPIE_TEST_HOST_PID"))
-		if err != nil {
-			t.Fatal(err)
-		}
-		pid, err := strconv.Atoi(string(b))
-		if err != nil || pid <= 0 {
-			t.Fatalf("host PID %q: %v", b, err)
-		}
-		var status syscall.WaitStatus
-		n, err := syscall.Wait4(pid, &status, syscall.WNOHANG, nil)
-		if !errors.Is(err, syscall.ECHILD) {
-			if n == 0 { // clean up the old-code failure, too
-				_ = syscall.Kill(pid, syscall.SIGKILL)
-				_, _ = syscall.Wait4(pid, &status, 0, nil)
+		ctx := context.Background()
+		if os.Getenv("MAGPIE_TEST_WEB_CANCEL") == "1" {
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithCancel(ctx)
+			cancel()
+			if err := w.Wait(ctx); err != nil {
+				t.Fatal(err)
 			}
-			t.Fatalf("plugin host was not reaped before reexec: wait4 = %d, %v", n, err)
+			checkWebHostReaped(t)
+			return
 		}
+		t.Fatalf("reexec returned: %v", w.Wait(ctx))
+	case "after":
+		if os.Getenv("MAGPIE_TEST_WEB_CANCEL") == "1" {
+			t.Fatal("a cancelled Web.Wait restarted the process")
+		}
+		checkWebHostReaped(t)
 	default:
 		testenv.Bun(t) // fail with an explicit skip if the real host cannot run
 		exe, err := os.Executable()
@@ -91,12 +86,43 @@ export const Fixture = async () => {
 		}
 		ctx, cancel := context.WithTimeout(t.Context(), time.Minute)
 		defer cancel()
-		for _, stuck := range []string{"0", "1"} {
+		for _, mode := range []string{"normal", "stuck", "cancel"} {
+			stuck, cancelled := "0", "0"
+			if mode == "stuck" {
+				stuck = "1"
+			}
+			if mode == "cancel" {
+				cancelled = "1"
+			}
 			cmd := proc.CommandContext(ctx, exe, "-test.run=^TestWebReexecReapsPluginHost$", "-test.v")
-			cmd.Env = append(os.Environ(), stage+"=start", "MAGPIE_TEST_HOST_STUCK="+stuck, "MAGPIE_TEST_REEXEC_DIR="+t.TempDir())
+			cmd.Env = append(os.Environ(), stage+"=start", "MAGPIE_TEST_HOST_STUCK="+stuck, "MAGPIE_TEST_WEB_CANCEL="+cancelled, "MAGPIE_TEST_REEXEC_DIR="+t.TempDir())
 			if out, err := cmd.CombinedOutput(); err != nil {
-				t.Errorf("web restart (stuck=%s): %v\n%s", stuck, err, out)
+				t.Errorf("web shutdown (%s): %v\n%s", mode, err, out)
 			}
 		}
+	}
+}
+
+func checkWebHostReaped(t *testing.T) {
+	t.Helper()
+	if _, err := os.Stat(os.Getenv("MAGPIE_TEST_HOST_PID") + ".drained"); err != nil {
+		t.Error("gateway backend was not drained before reexec:", err)
+	}
+	b, err := os.ReadFile(os.Getenv("MAGPIE_TEST_HOST_PID"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	pid, err := strconv.Atoi(string(b))
+	if err != nil || pid <= 0 {
+		t.Fatalf("host PID %q: %v", b, err)
+	}
+	var status syscall.WaitStatus
+	n, err := syscall.Wait4(pid, &status, syscall.WNOHANG, nil)
+	if !errors.Is(err, syscall.ECHILD) {
+		if n == 0 { // clean up the old-code failure, too
+			_ = syscall.Kill(pid, syscall.SIGKILL)
+			_, _ = syscall.Wait4(pid, &status, 0, nil)
+		}
+		t.Fatalf("plugin host was not reaped before reexec: wait4 = %d, %v", n, err)
 	}
 }

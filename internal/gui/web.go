@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/hex"
@@ -127,22 +128,25 @@ func StartWeb(addr, version string) (*Web, error) {
 // same files, and this one takes the gateway up once that one is gone.
 func (w *Web) ServesGateway() bool { return served.Load() != nil }
 
-// Wait returns once the page's Quit is used. After a restart to update it
-// runs the new version in this one's place, with the same arguments and
-// key, so the page open in the browser finds it where it was.
-func (w *Web) Wait() error {
-	<-w.quit
-	time.Sleep(200 * time.Millisecond) // the answer to the Quit gets out
+// Wait stops the page and drains this process's gateway when Quit is used
+// or ctx ends. A page-requested update runs the new version in this one's
+// place, with the same arguments and key; a stop signal never restarts it.
+func (w *Web) Wait(ctx context.Context) error {
+	select {
+	case <-w.quit:
+		time.Sleep(200 * time.Millisecond) // the answer to the Quit gets out
+	case <-ctx.Done():
+	}
 	w.srv.Close()
-	if !webReexec.Load() {
+	stopServing()
+	plugin.Settle() // no host outlives this process, or its replaced image
+	if ctx.Err() != nil || !webReexec.Load() {
 		return nil
 	}
 	exe, err := update.Executable()
 	if err != nil {
 		return err
 	}
-	stopServing()
-	plugin.Settle() // exec discards the goroutines that reap the old hosts
 	return update.Reexec(exe, os.Args[1:], append(os.Environ(), webRunKey+"="+w.key))
 }
 
