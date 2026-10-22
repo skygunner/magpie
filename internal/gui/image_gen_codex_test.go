@@ -3,8 +3,10 @@ package gui
 import (
 	"encoding/base64"
 	"encoding/json"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -54,9 +56,14 @@ func TestImageGenCodexOneEntry(t *testing.T) {
 	if s.ImageGen != "codex/gpt-image-2.5" || s.ImageGenShown != "codex/gpt-image-2" || s.ImageGenMissing != "" {
 		t.Fatalf("imageGen %q shown %q missing %q", s.ImageGen, s.ImageGenShown, s.ImageGenMissing)
 	}
-	st.ImageGen = "codex/gpt-image-2"
-	if err := settings.Save(st); err != nil {
-		t.Fatal(err)
+	// A saved alias remains valid on another save, and the listed image
+	// model can be picked even though Codex's chat catalog doesn't list it.
+	for _, id := range []string{"codex/gpt-image-2.5", "codex/gpt-image-2"} {
+		r := httptest.NewRecorder()
+		Handler(nil, nil).ServeHTTP(r, httptest.NewRequest("POST", "/api/settings", strings.NewReader(`{"imageGen":"`+id+`"}`)))
+		if r.Code != 200 || settings.Load().ImageGen != id {
+			t.Fatalf("image pick %q: status %d, saved %q", id, r.Code, settings.Load().ImageGen)
+		}
 	}
 	if s := settingsState(); s.ImageGenShown != "" {
 		t.Fatalf("a listed pick is shown as %q", s.ImageGenShown)

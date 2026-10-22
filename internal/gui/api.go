@@ -605,6 +605,34 @@ type searchFailedJSON struct {
 // it. A var for the tests: the real one asks the user's own system.
 var loginState = autostart.Enabled
 
+// modelServed checks a picker target, including unlisted providers and
+// either spelling of a found group. Resolve accepts any model name under
+// a known provider, which is useful for requests but not a new pick.
+func modelServed(id string) bool {
+	return slices.ContainsFunc(provider.Served(), func(e provider.Entry) bool {
+		return e.ID == id || e.Group != "" && provider.SameRef(e.ID, id)
+	})
+}
+
+// imageGens is the image picker: a subscription can draw with models its
+// chat catalog doesn't list, so its own Drawers decide what can be picked.
+func imageGens() []modelRef {
+	out := []modelRef{}
+	for _, p := range provider.All() {
+		if !p.On() || p.DecideOnly() {
+			continue
+		}
+		for _, m := range gateway.Drawers(p) {
+			name := m.Name
+			if name == "" {
+				name = m.ID
+			}
+			out = append(out, modelRef{ID: p.ID + "/" + m.ID, Name: name, Provider: p.ID, PName: p.Name, Icon: p.Icon, VendorPicks: gateway.VendorPicksDrawer(p)})
+		}
+	}
+	return out
+}
+
 func settingsState() settingsJSON {
 	s := settingsJSON{Settings: settings.Load(), Version: Version, Dir: tilde(settings.Dir()), Portable: settings.Portable() != "", Gateway: gateway.URL()}
 	s.AddrEnv = os.Getenv("MAGPIE_ADDR")
@@ -691,19 +719,7 @@ func settingsState() settingsJSON {
 		}
 	}
 	searchState(&s)
-	s.ImageGenAuto, s.ImageGenModels, s.ImageGenMissing = gateway.AutoDrawer(), []modelRef{}, gateway.DrawerMissing()
-	for _, p := range provider.All() {
-		if !p.On() || p.DecideOnly() {
-			continue
-		}
-		for _, m := range gateway.Drawers(p) {
-			name := m.Name
-			if name == "" {
-				name = m.ID
-			}
-			s.ImageGenModels = append(s.ImageGenModels, modelRef{ID: p.ID + "/" + m.ID, Name: name, Provider: p.ID, PName: p.Name, Icon: p.Icon, VendorPicks: gateway.VendorPicksDrawer(p)})
-		}
-	}
+	s.ImageGenAuto, s.ImageGenModels, s.ImageGenMissing = gateway.AutoDrawer(), imageGens(), gateway.DrawerMissing()
 	if v := gateway.ListedDrawer(s.ImageGen); v != s.ImageGen {
 		s.ImageGenShown = v
 	}
@@ -1345,14 +1361,16 @@ func Handler(w Windows, gw *gateway.Server) http.Handler {
 		// gateway mode, set on its own (gateway-mode)
 		in.GatewayMode = cur.GatewayMode
 		in.NoAccountDiscovery = cur.NoAccountDiscovery // set on its own (account-discovery below, or the CLI)
+		// The page re-sends its picks with every save. A saved one that is
+		// no longer listed stays; only a newly chosen model is checked.
 		if v := strings.TrimSpace(in.Vision); v != "" && v != "off" && v != cur.Vision {
-			if _, _, ok := provider.Resolve(v); !ok {
+			if !modelServed(v) {
 				fail(rw, fmt.Errorf("no model %s to describe images", v))
 				return
 			}
 		}
 		if v := strings.TrimSpace(in.ImageGen); v != "" && v != "off" && v != cur.ImageGen {
-			if _, _, ok := provider.Resolve(v); !ok {
+			if !slices.ContainsFunc(imageGens(), func(m modelRef) bool { return m.ID == v }) {
 				fail(rw, fmt.Errorf("no model %s to generate images", v))
 				return
 			}
@@ -1630,13 +1648,13 @@ func Handler(w Windows, gw *gateway.Server) http.Handler {
 			return
 		}
 		v := strings.TrimSpace(in.Model)
-		if v != "" {
-			if _, _, ok := provider.Resolve(v); !ok {
+		s := settings.Load()
+		if v != "" && v != s.CodexDescriptions {
+			if !modelServed(v) {
 				fail(rw, fmt.Errorf("no model %s to write Codex's descriptions", v))
 				return
 			}
 		}
-		s := settings.Load()
 		s.CodexDescriptions = v
 		if err := settings.Save(s); err != nil {
 			fail(rw, err)
@@ -1653,13 +1671,13 @@ func Handler(w Windows, gw *gateway.Server) http.Handler {
 			return
 		}
 		v := strings.TrimSpace(in.Model)
-		if v != "" && v != "off" {
-			if _, _, ok := provider.Resolve(v); !ok {
+		s := settings.Load()
+		if v != "" && v != "off" && v != s.CodexPredictions {
+			if !modelServed(v) {
 				fail(rw, fmt.Errorf("no model %s to write Codex's composer predictions", v))
 				return
 			}
 		}
-		s := settings.Load()
 		s.CodexPredictions = v
 		if err := settings.Save(s); err != nil {
 			fail(rw, err)
@@ -1693,13 +1711,13 @@ func Handler(w Windows, gw *gateway.Server) http.Handler {
 			return
 		}
 		v := strings.TrimSpace(in.Model)
-		if v != "" && v != "off" {
-			if _, _, ok := provider.Resolve(v); !ok {
+		s := settings.Load()
+		if v != "" && v != "off" && v != s.CodexTitles {
+			if !modelServed(v) {
 				fail(rw, fmt.Errorf("no model %s to write Codex's titles", v))
 				return
 			}
 		}
-		s := settings.Load()
 		s.CodexTitles = v
 		if err := settings.Save(s); err != nil {
 			fail(rw, err)
@@ -1720,7 +1738,7 @@ func Handler(w Windows, gw *gateway.Server) http.Handler {
 			// Resolve intentionally accepts arbitrary names under a known
 			// provider. An approval reviewer must be a model or group magpie
 			// actually lists, including providers kept unlisted for routing.
-			if !slices.ContainsFunc(provider.Served(), func(e provider.Entry) bool { return e.ID == v || e.Group != "" && provider.SameRef(e.ID, v) }) {
+			if !modelServed(v) {
 				fail(rw, fmt.Errorf("no model %s for Codex's auto-review", v))
 				return
 			}
