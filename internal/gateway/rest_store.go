@@ -92,7 +92,7 @@ func saveRests() {
 		return
 	}
 	path := restsPath()
-	if err := lastgood.KeepUnparsed(path, func(b []byte) bool {
+	if err = lastgood.KeepUnparsed(path, func(b []byte) bool {
 		var v map[string]savedRest
 		return json.Unmarshal(b, &v) == nil
 	}); err == nil {
