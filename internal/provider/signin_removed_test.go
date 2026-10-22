@@ -64,6 +64,7 @@ func TestSignInDoneOnceTheAccountIsBack(t *testing.T) {
 		setUp: func(t *testing.T) {
 			bun := testenv.Bun(t)
 			claudeHome(t)
+			writeFile(t, catalog.CachePath(), json.RawMessage(`{"fakeco":{"id":"fakeco","models":{}}}`))
 			t.Setenv("MAGPIE_BUN", bun)
 			t.Cleanup(plugin.Settle)
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
@@ -105,6 +106,9 @@ func TestSignInDoneOnceTheAccountIsBack(t *testing.T) {
 				t.Fatal("removed account still listed")
 			}
 
+			// Finish the refresh and its hooks before swapping the global observer.
+			plugin.Refreshed()
+			plugin.Told()
 			// what the sign-in reads as the moment its account is shown again
 			var mu sync.Mutex
 			id, back := "", ""
@@ -117,7 +121,11 @@ func TestSignInDoneOnceTheAccountIsBack(t *testing.T) {
 					back = st.State
 				}
 			}
-			t.Cleanup(func() { catalog.Changed = was })
+			t.Cleanup(func() {
+				plugin.Refreshed()
+				plugin.Told()
+				catalog.Changed = was
+			})
 
 			st := c.signIn(t)
 			mu.Lock()
