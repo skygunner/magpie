@@ -56,4 +56,18 @@ func TestProviderSaveOutputs(t *testing.T) {
 	if w := post(save + `,"outputs":{}}`); w.Code != 200 || len(settings.Load().ModelOutputs) != 0 {
 		t.Fatalf("emptied: %d %v", w.Code, settings.Load().ModelOutputs)
 	}
+	// #3305: the editor carries an old limit after a catalog retires its model.
+	s := settings.Load()
+	s.ModelOutputs = map[string]int{"relay/retired": 65536}
+	s.ModelCompacts = map[string]int{"relay/retired": 131072}
+	if err := settings.Save(s); err != nil {
+		t.Fatal(err)
+	}
+	if w := post(save + `,"outputs":{"retired":65536,"sol":8192},"compacts":{"retired":131072}}`); w.Code != 200 {
+		t.Fatalf("retired model blocked save: %d %s", w.Code, w.Body)
+	}
+	if got := settings.Load(); !maps.Equal(got.ModelOutputs, map[string]int{"relay/retired": 65536, "relay/sol": 8192}) || !maps.Equal(got.ModelCompacts, map[string]int{"relay/retired": 131072}) {
+		t.Fatalf("limits after save: outputs=%v compacts=%v", got.ModelOutputs, got.ModelCompacts)
+	}
+
 }

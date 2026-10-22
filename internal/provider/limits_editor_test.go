@@ -67,3 +67,64 @@ func TestModelOutputsSetFromTheEditor(t *testing.T) {
 		t.Errorf("emptied: %v", got)
 	}
 }
+
+// #3305: a catalog can retire a model after its limit was saved. Carrying
+// the unchanged value through an editor save must not block all other edits.
+func TestEditorKeepsRetiredModelLimits(t *testing.T) {
+	for _, compact := range []bool{false, true} {
+		name := "output"
+		if compact {
+			name = "compact"
+		}
+		t.Run(name, func(t *testing.T) {
+			limitsHome(t)
+			if err := Save(Provider{ID: "relay", Name: "Relay", Chat: "https://relay.example/v1", Key: "k", Models: []string{"current"}}); err != nil {
+				t.Fatal(err)
+			}
+			s := settings.Load()
+			old := map[string]int{"relay/retired": 65536, "other/model": 1024}
+			set := SetModelOutputs
+			if compact {
+				s.ModelCompacts = old
+				set = SetModelCompacts
+			} else {
+				s.ModelOutputs = old
+			}
+			if err := settings.Save(s); err != nil {
+				t.Fatal(err)
+			}
+			read := func() map[string]int {
+				s := settings.Load()
+				if compact {
+					return s.ModelCompacts
+				}
+				return s.ModelOutputs
+			}
+			if err := set("relay", map[string]int{"retired": 65536, "current": 8192}); err != nil {
+				t.Fatal(err)
+			}
+			want := map[string]int{"relay/retired": 65536, "relay/current": 8192, "other/model": 1024}
+			if !maps.Equal(read(), want) {
+				t.Fatalf("saved: %v", read())
+			}
+			for _, bad := range []map[string]int{{"retired": 1234}, {"typo": 65536}, {"retired": -1}} {
+				if err := set("relay", bad); err == nil {
+					t.Errorf("accepted invalid limits: %v", bad)
+				}
+				if !maps.Equal(read(), want) {
+					t.Fatalf("refused save changed limits: %v", read())
+				}
+			}
+			if err := set("relay", map[string]int{"retired": 0, "current": 8192}); err != nil {
+				t.Fatal(err)
+			}
+			delete(want, "relay/retired")
+			if !maps.Equal(read(), want) {
+				t.Fatalf("removed: %v", read())
+			}
+			if err := set("relay", map[string]int{"retired": 65536}); err == nil {
+				t.Error("recreated a retired model limit")
+			}
+		})
+	}
+}
