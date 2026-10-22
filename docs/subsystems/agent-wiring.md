@@ -8,6 +8,14 @@ supported agent: where its config lives, which fields matter and which
 values to offer. It also records what magpie set, so a later change made by
 something else shows up as drift.
 
+The TUI’s Agents overview (`viewList` in
+[`tui.go`](../../internal/tui/tui.go)) abbreviates a row wider than the terminal.
+Selecting it expands its fields into wrapped lines and keeps the field chosen
+with Tab or the arrow keys visible, with the agent name and config path.
+The surrounding agents use the remaining terminal lines; ordinary rows stay
+compact. `TestAgentsFieldsStayReadable` covers narrow and short terminals,
+field navigation, paths and fallback status.
+
 ## Responsibilities and sources of truth
 
 | Part | Responsibility | Source |
