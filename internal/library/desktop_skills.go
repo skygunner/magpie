@@ -87,7 +87,7 @@ func desktopEdited(p string) bool {
 	}
 	for _, line := range strings.Split(string(b), "\n") {
 		if h, ok := strings.CutPrefix(strings.TrimSpace(line), "hash "); ok {
-			return h != hashDir(p)
+			return h != hashDir(p) && h != hashFiles(p, false)
 		}
 	}
 	return false
