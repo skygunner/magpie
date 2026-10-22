@@ -21,7 +21,7 @@ func TestWebReexecReapsPluginHost(t *testing.T) {
 	const stage = "MAGPIE_TEST_WEB_REEXEC"
 	switch os.Getenv(stage) {
 	case "start":
-		dir := t.TempDir()
+		dir := os.Getenv("MAGPIE_TEST_REEXEC_DIR") // the parent owns cleanup across exec
 		pidPath := filepath.Join(dir, "pid")
 		t.Setenv("MAGPIE_TEST_HOST_PID", pidPath)
 		t.Setenv("MAGPIE_BUN", testenv.Bun(t))
@@ -93,7 +93,7 @@ export const Fixture = async () => {
 		defer cancel()
 		for _, stuck := range []string{"0", "1"} {
 			cmd := proc.CommandContext(ctx, exe, "-test.run=^TestWebReexecReapsPluginHost$", "-test.v")
-			cmd.Env = append(os.Environ(), stage+"=start", "MAGPIE_TEST_HOST_STUCK="+stuck)
+			cmd.Env = append(os.Environ(), stage+"=start", "MAGPIE_TEST_HOST_STUCK="+stuck, "MAGPIE_TEST_REEXEC_DIR="+t.TempDir())
 			if out, err := cmd.CombinedOutput(); err != nil {
 				t.Errorf("web restart (stuck=%s): %v\n%s", stuck, err, out)
 			}
