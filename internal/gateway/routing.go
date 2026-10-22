@@ -1042,8 +1042,11 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
 		r.Model = c.model
 	}
 	restingUntil.Lock()
-	restingUntil.m[id] = r.Until
-	restingUntil.note[id] = r
+	// Another in-flight reply may already have rested it for longer (#3289).
+	if until, ok := restingUntil.m[id]; !ok || until.Before(r.Until) {
+		restingUntil.m[id] = r.Until
+		restingUntil.note[id] = r
+	}
 	restingUntil.Unlock()
 	if unread && id == c.restKey() && id != c.restID() {
 		narrowing.Add(1)
