@@ -424,6 +424,7 @@ type host struct {
 	calls    map[int64]*call
 	next     int64
 	dead     chan struct{}
+	reaped   chan struct{} // Wait finished; dead can close on a write failure first
 	err      error
 	loaded   []Loaded
 	// renewing is how many sign-ins the host is renewing: stop lets them
@@ -717,7 +718,7 @@ func (h *host) retire() {
 		end := time.Now().Add(retireWait)
 		for h.busy() && time.Now().Before(end) {
 			select {
-			case <-h.dead:
+			case <-h.reaped:
 				return
 			case <-time.After(250 * time.Millisecond):
 			}
@@ -763,7 +764,7 @@ func (h *host) stop() {
 	wait := time.NewTimer(stopWait)
 	defer wait.Stop()
 	select {
-	case <-h.dead:
+	case <-h.reaped:
 		return
 	case <-wait.C:
 	}
@@ -771,13 +772,14 @@ func (h *host) stop() {
 	defer tick.Stop()
 	for h.renewing.Load() > 0 && time.Since(start) < stopRenewing {
 		select {
-		case <-h.dead:
+		case <-h.reaped:
 			return
 		case <-tick.C:
 		}
 	}
 	if h.cmd.Process != nil {
 		h.cmd.Process.Kill()
+		<-h.reaped
 	}
 }
 
@@ -948,6 +950,7 @@ func startOn(ctx context.Context, bun string) (*host, bool, error) {
 		cmd: cmd, in: in,
 		calls:    map[int64]*call{},
 		dead:     make(chan struct{}),
+		reaped:   make(chan struct{}),
 		slots:    make(chan struct{}, callLimit()),
 		streams:  make(chan struct{}, streamLimit()),
 		out:      make(chan writeReq, callLimit()),
@@ -1030,6 +1033,7 @@ func drainStderr(r io.Reader) {
 }
 
 func (h *host) read(out io.Reader) {
+	defer close(h.reaped)
 	r := bufio.NewReaderSize(out, 1<<20)
 	for {
 		line, err := readLine(r, h.lineLimit())

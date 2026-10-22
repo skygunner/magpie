@@ -547,8 +547,8 @@ func Answered() bool {
 
 // Settle waits for Cached's refreshes to end, stops the host, waits for
 // the hooks told of a change (Told) and forgets the plugins (UseCached
-// nil): for tests, whose folders the host runs in go when they end, so
-// the next test starts with nothing of this one's running or seen. Each
+// nil): before process replacement, or when a test's host folder goes
+// away, so nothing of this host outlives its owner. Each
 // ask is bounded and the retries are few, so this waits a bounded time
 // even for a host that never answers.
 //

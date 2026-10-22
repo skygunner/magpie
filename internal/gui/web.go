@@ -20,6 +20,7 @@ import (
 	"github.com/klauspost/compress/gzhttp"
 
 	"github.com/yetone/magpie/internal/gateway"
+	"github.com/yetone/magpie/internal/plugin"
 	"github.com/yetone/magpie/internal/update"
 )
 
@@ -140,6 +141,8 @@ func (w *Web) Wait() error {
 	if err != nil {
 		return err
 	}
+	stopServing()
+	plugin.Settle() // exec discards the goroutines that reap the old hosts
 	return update.Reexec(exe, os.Args[1:], append(os.Environ(), webRunKey+"="+w.key))
 }
 
