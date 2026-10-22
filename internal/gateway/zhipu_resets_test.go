@@ -4,6 +4,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -157,5 +159,50 @@ func TestZhipuRestsUntilItsReset(t *testing.T) {
 	}
 	if asked != 1 {
 		t.Errorf("Z.ai asked %d times, want once: the second is held until its reset", asked)
+	}
+}
+
+// A plugin wraps ZCode's Chinese five-hour limit as rate_limit_error
+// (#3266); its allowance renewal must lift this quota rest, not a real RPM rest.
+func TestZcodeWindowRenewalLiftsQuotaRest(t *testing.T) {
+	fresh(t)
+	if err := os.MkdirAll(filepath.Dir(restsPath()), 0700); err != nil {
+		t.Fatal(err)
+	}
+	old, oldStale := allowances, staleAllowance
+	t.Cleanup(func() { allowances, staleAllowance = old, oldStale })
+	allowances = func(string) map[string]provider.Allowance {
+		return map[string]provider.Allowance{"a@x.com": {{Used: 100, Resets: time.Now().Add(3 * time.Hour), Span: 5 * time.Hour}}}
+	}
+	staleAllowance = func(string, string) {}
+	reset := time.Now().Add(2 * time.Hour).Truncate(time.Second)
+	said := "[1308][已达到 5 小时的使用上限。您的限额将在 " + reset.In(zhipuZone).Format("2006-01-02 15:04:05") + " 重置。]"
+	for _, c := range []struct {
+		name, body, why string
+		lifted          bool
+	}{
+		{"Chinese plugin refusal", `{"error":{"type":"rate_limit_error","message":"` + said + `"}}`, failQuota, true},
+		{"escaped Chinese plugin refusal", strings.Replace(escaped(said, "1308"), `"code":"1308"`, `"type":"rate_limit_error"`, 1), failQuota, true},
+		{"Chinese RPM refusal", `{"error":{"type":"rate_limit_error","message":"每分钟请求次数达到上限"}}`, failRate, false},
+		{"ordinary RPM refusal", `{"error":{"type":"rate_limit_error","message":"Too many requests per minute"}}`, failRate, false},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			forgetRouting()
+			restingUntil.Lock()
+			restingUntil.m, restingUntil.note = map[string]time.Time{}, map[string]Rest{}
+			restingUntil.Unlock()
+			acct := candidate{p: provider.Provider{ID: "zcode", Account: &provider.Account{Agent: "plugin:zcode", User: "a@x.com"}}, model: "GLM-5.3-Flash", rest: "zcode"}
+			r := (&Server{}).restAfter(acct, 429, http.Header{}, []byte(c.body))
+			if r.Why != c.why {
+				t.Errorf("rest reason %s, want %s", r.Why, c.why)
+			}
+			if c.lifted && (r.By != "resets" || !r.Until.Equal(reset)) {
+				t.Errorf("quota rest %+v, want vendor reset %v", r, reset)
+			}
+			renewed(acct.p.Account.UsageAgent(), "A@x.com")
+			if _, ok := restingOf(acct); ok == c.lifted {
+				t.Errorf("rest remains %v after allowance renewal, want %v", ok, !c.lifted)
+			}
+		})
 	}
 }

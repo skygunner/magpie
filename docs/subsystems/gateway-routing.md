@@ -13,6 +13,10 @@ A restart or update preserves the remaining `quota-rest` wait. A manual
 unrest, successful answer, or allowance renewal removes the saved rest; an
 expired rest is ignored when loading (a recent rate limit is kept for its
 backoff ladder). `TestQuotaRestSurvivesGatewayRestart` covers this.
+A plugin wrapping Zhipu’s Chinese “小时的使用上限” as `rate_limit_error`
+is still out of quota: its named reset sets the deadline, and an allowance
+renewal lifts it (`TestZcodeWindowRenewalLiftsQuotaRest`). Ordinary per-minute
+rate limits stay rested after an allowance renewal.
 
 This page covers how a request is routed. Plugins that change requests and
 replies are in [Gateway middleware](gateway-middleware.md). Subscriptions
