@@ -693,6 +693,12 @@ func withPicks(a, pk Provider) Provider {
 	a.MaxConcurrency, a.PinUpstream = pk.MaxConcurrency, pk.PinUpstream
 	a.AccountConcurrency, a.QueueLimit, a.QueueWait = pk.AccountConcurrency, pk.QueueLimit, pk.QueueWait
 	a.MaxRPM = pk.MaxRPM
+	// the rests the user set for it, which Save keeps on an account's
+	// record too: a rest cap, a quota rest, and the time of day a quota
+	// comes back (#2008). Dropped here, a cap set on a signed-in provider
+	// never reached the gateway's rests, and its read-back said magpie's
+	// own (#3176)
+	a.QuotaRest, a.QuotaResetAt, a.RestCap = pk.QuotaRest, pk.QuotaResetAt, pk.RestCap
 	// the extra body fields written for it, which a ChatGPT account's
 	// requests take (WithExtraBody, magpie-releases#18)
 	a.ExtraBody = pk.ExtraBody
