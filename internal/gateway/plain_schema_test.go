@@ -65,3 +65,25 @@ func TestPlainSchemaUnionBesideItemsKeepsTheArrayHalf(t *testing.T) {
 		t.Fatalf("the non-array union kept array keywords: %s", b)
 	}
 }
+
+// The array half of a union leaves the object half's keywords behind with
+// it: codex_apps' params are typed ["object","array"] and carry both halves'
+// keywords, and Antigravity answers the same 400 over properties on an array
+// as over items on a non-array (#3370, yxr1995-maker).
+func TestPlainSchemaUnionArrayHalfLeavesObjectKeywordsBehind(t *testing.T) {
+	codexApps := `{"type": ["object", "array"], "description": "Tool params as a real JSON object (an array for the handful of array-body tools) ...", "items": {"type": "string"}, "properties": {}, "minProperties": 1, "required": ["x"]}`
+	var got map[string]any
+	if err := json.Unmarshal(plainSchema(json.RawMessage(codexApps)), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got["type"] != "array" || got["items"] == nil {
+		b, _ := json.Marshal(got)
+		t.Fatalf("the union folded wrong: %s", b)
+	}
+	for _, k := range []string{"properties", "minProperties", "required"} {
+		if got[k] != nil {
+			b, _ := json.Marshal(got)
+			t.Fatalf("the array half kept the object half's %s: %s", k, b)
+		}
+	}
+}
