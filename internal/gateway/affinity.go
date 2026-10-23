@@ -374,13 +374,19 @@ func turnIn(req *Request) (turn int, within bool) {
 // move either: held is it, for the request to be refused as held. Neither
 // for another mode, nor for a conversation nobody has answered yet.
 func strictKeep(scope, mode string, in http.Header, body []byte, cs []candidate, pl planned) ([]candidate, planned, []Weighed) {
-	if mode != provider.AffinityStrict {
-		return cs, pl, nil
-	}
 	sticks.Lock()
 	st, had := stickOf(scope + "|" + conversationID(in, body))
 	sticks.Unlock()
 	if !had || time.Since(st.at) > stickKeep || slices.ContainsFunc(cs, func(c candidate) bool { return c.who() == st.who }) {
+		return cs, pl, nil
+	}
+	// A nested off/session also overrides an outer strict before a cap
+	// is bypassed; use the same model/effort match as ordinary affinity.
+	left := append(slices.Clone(pl.capped), pl.held...)
+	if at := lastAnswerer(left, st); at >= 0 && left[at].affinity != "" {
+		mode = left[at].affinity
+	}
+	if mode != provider.AffinityStrict {
 		return cs, pl, nil
 	}
 	// the left's line for c, as it was left out
@@ -452,6 +458,23 @@ func strictOnly(cs []candidate, pl planned, at int) ([]candidate, planned) {
 	return out, pl
 }
 
+// lastAnswerer prefers the model and fixed effort that answered, then
+// the same account when that member is no longer in the plan.
+func lastAnswerer(cs []candidate, st stick) int {
+	for _, same := range []func(candidate) bool{
+		func(c candidate) bool { return c.who() == st.who && c.model == st.model && c.effort == st.effort },
+		func(c candidate) bool { return c.who() == st.who && c.model == st.model },
+		func(c candidate) bool { return c.who() == st.who },
+	} {
+		for i, c := range cs {
+			if same(c) {
+				return i
+			}
+		}
+	}
+	return -1
+}
+
 // affine puts first whoever answered the conversation last, while its
 // affinity says to keep it there.
 func affine(scope, mode string, rotate bool, in http.Header, from provider.Protocol, body []byte, cs []candidate, pl planned) ([]candidate, planned, *Affinity, string) {
@@ -472,15 +495,13 @@ func affine(scope, mode string, rotate bool, in http.Header, from provider.Proto
 	// had the turn's next request kept to the account and so to Sonnet,
 	// its first member there; the account alone when the model is gone
 	at := -1
-	for _, same := range []func(candidate) bool{
-		func(c candidate) bool { return c.who() == st.who && c.model == st.model && c.effort == st.effort },
-		func(c candidate) bool { return c.who() == st.who && c.model == st.model },
-		func(c candidate) bool { return c.who() == st.who },
-	} {
-		for i, c := range cs {
-			if had && at < 0 && same(c) {
-				at, a.Last = i, c.rest // as it goes by now
-			}
+	if had {
+		at = lastAnswerer(cs, st)
+	}
+	if at >= 0 {
+		a.Last = cs[at].rest
+		if cs[at].affinity != "" {
+			mode, a.Mode = cs[at].affinity, cs[at].affinity
 		}
 	}
 	switch {

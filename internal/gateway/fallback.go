@@ -63,6 +63,8 @@ type candidate struct {
 	// member is in that sets one (#2246): a group in a group times its own
 	// members' first tokens, the group asked for only those that set none
 	firstToken int
+	// affinity is the innermost group mode; empty inherits the asked group.
+	affinity string
 	// patience is the Patience of the innermost group of those the member
 	// is in that sets one (#2410): a group in a group waits out its own
 	// members' busy failures, the group asked for only those that set none;
@@ -413,6 +415,16 @@ func innerFirstToken(m provider.Member) int {
 	return 0
 }
 
+// innerAffinity follows the same inner-first precedence as FirstToken.
+func innerAffinity(m provider.Member) string {
+	for i := len(m.Via) - 1; i >= 0; i-- {
+		if m.Via[i].Affinity != "" {
+			return m.Via[i].Affinity
+		}
+	}
+	return ""
+}
+
 // innerPatience is the Patience of the innermost group m is in (m.Via,
 // the outermost first) that sets one (#2410), 0 for none: PatienceOff
 // (-1) counts as set, so an inner Off stops replan for that member.
@@ -437,6 +449,7 @@ func planLevel(g provider.Group, ms []provider.Member, depth int, from provider.
 			for i := range l {
 				l[i].effort, l[i].fast = m.Effort, m.Fast
 				l[i].firstToken = innerFirstToken(m)
+				l[i].affinity = innerAffinity(m)
 				l[i].patience = innerPatience(m)
 			}
 		}
