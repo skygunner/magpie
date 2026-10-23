@@ -87,3 +87,35 @@ func TestPlainSchemaUnionArrayHalfLeavesObjectKeywordsBehind(t *testing.T) {
 		}
 	}
 }
+
+// Either order of the union folds the same way: ["array","object"] beside
+// both halves' keywords left the object half's properties on the array
+// (#3370 review), where ["object","array"] did not.
+func TestPlainSchemaUnionFoldIsOrderIndependent(t *testing.T) {
+	both := `"items": {"type": "string"}, "properties": {}, "minProperties": 1, "maxProperties": 2, "required": ["x"]`
+	for _, u := range []string{`{"type": ["object", "array"], ` + both + `}`, `{"type": ["array", "object"], ` + both + `}`} {
+		var got map[string]any
+		if err := json.Unmarshal(plainSchema(json.RawMessage(u)), &got); err != nil {
+			t.Fatal(err)
+		}
+		if got["type"] != "array" || got["items"] == nil {
+			b, _ := json.Marshal(got)
+			t.Fatalf("%s folded wrong: %s", u, b)
+		}
+		for _, k := range []string{"properties", "minProperties", "maxProperties", "required"} {
+			if got[k] != nil {
+				b, _ := json.Marshal(got)
+				t.Fatalf("%s kept the object half's %s: %s", u, k, b)
+			}
+		}
+	}
+	// a pure object keeps its properties and required
+	var got map[string]any
+	if err := json.Unmarshal(plainSchema(json.RawMessage(`{"type": "object", "properties": {"x": {"type": "string"}}, "required": ["x"]}`)), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got["properties"] == nil || got["required"] == nil {
+		b, _ := json.Marshal(got)
+		t.Fatalf("a plain object lost its keywords: %s", b)
+	}
+}

@@ -799,27 +799,30 @@ func plainSchema(raw json.RawMessage) json.RawMessage {
 			// folds to its first member, so ["string", "array"] beside
 			// items became a string carrying items — and Antigravity holds
 			// Schema.items to type array, a 400 before anything was
-			// answered (#3121, MurmuredVelpro). A union with an array half
-			// takes it when the array keywords are there; a schema with no
-			// array half loses them.
+			// answered (#3121, MurmuredVelpro). A schema with array
+			// keywords that ends an array — folded there, or a union with
+			// an array half taking it in either order — keeps only the
+			// array half's keywords: the object half's go with the fold,
+			// properties on an array the mirror of items on a string, the
+			// same strict predicate answering 400 over (#3370,
+			// yxr1995-maker — codex_apps' params carry both halves'). A
+			// schema with no array half loses the array keywords.
 			if out["items"] != nil || out["minItems"] != nil || out["maxItems"] != nil {
-				if out["type"] != "array" {
+				isArray := out["type"] == "array"
+				if !isArray {
 					if t, ok := x["type"].([]any); ok && slices.Contains(t, "array") {
 						out["type"] = "array"
-						// the object half stays behind with the fold, so
-						// its keywords go too: properties on an array is
-						// the mirror of items on a string, the same strict
-						// predicate answers 400 over (#3370,
-						// yxr1995-maker — codex_apps' params carry both
-						// halves' keywords).
-						delete(out, "properties")
-						delete(out, "minProperties")
-						delete(out, "maxProperties")
-					} else {
-						delete(out, "items")
-						delete(out, "minItems")
-						delete(out, "maxItems")
+						isArray = true
 					}
+				}
+				if isArray {
+					delete(out, "properties")
+					delete(out, "minProperties")
+					delete(out, "maxProperties")
+				} else {
+					delete(out, "items")
+					delete(out, "minItems")
+					delete(out, "maxItems")
 				}
 			}
 			if req, ok := out["required"].([]any); ok {
