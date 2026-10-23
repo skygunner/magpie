@@ -126,7 +126,7 @@ func TestClaudeDesktopDefault(t *testing.T) {
 		Models: []string{"m1", "claude-opus-4-8"}}); err != nil {
 		t.Fatal(err)
 	}
-	title := []byte(`{"max_tokens":200,"messages":[{"role":"user","content":"hi"}]}`)
+	title := []byte(`{"system":"You write short session titles.","max_tokens":200,"messages":[{"role":"user","content":"hi"}]}`)
 	turn := []byte(`{"max_tokens":32000,"tools":[{"name":"Bash"}],"messages":[{"role":"user","content":"hi"}]}`)
 	if got := desktopDefault("claude-sonnet-5"); got != "fake/m1" {
 		t.Fatalf("default = %q", got)
@@ -134,7 +134,7 @@ func TestClaudeDesktopDefault(t *testing.T) {
 	if got := desktopDefault("fake/m1"); got != "" {
 		t.Fatalf("default for the first model itself = %q", got)
 	}
-	if got := desktopTurn("claude-haiku-4-5", title, false, false); got != "fake/m1" {
+	if got := desktopTurn("claude-haiku-4-5", title, false); got != "fake/m1" {
 		t.Fatalf("title = %q", got)
 	}
 	StandIn = func(agent, model string) string {
@@ -144,11 +144,11 @@ func TestClaudeDesktopDefault(t *testing.T) {
 		return ""
 	}
 	t.Cleanup(func() { StandIn = nil })
-	if got := desktopTurn("claude-haiku-4-5", title, false, false); got != "fake/claude-opus-4-8" {
+	if got := desktopTurn("claude-haiku-4-5", title, false); got != "fake/claude-opus-4-8" {
 		t.Fatalf("title with a stand-in = %q", got)
 	}
 	// a session on a real Claude model magpie serves keeps it
-	if got := desktopTurn("fake/claude-opus-4-8", turn, false, false); got != "fake/claude-opus-4-8" {
+	if got := desktopTurn("fake/claude-opus-4-8", turn, false); got != "fake/claude-opus-4-8" {
 		t.Fatalf("turn = %q", got)
 	}
 }
@@ -249,14 +249,14 @@ func TestDesktopSubagentTurnKeepsSessionPick(t *testing.T) {
 		{"fake/m2", true, "fake/m1"},
 		{"fake/m2", false, "fake/m2"},
 	} {
-		if got := desktopTurn(turn.model, body, true, turn.sub); got != turn.model {
+		if got := desktopTurn(turn.model, body, turn.sub); got != turn.model {
 			t.Fatalf("turn sent %q, want %q", got, turn.model)
 		}
 		if b, err := os.ReadFile(desktopPickedPath()); err != nil || strings.TrimSpace(string(b)) != turn.picked {
 			t.Fatalf("subagent %v: picked %q, want %q (%v)", turn.sub, b, turn.picked, err)
 		}
 	}
-	if got := desktopTurn("claude-haiku-unserved", body, true, true); got != "fake/m2" {
+	if got := desktopTurn("claude-haiku-unserved", body, true); got != "fake/m2" {
 		t.Fatalf("unserved subagent sent %q, want the session's model", got)
 	}
 }

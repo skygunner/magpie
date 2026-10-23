@@ -444,9 +444,8 @@ func isClaudeDesktop(r *http.Request) bool {
 // claude-haiku-… by name for small tasks too.
 //
 // A session's turns carry tools; the model the latest one is for is the one
-// the user picked. A small tool-less request (a title's max_tokens is 200,
-// a turn's tens of thousands) for a model whose id reads as Claude's, and
-// any request for a model magpie doesn't serve, goes to that model instead,
+// the user picked. A tool-less title request for a model whose id reads
+// as Claude's, and any request for a model magpie doesn't serve, goes to that model instead,
 // so a chat the user started on a Claude model of their own stays on it. It is
 // kept on disk, so a title asked for before the first turn after a restart
 // goes there too; before any turn at all it goes to desktopDefault.
@@ -459,8 +458,7 @@ var desktopPicked struct {
 func desktopPickedPath() string { return filepath.Join(settings.Dir(), "claude-desktop.model") }
 
 // desktopTurn is the model a Claude Desktop request for asked is served by.
-// byClaudeCode is a request Claude Code sent (its claude-cli/ User-Agent)
-// rather than Desktop's own client. bySubagent is a subagent's request
+// bySubagent is a subagent's request
 // (x-claude-code-agent-id): its turns carry tools too, but its model is
 // the one its tier or definition asked for, not the user's pick, so it is
 // never kept as the session's model. Before, a subagent on the opus tier's
@@ -470,13 +468,14 @@ func desktopPickedPath() string { return filepath.Join(settings.Dir(), "claude-d
 // Claude Code names the model of each of its own background requests on
 // purpose: its auto mode's safety classifier asks for its sonnet with no
 // tools and a max_tokens of 64 or 256, its notification classifier with
-// 1024 (#1539, tete1030). So a tool-less request from it goes to the
+// 1024 (#1539, tete1030). Desktop also probes credentials with one token
+// and no tools (#2473). A tool-less request from either client goes to the
 // session's model only when it is Desktop's title, which Desktop asks
 // Claude Code for when its own request fails (`claude -p --model <its
 // pick> --system-prompt "You write short session titles…" --tools ""`,
 // sent with max_tokens 64000); one for a model magpie doesn't serve still
 // goes there whoever sent it.
-func desktopTurn(asked string, body []byte, byClaudeCode, bySubagent bool) string {
+func desktopTurn(asked string, body []byte, bySubagent bool) string {
 	if asked == "" {
 		return asked
 	}
@@ -494,11 +493,7 @@ func desktopTurn(asked string, body []byte, byClaudeCode, bySubagent bool) strin
 	if asked == picked {
 		return asked
 	}
-	aside := small(body)
-	if byClaudeCode {
-		aside = desktopTitle(body)
-	}
-	title := !tools && aside && desktopAccepts(asked)
+	title := !tools && desktopTitle(body) && desktopAccepts(asked)
 	gone := unserved(asked)
 	if gone && !title {
 		if m := servedBeside(asked, picked); m != "" {
