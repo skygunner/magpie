@@ -16,7 +16,14 @@
 | M3 | 测试证据/文档修正 | gateway 测试 + docs | relayReply 合法 JSON + G 断言加强 + 无冲突标记 + E/F 链 full SHA | go test ./internal/gateway -run 'TestAgentMessage\|TestChatEndings'; git diff --check | 待做 |
 | M4 | 72 条逐项对账 + 分支归属 | docs/fork/ (dev) | 每项 permalink/SHA/fix_id 可追溯；85+ 远端 heads 归属；指定集合一致 | python3 docs/fork/generate.py（严格校验器） | 待做 |
 | M5 | 校验器负例 + 归档候选规则 | docs/fork/generate.py + JSON | 五类坏数据全拒；火山三层准确；候选 read-only | 校验器 + 负例测试 | 待做 |
-| M6 | 最终回归 + 推送核对 | 全部 | 全量 nogui 串行 + 基线证据 + 推送读回 | go test -tags nogui ./... | 待做 |
+| M6 | 最终回归 + 推送核对 | 全部 | 全量 nogui 串行 + 基线证据 + 推送读回 | go test -tags nogui ./... | 完成（见下） |
+
+### M6 记录（2026-10-24）
+
+- 环境：Linux 6.18 amd64（CachyOS，bash as /bin/sh），go1.26.8（GOTOOLCHAIN），umask 022，Bun 1.4.3，隔离 XDG。Windows/macOS 原生未执行（无环境）；跨平台 build/vet 仅静态检查（三平台过）。真实供应商/真实守护进程未调用。
+- 全量 nogui（r3-batch head 885c1b8b，串行，45m 超时）：**67 包 ok，2 失败**，exit=1。失败＝TestClaudeClientCacheAbsentUnchanged（gateway，#3280）与 TestPluginSOCKSProxy（plugin，#2207）。同环境基线：干净 upstream/main（b437e4ad）上同两测试同样 FAIL——**无新增失败**；"全套全绿"未达成（这两个预存红仍在）。#3284 本轮未复现。
+- 推送读回：r3-batch 885c1b8b、r3-union 275b7a2e、r3-rests d639c8d7、dev——local=remote 全一致。远端 heads 现 89（85+3 r3+1 origin 杂散，见台账分支表）。本轮远端删除 0、无 force-push。
+- 评论草稿：docs/fork/comment-drafts-2026-10-24.md（5 条，覆盖 R1-R4 修正与新 head，未发送）。
 
 # 长程任务计划：为 magpie 上游修复 issue 并推送 PR
 
