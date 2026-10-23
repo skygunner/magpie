@@ -21,13 +21,10 @@ import (
 func TestPluginPickedDecisionModelRoutes(t *testing.T) {
 	up := &decideUp{}
 	pid := besideFake(t, "commandcode-plan", up)
-	// the feed lists chat models only, as the real plan's does
-	p0, err := provider.Find(pid)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, m := range p0.Models {
-		if m == "typesafe/jev" {
+	// the plugin's own feed lists chat models only, as the real plan's
+	// does: the catalog the agents read carries no Jev entry for it
+	for _, e := range provider.Catalog() {
+		if e.ID == pid+"/typesafe/jev" {
 			t.Fatal("the feed already lists typesafe/jev; the fixture must not")
 		}
 	}
@@ -47,12 +44,23 @@ func TestPluginPickedDecisionModelRoutes(t *testing.T) {
 	if err != nil || p.Account == nil || p.Decide != decide {
 		t.Fatalf("re-read: %+v, %v", p, err)
 	}
-	// the picked model is a decider, kept from agents' lists
+	// the picked model is a decider, discoverable in the classifier
+	// picker, kept from agents' lists
 	if _, model, err := provider.RouteDecider(pid + "/typesafe/jev"); err != nil || model != "typesafe/jev" {
 		t.Fatalf("RouteDecider: %q, %v", model, err)
 	}
 	if offered(pid + "/typesafe/jev") {
 		t.Fatal("the decision model is offered to agents")
+	}
+	if !slices.ContainsFunc(provider.Deciders(), func(e provider.Entry) bool { return e.ID == pid+"/typesafe/jev" }) {
+		t.Fatal("Deciders omits the explicitly configured decision model")
+	}
+	p2, err := provider.Find(pid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := p2.Jev(); got != "typesafe/jev" {
+		t.Fatalf("the default decision model is %q, want the explicit pick", got)
 	}
 	s := New()
 	rec := httptest.NewRecorder()

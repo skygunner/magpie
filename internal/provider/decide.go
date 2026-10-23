@@ -101,13 +101,20 @@ func (p Provider) DecidesModel(model string) bool {
 	return jevID(model) || p.DecideVia() == ViaCloudflare && CloudflareClef(model)
 }
 
-// userPicked says the user named model among this provider's own picks
-// while a decision API is set on it: a plugin's plan may list no decision
-// model at all (Command Code's lists 92 chat models, never its Jev), and
-// the pick beside the decide= the user set is the user's word for what
-// that API answers (#3349).
+// decisionShaped says a model id names a model a decision API answers by
+// its shape: a Jev, Bailian's decision model, a Clef.
+func decisionShaped(id string) bool {
+	return jevID(id) || id == BailianDecision || CloudflareClef(id)
+}
+
+// userPicked says the user picked model for this provider's decision API:
+// a decision API is set on it and the pick names a model a decision API
+// answers by shape (a Jev, Bailian's, a Clef). Models are the
+// conversation picks besides — picking glm-5.3-flash says nothing about
+// decisions, whatever endpoints the provider has (#3349 review R2: the
+// picked chat model turned decision-only and left the catalog).
 func (p Provider) userPicked(model string) bool {
-	return p.Decides() && p.IsPlugin() && slices.Contains(p.Models, model)
+	return p.Decides() && p.IsPlugin() && decisionShaped(model) && slices.Contains(p.Models, model)
 }
 
 // isDecision uses a listed remote model's marker without reading its whole
@@ -284,6 +291,18 @@ func (p Provider) Jev() string {
 	if p.IsRemoteMagpie() || p.IsPlugin() {
 		if models := p.decideListed(); len(models) > 0 {
 			return models[0].ID
+		}
+		// and a plugin's model the user picked beside an explicit decide=
+		// is the default: the feed may never name a Jev at all (#3349).
+		// A remote magpie's picks stay picks — its decisions are the ones
+		// its list marks (#3349 review R2's lesson: picks are not a
+		// decision statement)
+		if p.IsPlugin() {
+			for _, m := range p.Models {
+				if m = strings.TrimSpace(m); decisionShaped(m) {
+					return m
+				}
+			}
 		}
 		return ""
 	}
@@ -594,6 +613,22 @@ func deciders(keep func(id string) bool) []Entry {
 		ms := p.Exposed()
 		if !p.DecideOnly() && (len(p.Models) == 0 || p.listsDecisions() || p.bailianApart() || p.IsRemoteMagpie() || p.IsPlugin()) {
 			ms = p.decideModels() // the conversation picker's limit does not hide Jev
+			if p.Decides() {
+				// and a decision model the user picked beside an explicit
+				// decide= joins the picker: the feed may never name one
+				// (Command Code's lists 92 chat models, never its Jev)
+				// (#3349 review R3)
+				have := map[string]bool{}
+				for _, m := range ms {
+					have[m.ID] = true
+				}
+				for _, id := range p.Models {
+					if id = strings.TrimSpace(id); id != "" && !have[id] && p.DecidesModel(id) {
+						have[id] = true
+						ms = append(ms, catalog.Model{ID: id, Name: id})
+					}
+				}
+			}
 			if keep != nil && len(p.Models) > 0 {
 				ms = slices.DeleteFunc(slices.Clone(ms), func(m catalog.Model) bool {
 					return !slices.Contains(p.Models, m.ID) && !keep(p.ID+"/"+m.ID)
