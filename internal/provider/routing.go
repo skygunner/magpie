@@ -499,7 +499,20 @@ func Allowances(agent string) map[string]Allowance {
 			all := map[string]Allowance{}
 			readings, readAt := loginUsageAt(ctx, agent)
 			for user, q := range readings {
-				if q.Error != "" || len(q.Windows) == 0 {
+				if q.Error != "" {
+					continue
+				}
+				if len(q.Windows) == 0 {
+					if q.Balance == "" {
+						continue
+					}
+					// a reading that answered with a balance alone (MiniMax
+					// Code's credits): the account is known, with no window
+					// that stops it — the balance is the Usage page's meter,
+					// and the vendor's own insufficient-balance answer rests
+					// it. Left out here it read as "allowance not known" and
+					// ranked behind those known (#3352).
+					all[user] = Allowance{}
 					continue
 				}
 				all[user] = allowanceOf(q.Windows, time.Now()).restartedBy(resetRunsOut(agent, user, q.Windows, q.Resets))
