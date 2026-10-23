@@ -4,6 +4,45 @@
 > 上游：yetone/magpie（main）；fork：skygunner/magpie。
 > 本文件是活的文档：每个 milestone 完成后更新状态与证据。
 
+## 2026-10-24 返工轮（ZCode 会话四）：六项返工 + 总账
+
+独立审查（公开 refs：fix/issue-batch-1023pm 007b8b9b、union-items b2336968、
+persist-gateway-rests 4d0b0b75、web-signal-shutdown c5334b59、dev 269f6fe8、
+upstream/main 50f52b54）确认了六项缺陷。本轮全部返工，交付树重建于新的
+upstream/main（现场实测已前移至 fa22bc64，含上游新 redact 缓存 sentKnownSpans）：
+
+- **v2 交付树**：`fix/issue-batch-1023pm-v2`（base fa22bc64，15 commits：
+  #3183 两 commit 移植 + 旧批次 7 commit 的 rebase + 返工 6 commit）；
+  `fix/union-items-v2`（base fa22bc64，3 commits：d4e6998f→99d6e6ed→cbc6c3b3）；
+  `fix/persist-gateway-rests-v2`（base fa22bc64，3 commits：047520f0→ae193b86→5035eb0b）。
+  旧分支保留原 SHA 不动（追溯关系），未 force-push、未删除。
+- **A**（9c720bc0）：secretValue 版本/repo 例外改为字段感知——password/api_key 等
+  凭据字段不再因值形似放行（审查三个输入红→绿）。
+- **B**（fde6695f）：learned 资格表——占位密码升级为真实凭据后开始学习；
+  reindexKnown 只重建 learned（审查两条转移红→绿；与上游 sentKnownSpans 缓存
+  共存，测试全用新文本避开缓存假绿）。
+- **C**（683547f0）：账号 picks 的 Decide 不再触发 customIDs/phantom provider
+  （PluginID("cline") 回归红→绿）。
+- **D**（1e7644d1）：显式 picks 的决策模型经 RouteDecider→/v1/systemone 全链
+  （红＝审查报错原文；真实供应商行为仍是报告者的验证，本轮只验本地路由与协议构造）。
+- **E**（cbc6c3b3）：union fold 按最终类型统一清理，["array","object"] 顺序
+  不再漏（红→绿）；依赖 6ae89820→b2336968→本轮修正，旧评论"可独立 cherry-pick"
+  说法错误（草稿待发）。
+- **F**（5035eb0b）：restSlow 落盘（锁释放后 saveRests，审查确认的遗漏）；
+  模拟重启恢复绝对截止时间/原因/状态/次数。
+- **G**（95537ceb）：#3358 正向覆盖——text/tool-call/length/filter 各结束态在
+  /v1/responses（流式+非流式）保持各自语义。
+- **统一**（97a8a0c2）：#3374 的裸 agent_message 改写退役，采纳 #3183 的
+  PlainAgentMessage（保留 From/To 与图片）；组合测试走 /backend-api/codex/responses；
+  sealed 项 400 拒绝（旧测试断言错误已改）。
+- **台账**：docs/fork/upstream-status.json（唯一数据源，19 units）+
+  UPSTREAM_STATUS.md（generate.py 生成，校验重复/缺失 SHA/共享补丁/误归档）+
+  comment-drafts-2026-10-24.md（四条待发草稿，未发送）。火山修复入账：
+  adopted_with_changes@8278fd9b/v0.1.1325；三测试在上游实现上绿（fa22bc64）；
+  fix/volcengine-resets 列归档候选（最早复查 2027-01-23，本轮删除 0 分支）。
+- **验证**：redact 包 67 绿、provider 包 1752 绿、union/rests 的 gateway 包
+  全绿（唯一红 #3280 预存）；三平台 build+vet 过；最终树全量 nogui 见末节。
+
 ## 2026-10-23 午后轮（ZCode 会话三）：巡检 + 新 issue 修复
 
 ### Milestone 日志（本轮）
@@ -43,7 +82,8 @@
   （英文题英文、中文题中文）。
 - **验证纪律执行情况**：每个修复红→绿真实还原验证（三子修复的 #3349 逐项红）；
   gateway/provider/redact 三包全量绿（唯一红 #3280 预存）；三平台 build+vet 干净；
-  全量 `go test -tags nogui ./...` 跑于分支 head（见终验收）。
+  全量 `go test -tags nogui ./...` 跑于分支 head（10-23 当轮记录：69 包 ok +
+  4 个本机已知预存红；10-24 返工轮的复验见下方"2026-10-24 返工轮"）。
 - **不修（附原因）**：#3367/#3357/#3350/#3362（维护者自领）；#3372（报告者准备提 PR）；
   #3361（自带修复分支）；#3337（上游限额行为不定，根因存疑）；#3353（数据局限+
   产品设计）；#3356（复现重、参与历史 rebasing 设计敏感）；#3373（复现条件不明，

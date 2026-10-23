@@ -1,0 +1,776 @@
+{
+  "meta": {
+    "schema": 1,
+    "checked_at": "2026-10-24T03:20:00Z",
+    "last_checked_upstream_sha": "fa22bc64676e230a71b45a40e7fee2ca750bb4dd",
+    "upstream": "yetone/magpie",
+    "fork": "skygunner/magpie",
+    "branch_reviewed_heads": {
+      "fix/issue-batch-1023pm": "007b8b9b7433bc2b7f452f9526ed698a8aa2b49f",
+      "batch_baseline": "0815c91864fb8e912b49249cc0aac23563d32c03",
+      "fix/union-items": "b2336968b0f3076c7bb85c0a32c70cc0e9cb7ef2",
+      "fix/persist-gateway-rests": "4d0b0b7552195bd75a90ef7c22c7d93e3555dd7a",
+      "fix/web-signal-shutdown": "c5334b59a5782b93cca263c28959da735dc69819",
+      "dev": "269f6fe82cc8e460f7bf57ede11ea436002e7164",
+      "upstream_main_at_review": "50f52b540b915bdf5912ddebc48c1fa46eef3025"
+    },
+    "notes": [
+      "A fix unit is one patch with its own verification; one unit may cover several issues, one issue may name one unit.",
+      "Verification states: unverified (only delivered), pass (red-green evidence recorded), pass_upstream (verified inside upstream's release), rework_needed.",
+      "Upstream relations: unconfirmed, adopted_verbatim, adopted_with_changes, partial, independent_alternative, none_yet, in_upstream_history (upstream fixed the same thing on its own).",
+      "Branches are counted separately from units and issues; a batch verification branch carries many units, several branches may carry one unit."
+    ],
+    "pushed_v2": {
+      "fix/issue-batch-1023pm-v2": "95537ceb898a4f947f056af8f832663cc015c83c",
+      "fix/union-items-v2": "cbc6c3b3ddd690d9f845ec2b6438cb3812cd5b12",
+      "fix/persist-gateway-rests-v2": "5035eb0b2cd2bec737419df50ed89a9164778421"
+    },
+    "pushed_at": "2026-10-24"
+  },
+  "units": [
+    {
+      "id": "u-volcengine-resets",
+      "issues": [
+        "3251",
+        "3276"
+      ],
+      "category": "product",
+      "title": "Volcengine/Ark reset times (+0800 CST) unread by resetsWhen; monthly trust window",
+      "coverage": "Layer 1 only: offset parsing and the monthly 35-day trust window. Layer 2 of #3251 (AccessKey plan windows into routing) is NOT implemented and remains open upstream.",
+      "branch": "fix/volcengine-resets",
+      "base": "87d703c5c263de0293091d95200cc02f741b1a47",
+      "commits": [
+        "e6c2b6fb64902d2d0dc4613a1d98f9711a1939f3"
+      ],
+      "comments": {
+        "3251": "https://github.com/yetone/magpie/issues/3251#issuecomment-6342260029",
+        "3276": "https://github.com/yetone/magpie/issues/3276#issuecomment-6342270787"
+      },
+      "verify": {
+        "state": "pass_upstream",
+        "evidence": "2026-10-24, this machine: TestResetsWritten, TestMonthlyWrittenResetRestsTheMonth, TestResetsZhipu all pass on upstream/main fa22bc64 (which carries 8278fd9b) — running upstream's narrowed implementation and its own tests, not replaying the fork's e6c2b6fb. Historical: fork red-green 10-22 (TestResetsWritten ark case + TestMonthlyWrittenResetRestsTheMonth); reporter CNife confirmed the fix live 10-23 (#3251 comment); #3276 closed completed.",
+        "env": "Linux, go1.26.8"
+      },
+      "upstream": {
+        "status": "adopted_with_changes",
+        "commit": "8278fd9b0ce1083e71ae4651bce5d138f940d95e",
+        "release": "v0.1.1325",
+        "changes": "Upstream narrowed resetsWhen to Go default-time formats only, opened the rest cap only for monthly wording with by=resets, and added a Zhipu monthly path. The fork's broader regex was superseded; do not replay e6c2b6fb over it.",
+        "evidence": [
+          "https://github.com/yetone/magpie/commit/8278fd9b0ce1083e71ae4651bce5d138f940d95e",
+          "https://github.com/yetone/magpie/issues/3276#issuecomment-6356521288",
+          "https://github.com/yetone/magpie/releases/tag/v0.1.1325"
+        ]
+      },
+      "issue_state": {
+        "3276": "closed-completed, reporter confirmed",
+        "3251": "open — layer 2 remains"
+      },
+      "archive": {
+        "candidate": true,
+        "reason": "scope adopted upstream with release; no unique outstanding change; layer 2 tracked in the ledger, not on this branch",
+        "earliest_review": "2027-01-23",
+        "conditions": "no active dependent branches; evidence recorded here"
+      }
+    },
+    {
+      "id": "u-shared-session-folder",
+      "issues": [
+        "3258",
+        "3255"
+      ],
+      "category": "product",
+      "title": "Two agents sharing one folder under different spellings read twice (pi/omp, qoder/qoder-cn)",
+      "coverage": "The two spelled pairs; #3255's exactly-identical path case was already covered by upstream 572a1757 (distinctPaths).",
+      "branch": "fix/shared-session-folder",
+      "base": "be002aca",
+      "commits": [
+        "4c3d6e26"
+      ],
+      "comments": {
+        "3258": "https://github.com/yetone/magpie/issues/3258#issuecomment-6342495758",
+        "3255": "https://github.com/yetone/magpie/issues/3255#issuecomment-6342498748"
+      },
+      "verify": {
+        "state": "pass",
+        "evidence": "TestSharedFolderReadOnce red->green 10-22; full nogui suite ok",
+        "env": "Linux, go1.26.8"
+      },
+      "upstream": {
+        "status": "none_yet"
+      },
+      "archive": {
+        "candidate": false
+      }
+    },
+    {
+      "id": "u-null-tool-calls",
+      "issues": [
+        "3259"
+      ],
+      "category": "product",
+      "title": "mimo: tool_calls:null treated as a call happened",
+      "coverage": "chattidy null==[] parity.",
+      "branch": "fix/null-tool-calls",
+      "base": "be002aca",
+      "commits": [
+        "d2abf49"
+      ],
+      "comments": {
+        "3259": "https://github.com/yetone/magpie/issues/3259#issuecomment-6342839037"
+      },
+      "verify": {
+        "state": "pass",
+        "evidence": "TestChatTidyNullToolCalls red->green 10-22; full nogui suite ok",
+        "env": "Linux, go1.26.8"
+      },
+      "upstream": {
+        "status": "none_yet"
+      },
+      "archive": {
+        "candidate": false
+      }
+    },
+    {
+      "id": "u-account-rest-cap",
+      "issues": [
+        "3076",
+        "3176"
+      ],
+      "category": "product",
+      "title": "rest-cap/quotaRest set on a subscription provider dropped (withPicks)",
+      "coverage": "The three fields carried onto accounts and AlsoOn.",
+      "branch": "fix/account-rest-cap",
+      "base": "87d703c5",
+      "commits": [
+        "c41b6febc30d8a2f0451a2be50e1778e0868de80"
+      ],
+      "comments": {
+        "3076": "https://github.com/yetone/magpie/issues/3076#issuecomment-6343065990",
+        "3176": "https://github.com/yetone/magpie/issues/3176#issuecomment-6343065990"
+      },
+      "verify": {
+        "state": "pass",
+        "evidence": "TestAccountKeepsItsRests red->green 10-22; validated by ggbdpq 10-22 (issue comment) as equivalent to his hunt53-d-restcap",
+        "env": "Linux, go1.26.8"
+      },
+      "upstream": {
+        "status": "none_yet"
+      },
+      "archive": {
+        "candidate": false
+      }
+    },
+    {
+      "id": "u-unknown-model-sent-id",
+      "issues": [
+        "3150"
+      ],
+      "category": "product",
+      "title": "404 for unknown auto model reports the id the client sent, not a synthetic one",
+      "branch": "fix/unknown-model-sent-id",
+      "base": "be002aca",
+      "commits": [
+        "38444c2d"
+      ],
+      "comments": {
+        "3150": "https://github.com/yetone/magpie/issues/3150#issuecomment-6343065990"
+      },
+      "verify": {
+        "state": "pass",
+        "evidence": "TestUnknownModelNamesTheIdSent red->green 10-22",
+        "env": "Linux, go1.26.8"
+      },
+      "upstream": {
+        "status": "none_yet",
+        "note": "competing branch tahodev:fix-3150-sent-model-id exists upstream-side; not absorbed"
+      },
+      "archive": {
+        "candidate": false
+      }
+    },
+    {
+      "id": "u-union-items",
+      "issues": [
+        "3121",
+        "3173",
+        "3370"
+      ],
+      "category": "product",
+      "title": "Antigravity schema unions beside items/properties; fold order-independent",
+      "coverage": "#3121 reporter's [\"string\",\"array\"] shape; #3173 LIMITED shape coverage — the reporter's full 309-tool schema was never obtained, and the plain items.oneOf example was already correct before; only nested type-lists on the same path were tested. #3370 object-half keyword cleanup, both member orders.",
+      "branch": "fix/union-items",
+      "base": "0815c918",
+      "commits": [
+        "6ae89820",
+        "b2336968"
+      ],
+      "branch_v2": "fix/union-items-v2",
+      "base_v2": "fa22bc64676e230a71b45a40e7fee2ca750bb4dd",
+      "commits_v2": [
+        "d4e6998f",
+        "99d6e6ed",
+        "cbc6c3b3"
+      ],
+      "comments": {
+        "3121": "https://github.com/yetone/magpie/issues/3121#issuecomment-6343065990",
+        "3173": "https://github.com/yetone/magpie/issues/3173#issuecomment-6343065990",
+        "3370": "https://github.com/yetone/magpie/issues/3370#issuecomment-6363745685"
+      },
+      "comment_corrections": [
+        "#3370 comment said both commits cherry-pick independently — false: b2336968 does not apply to pre-#3121 mains. Dependency is 6ae89820 -> b2336968 -> cbc6c3b3 equivalent."
+      ],
+      "verify": {
+        "state": "pass",
+        "evidence": "union-items-v2 cbc6c3b3: TestPlainSchemaUnionFoldIsOrderIndependent red->green (order [array,object] failed before), family green; schema-output only, no real Antigravity call",
+        "env": "Linux, go1.26.8"
+      },
+      "upstream": {
+        "status": "none_yet",
+        "note": "#3173 closed upstream before our comment; closed state is NOT evidence of adoption"
+      },
+      "archive": {
+        "candidate": false
+      }
+    },
+    {
+      "id": "u-queue-model-rest",
+      "issues": [
+        "3213"
+      ],
+      "category": "product",
+      "title": "Per-model queue 503 rests the model+account, not the whole account",
+      "branch": "fix/queue-model-rest",
+      "base": "be002aca->50eac57f (rebased 10-23)",
+      "commits": [
+        "50eac57f"
+      ],
+      "comments": {
+        "3213": "https://github.com/yetone/magpie/issues/3213#issuecomment-6343670538"
+      },
+      "verify": {
+        "state": "pass",
+        "evidence": "TestQueuedModelRestsAlone red->green 10-23 rebase; full nogui ok",
+        "env": "Linux, go1.26.8"
+      },
+      "upstream": {
+        "status": "none_yet"
+      },
+      "archive": {
+        "candidate": false
+      }
+    },
+    {
+      "id": "u-qoder-ide-code",
+      "issues": [
+        "3148"
+      ],
+      "category": "product",
+      "title": "Qoder IDE detected as both VS Code and Qoder",
+      "coverage": "vscodeCodeBinary exclusion using reporter-provided product.json values.",
+      "branch": "fix/qoder-ide-code",
+      "base": "origin/main 10-23",
+      "commits": [
+        "4aa39dbf"
+      ],
+      "comments": {
+        "3148": "https://github.com/yetone/magpie/issues/3148#issuecomment-6342963529 (initial ask) and #issuecomment-6348218520 (delivery)"
+      },
+      "verify": {
+        "state": "pass",
+        "evidence": "red->green with real code control group; internal/agent ok",
+        "env": "Linux, go1.26.8"
+      },
+      "upstream": {
+        "status": "none_yet"
+      },
+      "archive": {
+        "candidate": false
+      }
+    },
+    {
+      "id": "u-batch-1023am",
+      "issues": [
+        "2259",
+        "2287",
+        "2323",
+        "2389",
+        "2460",
+        "2473",
+        "2530",
+        "2923",
+        "2953",
+        "3020",
+        "3035",
+        "3062",
+        "3097",
+        "3100",
+        "3139",
+        "3141",
+        "3152",
+        "3153",
+        "3165",
+        "3183",
+        "3193",
+        "3197",
+        "3205",
+        "3224",
+        "3233",
+        "3234",
+        "3260",
+        "3266",
+        "3277",
+        "3280",
+        "3282",
+        "3284",
+        "3285",
+        "3289",
+        "3302",
+        "3306",
+        "3311"
+      ],
+      "category": "mixed",
+      "title": "10-22/10-23 batch verification chains (fix/issue-batch-20261023*, shared stack)",
+      "coverage": "Each issue's fix is its own commit inside the shared verification stack; see the branch map for which branch head carries which tail commit. Sources: 2530/3141/3152/3153/3165/3193/3205/3224 adopt other authors' patches with Co-authored-by preserved; 3020/3183 verified by ggbdpq upstream-side.",
+      "branch": "fix/issue-batch-20261023* (chain heads; see branches map)",
+      "base": "7aad6a50 (and later merges of upstream main)",
+      "commits": [
+        "see branches map — every unit's commit is the tail of its named branch or named in the issue comment"
+      ],
+      "comments": {
+        "see": "each unit's issue comment permalink in the branch map"
+      },
+      "verify": {
+        "state": "pass",
+        "evidence": "per-commit red-green recorded in commit bodies; ggbdpq independently verified ~20 of the adapted branches 10-23 (cherry-pick + ablation) with no rework requested",
+        "env": "Linux, go1.26.8, umask 022"
+      },
+      "upstream": {
+        "status": "none_yet",
+        "note": "0 skygunner co-authored commits in upstream 0815c918..fa22bc64"
+      },
+      "archive": {
+        "candidate": false,
+        "reason": "batch branches carry unabsorbed units; per-branch candidacy only after all their units resolve"
+      }
+    },
+    {
+      "id": "u-3339-disabled-models",
+      "issues": [
+        "3339",
+        "3027"
+      ],
+      "category": "product",
+      "title": "Antigravity -disabled placeholder ids left out of the model list",
+      "branch": "fix/issue-batch-1023pm (old head)",
+      "base": "0815c918",
+      "commits": [
+        "8b4ecbac"
+      ],
+      "branch_v2": "fix/issue-batch-1023pm-v2",
+      "base_v2": "fa22bc64676e230a71b45a40e7fee2ca750bb4dd",
+      "commits_v2": [
+        "fbaa9a67"
+      ],
+      "comments": {
+        "3339": "https://github.com/yetone/magpie/issues/3339#issuecomment-6364113316",
+        "3027": "https://github.com/yetone/magpie/issues/3027#issuecomment-6364113600"
+      },
+      "verify": {
+        "state": "pass",
+        "evidence": "TestAntigravityDisabledSuffixNotOffered red->green; tier tests unchanged",
+        "env": "Linux, go1.26.8"
+      },
+      "upstream": {
+        "status": "none_yet"
+      },
+      "archive": {
+        "candidate": false
+      }
+    },
+    {
+      "id": "u-3374-agent-message-relay",
+      "issues": [
+        "3374"
+      ],
+      "category": "product",
+      "title": "Codex subagent task in agent_message reaches Responses-API key providers",
+      "coverage": "Superseded mechanism: the delivered 67b57000 bare rewrite is retired in favor of #3183's PlainAgentMessage reading (97a8a0c2), which keeps author/recipient and images. #3183's own two commits (b1ae66c7 request+reply sides, eae195b1 Copilot native) remain the product path; this unit's remaining value is the composition test through /backend-api/codex/responses.",
+      "branch": "fix/issue-batch-1023pm (old head)",
+      "base": "0815c918",
+      "commits": [
+        "67b57000"
+      ],
+      "branch_v2": "fix/issue-batch-1023pm-v2",
+      "base_v2": "fa22bc64",
+      "commits_v2": [
+        "34dcacff (3183)",
+        "a77f4eba (3183 copilot)",
+        "c2602273 (3374, superseded mechanism)",
+        "97a8a0c2 (retirement + composition tests)"
+      ],
+      "comments": {
+        "3374": "https://github.com/yetone/magpie/issues/3374#issuecomment-6364109042"
+      },
+      "comment_corrections": [
+        "#3374 comment describes the bare-rewrite shape (no From/To lead); the v2 tree keeps that information instead. Draft correction prepared, not sent."
+      ],
+      "verify": {
+        "state": "pass",
+        "evidence": "v2 97a8a0c2: TestAgentMessageRelaysAsUserTurn (From/To lead + task text through /backend-api/codex/responses), TestSealedAgentMessageIsRefusedNotForwarded (400 sealed, 0 upstream calls)",
+        "env": "Linux, go1.26.8"
+      },
+      "upstream": {
+        "status": "none_yet"
+      },
+      "archive": {
+        "candidate": false
+      }
+    },
+    {
+      "id": "u-3352-balance-only",
+      "issues": [
+        "3352"
+      ],
+      "category": "product",
+      "title": "Balance-only usage readings know the account",
+      "branch": "fix/issue-batch-1023pm (old head)",
+      "base": "0815c918",
+      "commits": [
+        "4fb09e6b"
+      ],
+      "branch_v2": "fix/issue-batch-1023pm-v2",
+      "base_v2": "fa22bc64",
+      "commits_v2": [
+        "6e3c2bd1"
+      ],
+      "comments": {
+        "3352": "https://github.com/yetone/magpie/issues/3352#issuecomment-6364210763"
+      },
+      "verify": {
+        "state": "pass",
+        "evidence": "live + persisted path red-green",
+        "env": "Linux, go1.26.8"
+      },
+      "upstream": {
+        "status": "none_yet"
+      },
+      "archive": {
+        "candidate": false
+      }
+    },
+    {
+      "id": "u-3349-decide",
+      "issues": [
+        "3349"
+      ],
+      "category": "product",
+      "title": "decide= on signed-in/plugin providers persists and routes the picked decision model",
+      "coverage": "v2 completes the loop: field saved (b2497dd8-equivalent), identity stable (683547f0), plugin's own declared decide kept when no override (1fb9a44e-equivalent), and RouteDecider/SystemOne answer the explicitly picked model end to end (1e7644d1). Real Command Code endpoint behavior was the reporter's own live-API verification; ours is local routing and protocol construction only.",
+      "branch": "fix/issue-batch-1023pm (old head)",
+      "base": "0815c918",
+      "commits": [
+        "b2497dd8",
+        "007b8b9b"
+      ],
+      "branch_v2": "fix/issue-batch-1023pm-v2",
+      "base_v2": "fa22bc64",
+      "commits_v2": [
+        "26500e21",
+        "1fb9a44e",
+        "683547f0",
+        "1e7644d1"
+      ],
+      "comments": {
+        "3349": "https://github.com/yetone/magpie/issues/3349#issuecomment-6364310053 and follow-up #issuecomment-6364831515"
+      },
+      "comment_corrections": [
+        "The first #3349 comment implied the route closed end-to-end; the v2 work shows RouteDecider still refused the picked model. Draft correction prepared, not sent."
+      ],
+      "verify": {
+        "state": "pass",
+        "evidence": "v2: TestAccountKeepsItsDecide, TestAccountDecideStaysOffCustomIDs (PluginID stable), TestPluginPickedDecisionModelRoutes (save->reread->RouteDecider->/v1/systemone through the plugin fetch: path, model, Bearer k1; red = the review's exact error text)",
+        "env": "Linux, go1.26.8"
+      },
+      "upstream": {
+        "status": "none_yet"
+      },
+      "archive": {
+        "candidate": false
+      }
+    },
+    {
+      "id": "u-3365-redact",
+      "issues": [
+        "3365"
+      ],
+      "category": "product",
+      "title": "redact: credential fields keep version-shaped values; placeholder passwords learn when real; reindex keeps learning state",
+      "coverage": "v2: field-aware exemption (A), learned-eligibility upgrade + rebuild survival (B), both against upstream's sentKnownSpans cache (50f52b54) with fresh texts at every step.",
+      "branch": "fix/issue-batch-1023pm (old head)",
+      "base": "0815c918",
+      "commits": [
+        "4b6d93d9"
+      ],
+      "branch_v2": "fix/issue-batch-1023pm-v2",
+      "base_v2": "fa22bc64",
+      "commits_v2": [
+        "91bbe995 (original)",
+        "9c720bc0 (A)",
+        "fde6695f (B)"
+      ],
+      "comments": {
+        "3365": "https://github.com/yetone/magpie/issues/3365#issuecomment-6364536473"
+      },
+      "verify": {
+        "state": "pass",
+        "evidence": "A: TestCredentialFieldsKeepVersionShapedSecrets red (n=0 as-written) then green; B: TestPlaceholderPasswordLearnsWhenReal + TestReindexKeepsLearningState red->green; TestSentTextKeepsItsMasking and TestMaskedConversationKeepsItsCachedPrefix green unchanged; whole redact package green",
+        "env": "Linux, go1.26.8"
+      },
+      "upstream": {
+        "status": "none_yet"
+      },
+      "archive": {
+        "candidate": false
+      }
+    },
+    {
+      "id": "u-3358-empty-chat-reply",
+      "issues": [
+        "3358"
+      ],
+      "category": "product",
+      "title": "An ordinary Chat upstream that says nothing fails the reply, not the turn",
+      "coverage": "emptyFails += Chat with title-ask exemption; v2 adds the translated route's positive controls (text, tool call, length, filter; streamed and not).",
+      "branch": "fix/issue-batch-1023pm (old head)",
+      "base": "0815c918",
+      "commits": [
+        "600fa01c"
+      ],
+      "branch_v2": "fix/issue-batch-1023pm-v2",
+      "base_v2": "fa22bc64",
+      "commits_v2": [
+        "28c6dcab",
+        "95537ceb (controls)"
+      ],
+      "comments": {
+        "3358": "https://github.com/yetone/magpie/issues/3358#issuecomment-6364831214"
+      },
+      "verify": {
+        "state": "pass",
+        "evidence": "TestChatEmptyReplyIsAnError red->green; TestChatEndingsKeepTheirSemanticsThroughResponses green; gateway package green except known #3280",
+        "env": "Linux, go1.26.8"
+      },
+      "upstream": {
+        "status": "none_yet"
+      },
+      "archive": {
+        "candidate": false
+      }
+    },
+    {
+      "id": "u-web-signal-shutdown",
+      "issues": [
+        "1258",
+        "3285"
+      ],
+      "category": "product+test",
+      "title": "magpie web exits cleanly on SIGTERM/SIGINT (ported PR 1258) + plugin host reaped before reexec",
+      "coverage": "Port of AmAzing129's PR #1258 with Co-authored-by preserved; #3285 is our own; the fixture cleanup commit is test-only.",
+      "branch": "fix/web-signal-shutdown",
+      "base": "upstream/main at rebuild",
+      "commits": [
+        "44d850d8 (3285)",
+        "eb890865 (fixtures)",
+        "c5334b59 (signals; port of 8d5523f2)"
+      ],
+      "comments": {
+        "1258": "https://github.com/yetone/magpie/issues/1258#issuecomment-6342434515 (initial) and #issuecomment-6364361000 (rebuilt heads)",
+        "3285": "https://github.com/yetone/magpie/issues/3285 (delivery comment)"
+      },
+      "verify": {
+        "state": "pass",
+        "evidence": "rebuild 10-23: cli signal/web family 22 tests + TestWebReexecReapsPluginHost green on Linux; three injected regressions red as designed (original verification)",
+        "env": "Linux, go1.26.8"
+      },
+      "upstream": {
+        "status": "none_yet"
+      },
+      "archive": {
+        "candidate": false
+      }
+    },
+    {
+      "id": "u-persist-gateway-rests",
+      "issues": [
+        "2008"
+      ],
+      "category": "product",
+      "title": "Gateway rest deadlines persist across restarts; save errors reported; slow rests reach the ledger",
+      "branch": "fix/persist-gateway-rests",
+      "base": "upstream/main at rebuild",
+      "commits": [
+        "2fc84b93->047520f0",
+        "fcb0767a->ae193b86"
+      ],
+      "branch_v2": "fix/persist-gateway-rests-v2",
+      "base_v2": "fa22bc64",
+      "commits_v2": [
+        "047520f0",
+        "ae193b86",
+        "5035eb0b (restSlow saves)"
+      ],
+      "comments": {
+        "2008": "https://github.com/yetone/magpie/issues/2008#issuecomment-6342455591 (initial) and #issuecomment-6364369875 (rebuilt heads)"
+      },
+      "verify": {
+        "state": "pass",
+        "evidence": "v2 5035eb0b: TestSlowRestReachesTheLedger red (no rests file) -> green (absolute deadline, reason, status, failures, model restored after simulated restart); TestQuotaRestSurvivesGatewayRestart, TestSlowStartsRestTheModelOnItsAccount green",
+        "env": "Linux, go1.26.8"
+      },
+      "upstream": {
+        "status": "none_yet"
+      },
+      "archive": {
+        "candidate": false
+      }
+    },
+    {
+      "id": "u-test-fixes-1022",
+      "issues": [
+        "2207",
+        "3095",
+        "3100",
+        "3174",
+        "3229",
+        "3277",
+        "3280",
+        "3284",
+        "3311"
+      ],
+      "category": "test",
+      "title": "Test/CI fixes: socks-proxy Bun 1.4.3, hold under load, sign-in race, credential cache, gui timing x3, sh-echo portability (filed by us: #3280, #3284), panel log isolation",
+      "branch": "various (fix/socks-proxy-test, fix/hold-test-expiry, fix/signin-plugin-hook-race, fix/claude-signin-test-cache, fix/quota-picker-save-test, fix/codex-subagent-story-test, fix/claude-harness-bytes, fix/opencode-session-test, fix/panel-test-request-isolation)",
+      "base": "various",
+      "commits": [
+        "d16f32c (2207)",
+        "665af242 (3095)",
+        "f85bd166 (3100)",
+        "873c5dfd (3174)",
+        "cebfc283+9f7ada4f (3229/3233)",
+        "435c03ac (3277)",
+        "ef857324 (3280)",
+        "30b23a3f (3284)",
+        "4671590d (3311)"
+      ],
+      "comments": {
+        "2207": "#issuecomment-6342434515-family, see branch map",
+        "3280": "filed by us with bisect",
+        "3284": "filed by us"
+      },
+      "verify": {
+        "state": "pass",
+        "evidence": "each red->green recorded in its commit body; several verified by ggbdpq",
+        "env": "Linux, go1.26.8"
+      },
+      "upstream": {
+        "status": "none_yet"
+      },
+      "archive": {
+        "candidate": false
+      }
+    },
+    {
+      "id": "u-ported-prs",
+      "issues": [
+        "1072",
+        "1073"
+      ],
+      "category": "product",
+      "title": "Ports of TryWorld2026's open PRs #1072/#1073 onto current main",
+      "branch": "fix/issue-batch-20261023-x and -y (chain tails)",
+      "base": "chain",
+      "commits": [
+        "bcdee087 (1072)",
+        "0644f6fc-era 1073 port"
+      ],
+      "comments": {
+        "1072": "https://github.com/yetone/magpie/issues/1072 (comment)",
+        "1073": "https://github.com/yetone/magpie/issues/1073 (comment)"
+      },
+      "verify": {
+        "state": "unverified",
+        "evidence": "delivered on chain; no per-unit regression test cited — treat as unverified until re-checked"
+      },
+      "upstream": {
+        "status": "none_yet"
+      },
+      "archive": {
+        "candidate": false
+      }
+    }
+  ],
+  "pointed_elsewhere": [
+    {
+      "issues": [
+        "2949"
+      ],
+      "note": "upstream already fixed: b641868e (TestHeldClock zone)",
+      "comment": "https://github.com/yetone/magpie/issues/2949 (comment)"
+    },
+    {
+      "issues": [
+        "3143",
+        "3144"
+      ],
+      "note": "upstream already fixed: 88119d4f",
+      "comment": "https://github.com/yetone/magpie/issues/3143 (comment)"
+    },
+    {
+      "issues": [
+        "3151"
+      ],
+      "note": "upstream already fixed: e6568888",
+      "comment": "https://github.com/yetone/magpie/issues/3151 (comment)"
+    },
+    {
+      "issues": [
+        "3255"
+      ],
+      "note": "upstream 572a1757 covers identical-path case (v0.1.1320); different-spelling pairs remain our u-shared-session-folder",
+      "comment": "https://github.com/yetone/magpie/issues/3255#issuecomment-6342498748"
+    },
+    {
+      "issues": [
+        "3345"
+      ],
+      "note": "same bug as #2932, fixed in v0.1.1320 (572a1757); reporter tested only to 1319",
+      "comment": "https://github.com/yetone/magpie/issues/3345#issuecomment-6363786237"
+    },
+    {
+      "issues": [
+        "3131"
+      ],
+      "note": "belongs to the community plugins repo (magpie-community/plugins); pointed there",
+      "comment": "https://github.com/yetone/magpie/issues/3131#issuecomment-6343065990"
+    },
+    {
+      "issues": [
+        "3147"
+      ],
+      "note": "waiting on reporter for conversations/*.db sample; no fix attempted",
+      "comment": "https://github.com/yetone/magpie/issues/3147#issuecomment-6343065990"
+    }
+  ],
+  "branches": "SEE branches.json generated from git — mapping below in UPSTREAM_STATUS.md",
+  "archive_policy": {
+    "candidate_rule": "All units of the branch adopted/superseded AND verified AND released (where release-verifiable) AND no unique outstanding change AND no active dependent; earliest review 90 days after the confirming evidence. Candidacy is not deletion; deletion needs an explicit instruction, an annotated archive tag or bundle first.",
+    "candidates_now": [
+      "fix/volcengine-resets (u-volcengine-resets adopted_with_changes, released v0.1.1325, #3276 closed-completed; #3251 layer 2 tracked in ledger not on branch)"
+    ],
+    "never": [
+      "origin (fork mirror of upstream main)",
+      "dev (maintenance/PLAN)"
+    ]
+  }
+}
