@@ -657,7 +657,7 @@ func allProviders() []Provider {
 		// an account's stored entry is its picks even when it names a
 		// decision API (hasEndpoint counts one): the entry would else
 		// stand in for the sign-in (#3349)
-		if _, isAcct := find(accts, p.ID); isAcct || !hasEndpoint(p) {
+		if _, isAcct := find(accts, p.ID); isAcct || !hasEndpoint(p) || accountPicksEntry(p) {
 			picks[p.ID] = p
 			continue
 		}
