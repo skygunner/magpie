@@ -982,6 +982,14 @@ func (g googleAccount) modelInfo(ctx context.Context) ([]googleModelInfo, error)
 				internal = append(internal, id)
 				continue
 			}
+			if strings.HasSuffix(id, "-disabled") {
+				// an id this account's tier only holds as switched off
+				// (gemini-4-argon-disabled): its own name answers nothing
+				// — every request to it a NOT_FOUND (#3027, #3339) — so
+				// it is left out, not offered to pick
+				disabled = append(disabled, id)
+				continue
+			}
 			if m.Disabled {
 				disabled = append(disabled, id) // still listed, as before
 			}
