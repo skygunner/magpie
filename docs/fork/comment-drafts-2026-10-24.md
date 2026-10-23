@@ -1,27 +1,32 @@
-# Comment drafts — corrections to earlier upstream comments (NOT SENT)
+# Comment drafts — corrections after the second independent review (NOT SENT)
 
-Prepared 2026-10-24. These are held for later sending when the v2 heads
-are pushed and confirmed; nothing here has been posted. Each names the
-comment it corrects.
+Prepared 2026-10-24, round 3. Supersedes the earlier draft file where they
+overlap. Nothing here has been posted; the r3 heads named below are pushed
+and read back. Permalinks of the comments being corrected are kept.
 
 ---
 
-## Draft 1 — issue #3349 (decide= on plugin providers)
+## Draft 1 — issue #3365 (redact overreach), correcting #issuecomment-6364536473
 
-> Correction to [my earlier comment](https://github.com/yetone/magpie/issues/3349#issuecomment-6364310053): that fix stopped at the field. With `decide=` saved, `RouteDecider("commandcode-plan/typesafe/jev")` still answered `typesafe/jev is not a model of Command Code Plan` — a plugin's decision models were only the ones its feed marks, and the plan's feed lists 92 chat models and never its Jev, which is the shape of this issue.
+> Correction to [my earlier comment](https://github.com/yetone/magpie/issues/3365#issuecomment-6364536473): that fix was not complete. The second review's 24-case matrix (8 credential-ish field names × Mask / MaskJSON message / MaskJSON tool-file-content) showed hyphenated names (api-key, x-api-key, access-key, private-key), compound tokens (access_token, refresh_token) and values inside JSON-escaped tool content still taking the version/repo exceptions — `{"x-api-key":"Rq308c7/bT2mN4z"}` went out as written.
 >
-> The completed fix (branch `fix/issue-batch-1023pm-v2`, commits `683547f0` identity, `1e7644d1` route): the model a user picks beside an explicit `decide=` on a plugin is answered as picked — `userPicked` requires both the decision API set and the model named in the picks, so nothing else opens. The end-to-end test runs the plan's shape on the plugin fixture: save → re-read (identity stable) → `RouteDecider` → `POST /v1/systemone` reaching the plan's host at `/provider/v1/systemone` with the picked model and the account's Bearer. Local routing and protocol construction only; the live-API behavior was the reporter's own verification.
+> Fixed on `r3-batch` (a0b2faa8): the exception reads the field's name the way the ID rules already do (`fieldNameWords`/`nameWords`), and only fields that do not name a credential outright take it — `strongCredential`: password/passwd/pwd/secret/credential outright; a compound key or token when its kind word says so (api, access, private, auth…). versionToken, tokenspeed-* and a bare `key` keep the exceptions, as the issue requires. The 24/24 matrix, the original three inputs and the benign samples are green in the delivered tests.
 
-## Draft 2 — issue #3370 (union type + items)
+## Draft 2 — issue #3349 (decide= on plugin providers), correcting #issuecomment-6364310053 and #issuecomment-6364831515
 
-> Correction to [my earlier comment](https://github.com/yetone/magpie/issues/3370#issuecomment-6363745685): the claim that both commits cherry-pick independently is wrong — `b2336968` does not apply to a main without `6ae89820` (#3121's fix); the dependency is `6ae89820 → b2336968`. The review also found the cleanup only ran when the fold lifted another type to array, so `["array","object"]` beside both halves' keywords kept `properties`/`minProperties`/`maxProperties` on the array.
+> Two corrections to the earlier comments, both from the second review:
 >
-> Branch `fix/union-items-v2` carries the whole chain rebased: `d4e6998f` (= 6ae89820) → `99d6e6ed` (= b2336968) → `cbc6c3b3` (fold cleans by the type it ends, either order), with `TestPlainSchemaUnionFoldIsOrderIndependent` red on the `["array","object"]` order before `cbc6c3b3`. Schema-output testing only; the real Antigravity predicate was not called.
+> 1. The route was not the whole story — `Deciders()`/`OfferedDeciders()` and `Jev()` still read only what the plugin's feed marks, so the explicitly configured Jev was routable but undiscoverable and not a default. Fixed on `r3-batch` (5b4e0d5f-equivalent, now `1e7644d1`-lineage rebased): a decision-shaped pick beside an explicit `decide=` joins the pickers and is the default. The route test now asserts discovery and the default beside the request path, and checks the feed through the catalog rather than the picks slice.
+> 2. The pick-acceptance rule was too wide: any `Models` member counted, so selecting an ordinary chat model on a provider with a `decide=` reclassified it (`cline-pass/glm-5.3-flash` left the catalog). A pick now has to name a model a decision API answers by shape (a Jev, Bailian's, a Clef); chat picks stay chat. And an account's stored entry is told from an independent provider by its key (an independent provider carries one even when its name is left out), so the identity fix no longer hides hand-written decision providers.
 
-## Draft 3 — issue #3374 (agent_message relay)
+## Draft 3 — issue #3370 (union type + items), correcting #issuecomment-6363745685
 
-> Correction to [my earlier comment](https://github.com/yetone/magpie/issues/3374#issuecomment-6364109042): the bare rewrite described there has been retired in favor of the same request path's richer reading (#3183's `PlainAgentMessage`), which keeps what the bare form dropped — the `From <author> to <recipient>` lead and image parts. The composition test runs the reporter's pair through `/backend-api/codex/responses` onto a key Responses provider and asserts the From/To lead and the task text; a sealed `agent_message` is refused 400 (sealed-task explanation) and reaches no upstream. Branch `fix/issue-batch-1023pm-v2`, commit `97a8a0c2`.
+> Correction to [my earlier comment](https://github.com/yetone/magpie/issues/3370#issuecomment-6363745685): the claim that both commits cherry-pick independently was wrong — the hardening needs #3121's fold beneath it. The review also found the cleanup only ran when the fold lifted another type to array, so `["array","object"]` beside both halves' keywords kept the object keywords. Branch `r3-union` carries the whole chain rebased (`d4e6998f` → `99d6e6ed` → `cbc6c3b3`), with the order-independence test red on the parent and green on the head. Schema-output testing only; the real Antigravity predicate was not called.
 
-## Draft 4 — issue #2008 (rest persistence)
+## Draft 4 — issue #3374 (agent_message relay), correcting #issuecomment-6364109042
 
-> Addition to [my earlier comment](https://github.com/yetone/magpie/issues/2008#issuecomment-6364369875): the review found `restSlow` wrote the rest into memory and never saved it, so a Why=slow, Status=504 rest was gone after a restart. Fixed on `fix/persist-gateway-rests-v2` (`5035eb0b`): the save runs after the lock is let go, as every other rest write does; `TestSlowRestReachesTheLedger` forms the rest through the real slow-start flow, then restores its absolute deadline, reason, status, failure count and model from the ledger after a simulated restart. No real daemon was restarted.
+> Correction to [my earlier comment](https://github.com/yetone/magpie/issues/3374#issuecomment-6364109042): the bare rewrite described there has been retired in favor of the same request path's richer reading (#3183's `PlainAgentMessage`), which keeps the `From <author> to <recipient>` lead and image parts that the bare form dropped. The composition test runs the reporter's pair through `/backend-api/codex/responses` onto a key Responses provider and asserts the lead and the task text; a sealed `agent_message` is refused 400 with the sealed-task explanation and reaches no upstream. Branch `r3-batch`.
+
+## Draft 5 — issue #2008 (rest persistence), correcting #issuecomment-6364369875
+
+> Scope note on [my earlier comment](https://github.com/yetone/magpie/issues/2008#issuecomment-6364369875): the restart evidence is a simulated restart (in-memory rests cleared, ledger loaded again), not a real daemon restart; and the review found `restSlow` wrote the rest into memory without saving it, so a Why=slow, Status=504 rest was gone after one. Fixed on `r3-rests` (`5035eb0b`): the save runs after the lock is let go, and `TestSlowRestReachesTheLedger` restores the absolute deadline, reason, status, failure count and model from the ledger after the simulated restart.

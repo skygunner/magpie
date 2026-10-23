@@ -13,10 +13,10 @@
     },
     "r3": {
       "base": "b437e4adb4dba82446e0d625b040a8e2d95004b4",
-      "batch_head": "113867ad131cab0637ce1ae1dcb31e5e9014e153",
+      "batch_head": "885c1b8bfe68c62f0bac9fcc928cc0b83fde68bc",
       "union_head": "275b7a2ea558fcc25c24b71ec077bfe000e83f04",
       "rests_head": "d639c8d79f3be8f49c8acbcfbe518828210c32da",
-      "pushed": "pending"
+      "pushed": "pushed and read back 2026-10-24: batch 885c1b8b, union 275b7a2e, rests d639c8d7"
     },
     "totals": {
       "entries": 72,
@@ -232,7 +232,7 @@
       "archive": {
         "candidate": false
       },
-      "branch_v2": "fix/persist-gateway-rests-v2",
+      "branch_v2": "r3-rests (pushed; supersedes fix/persist-gateway-rests-v2)",
       "rework_head": "PENDING"
     },
     {
@@ -750,7 +750,7 @@
       "verify": {
         "state": "unverified_this_round",
         "evidence": "Delivered with red-green recorded in the commit body; not independently re-run this round. See prior/72-thread-evidence.json for the delivered-time evidence chain.",
-        "head": "113867ad131cab0637ce1ae1dcb31e5e9014e153"
+        "head": "885c1b8bfe68c62f0bac9fcc928cc0b83fde68bc"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -758,7 +758,7 @@
       "archive": {
         "candidate": false
       },
-      "branch_v2": "fix/issue-batch-1023pm-v2"
+      "branch_v2": "r3-batch (pushed; supersedes fix/issue-batch-1023pm-v2)"
     },
     {
       "id": "u-gateway-recognize-sensenova-s-guided-grammar-for-8f931a28",
@@ -1079,7 +1079,7 @@
       "archive": {
         "candidate": false
       },
-      "branch_v2": "fix/union-items-v2",
+      "branch_v2": "r3-union (pushed; supersedes fix/union-items-v2)",
       "rework_head": "PENDING",
       "commits_r3": [
         "d4e6998f17ebf90db9642fa415c630020f0b3b96",
@@ -1476,7 +1476,7 @@
       "verify": {
         "state": "pass",
         "evidence": "Composition retained and re-run on r3 head: TestNativeRelay* , Copilot native (TestCopilotUltraSubagentWithWebSearch, TestCopilotRelayedUnlessAskedToSeal — the earlier \"no fixture\" claim was wrong), reply-side encrypted_function_args.",
-        "head": "113867ad131cab0637ce1ae1dcb31e5e9014e153"
+        "head": "885c1b8bfe68c62f0bac9fcc928cc0b83fde68bc"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -1484,7 +1484,7 @@
       "archive": {
         "candidate": false
       },
-      "branch_v2": "fix/issue-batch-1023pm-v2",
+      "branch_v2": "r3-batch (pushed; supersedes fix/issue-batch-1023pm-v2)",
       "rework_head": "PENDING"
     },
     {
@@ -2490,7 +2490,7 @@
       "verify": {
         "state": "pass",
         "evidence": "R2 chat-stays-chat, R3 discovery (Deciders/OfferedDeciders/Jev), R4 nameless independent provider survive: TestReviewV2* green on r3 head; whole provider package green; TestPluginPickedDecisionModelRoutes strengthened with discovery+default assertions and catalog feed check.",
-        "head": "113867ad131cab0637ce1ae1dcb31e5e9014e153"
+        "head": "885c1b8bfe68c62f0bac9fcc928cc0b83fde68bc"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -2498,7 +2498,7 @@
       "archive": {
         "candidate": false
       },
-      "branch_v2": "fix/issue-batch-1023pm-v2",
+      "branch_v2": "r3-batch (pushed; supersedes fix/issue-batch-1023pm-v2)",
       "rework_head": "PENDING"
     },
     {
@@ -2534,7 +2534,7 @@
       "verify": {
         "state": "unverified_this_round",
         "evidence": "Delivered with red-green recorded in the commit body; not independently re-run this round. See prior/72-thread-evidence.json for the delivered-time evidence chain.",
-        "head": "113867ad131cab0637ce1ae1dcb31e5e9014e153"
+        "head": "885c1b8bfe68c62f0bac9fcc928cc0b83fde68bc"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -2542,7 +2542,7 @@
       "archive": {
         "candidate": false
       },
-      "branch_v2": "fix/issue-batch-1023pm-v2"
+      "branch_v2": "r3-batch (pushed; supersedes fix/issue-batch-1023pm-v2)"
     },
     {
       "id": "u-gateway-an-ordinary-chat-upstream-that-says-noth-600fa01c",
@@ -2577,7 +2577,7 @@
       "verify": {
         "state": "pass",
         "evidence": "Endings matrix replaced by the review's stronger TestReviewV2ResponsesEndings (status, incomplete_details, single terminal event); relayReply fixture now valid JSON (TestReviewV2RelayFixtureIsValidJSON); empty-reply retry/failure and title exemption retained. 113867ad.",
-        "head": "113867ad131cab0637ce1ae1dcb31e5e9014e153"
+        "head": "885c1b8bfe68c62f0bac9fcc928cc0b83fde68bc"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -2585,7 +2585,7 @@
       "archive": {
         "candidate": false
       },
-      "branch_v2": "fix/issue-batch-1023pm-v2",
+      "branch_v2": "r3-batch (pushed; supersedes fix/issue-batch-1023pm-v2)",
       "rework_head": "PENDING"
     },
     {
@@ -2621,7 +2621,7 @@
       "verify": {
         "state": "pass",
         "evidence": "R1: TestReviewV2CredentialAssignments 24/24 green after a0b2faa8 (21 red before locally, 20 per review); R2 learning/rebuild semantics retained (fde6695f). Full redact package green; sentKnownSpans cache tests green.",
-        "head": "113867ad131cab0637ce1ae1dcb31e5e9014e153"
+        "head": "885c1b8bfe68c62f0bac9fcc928cc0b83fde68bc"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -2629,7 +2629,7 @@
       "archive": {
         "candidate": false
       },
-      "branch_v2": "fix/issue-batch-1023pm-v2",
+      "branch_v2": "r3-batch (pushed; supersedes fix/issue-batch-1023pm-v2)",
       "rework_head": "PENDING"
     },
     {
@@ -2676,7 +2676,7 @@
       "archive": {
         "candidate": false
       },
-      "branch_v2": "fix/union-items-v2",
+      "branch_v2": "r3-union (pushed; supersedes fix/union-items-v2)",
       "rework_head": "PENDING",
       "commits_r3": [
         "d4e6998f17ebf90db9642fa415c630020f0b3b96",
@@ -2717,7 +2717,7 @@
       "verify": {
         "state": "pass",
         "evidence": "Bare rewrite retired in favor of PlainAgentMessage (97a8a0c2); composition through /backend-api/codex/responses green; sealed refused 400.",
-        "head": "113867ad131cab0637ce1ae1dcb31e5e9014e153"
+        "head": "885c1b8bfe68c62f0bac9fcc928cc0b83fde68bc"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -2725,7 +2725,7 @@
       "archive": {
         "candidate": false
       },
-      "branch_v2": "fix/issue-batch-1023pm-v2",
+      "branch_v2": "r3-batch (pushed; supersedes fix/issue-batch-1023pm-v2)",
       "rework_head": "PENDING"
     }
   ],
