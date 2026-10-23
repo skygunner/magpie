@@ -11,16 +11,17 @@ import (
 
 func relayReply() string {
 	return sse(
-		`data: {"type":"response.completed","response":{"id":"r1","output":[{"type":"message","role":"assistant","content":[{"type":"output_text","text":"PONG"}]}],"usage":{"input_tokens":10,"output_tokens":1}}}`,
+		`data: {"type":"response.completed","response":{"id":"r1","output":[{"type":"message","role":"assistant","content":[{"type":"output_text","text":"PONG"}]}],"usage":{"input_tokens":10,"output_tokens:1}}}`,
 		`data: [DONE]`)
 }
 
 // A subagent's plain agent_message reaches a provider of OpenAI's public
-// Responses as the receiving agent's user turn, not as the ChatGPT
-// backend's own item such a provider drops unheard-of: a subagent on
-// DeepSeek started with nothing to do (#3374, bigTsingLung — the pair the
-// reporter posted, the same task as a user message and as an
-// agent_message).
+// Responses as the receiving agent's user turn, author and recipient said
+// first and its images carried, through the relay's agent_message reading
+// (forVendor, #3183) — from Codex's own endpoint, where the review's pair
+// showed the item going missing on a DeepSeek preset (#3374, bigTsingLung:
+// the same task as a user message worked, as an agent_message the subagent
+// asked for a task).
 func TestAgentMessageRelaysAsUserTurn(t *testing.T) {
 	f := &fake{t: t, reply: relayReply()}
 	setup(t, provider.Responses, f)
@@ -52,7 +53,12 @@ func TestAgentMessageRelaysAsUserTurn(t *testing.T) {
 	}
 	parts, _ := last["content"].([]any)
 	first, _ := parts[0].(map[string]any)
-	if first["text"] != task {
+	head, _ := first["text"].(string)
+	if head != "From /root to /root/format_probe\n\n" {
+		t.Fatalf("the sender and recipient were lost: %s", f.got)
+	}
+	second, _ := parts[1].(map[string]any)
+	if second["text"] != task {
 		t.Fatalf("the task text was lost: %s", f.got)
 	}
 	for _, k := range []string{"author", "recipient", "id"} {
@@ -62,13 +68,24 @@ func TestAgentMessageRelaysAsUserTurn(t *testing.T) {
 	}
 }
 
-// A sealed agent_message (its encrypted_content) is left as it came:
-// what it says is not magpie's to read. Serve turns a sealed task away
-// from a provider that cannot open it (hasSealedAgentMessage), so this is
-// the rewrite's own guard.
-func TestSealedAgentMessageStaysSealedInRelay(t *testing.T) {
-	body := []byte(`{"model":"m","input":[{"type":"agent_message","id":"amsg_1","author":"/root","recipient":"/root/w","content":[{"type":"encrypted_content","encrypted_content":"gAAAAABc9zF0Q2lzY28"}]}]}`)
-	if got := agentMessagesAsUserTurns(body); string(got) != string(body) {
-		t.Fatalf("the sealed item was touched:\n%s", got)
+// A sealed agent_message (its encrypted_content) never reaches a
+// provider that cannot open it: serve refuses the request with the
+// sealed-task explanation (hasSealedAgentMessage, sealedTaskError) —
+// what the item says is not magpie's to read, and forwarding the
+// ciphertext as a user turn would hand the subagent nothing.
+func TestSealedAgentMessageIsRefusedNotForwarded(t *testing.T) {
+	f := &fake{t: t, reply: relayReply()}
+	setup(t, provider.Responses, f)
+	s := New()
+	body := `{"model":"fake/m1","stream":false,"input":[{"type":"agent_message","id":"amsg_1","author":"/root","recipient":"/root/w","content":[{"type":"encrypted_content","encrypted_content":"gAAAAABc9zF0Q2lzY28"}]}]}`
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", CodexPath+"/responses", strings.NewReader(body))
+	req.Header.Set("Authorization", "Bearer chatgpt-token")
+	s.Handler().ServeHTTP(rec, req)
+	if rec.Code != 400 || f.calls != 0 {
+		t.Fatalf("status %d, upstream calls %d, body %s", rec.Code, f.calls, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "sealed") {
+		t.Fatalf("the refusal says nothing of the seal: %s", rec.Body.String())
 	}
 }
