@@ -4225,6 +4225,15 @@ func (s *Server) passthrough(w http.ResponseWriter, r *http.Request, p provider.
 		if p.Account == nil || p.Account.Agent != "codex" {
 			body, searchFn = searchAsFunction(body)
 		}
+		// and only it reads a subagent's agent_message (its task, agents'
+		// notes): a key provider of OpenAI's public Responses drops the
+		// item unheard-of, so it goes as the receiving agent's user turn
+		// (#3374). An account provider's own handling stands: Codex's
+		// reads the item, and the Grok and Zed plugins shape it their way
+		// (p.Prepare)
+		if p.Account == nil {
+			body = agentMessagesAsUserTurns(body)
+		}
 		body = forVendor(p, body)
 		if replay {
 			// its reasoning goes back as text, never left out: DeepSeek

@@ -2952,3 +2952,60 @@ type recorder struct {
 func (r *recorder) Header() http.Header         { return r.header }
 func (r *recorder) WriteHeader(status int)      { r.status = status }
 func (r *recorder) Write(b []byte) (int, error) { return r.body.Write(b) }
+
+// agentMessagesAsUserTurns is a request's input with each plain
+// agent_message item as the user message it is for the agent receiving
+// it. The item is the ChatGPT backend's own (MultiAgentV2): OpenAI's
+// public Responses knows no such item, and a provider of it drops one
+// unheard-of, so a subagent on such a provider started with nothing to
+// do (#3374). A sealed one (its encrypted_content) stays as it came:
+// what it says is not magpie's to read, and the sealed handling above
+// still judges it. The same reading the chat translation gives the item
+// (responses.go): its words are the receiving agent's user turn.
+func agentMessagesAsUserTurns(body []byte) []byte {
+	if !bytes.Contains(body, []byte(`"agent_message"`)) {
+		return body
+	}
+	dec := json.NewDecoder(bytes.NewReader(body))
+	dec.UseNumber()
+	var m map[string]any
+	if dec.Decode(&m) != nil || m == nil {
+		return body
+	}
+	items, ok := m["input"].([]any)
+	if !ok {
+		return body
+	}
+	changed := false
+	for i, it := range items {
+		im, _ := it.(map[string]any)
+		if im["type"] != "agent_message" {
+			continue
+		}
+		parts, _ := im["content"].([]any)
+		if len(parts) == 0 {
+			// nothing to hand over; the vendor drops it either way
+			continue
+		}
+		sealed := false
+		for _, p := range parts {
+			if pm, _ := p.(map[string]any); pm != nil && pm["type"] == "encrypted_content" {
+				sealed = true
+			}
+		}
+		if sealed {
+			continue
+		}
+		items[i] = map[string]any{"type": "message", "role": "user", "content": parts}
+		changed = true
+	}
+	if !changed {
+		return body
+	}
+	m["input"] = items
+	out, err := marshalPlain(m)
+	if err != nil {
+		return body
+	}
+	return out
+}
