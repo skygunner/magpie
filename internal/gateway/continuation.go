@@ -596,7 +596,7 @@ func (s *Server) streamTranslated(w http.ResponseWriter, r *http.Request, p prov
 			if held != nil {
 				held()
 			}
-			if (empty || counts && uncounted(this)) && !said && answersNothing(stop) {
+			if (empty || counts && uncounted(this)) && !said && answersNothing(stop) && !titleAsk(r.Context()) {
 				if empties < emptyRetries(w, r.Context()) && r.Context().Err() == nil {
 					// asked again here first, for the agent to have the
 					// answer rather than the error: Gemini on a long
