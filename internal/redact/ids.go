@@ -111,6 +111,28 @@ func credentialField(s string, at int) bool {
 	return true
 }
 
+// fieldName is the raw field name whose value starts at s[at]: what
+// stands before the : or = the value's opening quote follows, quotes and
+// escapes skipped. "" when there is no field there.
+func fieldName(s string, at int) string {
+	i := at
+	for i > 0 && strings.IndexByte(" \t\"'\\", s[i-1]) >= 0 {
+		i--
+	}
+	if i == 0 || s[i-1] != ':' && s[i-1] != '=' {
+		return ""
+	}
+	i--
+	for i > 0 && strings.IndexByte(" \t\"'\\", s[i-1]) >= 0 {
+		i--
+	}
+	j := i
+	for j > 0 && strings.IndexByte(alnum+"_.-", s[j-1]) >= 0 {
+		j--
+	}
+	return s[j:i]
+}
+
 // fieldNameWords is the field's name whose value starts at s[at], as
 // nameWords words: the name is what stands before the : or = the value's
 // opening quote follows, quotes and escapes skipped. "" and no words when

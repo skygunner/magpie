@@ -238,38 +238,44 @@ func secretValue(v string) bool {
 // second review had {"x-api-key":"Rq308c7/bT2mN4z"} and access_token go
 // the same way.
 func secretValueAt(s string, a, b int) bool {
-	if !strongCredential(fieldNameWords(s, a)) && (versionRe.MatchString(s[a:b]) || repoRefRe.MatchString(s[a:b])) {
+	if !strongCredential(fieldName(s, a)) && (versionRe.MatchString(s[a:b]) || repoRefRe.MatchString(s[a:b])) {
 		return false
 	}
 	return secretValue(s[a:b])
 }
 
-// keyKinds are the words before "key" that name a credential: an
-// api-key, an access-key, a private-key is a secret; a primary key, a
-// sort key, a bare "key" is anything.
-var keyKinds = []string{"api", "access", "private", "auth", "signing", "encryption", "encrypt", "decryption"}
-
-// tokenKinds are the words before "token" that name a credential: an
-// access token, a refresh token, an auth token is a secret. A version
-// token, a page token, a cursor token is an identifier (#3365).
-var tokenKinds = []string{"access", "refresh", "auth", "bearer", "session", "api", "credentials", "credential", "secret"}
-
-// strongCredential says a field's name words name a credential outright:
-// password, passwd, pwd, secret and credential do on their own; a
-// compound key or token does when its kind word says so. Whatever
-// strongCredential says no of, the value may still take the #3365
-// version/repository exceptions.
-func strongCredential(words []string) bool {
-	if len(words) == 0 {
-		return false
+// strongCredential says a field's name names a credential outright, the
+// way the assignment rules read names: the name, lower-cased with its
+// separators gone, carries a credential word — password, passwd, pwd,
+// secret, credential — or a key compound (apikey, accesskey, privatekey)
+// or a credential token compound (accesstoken, refreshtoken, authtoken,
+// bearertoken, sessiontoken, apitoken). Compact spellings (apikey,
+// APIKey) and suffixed ones (api_key_v2, password_primary) read the same
+// as their plain forms, which the assignment rules all took (#3365
+// review R1 and its follow-up). Whatever strongCredential says no of,
+// the value may still take the #3365 version/repository exceptions — a
+// bare key and a …token with no credential kind in it (versionToken)
+// stay exempt, as the issue requires.
+func strongCredential(name string) bool {
+	var b strings.Builder
+	b.Grow(len(name))
+	for i := 0; i < len(name); i++ {
+		c := name[i]
+		switch {
+		case c == '_' || c == '-' || c == '.':
+			continue
+		case c >= 'A' && c <= 'Z':
+			c += 'a' - 'A'
+		}
+		b.WriteByte(c)
 	}
-	switch last := words[len(words)-1]; last {
-	case "password", "passwd", "pwd", "secret", "credential", "credentials":
-		return true
-	case "key":
-		return len(words) >= 2 && slices.Contains(keyKinds, words[len(words)-2])
-	case "token":
-		return len(words) >= 2 && slices.Contains(tokenKinds, words[len(words)-2])
+	n := b.String()
+	for _, w := range []string{"password", "passwd", "pwd", "secret", "credential",
+		"apikey", "accesskey", "privatekey",
+		"accesstoken", "refreshtoken", "authtoken", "bearertoken", "sessiontoken", "apitoken"} {
+		if strings.Contains(n, w) {
+			return true
+		}
 	}
 	return false
 }
