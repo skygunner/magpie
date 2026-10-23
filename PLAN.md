@@ -4,6 +4,93 @@
 > 上游：yetone/magpie（main）；fork：skygunner/magpie。
 > 本文件是活的文档：每个 milestone 完成后更新状态与证据。
 
+## 2026-10-23 午后轮（ZCode 会话三）：巡检 + 新 issue 修复
+
+### Milestone 日志（本轮）
+
+- **巡检完成**：65 条留言/60 issue 的反馈全部正面（ggbdpq 逐项 verify ~20 个分支，
+  JoeyWu 认可 #3141，CNife 确认 #3251）。上游 main 前移 65 commit（→0815c918），
+  窗口内 0 个吸收；77 个修复 commit 中仅 3 组不再干净套用。
+- **M-3370 完成**（#3370, yxr1995-maker）：`fix/union-items` rebase 到最新 main 并加强
+  （b2336968）——union 取 array 半边时丢掉 object 半边关键字（properties/
+  minProperties/maxProperties）。报告者 codex_apps payload 逐字节红→绿。已回帖。
+- **M-3345 完成**（#3345, Sumeriasns）：与 #2932 同一 bug（refresh publish close nil
+  channel，栈与红测试行号 891/905 完全一致），572a1757 已在 v0.1.1320 修复，
+  报告者只测到 1319。回帖指认 + 请升级验证。
+- **M-3374 完成**（#3374, bigTsingLung）：根因＝deepseek preset 双端点（Chat+Responses）
+  → Responses 原生**透传**，`agent_message`（ChatGPT 后端私有项）被 DeepSeek 静默丢弃。
+  修：passthrough 对无账号 provider 把未密封 agent_message 改写成 user message
+  （67b57000，与 chat 翻译同语义）；codex 账号/grok/zed 插件自己的处理不动。
+- **M-3339 完成**（#3339/#3027）：fetchAvailableModels 过滤 `-disabled` 后缀占位 id
+  （8b4ecbac）。普通 id 的 disabled:true 保持列出。
+- **M-3352 完成**（#3352, 1234fsdc）：balance-only 读数（有 balance 无 windows）在
+  live 读数（Allowances）和磁盘回退（lastAllowances）两处都记为"已知、空 Allowance"
+  （4fb09e6b）。错误读数仍未知。
+- **M-3349 完成**（#3349, Arcadia822）：decide= 落在账号 provider 的 picks 白名单
+  （Save）+ withPicks 携带 + allProviders 分类修正（账号 id 的存储条目不做独立
+  provider）（b2497dd8 + 007b8b9b follow-up：插件自己声明的 decide 不被空 pick 覆盖）。
+- **M-3365 完成**（#3365, Ethereal49）：redact 三处——URL 占位密码（密码==用户名）
+  打码但不进 known；版本号（三段点分数字）不做 SECRET；owner/name(#n) 不做 SECRET
+  （4b6d93d9）。真密码/真 key 控制组不回归。
+- **M-3358 完成**（#3358, Latias94）：普通 Chat 上游"啥也没说就 stop"判为 empty-reply
+  失败（600fa01c）——emptyFails 加 Chat（AIGO 案例有 usage 也覆盖，判据是说了什么
+  而不是数了什么）；流式先按 #667 重问再 response.failed；magpie 自己的标题请求豁免。
+- **重建失效分支**：fix/web-signal-shutdown（3 commit 链：#3285 → fixtures → signals，
+  新 head c5334b59）与 fix/persist-gateway-rests（2fc84b93 → 4d0b0b75），测试通过，
+  分别在 #1258/#2008 回帖新 head。
+- **分支**：本轮全部在 `fix/issue-batch-1023pm`（8 commit，基于 origin/main 0815c918），
+  外加 rebase 后的 `fix/union-items`。全部已推 fork，全部已在对应 issue 回帖
+  （英文题英文、中文题中文）。
+- **验证纪律执行情况**：每个修复红→绿真实还原验证（三子修复的 #3349 逐项红）；
+  gateway/provider/redact 三包全量绿（唯一红 #3280 预存）；三平台 build+vet 干净；
+  全量 `go test -tags nogui ./...` 跑于分支 head（见终验收）。
+- **不修（附原因）**：#3367/#3357/#3350/#3362（维护者自领）；#3372（报告者准备提 PR）；
+  #3361（自带修复分支）；#3337（上游限额行为不定，根因存疑）；#3353（数据局限+
+  产品设计）；#3356（复现重、参与历史 rebasing 设计敏感）；#3373（复现条件不明，
+  待报告者数据）；#3366/#3340/#3341（Windows 平台题）；#3363/#3364/#3335/#3334/#3333
+  （功能请求类）。
+
+
+### 巡检结论（本轮开头完成）
+
+- fork 现有 82 个远程分支、60 个 issue 上的 65 条留言；最近一轮交付 45+ 组修复。
+- 上游 main 前移到 0815c918（65 个新提交），窗口内 **0 个** skygunner co-author 提交（尚未被吸收）。
+- ggbdpq 对 ~20 个我的适配分支做了逐项 verify（cherry-pick 到 main、ablation、跑测试），
+  全部正面，无需返工；JoeyWu 认可 #3141；CNife 确认 #3251 已修复。
+- 维护者 yetone 今天上午自立案并自领：#3367（app.js 预算红）、#3357（CI race 红）、
+  #3362（partners 刷新）——跳过不撞车；#3350 是他顺手发现的 1 行测试期望，跳过。
+- #3372（XDG autostart）报告者本人准备提 PR——跳过。
+
+### 本轮候选池（按优先级；调查后可删）
+
+1. #3370 Antigravity `["object","array"]`+items 400 —— 疑似 fix/union-items (c638203) 已覆盖，
+   验证后回帖指认分支。
+2. #3345 Windows 无 WSL 时 GUI 启动 2 秒必 panic（sessions.go:891 close of nil channel）——
+   严重且确定性；代码路径可在 Linux 上测。
+3. #3374 Codex `agent_message` 输入项被翻译丢弃（deepseek chat）——确定性直连复现。
+4. #3339 Antigravity 模型列表暴露 `*-disabled` 占位模型（404）。
+5. #3352 routing.go 跳过 balance-only 读数 → 「剩余额度未知」（报告者给了精确代码位置）。
+6. #3349 插件 provider 上 `decide=` 显示已保存但不持久化（commandcode-plan）。
+7. #3358 Chat→Responses 翻译静默完成 Codex 轮次（5 起真实事故）。
+8. #3365 redact：普通 key/版本号误判 SECRET + known 状态跨请求污染 paperclip。
+9. #3346 Z.ai 流中错误对象被当正常 chunk 转发（读版本依赖后定）。
+10. （低优先，可能放弃）#3337 prompt-too-long 会话钉死；#3353 add-on 窗口 0%；#3356 库同步覆盖。
+
+### 验证纪律（沿用）
+
+每题：读全 issue 线程 → `git log --grep` + 全仓库搜关键词确认未修 → 红测试（报告者原始数据）
+→ 修 → 绿 → 三平台 vet/build → 全量 `GOTOOLCHAIN=go1.26.8 umask 022
+go test -tags nogui ./... -timeout 45m`（预存红：#2207/#3280/#3284）→ push fork →
+issue 留言（英文题英文、中文题中文）。commit message `区域: 行为 (#issue, 报告人)`，body 记录验证。
+
+### 分支命名
+
+沿用 batch 堆叠模式，但基于最新 origin/main（0815c918）开新链：
+`fix/issue-batch-1023pm`、`-b`、`-c`…每 commit 一个 issue。
+
+---
+（以下为 2026-10-22 首轮计划与日志，保留为历史）
+
 ## 背景结论（侦察阶段得出）
 
 - 仓库为 Go 单体（网关 + provider + agent 接入 + GUI assets + 插件 host），
