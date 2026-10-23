@@ -337,6 +337,11 @@ func vscodeKindAt(k vscodeKind, dir string) *Agent {
 
 // Cursor can install its own launcher as code. Only a known product identity
 // rules it out: wrappers without readable metadata keep the PATH fallback.
+// Qoder IDE's launcher is a code too (Henvy-Mango on #3148): its product.json
+// reads applicationName qoder-cn, nameShort QoderCN, and its `code` went on
+// showing as a second VS Code beside the Qoder agent. These are that build's
+// own values; another fork's identity is excluded when its product.json is
+// known, not guessed.
 func vscodeCodeBinary(bin string) bool {
 	resolved, err := filepath.EvalSymlinks(bin)
 	if err != nil {
@@ -360,8 +365,13 @@ func vscodeCodeBinary(bin string) bool {
 		if err != nil || json.Unmarshal(b, &product) != nil {
 			continue
 		}
-		if strings.EqualFold(product.ApplicationName, "cursor") || strings.EqualFold(product.NameShort, "Cursor") {
-			return false
+		for _, fork := range [][2]string{
+			{"cursor", "Cursor"},
+			{"qoder-cn", "QoderCN"},
+		} {
+			if strings.EqualFold(product.ApplicationName, fork[0]) || strings.EqualFold(product.NameShort, fork[1]) {
+				return false
+			}
 		}
 	}
 	return true
