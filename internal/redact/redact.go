@@ -217,8 +217,25 @@ func secretValue(v string) bool {
 	if !notAVariable(v) || strings.HasPrefix(v, "process.env") || strings.HasPrefix(v, "os.") {
 		return false
 	}
+	// a version, build or image tag (2.9.0+sha.a7177d7bb704,
+	// cu130-torch-2.14.0-flashinfer-0.6.18) or a repository's path or
+	// reference (example-org/demo-project#1234) is not a secret, whatever
+	// field holds it (#3365): fields named token and key hold these all
+	// the time
+	if versionRe.MatchString(v) || repoRefRe.MatchString(v) {
+		return false
+	}
 	return strings.ContainsAny(v, digits) && strings.IndexFunc(v, func(r rune) bool { return r >= 'A' && r <= 'Z' || r >= 'a' && r <= 'z' }) >= 0
 }
+
+// versionRe is a run of dotted numbers with at least three parts, as
+// versions and build tags carry (2.14.0, 3.9.10.post20261008): no secret
+// has such a run in it.
+var versionRe = regexp.MustCompile(`\d+\.\d+\.\d+`)
+
+// repoRefRe is a repository's path or its pull or issue reference,
+// owner/name or owner/name#123.
+var repoRefRe = regexp.MustCompile(`^[0-9A-Za-z_.-]+/[0-9A-Za-z_.-]+(?:#[0-9]+)?$`)
 
 func realEmail(v string) bool {
 	host := strings.ToLower(v[strings.LastIndexByte(v, '@')+1:])
@@ -368,7 +385,7 @@ func tag(kind, v string) string {
 	return "{{" + kind + "_" + strings.ToLower(b32.EncodeToString(h.Sum(nil))[:8]) + "}}"
 }
 
-func placeholder(kind, v string) string {
+func placeholder(kind, v string, learn bool) string {
 	p := tag(kind, v)
 	mu.Lock()
 	if _, ok := values[p]; !ok {
@@ -384,7 +401,12 @@ func placeholder(kind, v string) string {
 		}
 		values[p] = v
 		kinds[kind] = true
-		addKnown(p, v)
+		if learn {
+			// not learned: a value masked without becoming one known
+			// (a URL placeholder's password, known.go) still restores,
+			// it just swaps nowhere else
+			addKnown(p, v)
+		}
 	}
 	mu.Unlock()
 	return p
@@ -396,6 +418,7 @@ type span struct {
 	start, end int
 	kind       string
 	by         string // which finder found it: one of the By constants
+	nolearn    bool   // masked without its value becoming one known
 }
 
 // Which finder found a value (Hit.By): magpie's rules, the user's own
@@ -478,14 +501,14 @@ func anyCase(w string) *regexp.Regexp {
 
 // Mask swaps what o covers in s for placeholders, and says how many.
 func Mask(s string, o Options) (string, int) {
-	return mask(s, withModel(o, []string{s}), placeholder, false)
+	return mask(s, withModel(o, []string{s}), learnPut, false)
 }
 
 // Preview is Mask with nothing remembered: each value goes as the
 // placeholder it would have, which isn't kept for Restore or as a value
 // seen before (known.go).
 func Preview(s string, o Options) string {
-	out, _ := mask(s, withModel(o, []string{s}), tag, false)
+	out, _ := mask(s, withModel(o, []string{s}), previewPut, false)
 	return out
 }
 
@@ -503,7 +526,13 @@ func Preview(s string, o Options) string {
 // before the placeholder (\{{EMAIL_…}}), the arguments were JSON no
 // longer, and Ollama Cloud turned away every turn that replayed the call
 // with 400 "invalid tool call arguments" (#3022).
-func mask(raw string, o Options, put func(kind, v string) string, escaped bool) (string, int) {
+// learnPut masks as Mask does: a value learned unless its span says not.
+func learnPut(kind, v string, learn bool) string { return placeholder(kind, v, learn) }
+
+// previewPut masks as Preview does: nothing remembered, learn or not.
+func previewPut(kind, v string, learn bool) string { return tag(kind, v) }
+
+func mask(raw string, o Options, put func(kind, v string, learn bool) string, escaped bool) (string, int) {
 	if len(raw) < 3 {
 		return raw, 0
 	}
@@ -519,7 +548,7 @@ func mask(raw string, o Options, put func(kind, v string) string, escaped bool) 
 		}
 		if o.WordsAnyCase {
 			for _, m := range anyCase(w).FindAllStringIndex(s, -1) {
-				found = append(found, span{m[0], m[1], "TERM", ByWord})
+				found = append(found, span{m[0], m[1], "TERM", ByWord, false})
 			}
 			continue
 		}
@@ -528,7 +557,7 @@ func mask(raw string, o Options, put func(kind, v string) string, escaped bool) 
 			if j < 0 {
 				break
 			}
-			found = append(found, span{i + j, i + j + len(w), "TERM", ByWord})
+			found = append(found, span{i + j, i + j + len(w), "TERM", ByWord, false})
 			i += j + len(w)
 		}
 	}
@@ -563,12 +592,12 @@ func mask(raw string, o Options, put func(kind, v string) string, escaped bool) 
 				took := false
 				for g, kind := range r.groups {
 					if a, b := m[2*g+2], m[2*g+3]; a >= 0 && r.takes(s, a, b, r.groupOK[g]) {
-						found = append(found, span{a, b, kind, r.by()})
+						found = append(found, span{a, b, kind, r.by(), false})
 						took = true
 					}
 				}
 				if took {
-					split = append(split, span{m[2], m[1], "", ""})
+					split = append(split, span{m[2], m[1], "", "", false})
 				}
 				continue
 			}
@@ -591,7 +620,16 @@ func mask(raw string, o Options, put func(kind, v string) string, escaped bool) 
 				ok = nil
 			}
 			if r.takes(s, a, b, ok) {
-				found = append(found, span{a, b, r.kind, r.by()})
+				sp := span{a, b, r.kind, r.by(), false}
+				if m0 := strings.Index(s[m[0]:m[1]], "://") + m[0] + 3; r.kind == "PASSWORD" && m0 < a-1 && s[m0:a-1] == s[a:b] {
+					// the URL's password is its user (postgres://
+					// paperclip:paperclip@…): a placeholder's shape, not a
+					// secret's — masked where it stands, but its word is a
+					// name in plain words too, so it is not learned to swap
+					// everywhere after (#3365)
+					sp.nolearn = true
+				}
+				found = append(found, sp)
 			}
 		}
 	}
@@ -647,15 +685,15 @@ func unescapedView(s string) string {
 // unescapedPut is put given each value unescaped, as the vendor and the
 // agent read it: a private key's \n are newlines. A value that isn't a
 // JSON string's text goes as it is.
-func unescapedPut(put func(kind, v string) string) func(kind, v string) string {
-	return func(kind, v string) string {
+func unescapedPut(put func(kind, v string, learn bool) string) func(kind, v string, learn bool) string {
+	return func(kind, v string, learn bool) string {
 		if strings.IndexByte(v, '\\') >= 0 {
 			var u string
 			if json.Unmarshal([]byte(`"`+v+`"`), &u) == nil {
 				v = u
 			}
 		}
-		return put(kind, v)
+		return put(kind, v, learn)
 	}
 }
 
@@ -821,7 +859,7 @@ func (r rule) takes(s string, a, b int, ok func(string) bool) bool {
 // first and longest where they overlap, nothing inside a placeholder. A
 // value o allows is left as it is, and one of a kind o warns of is left
 // and told. o.Seen, where set, is told of each.
-func apply(s string, found []span, put func(kind, v string) string, o Options) (string, int) {
+func apply(s string, found []span, put func(kind, v string, learn bool) string, o Options) (string, int) {
 	if len(found) == 0 {
 		return s, 0
 	}
@@ -868,7 +906,7 @@ func apply(s string, found []span, put func(kind, v string) string, o Options) (
 			continue
 		}
 		b.WriteString(s[last:f.start])
-		h.Placeholder = put(f.kind, v)
+		h.Placeholder = put(f.kind, v, !f.nolearn)
 		b.WriteString(h.Placeholder)
 		if o.Seen != nil {
 			o.Seen(h)

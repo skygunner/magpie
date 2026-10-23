@@ -94,7 +94,7 @@ func TestMoreKinds(t *testing.T) {
 			if strings.Contains(unmarked(out), g.value) {
 				t.Errorf("%q: %q still in %q", c.in, g.value, out)
 			}
-			if p := placeholder(g.kind, g.value); !strings.Contains(out, p) {
+			if p := placeholder(g.kind, g.value, true); !strings.Contains(out, p) {
 				t.Errorf("%q: no %s placeholder for %q in %q", c.in, g.kind, g.value, out)
 			}
 		}
@@ -215,7 +215,7 @@ func TestMoreKindsKnown(t *testing.T) {
 	o := allKinds()
 	a, _ := Mask("cwd /Users/rkatodev/src", o)
 	b, _ := Mask("rkatodev@rina-mbp:~$ ls", o)
-	p := placeholder("USERNAME", "rkatodev")
+	p := placeholder("USERNAME", "rkatodev", true)
 	if !strings.Contains(a, p) || !strings.Contains(b, p) {
 		t.Fatalf("not one placeholder: %q %q", a, b)
 	}

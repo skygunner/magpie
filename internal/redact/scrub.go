@@ -17,7 +17,7 @@ import (
 // Scrubbed is what a field or header named for a secret holds once scrubbed.
 const Scrubbed = "[REDACTED]"
 
-func scrubbed(kind, _ string) string { return "[REDACTED:" + kind + "]" }
+func scrubbed(kind, _ string, _ bool) string { return "[REDACTED:" + kind + "]" }
 
 // secretName is a field's or header's name that says its value is a secret.
 var secretName = regexp.MustCompile(`(?i)` + secretNames.pattern() + `|authori[sz]ation|cookie|^key$`)
