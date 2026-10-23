@@ -544,10 +544,17 @@ func buildCodexListTag(kind string) string {
 //
 // A provider switched off picks nothing, as it serves no agent anything
 // (Provider.Off): its picks are kept for when it is switched on again and
-// are not a narrowing now.
+// are not a narrowing now. Usage only narrows the visible native list to
+// none, as it does the general catalog; codexModels keeps hidden jobs.
 func CodexNativePicked() (map[string]bool, bool) {
 	p, ok := find(All(), "codex")
-	if !ok || p.Off || len(p.Models) == 0 {
+	if !ok || p.Off {
+		return nil, false
+	}
+	if p.ServesNone() {
+		return nil, true
+	}
+	if len(p.Models) == 0 {
 		return nil, false
 	}
 	keep := make(map[string]bool, len(p.Models))
