@@ -176,6 +176,15 @@ func FreeID(id string) string { return freeID(id) }
 
 // hasEndpoint: a provider of the user's, not a subscription's model picks.
 // Vertex AI's has none of the four: it is asked at its project's address.
+// accountPicksEntry says a stored entry is an account's settings rather
+// than a provider the user built: it carries nothing but a decision
+// endpoint and has no name, which Save's account whitelist never stores.
+// A decision provider the user built has its name, so the two stay apart
+// (#3349 review).
+func accountPicksEntry(p Provider) bool {
+	return p.Name == "" && p.DecideOnly()
+}
+
 func hasEndpoint(p Provider) bool {
 	return p.Chat != "" || p.Responses != "" || p.Anthropic != "" || p.Gemini != "" || p.Decide != "" || p.IsVertex()
 }

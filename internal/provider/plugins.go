@@ -60,12 +60,15 @@ func PluginID(id string) string {
 
 // customIDs are the ids of the user's own providers, those with an endpoint
 // in providers.json: a signed-in account with one of them would be hidden
-// behind it, not listed (allProviders).
+// behind it, not listed (allProviders). An account's stored picks are no
+// provider of the user's: one carrying only a decision endpoint and no
+// name (Save's account whitelist keeps neither) is the account's decide=
+// setting, not a decision provider built over the plugin (#3349 review).
 func customIDs() map[string]bool {
 	return heldOf("customIDs", func() map[string]bool {
 		ids := map[string]bool{}
 		for _, p := range load().Providers {
-			if hasEndpoint(p) {
+			if hasEndpoint(p) && !accountPicksEntry(p) {
 				ids[p.ID] = true
 			}
 		}
