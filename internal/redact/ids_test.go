@@ -13,6 +13,7 @@ func TestIDsGoAsWritten(t *testing.T) {
 	forgetIDs := func() {
 		mu.Lock()
 		values = map[string]string{}
+		learned = map[string]bool{}
 		reindexKnown()
 		mu.Unlock()
 	}

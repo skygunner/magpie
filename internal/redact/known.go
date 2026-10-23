@@ -74,13 +74,17 @@ func addKnown(p, v string) {
 }
 
 // reindexKnown makes known again from values, after some were let go;
-// called with mu held.
+// called with mu held. Only what was learned is known again: a value met
+// only as a placeholder's password stays unmatched in plain words (#3365
+// review), while one learned keeps matching across the rebuild.
 func reindexKnown() {
 	known = map[string][]knownValue{}
 	knownBits = [1 << 14]uint64{}
 	knownGen.Add(1)
 	for p, v := range values {
-		addKnown(p, v)
+		if learned[p] {
+			addKnown(p, v)
+		}
 	}
 }
 
