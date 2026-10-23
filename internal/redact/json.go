@@ -388,8 +388,8 @@ func MaskJSON(body []byte, o Options) ([]byte, int) {
 	}
 	total := 0
 	var seen []string // value, placeholder, value, placeholder…
-	put := func(kind, v string) string {
-		p := placeholder(kind, v)
+	put := func(kind, v string, learn bool) string {
+		p := placeholder(kind, v, learn)
 		seen = append(seen, v, p)
 		return p
 	}
@@ -428,7 +428,7 @@ func MaskJSON(body []byte, o Options) ([]byte, int) {
 		// number or an address the vendor wrote of its own can be one
 		// masked in another conversation (13800138000 is in many), and
 		// masked, its text would no longer match its signature
-		t, n := apply(t, sentKnownSpans(t, Options{Secrets: o.Secrets}), placeholder, o)
+		t, n := apply(t, sentKnownSpans(t, Options{Secrets: o.Secrets}), func(kind, v string, learn bool) string { return placeholder(kind, v, learn) }, o)
 		total += n
 		return t
 	})
