@@ -29,7 +29,9 @@
       "code_entries": 64,
       "units": 60
     },
-    "counts_note": "Generated from the JSON by docs/fork/generate.py; not hand-written. 64 code-linked entries are not 64 independent fixes: units are grouped by first primary fix commit (60 groups)."
+    "counts_note": "Generated from the JSON by docs/fork/generate.py; not hand-written. 64 code-linked entries are not 64 independent fixes: units are grouped by first primary fix commit (60 groups).",
+    "fork": "skygunner/magpie",
+    "upstream": "yetone/magpie"
   },
   "units": [
     {
