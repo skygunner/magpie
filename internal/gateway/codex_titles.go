@@ -86,6 +86,13 @@ func codexPredictionsTo(h http.Header, body []byte, ours bool) string {
 type titleCheckKey struct{}
 type titleShapeKey struct{}
 
+// titleAsk says this request is a title ask of magpie's own: an empty
+// answer is no title, not a failure to fail over on (#3358's empty reply
+// is a real turn's; a title's empty answer is the answer)
+func titleAsk(ctx context.Context) bool {
+	return ctx.Value(titleCheckKey{}) != nil
+}
+
 // replyTitleShape is the exact schema used by the title wrapper, or nil for a
 // native reply. Inference must fingerprint the title the caller actually gets.
 func replyTitleShape(ctx context.Context) *titleShape {
