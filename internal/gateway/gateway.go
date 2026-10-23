@@ -5994,7 +5994,7 @@ func (s *Server) translate(w http.ResponseWriter, r *http.Request, p provider.Pr
 		msg := p.Name + ": " + errEndedShort.Error()
 		return writeError(w, from, 502, msg), msg
 	}
-	if (empty || repliesCounted(actual) && uncounted(col.res.Usage)) && !saidAnything(col.res.Parts) && answersNothing(col.res.Stop) {
+	if (empty || repliesCounted(actual) && uncounted(col.res.Usage)) && !saidAnything(col.res.Parts) && answersNothing(col.res.Stop) && !titleAsk(r.Context()) {
 		msg := p.Name + ": " + emptyReply
 		return writeError(w, from, 502, msg), msg
 	}
@@ -6023,7 +6023,11 @@ const emptyReply = "an empty reply (the model answered nothing; try again)"
 // with nothing after a tool's result is its answer, so no other
 // protocol's is.
 func emptyFails(proto provider.Protocol) bool {
-	return proto == provider.CodeAssist || proto == provider.Gemini
+	// Chat too: an ordinary chat upstream that says nothing and stopped
+	// completed a translated Codex turn with no message, and the agent
+	// took the task for done (#3358); usage counted on the way is no
+	// answer either, so Chat is judged by what it said, not counted
+	return proto == provider.CodeAssist || proto == provider.Gemini || proto == provider.Chat
 }
 
 // repliesCounted tells whether every whole reply in proto counts its tokens:
