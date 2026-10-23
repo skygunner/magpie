@@ -806,6 +806,15 @@ func plainSchema(raw json.RawMessage) json.RawMessage {
 				if out["type"] != "array" {
 					if t, ok := x["type"].([]any); ok && slices.Contains(t, "array") {
 						out["type"] = "array"
+						// the object half stays behind with the fold, so
+						// its keywords go too: properties on an array is
+						// the mirror of items on a string, the same strict
+						// predicate answers 400 over (#3370,
+						// yxr1995-maker — codex_apps' params carry both
+						// halves' keywords).
+						delete(out, "properties")
+						delete(out, "minProperties")
+						delete(out, "maxProperties")
 					} else {
 						delete(out, "items")
 						delete(out, "minItems")
