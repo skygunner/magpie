@@ -38,6 +38,33 @@ func TestAgentMessageRelaysAsUserTurn(t *testing.T) {
 	if rec.Code != 200 || f.calls != 1 {
 		t.Fatalf("status %d, upstream calls %d", rec.Code, f.calls)
 	}
+	// the reply itself is well-formed and terminal: the fixture used to be
+	// invalid JSON while the request side still passed (#3358 review M3)
+	terminals := 0
+	for _, line := range strings.Split(rec.Body.String(), "\n") {
+		data, ok := strings.CutPrefix(line, "data: ")
+		if !ok || data == "[DONE]" {
+			continue
+		}
+		if !json.Valid([]byte(data)) {
+			t.Fatalf("reply line is not JSON: %s", data)
+		}
+		var ev struct {
+			Type     string `json:"type"`
+			Response struct {
+				Status string `json:"status"`
+			} `json:"response"`
+		}
+		if json.Unmarshal([]byte(data), &ev) == nil && ev.Type == "response.completed" {
+			terminals++
+			if ev.Response.Status != "completed" {
+				t.Fatalf("terminal status %q", ev.Response.Status)
+			}
+		}
+	}
+	if terminals != 1 {
+		t.Fatalf("terminal response.completed count %d in %s", terminals, rec.Body.String())
+	}
 	var sent struct {
 		Input []map[string]any `json:"input"`
 	}
