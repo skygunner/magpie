@@ -11,11 +11,11 @@
 | M | 目标 | 修改范围 | 验收 | 验证命令 | 状态 |
 |---|---|---|---|---|---|
 | M0 | 固定范围/版本/口径 | PLAN.md | 本表；refs 对齐 | git rev-parse/remote/worktree | 完成 |
-| M1 | R1：凭据例外收紧（24 矩阵） | internal/redact/ | 24 项绿 + 原三输入/良性样例/B/缓存绿 + 全包 | go test ./internal/redact（含 TestReviewV2*） | 进行中 |
-| M2 | R2/R3/R4：provider 身份与决策语义 | internal/provider/ (+gateway 测试) | 三探针绿 + 原 C/D 测试绿 + 撞名正控 + Catalog 不丢 + 文档 | go test ./internal/provider ./internal/gateway -run 'TestReviewV2\|TestPluginPicked\|TestPluginServes' | 待做 |
-| M3 | 测试证据/文档修正 | gateway 测试 + docs | relayReply 合法 JSON + G 断言加强 + 无冲突标记 + E/F 链 full SHA | go test ./internal/gateway -run 'TestAgentMessage\|TestChatEndings'; git diff --check | 待做 |
-| M4 | 72 条逐项对账 + 分支归属 | docs/fork/ (dev) | 每项 permalink/SHA/fix_id 可追溯；85+ 远端 heads 归属；指定集合一致 | python3 docs/fork/generate.py（严格校验器） | 待做 |
-| M5 | 校验器负例 + 归档候选规则 | docs/fork/generate.py + JSON | 五类坏数据全拒；火山三层准确；候选 read-only | 校验器 + 负例测试 | 待做 |
+| M1 | R1：凭据例外收紧（24 矩阵） | internal/redact/ | 24 项绿 + 原三输入/良性样例/B/缓存绿 + 全包 | go test ./internal/redact（含 TestReviewV2*） | 完成（a0b2faa8；其后 R1 新回归见第四轮 M1） |
+| M2 | R2/R3/R4：provider 身份与决策语义 | internal/provider/ (+gateway 测试) | 三探针绿 + 原 C/D 测试绿 + 撞名正控 + Catalog 不丢 + 文档 | go test ./internal/provider ./internal/gateway -run 'TestReviewV2\|TestPluginPicked\|TestPluginServes' | 完成（完成（5b4e0d5f；其后续见第四轮 M2）） |
+| M3 | 测试证据/文档修正 | gateway 测试 + docs | relayReply 合法 JSON + G 断言加强 + 无冲突标记 + E/F 链 full SHA | go test ./internal/gateway -run 'TestAgentMessage\|TestChatEndings'; git diff --check | 完成（完成（113867ad）） |
+| M4 | 72 条逐项对账 + 分支归属 | docs/fork/ (dev) | 每项 permalink/SHA/fix_id 可追溯；85+ 远端 heads 归属；指定集合一致 | python3 docs/fork/generate.py（严格校验器） | 完成（完成（dev 台账重建）） |
+| M5 | 校验器负例 + 归档候选规则 | docs/fork/generate.py + JSON | 五类坏数据全拒；火山三层准确；候选 read-only | 校验器 + 负例测试 | 完成（完成（--selftest 五负例；九负例见第四轮 M4）） |
 | M6 | 最终回归 + 推送核对 | 全部 | 全量 nogui 串行 + 基线证据 + 推送读回 | go test -tags nogui ./... | 完成（见下） |
 
 ### M6 记录（2026-10-24）
@@ -24,6 +24,24 @@
 - 全量 nogui（r3-batch head 885c1b8b，串行，45m 超时）：**67 包 ok，2 失败**，exit=1。失败＝TestClaudeClientCacheAbsentUnchanged（gateway，#3280）与 TestPluginSOCKSProxy（plugin，#2207）。同环境基线：干净 upstream/main（b437e4ad）上同两测试同样 FAIL——**无新增失败**；"全套全绿"未达成（这两个预存红仍在）。#3284 本轮未复现。
 - 推送读回：r3-batch 885c1b8b、r3-union 275b7a2e、r3-rests d639c8d7、dev——local=remote 全一致。远端 heads 现 89（85+3 r3+1 origin 杂散，见台账分支表）。本轮远端删除 0、无 force-push。
 - 评论草稿：docs/fork/comment-drafts-2026-10-24.md（5 条，覆盖 R1-R4 修正与新 head，未发送）。
+
+## 2026-10-24 第四轮返工（ZCode 会话六）：r3 验收剩余项
+
+独立审查（magpie-r3-review，REVIEW.md）在精确 head 上复现三项代码缺陷与四处台账缺口。
+边界不变：r3-batch/dev 向前普通提交，r3-union/r3-rests 本轮无产品缺陷不重建；无 force-push、
+无上游交互、无真实供应商；远端删除 0。上游 main 已前移（审查时 a2189463，现场 a93190ae），
+但触及文件（redact/provider.decide/rename/provider.go/gui.providers）自 b437e4ad 无漂移，
+r3 树追加提交有效。环境：go1.26.8（GOTOOLCHAIN），Bun 1.4.4（1.4.3→1.4.4 变化记录），
+umask 022 用于测试。
+
+| M | 目标 | 范围 | 验收 | 状态 |
+|---|---|---|---|---|
+| M0 | 现场/证据固定 | PLAN + 工作树 | refs 对齐、漂移记录、探针就位 | 完成 |
+| M1 | R1 新回归：紧凑/缩写/后缀凭据名（apikey/APIKey/api_key_v2/password_primary，8 项） | internal/redact | 8 项红→绿；原 24 项、三输入、良性控制、B/cache 绿；全包绿 | 完成 bbd6e228（strongCredential 改名字包含语义；40 项定向+全包绿） |
+| M2 | R4 补遗：无 key 无 Name 本地 decision provider 被隐藏；R3 补遗：DecisionModels 漏显式 Jev（GUI deciders 元数据） | internal/provider + gui | 两探针红→绿（4e136a4b）；全部控制组绿；provider 全包绿；gui deciders 契约测试绿 | 完成 4e136a4b（accountOrPluginID 按 id 归属；DecisionModels 并入显式 picks；providerInfo 元数据断言） |
+| M3 | 台账 r3 关系：heads/fix_ids/pushed 状态、union/rests 真实 r3 链、PENDING 替换、base 补齐、草稿 v2/r3 混用修正 | docs/fork JSON+MD+草稿 | 校验器过；链与远端读回一致；历史头另存 | 完成（deliveries 对象+真链+PENDING=0+base 全补；草稿 #3370/#2008 改引 r3 真链并记录被替代关系） |
+| M4 | 校验器：新增 9 类负例 + MD 保留 fix_ids + %(symref) 判据 + totals 计算 + 候选从图派生 + evidence receipt | generate.py + evidence/ | 九负例拒、正确数据过 | 完成（--selftest 14 负例全拒=原 5+新 9；merge_branch_records 把 JSON 归属合入实时行，head 漂移显式标注；totals 重算比对；候选三方一致校验；evidence/round4/manifest.json） |
+| M5 | 最终回归与收口 | 全部 | 最终 head 全量 nogui 串行（失败有同环境基线）、diff/gofmt/vet、推送读回、PLAN/草稿一致 | 完成（见 M6 记录与本节 evidence） |
 
 # 长程任务计划：为 magpie 上游修复 issue 并推送 PR
 
@@ -68,7 +86,7 @@ upstream/main（现场实测已前移至 fa22bc64，含上游新 redact 缓存 s
   adopted_with_changes@8278fd9b/v0.1.1325；三测试在上游实现上绿（fa22bc64）；
   fix/volcengine-resets 列归档候选（最早复查 2027-01-23，本轮删除 0 分支）。
 - **验证**：redact 包 67 绿、provider 包 1752 绿、union/rests 的 gateway 包
-  全绿（唯一红 #3280 预存）；三平台 build+vet 过；最终树全量 nogui 见末节。
+  全绿（唯一红 #3280 预存）；三平台 build+vet 过。该轮全量 nogui：69 包 ok + 4 本机已知预存红（#2207/#3280/umask 两项），运行于分支 head；原始日志当时未归档（已丢失），此后各轮的全量记录见对应轮次节与本轮 evidence 目录。
 
 ## 2026-10-23 午后轮（ZCode 会话三）：巡检 + 新 issue 修复
 
@@ -104,7 +122,7 @@ upstream/main（现场实测已前移至 fa22bc64，含上游新 redact 缓存 s
 - **重建失效分支**：fix/web-signal-shutdown（3 commit 链：#3285 → fixtures → signals，
   新 head c5334b59）与 fix/persist-gateway-rests（2fc84b93 → 4d0b0b75），测试通过，
   分别在 #1258/#2008 回帖新 head。
-- **分支**：本轮全部在 `fix/issue-batch-1023pm`（8 commit，基于 origin/main 0815c918），
+- **分支**：本轮全部在 `fix/issue-batch-1023pm`（7 commit，基于 origin/main 0815c918；#3370 在独立分支 fix/union-items），
   外加 rebase 后的 `fix/union-items`。全部已推 fork，全部已在对应 issue 回帖
   （英文题英文、中文题中文）。
 - **验证纪律执行情况**：每个修复红→绿真实还原验证（三子修复的 #3349 逐项红）；

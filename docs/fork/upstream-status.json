@@ -13,10 +13,23 @@
     },
     "r3": {
       "base": "b437e4adb4dba82446e0d625b040a8e2d95004b4",
-      "batch_head": "885c1b8bfe68c62f0bac9fcc928cc0b83fde68bc",
+      "batch_head": "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b",
       "union_head": "275b7a2ea558fcc25c24b71ec077bfe000e83f04",
       "rests_head": "d639c8d79f3be8f49c8acbcfbe518828210c32da",
-      "pushed": "pushed and read back 2026-10-24: batch 885c1b8b, union 275b7a2e, rests d639c8d7"
+      "pushed": "pushed and read back 2026-10-24 (round 4): batch 4e136a4b (ff from 885c1b8b), union 275b7a2e, rests d639c8d7",
+      "chains": {
+        "r3-union": [
+          "ad7beadd6dbffd8f5a36458b25dce330436ca8bd",
+          "45d9eb167cf393d3f9264227f6b3443ee1cdc7e5",
+          "275b7a2ea558fcc25c24b71ec077bfe000e83f04"
+        ],
+        "r3-rests": [
+          "71b9805c793c228b7be789099d94a22e70a66ad9",
+          "3567cbf5b77938106fb01d5f77c8035864b7810c",
+          "d639c8d79f3be8f49c8acbcfbe518828210c32da"
+        ]
+      },
+      "batch_chain_note": "batch is a forward-append chain: the v2 base fa22bc64 carries 15 commits (34dcacff…95537ceb), rebased onto b437e4ad, then bbd6e228 and 4e136a4b this round; see deliveries.r3-batch"
     },
     "totals": {
       "entries": 72,
@@ -31,7 +44,8 @@
     },
     "counts_note": "Generated from the JSON by docs/fork/generate.py; not hand-written. 64 code-linked entries are not 64 independent fixes: units are grouped by first primary fix commit (60 groups).",
     "fork": "skygunner/magpie",
-    "upstream": "yetone/magpie"
+    "upstream": "yetone/magpie",
+    "snapshot_at": "2026-10-24 (round-4 ledger update; source_ref dev, pushed as the round-4 closeout)"
   },
   "units": [
     {
@@ -53,7 +67,7 @@
         }
       ],
       "branch": "fix/skill-desktop-metadata",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "1072": [
           "https://github.com/yetone/magpie/pull/1072#issuecomment-6348636702"
@@ -97,7 +111,7 @@
         }
       ],
       "branch": "fix/settings-served-models",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "1073": [
           "https://github.com/yetone/magpie/pull/1073#issuecomment-6348635950"
@@ -147,7 +161,7 @@
         }
       ],
       "branch": "fix/web-signal-shutdown",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "1258": [
           "https://github.com/yetone/magpie/pull/1258#issuecomment-6348637537",
@@ -233,7 +247,13 @@
         "candidate": false
       },
       "branch_v2": "r3-rests (pushed; supersedes fix/persist-gateway-rests-v2)",
-      "rework_head": "PENDING"
+      "rework_head": "d639c8d79f3be8f49c8acbcfbe518828210c32da",
+      "delivery": "r3-rests",
+      "commits_r3": [
+        "71b9805c793c228b7be789099d94a22e70a66ad9",
+        "3567cbf5b77938106fb01d5f77c8035864b7810c",
+        "d639c8d79f3be8f49c8acbcfbe518828210c32da"
+      ]
     },
     {
       "id": "u-plugin-tests-accept-https-proxy-connect-failures-d16f32c3",
@@ -254,7 +274,7 @@
         }
       ],
       "branch": "fix/socks-proxy-test",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "2207": [
           "https://github.com/yetone/magpie/issues/2207#issuecomment-6348174686"
@@ -296,7 +316,7 @@
         }
       ],
       "branch": "fix/issue-batch-20261023-y",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "2259": [
           "https://github.com/yetone/magpie/issues/2259#issuecomment-6355087485"
@@ -340,7 +360,7 @@
         }
       ],
       "branch": "fix/issue-batch-20261023-x",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "2287": [
           "https://github.com/yetone/magpie/issues/2287#issuecomment-6354911428"
@@ -384,7 +404,7 @@
         }
       ],
       "branch": "fix/issue-batch-20261023-w",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "2323": [
           "https://github.com/yetone/magpie/issues/2323#issuecomment-6354772359"
@@ -426,7 +446,7 @@
         }
       ],
       "branch": "fix/issue-batch-20261023-v",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "2389": [
           "https://github.com/yetone/magpie/issues/2389#issuecomment-6354583653"
@@ -470,7 +490,7 @@
         }
       ],
       "branch": "fix/issue-batch-20261023-u",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "2460": [
           "https://github.com/yetone/magpie/issues/2460#issuecomment-6354479109"
@@ -514,7 +534,7 @@
         }
       ],
       "branch": "fix/issue-batch-20261023-t",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "2473": [
           "https://github.com/yetone/magpie/issues/2473#issuecomment-6354354731"
@@ -558,7 +578,7 @@
         }
       ],
       "branch": "fix/issue-batch-20261023-s",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "2530": [
           "https://github.com/yetone/magpie/issues/2530#issuecomment-6354217288"
@@ -602,7 +622,7 @@
         }
       ],
       "branch": "fix/issue-batch-20261023-r",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "2923": [
           "https://github.com/yetone/magpie/issues/2923#issuecomment-6352725039"
@@ -644,7 +664,7 @@
         }
       ],
       "branch": "fix/issue-batch-20261023-q",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "2953": [
           "https://github.com/yetone/magpie/issues/2953#issuecomment-6352556608"
@@ -688,7 +708,7 @@
         }
       ],
       "branch": "fix/issue-batch-20261023-p",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3020": [
           "https://github.com/yetone/magpie/issues/3020#issuecomment-6352398582"
@@ -733,7 +753,7 @@
         }
       ],
       "branch": "fix/issue-batch-1023pm",
-      "base": "",
+      "base": "see delivery: r3-batch",
       "comments": {
         "3027": [
           "https://github.com/yetone/magpie/issues/3027#issuecomment-6364113600"
@@ -758,7 +778,8 @@
       "archive": {
         "candidate": false
       },
-      "branch_v2": "r3-batch (pushed; supersedes fix/issue-batch-1023pm-v2)"
+      "branch_v2": "r3-batch",
+      "delivery": "r3-batch"
     },
     {
       "id": "u-gateway-recognize-sensenova-s-guided-grammar-for-8f931a28",
@@ -779,7 +800,7 @@
         }
       ],
       "branch": "fix/issue-batch-20261023-o",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3035": [
           "https://github.com/yetone/magpie/issues/3035#issuecomment-6352249039"
@@ -823,7 +844,7 @@
         }
       ],
       "branch": "fix/issue-batch-20261023-n",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3062": [
           "https://github.com/yetone/magpie/issues/3062#issuecomment-6352083061"
@@ -868,7 +889,7 @@
         }
       ],
       "branch": "fix/account-rest-cap",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3076": [
           "https://github.com/yetone/magpie/issues/3076#issuecomment-6347697853"
@@ -913,7 +934,7 @@
         }
       ],
       "branch": "fix/issue-batch-20261023-m",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3095": [
           "https://github.com/yetone/magpie/issues/3095#issuecomment-6351919564"
@@ -957,7 +978,7 @@
         }
       ],
       "branch": "fix/issue-batch-20261023-m",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3097": [
           "https://github.com/yetone/magpie/issues/3097#issuecomment-6351918961"
@@ -1001,7 +1022,7 @@
         }
       ],
       "branch": "fix/issue-batch-20261023-m",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3100": [
           "https://github.com/yetone/magpie/issues/3100#issuecomment-6351920135"
@@ -1080,12 +1101,13 @@
         "candidate": false
       },
       "branch_v2": "r3-union (pushed; supersedes fix/union-items-v2)",
-      "rework_head": "PENDING",
+      "rework_head": "275b7a2ea558fcc25c24b71ec077bfe000e83f04",
       "commits_r3": [
-        "d4e6998f17ebf90db9642fa415c630020f0b3b96",
-        "99d6e6ed863aa562fafdccc9a0bd30124948783d",
-        "cbc6c3b3ddd690d9f845ec2b6438cb3812cd5b12"
-      ]
+        "ad7beadd6dbffd8f5a36458b25dce330436ca8bd",
+        "45d9eb167cf393d3f9264227f6b3443ee1cdc7e5",
+        "275b7a2ea558fcc25c24b71ec077bfe000e83f04"
+      ],
+      "delivery": "r3-union"
     },
     {
       "id": "u-provider-retain-the-first-single-card-quota-refr-a11d605e",
@@ -1106,7 +1128,7 @@
         }
       ],
       "branch": "fix/initial-single-quota-refresh",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3139": [
           "https://github.com/yetone/magpie/issues/3139#issuecomment-6351281868"
@@ -1148,7 +1170,7 @@
         }
       ],
       "branch": "fix/path-same-tick-install",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3141": [
           "https://github.com/yetone/magpie/issues/3141#issuecomment-6351191858"
@@ -1192,7 +1214,7 @@
         }
       ],
       "branch": "fix/qoder-ide-code",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3148": [
           "https://github.com/yetone/magpie/issues/3148#issuecomment-6342963529",
@@ -1235,7 +1257,7 @@
         }
       ],
       "branch": "fix/unknown-model-sent-id",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3150": [
           "https://github.com/yetone/magpie/issues/3150#issuecomment-6343313763"
@@ -1277,7 +1299,7 @@
         }
       ],
       "branch": "fix/issue-batch-20261023-i",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3152": [
           "https://github.com/yetone/magpie/issues/3152#issuecomment-6351033700"
@@ -1321,7 +1343,7 @@
         }
       ],
       "branch": "fix/issue-batch-20261023-i",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3153": [
           "https://github.com/yetone/magpie/issues/3153#issuecomment-6351033261"
@@ -1365,7 +1387,7 @@
         }
       ],
       "branch": "fix/issue-batch-20261023-i",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3165": [
           "https://github.com/yetone/magpie/issues/3165#issuecomment-6351032820"
@@ -1410,7 +1432,7 @@
         }
       ],
       "branch": "fix/claude-signin-test-cache",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3174": [
           "https://github.com/yetone/magpie/issues/3174#issuecomment-6349009775"
@@ -1460,7 +1482,7 @@
         }
       ],
       "branch": "fix/issue-batch-20261023-g",
-      "base": "",
+      "base": "see delivery: r3-batch",
       "comments": {
         "3183": [
           "https://github.com/yetone/magpie/issues/3183#issuecomment-6350770765"
@@ -1476,7 +1498,7 @@
       "verify": {
         "state": "pass",
         "evidence": "Composition retained and re-run on r3 head: TestNativeRelay* , Copilot native (TestCopilotUltraSubagentWithWebSearch, TestCopilotRelayedUnlessAskedToSeal — the earlier \"no fixture\" claim was wrong), reply-side encrypted_function_args.",
-        "head": "885c1b8bfe68c62f0bac9fcc928cc0b83fde68bc"
+        "head": "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -1484,8 +1506,9 @@
       "archive": {
         "candidate": false
       },
-      "branch_v2": "r3-batch (pushed; supersedes fix/issue-batch-1023pm-v2)",
-      "rework_head": "PENDING"
+      "branch_v2": "r3-batch",
+      "rework_head": "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b",
+      "delivery": "r3-batch"
     },
     {
       "id": "u-fix-gui-apply-left-display-to-custom-balance-per-15759adb",
@@ -1506,7 +1529,7 @@
         }
       ],
       "branch": "fix/balance-quota-left",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3193": [
           "https://github.com/yetone/magpie/issues/3193#issuecomment-6351631831"
@@ -1550,7 +1573,7 @@
         }
       ],
       "branch": "fix/issue-batch-20261023-g",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3197": [
           "https://github.com/yetone/magpie/issues/3197#issuecomment-6350770188"
@@ -1594,7 +1617,7 @@
         }
       ],
       "branch": "fix/kimi-ref-chain",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3205": [
           "https://github.com/yetone/magpie/issues/3205#issuecomment-6350369324"
@@ -1644,7 +1667,7 @@
         }
       ],
       "branch": "fix/queue-model-rest",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3213": [
           "https://github.com/yetone/magpie/issues/3213#issuecomment-6343670538",
@@ -1687,7 +1710,7 @@
         }
       ],
       "branch": "fix/claude-exit-drift",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3224": [
           "https://github.com/yetone/magpie/issues/3224#issuecomment-6350064542"
@@ -1731,7 +1754,7 @@
         }
       ],
       "branch": "fix/quota-picker-save-test",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3229": [
           "https://github.com/yetone/magpie/issues/3229#issuecomment-6350064115"
@@ -1779,7 +1802,7 @@
         }
       ],
       "branch": "fix/provider-protocol-url",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3233": [
           "https://github.com/yetone/magpie/issues/3233#issuecomment-6350063562"
@@ -1821,7 +1844,7 @@
         }
       ],
       "branch": "",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3234": [
           "https://github.com/yetone/magpie/issues/3234#issuecomment-6349585899"
@@ -1923,7 +1946,7 @@
         }
       ],
       "branch": "fix/shared-session-folder",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3258": [
           "https://github.com/yetone/magpie/issues/3258#issuecomment-6342495758"
@@ -1965,7 +1988,7 @@
         }
       ],
       "branch": "fix/null-tool-calls",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3259": [
           "https://github.com/yetone/magpie/issues/3259#issuecomment-6342839037"
@@ -2007,7 +2030,7 @@
         }
       ],
       "branch": "",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3260": [
           "https://github.com/yetone/magpie/issues/3260#issuecomment-6349585359"
@@ -2049,7 +2072,7 @@
         }
       ],
       "branch": "fix/zcode-window-renewal",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3266": [
           "https://github.com/yetone/magpie/issues/3266#issuecomment-6349009131"
@@ -2091,7 +2114,7 @@
         }
       ],
       "branch": "fix/issue-batch-20261023-c",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3277": [
           "https://github.com/yetone/magpie/issues/3277#issuecomment-6349008616"
@@ -2133,7 +2156,7 @@
         }
       ],
       "branch": "fix/claude-harness-bytes",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3280": [
           "https://github.com/yetone/magpie/issues/3280#issuecomment-6348173813"
@@ -2175,7 +2198,7 @@
         }
       ],
       "branch": "fix/pi-google-api",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3282": [
           "https://github.com/yetone/magpie/issues/3282#issuecomment-6348173228"
@@ -2217,7 +2240,7 @@
         }
       ],
       "branch": "fix/opencode-session-test",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3284": [
           "https://github.com/yetone/magpie/issues/3284#issuecomment-6348174237"
@@ -2259,7 +2282,7 @@
         }
       ],
       "branch": "fix/reexec-plugin-host",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3285": [
           "https://github.com/yetone/magpie/issues/3285#issuecomment-6348172340"
@@ -2301,7 +2324,7 @@
         }
       ],
       "branch": "fix/rest-deadline-monotonic",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3289": [
           "https://github.com/yetone/magpie/issues/3289#issuecomment-6348172755"
@@ -2343,7 +2366,7 @@
         }
       ],
       "branch": "fix/embedding-indices",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3302": [
           "https://github.com/yetone/magpie/issues/3302#issuecomment-6348635309"
@@ -2385,7 +2408,7 @@
         }
       ],
       "branch": "fix/pi-reasoning-usage",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3306": [
           "https://github.com/yetone/magpie/issues/3306#issuecomment-6350368871"
@@ -2427,7 +2450,7 @@
         }
       ],
       "branch": "fix/issue-batch-20261023-m",
-      "base": "",
+      "base": "see delivery: historical; base recorded in the unit branch map",
       "comments": {
         "3311": [
           "https://github.com/yetone/magpie/issues/3311#issuecomment-6351920677"
@@ -2457,7 +2480,7 @@
       ],
       "category": "product",
       "title": "provider: decide= set on a signed-in provider stays where it was set (#3349, Arcadia822)",
-      "coverage": "decide= persists on signed-in/plugin providers; identity stable (PluginID); plugin-declared endpoint kept when no override; explicit decision-shaped pick routes /v1/systemone end to end, is discoverable (Deciders/OfferedDeciders/Jev default), and picked chat models stay chat. Remaining: no real Command Code API verification (reporter verified the live endpoint).",
+      "coverage": "decide= persists; identity stable; plugin-declared endpoint kept when no override; explicit decision-shaped pick routes /v1/systemone end to end, is discoverable (Deciders/OfferedDeciders/Jev), AND is in the editor metadata (DecisionModels -> providerInfo deciders) so the page classifies it by name; keyless nameless local decision providers survive (accountOrPluginID by id, not by name/key presence); picked chat models stay chat. Remaining: no real Command Code API verification (reporter verified the live endpoint).",
       "commits": [
         "b2497dd82f46fe1279867aa42b2b4769d213c377",
         "007b8b9b7433bc2b7f452f9526ed698a8aa2b49f"
@@ -2475,7 +2498,7 @@
         }
       ],
       "branch": "fix/issue-batch-1023pm",
-      "base": "",
+      "base": "see delivery: r3-batch",
       "comments": {
         "3349": [
           "https://github.com/yetone/magpie/issues/3349#issuecomment-6364310053",
@@ -2489,8 +2512,8 @@
       },
       "verify": {
         "state": "pass",
-        "evidence": "R2 chat-stays-chat, R3 discovery (Deciders/OfferedDeciders/Jev), R4 nameless independent provider survive: TestReviewV2* green on r3 head; whole provider package green; TestPluginPickedDecisionModelRoutes strengthened with discovery+default assertions and catalog feed check.",
-        "head": "885c1b8bfe68c62f0bac9fcc928cc0b83fde68bc"
+        "evidence": "Round-4: TestReviewR3KeylessLocalDecisionProviderSurvives and TestReviewR3PickedDecisionMetadataAgreesWithRouting red at 885c1b8b (per review) -> green at 4e136a4b; TestProviderEditorDeciders* pin the JSON contract; whole provider package green; plugin SystemOne routing family green.",
+        "head": "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -2498,8 +2521,9 @@
       "archive": {
         "candidate": false
       },
-      "branch_v2": "r3-batch (pushed; supersedes fix/issue-batch-1023pm-v2)",
-      "rework_head": "PENDING"
+      "branch_v2": "r3-batch",
+      "rework_head": "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b",
+      "delivery": "r3-batch"
     },
     {
       "id": "u-provider-a-balance-only-reading-knows-the-accoun-4fb09e6b",
@@ -2520,7 +2544,7 @@
         }
       ],
       "branch": "fix/issue-batch-1023pm",
-      "base": "",
+      "base": "see delivery: r3-batch",
       "comments": {
         "3352": [
           "https://github.com/yetone/magpie/issues/3352#issuecomment-6364210763"
@@ -2542,7 +2566,8 @@
       "archive": {
         "candidate": false
       },
-      "branch_v2": "r3-batch (pushed; supersedes fix/issue-batch-1023pm-v2)"
+      "branch_v2": "r3-batch",
+      "delivery": "r3-batch"
     },
     {
       "id": "u-gateway-an-ordinary-chat-upstream-that-says-noth-600fa01c",
@@ -2563,7 +2588,7 @@
         }
       ],
       "branch": "fix/issue-batch-1023pm",
-      "base": "",
+      "base": "see delivery: r3-batch",
       "comments": {
         "3358": [
           "https://github.com/yetone/magpie/issues/3358#issuecomment-6364831214"
@@ -2577,7 +2602,7 @@
       "verify": {
         "state": "pass",
         "evidence": "Endings matrix replaced by the review's stronger TestReviewV2ResponsesEndings (status, incomplete_details, single terminal event); relayReply fixture now valid JSON (TestReviewV2RelayFixtureIsValidJSON); empty-reply retry/failure and title exemption retained. 113867ad.",
-        "head": "885c1b8bfe68c62f0bac9fcc928cc0b83fde68bc"
+        "head": "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -2585,8 +2610,9 @@
       "archive": {
         "candidate": false
       },
-      "branch_v2": "r3-batch (pushed; supersedes fix/issue-batch-1023pm-v2)",
-      "rework_head": "PENDING"
+      "branch_v2": "r3-batch",
+      "rework_head": "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b",
+      "delivery": "r3-batch"
     },
     {
       "id": "u-redact-a-placeholder-url-s-password-and-version--4b6d93d9",
@@ -2595,7 +2621,7 @@
       ],
       "category": "product",
       "title": "redact: a placeholder URL's password and version and repository values are not secrets to learn (#3365, Ethereal49)",
-      "coverage": "R1: field-aware exceptions now read the field name as the ID rules do (fieldNameWords + strongCredential); hyphenated credential names, access/refresh tokens and JSON-escaped tool content no longer take the version/repo exceptions. R2 (10-24 earlier round): placeholder passwords learn when met as real credentials; reindexKnown rebuilds only learned values. Remaining: none known on the reported shapes.",
+      "coverage": "R1 (a0b2faa8): field-aware exceptions via fieldNameWords; R1-followup (bbd6e228): strongCredential reads the whole name the assignment rules read — compact apikey/APIKey and suffixed api_key_v2/password_primary no longer take the exceptions. R2 (fde6695f): placeholder passwords learn when met as real credentials; reindexKnown rebuilds only learned values. Remaining: none known on the reported shapes.",
       "commits": [
         "4b6d93d9abe29038f9e8662890bf8190fc3a9f23"
       ],
@@ -2607,7 +2633,7 @@
         }
       ],
       "branch": "fix/issue-batch-1023pm",
-      "base": "",
+      "base": "see delivery: r3-batch",
       "comments": {
         "3365": [
           "https://github.com/yetone/magpie/issues/3365#issuecomment-6364536473"
@@ -2620,8 +2646,8 @@
       },
       "verify": {
         "state": "pass",
-        "evidence": "R1: TestReviewV2CredentialAssignments 24/24 green after a0b2faa8 (21 red before locally, 20 per review); R2 learning/rebuild semantics retained (fde6695f). Full redact package green; sentKnownSpans cache tests green.",
-        "head": "885c1b8bfe68c62f0bac9fcc928cc0b83fde68bc"
+        "evidence": "Round-4: TestReviewR3CredentialNamesKeepTheirMeaning 8/8 red at 885c1b8b (per review) -> green at bbd6e228; the 24-matrix, benign controls, learning/rebuild, sent-cache tests green; whole redact package green.",
+        "head": "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -2629,8 +2655,9 @@
       "archive": {
         "candidate": false
       },
-      "branch_v2": "r3-batch (pushed; supersedes fix/issue-batch-1023pm-v2)",
-      "rework_head": "PENDING"
+      "branch_v2": "r3-batch",
+      "rework_head": "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b",
+      "delivery": "r3-batch"
     },
     {
       "id": "u-gateway-a-union-s-array-half-leaves-the-object-h-b2336968",
@@ -2677,12 +2704,13 @@
         "candidate": false
       },
       "branch_v2": "r3-union (pushed; supersedes fix/union-items-v2)",
-      "rework_head": "PENDING",
+      "rework_head": "275b7a2ea558fcc25c24b71ec077bfe000e83f04",
       "commits_r3": [
-        "d4e6998f17ebf90db9642fa415c630020f0b3b96",
-        "99d6e6ed863aa562fafdccc9a0bd30124948783d",
-        "cbc6c3b3ddd690d9f845ec2b6438cb3812cd5b12"
-      ]
+        "ad7beadd6dbffd8f5a36458b25dce330436ca8bd",
+        "45d9eb167cf393d3f9264227f6b3443ee1cdc7e5",
+        "275b7a2ea558fcc25c24b71ec077bfe000e83f04"
+      ],
+      "delivery": "r3-union"
     },
     {
       "id": "u-gateway-a-subagent-s-task-reaches-a-responses-ap-67b57000",
@@ -2703,7 +2731,7 @@
         }
       ],
       "branch": "fix/issue-batch-1023pm",
-      "base": "",
+      "base": "see delivery: r3-batch",
       "comments": {
         "3374": [
           "https://github.com/yetone/magpie/issues/3374#issuecomment-6364109042"
@@ -2717,7 +2745,7 @@
       "verify": {
         "state": "pass",
         "evidence": "Bare rewrite retired in favor of PlainAgentMessage (97a8a0c2); composition through /backend-api/codex/responses green; sealed refused 400.",
-        "head": "885c1b8bfe68c62f0bac9fcc928cc0b83fde68bc"
+        "head": "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -2725,8 +2753,9 @@
       "archive": {
         "candidate": false
       },
-      "branch_v2": "r3-batch (pushed; supersedes fix/issue-batch-1023pm-v2)",
-      "rework_head": "PENDING"
+      "branch_v2": "r3-batch",
+      "rework_head": "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b",
+      "delivery": "r3-batch"
     }
   ],
   "pointed_elsewhere": [
@@ -4358,7 +4387,10 @@
       ],
       "replaced_by": "",
       "note": "",
-      "category": "single-fix"
+      "category": "single-fix",
+      "archive": {
+        "candidate": true
+      }
     },
     {
       "branch": "fix/vscode-portable-path",
@@ -4439,30 +4471,55 @@
     },
     {
       "branch": "r3-batch",
-      "head": "113867ad131cab0637ce1ae1dcb31e5e9014e153",
-      "kind": "local-only",
+      "head": "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b",
+      "kind": "fix",
       "base": "b437e4adb4dba82446e0d625b040a8e2d95004b4",
-      "fix_ids": [],
-      "note": "not pushed",
-      "category": "unknown"
+      "fix_ids": [
+        "u-provider-antigravity-s-disabled-ids-are-left-out-8b4ecbac",
+        "u-gateway-preserve-plaintext-codex-collaboration-t-b1ae66c7",
+        "u-provider-decide-set-on-a-signed-in-provider-stay-b2497dd8",
+        "u-provider-a-balance-only-reading-knows-the-accoun-4fb09e6b",
+        "u-gateway-an-ordinary-chat-upstream-that-says-noth-600fa01c",
+        "u-redact-a-placeholder-url-s-password-and-version--4b6d93d9",
+        "u-gateway-a-subagent-s-task-reaches-a-responses-ap-67b57000"
+      ],
+      "note": "forward-appended over the reviewed 885c1b8b; read back",
+      "category": "batch-chain",
+      "where": "remote",
+      "archive": {
+        "candidate": false
+      }
     },
     {
       "branch": "r3-rests",
       "head": "d639c8d79f3be8f49c8acbcfbe518828210c32da",
-      "kind": "local-only",
+      "kind": "fix",
       "base": "b437e4adb4dba82446e0d625b040a8e2d95004b4",
-      "fix_ids": [],
+      "fix_ids": [
+        "u-fix-gateway-persist-provider-rest-deadlines-acro-8d72abec"
+      ],
       "note": "not pushed",
-      "category": "unknown"
+      "category": "single-fix",
+      "where": "remote",
+      "archive": {
+        "candidate": false
+      }
     },
     {
       "branch": "r3-union",
       "head": "275b7a2ea558fcc25c24b71ec077bfe000e83f04",
-      "kind": "local-only",
+      "kind": "fix",
       "base": "b437e4adb4dba82446e0d625b040a8e2d95004b4",
-      "fix_ids": [],
+      "fix_ids": [
+        "u-gateway-a-schema-s-type-union-beside-items-keeps-c638203e",
+        "u-gateway-a-union-s-array-half-leaves-the-object-h-b2336968"
+      ],
       "note": "not pushed",
-      "category": "unknown"
+      "category": "single-fix",
+      "where": "remote",
+      "archive": {
+        "candidate": false
+      }
     }
   ],
   "archive_policy": {
@@ -4475,5 +4532,69 @@
       "dev (maintenance/PLAN/ledger)"
     ],
     "deletions_this_round": 0
+  },
+  "deliveries": {
+    "r3-batch": {
+      "branch": "r3-batch",
+      "base": "b437e4adb4dba82446e0d625b040a8e2d95004b4",
+      "head": "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b",
+      "commits": [
+        "16289db2755a9ceb4408f100156563f41c8541a6",
+        "7cbf4396acb2a4264d63e96a3002ec668b445772",
+        "39f63979ccc52b5e33e4e683031e7770f6c9002d",
+        "521b9acfe276f929fadef0c57233e02df1b43ae1",
+        "a443f6fb67826321ee764601a88b1f6fe67d942d",
+        "7dbdf6c977285092203dc07821055484e1b013d0",
+        "a4dcc55dee50b709de4b040b0130d071c325e616",
+        "833fca2a8c85064dbadb69624eb095c0fcaccfa9",
+        "0ecd3a573089ee160d9e45d317c623a8860aa63c",
+        "23973fd92931959657c9e0ccfb5c7f0b46117b43",
+        "8fb8411952172ff7c87fd43ae2a56b3b34d4c4e5",
+        "40663086d95d1708bec236749ff6428dd645817c",
+        "8971bfc1fd37ee8cbd8a51c6b87f32c3b3726cf2",
+        "2b84d3c5d2a00e44ab1d9551b52e40b5dbda741f",
+        "901c2bbfe5a0737ef763dd97dcc284579bbc8a96",
+        "a0b2faa89397c62e45c25262f13622969921df71",
+        "5b4e0d5f94d96dac34d5f2afdc69f91056ca4385",
+        "113867ad131cab0637ce1ae1dcb31e5e9014e153",
+        "885c1b8bfe68c62f0bac9fcc928cc0b83fde68bc",
+        "bbd6e2284c923d834b9f874664a10e20bcc38097",
+        "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b"
+      ],
+      "pushed": true,
+      "read_back": "2026-10-24 origin/r3-batch=4e136a4b",
+      "replaces": "fix/issue-batch-1023pm-v2 (95537ceb, itself replacing fix/issue-batch-1023pm 007b8b9b)"
+    },
+    "r3-union": {
+      "branch": "r3-union",
+      "base": "b437e4adb4dba82446e0d625b040a8e2d95004b4",
+      "head": "275b7a2ea558fcc25c24b71ec077bfe000e83f04",
+      "commits": [
+        "ad7beadd6dbffd8f5a36458b25dce330436ca8bd",
+        "45d9eb167cf393d3f9264227f6b3443ee1cdc7e5",
+        "275b7a2ea558fcc25c24b71ec077bfe000e83f04"
+      ],
+      "pushed": true,
+      "read_back": "2026-10-24 origin/r3-union=275b7a2e",
+      "replaces": "fix/union-items-v2 (cbc6c3b3; its own chain d4e6998f->99d6e6ed->cbc6c3b3 replaced fix/union-items b2336968)"
+    },
+    "r3-rests": {
+      "branch": "r3-rests",
+      "base": "b437e4adb4dba82446e0d625b040a8e2d95004b4",
+      "head": "d639c8d79f3be8f49c8acbcfbe518828210c32da",
+      "commits": [
+        "71b9805c793c228b7be789099d94a22e70a66ad9",
+        "3567cbf5b77938106fb01d5f77c8035864b7810c",
+        "d639c8d79f3be8f49c8acbcfbe518828210c32da"
+      ],
+      "pushed": true,
+      "read_back": "2026-10-24 origin/r3-rests=d639c8d7",
+      "replaces": "fix/persist-gateway-rests-v2 (d639c8d7 lineage: 047520f0->ae193b86->5035eb0b rebuilt as 71b9805c->3567cbf5->d639c8d7)"
+    },
+    "dev": {
+      "branch": "dev",
+      "kind": "maintenance",
+      "note": "snapshot_at 2026-10-24 from source_ref dev; the maintenance branch does not record its own head inside its own files"
+    }
   }
 }

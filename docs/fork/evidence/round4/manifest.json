@@ -1,0 +1,85 @@
+{
+  "round": "r3-rework-round4",
+  "generated_at": "2026-10-23T19:34:30Z",
+  "tree": {
+    "branch": "r3-batch",
+    "head": "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b",
+    "base": "b437e4adb4dba82446e0d625b040a8e2d95004b4"
+  },
+  "environment": {
+    "os": "Linux 6.18 amd64 (CachyOS, bash as /bin/sh)",
+    "go": "go1.26.8 via GOTOOLCHAIN (system default go1.27.1 unused)",
+    "bun": "1.4.4 (was 1.4.3 in earlier rounds)",
+    "umask_for_tests": "022",
+    "config_isolation": "testenv sandbox + temp XDG/HOME per test; no real credentials read"
+  },
+  "runs": [
+    {
+      "name": "full nogui suite",
+      "argv": "GOTOOLCHAIN=go1.26.8 GOFLAGS=-tags=nogui go test ./... -timeout 45m (umask 022, serial)",
+      "head": "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b",
+      "started": "2026-10-24T~05:55Z",
+      "exit": 1,
+      "result": "66 packages ok, 3 failures",
+      "log": "full-suite-r3batch-4e136a4b.log",
+      "log_sha256": "7b77f9ba669c0fda6e7155764a2a0c49fd3a9ddbf84f6c5761d282bda33fb363",
+      "failures": [
+        {
+          "test": "TestClaudeClientCacheAbsentUnchanged",
+          "pkg": "internal/gateway",
+          "known": "#3280 (bash as /bin/sh)",
+          "baseline": "reproduced on clean upstream/main a93190ae same session",
+          "baseline_log": "baseline-3280-clean-upstream-a93190ae.log"
+        },
+        {
+          "test": "TestPluginSOCKSProxy",
+          "pkg": "internal/plugin",
+          "known": "#2207 (local Bun; now Bun 1.4.4)",
+          "baseline": "reproduced on clean upstream/main a93190ae same session",
+          "baseline_log": "baseline-2207-clean-upstream-a93190ae.log"
+        },
+        {
+          "test": "TestClaudeAccountServesModelsListedSinceItsFetch",
+          "pkg": "internal/provider",
+          "known": "#3174/#3284-class load-order flake",
+          "assessment": "isolated rerun PASS; whole internal/provider package rerun PASS twice afterwards (one interim run hit the known #3284 TestOpenCodeSessionOnEveryCall instead); no product path of this round touches that test's cache logic",
+          "evidence": "provider-package-rerun-green.log"
+        }
+      ]
+    },
+    {
+      "name": "internal/provider package rerun (post-suite)",
+      "argv": "go test ./internal/provider -count=1",
+      "head": "4e136a4b",
+      "exit": 0,
+      "result": "ok",
+      "log": "provider-package-rerun-green.log",
+      "log_sha256": "fc7ebc6ec3f34dd2687463ea1743955f87ee315bbef96bdfabe3e09cd39933d7"
+    },
+    {
+      "name": "baseline #3280 on clean upstream/main",
+      "argv": "go test ./internal/gateway -run TestClaudeClientCacheAbsentUnchanged -count=1",
+      "head": "a93190ae193dd97f52c21f21771f825f552e19c5",
+      "exit": 1,
+      "result": "FAIL (expected, pre-existing)",
+      "log": "baseline-3280-clean-upstream-a93190ae.log",
+      "log_sha256": "7d533ecfb727b52aa904d975de392276db23c1cd0b66b134c5e5dbbdf26e690e"
+    },
+    {
+      "name": "baseline #2207 on clean upstream/main",
+      "argv": "go test ./internal/plugin -run TestPluginSOCKSProxy -count=1",
+      "head": "a93190ae193dd97f52c21f21771f825f552e19c5",
+      "exit": 1,
+      "result": "FAIL (expected, pre-existing)",
+      "log": "baseline-2207-clean-upstream-a93190ae.log",
+      "log_sha256": "9c373e341d0e957c7985c9749685134b2a5d2707fdb3e803cc0c0511bcea4368"
+    }
+  ],
+  "not_run": {
+    "windows_native": "no environment",
+    "macos_native": "no environment",
+    "real_vendors": "none called; all tests use fakes/stubs and sandboxed config",
+    "real_daemon_restart": "F's restart evidence is simulated (memory cleared + ledger reload)"
+  },
+  "summary": "no new failures attributable to this round's changes; full-suite green NOT achieved (two known pre-existing reds baselined same-session); one load-order flake observed, isolated+package reruns green"
+}

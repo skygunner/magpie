@@ -45,16 +45,31 @@ COMMENT_RE = re.compile(r"#issuecomment-([0-9]+)$")
 def git(*args):
     return subprocess.run(["git"] + list(args), capture_output=True, text=True).stdout.strip()
 
+def gitrc(*args):
+    """git's exit status: 0 when the assertion holds (is-ancestor & co)."""
+    return subprocess.run(["git"] + list(args), capture_output=True, text=True).returncode
+
+PROTECTED_BRANCHES = {"main", "master", "dev", "origin"}
+
 def branch_inventory():
+    """Live refs, with the JSON's classifications merged back in.
+
+    Symrefs are detected by %(symref) pointing at another ref, not by
+    objecttype. Protected names (main, dev, origin) never classify as
+    fix/unknown. fix_ids, category and notes come from the JSON's branch
+    records where it has them, so the markdown keeps the ledger's
+    attributions; heads and existence come from git.
+    """
     out, seen = [], set()
     for line in git("for-each-ref", "refs/remotes/origin",
-                    "--format=%(objectname)|%(refname:short)|%(objecttype)").splitlines():
-        sha, full, typ = line.split("|")
-        name = full[len("origin/"):]
-        if typ == "symref":
+                    "--format=%(refname)|%(objectname)|%(symref)").splitlines():
+        full, sha, symref = line.split("|")
+        name = full[len("refs/remotes/origin/"):]
+        if symref:
             seen.add(name)
-            out.append({"branch": name, "head": "symref", "kind": "symref", "where": "remote",
-                        "category": "n/a", "fix_ids": [], "base": "",
+            out.append({"branch": name, "head": "symref->" + symref.split("origin/")[-1],
+                        "kind": "symref", "where": "remote", "category": "n/a",
+                        "fix_ids": [], "base": "",
                         "note": "symbolic ref, not a branch; excluded from head counts"})
             continue
         if name == "HEAD":
@@ -62,18 +77,22 @@ def branch_inventory():
         seen.add(name)
         out.append(branch_entry(name, sha, "remote"))
     for line in git("for-each-ref", "refs/heads",
-                    "--format=%(objectname)|%(refname:short)").splitlines():
-        sha, name = line.split("|")
+                    "--format=%(refname:short)|%(objectname)").splitlines():
+        name, sha = line.split("|")
         if name not in seen:
             out.append(branch_entry(name, sha, "local-only"))
     return out
 
 def branch_entry(name, sha, where):
-    kind = "maintenance" if name == "dev" else "fix"
-    base = ""
-    if kind == "fix":
-        base = git("merge-base", sha, "upstream/main")[:40]
-    cat = "maintenance" if kind == "maintenance" else "unknown"
+    if name in ("main", "master"):
+        kind, cat = "protected", "stale-protected"
+    elif name == "dev":
+        kind, cat = "maintenance", "maintenance"
+    elif name == "origin":
+        kind, cat = "fix", "stray"
+    else:
+        kind, cat = "fix", "unknown"
+    base = git("merge-base", sha, "upstream/main")[:40] if kind == "fix" else ""
     return {"branch": name, "head": sha, "kind": kind, "where": where,
             "base": base, "fix_ids": [], "category": cat, "note": ""}
 
@@ -167,8 +186,91 @@ def check(data, branches, prior):
         if b.get("archive", {}).get("candidate") and b.get("category") in (
                 "unknown", "batch-chain", "superseded"):
             errs.append(f"branch {b['branch']}: {b['category']} marked an archive candidate")
+        if b.get("archive", {}).get("candidate"):
+            if b.get("head") in (None, "", "0" * 40):
+                errs.append(f"branch {b['branch']}: candidate with a null head")
+            for uid in b.get("fix_ids", []):
+                u = next((x for x in units if x["id"] == uid), None)
+                if u is None:
+                    errs.append(f"branch {b['branch']}: candidate cites unknown unit {uid}")
+                elif not u.get("archive", {}).get("candidate"):
+                    errs.append(f"branch {b['branch']}: candidate while its unit {uid} is not")
+    # every code unit must carry its delivery comments; pointed-elsewhere
+    # comments must belong to their own issue and the verified evidence set
+    for u in units:
+        if u.get("category") in ("product", "tests") and not u.get("comments"):
+            errs.append(f"{u['id']}: a code unit without its delivery comments")
+    for pnt in data.get("pointed_elsewhere", []):
+        for i in pnt["issues"]:
+            for url in pnt.get("comments", []):
+                if f"/issues/{i}" not in url and f"/pull/{i}" not in url:
+                    errs.append(f"pointed entry #{i}: comment url names another topic: {url}")
+                elif str(i) in prior and url not in prior[str(i)].get("urls", []):
+                    errs.append(f"pointed entry #{i}: comment not in the verified evidence set: {url}")
     if data.get("archive_policy", {}).get("deletions_this_round") != 0:
         errs.append("deletions_this_round must be 0 in a read-only round")
+    # totals are computed, not believed
+    want = compute_totals(data)
+    got = data.get("meta", {}).get("totals")
+    if got and any(got.get(k) != v for k, v in want.items() if k in got):
+        diffs = {k: (got.get(k), v) for k, v in want.items() if k in got and got.get(k) != v}
+        errs.append(f"stored totals disagree with the ledger's own data: {diffs}")
+    if got and "unknown_entries" in want:
+        errs.append(f"the ledger carries entries outside the required 72: {want['unknown_entries']}")
+    # candidates come from one graph: the stored list, the per-unit flags
+    # and the per-branch flags must agree with what the relations imply
+    ap = data.get("archive_policy", {})
+    listed = ap.get("candidates", [])
+    for c in listed:
+        if str(c) in PROTECTED_BRANCHES:
+            errs.append(f"archive candidate list names a protected branch: {c}")
+    unit_candidates = {u["id"] for u in units if u.get("archive", {}).get("candidate")}
+    branch_candidate_ids = set()
+    for b in data.get("branches", []):
+        if b.get("archive", {}).get("candidate"):
+            if not b.get("fix_ids"):
+                errs.append(f"branch {b['branch']}: candidate without attributed fix units")
+            else:
+                branch_candidate_ids.update(b["fix_ids"])
+    for uid in unit_candidates:
+        u = next(x for x in units if x["id"] == uid)
+        up = u.get("upstream", {})
+        if str(up.get("status", "")).startswith("adopted") and not up.get("commit"):
+            errs.append(f"candidate unit {uid}: adopted upstream without its commit recorded")
+    if unit_candidates != set(listed):
+        errs.append(f"archive_policy.candidates {sorted(listed)} != the units flagged candidate {sorted(unit_candidates)}")
+    derived = {u["id"] for u in units
+               if u.get("archive", {}).get("candidate")
+               and u.get("verify", {}).get("state") in ("pass", "pass_upstream")
+               and u.get("upstream", {}).get("status") in (
+                   "adopted_with_changes", "adopted_verbatim", "patch_equivalent",
+                   "independent_alternative", "superseded")}
+    if not unit_candidates <= derived:
+        errs.append(f"candidate units whose verify/upstream do not support candidacy: {sorted(unit_candidates - derived)}")
+    for uid in unit_candidates - branch_candidate_ids:
+        errs.append(f"candidate unit {uid} has no candidate branch carrying it")
+    # a declared chain is an order: each commit must have the previous as
+    # an ancestor, and the last must be (or contain) the delivery head
+    for dname, drec in data.get("deliveries", {}).items():
+        if drec.get("kind") == "maintenance":
+            continue
+        head, commits = drec.get("head", ""), drec.get("commits", [])
+        if head:
+            if not SHA_RE.match(str(head)) or git("cat-file", "-t", head) != "commit":
+                errs.append(f"delivery {dname}: head is not a resolvable full SHA")
+            if head not in {b["head"] for b in branches if b["kind"] != "symref"} and dname != "dev":
+                errs.append(f"delivery {dname}: head is neither a live remote nor local head")
+        prev = None
+        for c in commits:
+            if not SHA_RE.match(str(c)) or git("cat-file", "-t", c) != "commit":
+                errs.append(f"delivery {dname}: chain commit {str(c)[:8]} is not a resolvable full SHA")
+                prev = None
+                continue
+            if prev and gitrc("merge-base", "--is-ancestor", prev, c) != 0:
+                errs.append(f"delivery {dname}: {prev[:8]} is not an ancestor of {c[:8]} — chain order is wrong")
+            prev = c
+        if commits and head and gitrc("merge-base", "--is-ancestor", commits[-1], head) != 0:
+            errs.append(f"delivery {dname}: last chain commit {commits[-1][:8]} is not an ancestor of the head")
     return errs
 
 def selftest(data, branches, prior):
@@ -211,6 +313,61 @@ def selftest(data, branches, prior):
             b["archive"] = {"candidate": True}
             break
     variants["mixed/unknown branch made a candidate"] = v
+
+    u0 = next(u for u in data["units"] if u.get("category") in ("product", "tests"))
+    # the nine review negatives, each against an otherwise-good copy
+    v = copy.deepcopy(data)
+    v["units"][0]["comments"] = {}
+    variants["code unit's comments deleted"] = v
+
+    v = copy.deepcopy(data)
+    cand = data["archive_policy"]["candidates"][0] if data["archive_policy"].get("candidates") else None
+    if cand:
+        bu = next(u for u in v["units"] if u["id"] == cand)
+        bb = next(b for b in v["branches"] if b["branch"] == bu.get("branch") or
+                  b.get("fix_ids") and cand in b["fix_ids"])
+        bb["archive"] = {"candidate": True}
+        bb["head"] = "0" * 40
+        variants["candidate branch head is null sha"] = v
+
+    v = copy.deepcopy(data)
+    if cand:
+        bu = next(u for u in v["units"] if u["id"] == cand)
+        bu["upstream"].pop("commit", None)
+        bu["upstream"].pop("release", None)
+        variants["adopted candidate lost its upstream commit/release"] = v
+
+    v = copy.deepcopy(data)
+    v["archive_policy"]["candidates"] = ["main"]
+    variants["candidates list names main"] = v
+
+    v = copy.deepcopy(data)
+    for b in v["branches"]:
+        if b.get("fix_ids") and b["branch"] != "r3-batch":
+            b["archive"] = {"candidate": True}
+            break
+    variants["branch candidate while its units are not"] = v
+
+    v = copy.deepcopy(data)
+    v["branches"] = []
+    variants["empty branch map"] = v
+
+    v = copy.deepcopy(data)
+    v["meta"]["totals"]["entries"] = 999
+    variants["totals = 999"] = v
+
+    v = copy.deepcopy(data)
+    drec = v["deliveries"]["r3-union"]
+    drec["commits"] = list(reversed(drec["commits"]))
+    variants["union chain reversed"] = v
+
+    v = copy.deepcopy(data)
+    for pnt in v["pointed_elsewhere"]:
+        if pnt.get("comments"):
+            pnt["comments"] = [u.replace(f"/issues/{pnt['issues'][0]}", "/issues/3076")
+                               for u in pnt["comments"]]
+            break
+    variants["pointed comment names another topic"] = v
 
     for name, v in variants.items():
         errs = check(v, branches, prior)
@@ -267,8 +424,8 @@ def write_md(data, branches):
         w(f"- {', '.join('#'+str(i) for i in p['issues'])} ({p['category']}): {p['note']}"
           + (f" — comment {p['comments'][0]}" if p.get("comments") else ""))
     w("\n## Branches (from git at this run)\n")
-    remote = [b for b in branches if b["kind"] in ("fix", "maintenance") and b["where"] == "remote"]
-    w(f"{len(remote)} remote heads, "
+    remote = [b for b in branches if b["where"] == "remote" and b["kind"] != "symref"]
+    w(f"{len(remote)} remote heads (this run's snapshot), "
       f"{sum(1 for b in branches if b.get('where')=='local-only')} local-only, "
       f"{sum(1 for b in branches if b['kind']=='symref')} symref(s) excluded.\n")
     for b in branches:
@@ -288,10 +445,66 @@ def write_md(data, branches):
     w(f"- Remote deletions this round: {ap['deletions_this_round']}")
     return "\n".join(L) + "\n"
 
+def merge_branch_records(branches, data):
+    """Carry the JSON's branch attributions onto the live rows, and flag
+    drift: a JSON head that no longer matches git is kept as
+    head_in_ledger with a note, never silently overwritten."""
+    by_name = {b["branch"]: b for b in branches}
+    for rec in data.get("branches", []):
+        b = by_name.get(rec["branch"])
+        if b is None:
+            where = rec.get("where", "remote")
+            if where == "remote":
+                # a remote branch the ledger classifies but git no longer
+                # has: the record may be stale — said, not hidden
+                rec.setdefault("note", "")
+                rec["note"] = (rec["note"] + "; " if rec["note"] else "") + \
+                    "not on the remote at this run (stale record?)"
+                branches.append(rec)
+            else:
+                rec.setdefault("note", "")
+                rec["note"] = (rec["note"] + "; " if rec["note"] else "") + \
+                    "machine-local ref, unavailable here (historical snapshot)"
+                branches.append(rec)
+            continue
+        for k in ("fix_ids", "category", "note", "kind"):
+            if rec.get(k) and (b.get(k) in (None, "", [], "unknown", "n/a") or k == "fix_ids"):
+                b[k] = rec[k]
+        if b["head"] != rec.get("head") and not str(rec.get("head", "")).startswith("symref"):
+            b["head_in_ledger"] = rec.get("head")
+            b["note"] = (b.get("note", "") + "; " if b.get("note") else "") + \
+                f"ledger head was {str(rec.get('head'))[:8]}"
+    return branches
+
+def compute_totals(data):
+    units = data["units"]
+    covered = {}
+    for u in units:
+        for i in u["issues"]:
+            covered.setdefault(i, True)
+    for pnt in data.get("pointed_elsewhere", []):
+        for i in pnt["issues"]:
+            covered.setdefault(i, True)
+    prs = {i for i in covered if str(i) in prior and prior[str(i)].get("type") == "PR"}
+    cats = {}
+    unknown = [n for n in covered if str(n) not in prior]
+    for n in covered:
+        if str(n) in prior:
+            cats[prior[str(n)]["category"]] = cats.get(prior[str(n)]["category"], 0) + 1
+    t = {"entries": len(covered), "issues": len(covered) - len(prs), "prs": len(prs),
+         "product": cats.get("product", 0), "tests_ci": cats.get("tests", 0),
+         "upstream_existing": cats.get("upstream_fixed", 0), "other": cats.get("other", 0),
+         "code_entries": cats.get("product", 0) + cats.get("tests", 0),
+         "units": len(units)}
+    if unknown:
+        t["unknown_entries"] = unknown
+    return t
+
 def main():
+    global prior
     data = json.load(open(JSON_PATH))
     prior = json.load(open(PRIOR_PATH))
-    branches = branch_inventory()
+    branches = merge_branch_records(branch_inventory(), data)
     errs = check(data, branches, prior)
     if "--selftest" in sys.argv:
         errs += selftest(data, branches, prior)
@@ -300,7 +513,7 @@ def main():
             print("CHECK FAIL:", e)
         return 1
     units = data["units"]
-    heads = [b for b in branches if b["kind"] in ("fix", "maintenance") and b["where"] == "remote"]
+    heads = [b for b in branches if b["where"] == "remote" and b["kind"] != "symref"]
     print(f"checks ok: {len(units)} units, {sum(len(u['issues']) for u in units)} unit-covered issues, "
           f"{len(heads)} remote heads, {sum(1 for b in branches if b.get('where')=='local-only')} local-only")
     if "--write" in sys.argv:

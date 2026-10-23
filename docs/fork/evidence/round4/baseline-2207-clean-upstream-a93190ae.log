@@ -1,0 +1,7 @@
+testenv: a test asked models.dev:443, refused: tests stay off the network
+--- FAIL: TestPluginSOCKSProxy (0.05s)
+    plugin_socks_test.go:128: https://vendor.invalid/v1/chat/completions through a SOCKS proxy that is down: 0 "", proxyconnect tcp: 502 Bad Gateway: socks connect tcp 127.0.0.1:41413->vendor.invalid:443: dial tcp 127.0.0.1:41413: connect: connection refused
+FAIL
+FAIL	github.com/yetone/magpie/internal/plugin	0.050s
+FAIL
+exit=1
