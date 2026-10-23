@@ -86,7 +86,7 @@ func (p Provider) DecidesModel(model string) bool {
 		return false
 	}
 	if p.IsPlugin() {
-		return p.pluginMarks(model) || jevID(model)
+		return p.pluginMarks(model) || jevID(model) || p.userPicked(model)
 	}
 	if p.DecideOnly() {
 		return true
@@ -99,6 +99,15 @@ func (p Provider) DecidesModel(model string) bool {
 		return slices.ContainsFunc(p.decideListed(), func(m catalog.Model) bool { return m.ID == model })
 	}
 	return jevID(model) || p.DecideVia() == ViaCloudflare && CloudflareClef(model)
+}
+
+// userPicked says the user named model among this provider's own picks
+// while a decision API is set on it: a plugin's plan may list no decision
+// model at all (Command Code's lists 92 chat models, never its Jev), and
+// the pick beside the decide= the user set is the user's word for what
+// that API answers (#3349).
+func (p Provider) userPicked(model string) bool {
+	return p.Decides() && p.IsPlugin() && slices.Contains(p.Models, model)
 }
 
 // isDecision uses a listed remote model's marker without reading its whole
@@ -744,6 +753,11 @@ func resolveDecideModel(p Provider, name string) (string, bool) {
 		}
 	}
 	if name == p.Jev() {
+		return name, true
+	}
+	// and what the user picked for a plugin's decision API is answered as
+	// picked: the plan's own list never named it (#3349)
+	if p.userPicked(name) {
 		return name, true
 	}
 	// a gateway lists one Jev, named its own way; jev-latest is that model
