@@ -3,6 +3,7 @@ package provider
 import (
 	"errors"
 	"fmt"
+	"github.com/yetone/magpie/internal/plugin"
 	"os"
 	"slices"
 	"strings"
@@ -178,12 +179,37 @@ func FreeID(id string) string { return freeID(id) }
 // Vertex AI's has none of the four: it is asked at its project's address.
 // accountPicksEntry says a stored entry is an account's settings rather
 // than a provider the user built. Save's account whitelist stores no
-// name — but a hand-written provider's name may be left out too, so the
-// key is the tell: an independent provider carries its own key, an
-// account's picks record keeps none (only Kiro's does, and Kiro is an
-// account id the account path answers first) (#3349 review R4).
+// name and (Kiro aside) no key — but a hand-written provider may leave
+// both out too: a local decision server is asked without a key
+// (keyOptional), and the name is optional in stored configuration. What
+// tells the two apart is the id: an account's or a plugin's id (the
+// sign-in may be out, its saved settings waiting) holds the entry for
+// the account; an id nothing claims is an independent provider of the
+// user's (#3349 review R4 and its keyless follow-up).
 func accountPicksEntry(p Provider) bool {
-	return p.Name == "" && p.Key == "" && p.DecideOnly() && len(p.Keys) == 0
+	return p.Name == "" && p.Key == "" && len(p.Keys) == 0 && p.DecideOnly() && accountOrPluginID(p.ID)
+}
+
+// accountOrPluginID says id is one magpie knows as an account's or an
+// installed plugin's: a signed-in account, a built-in a plugin now
+// serves, a built-in account id, or a plugin on the disk (Cached reads
+// plugins.json and the last providers feed, no host start), whose
+// remembered sign-ins count even signed out.
+func accountOrPluginID(id string) bool {
+	// no Accounts() here: it reads back through the picks this function
+	// judges, and a signed-in built-in account's id is accountIDs anyway
+	if PluginServes(id) || slices.Contains(accountIDs, id) {
+		return true
+	}
+	if len(plugin.Auths(id)) > 0 {
+		return true
+	}
+	for _, pp := range plugin.Cached() {
+		if pp.ID == id {
+			return true
+		}
+	}
+	return false
 }
 
 func hasEndpoint(p Provider) bool {

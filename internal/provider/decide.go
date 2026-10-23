@@ -192,7 +192,24 @@ func (p Provider) DecisionModels() []catalog.Model {
 		if !p.Decides() {
 			return nil
 		}
-		return p.decideModels()
+		ms := p.decideModels()
+		// and a decision model the user picked beside an explicit decide=
+		// is metadata like the feed's: the editor's deciders list is read
+		// by name, and a model the routing accepts must not read as a
+		// conversation model there (#3349 review, r3 follow-up)
+		if len(p.Models) > 0 {
+			have := make(map[string]bool, len(ms))
+			for _, m := range ms {
+				have[m.ID] = true
+			}
+			for _, id := range p.Models {
+				if id = strings.TrimSpace(id); id != "" && !have[id] && p.userPicked(id) {
+					have[id] = true
+					ms = append(ms, catalog.Model{ID: id, Name: id})
+				}
+			}
+		}
+		return ms
 	}
 	if !p.IsRemoteMagpie() && (p.DecideOnly() || !p.listsDecisions() && !p.bailianApart()) {
 		return nil
