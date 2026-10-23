@@ -93,22 +93,7 @@ func idShaped(v string) bool {
 // a credential: refresh_token, DB_PASSWORD, x-api-key; not one named for
 // an id, a cursor or a request, and not a bare "key".
 func credentialField(s string, at int) bool {
-	i := at
-	for i > 0 && strings.IndexByte(" \t\"'\\", s[i-1]) >= 0 {
-		i--
-	}
-	if i == 0 || s[i-1] != ':' && s[i-1] != '=' {
-		return false
-	}
-	i--
-	for i > 0 && strings.IndexByte(" \t\"'\\", s[i-1]) >= 0 {
-		i--
-	}
-	j := i
-	for j > 0 && strings.IndexByte(alnum+"_.-", s[j-1]) >= 0 {
-		j--
-	}
-	words := nameWords(s[j:i])
+	words := fieldNameWords(s, at)
 	if len(words) < 2 && (len(words) == 0 || words[0] == "key") {
 		return false
 	}
@@ -124,6 +109,29 @@ func credentialField(s string, at int) bool {
 		}
 	}
 	return true
+}
+
+// fieldNameWords is the field's name whose value starts at s[at], as
+// nameWords words: the name is what stands before the : or = the value's
+// opening quote follows, quotes and escapes skipped. "" and no words when
+// there is no field there.
+func fieldNameWords(s string, at int) []string {
+	i := at
+	for i > 0 && strings.IndexByte(" \t\"'\\", s[i-1]) >= 0 {
+		i--
+	}
+	if i == 0 || s[i-1] != ':' && s[i-1] != '=' {
+		return nil
+	}
+	i--
+	for i > 0 && strings.IndexByte(" \t\"'\\", s[i-1]) >= 0 {
+		i--
+	}
+	j := i
+	for j > 0 && strings.IndexByte(alnum+"_.-", s[j-1]) >= 0 {
+		j--
+	}
+	return nameWords(s[j:i])
 }
 
 // nameWords are a field's name's words in lower case: next_page_token,

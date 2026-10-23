@@ -231,15 +231,47 @@ func secretValue(v string) bool {
 // (2.9.0+sha.a7177d7bb704, cu130-torch-2.14.0-flashinfer-0.6.18) or a
 // repository's path or reference (example-org/demo-project#1234) is not a
 // secret under a field that names an identifier (#3365) — fields named
-// token and key carry these all the time. Under a credential field
-// (password, api_key, secret…) the value is held to be one whatever it
-// looks like: the review of #3365 had {"password":"R8c7/bT2mN4z"} and
-// {"password":"ProdA1.2.3Z9"} going out as written.
+// token and key carry these all the time. Under a field that names a
+// credential outright (strongCredential) the value is held to be one
+// whatever it looks like: the review of #3365 had {"password":"R8c7/
+// bT2mN4z"} and {"password":"ProdA1.2.3Z9"} going out as written, and its
+// second review had {"x-api-key":"Rq308c7/bT2mN4z"} and access_token go
+// the same way.
 func secretValueAt(s string, a, b int) bool {
-	if !credentialFieldAt(s, a) && (versionRe.MatchString(s[a:b]) || repoRefRe.MatchString(s[a:b])) {
+	if !strongCredential(fieldNameWords(s, a)) && (versionRe.MatchString(s[a:b]) || repoRefRe.MatchString(s[a:b])) {
 		return false
 	}
 	return secretValue(s[a:b])
+}
+
+// keyKinds are the words before "key" that name a credential: an
+// api-key, an access-key, a private-key is a secret; a primary key, a
+// sort key, a bare "key" is anything.
+var keyKinds = []string{"api", "access", "private", "auth", "signing", "encryption", "encrypt", "decryption"}
+
+// tokenKinds are the words before "token" that name a credential: an
+// access token, a refresh token, an auth token is a secret. A version
+// token, a page token, a cursor token is an identifier (#3365).
+var tokenKinds = []string{"access", "refresh", "auth", "bearer", "session", "api", "credentials", "credential", "secret"}
+
+// strongCredential says a field's name words name a credential outright:
+// password, passwd, pwd, secret and credential do on their own; a
+// compound key or token does when its kind word says so. Whatever
+// strongCredential says no of, the value may still take the #3365
+// version/repository exceptions.
+func strongCredential(words []string) bool {
+	if len(words) == 0 {
+		return false
+	}
+	switch last := words[len(words)-1]; last {
+	case "password", "passwd", "pwd", "secret", "credential", "credentials":
+		return true
+	case "key":
+		return len(words) >= 2 && slices.Contains(keyKinds, words[len(words)-2])
+	case "token":
+		return len(words) >= 2 && slices.Contains(tokenKinds, words[len(words)-2])
+	}
+	return false
 }
 
 // versionRe is a run of dotted numbers with at least three parts at word
@@ -251,18 +283,6 @@ var versionRe = regexp.MustCompile(`(?:^|[^0-9A-Za-z])\d+\.\d+\.\d+(?:$|[^0-9A-Z
 // repoRefRe is a repository's path or its pull or issue reference,
 // owner/name or owner/name#123, as the whole value.
 var repoRefRe = regexp.MustCompile(`^[0-9A-Za-z_.-]+/[0-9A-Za-z_.-]+(?:#[0-9]+)?$`)
-
-// credentialFieldRe is a field's name that says the value under it is a
-// credential, looked for at the end of the text before the value: name
-// and its quotes, the separating : or =, and the value's opening quote.
-var credentialFieldRe = regexp.MustCompile(`(?i)(?:^|[^A-Za-z0-9_.-])[A-Za-z0-9_.-]*(?:password|passwd|pwd|secret|api_?key|access_?key|private_?key|credential)[A-Za-z0-9_.-]*["']?[ \t]*[:=][ \t]*["']?$`)
-
-// credentialFieldAt says the value at a sits under a field whose name
-// names a credential. A bare key or a …Token name is no such field: those
-// carry versions and repository references as often (#3365).
-func credentialFieldAt(s string, a int) bool {
-	return credentialFieldRe.MatchString(s[:a])
-}
 
 func realEmail(v string) bool {
 	host := strings.ToLower(v[strings.LastIndexByte(v, '@')+1:])
