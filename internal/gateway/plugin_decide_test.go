@@ -34,6 +34,12 @@ func (u *decideUp) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream")
 		io.WriteString(w, sse(`data: {"id":"c","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"role":"assistant","content":"from the plugin"},"finish_reason":"stop"}]}`, `data: [DONE]`))
 	default:
+		if strings.HasSuffix(r.URL.Path, "/systemone") {
+			// a decide endpoint set on the provider, asked at its own base
+			// (#3349): the same System One answer
+			io.WriteString(w, `{"model":"`+q.Model+`","answers":{"levels":{"type":"noul","noul":0},"intent":{"type":"choice","choice":"bug","confidence":0.9}}}`)
+			return
+		}
 		http.NotFound(w, r)
 	}
 }
