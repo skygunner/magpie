@@ -1,3 +1,23 @@
+## 2026-10-24 第三轮返工（ZCode 会话五）：R1–R4 + 台账收口
+
+独立审查（Magpie-v2-independent-review，REVIEW.txt）在精确 head 上复现 R1–R4、
+测试/文档缺陷与台账缺口。本节为逐 milestone 计划；状态实时更新。
+
+- 现场确认：三 v2 head + dev 与审查 refs 一致；upstream/main 已前移 a2e98cd7→
+  b437e4ad（3 commits，未触碰 redact/decide/rename）；r3-batch/r3-union/r3-rests
+  干净 rebase 到 b437e4ad，无冲突。边界不变：仅普通推送本轮分支、读回 SHA；
+  不发上游评论/PR/tag；评论更正仅草稿；无真实供应商/生产操作。
+
+| M | 目标 | 修改范围 | 验收 | 验证命令 | 状态 |
+|---|---|---|---|---|---|
+| M0 | 固定范围/版本/口径 | PLAN.md | 本表；refs 对齐 | git rev-parse/remote/worktree | 完成 |
+| M1 | R1：凭据例外收紧（24 矩阵） | internal/redact/ | 24 项绿 + 原三输入/良性样例/B/缓存绿 + 全包 | go test ./internal/redact（含 TestReviewV2*） | 进行中 |
+| M2 | R2/R3/R4：provider 身份与决策语义 | internal/provider/ (+gateway 测试) | 三探针绿 + 原 C/D 测试绿 + 撞名正控 + Catalog 不丢 + 文档 | go test ./internal/provider ./internal/gateway -run 'TestReviewV2\|TestPluginPicked\|TestPluginServes' | 待做 |
+| M3 | 测试证据/文档修正 | gateway 测试 + docs | relayReply 合法 JSON + G 断言加强 + 无冲突标记 + E/F 链 full SHA | go test ./internal/gateway -run 'TestAgentMessage\|TestChatEndings'; git diff --check | 待做 |
+| M4 | 72 条逐项对账 + 分支归属 | docs/fork/ (dev) | 每项 permalink/SHA/fix_id 可追溯；85+ 远端 heads 归属；指定集合一致 | python3 docs/fork/generate.py（严格校验器） | 待做 |
+| M5 | 校验器负例 + 归档候选规则 | docs/fork/generate.py + JSON | 五类坏数据全拒；火山三层准确；候选 read-only | 校验器 + 负例测试 | 待做 |
+| M6 | 最终回归 + 推送核对 | 全部 | 全量 nogui 串行 + 基线证据 + 推送读回 | go test -tags nogui ./... | 待做 |
+
 # 长程任务计划：为 magpie 上游修复 issue 并推送 PR
 
 > 创建：2026-10-22。执行者：ZCode（skygunner fork）。
