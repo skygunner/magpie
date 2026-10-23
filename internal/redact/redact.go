@@ -98,6 +98,9 @@ type rule struct {
 	fold  []string
 	bound string
 	ok    func(string) bool
+	// okAt is ok with the text and the match's place in it, for a check
+	// that reads the field the value sits under
+	okAt func(s string, a, b int) bool
 	// at checks the value at s[a:b] by what is around it: a dotted quad
 	// right after "version" is no address
 	at func(s string, a, b int) bool
@@ -145,12 +148,12 @@ var rules = append([]rule{
 	{kind: "PASSWORD", re: regexp.MustCompile(`[A-Za-z][A-Za-z0-9+.-]*://[^\s:@/?#"'<>]+:([^\s@/?#"'<>]{3,})@`), markers: []string{"://"}, ok: notAVariable},
 	// password = …, API_KEY: "…", as .env files and configs have them
 	{kind: "SECRET", re: regexp.MustCompile(`(?i)[A-Za-z0-9_.-]*(?:` + secretNames.pattern() + `)[A-Za-z0-9_.-]*` + quote + `[ \t]*[:=][ \t]*` + quote + `(` + secretCh + `{8,})`),
-		markers: secretNames.markers(), ok: secretValue},
+		markers: secretNames.markers(), okAt: secretValueAt},
 	// a field called key and nothing more, as providers.json has one: "key":
 	// "oc_sk_…" (#195). Only a long value of letters and digits both, since
 	// code calls anything a key: a map's "key": "value", sort_key, keyboard.
 	{kind: "SECRET", re: regexp.MustCompile(`(?i)(?:^|[^A-Za-z0-9_.-])` + quote + `key` + quote + `[ \t]*[:=][ \t]*` + quote + `(` + secretCh + `{16,})`),
-		markers: fieldNames{{"key", "key"}}.markers(), ok: secretValue},
+		markers: fieldNames{{"key", "key"}}.markers(), okAt: secretValueAt},
 
 	{kind: "EMAIL", re: regexp.MustCompile(`[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}`), markers: []string{"@"}, bound: alnum + "._%+-", ok: realEmail, cat: catPersonal},
 	{kind: "ID_CARD", re: regexp.MustCompile(`[1-9]\d{5}(?:18|19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx]`), bound: alnum, ok: chineseID, cat: catPersonal},
@@ -220,25 +223,46 @@ func secretValue(v string) bool {
 	if !notAVariable(v) || strings.HasPrefix(v, "process.env") || strings.HasPrefix(v, "os.") {
 		return false
 	}
-	// a version, build or image tag (2.9.0+sha.a7177d7bb704,
-	// cu130-torch-2.14.0-flashinfer-0.6.18) or a repository's path or
-	// reference (example-org/demo-project#1234) is not a secret, whatever
-	// field holds it (#3365): fields named token and key hold these all
-	// the time
-	if versionRe.MatchString(v) || repoRefRe.MatchString(v) {
-		return false
-	}
 	return strings.ContainsAny(v, digits) && strings.IndexFunc(v, func(r rune) bool { return r >= 'A' && r <= 'Z' || r >= 'a' && r <= 'z' }) >= 0
 }
 
-// versionRe is a run of dotted numbers with at least three parts, as
-// versions and build tags carry (2.14.0, 3.9.10.post20261008): no secret
-// has such a run in it.
-var versionRe = regexp.MustCompile(`\d+\.\d+\.\d+`)
+// secretValueAt is secretValue for a value the assignment rules found,
+// with the field it sits under read: a version, build or image tag
+// (2.9.0+sha.a7177d7bb704, cu130-torch-2.14.0-flashinfer-0.6.18) or a
+// repository's path or reference (example-org/demo-project#1234) is not a
+// secret under a field that names an identifier (#3365) — fields named
+// token and key carry these all the time. Under a credential field
+// (password, api_key, secret…) the value is held to be one whatever it
+// looks like: the review of #3365 had {"password":"R8c7/bT2mN4z"} and
+// {"password":"ProdA1.2.3Z9"} going out as written.
+func secretValueAt(s string, a, b int) bool {
+	if !credentialFieldAt(s, a) && (versionRe.MatchString(s[a:b]) || repoRefRe.MatchString(s[a:b])) {
+		return false
+	}
+	return secretValue(s[a:b])
+}
+
+// versionRe is a run of dotted numbers with at least three parts at word
+// boundaries, as versions and build tags carry (2.14.0,
+// 3.9.10.post20261008): a run embedded in a longer word (ProdA1.2.3Z9) is
+// no version.
+var versionRe = regexp.MustCompile(`(?:^|[^0-9A-Za-z])\d+\.\d+\.\d+(?:$|[^0-9A-Za-z])`)
 
 // repoRefRe is a repository's path or its pull or issue reference,
-// owner/name or owner/name#123.
+// owner/name or owner/name#123, as the whole value.
 var repoRefRe = regexp.MustCompile(`^[0-9A-Za-z_.-]+/[0-9A-Za-z_.-]+(?:#[0-9]+)?$`)
+
+// credentialFieldRe is a field's name that says the value under it is a
+// credential, looked for at the end of the text before the value: name
+// and its quotes, the separating : or =, and the value's opening quote.
+var credentialFieldRe = regexp.MustCompile(`(?i)(?:^|[^A-Za-z0-9_.-])[A-Za-z0-9_.-]*(?:password|passwd|pwd|secret|api_?key|access_?key|private_?key|credential)[A-Za-z0-9_.-]*["']?[ \t]*[:=][ \t]*["']?$`)
+
+// credentialFieldAt says the value at a sits under a field whose name
+// names a credential. A bare key or a …Token name is no such field: those
+// carry versions and repository references as often (#3365).
+func credentialFieldAt(s string, a int) bool {
+	return credentialFieldRe.MatchString(s[:a])
+}
 
 func realEmail(v string) bool {
 	host := strings.ToLower(v[strings.LastIndexByte(v, '@')+1:])
@@ -325,6 +349,7 @@ func luhn(v string) bool {
 var (
 	mu      sync.RWMutex
 	values  = map[string]string{} // placeholder → value
+	learned = map[string]bool{}   // placeholder → its value is one known (known.go)
 	kinds   = map[string]bool{}   // the kinds of values, for wordTail
 	keyOf   []byte
 	keyPath string // guarded by mu, as keyOf is
@@ -396,6 +421,7 @@ func placeholder(kind, v string, learn bool) string {
 			n := 0
 			for k := range values {
 				delete(values, k)
+				delete(learned, k)
 				if n++; n >= maxValues/2 {
 					break
 				}
@@ -404,12 +430,19 @@ func placeholder(kind, v string, learn bool) string {
 		}
 		values[p] = v
 		kinds[kind] = true
+		learned[p] = learn
 		if learn {
 			// not learned: a value masked without becoming one known
 			// (a URL placeholder's password, known.go) still restores,
 			// it just swaps nowhere else
 			addKnown(p, v)
 		}
+	} else if learn && !learned[p] {
+		// the same value met where it is a real credential this time (a
+		// URL's password under a user of its own): it is learned now, so
+		// it is masked in plain words too from here on (#3365 review)
+		learned[p] = true
+		addKnown(p, v)
 	}
 	mu.Unlock()
 	return p
@@ -614,6 +647,9 @@ func mask(raw string, o Options, put func(kind, v string, learn bool) string, es
 				if !r.anyGroup {
 					break
 				}
+			}
+			if r.okAt != nil && !r.okAt(s, a, b) {
+				continue
 			}
 			ok := r.ok
 			if r.fix != nil {
