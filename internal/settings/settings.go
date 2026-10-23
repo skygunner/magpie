@@ -194,8 +194,8 @@ type Settings struct {
 	// of their rate-limit resets by themselves once their weekly window is
 	// used up and no other account can take the request: at most one a
 	// week each (see provider.AutoUseCodexReset); and one about to run out
-	// unused half an hour before it does, or at once when the account is
-	// held up past then (provider.SpendExpiringCodexResets).
+	// unused half an hour before it does, never earlier for exhausted
+	// windows (provider.SpendExpiringCodexResets).
 	CodexAutoReset []string `json:"codexAutoReset,omitempty"`
 	// CodexAutoResetOnly narrows an account in CodexAutoReset to one of
 	// those two times (#2078, alanwalk: Codex's own resets come often, so

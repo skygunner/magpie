@@ -202,37 +202,17 @@ func (a Allowance) OnCredits() bool {
 
 // Restarts is when an auto-used reset starts the account's windows again,
 // as the Codex reset about to run out is spent (expiringResetSpent):
-// resetExpiryLead before it runs out, or now when the account is held up
-// past then. What they have left then is lost, as at their own reset, so
+// resetExpiryLead before it runs out, or now within that window.
+// What they have left then is lost, as at their own reset, so
 // Weekly pace and Smart take it for their renewal when it comes sooner
 // (#717, #718). Zero when none will be.
 func (a Allowance) Restarts(now time.Time) time.Time {
 	for _, l := range a {
 		if !l.ResetRunsOut.IsZero() {
-			stopped, back := a.heldUp()
-			return expiringResetSpent(l.ResetRunsOut, now, stopped, back)
+			return expiringResetSpent(l.ResetRunsOut, now)
 		}
 	}
 	return time.Time{}
-}
-
-// heldUp is usedUp and BackAt by an allowance: whether a window that
-// stops the account, for every model, is used up, and when the last of
-// those starts again (zero when one doesn't say).
-func (a Allowance) heldUp() (stopped bool, back time.Time) {
-	for _, l := range a {
-		if l.Model != "" || l.matches != nil || l.Used < 100 {
-			continue
-		}
-		if l.Resets.IsZero() {
-			return true, time.Time{}
-		}
-		if !stopped || l.Resets.After(back) {
-			back = l.Resets
-		}
-		stopped = true
-	}
-	return stopped, back
 }
 
 // restarted is when a window that renews at renews (zero: not known) is

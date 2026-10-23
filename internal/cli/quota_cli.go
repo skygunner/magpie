@@ -35,7 +35,7 @@ const quotaUsage = `usage: magpie quota [<provider>…] [--json]
   account can take a request, one a week at most (the five hours running out never
   does), and spend the one about to expire about half an hour before it does, if
   the account's windows have been used, so what they have left can be used until
-  then and it isn't lost; at once when the account is held up until after then.
+  then and it isn't lost. Exhausted windows never bring expiry use forward.
   week on|off or expiring on|off turns only one of those two times on or off, the
   other kept as it is: expiring on alone waits out a used-up week (the vendor may
   reset it) and still spends the reset about to expire.
@@ -316,11 +316,11 @@ func quotaAutoResetCmd(args []string) error {
 	}
 	switch week, expiring := provider.CodexAutoResetWhen(user); {
 	case week && expiring:
-		fmt.Println(green.Render("✓"), user+":", "uses a reset by itself once its week is used up and no other account can answer, one a week at most, and the one about to expire half an hour before it does, or at once when held up past then")
+		fmt.Println(green.Render("✓"), user+":", "uses a reset by itself once its week is used up and no other account can answer, one a week at most, and the one about to expire half an hour before it does")
 	case week:
 		fmt.Println(green.Render("✓"), user+":", "uses a reset by itself once its week is used up and no other account can answer, one a week at most; one about to expire is left to run out")
 	case expiring:
-		fmt.Println(green.Render("✓"), user+":", "uses the reset about to expire half an hour before it does, or at once when held up past then; a week used up is waited out")
+		fmt.Println(green.Render("✓"), user+":", "uses the reset about to expire half an hour before it does; a week used up is waited out")
 	default:
 		fmt.Println(green.Render("✓"), user+":", "no longer uses a reset by itself")
 	}
