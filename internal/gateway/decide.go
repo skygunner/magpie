@@ -511,12 +511,22 @@ func (s *Server) serveSystemOne(w http.ResponseWriter, r *http.Request) {
 	if refuseOff(w, provider.Chat, q.Model) {
 		return
 	}
+	plain := body
+	w, body, unmask, err := redacted(w, body)
+	defer unmask()
+	if err != nil {
+		writeError(w, provider.Chat, maskStatus(err), err.Error())
+		return
+	}
 	// a routing group of decision models: each of them in turn
 	// (decide_group.go)
 	if g, ms, ok, status, err := decisionGroupOf(q.Model); err != nil {
 		writeError(w, provider.Chat, status, err.Error())
 		return
 	} else if ok {
+		if unredactedRoute(provider.Provider{}, true, ms) {
+			body = plain
+		}
 		s.serveDecisionGroup(w, r, body, q.Model, g, ms)
 		return
 	}
@@ -524,6 +534,9 @@ func (s *Server) serveSystemOne(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeError(w, provider.Chat, provider.DecideRouteStatus(err), err.Error())
 		return
+	}
+	if unredactedRoute(p, false, nil) {
+		body = plain
 	}
 	body = withModel(body, model)
 	start := time.Now()
