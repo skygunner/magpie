@@ -11,7 +11,7 @@ import (
 
 func relayReply() string {
 	return sse(
-		`data: {"type":"response.completed","response":{"id":"r1","output":[{"type":"message","role":"assistant","content":[{"type":"output_text","text":"PONG"}]}],"usage":{"input_tokens":10,"output_tokens:1}}}`,
+		`data: {"type":"response.completed","response":{"id":"r1","status":"completed","output":[{"type":"message","role":"assistant","content":[{"type":"output_text","text":"PONG"}]}],"usage":{"input_tokens":10,"output_tokens":1}}}`,
 		`data: [DONE]`)
 }
 
