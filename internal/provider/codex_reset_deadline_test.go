@@ -125,7 +125,7 @@ func TestResetRunsOutForRouting(t *testing.T) {
 }
 
 // Routing takes the reset as spent when check spends it: half an hour
-// before it runs out, or now when the account is held up past then (#718).
+// before it runs out, even when the account is held up past then (#3417).
 func TestRestartsWhenHeldUp(t *testing.T) {
 	now := time.Now()
 	acct := func(fiveUsed float64, fiveBack time.Duration) Allowance {
@@ -140,8 +140,8 @@ func TestRestartsWhenHeldUp(t *testing.T) {
 		want time.Time
 	}{
 		"free again before it is spent":  {acct(100, 110*time.Minute), now.Add(150 * time.Minute)},
-		"held up past it":                {acct(100, 160*time.Minute), now},
-		"held up, not saying until when": {acct(100, 0), now},
+		"held up past it":                {acct(100, 160*time.Minute), now.Add(150 * time.Minute)},
+		"held up, not saying until when": {acct(100, 0), now.Add(150 * time.Minute)},
 		"not held up":                    {acct(60, 110*time.Minute), now.Add(150 * time.Minute)},
 	} {
 		if got := c.a.Restarts(now); !got.Equal(c.want) {

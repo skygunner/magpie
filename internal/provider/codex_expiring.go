@@ -9,10 +9,9 @@ package provider
 // safe, resetExpiryLead before it runs out (#718: spent three hours
 // early, an account held up for the five hours but freed again in two
 // lost the 68% of its week it could have used before the reset ran out).
-// Only when the account is held up now and won't be free again before
-// then is it spent at once: nothing more can be used by waiting, and
-// spending it frees the account. It is the reset that runs out first that
-// is spent (UseCodexReset), so one that lasts longer is kept. This is
+// An exhausted window or an unknown recovery time never brings that
+// deadline forward (#2078, #3417). The reset that runs out first is spent
+// (UseCodexReset), so one that lasts longer is kept. This is
 // apart from the week's one when the week is used up (AutoUseCodexReset):
 // a reset that would be lost anyway takes none of the week's.
 
@@ -40,8 +39,7 @@ var (
 	// when its next look is due)
 	resetExpiryClose = 5 * time.Minute
 	// resetExpiryWatch is how often an account holding a reset that runs
-	// out, not yet near, is looked at: it may come to be held up past it
-	// (spent at once then), or be used
+	// out, not yet near, is looked at: its expiry or use may change
 	resetExpiryWatch = 30 * time.Minute
 	// resetExpiryFar is the longest an account goes unread: a reset
 	// granted meanwhile is seen by then
@@ -57,8 +55,8 @@ type expiringResets struct {
 }
 
 // check spends one of user's resets, if its windows have been used, when
-// the soonest of them runs out within resetExpiryLead or the account is
-// held up past then (expiringResetSpent); look reads its windows and
+// the soonest of them runs out within resetExpiryLead
+// (expiringResetSpent); look reads its windows and
 // resets, spend spends the one that runs out first. Code is "" when none
 // was tried. now is wall-clock time: a Mac asleep doesn't count it on the
 // monotonic clock, and the reset runs out by the wall clock.
@@ -95,11 +93,10 @@ func (e *expiringResets) check(user string, now time.Time, look func() ([]QuotaW
 		e.next[key] = now.Add(resetExpiryClose)
 		return ResetOutcome{}, nil
 	}
-	q := SubscriptionQuota{Windows: windows}
-	at := expiringResetSpent(until, now, usedUp(q, now), BackAt(q, now))
+	at := expiringResetSpent(until, now)
 	if at.After(now) || !windowsUsed(windows) {
-		// not yet, or nothing to start again yet: the account may be used,
-		// or held up, before it runs out
+		// not yet, or nothing to start again yet: the account may be used
+		// before it runs out
 		e.next[key] = nextResetLook(until, now)
 		return ResetOutcome{}, nil
 	}
@@ -127,19 +124,17 @@ func nextResetLook(until, now time.Time) time.Time {
 
 // expiringResetSpent is when a reset that runs out at until is spent by
 // itself (check, when the account's windows have been used by then):
-// resetExpiryLead before it runs out, or now once that has passed; now
-// too when the account is stopped (a window that stops it used up) and
-// back, when it is free again (zero: not known), isn't before then — what
-// the windows have left can't be used before the reset is spent anyway,
-// and spending it frees the account. Zero when it has run out already.
+// resetExpiryLead before it runs out, or now within that window.
+// Quota exhaustion and recovery predictions cannot authorize an earlier
+// spend (#2078, #3417). Zero when it has run out already.
 // Routing goes by the same time (Allowance.Restarts; #717, #718), so the
 // two can't drift apart.
-func expiringResetSpent(until, now time.Time, stopped bool, back time.Time) time.Time {
+func expiringResetSpent(until, now time.Time) time.Time {
 	if !until.After(now) {
 		return time.Time{}
 	}
 	at := until.Add(-resetExpiryLead)
-	if !at.After(now) || stopped && (back.IsZero() || !back.Before(at)) {
+	if !at.After(now) {
 		return now
 	}
 	return at
@@ -232,8 +227,7 @@ func spendExpiringNow(windows []QuotaWindow, resets *ResetCredits, now time.Time
 	if resets == nil || resets.Count <= 0 || resets.Until == nil || !windowsUsed(windows) {
 		return false
 	}
-	q := SubscriptionQuota{Windows: windows}
-	at := expiringResetSpent(resets.Until.Round(0), now, usedUp(q, now), BackAt(q, now))
+	at := expiringResetSpent(resets.Until.Round(0), now)
 	return !at.IsZero() && !at.After(now)
 }
 

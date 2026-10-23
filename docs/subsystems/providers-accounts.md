@@ -156,6 +156,19 @@ listed models keep their `Available` names unchanged
 
 ## Constraints and failure behavior
 
+Codex automatic reset spending has two independent permissions (#2078,
+#3417): `week` allows a reset when the week is exhausted and no account can
+answer, at most once a week; `expiring` allows the earliest expiring card
+only in its final 30 minutes, and only with used windows. Exhaustion and
+late or unknown recovery times never advance expiry use. The background
+check and its locked recheck share `expiringResetSpent` in
+[`codex_expiring.go`](../../internal/provider/codex_expiring.go); routing uses
+the same deadline through `Allowance.Restarts`. Expired cards and unused
+windows spend nothing. Manual use remains an explicit user action.
+`TestExpiringResetWaitsForExpiry`, `TestSpendExpiringCodexResets` and
+`TestCodexAutoResetCases` exercise this with fixed times, fake callbacks
+and a local fake vendor; no real cards are needed.
+
 An allowance deliberately not requested (a saved Claude account outside
 its card refresh, or allowances set to *When I ask*) can use the last
 reading with `readDeferred: true`. `AsOf` and `ReadAt` still date that

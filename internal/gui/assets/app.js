@@ -17528,7 +17528,7 @@ function resetsWords(r, q) {
     if (q && autoResetKept(q)) {
       const on = autoResetWhen(q).expiring;
       w.append(el("span", "resets-kept" + (on ? " on" : ""), " · " + t(on ? "auto-used before it expires" : "not auto-used")));
-      w.title += "\n" + t(on ? "Auto-use is on: the reset that runs out first is used about half an hour before it does, if this account's windows have been used, so what they have left can be used until then and it isn't lost; at once if the account is held up until after then."
+      w.title += "\n" + t(on ? "Auto-use is on: the reset that runs out first is used about half an hour before it does, if this account's windows have been used, so what they have left can be used until then and it isn't lost."
         : "Auto-use is off: the reset that runs out first is lost unless it's used by hand before then.");
     }
   } else if (r.each?.length) w.title = resetsEach(r);
@@ -17589,7 +17589,7 @@ const AUTO_RESET_CASES = [
     on: "On: a reset is used by itself when this account's week is used up and no other account can answer, one a week at most. The five hours running out never uses one. Click to turn it off.",
     off: "Off: a used-up week is waited out, and the vendor may start it again sooner; requests go to your other accounts, or are refused with why. Click to turn it on." },
   { id: "expiring", say: "before one expires",
-    on: "On: the reset that runs out first is used about half an hour before it does, if this account's windows have been used, or at once when the account is held up until after then. Click to turn it off.",
+    on: "On: the reset that runs out first is used about half an hour before it does, if this account's windows have been used. Click to turn it off.",
     off: "Off: a reset that runs out unused is lost. Click to turn it on." },
 ];
 // autoResetStatus says what the account does now, after a switch.
@@ -17649,8 +17649,8 @@ function resetUsedWhy(why) {
   return t("by hand");
 }
 function autoResetTitle(on) {
-  return t(on ? "On: a reset is used by itself when this account's week is used up and no other account can answer, one a week at most, and the one about to run out is used about half an hour before it does, if the account has been used, or at once when the account is held up until after then. Otherwise the five hours running out never uses one. Click to turn it off."
-    : "Off: this account's resets are used only by hand. Turned on, one is used by itself when its week is used up and no other account can answer, one a week at most, and the one about to run out about half an hour before it does, if the account has been used, or at once when the account is held up until after then. Otherwise the five hours running out never uses one.");
+  return t(on ? "On: a reset is used by itself when this account's week is used up and no other account can answer, one a week at most, and the one about to run out is used about half an hour before it does, if the account has been used. Otherwise the five hours running out never uses one. Click to turn it off."
+    : "Off: this account's resets are used only by hand. Turned on, one is used by itself when its week is used up and no other account can answer, one a week at most, and the one about to run out about half an hour before it does, if the account has been used. Otherwise the five hours running out never uses one.");
 }
 
 // autoResetBrief: an account in brief says it too, beside its name — the

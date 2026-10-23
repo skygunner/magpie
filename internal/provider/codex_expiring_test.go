@@ -57,6 +57,50 @@ func TestResetSpentBeforeItRunsOut(t *testing.T) {
 	}
 }
 
+// #3417: expiry-only permission never spends early, even when an exhausted
+// window's recovery is late or unknown. Both checks and routing share the deadline.
+func TestExpiringResetWaitsForExpiry(t *testing.T) {
+	now := time.Date(2026, 10, 24, 12, 0, 0, 0, time.UTC)
+	for _, span := range []time.Duration{5 * time.Hour, 7 * 24 * time.Hour} {
+		for _, recovery := range []time.Duration{0, time.Hour, 6*24*time.Hour - resetExpiryLead, 7 * 24 * time.Hour} {
+			for _, left := range []time.Duration{6 * 24 * time.Hour, resetExpiryLead + time.Second, resetExpiryLead, time.Minute, 0, -time.Second} {
+				t.Run(span.String()+"/"+recovery.String()+"/"+left.String(), func(t *testing.T) {
+					until := now.Add(left)
+					window := QuotaWindow{Span: span, Used: 100}
+					limit := Limit{Span: span, Used: 100}
+					if recovery != 0 {
+						back := now.Add(recovery)
+						window.ResetsAt, limit.Resets = &back, back
+					}
+					windows := []QuotaWindow{window}
+					held := &ResetCredits{Count: 1, Until: &until}
+					want := left > 0 && left <= resetExpiryLead
+					e := expiringResets{next: map[string]time.Time{}}
+					spent := 0
+					out, err := e.check("me@example.com", now, func() ([]QuotaWindow, *ResetCredits, error) { return windows, held, nil },
+						func() (ResetOutcome, error) { spent++; return ResetOutcome{Code: "reset"}, nil })
+					if err != nil || spent != map[bool]int{false: 0, true: 1}[want] || (out.Code == "reset") != want {
+						t.Errorf("check spent %d: %+v, %v; want spend %v", spent, out, err, want)
+					}
+					if got := spendExpiringNow(windows, held, now); got != want {
+						t.Errorf("locked recheck: %v, want %v", got, want)
+					}
+					deadline := time.Time{}
+					if left > 0 {
+						deadline = until.Add(-resetExpiryLead)
+						if want {
+							deadline = now
+						}
+					}
+					if got := (Allowance{limit}).restartedBy(until).Restarts(now); !got.Equal(deadline) {
+						t.Errorf("routing restart %v, want %v", got, deadline)
+					}
+				})
+			}
+		}
+	}
+}
+
 // A read or a spend that fails is tried again later, not on every pass.
 func TestResetExpiryRetriesLater(t *testing.T) {
 	now := time.Now()
@@ -84,7 +128,8 @@ func TestSpendExpiringCodexResets(t *testing.T) {
 	old, oldUntil := expiring.next, expiring.until
 	expiring.next, expiring.until = map[string]time.Time{}, map[string]time.Time{}
 	t.Cleanup(func() { expiring.next, expiring.until = old, oldUntil })
-	soon := time.Now().Add(20 * time.Minute).UTC().Format(time.RFC3339)
+	soon := time.Now().Add(6 * 24 * time.Hour).UTC().Format(time.RFC3339)
+	weekUsed, weekBack := 100, time.Now().Add(7*24*time.Hour).Unix()
 	later := time.Now().Add(20 * 24 * time.Hour).UTC().Format(time.RFC3339)
 	var read, consumed atomic.Int32
 	var spentID string
@@ -95,7 +140,7 @@ func TestSpendExpiringCodexResets(t *testing.T) {
 			json.NewEncoder(w).Encode(map[string]any{"plan_type": "pro",
 				"rate_limit": map[string]any{
 					"primary_window":   map[string]any{"used_percent": 0, "limit_window_seconds": 18000},
-					"secondary_window": map[string]any{"used_percent": 35, "limit_window_seconds": 604800, "reset_at": time.Now().Add(72 * time.Hour).Unix()}},
+					"secondary_window": map[string]any{"used_percent": weekUsed, "limit_window_seconds": 604800, "reset_at": weekBack}},
 				"rate_limit_reset_credits": map[string]any{"available_count": 2}})
 		case "/backend-api/wham/rate-limit-reset-credits":
 			json.NewEncoder(w).Encode(map[string]any{"available_count": 2, "credits": []any{
@@ -131,9 +176,30 @@ func TestSpendExpiringCodexResets(t *testing.T) {
 	if read.Load() != 0 || consumed.Load() != 0 {
 		t.Fatalf("kept to its week, yet read %d, spent %d", read.Load(), consumed.Load())
 	}
-	if err := SetCodexAutoReset("me@example.com", true); err != nil {
+	if err := SetCodexAutoResetCase("me@example.com", ResetCaseWeek, false); err != nil {
 		t.Fatal(err)
 	}
+	if err := SetCodexAutoResetCase("me@example.com", ResetCaseExpiring, true); err != nil {
+		t.Fatal(err)
+	}
+	for _, back := range []int64{weekBack, 0} {
+		weekBack = back
+		expiring.next = map[string]time.Time{}
+		SpendExpiringCodexResets(t.Context())
+		if consumed.Load() != 0 {
+			t.Fatalf("expiry-only, card lasts six days, recovery %d: spent %d", back, consumed.Load())
+		}
+		if out, err := AutoUseCodexReset(t.Context(), "me@example.com"); err != nil || out.Code != "" {
+			t.Fatalf("week off: %+v %v", out, err)
+		}
+	}
+	if read.Load() == 0 {
+		t.Fatal("expiry-only account was not checked")
+	}
+	// The same account may spend the earliest card only after it is near expiry.
+	soon = time.Now().Add(20 * time.Minute).UTC().Format(time.RFC3339)
+	weekUsed = 35
+	expiring.next = map[string]time.Time{}
 	SpendExpiringCodexResets(t.Context())
 	if consumed.Load() != 1 || spentID != "soon" {
 		t.Fatalf("spent %d (%q), want the one running out", consumed.Load(), spentID)
@@ -210,9 +276,8 @@ func TestExpiringResetLeftAlone(t *testing.T) {
 // spent that reset at 15:20, within three hours of it, losing the 68% of the week it could have used
 // after 17:09. Spending it starts the windows again, and the fresh ones
 // are the same whenever it is: so it is spent half an hour before it runs
-// out, looked at every five minutes in its last hour. Only an account held
-// up past then spends it at once — waiting can use nothing more, and
-// spending it frees the account; windows unused spend nothing.
+// out, looked at every five minutes in its last hour. Exhausted windows
+// still wait until then (#3417); windows unused spend nothing.
 func TestResetSpentAsLateAsSafe(t *testing.T) {
 	day := time.Date(2026, 10, 4, 0, 0, 0, 0, time.Local)
 	clock := func(h, m int) time.Time { return day.Add(time.Duration(h)*time.Hour + time.Duration(m)*time.Minute) }
@@ -238,10 +303,10 @@ func TestResetSpentAsLateAsSafe(t *testing.T) {
 	}{
 		"the report: five hours free at 17:09": {windows(100, clock(17, 9), 32), clock(17, 45)},
 		"five hours free at 17:40":             {windows(100, clock(17, 40), 32), clock(17, 45)},
-		"five hours free at 17:50":             {windows(100, clock(17, 50), 32), clock(15, 20)},
-		"five hours free after it runs out":    {windows(100, clock(19, 0), 32), clock(15, 20)},
-		"five hours used up, not saying when":  {windows(100, time.Time{}, 32), clock(15, 20)},
-		"week used up past it":                 {windows(40, clock(17, 0), 100), clock(15, 20)},
+		"five hours free at 17:50":             {windows(100, clock(17, 50), 32), clock(17, 45)},
+		"five hours free after it runs out":    {windows(100, clock(19, 0), 32), clock(17, 45)},
+		"five hours used up, not saying when":  {windows(100, time.Time{}, 32), clock(17, 45)},
+		"week used up past it":                 {windows(40, clock(17, 0), 100), clock(17, 45)},
 		"not held up":                          {windows(60, clock(17, 9), 32), clock(17, 45)},
 		"nothing used":                         {windows(0, clock(17, 9), 0), time.Time{}},
 	} {
@@ -326,10 +391,11 @@ func TestResetExpiryLastHour(t *testing.T) {
 
 // the expiring spend reads the account again under autoReset's lock: a
 // held-up account the week's used-up spend has just started again (its
-// windows back at 0) gets no second reset, one still held up does
+// windows back at 0) gets no second reset; a used account waits until the lead
 func TestExpiringSpendReadAgain(t *testing.T) {
 	now := time.Date(2026, 10, 4, 15, 20, 0, 0, time.UTC)
 	until := now.Add(2 * time.Hour)
+	near := now.Add(20 * time.Minute)
 	back := now.Add(3 * time.Hour)
 	held := &ResetCredits{Count: 2, Until: &until}
 	blocked := []QuotaWindow{{Span: 7 * 24 * time.Hour, Used: 100, ResetsAt: &back}}
@@ -341,8 +407,9 @@ func TestExpiringSpendReadAgain(t *testing.T) {
 		r    *ResetCredits
 		want bool
 	}{
-		"still held up past expiry":  {blocked, held, true},
-		"started again meanwhile":    {fresh, held, false},
+		"still held up past expiry":  {blocked, held, false},
+		"started again meanwhile":    {fresh, &ResetCredits{Count: 1, Until: &near}, false},
+		"within lead, still used":    {blocked, &ResetCredits{Count: 1, Until: &near}, true},
 		"free again before the lead": {waiting, held, false},
 		"none held any more":         {blocked, &ResetCredits{}, false},
 		"run out already":            {blocked, &ResetCredits{Count: 1, Until: &now}, false},
