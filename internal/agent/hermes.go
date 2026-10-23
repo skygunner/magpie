@@ -23,6 +23,7 @@ package agent
 // out of each.
 
 import (
+	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -106,7 +107,11 @@ func hermesIn(at place) *Agent {
 		Unwire: func() error {
 			var errs []error
 			if joined() {
-				errs = append(errs, edit.DelYAML(path, "providers."+magpieID))
+				if err := edit.DelYAML(path, "providers."+magpieID); err != nil {
+					errs = append(errs, err)
+				} else {
+					forget("hermes:" + path + ":vision")
+				}
 			}
 			for _, p := range hermesOthers(at, dir) {
 				errs = append(errs, hermesUnwireProfile(p))
@@ -268,25 +273,29 @@ func hermesUnwireProfile(p string) error {
 	if v, _ := edit.GetYAML(p, "model.provider"); v == magpieID {
 		del = append(del, "model.provider", "model.default")
 	}
-	return edit.DelYAML(p, del...)
+	if err := edit.DelYAML(p, del...); err != nil {
+		return err
+	}
+	forget("hermes:" + p + ":vision")
+	return nil
 }
 
 type hermesProviderEntry struct {
-	Name    string            `yaml:"name"`
-	BaseURL string            `yaml:"base_url"`
-	APIKey  string            `yaml:"api_key"`
-	APIMode string            `yaml:"api_mode"`
-	Headers map[string]string `yaml:"extra_headers"`
-	Models  []string          `yaml:"models"`
+	Name    string                    `yaml:"name"`
+	BaseURL string                    `yaml:"base_url"`
+	APIKey  string                    `yaml:"api_key"`
+	APIMode string                    `yaml:"api_mode"`
+	Headers map[string]string         `yaml:"extra_headers"`
+	Models  map[string]map[string]any `yaml:"models"`
 }
 
 // hermesProviderAt is magpie's entry under providers, for a Hermes reaching
 // the gateway at gw. Hermes sends its own User-Agent only from a recent
 // release on, so the header names it for the gateway's usage view.
 func hermesProviderAt(gw string) hermesProviderEntry {
-	ms := []string{}
+	ms := map[string]map[string]any{}
 	for _, m := range magpieModels("hermes") {
-		ms = append(ms, m.ID)
+		ms[m.ID] = map[string]any{"supports_vision": m.Images}
 	}
 	return hermesProviderEntry{
 		Name: magpieID, BaseURL: gw + "/v1", APIKey: keyAt(gw), APIMode: "chat_completions",
@@ -303,6 +312,37 @@ func hermesProviderAt(gw string) hermesProviderEntry {
 // address, key, API mode and model list are magpie's (#2030), but for a
 // key the user keeps as a reference to a variable (hermesKeptKey).
 func hermesKept(at place, path string, e hermesProviderEntry) any {
+	// Hermes reads capability overrides only from a model mapping (#2323).
+	// Keep user settings; only a capability we wrote follows the catalog.
+	kept, _ := yamlKept(path, "providers."+magpieID+".models", map[string]any{}).(map[string]any)
+	key := "hermes:" + path + ":vision"
+	saved := stashLoad()[key]
+	previous := map[string]bool{}
+	_ = json.Unmarshal([]byte(saved), &previous)
+	wrote := map[string]bool{}
+	for id, model := range e.Models {
+		wrote[id] = model["supports_vision"].(bool)
+		if old, ok := kept[id].(map[string]any); ok {
+			value, boolean := old["supports_vision"].(bool)
+			was, recorded := previous[id]
+			ours := boolean && recorded && was == value
+			if _, alias := old["vision"]; alias {
+				delete(model, "supports_vision")
+				delete(wrote, id)
+			}
+			for k, v := range old {
+				if k != "supports_vision" || !ours {
+					model[k] = v
+					if k == "supports_vision" {
+						delete(wrote, id)
+					}
+				}
+			}
+		}
+	}
+	if b, err := json.Marshal(wrote); err == nil && string(b) != saved {
+		stash(map[string]string{key: string(b)})
+	}
 	e.APIKey = hermesKeptKey(at, path, e.APIKey)
 	if name, ok := edit.GetYAML(path, "providers."+magpieID+".name"); ok && strings.TrimSpace(name) != "" {
 		e.Name = name
