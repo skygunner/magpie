@@ -228,7 +228,7 @@ func autoVision() (string, bool) {
 		if bestReady && t > bestTier {
 			continue
 		}
-		m, cost, ready := smallModelWhere(p, "sees", sees)
+		m, cost, ready := smallModelWhere(p, "sees", seesOn(p))
 		if m == "" {
 			continue
 		}
@@ -274,9 +274,19 @@ func autoDescribes() bool {
 	return v == "" || pickedMissing(v) != ""
 }
 
-// sees is whether a model takes images.
-func sees(m catalog.Model) bool {
-	return m.Images && (m.ImageInput == nil || *m.ImageInput)
+// seesOn reads image input as the served entry does: the user's answer,
+// then the vendor's explicit answer, then the catalog's for the model ID.
+func seesOn(p provider.Provider) func(catalog.Model) bool {
+	s := provider.HeldSettings()
+	return func(m catalog.Model) bool {
+		if v, ok := provider.ImageOverrideIn(s, p.ID, m.ID); ok {
+			return v
+		}
+		if m.ImageInput != nil {
+			return *m.ImageInput
+		}
+		return m.Images || catalog.SeesImages(m.ID)
+	}
 }
 
 // sight is a description, once it is done.

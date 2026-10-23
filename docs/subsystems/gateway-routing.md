@@ -665,6 +665,15 @@ Covered by `TestSearchMCPServesWebSearch`, `TestSearchMCPWithNoSearcher`,
 
 ## Image recognition as an MCP server
 
+Automatic image recognition (`autoVision`, [`vision.go`](../../internal/gateway/vision.go))
+uses the same image-input answers as a served model: the user's per-model
+answer first, then the vendor's explicit `ImageInput`, then `Images` or the
+catalog's answer for the ID. A custom provider listing only IDs can therefore
+supply a describer; an explicit no excludes it unless the user overrides it.
+The existing enabled-model, priority, price and allowance rules still apply.
+`TestAutoVisionTakesTheCatalogsWordForAnIDOnlyModel` covers these answers
+and their changes after the candidate list has been cached.
+
 `VisionMCPPath`, `/mcp/magpie/vision`, serves the model that describes
 images to a model that can't see them (`seer`: Settings › Models › Image
 recognition, else `AutoVision`'s) as an MCP server with one `analyze_image`
