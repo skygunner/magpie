@@ -216,7 +216,9 @@ const (
 // no shape a chat test knows. OpenRouter's image-only models use its /images
 // endpoint; its chat image models still use chat completions.
 func (p Provider) drawsOnImages(model string) bool {
-	return p.Account == nil && p.Chat != "" && catalog.ImagesAPI(model)
+	// a model the user said draws is tested where it draws, as one whose
+	// name the catalog knows (#1105)
+	return p.Account == nil && p.Chat != "" && (catalog.ImagesAPI(model) || p.ModelKind(model) == KindImage)
 }
 
 // tinyDrawing is the smallest images request for model: one picture of

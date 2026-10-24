@@ -819,6 +819,12 @@ func viaFor(p provider.Provider, model string) drawVia {
 			return viaImages
 		}
 		return viaChat
+	case p.ModelKind(model) == provider.KindImage:
+		// the user said this model draws (#1399): a name the catalog
+		// doesn't know for one (Gitee's z-image-turbo, #1105) is drawn
+		// at the images API all the same, not sent to chat for the
+		// vendor's 400
+		return viaImages
 	case catalog.ImagesAPI(model):
 		return viaImages
 	}
@@ -1171,7 +1177,18 @@ func (s *Server) drawImages(ctx context.Context, p provider.Provider, model stri
 		body, _ = json.Marshal(req)
 	} else if len(d.Images) == 0 {
 		req := map[string]any{"model": model, "prompt": d.Prompt, "n": d.N}
-		for k, v := range map[string]string{"size": d.Size, "quality": d.Quality, "background": d.Background, "output_format": d.Format} {
+		size := d.Size
+		if isGitee(p) {
+			// Gitee takes width and height, never OpenAI's size, which it
+			// answers 参数无效 (#1105)
+			if m := whSize.FindStringSubmatch(size); m != nil {
+				w, _ := strconv.Atoi(m[1])
+				h, _ := strconv.Atoi(m[2])
+				req["width"], req["height"] = w, h
+				size = ""
+			}
+		}
+		for k, v := range map[string]string{"size": size, "quality": d.Quality, "background": d.Background, "output_format": d.Format} {
 			if v != "" {
 				req[k] = v
 			}
