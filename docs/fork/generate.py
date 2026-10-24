@@ -38,6 +38,7 @@ REQUIRED_SET = {n: "product" for n in
      3392,3401,3440,3444,3447)}
 REQUIRED_SET.update({n: "tests" for n in (2207,3095,3100,3174,3229,3277,3280,3284,3311)})
 REQUIRED_SET.update({n: "upstream_fixed" for n in (2949,3143,3144,3151,3255,3345)})
+REQUIRED_SET.update({n: "product" for n in (1105, 3455, 3470, 3487, 3513, 3514, 3519)})
 REQUIRED_SET.update({n: "other" for n in (3131,3147)})
 PRS = {1072, 1073, 1258}
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")

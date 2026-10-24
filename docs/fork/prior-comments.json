@@ -701,5 +701,68 @@
   "type": "issue",
   "url": "https://github.com/yetone/magpie/issues/3401",
   "title": "library: Reasonix Studio gets no MCP servers, skills or hooks"
+ },
+ "3487": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3487#issuecomment-6389261270"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3487",
+  "title": "quota card ms span + unknown amount"
+ },
+ "3470": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3470#issuecomment-6389269893"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3470",
+  "title": "session hit rates cache_unknown"
+ },
+ "3519": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3519#issuecomment-6389270118"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3519",
+  "title": "v4 fallback mark on a host with no IPv4"
+ },
+ "3514": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3514#issuecomment-6389275410"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3514",
+  "title": "dsh subscription Claude on Messages"
+ },
+ "1105": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/1105#issuecomment-6389275629"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/1105",
+  "title": "images-API image models on any vendor (gitee half)"
+ },
+ "3513": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3513#issuecomment-6389279389"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3513",
+  "title": "ChatGPT drawing size in words"
+ },
+ "3455": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3455#issuecomment-6389279618"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3455",
+  "title": "url_citation on Responses/Chat search replies"
  }
 }

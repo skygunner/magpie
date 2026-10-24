@@ -47,15 +47,15 @@
    "batch_chain_note": "batch is a forward-append chain: the v2 base fa22bc64 carries 15 commits (34dcacff…95537ceb), rebased onto b437e4ad, then bbd6e228 and 4e136a4b this round; see deliveries.r3-batch"
   },
   "totals": {
-   "entries": 77,
-   "issues": 74,
+   "entries": 84,
+   "issues": 81,
    "prs": 3,
-   "product": 60,
+   "product": 67,
    "tests_ci": 9,
    "upstream_existing": 6,
    "other": 2,
-   "code_entries": 69,
-   "units": 65
+   "code_entries": 76,
+   "units": 72
   },
   "counts_note": "Generated from the JSON by docs/fork/generate.py; not hand-written. 64 code-linked entries are not 64 independent fixes: units are grouped by first primary fix commit (60 groups).",
   "fork": "skygunner/magpie",
@@ -2895,7 +2895,7 @@
    "comments": {
     "3440": [
      "https://github.com/yetone/magpie/issues/3440#issuecomment-6380798386",
-      "https://github.com/yetone/magpie/issues/3440#issuecomment-6383458761"
+     "https://github.com/yetone/magpie/issues/3440#issuecomment-6383458761"
     ]
    },
    "sources": {
@@ -2985,7 +2985,7 @@
    "comments": {
     "3401": [
      "https://github.com/yetone/magpie/issues/3401#issuecomment-6380817606",
-      "https://github.com/yetone/magpie/issues/3401#issuecomment-6383557929"
+     "https://github.com/yetone/magpie/issues/3401#issuecomment-6383557929"
     ]
    },
    "sources": {
@@ -3005,6 +3005,300 @@
     "candidate": false
    },
    "delivery": "fix/issue-batch-1024pm"
+  },
+  {
+   "id": "u-usage-the-quota-card-charts-a-window-past-every-vendor-span-3487-d4944ace",
+   "issues": [
+    3487
+   ],
+   "category": "product",
+   "title": "usage: the quota card charts a window past every vendor span from its name, and one without a count says none, never a full allowance (#3487, skygunner own filing)",
+   "coverage": "coverage: windowSpan caps a vendor span at 400 days (past it a misread unit - milliseconds read as seconds) and falls back to the name; the host keeps amount:null null, QuotaWindow carries AmountUnknown beside its limit (only when it counts in amounts), Count/quotaCount render the vendor text or a dash, never limit-0. Fake plugin window (amount null, limit 10000) through the host; Playwright quota-amount-unknown both engines en+zh red with the reporter card, green after; plugin #366 stays the real cure.",
+   "commits": [
+    "d4944acee8cccf04f7ff7f07a1e6c586e867e645"
+   ],
+   "commit_details": [
+    {
+     "sha": "d4944acee8cccf04f7ff7f07a1e6c586e867e645",
+     "title": "usage: a window past every vendor span charts from its name, and one without a count says none (#3487, skygunner)",
+     "url": "https://github.com/skygunner/magpie/commit/d4944acee8cccf04f7ff7f07a1e6c586e867e645"
+    }
+   ],
+   "branch": "fix/issue-batch-1025a",
+   "base": "7d67910f74889f7860e53a15fdf45bf1587b1555",
+   "comments": {
+    "3487": [
+     "https://github.com/yetone/magpie/issues/3487#issuecomment-6389261270"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false,
+    "credited": "",
+    "coauthors": []
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red->green on fix/issue-batch-1025a as the commit body records; package suites green (see commit); three-platform build+vet clean; full nogui at head (round15 evidence).",
+    "head": "d4944acee8cccf04f7ff7f07a1e6c586e867e645"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-sessions-a-hit-rate-leaves-out-the-prompt-a-vendor-didn't-c-3470-fe330ea1",
+   "issues": [
+    3470
+   ],
+   "category": "product",
+   "title": "sessions: a hit rate leaves out the prompt a vendor didn't count - Tokens.CacheUnknown through the projections, the list rows and every rate (#3470)",
+   "coverage": "coverage: sessions.Tokens.CacheUnknown (add/sub), GatewaySession/DayUsage/Model sums, TUI+CLI (N% hit) and the Usage Sessions tile leave it out; /api/sessions native rows join from the kept projection (NativeSessionUnknown). Remaining, said in provider-plugins.md: native per-day rows in Stats.Days.",
+   "commits": [
+    "fe330ea19fd33f4a34672345ec21f49bffa757a7"
+   ],
+   "commit_details": [
+    {
+     "sha": "fe330ea19fd33f4a34672345ec21f49bffa757a7",
+     "title": "sessions: a hit rate leaves out the prompt a vendor didn't count (#3470, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/fe330ea19fd33f4a34672345ec21f49bffa757a7"
+    }
+   ],
+   "branch": "fix/issue-batch-1025a",
+   "base": "7d67910f74889f7860e53a15fdf45bf1587b1555",
+   "comments": {
+    "3470": [
+     "https://github.com/yetone/magpie/issues/3470#issuecomment-6389269893"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false,
+    "credited": "",
+    "coauthors": []
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red->green on fix/issue-batch-1025a as the commit body records; package suites green (see commit); three-platform build+vet clean; full nogui at head (round15 evidence).",
+    "head": "fe330ea19fd33f4a34672345ec21f49bffa757a7"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-netproxy-a-host-with-no-ipv4-clears-the-v4-fallback-mark-3519-91fc2733",
+   "issues": [
+    3519
+   ],
+   "category": "product",
+   "title": "netproxy: a host with no IPv4 clears the v4-fallback mark (DNSError.IsNotFound) and a failed retry says the IPv6 error (#3519, Tinkler-i)",
+   "coverage": "coverage: ports the reporter fix verbatim (noAddress/unmarkV4 + the v4Retry original-error note); reporter test names recreated red; TUN path TestIPv4Fallback tcp,tcp4,tcp4 unchanged.",
+   "commits": [
+    "91fc2733f0eca01f2f1a1caf52831961fa5a1eea"
+   ],
+   "commit_details": [
+    {
+     "sha": "91fc2733f0eca01f2f1a1caf52831961fa5a1eea",
+     "title": "netproxy: a host with no IPv4 clears the v4-fallback mark, and a failed retry says the IPv6 error (#3519, Tinkler-i)",
+     "url": "https://github.com/skygunner/magpie/commit/91fc2733f0eca01f2f1a1caf52831961fa5a1eea"
+    }
+   ],
+   "branch": "fix/issue-batch-1025a",
+   "base": "7d67910f74889f7860e53a15fdf45bf1587b1555",
+   "comments": {
+    "3519": [
+     "https://github.com/yetone/magpie/issues/3519#issuecomment-6389270118"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": true,
+    "credited": "Tinkler-i",
+    "coauthors": []
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red->green on fix/issue-batch-1025a as the commit body records; package suites green (see commit); three-platform build+vet clean; full nogui at head (round15 evidence).",
+    "head": "91fc2733f0eca01f2f1a1caf52831961fa5a1eea"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-agent-a-claude-code-subscription's-claude-models-say-the-me-3514-3053f99f",
+   "issues": [
+    3514
+   ],
+   "category": "product",
+   "title": "agent: a Claude Code subscription's Claude models say the Messages API - magpieModels MessagesFirst when Native is empty (#3514, stofancy)",
+   "coverage": "coverage: reporter-suggested fix; dsh route + start on magpie-anthropic; Pi/omp/droid read the same m.APIs.",
+   "commits": [
+    "3053f99ffa5e09646e8c2fd1244a214d1feb1d9c"
+   ],
+   "commit_details": [
+    {
+     "sha": "3053f99ffa5e09646e8c2fd1244a214d1feb1d9c",
+     "title": "agent: a Claude Code subscription's Claude models say the Messages API (#3514, stofancy)",
+     "url": "https://github.com/skygunner/magpie/commit/3053f99ffa5e09646e8c2fd1244a214d1feb1d9c"
+    }
+   ],
+   "branch": "fix/issue-batch-1025a",
+   "base": "7d67910f74889f7860e53a15fdf45bf1587b1555",
+   "comments": {
+    "3514": [
+     "https://github.com/yetone/magpie/issues/3514#issuecomment-6389275410"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": true,
+    "credited": "stofancy",
+    "coauthors": []
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red->green on fix/issue-batch-1025a as the commit body records; package suites green (see commit); three-platform build+vet clean; full nogui at head (round15 evidence).",
+    "head": "3053f99ffa5e09646e8c2fd1244a214d1feb1d9c"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gateway-a-model-the-user-said-draws-is-drawn-at-the-images--1105-3e3fd41a",
+   "issues": [
+    1105
+   ],
+   "category": "product",
+   "title": "gateway: a model the user said draws is drawn at the images API, and Gitee's size dialect is width and height (#1105, GEEKCX half)",
+   "coverage": "coverage: viaFor honors KindImage marks; drawsOnImages sync; gitee generations dialect width/height. OpenRouter half fixed upstream a75fa9e54; edits multipart dialect not mapped (unmeasured).",
+   "commits": [
+    "3e3fd41a3c526367ff209d5dce43f068e000caa8"
+   ],
+   "commit_details": [
+    {
+     "sha": "3e3fd41a3c526367ff209d5dce43f068e000caa8",
+     "title": "gateway: a model the user said draws is drawn at the images API, and Gitee's size dialect is width and height (#1105, GEEKCX)",
+     "url": "https://github.com/skygunner/magpie/commit/3e3fd41a3c526367ff209d5dce43f068e000caa8"
+    }
+   ],
+   "branch": "fix/issue-batch-1025a",
+   "base": "7d67910f74889f7860e53a15fdf45bf1587b1555",
+   "comments": {
+    "1105": [
+     "https://github.com/yetone/magpie/issues/1105#issuecomment-6389275629"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false,
+    "credited": "GEEKCX (gitee half), Ti800 (original)",
+    "coauthors": []
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red->green on fix/issue-batch-1025a as the commit body records; package suites green (see commit); three-platform build+vet clean; full nogui at head (round15 evidence).",
+    "head": "3e3fd41a3c526367ff209d5dce43f068e000caa8"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gateway-a-chatgpt-account's-drawing-says-its-size-in-words-3513-fb29f08c",
+   "issues": [
+    3513
+   ],
+   "category": "product",
+   "title": "gateway: a ChatGPT account's drawing says its size in words, generations and edits (#3513, kilo-s)",
+   "coverage": "coverage: codexSays prepends \"Generate at WxH resolution.\" on both paths, the Codex CLI trick the reporter proved; sizeless drawings unchanged; real upstream not called (reporter measurements are the evidence).",
+   "commits": [
+    "fb29f08ce05f3b735e56d15faf198f8e094383b0"
+   ],
+   "commit_details": [
+    {
+     "sha": "fb29f08ce05f3b735e56d15faf198f8e094383b0",
+     "title": "gateway: a ChatGPT account's drawing says its size in words (#3513, kilo-s)",
+     "url": "https://github.com/skygunner/magpie/commit/fb29f08ce05f3b735e56d15faf198f8e094383b0"
+    }
+   ],
+   "branch": "fix/issue-batch-1025a",
+   "base": "7d67910f74889f7860e53a15fdf45bf1587b1555",
+   "comments": {
+    "3513": [
+     "https://github.com/yetone/magpie/issues/3513#issuecomment-6389279389"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false,
+    "credited": "kilo-s",
+    "coauthors": []
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red->green on fix/issue-batch-1025a as the commit body records; package suites green (see commit); three-platform build+vet clean; full nogui at head (round15 evidence).",
+    "head": "fb29f08ce05f3b735e56d15faf198f8e094383b0"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gateway-a-search's-pages-are-cited-as-url_citation-on-respo-3455-b78a4f07",
+   "issues": [
+    3455
+   ],
+   "category": "product",
+   "title": "gateway: a search's pages are cited as url_citation on Responses (streamed annotation.added + whole) and Chat messages (#3455, yetone)",
+   "coverage": "coverage: urlCites (rune-indexed spans, each page once at first naming); collector keeps Result.Hits; streamed Responses emits response.output_text.annotation.added and part done; whole Responses + Chat message carry them; streamed Chat none (no OpenAI event); gateway-routing.md updated.",
+   "commits": [
+    "b78a4f07e74273d99e140dacaa4c7e3042f700ef"
+   ],
+   "commit_details": [
+    {
+     "sha": "b78a4f07e74273d99e140dacaa4c7e3042f700ef",
+     "title": "gateway: a search's pages are cited as url_citation on Responses and Chat replies (#3455, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/b78a4f07e74273d99e140dacaa4c7e3042f700ef"
+    }
+   ],
+   "branch": "fix/issue-batch-1025a",
+   "base": "7d67910f74889f7860e53a15fdf45bf1587b1555",
+   "comments": {
+    "3455": [
+     "https://github.com/yetone/magpie/issues/3455#issuecomment-6389279618"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false,
+    "credited": "",
+    "coauthors": []
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red->green on fix/issue-batch-1025a as the commit body records; package suites green (see commit); three-platform build+vet clean; full nogui at head (round15 evidence).",
+    "head": "b78a4f07e74273d99e140dacaa4c7e3042f700ef"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
   }
  ],
  "pointed_elsewhere": [
@@ -4785,6 +5079,24 @@
    "replaced_by": "",
    "note": "round-10 batch on upstream main dd1e8822 (v0.1.1364) + r10-review rework; head 14c1551 = product rework; pushed, read back",
    "category": "product"
+  },
+  {
+   "branch": "fix/issue-batch-1025a",
+   "head": "b78a4f07e74273d99e140dacaa4c7e3042f700ef",
+   "kind": "product",
+   "base": "7d67910f74889f7860e53a15fdf45bf1587b1555",
+   "fix_ids": [
+    "u-usage-the-quota-card-charts-a-window-past-every-vendor-span-3487-d4944ace",
+    "u-sessions-a-hit-rate-leaves-out-the-prompt-a-vendor-didn't-c-3470-fe330ea1",
+    "u-netproxy-a-host-with-no-ipv4-clears-the-v4-fallback-mark-3519-91fc2733",
+    "u-agent-a-claude-code-subscription's-claude-models-say-the-me-3514-3053f99f",
+    "u-gateway-a-model-the-user-said-draws-is-drawn-at-the-images--1105-3e3fd41a",
+    "u-gateway-a-chatgpt-account's-drawing-says-its-size-in-words-3513-fb29f08c",
+    "u-gateway-a-search's-pages-are-cited-as-url_citation-on-respo-3455-b78a4f07"
+   ],
+   "replaced_by": "",
+   "note": "round-15",
+   "category": "product"
   }
  ],
  "archive_policy": {
@@ -5138,6 +5450,125 @@
    "delivery_head": "cf87dc37c09e5b6fbadebfd7ebc8adcd9f102290",
    "body_sha256": "a24c21d109cf61ae8e98a4f2e53bb24de34f1a9290402787690193f46878fb8e",
    "evidence": "docs/fork/evidence/round14/closeout.md"
+  },
+  {
+   "issue": 3487,
+   "fix_id": "u-usage-the-quota-card-charts-a-window-past-every-vendor-span-3487-d4944ace",
+   "comment_id": 6389261270,
+   "url": "https://github.com/yetone/magpie/issues/3487#issuecomment-6389261270",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-24T20:38:50Z",
+   "verified_at": "2026-10-24T20:42:00Z",
+   "delivery": "fix/issue-batch-1025a",
+   "delivery_head": "b78a4f07e74273d99e140dacaa4c7e3042f700ef",
+   "body_sha256": "d4996988b50f25f35bec1685c5cc6f0265fec207c719375f2dacfcc331ce4ef1",
+   "evidence": "docs/fork/evidence/round15/comment-readback.json",
+   "body_updated_at": "2026-10-24T20:38:50Z"
+  },
+  {
+   "issue": 3470,
+   "fix_id": "u-sessions-a-hit-rate-leaves-out-the-prompt-a-vendor-didn't-c-3470-fe330ea1",
+   "comment_id": 6389269893,
+   "url": "https://github.com/yetone/magpie/issues/3470#issuecomment-6389269893",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-24T20:39:43Z",
+   "verified_at": "2026-10-24T20:42:01Z",
+   "delivery": "fix/issue-batch-1025a",
+   "delivery_head": "b78a4f07e74273d99e140dacaa4c7e3042f700ef",
+   "body_sha256": "8bf113e90a81900f5dc90a3e855d9287355ca7a75f266098dcbf6e0c4dc39be6",
+   "evidence": "docs/fork/evidence/round15/comment-readback.json",
+   "body_updated_at": "2026-10-24T20:39:43Z"
+  },
+  {
+   "issue": 3519,
+   "fix_id": "u-netproxy-a-host-with-no-ipv4-clears-the-v4-fallback-mark-3519-91fc2733",
+   "comment_id": 6389270118,
+   "url": "https://github.com/yetone/magpie/issues/3519#issuecomment-6389270118",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "zh-CN",
+   "status": "published_verified",
+   "published_at": "2026-10-24T20:39:44Z",
+   "verified_at": "2026-10-24T20:42:01Z",
+   "delivery": "fix/issue-batch-1025a",
+   "delivery_head": "b78a4f07e74273d99e140dacaa4c7e3042f700ef",
+   "body_sha256": "c189a6df3ea37391b99c1b0c3ea8bec0d21695686926e335e2f601c82ba63079",
+   "evidence": "docs/fork/evidence/round15/comment-readback.json",
+   "body_updated_at": "2026-10-24T20:39:44Z"
+  },
+  {
+   "issue": 3514,
+   "fix_id": "u-agent-a-claude-code-subscription's-claude-models-say-the-me-3514-3053f99f",
+   "comment_id": 6389275410,
+   "url": "https://github.com/yetone/magpie/issues/3514#issuecomment-6389275410",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "zh-CN",
+   "status": "published_verified",
+   "published_at": "2026-10-24T20:40:16Z",
+   "verified_at": "2026-10-24T20:42:02Z",
+   "delivery": "fix/issue-batch-1025a",
+   "delivery_head": "b78a4f07e74273d99e140dacaa4c7e3042f700ef",
+   "body_sha256": "c2d5f813c60ed5f065877fd3dadab00150b58f5ec644ba120ff36f87f68a88b2",
+   "evidence": "docs/fork/evidence/round15/comment-readback.json",
+   "body_updated_at": "2026-10-24T20:40:16Z"
+  },
+  {
+   "issue": 1105,
+   "fix_id": "u-gateway-a-model-the-user-said-draws-is-drawn-at-the-images--1105-3e3fd41a",
+   "comment_id": 6389275629,
+   "url": "https://github.com/yetone/magpie/issues/1105#issuecomment-6389275629",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-24T20:40:18Z",
+   "verified_at": "2026-10-24T20:42:02Z",
+   "delivery": "fix/issue-batch-1025a",
+   "delivery_head": "b78a4f07e74273d99e140dacaa4c7e3042f700ef",
+   "body_sha256": "1bf661de9cf606ab5019b39c08ee1d6ee8f1f8e437a838b6271085e242e1b826",
+   "evidence": "docs/fork/evidence/round15/comment-readback.json",
+   "body_updated_at": "2026-10-24T20:40:18Z"
+  },
+  {
+   "issue": 3513,
+   "fix_id": "u-gateway-a-chatgpt-account's-drawing-says-its-size-in-words-3513-fb29f08c",
+   "comment_id": 6389279389,
+   "url": "https://github.com/yetone/magpie/issues/3513#issuecomment-6389279389",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "zh-CN",
+   "status": "published_verified",
+   "published_at": "2026-10-24T20:40:40Z",
+   "verified_at": "2026-10-24T20:42:03Z",
+   "delivery": "fix/issue-batch-1025a",
+   "delivery_head": "b78a4f07e74273d99e140dacaa4c7e3042f700ef",
+   "body_sha256": "fd6360fde723aa82bf99ec843a8e2b145aab6082ed1b5dcd6fa3ca3e57f0e30d",
+   "evidence": "docs/fork/evidence/round15/comment-readback.json",
+   "body_updated_at": "2026-10-24T20:40:40Z"
+  },
+  {
+   "issue": 3455,
+   "fix_id": "u-gateway-a-search's-pages-are-cited-as-url_citation-on-respo-3455-b78a4f07",
+   "comment_id": 6389279618,
+   "url": "https://github.com/yetone/magpie/issues/3455#issuecomment-6389279618",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-24T20:40:41Z",
+   "verified_at": "2026-10-24T20:42:04Z",
+   "delivery": "fix/issue-batch-1025a",
+   "delivery_head": "b78a4f07e74273d99e140dacaa4c7e3042f700ef",
+   "body_sha256": "9a909b34ffce43335422797ac3e56980cdf1e4d8c3ee731c5df8eec461b0dbe4",
+   "evidence": "docs/fork/evidence/round15/comment-readback.json",
+   "body_updated_at": "2026-10-24T20:40:41Z"
   }
  ],
  "deliveries": {
@@ -5238,6 +5669,23 @@
    "pushed": true,
    "read_back": "2026-10-24 origin/fix/reasonix-library-complete-1024=cf87dc37",
    "note": "Independent #3401-only branch: MCP and skills baseline cherry-picked, Reasonix hooks/shared skill accounting added, native tool-name matchers corrected. No #3440/#3447 mixed changes. Windows vet passed but native Reasonix Studio Windows runtime remains unverified."
+  },
+  "fix/issue-batch-1025a": {
+   "branch": "fix/issue-batch-1025a",
+   "base": "7d67910f74889f7860e53a15fdf45bf1587b1555",
+   "head": "b78a4f07e74273d99e140dacaa4c7e3042f700ef",
+   "commits": [
+    "d4944acee8cccf04f7ff7f07a1e6c586e867e645",
+    "fe330ea19fd33f4a34672345ec21f49bffa757a7",
+    "91fc2733f0eca01f2f1a1caf52831961fa5a1eea",
+    "3053f99ffa5e09646e8c2fd1244a214d1feb1d9c",
+    "3e3fd41a3c526367ff209d5dce43f068e000caa8",
+    "fb29f08ce05f3b735e56d15faf198f8e094383b0",
+    "b78a4f07e74273d99e140dacaa4c7e3042f700ef"
+   ],
+   "pushed": true,
+   "read_back": "2026-10-25 origin/fix/issue-batch-1025a=b78a4f07 (read back equal)",
+   "note": "round-15 batch: seven fixes (#3487 d4944ace, #3470 fe330ea1, #3519 91fc2733, #3514 3053f99f, #1105 3e3fd41a, #3513 fb29f08c, #3455 b78a4f07) on upstream/main 7d67910f; seven delivery comments published and read back; full nogui + three-platform build/vet in evidence/round15."
   }
  }
 }
