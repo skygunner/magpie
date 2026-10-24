@@ -1,6 +1,9 @@
 package gateway
 
-import "strings"
+import (
+	"strings"
+	"unicode/utf8"
+)
 
 // After a search magpie ran for a model (searchReply), or one a provider
 // ran and reported (KSearch), the model's answer names the pages it used
@@ -130,4 +133,43 @@ func urlIn(line, u string) int {
 func urlEnds(rest string) bool {
 	rest = strings.TrimLeft(rest, ".,;:!?*_")
 	return rest == "" || rest[0] >= 0x80 || strings.IndexByte(" \t\r\n)]}>\"'`|", rest[0]) >= 0
+}
+
+// urlCites are OpenAI's url_citation annotations for the pages text names,
+// as a Responses output_text or a Chat message carries them (#3455): each
+// found page once, at its first naming, spanning the address as it stands
+// in the text, the indexes counting the text's characters.
+func urlCites(text string, hits []Hit) []map[string]any {
+	type at struct {
+		i, j int // bytes, of the address as it stands
+		h    Hit
+	}
+	var found []at
+	seen := map[string]bool{}
+	for _, h := range hits {
+		u := strings.TrimSuffix(h.URL, "/")
+		if u == "" || seen[u] {
+			continue
+		}
+		if i := urlIn(text, u); i >= 0 {
+			seen[u] = true
+			found = append(found, at{i, i + len(u), h})
+		}
+	}
+	if len(found) == 0 {
+		return nil
+	}
+	for i := 1; i < len(found); i++ {
+		for j := i; j > 0 && found[j].i < found[j-1].i; j-- {
+			found[j], found[j-1] = found[j-1], found[j]
+		}
+	}
+	out := make([]map[string]any, 0, len(found))
+	for _, f := range found {
+		out = append(out, map[string]any{"type": "url_citation",
+			"start_index": utf8.RuneCountInString(text[:f.i]),
+			"end_index":   utf8.RuneCountInString(text[:f.j]),
+			"url":         f.h.URL, "title": f.h.Title})
+	}
+	return out
 }

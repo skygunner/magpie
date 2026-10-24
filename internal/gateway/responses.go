@@ -1684,6 +1684,10 @@ type responsesEncoder struct {
 	// until its phase is known (phase.go, #2437)
 	heldMsg map[string]any
 	held    []heldEvent
+	// hits are the pages a search magpie ran found; cites are the
+	// url_citations already said of the open text item (#3455)
+	hits  []Hit
+	cites []map[string]any
 }
 
 type heldEvent struct {
@@ -1803,6 +1807,26 @@ func (e *responsesEncoder) start(ev Event) {
 	e.send("response.in_progress", map[string]any{"response": e.response("in_progress", nil)})
 }
 
+// sayCites says, as response.output_text.annotation.added events, the
+// url_citations of the pages the text so far names and none were said of
+// yet (#3455): each page once, at its first naming.
+func (e *responsesEncoder) sayCites() {
+	if len(e.hits) == 0 || e.open != Text {
+		return
+	}
+	said := map[string]bool{}
+	for _, a := range e.cites {
+		said[a["url"].(string)] = true
+	}
+	for _, a := range urlCites(e.text.String(), e.hits) {
+		if said[a["url"].(string)] {
+			continue
+		}
+		e.cites = append(e.cites, a)
+		e.send("response.output_text.annotation.added", map[string]any{"item_id": e.itemID, "output_index": e.item, "content_index": 0, "annotation": a})
+	}
+}
+
 func (e *responsesEncoder) closeItem() {
 	e.closeAs(nil)
 }
@@ -1818,7 +1842,11 @@ func (e *responsesEncoder) closeAs(sealed json.RawMessage) {
 	case Text:
 		t := e.text.String()
 		e.send("response.output_text.done", map[string]any{"item_id": e.itemID, "output_index": e.item, "content_index": 0, "text": t, "logprobs": []any{}})
-		part := map[string]any{"type": "output_text", "text": t, "annotations": []any{}, "logprobs": []any{}}
+		annotations := []any{}
+		for _, a := range e.cites {
+			annotations = append(annotations, a)
+		}
+		part := map[string]any{"type": "output_text", "text": t, "annotations": annotations, "logprobs": []any{}}
 		e.send("response.content_part.done", map[string]any{"item_id": e.itemID, "output_index": e.item, "content_index": 0, "part": part})
 		m := map[string]any{"id": e.itemID, "type": "message", "role": "assistant", "status": "completed", "content": []map[string]any{part}}
 		// its done waits for what comes next to say its phase
@@ -1883,11 +1911,13 @@ func (e *responsesEncoder) event(ev Event) {
 		}
 		if e.open != Text {
 			e.openItem(Text, "msg_", map[string]any{"type": "message", "role": "assistant", "content": []any{}})
+			e.cites = nil
 			e.send("response.content_part.added", map[string]any{"item_id": e.itemID, "output_index": e.item, "content_index": 0,
 				"part": map[string]any{"type": "output_text", "text": "", "annotations": []any{}, "logprobs": []any{}}})
 		}
 		e.text.WriteString(ev.Text)
 		e.send("response.output_text.delta", map[string]any{"item_id": e.itemID, "output_index": e.item, "content_index": 0, "delta": ev.Text, "logprobs": []any{}})
+		e.sayCites()
 	case KThink:
 		if ev.Text == "" {
 			return
@@ -1923,8 +1953,10 @@ func (e *responsesEncoder) event(ev Event) {
 		e.output = append(e.output, raw)
 	case KSearch:
 		// A search arrives whole, after it ran. Tell the client its query
-		// and sources, as Anthropic's encoder does, without inventing
-		// earlier in-progress events or citation offsets in the answer.
+		// and sources, as Anthropic's encoder does. Its pages are cited
+		// where the answer names them (#3455); nothing earlier is
+		// invented.
+		e.hits = append(e.hits, ev.Hits...)
 		e.closeItem()
 		e.release(phaseCommentary)
 		e.item++
@@ -2032,8 +2064,14 @@ func renderResponses(res Result, model string, named map[string]nsTool) []byte {
 			if p.Text == "" && p.Signature != "" {
 				continue // only Gemini's signature, which is Gemini's
 			}
+			// the pages a search found, named in the text, are cited
+			// where they are named (#3455)
+			annotations := []any{}
+			for _, a := range urlCites(p.Text, res.Hits) {
+				annotations = append(annotations, a)
+			}
 			output = append(output, map[string]any{"id": "msg_" + newID(), "type": "message", "role": "assistant", "status": "completed",
-				"content": []map[string]any{{"type": "output_text", "text": p.Text, "annotations": []any{}}}})
+				"content": []map[string]any{{"type": "output_text", "text": p.Text, "annotations": annotations}}})
 		case Thinking:
 			if p.sealedBy(sealResponses) {
 				// as the upstream wrote it: id, summary, encrypted_content

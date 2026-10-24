@@ -386,9 +386,11 @@ The stream adds and completes each search item, emits
 `response.web_search_call.completed`, and keeps the same item in the final
 response's `output`. Search events arrive after the search has run, so no
 earlier progress is fabricated. Search items keep their order among text,
-reasoning and client tool calls. They carry sources, not invented
-`url_citation` annotations: the shared search result has no citation offsets
-in the model's answer. Native Responses passthrough is unchanged. A client
+reasoning and client tool calls. They carry sources; where the answer names
+a found page's address, the same URL match gives the offsets, and the
+`output_text` carries `url_citation` annotations - streamed as
+`response.output_text.annotation.added` and kept on the part's done -
+which the whole reply carries too (#3455). Native Responses passthrough is unchanged. A client
 that sends the item back in its next input (Codex replays its output) loses
 nothing: `parseResponses` has no case for `web_search_call` and leaves it
 out, as before.
@@ -421,8 +423,10 @@ cut to 150 characters (`Hit.Cited`: a search API's snippet, or the text an
 Anthropic searcher's own citation quoted), else `""`. A reply with no
 search is said as before. Covered by `TestSearchCitedAsAnthropics`
 (streamed and whole), `TestNoSearchNoCitations` and
-`TestCitesOnlyTheWholeURL`. Responses and Chat replies carry no
-`url_citation` annotations yet.
+`TestCitesOnlyTheWholeURL`. Responses' `output_text` (whole and streamed)
+and a Chat reply's message carry OpenAI-shaped `url_citation` annotations
+for the same matches (#3455); a streamed Chat reply carries none - OpenAI's
+Chat streaming has no event for them.
 
 While a provider asked by `searchReply` is queued or thinking, sending only
 keepalives or `response.in_progress`, `askTranslated` reads it with

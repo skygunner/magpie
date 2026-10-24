@@ -1469,13 +1469,14 @@ func (e *chatEncoder) finish() {
 func renderChat(res Result, model string) []byte {
 	msg := map[string]any{"role": "assistant", "content": nil}
 	var calls []map[string]any
-	var think string
+	var think, said string
 	for _, p := range res.Parts {
 		switch p.Kind {
 		case Text:
 			if p.Text == "" && p.Signature != "" {
 				continue // only Gemini's signature on its text, which is Gemini's
 			}
+			said += p.Text
 			if msg["content"] == nil {
 				msg["content"] = p.Text
 			} else {
@@ -1497,6 +1498,11 @@ func renderChat(res Result, model string) []byte {
 	}
 	if think != "" {
 		msg["reasoning_content"] = think
+	}
+	// the pages a search found, named in the answer, are cited where
+	// they are named (#3455)
+	if ann := urlCites(said, res.Hits); len(ann) > 0 {
+		msg["annotations"] = ann
 	}
 	id := res.ID
 	if id == "" {

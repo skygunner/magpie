@@ -488,6 +488,9 @@ type Result struct {
 	Usage            Usage
 	SafeguardResults json.RawMessage
 	StopDetails      json.RawMessage
+	// Hits are the pages a search magpie ran for the reply found
+	// (KSearch), for a whole reply's citations (#3455).
+	Hits []Hit
 }
 
 // collector assembles a Result from events. Encoders use the same logic to
@@ -564,6 +567,9 @@ func (c *collector) add(ev Event) {
 	}
 	if len(ev.StopDetails) > 0 {
 		c.res.StopDetails = ev.StopDetails
+	}
+	if ev.Kind == KSearch {
+		c.res.Hits = append(c.res.Hits, ev.Hits...)
 	}
 	switch ev.Kind {
 	case KStart:
