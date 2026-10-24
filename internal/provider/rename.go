@@ -209,15 +209,27 @@ func accountOrPluginID(id string) bool {
 			return true
 		}
 	}
-	// a stored entry may carry the plugin's public id (<raw>-plugin, the
-	// PluginID contract) while the raw side is what Auths and Cached
-	// know — the account's settings survive a sign-out, and the plugin
-	// still shows in Cached without its accounts. Resolve the public id
-	// to the raw one and judge that; an id whose raw side nothing claims
-	// is an independent provider of the user's, its -plugin suffix
-	// notwithstanding (#3349 review, r4 follow-up)
+	// a stored entry may carry the plugin's public id (<raw>-plugin)
+	// while the raw side is what Auths and Cached know — the account's
+	// settings survive a sign-out, and the plugin still shows in Cached
+	// without its accounts. The alias is the plugin's only when the
+	// PluginID contract actually suffixes the raw id: a plugin-served
+	// raw id keeps its own id (plain cline is cline, so cline-plugin is
+	// free for an independent provider of the user's), and a reserved,
+	// preset or stored-endpoint raw id gains -plugin (#3349 review, r4
+	// follow-up; the r5 review's cline-plugin counter-example). The
+	// stored-endpoint term reads the file directly, not customIDs,
+	// which judges these very entries.
 	if rest, ok := strings.CutSuffix(id, "-plugin"); ok && rest != "" {
-		return accountOrPluginID(rest)
+		if PluginServes(rest) {
+			return false
+		}
+		if slices.Contains(accountIDs, rest) || Preset(rest) != nil ||
+			rest == "magpie" || rest == autoID || rest == strings.TrimSuffix(GroupPrefix, "/") ||
+			slices.ContainsFunc(load().Providers, func(p Provider) bool { return p.ID == rest && hasEndpoint(p) }) {
+			return accountOrPluginID(rest)
+		}
+		return false
 	}
 	return false
 }
