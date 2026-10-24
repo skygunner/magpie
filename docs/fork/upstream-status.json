@@ -2910,7 +2910,7 @@
    ],
    "category": "product",
    "title": "gateway: a search's pages are cited on the text that follows them (#3447, HuHong-Tao)",
-   "coverage": "Hit.Cited carries the excerpt the model saw; renderAnthropic and the stream encoder cite it (web_search_result_location, empty encrypted_index); no excerpt, no citation; multi-search accumulation (round-10 rework, accumulateCitations: search order, first excerpt wins on a repeated URL, cleared by the first real text). OVERLAP: ggbdpq delivered an independent fix before this rework (hunt76-a-websearch-citations, 69068ead, posted 2026-10-24T06:36:17Z), which also keeps a searcher's own cited_text and corrects this account's delivery post: deepseek/deepseek-flash on api.deepseek.com is relayed (searchHosts[Anthropic]), not searched-for. Verified: review probe red 4/4 on the round head, green after; Search|Anthropic green.",
+   "coverage": "Hit.Cited carries the excerpt the model saw; renderAnthropic and the stream encoder cite it (web_search_result_location, empty encrypted_index); no excerpt, no citation; multi-search accumulation (accumulateCitations: search order, first excerpt wins on a repeated URL, cleared by the first real text). SUPERSEDED BY UPSTREAM INDEPENDENT: yetone merged 1d6b72ada8c93ca05bb70d02ef77cfadf853361f (in v0.1.1369+, upstream main 9d643631 at recording) with a DIFFERENT contract — cites the lines whose text names a whole URL, excerpts from the search model's own text.citations. The reporter (HuHong-Tao, comment 6382090015, 2026-10-24T08:38:27Z) verified 1d6b72ad on a real 0.1.1371 install over the issue's original paths (both routers, stream + whole, DSH); the issue was closed 2026-10-24T08:38:42Z. Semantic comparison pending: ggbdpq's searcher-excerpt contract (69068ead) and this fork's pipeline-excerpt contract (e5a05c44+14c1551) also cite pages when the answer names no URL — ggbdpq's e2e fixtures fail on upstream 9d643631 (2 red, 1 green; evidence round12/behavior-tests.md §4), a real behavioral difference a maintainer may weigh, recorded here rather than patched. Known residual gap of this fork's unit, documented by test and NOT fixed (superseded): searchWith drops a searcher's own cited_text (review r11 probe, evidence round12/behavior-tests.md §1).",
    "commits": [
     "e5a05c44230ae8f2b4540ed35b197460e6146e47"
    ],
@@ -2934,12 +2934,13 @@
     "coauthors": []
    },
    "verify": {
-    "state": "pass",
-    "evidence": "Red-green on the fix branch: review_r10_multi_search_test.go 4/4 red on 4f353657, green at rework head; single-search/no-excerpt/Anthropic suites green. No real DSH client.",
-    "head": "fd4bcb54e53462e0e9bfa894846c3909875c5444"
+    "state": "superseded_by_upstream_independent",
+    "evidence": "Local red-green stood at delivery (round-10) and rework (round-11): review probe 4/4 red on 4f353657, green at 14c1551. r11 review red test (searchWith cited_text) reproduced on 14c1551 — recorded as the superseded unit's residual gap. Upstream coverage proven by the reporter on a real install; behavior-test evidence docs/fork/evidence/round12/behavior-tests.md."
    },
    "upstream": {
-    "status": "unconfirmed"
+    "status": "independent_alternative",
+    "decision": "semantic_comparison_pending",
+    "note": "upstream 1d6b72ada8c93ca05bb70d02ef77cfadf853361f is an independent implementation, not a merge of this fork's 14c1551 nor an adoption of ggbdpq's 69068ead; reporter-verified on real paths; issue closed. NOT archive-candidate: this fork's unit is superseded, not adopted, and the batch is mixed."
    },
    "archive": {
     "candidate": false

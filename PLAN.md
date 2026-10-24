@@ -1,3 +1,54 @@
+## 2026-10-24 第十轮返工复核（ZCode 会话十二）：r11 审查限定收口
+
+r11 独立复核（magpie-r11-review）确认：14c1551 的多搜索累计/URL 去重全绿；8 条
+comment_publications 的 author/issue/时间/UTF-8 SHA256 与 GitHub API 8/8 吻合；
+selftest 19 负例全拒。实质遗留＝我方分支 searchWith 丢失搜索器真实 cited_text
+（reviewer 最小回归已红）。**新上游事实**：yetone 已合入独立实现
+1d6b72ada8c9（语义＝按回答文字实际写出的 URL 为对应行附引用，摘录取自搜索模型
+回复的 text.citations），上游 main 现为 9d643631（超出审查时 7d9165）；**报告者
+HuHong-Tao 已在真实 0.1.1371 上验证 1d6b72ad 覆盖其原路径**（两条路由、流式
+citations_delta 先于文字、DSH mapAnthropicResponse 拿到 snippet），**issue 已于
+08:38Z 关闭**，报告者明言两个 fork 分支无需再验证。ggbdpq 的 69068ead 与
+1d6b72 是两套合同（搜索器摘录直引 vs URL 提及行附引），其 e2e fixture 在
+upstream 上 2 红 1 绿（fixture 的模拟回答不含 URL）——如实记录，不当"上游没修"
+或"已等价采纳"。边界同前：不发上游评论/PR、不 force-push、不删分支、不碰他人
+worktree；fork 分支无产品改动则无需推送。
+
+| M | 目标 | 修改范围 | 验收 | 验证命令 | 状态 |
+|---|---|---|---|---|---|
+| M0 | 精确重现与上游对照 | 临时树（不提交） | reviewer 的 searchWith 红测试在 14c1551 红（"real searcher cited_text lost"）；绿色控制组并列；upstream tip 自有 H20 测试绿；ggbdpq 三 fixture 在 upstream 上复跑得 2红1绿（语义差异自有证据）；新上游 SHA 与 #3447 关闭状态入档 | go test（临时 archive 树）+ gh api | 完成（红测试于 14c1551 archive 精确复现 "real searcher cited_text lost"；绿色控制 7 项全绿；upstream 9d643631 自有 H20 三测试绿；ggbdpq 三 fixture 于 upstream 复跑 2红1绿；#3447 closed 08:38:42Z、报告者 6382090015 实测 1d6b72ad；证据 evidence/round12/behavior-tests.md） |
+| M1 | 裁定：产品补足 or superseded（M3.4 路径） | 无产品提交 | 依 NEXT-PROMPT M3.4：上游已由报告者在真实环境证明覆盖用户原路径 → 我方 #3447 单元标 superseded_by_upstream_independent（非 pass/adopted），不做第三套变体；semantic_comparison_pending 记录两套合同差异 | 行为测试证据 + 台账 | 完成（裁定＝superseded 路径：不做第三套变体；单元 verify.state=superseded_by_upstream_independent、upstream.status=independent_alternative/semantic_comparison_pending，coverage 记完整 SHA、两套合同差异与本单元 searchWith 残余缺口；generate.py+selftest 过） |
+| M2 | 台账与两份草稿 | docs/fork | #3447 单元改 superseded 状态、upstream.status=independent_alternative、coverage 引完整 SHA 与差异；#3440 维持 decision_pending；八条评论记录不再改写；**#3447 中文更正草稿单独成文（不发送）**：更正「两路由均代搜」错误、说明上游独立实现与报告者验证、声明不与 ggbdpq 竞争；#3440 草稿原样保留 | generate.py + selftest | 完成（单元口径已改；八条评论记录未再动；docs/fork/comment-draft-3447-correction.md 单独成文未发送——两处更正+合同分歧边界+不竞争声明；#3440 草稿原样） |
+| M3 | 最终验收 | 全部 | 冻结产品 head 仍为 14c1551（远端读回一致）；定向套件全绿；全量 nogui 一次（预存红分类）；gofmt/vet/diff --check；dev 推送读回；报告含 SHA/日志/剩余边界 | go test -tags nogui ./... + git | 完成（全量于冻结 14c1551：68 ok / 2 预存 FAIL #3280+#2207 / 19 no-test，零新增；gofmt/vet/diff--check 过；产品树 clean、远端读回 14c1551 一致；dev 推送读回见下） |
+
+### 本轮记录（2026-10-24 完成）
+
+- **裁定：走 NEXT-PROMPT M3.4 的 superseded 路径，不做第三套产品变体。** 依据：
+  ①上游 1d6b72ada8c9（v0.1.1369+）已由报告者 HuHong-Tao 在真实 0.1.1371 上端到端
+  验证覆盖 issue 原路径（两条路由、流式+整包、DSH mapAnthropicResponse；评论
+  6382090015），维护者据此关闭 issue（08:38:42Z）；②ggbdpq 69068ead 与上游是两套
+  合同（搜索器摘录直引 vs URL 提及行附引），其 e2e fixture 在 upstream 9d643631
+  上 2红1绿（本轮自有复现，非转述）；③我方分支再出一个变体只会制造第四份语义。
+- 产品分支 fix/issue-batch-1024pm **无新提交**：冻结 head
+  **14c1551e9672758c656ed2fd6b4db69ac1300b15**，远端读回一致（base dd1e8822 共
+  7 commits 不变）。e5a05c44+14c1551 保留为「搜索器摘录直引」备选；其 searchWith
+  对搜索器 cited_text 的缺口由 r11 探针在 14c1551 上精确复现（临时 archive 树，
+  产品树未动），作为 superseded 单元的已记录残余缺口，不修补。
+- 行为测试证据：docs/fork/evidence/round12/behavior-tests.md（红复现、绿色控制
+  7 项、H20 自有三测试绿、fixture 2红1绿、裁定依据）。
+- 台账：#3447 单元 verify.state=**superseded_by_upstream_independent**（非
+  pass/adopted、非归档候选）、upstream.status=independent_alternative +
+  decision=semantic_comparison_pending，coverage 记完整上游 SHA、报告者验证、
+  关闭时间、两套合同差异与本单元残余缺口。generate.py + selftest（19 负例）过。
+- 草稿（均未发送）：**docs/fork/comment-draft-3447-correction.md**（单独成文：
+  更正「两路由均代搜」、说明上游独立实现与报告者验证、记录合同分歧、声明不与
+  ggbdpq 竞争）；docs/fork/comment-draft-3440-r10-rework.md 原样保留
+  （#3440 维持 upstream_decision_pending）。八条评论记录本轮未再改写。
+- 全量 nogui（冻结 14c1551，串行）：**68 ok / 2 包 FAIL / 19 no-test，exit 1**；
+  FAIL＝#3280、#2207（干净 dd1e8822 基线同红），零新增。日志
+  evidence/round12/full-suite-14c1551-close.log。未做 Windows/macOS 原生验证
+  （仅跨平台 build/vet 历轮口径；本轮无产品改动）。
+
 ## 2026-10-24 第十轮返工（ZCode 会话十一）：r10 审查限定范围
 
 独立审查（magpie-r10-review，REVIEW.md + NEXT-PROMPT.txt）确认五个交付的定向测试
