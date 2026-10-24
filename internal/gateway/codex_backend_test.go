@@ -524,7 +524,7 @@ func TestCodexModelList(t *testing.T) {
 	}
 	// Other sign-ins found on the machine (Cursor's, say) may follow. The
 	// ETag is the backend's with magpie's list in it.
-	tag := codexcat.Tag(provider.CodexListed())
+	tag := provider.CodexListTag() // with every marker the list carries
 	if rec.Code != 200 || len(slugs) < 2 || slugs[0] != "gpt-5.5" || fake == nil || fake["base_instructions"] == "" ||
 		rec.Header().Get("ETag") != `"v1+magpie-`+tag+`"` || auth != "Bearer chatgpt-token" {
 		t.Errorf("%d %v %q %q", rec.Code, slugs, rec.Header().Get("ETag"), auth)
@@ -769,7 +769,7 @@ func TestCodexModelsEtagTagged(t *testing.T) {
 	req := httptest.NewRequest("POST", CodexPath+"/responses", strings.NewReader(`{"model":"gpt-5.5","stream":true,"input":[]}`))
 	req.Header.Set("Authorization", "Bearer chatgpt-token")
 	New().Handler().ServeHTTP(rec, req)
-	tag := codexcat.Tag(provider.CodexListed())
+	tag := provider.CodexListTag() // with every marker the list carries
 	if got := rec.Header().Get("X-Models-Etag"); got != `W/"v1+magpie-`+tag+`"` || !codexcat.Tagged(got, tag) {
 		t.Errorf("%d X-Models-Etag %q", rec.Code, got)
 	}
@@ -1137,5 +1137,65 @@ func TestCodexModelListOwnOnlyForFailover(t *testing.T) {
 	New().Handler().ServeHTTP(rec, req)
 	if got := rec.Header().Get("X-Models-Etag"); rec.Code != 200 || !codexcat.Tagged(got, provider.CodexOwnListTag()) {
 		t.Errorf("%d X-Models-Etag %q", rec.Code, got)
+	}
+}
+
+// The Agents page's long-conversation threshold holds of the account's own
+// models too, as of magpie's own (#3440, Sinnhu): a backend window past it
+// is handed Codex compacted at the threshold, its own window as the max.
+// A window the user set on the codex provider stands as they typed it, and
+// "full window" caps none.
+func TestCodexModelListNativeCompactedAtTheThreshold(t *testing.T) {
+	codexSignedIn(t)
+	up := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, `{"models":[{"slug":"gpt-6.1-sol","priority":1,"context_window":475000}]}`)
+	}))
+	defer up.Close()
+	was := provider.CodexBase
+	provider.CodexBase = up.URL + "/backend-api/codex"
+	defer func() { provider.CodexBase = was }()
+
+	window := func() (float64, float64) {
+		rec := httptest.NewRecorder()
+		New().Handler().ServeHTTP(rec, httptest.NewRequest("GET", CodexPath+"/models", nil))
+		var list struct {
+			Models []map[string]any `json:"models"`
+		}
+		json.Unmarshal(rec.Body.Bytes(), &list)
+		for _, m := range list.Models {
+			if m["slug"] == "gpt-6.1-sol" {
+				w, _ := m["context_window"].(float64)
+				x, _ := m["max_context_window"].(float64)
+				return w, x
+			}
+		}
+		t.Fatalf("no gpt-6.1-sol in %s", rec.Body)
+		return 0, 0
+	}
+	// the shipped default: 272K, the backend's 475K as the max
+	if w, x := window(); w != 272000 || x != 475000 {
+		t.Errorf("default: window %v max %v, want 272000 of 475000", w, x)
+	}
+	if err := provider.SetCompactAt(300000); err != nil {
+		t.Fatal(err)
+	}
+	if w, x := window(); w != 300000 || x != 475000 {
+		t.Errorf("a threshold of the user's: window %v max %v, want 300000 of 475000", w, x)
+	}
+	if err := provider.SetFullContext(true); err != nil {
+		t.Fatal(err)
+	}
+	if w, x := window(); w != 475000 || x != 0 {
+		t.Errorf("full window: window %v max %v, want the backend's 475000 alone", w, x)
+	}
+	if err := provider.SetFullContext(false); err != nil {
+		t.Fatal(err)
+	}
+	// a window the user set on the codex provider stands as they typed it
+	if err := provider.Save(provider.Provider{ID: "codex", Contexts: map[string]int{"gpt-6.1-sol": 400000}}); err != nil {
+		t.Fatal(err)
+	}
+	if w, x := window(); w != 400000 || x != 0 {
+		t.Errorf("the user's own window: window %v max %v, want 400000 with no max named", w, x)
 	}
 }

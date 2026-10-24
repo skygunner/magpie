@@ -518,11 +518,11 @@ func buildCodexListTag(kind string) string {
 		ms = append(ms, catalog.Model{ID: "^" + id})
 	}
 	ms = append(ms, codexWindowsTag()...)
-	// and where a model with no threshold of its own is compacted, when
-	// that isn't the working window
-	if n := settings.Load().Compact(); n != settings.WorkingWindow {
-		ms = append(ms, catalog.Model{ID: "~compact", Context: n})
-	}
+	// and where a model with no threshold of its own is compacted — always
+	// named, for the account's own models' windows are capped at it too
+	// (#3440): any change to it, the shipped 272K included, has Codex ask
+	// for the list again
+	ms = append(ms, catalog.Model{ID: "~compact", Context: settings.Load().Compact()})
 	// and the model Codex's auto-review runs on (#938)
 	if v := settings.Load().CodexAutoReview; v != "" {
 		ms = append(ms, catalog.Model{ID: "~autoreview:" + v})
@@ -585,6 +585,14 @@ func CodexNativeWindow(restore bool) func(slug string) (n, most int, ok bool) {
 		}
 		return 0, 0, false
 	}
+}
+
+// CodexUserWindow is the window the user set on the codex provider for one
+// of the ChatGPT account's own models, by the backend's slug: 0 for none,
+// which is what CodexNativeWindow's first branch answers a window for.
+func CodexUserWindow(slug string) int {
+	p, _ := find(All(), "codex")
+	return p.ContextOf(slug)
 }
 
 // CodexWindow is the context window Codex works in for one of its own

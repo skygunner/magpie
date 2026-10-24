@@ -1718,11 +1718,23 @@ func (s *Server) codexModels(w http.ResponseWriter, r *http.Request) {
 	// them (#674); a cached entry, which keeps what magpie handed Codex
 	// last, takes the account's own list's back when none is set
 	window := provider.CodexNativeWindow(cached)
+	// the long-conversation threshold holds of the account's own models
+	// too, as of magpie's own (#3440, Sinnhu): the backend's 475K window
+	// was handed Codex whole, so a "272K, compact" pick never compacted an
+	// official-subscription conversation. A window past the threshold is
+	// compacted at it, the backend's kept as the max. One the user set on
+	// the codex provider stands as they typed it.
+	compact := settings.Load().Compact()
 	for _, m := range own {
 		if o, ok := m.(map[string]any); ok {
 			slug, _ := o["slug"].(string)
 			if n, most, ok := window(slug); ok {
 				codexcat.Window(o, n, most)
+			}
+			if provider.CodexUserWindow(slug) == 0 {
+				if n, ok := entryWindow(o); ok && compact > 0 && n > compact {
+					codexcat.Window(o, compact, n)
+				}
 			}
 		}
 	}
@@ -1820,6 +1832,18 @@ func (s *Server) codexModels(w http.ResponseWriter, r *http.Request) {
 		codexcat.Order(all, at)
 	}
 	writeJSON(w, 200, map[string]any{"models": all})
+}
+
+// entryWindow is a native entry's context_window as the backend said it
+// (or magpie did, above): 0 for none or a shape it doesn't come in.
+func entryWindow(o map[string]any) (int, bool) {
+	switch v := o["context_window"].(type) {
+	case float64:
+		return int(v), v > 0
+	case int:
+		return v, v > 0
+	}
+	return 0, false
 }
 
 // modelsEtag is the X-Models-Etag of a backend reply as Codex should read
