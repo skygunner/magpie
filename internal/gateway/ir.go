@@ -92,6 +92,10 @@ type Hit struct {
 	URL   string `json:"url"`
 	// PageAge is how old the search said the page is, "" when it didn't
 	PageAge string `json:"page_age,omitempty"`
+	// Cited is the excerpt of the page the model itself was given, "" when
+	// the search said none: what a Messages client is told the reply cites
+	// (#3447, a text block's citations[].cited_text)
+	Cited string `json:"cited,omitempty"`
 }
 
 // attachmentText is the fallback when a protocol cannot carry a Gemini file.

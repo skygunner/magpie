@@ -195,7 +195,10 @@ func pagesSaid(pages []foundPage) (string, []Hit) {
 			b.WriteString(p.Text + "\n")
 		}
 		b.WriteString("\n")
-		hits = append(hits, Hit{Title: p.Title, URL: p.URL, PageAge: p.Age})
+		// the excerpt stands as the citation a Messages client reads
+		// (#3447): what the model was given is what there is to cite, at
+		// Anthropic's own 150 characters
+		hits = append(hits, Hit{Title: p.Title, URL: p.URL, PageAge: p.Age, Cited: clipText(strings.TrimSpace(p.Text), 150)})
 	}
 	return strings.TrimSpace(b.String()), hits
 }

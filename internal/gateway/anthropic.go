@@ -1364,8 +1364,11 @@ type anthropicEncoder struct {
 	w     *sseWriter
 	model string
 	index int
-	open  Kind // kind of the open content block, "" when none
-	args  bool // the open tool block got arguments
+	// citing are the pages of the search before, for the citations of the
+	// next text block (#3447)
+	citing []Hit
+	open   Kind // kind of the open content block, "" when none
+	args   bool // the open tool block got arguments
 	// fresh: a thinking block began upstream (KThinkStart), to be opened
 	// apart from the one open with what it says first
 	fresh   bool
@@ -1498,7 +1501,18 @@ func (e *anthropicEncoder) event(ev Event) {
 		if ev.Text == "" {
 			return
 		}
-		e.openBlock(Text, map[string]any{"text": ""})
+		block := map[string]any{"text": ""}
+		// the search's pages cited before the words, as Anthropic's own
+		// web search streams them (#3447)
+		cites := citationsOf(e.citing)
+		if cites != nil {
+			block["citations"] = []any{}
+		}
+		e.openBlock(Text, block)
+		for _, c := range cites {
+			e.delta(map[string]any{"type": "citations_delta", "citation": c})
+		}
+		e.citing = nil
 		e.delta(map[string]any{"type": "text_delta", "text": ev.Text})
 	case KThinkStart:
 		// opened with what it says first: one that says nothing isn't
@@ -1552,6 +1566,7 @@ func (e *anthropicEncoder) event(ev Event) {
 			"content_block": searchResultBlock(id, ev.Hits)})
 		e.w.event("content_block_stop", map[string]any{"type": "content_block_stop", "index": e.index})
 		e.index++
+		e.citing = ev.Hits
 	case KError:
 		e.close()
 		typ := "api_error"
@@ -1597,13 +1612,21 @@ func (e *anthropicEncoder) finish() {
 // renderAnthropic is the non-streaming reply.
 func renderAnthropic(res Result, model string) []byte {
 	content := []any{}
+	// the pages of the search before, cited on the text that follows it
+	// (#3447), as Anthropic's own web search cites its replies
+	var citing []Hit
 	for _, p := range res.Parts {
 		switch p.Kind {
 		case Text:
 			if p.Text == "" && p.Signature != "" {
 				continue // only Gemini's signature, which is Gemini's
 			}
-			content = append(content, map[string]any{"type": "text", "text": p.Text})
+			block := map[string]any{"type": "text", "text": p.Text}
+			if cites := citationsOf(citing); cites != nil {
+				block["citations"] = cites
+			}
+			citing = nil
+			content = append(content, block)
 		case Thinking:
 			switch {
 			case p.sealedBy(sealAnthropic):
@@ -1624,6 +1647,7 @@ func renderAnthropic(res Result, model string) []byte {
 			content = append(content,
 				map[string]any{"type": "server_tool_use", "id": id, "name": "web_search", "input": map[string]any{"query": p.Text}},
 				searchResultBlock(id, p.Hits))
+			citing = p.Hits
 		}
 	}
 	id := anthropicID(res.ID)
@@ -1640,6 +1664,23 @@ func renderAnthropic(res Result, model string) []byte {
 	}
 	b, _ := json.Marshal(reply)
 	return b
+}
+
+// citationsOf is the citations a text block that follows a search of hits
+// carries (#3447): each page the model was given an excerpt of, as
+// Anthropic's own web search cites a reply — nothing of ours is sealed, so
+// encrypted_index is empty. nil for no page with an excerpt to cite.
+func citationsOf(hits []Hit) []map[string]any {
+	var out []map[string]any
+	for _, h := range hits {
+		if h.Cited == "" {
+			continue
+		}
+		out = append(out, map[string]any{
+			"type": "web_search_result_location", "url": h.URL, "title": h.Title,
+			"encrypted_index": "", "cited_text": h.Cited})
+	}
+	return out
 }
 
 // searchResultBlock is a web_search_tool_result block of the pages a

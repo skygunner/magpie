@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"io"
@@ -701,4 +702,83 @@ func BenchmarkSearchedForIt(b *testing.B) {
 			searchedForIt(other, provider.Responses, "gpt-5", plain)
 		}
 	})
+}
+
+// A text block that follows a search carries the pages' citations, as
+// Anthropic's own web search does (#3447, HuHong-Tao): a Messages client
+// that builds its sources from citations[].cited_text — DeepSeek Harness
+// Desktop's web search among them — has the excerpts the model itself was
+// given, whole and streamed. A page with no excerpt is not cited.
+func TestSearchCitedOnTheTextAfterIt(t *testing.T) {
+	hits := []Hit{
+		{Title: "Go", URL: "https://go.dev/", Cited: "Go is an open-source language."},
+		{Title: "No excerpt", URL: "https://none.example/", Cited: ""},
+	}
+	type citation struct {
+		Type      string `json:"type"`
+		URL       string `json:"url"`
+		Title     string `json:"title"`
+		Encrypted string `json:"encrypted_index"`
+		Cited     string `json:"cited_text"`
+	}
+	res := Result{Parts: []Part{{Kind: Search, Text: "go", Hits: hits}, {Kind: Text, Text: "1.27"}}}
+	// whole
+	var whole struct {
+		Content []struct {
+			Type      string     `json:"type"`
+			Text      string     `json:"text"`
+			Citations []citation `json:"citations"`
+		} `json:"content"`
+	}
+	json.Unmarshal(renderAnthropic(res, "m"), &whole)
+	if len(whole.Content) != 3 || whole.Content[2].Type != "text" || len(whole.Content[2].Citations) != 1 {
+		t.Fatalf("whole: %+v", whole)
+	}
+	if c := whole.Content[2].Citations[0]; c.Type != "web_search_result_location" || c.URL != "https://go.dev/" ||
+		c.Title != "Go" || c.Encrypted != "" || c.Cited != "Go is an open-source language." {
+		t.Fatalf("whole citation: %+v", c)
+	}
+	if whole.Content[0].Citations != nil || whole.Content[1].Citations != nil {
+		t.Fatalf("citations outside the text: %+v", whole)
+	}
+
+	// streamed: the block starts empty with its citations, each a delta
+	// ahead of the words
+	rec := httptest.NewRecorder()
+	enc := &anthropicEncoder{w: newSSEWriter(rec), model: "m"}
+	enc.event(Event{Kind: KSearch, Text: "go", Hits: hits})
+	enc.event(Event{Kind: KText, Text: "1.27"})
+	enc.finish()
+	var block map[string]any
+	var cites []map[string]any
+	sc := bufio.NewScanner(strings.NewReader(rec.Body.String()))
+	for sc.Scan() {
+		data, ok := strings.CutPrefix(sc.Text(), "data: ")
+		if !ok {
+			continue
+		}
+		var ev map[string]any
+		if json.Unmarshal([]byte(data), &ev) != nil {
+			continue
+		}
+		switch ev["type"] {
+		case "content_block_start":
+			if b, _ := ev["content_block"].(map[string]any); b["type"] == "text" {
+				block = b
+			}
+		case "content_block_delta":
+			if d, _ := ev["delta"].(map[string]any); d["type"] == "citations_delta" {
+				cites = append(cites, d["citation"].(map[string]any))
+			}
+		}
+	}
+	if block == nil {
+		t.Fatalf("no text block: %s", rec.Body)
+	}
+	if cs, _ := block["citations"].([]any); len(cs) != 0 || block["text"] != "" {
+		t.Fatalf("the text block opened with other than empty citations: %+v", block)
+	}
+	if len(cites) != 1 || cites[0]["url"] != "https://go.dev/" || cites[0]["cited_text"] != "Go is an open-source language." {
+		t.Fatalf("citations: %+v", cites)
+	}
 }
