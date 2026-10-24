@@ -1176,7 +1176,11 @@ func (s *Server) drawImages(ctx context.Context, p provider.Provider, model stri
 		}
 		body, _ = json.Marshal(req)
 	} else if len(d.Images) == 0 {
-		req := map[string]any{"model": model, "prompt": d.Prompt, "n": d.N}
+		prompt := d.Prompt
+		if drawsCodex(p) {
+			prompt = codexSays(d)
+		}
+		req := map[string]any{"model": model, "prompt": prompt, "n": d.N}
 		size := d.Size
 		if isGitee(p) {
 			// Gitee takes width and height, never OpenAI's size, which it
@@ -1201,7 +1205,7 @@ func (s *Server) drawImages(ctx context.Context, p provider.Provider, model stri
 		ct, url = "application/json", base+"/images/generations"
 	} else if drawsCodex(p) {
 		// ChatGPT's backend takes an edit only as JSON, each image a data URL
-		req := map[string]any{"model": model, "prompt": d.Prompt, "n": d.N}
+		req := map[string]any{"model": model, "prompt": codexSays(d), "n": d.N}
 		for k, v := range map[string]string{"size": d.Size, "quality": d.Quality, "background": d.Background, "output_format": d.Format} {
 			if v != "" {
 				req[k] = v
@@ -1463,6 +1467,17 @@ func extOf(mimeType string) string {
 		return ".gif"
 	}
 	return ".png"
+}
+
+// codexSays is the prompt with its size said in words for a ChatGPT
+// account's drawing: the Codex images backend ignores the images API's
+// size field - a 1792x1024 ask came back square (#3513) - and Codex CLI
+// writes the resolution into the prompt itself, which the backend draws.
+func codexSays(d drawing) string {
+	if m := whSize.FindStringSubmatch(d.Size); m != nil {
+		return "Generate at " + d.Size + " resolution. " + d.Prompt
+	}
+	return d.Prompt
 }
 
 // drawPrompt is the prompt with what an images API takes as parameters
