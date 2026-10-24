@@ -1,3 +1,17 @@
+## 2026-10-24 第十轮后续独立执行：#3401 完整补齐、#3440 产品决策、#3447 收口
+
+本节由本轮直接执行并记录，非 zcode 返工；**#3447 不再扩张实现**（上游独立实现 `1d6b72ad` 已被报告者在 Magpie 0.1.1371 + DSH 实测，issue 关闭），`fix/issue-batch-1024pm` 的旧混合补丁不提交上游。
+
+| 项 | 执行动作与实际结果 | 状态 |
+|---|---|---|
+| R1 #3401 | 新建独立工作树 `../magpie-reasonix-1024`，基于 `dd1e8822`，cherry-pick 仅 Reasonix MCP/skills 的 `fd4bcb54`，另完成原生 `settings.json` Hooks（平面 `hooks.<Event>[]`、`match` 正则、毫秒超时、Reasonix 原生事件）、`~/.agents/skills` 的 `readsShared` 归属。完整交付链 `e3bcacfc -> 0281ada7 -> cf87dc37`。独立分支普通推送及远端 SHA 读回一致。 | 完成；Windows 真机待报告者 |
+| R2 #3401 验收 | 真实 Library 写入/保留用户 Hooks/删除 Magpie-owned 项及共享目录测试通过，`go test -tags nogui ./internal/library -count=1` 通过，Linux 和 Windows/amd64 静态 `go vet` 通过。最终独立 head `cf87dc37`，`umask 022` 的全量 nogui：**68 ok / 2 FAIL / 19 no-test，exit=1**；预存失败 #3280/#2207，非全绿。Windows Studio 2.50 原生未执行。 | 本地验收通过，实机待验证 |
+| R3 #3440 | 向上游原 issue 发布 A/B/C 产品决策澄清 [6383458761](https://github.com/yetone/magpie/issues/3440#issuecomment-6383458761)，认可 #674 原合同并纠正默认 272K 的作用域扩张；**不自行选 A/B/C，也不请求合并争议补丁**。GitHub 读回作者/正文/时间一致。 | upstream_decision_pending |
+| R4 #3401 上游沟通 | 发布独立分支、测试与 Windows Studio 2.50 实机验证请求 [6383557929](https://github.com/yetone/magpie/issues/3401#issuecomment-6383557929)，读回一致；无 PR、无真实账户调用。 | 等报告者原生运行结果 |
+| R5 #3447 | 上游已修并由报告者实测；原 fork searchWith 的缺口仅留历史事实，不继续写第三个变体。 | superseded_by_upstream_independent |
+
+原始命令、哈希、评论回执与剩余验证范围见 [round13/closeout.md](docs/fork/evidence/round13/closeout.md)。仅推独立 fork 分支及 dev 维护记录，未删除分支、未 force-push、未触碰另一 agent 的工作树。
+
 ## 2026-10-24 第十轮返工复核（ZCode 会话十二）：r11 审查限定收口
 
 r11 独立复核（magpie-r11-review）确认：14c1551 的多搜索累计/URL 去重全绿；8 条

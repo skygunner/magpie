@@ -2880,7 +2880,8 @@
    "base": "dd1e8822d916f8aeb085db4db93fc3d79e2263ed",
    "comments": {
     "3440": [
-     "https://github.com/yetone/magpie/issues/3440#issuecomment-6380798386"
+     "https://github.com/yetone/magpie/issues/3440#issuecomment-6380798386",
+      "https://github.com/yetone/magpie/issues/3440#issuecomment-6383458761"
     ]
    },
    "sources": {
@@ -2896,7 +2897,7 @@
    "upstream": {
     "status": "unconfirmed",
     "decision": "upstream_decision_pending",
-    "note": "maintainer product call required; drafted correction awaits authorization"
+    "note": "maintainer product call required; A/B/C decision request published and verified in #3440 comment 6383458761; no product behavior changed pending decision"
    },
    "archive": {
     "candidate": false
@@ -2954,7 +2955,7 @@
    ],
    "category": "product",
    "title": "library: Reasonix Studio takes MCP servers, skills and project skills (#3401, FuchaZ)",
-   "coverage": "fmtReasonix [[plugins]] array tables (put/read/del keeping the user's), skills dir + SkillsAlso claude, project .reasonix/skills. PARTIAL by scope: hooks remain not implemented (Reasonix's hook event names unknown, .reasonix/settings.json documented but no schema to wire); no native Windows verification (paths exercised through sandboxed home variables only).",
+   "coverage": "Original fd4bcb54 delivered Reasonix [[plugins]] MCP, skills and project .reasonix/skills. Standalone follow-up branch fix/reasonix-library-complete-1024 (base dd1e8822; commits e3bcacfc -> 0281ada7 -> cf87dc37) now additionally implements native hooks.<Event>[] with match regex and millisecond timeout, preserving user hooks on removal, plus readsShared accounting of ~/.agents/skills. Library full suite PASS; Linux and Windows/amd64 static vet PASS; nogui all packages 68 ok/2 existing FAIL (#3280/#2207)/19 no-test with umask 022, exit=1. Studio 2.50.0 native Windows run is pending reporter verification. Fork branch read back cf87dc37; not yet adopted upstream.",
    "commits": [
     "fd4bcb54e53462e0e9bfa894846c3909875c5444"
    ],
@@ -2969,7 +2970,8 @@
    "base": "dd1e8822d916f8aeb085db4db93fc3d79e2263ed",
    "comments": {
     "3401": [
-     "https://github.com/yetone/magpie/issues/3401#issuecomment-6380817606"
+     "https://github.com/yetone/magpie/issues/3401#issuecomment-6380817606",
+      "https://github.com/yetone/magpie/issues/3401#issuecomment-6383557929"
     ]
    },
    "sources": {
@@ -5037,6 +5039,40 @@
    "body_sha256": "e44ecf1ecf5c97130f44243dde6d200d6239a97e178a7d8d22130251eef393e1",
    "evidence": "docs/fork/evidence/round11/comment-readback.json",
    "body_updated_at": "2026-10-24T05:57:54Z"
+  },
+  {
+   "issue": 3440,
+   "fix_id": "u-gateway-provider-the-account-s-own-codex-m-3440-e9926d70",
+   "comment_id": 6383458761,
+   "url": "https://github.com/yetone/magpie/issues/3440#issuecomment-6383458761",
+   "role": "decision_request",
+   "author": "skygunner",
+   "language": "zh-CN",
+   "status": "published_verified",
+   "published_at": "2026-10-24T11:07:09Z",
+   "verified_at": "2026-10-24T11:21:10Z",
+   "body_updated_at": "2026-10-24T11:07:09Z",
+   "delivery": "fix/issue-batch-1024pm",
+   "delivery_head": "14c1551e9672758c656ed2fd6b4db69ac1300b15",
+   "body_sha256": "c95624f746c27203cf748f6ee82ef28deae17f40572c42edd22e344619e57b16",
+   "evidence": "docs/fork/evidence/round13/closeout.md"
+  },
+  {
+   "issue": 3401,
+   "fix_id": "u-library-reasonix-studio-takes-mcp-servers-ski-3401-fd4bcb54",
+   "comment_id": 6383557929,
+   "url": "https://github.com/yetone/magpie/issues/3401#issuecomment-6383557929",
+   "role": "delivery_followup",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-24T11:17:53Z",
+   "verified_at": "2026-10-24T11:21:10Z",
+   "body_updated_at": "2026-10-24T11:17:53Z",
+   "delivery": "fix/reasonix-library-complete-1024",
+   "delivery_head": "cf87dc37c09e5b6fbadebfd7ebc8adcd9f102290",
+   "body_sha256": "b9b6e0ddb250760ca210ffd92249a6a3e10b9f88612b3a06164b232604cc2b10",
+   "evidence": "docs/fork/evidence/round13/closeout.md"
   }
  ],
  "deliveries": {
@@ -5123,6 +5159,19 @@
    "pushed": true,
    "read_back": "2026-10-24 origin/fix/issue-batch-1024pm=14c1551e (rework push; prior 4f353657 read back at delivery)",
    "note": "round-10 batch + r10-review rework: five fixes (8ecab590 #3392, b834f286 #3444, e9926d70 #3440, e5a05c44 #3447, fd4bcb54 #3401), docs (4f353657), and the #3447 multi-search rework (14c1551: accumulateCitations + 422 status control, review probe red 4/4 on 4f353657, green here). #3447 overlap: ggbdpq delivered independently (hunt76-a-websearch-citations, 69068ead) before this rework. #3440 is design_sensitive/upstream_decision_pending. Full nogui at 14c1551: 68 ok / 2 pre-existing FAIL (#3280/#2207) / 19 no-test; evidence docs/fork/evidence/round11/."
+  },
+  "fix/reasonix-library-complete-1024": {
+   "branch": "fix/reasonix-library-complete-1024",
+   "base": "dd1e8822d916f8aeb085db4db93fc3d79e2263ed",
+   "head": "cf87dc37c09e5b6fbadebfd7ebc8adcd9f102290",
+   "commits": [
+    "e3bcacfc164a5762fb0fd7e92151d385e4e596a0",
+    "0281ada7efd3b874b0688803f498a27d18325dce",
+    "cf87dc37c09e5b6fbadebfd7ebc8adcd9f102290"
+   ],
+   "pushed": true,
+   "read_back": "2026-10-24 origin/fix/reasonix-library-complete-1024=cf87dc37",
+   "note": "Independent #3401-only branch: MCP and skills baseline cherry-picked, Reasonix hooks/shared skill accounting added, native tool-name matchers corrected. No #3440/#3447 mixed changes. Windows vet passed but native Reasonix Studio Windows runtime remains unverified."
   }
  }
 }
