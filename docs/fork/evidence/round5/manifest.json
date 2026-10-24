@@ -1,0 +1,46 @@
+{
+  "round": "r4-review-rework-round5",
+  "generated_at": "2026-10-24T03:06:32Z",
+  "tree": {
+    "branch": "r3-batch",
+    "base": "b437e4adb4dba82446e0d625b040a8e2d95004b4",
+    "head": "1952329fbfbd390406c58598c56e7b1fbc8e39ec"
+  },
+  "runs": [
+    {
+      "name": "full nogui suite",
+      "argv": "GOTOOLCHAIN=go1.26.8 GOFLAGS=-tags=nogui go test ./... -timeout 45m (umask 022, serial)",
+      "head": "1952329fbfbd390406c58598c56e7b1fbc8e39ec",
+      "exit": 1,
+      "result": "67 packages ok, 2 failures (both known pre-existing reds baselined on clean upstream/main a93190ae in evidence/round4/)",
+      "failures": [
+        {
+          "test": "TestClaudeClientCacheAbsentUnchanged",
+          "pkg": "internal/gateway",
+          "known": "#3280"
+        },
+        {
+          "test": "TestPluginSOCKSProxy",
+          "pkg": "internal/plugin",
+          "known": "#2207 (Bun 1.4.4)"
+        }
+      ],
+      "log": "full-suite-r3batch-1952329f.log",
+      "log_sha256": "d3e8d9d70028315d29c37cc8703f2c36d58714913cec9f23b7197c9d0a6a0371"
+    }
+  ],
+  "not_run": {
+    "windows_native": "no environment",
+    "macos_native": "no environment",
+    "real_vendors": "none called; fakes/stubs and sandboxed config only",
+    "real_daemon_restart": "not performed (F's restart evidence remains simulated)"
+  },
+  "summary": "67 packages ok, 2 failures \u2014 both known pre-existing reds (#3280 bash-as-sh, #2207 Bun 1.4.4) baselined the same environment on clean upstream/main a93190ae the previous round (see evidence/round4/baseline-*.log). No new failures. Full-suite green NOT achieved.",
+  "environment": {
+    "os": "Linux 6.18 amd64 (CachyOS, bash as /bin/sh)",
+    "go": "go1.26.8 via GOTOOLCHAIN",
+    "bun": "1.4.4",
+    "umask_for_tests": "022",
+    "config_isolation": "testenv sandbox + temp XDG/HOME per test"
+  }
+}

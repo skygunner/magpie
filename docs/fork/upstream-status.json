@@ -770,7 +770,7 @@
       "verify": {
         "state": "unverified_this_round",
         "evidence": "Delivered with red-green recorded in the commit body; not independently re-run this round. See prior/72-thread-evidence.json for the delivered-time evidence chain.",
-        "head": "885c1b8bfe68c62f0bac9fcc928cc0b83fde68bc"
+        "head": "1952329fbfbd390406c58598c56e7b1fbc8e39ec"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -1498,7 +1498,7 @@
       "verify": {
         "state": "pass",
         "evidence": "Composition retained and re-run on r3 head: TestNativeRelay* , Copilot native (TestCopilotUltraSubagentWithWebSearch, TestCopilotRelayedUnlessAskedToSeal — the earlier \"no fixture\" claim was wrong), reply-side encrypted_function_args.",
-        "head": "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b"
+        "head": "1952329fbfbd390406c58598c56e7b1fbc8e39ec"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -2512,8 +2512,8 @@
       },
       "verify": {
         "state": "pass",
-        "evidence": "Round-4: TestReviewR3KeylessLocalDecisionProviderSurvives and TestReviewR3PickedDecisionMetadataAgreesWithRouting red at 885c1b8b (per review) -> green at 4e136a4b; TestProviderEditorDeciders* pin the JSON contract; whole provider package green; plugin SystemOne routing family green.",
-        "head": "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b"
+        "evidence": "Round-5: TestReviewR4SignedOutDecisionPicksStaySettings (public -plugin id after real plugin.SignOut) red at 4e136a4b -> green at 2309249f; native-decision default priority control green; whole provider package green (1765).",
+        "head": "1952329fbfbd390406c58598c56e7b1fbc8e39ec"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -2558,7 +2558,7 @@
       "verify": {
         "state": "unverified_this_round",
         "evidence": "Delivered with red-green recorded in the commit body; not independently re-run this round. See prior/72-thread-evidence.json for the delivered-time evidence chain.",
-        "head": "885c1b8bfe68c62f0bac9fcc928cc0b83fde68bc"
+        "head": "1952329fbfbd390406c58598c56e7b1fbc8e39ec"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -2602,7 +2602,7 @@
       "verify": {
         "state": "pass",
         "evidence": "Endings matrix replaced by the review's stronger TestReviewV2ResponsesEndings (status, incomplete_details, single terminal event); relayReply fixture now valid JSON (TestReviewV2RelayFixtureIsValidJSON); empty-reply retry/failure and title exemption retained. 113867ad.",
-        "head": "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b"
+        "head": "1952329fbfbd390406c58598c56e7b1fbc8e39ec"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -2646,8 +2646,8 @@
       },
       "verify": {
         "state": "pass",
-        "evidence": "Round-4: TestReviewR3CredentialNamesKeepTheirMeaning 8/8 red at 885c1b8b (per review) -> green at bbd6e228; the 24-matrix, benign controls, learning/rebuild, sent-cache tests green; whole redact package green.",
-        "head": "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b"
+        "evidence": "Round-5: TestReviewR4TokenKeyCompoundsStaySecret (token_signing_key/token_encryption_key x3 paths) 6/6 red at 4e136a4b -> green at c7acc938; all prior matrices and controls green; whole redact package green.",
+        "head": "1952329fbfbd390406c58598c56e7b1fbc8e39ec"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -2745,7 +2745,7 @@
       "verify": {
         "state": "pass",
         "evidence": "Bare rewrite retired in favor of PlainAgentMessage (97a8a0c2); composition through /backend-api/codex/responses green; sealed refused 400.",
-        "head": "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b"
+        "head": "1952329fbfbd390406c58598c56e7b1fbc8e39ec"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -4537,7 +4537,7 @@
     "r3-batch": {
       "branch": "r3-batch",
       "base": "b437e4adb4dba82446e0d625b040a8e2d95004b4",
-      "head": "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b",
+      "head": "1952329fbfbd390406c58598c56e7b1fbc8e39ec",
       "commits": [
         "16289db2755a9ceb4408f100156563f41c8541a6",
         "7cbf4396acb2a4264d63e96a3002ec668b445772",
@@ -4562,7 +4562,7 @@
         "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b"
       ],
       "pushed": true,
-      "read_back": "2026-10-24 origin/r3-batch=4e136a4b",
+      "read_back": "2026-10-24 origin/r3-batch=1952329fbfbd390406c58598c56e7b1fbc8e39ec (fast-forward from 4e136a4b; round-5 append c7acc938 redact key-kind compounds, 2309249f public plugin id resolution, 1952329f docs)",
       "replaces": "fix/issue-batch-1023pm-v2 (95537ceb, itself replacing fix/issue-batch-1023pm 007b8b9b)"
     },
     "r3-union": {
