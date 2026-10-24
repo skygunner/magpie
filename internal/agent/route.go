@@ -234,6 +234,15 @@ func magpieModels(agent string) []catalog.Model {
 		if e.Group == "" {
 			if n := e.Provider.Native(e.Model); n != "" {
 				m.APIs = []string{string(n)}
+			} else if e.Provider.MessagesFirst(e.Model) {
+				// a sign-in served through its agent's own API (a Claude
+				// Code subscription) has no native API of its own, but the
+				// gateway serves it on Messages (serveClaudeSubscription):
+				// saying so keeps dsh's - and Pi's, omp's and droid's -
+				// wiring off the Chat translation, which drops the signed
+				// thinking blocks and cache_control on the way back
+				// (#3514, as MessagesFirst's relays already are, #997)
+				m.APIs = []string{string(provider.Anthropic)}
 			}
 		} else if allResponses(members(e.ID)) {
 			m.APIs = []string{string(provider.Responses)}

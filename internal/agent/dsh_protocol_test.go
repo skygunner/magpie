@@ -1,9 +1,13 @@
 package agent
 
 import (
+	"encoding/json"
 	"os"
+	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/yetone/magpie/internal/catalog"
 	"github.com/yetone/magpie/internal/gateway"
@@ -231,5 +235,48 @@ func TestDshCheckSaysAStartOnAnotherRoutesModel(t *testing.T) {
 	}
 	if d := a.Check(); d != "" {
 		t.Fatalf("after sync: %q", d)
+	}
+}
+
+// #3514 (stofancy): a Claude Code subscription's Claude models went to
+// dsh's one Chat route - Native() answers "" for a sign-in served through
+// its agent's own API - so every turn was translated to Chat and back
+// between dsh and the gateway, and Anthropic's signed thinking blocks and
+// cache_control were lost in the return translation. The gateway serves
+// those models on Messages (serveClaudeSubscription, OnMessages), and the
+// routes say so now.
+func TestDshRoutesASubscriptionClaudeOnMessages(t *testing.T) {
+	home, dir, web := dshRouteHome(t)
+	dshKeyFixture(dir)
+	os.WriteFile(web, []byte("# Your patch layer for this dsh profile.\n"), 0o644)
+	// the claude subscription, signed in: its provider is the built-in,
+	// its models Anthropic's list
+	lb, _ := json.Marshal([]map[string]any{{"agent": "claude", "user": "a@x.com", "plan": "max", "on": true, "seen": time.Now()}})
+	os.MkdirAll(filepath.Dir(provider.Path()), 0o755)
+	os.WriteFile(filepath.Join(filepath.Dir(provider.Path()), "logins.json"), lb, 0o600)
+	os.MkdirAll(filepath.Dir(catalog.CachePath()), 0o755)
+	os.WriteFile(catalog.CachePath(), []byte(`{"anthropic":{"models":{"claude-sonnet-5-5":{"id":"claude-sonnet-5-5","name":"Claude Sonnet 5.5"}}}}`), 0o644)
+	catalog.Reset()
+	t.Cleanup(catalog.Reset)
+	a := dsh(home)
+	f := a.Field("model")
+	if err := f.Set("magpie/claude/claude-sonnet-5-5"); err != nil {
+		t.Fatal(err)
+	}
+	b, _ := os.ReadFile(web)
+	s := string(b)
+	ps := dshPiProviders(t, web)
+	r, ok := ps["magpie-anthropic"]
+	if !ok {
+		t.Fatalf("no magpie-anthropic route:\n%s", s)
+	}
+	if !slices.Contains(dshRouteModelIDs(r), "claude/claude-sonnet-5-5") {
+		t.Fatalf("the subscription's Claude is not on the Messages route: %v\n%s", dshRouteModelIDs(r), s)
+	}
+	if chat, ok := ps["magpie"]; ok && slices.Contains(dshRouteModelIDs(chat), "claude/claude-sonnet-5-5") {
+		t.Fatalf("the subscription's Claude is still on the Chat route: %v\n%s", dshRouteModelIDs(chat), s)
+	}
+	if !strings.Contains(s, "provider: magpie-anthropic\n") || f.Get() != "magpie/claude/claude-sonnet-5-5" || a.Check() != "" {
+		t.Fatalf("the start is not on the Messages route:\n%s", s)
 	}
 }
