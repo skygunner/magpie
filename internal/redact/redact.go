@@ -270,9 +270,17 @@ func strongCredential(name string) bool {
 		b.WriteByte(c)
 	}
 	n := b.String()
+	// the credential words, the key compounds (the key-kind words the
+	// assignment reading has always taken — api, access, private, auth,
+	// signing, encryption, encrypt, decryption — before key), and the
+	// token compounds (access, refresh, auth, bearer, session, api,
+	// credentials, secret before token). A name carrying none of these —
+	// a bare key, a version token, a tokenspeed field — keeps the #3365
+	// exceptions.
 	for _, w := range []string{"password", "passwd", "pwd", "secret", "credential",
-		"apikey", "accesskey", "privatekey",
-		"accesstoken", "refreshtoken", "authtoken", "bearertoken", "sessiontoken", "apitoken"} {
+		"apikey", "accesskey", "privatekey", "authkey", "signingkey", "encryptionkey", "encryptkey", "decryptionkey",
+		"accesstoken", "refreshtoken", "authtoken", "bearertoken", "sessiontoken", "apitoken",
+		"credentialstoken", "credentialtoken", "secrettoken"} {
 		if strings.Contains(n, w) {
 			return true
 		}
