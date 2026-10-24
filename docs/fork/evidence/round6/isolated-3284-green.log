@@ -1,0 +1,5 @@
+=== RUN   TestOpenCodeSessionOnEveryCall
+--- PASS: TestOpenCodeSessionOnEveryCall (0.00s)
+PASS
+ok  	github.com/yetone/magpie/internal/provider	0.007s
+exit=0

@@ -293,6 +293,18 @@ def check(data, branches, prior):
             prev = c
         if commits and head and gitrc("merge-base", "--is-ancestor", commits[-1], head) != 0:
             errs.append(f"delivery {dname}: last chain commit {commits[-1][:8]} is not an ancestor of the head")
+        # completeness: a delivery promising the current sequence must carry
+        # every non-merge commit of base..head — a truncated list passes the
+        # ancestry checks while dropping the newest fixes
+        if commits and head:
+            base = drec.get("base") or ""
+            if SHA_RE.match(str(base)) and git("cat-file", "-t", base) == "commit":
+                want = [c for c in git("rev-list", "--reverse", "--no-merges",
+                                       f"{base}..{head}").splitlines() if c]
+                missing = [c for c in want if c not in commits]
+                if missing:
+                    errs.append(f"delivery {dname}: commits omit {len(missing)} commit(s) of "
+                                f"base..head, first {missing[0][:8]}")
     return errs
 
 def selftest(data, branches, prior):
@@ -413,6 +425,10 @@ def selftest(data, branches, prior):
     mb["archive"] = {"candidate": True}
     mb["fix_ids"] = ["u-volcengine-resets"]
     variants["main itself flagged candidate with a qualified unit"] = v
+
+    v = copy.deepcopy(data)
+    v["deliveries"]["r3-batch"]["commits"] = v["deliveries"]["r3-batch"]["commits"][:-3]
+    variants["delivery chain truncated before the newest fixes"] = v
 
     for name, v in variants.items():
         errs = check(v, branches, prior)

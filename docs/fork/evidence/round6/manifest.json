@@ -1,0 +1,64 @@
+{
+  "round": "r5-review-rework-round6",
+  "generated_at": "2026-10-24T03:44:45Z",
+  "tree": {
+    "branch": "r3-batch",
+    "base": "b437e4adb4dba82446e0d625b040a8e2d95004b4",
+    "head": "820eb89647d5f89f916005db852712c3ebdec022"
+  },
+  "environment": {
+    "os": "Linux 6.18 amd64 (CachyOS, bash as /bin/sh)",
+    "go": "go1.26.8 via GOTOOLCHAIN",
+    "bun": "1.4.4",
+    "umask_for_tests": "022",
+    "config_isolation": "testenv sandbox + temp XDG/HOME per test"
+  },
+  "runs": [
+    {
+      "name": "full nogui suite",
+      "argv": "GOTOOLCHAIN=go1.26.8 GOFLAGS=-tags=nogui go test ./... -timeout 45m (umask 022, serial)",
+      "head": "820eb89647d5f89f916005db852712c3ebdec022",
+      "exit": 1,
+      "result": "67 packages ok, 3 failures",
+      "log": "full-suite-r3batch-820eb896.log",
+      "log_sha256": "0033972858ad637f70ceaec1268f4e45dbdbb88cf4f66dbdc6b48aa3552b27d7",
+      "failures": [
+        {
+          "test": "TestClaudeClientCacheAbsentUnchanged",
+          "pkg": "internal/gateway",
+          "known": "#3280 (bash as /bin/sh)",
+          "baseline": "evidence/round4/baseline-3280-clean-upstream-a93190ae.log (same environment, clean upstream/main)"
+        },
+        {
+          "test": "TestPluginSOCKSProxy",
+          "pkg": "internal/plugin",
+          "known": "#2207 (local Bun; this machine runs 1.4.4)",
+          "baseline": "evidence/round4/baseline-2207-clean-upstream-a93190ae.log"
+        },
+        {
+          "test": "TestOpenCodeSessionOnEveryCall",
+          "pkg": "internal/provider",
+          "known": "#3284 (red only under a full run's load)",
+          "assessment": "isolated rerun green immediately after the suite",
+          "evidence": "isolated-3284-green.log"
+        }
+      ]
+    },
+    {
+      "name": "TestOpenCodeSessionOnEveryCall isolated",
+      "argv": "go test ./internal/provider -run TestOpenCodeSessionOnEveryCall -count=1 -v",
+      "head": "1952329fbfbd390406c58598c56e7b1fbc8e39ec",
+      "exit": 0,
+      "result": "PASS",
+      "log": "isolated-3284-green.log",
+      "log_sha256": "f4cacba79e7d32e84804b138474edd6c6616937510f0e1137cb07ff0d37196a9"
+    }
+  ],
+  "not_run": {
+    "windows_native": "no environment",
+    "macos_native": "no environment",
+    "real_vendors": "none called; fakes/stubs and sandboxed config only",
+    "real_daemon_restart": "not performed"
+  },
+  "summary": "no new failures: #3280/#2207 known and baselined, #3284-class load flake green in isolation. Full-suite green NOT achieved."
+}
