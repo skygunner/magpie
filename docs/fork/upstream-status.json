@@ -4498,7 +4498,7 @@
       "fix_ids": [
         "u-fix-gateway-persist-provider-rest-deadlines-acro-8d72abec"
       ],
-      "note": "not pushed",
+      "note": "pushed and read back 2026-10-24 (origin head d639c8d7)",
       "category": "single-fix",
       "where": "remote",
       "archive": {
@@ -4514,7 +4514,7 @@
         "u-gateway-a-schema-s-type-union-beside-items-keeps-c638203e",
         "u-gateway-a-union-s-array-half-leaves-the-object-h-b2336968"
       ],
-      "note": "not pushed",
+      "note": "pushed and read back 2026-10-24 (origin head 275b7a2e)",
       "category": "single-fix",
       "where": "remote",
       "archive": {

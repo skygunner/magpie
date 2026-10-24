@@ -189,6 +189,20 @@ def check(data, branches, prior):
         if b.get("archive", {}).get("candidate"):
             if b.get("head") in (None, "", "0" * 40):
                 errs.append(f"branch {b['branch']}: candidate with a null head")
+            if str(b.get("branch")) in PROTECTED_BRANCHES:
+                errs.append(f"branch {b['branch']}: a protected branch is never a "
+                            f"deletion candidate, whatever its units")
+            # the candidate head must be what the branch actually is: a
+            # real but different commit means the record drifted and the
+            # candidacy is unproven
+            live = git("rev-parse", "--verify", "--quiet",
+                       "origin/" + b["branch"] + "^{commit}") or \
+                  git("rev-parse", "--verify", "--quiet",
+                      "refs/heads/" + b["branch"] + "^{commit}")
+            if not live or live != b.get("head"):
+                errs.append(f"branch {b['branch']}: candidate head {str(b.get('head'))[:8]} "
+                            f"is not the branch's actual ref ({live[:8] if live else 'unresolvable'}) "
+                            f"— candidacy unproven")
             for uid in b.get("fix_ids", []):
                 u = next((x for x in units if x["id"] == uid), None)
                 if u is None:
@@ -237,6 +251,14 @@ def check(data, branches, prior):
         up = u.get("upstream", {})
         if str(up.get("status", "")).startswith("adopted") and not up.get("commit"):
             errs.append(f"candidate unit {uid}: adopted upstream without its commit recorded")
+        if str(up.get("status", "")).startswith("adopted"):
+            c = up.get("commit", "")
+            if not SHA_RE.match(str(c)) or git("cat-file", "-t", c) != "commit":
+                errs.append(f"candidate unit {uid}: adoption commit {c!r} is not a full, "
+                            f"resolvable commit SHA")
+            if not up.get("release"):
+                errs.append(f"candidate unit {uid}: an adopted product fix records no source "
+                            f"release for its release-verifiable scope")
     if unit_candidates != set(listed):
         errs.append(f"archive_policy.candidates {sorted(listed)} != the units flagged candidate {sorted(unit_candidates)}")
     derived = {u["id"] for u in units
@@ -369,6 +391,29 @@ def selftest(data, branches, prior):
             break
     variants["pointed comment names another topic"] = v
 
+    # the four r4-review archive negatives, one changed fact each
+    v = copy.deepcopy(data)
+    vu = next(u for u in v["units"] if u["id"] == "u-volcengine-resets")
+    vu["upstream"].pop("release", None)
+    variants["adopted candidate keeps commit but loses its release"] = v
+
+    v = copy.deepcopy(data)
+    vb = next(b for b in v["branches"] if b["branch"] == "fix/volcengine-resets")
+    vb["archive"] = {"candidate": True}
+    vb["head"] = "275b7a2ea558fcc25c24b71ec077bfe000e83f04"
+    variants["candidate branch head swapped for another real commit"] = v
+
+    v = copy.deepcopy(data)
+    vu = next(u for u in v["units"] if u["id"] == "u-volcengine-resets")
+    vu["upstream"]["commit"] = "not-a-sha"
+    variants["adoption commit is not a sha"] = v
+
+    v = copy.deepcopy(data)
+    mb = next(b for b in v["branches"] if b["branch"] == "main")
+    mb["archive"] = {"candidate": True}
+    mb["fix_ids"] = ["u-volcengine-resets"]
+    variants["main itself flagged candidate with a qualified unit"] = v
+
     for name, v in variants.items():
         errs = check(v, branches, prior)
         if not errs:
@@ -424,12 +469,17 @@ def write_md(data, branches):
         w(f"- {', '.join('#'+str(i) for i in p['issues'])} ({p['category']}): {p['note']}"
           + (f" — comment {p['comments'][0]}" if p.get("comments") else ""))
     w("\n## Branches (from git at this run)\n")
-    remote = [b for b in branches if b["where"] == "remote" and b["kind"] != "symref"]
+    remote = [b for b in branches if is_live_remote_head(b)]
     w(f"{len(remote)} remote heads (this run's snapshot), "
       f"{sum(1 for b in branches if b.get('where')=='local-only')} local-only, "
       f"{sum(1 for b in branches if b['kind']=='symref')} symref(s) excluded.\n")
     for b in branches:
         if b["kind"] == "symref":
+            continue
+        if b.get("where") == "local-only":
+            w(f"- `{b['branch']}` local-only (historical snapshot, unavailable on this machine) "
+              f"head `{b['head'][:8]}`"
+              + (f" → fix_ids: {', '.join(b['fix_ids'])}" if b.get("fix_ids") else ""))
             continue
         w(f"- `{b['branch']}` {b['kind']}/{b['category']} head `{b['head'][:8]}`"
           + (f" base `{b.get('base','')[:8]}`" if b.get("base") else "")
@@ -445,15 +495,37 @@ def write_md(data, branches):
     w(f"- Remote deletions this round: {ap['deletions_this_round']}")
     return "\n".join(L) + "\n"
 
+def normalize_branch_record(rec):
+    """One record contract for every consumer: where says machine-local
+    vs remote. A stored record that omits where is judged by its kind —
+    a local-only record is another machine's history, never a live
+    remote."""
+    if not rec.get("where"):
+        rec["where"] = "local-only" if rec.get("kind") == "local-only" else "remote"
+    rec.setdefault("kind", "fix")
+    rec.setdefault("fix_ids", [])
+    rec.setdefault("category", "unknown")
+    if rec["where"] == "local-only":
+        rec.setdefault("note", "")
+        if "unavailable" not in rec["note"]:
+            rec["note"] = (rec["note"] + "; " if rec["note"] else "") + \
+                "machine-local ref, unavailable here (historical snapshot)"
+    return rec
+
+def is_live_remote_head(b):
+    """A head this run actually sees: a remote, non-symref ref."""
+    return b.get("where") == "remote" and b.get("kind") != "symref"
+
 def merge_branch_records(branches, data):
     """Carry the JSON's branch attributions onto the live rows, and flag
     drift: a JSON head that no longer matches git is kept as
     head_in_ledger with a note, never silently overwritten."""
     by_name = {b["branch"]: b for b in branches}
     for rec in data.get("branches", []):
+        normalize_branch_record(rec)
         b = by_name.get(rec["branch"])
         if b is None:
-            where = rec.get("where", "remote")
+            where = rec["where"]
             if where == "remote":
                 # a remote branch the ledger classifies but git no longer
                 # has: the record may be stale — said, not hidden
@@ -513,7 +585,7 @@ def main():
             print("CHECK FAIL:", e)
         return 1
     units = data["units"]
-    heads = [b for b in branches if b["where"] == "remote" and b["kind"] != "symref"]
+    heads = [b for b in branches if is_live_remote_head(b)]
     print(f"checks ok: {len(units)} units, {sum(len(u['issues']) for u in units)} unit-covered issues, "
           f"{len(heads)} remote heads, {sum(1 for b in branches if b.get('where')=='local-only')} local-only")
     if "--write" in sys.argv:

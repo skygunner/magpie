@@ -538,9 +538,9 @@ Round-3 trees (base `b437e4ad`): batch `4e136a4b`, union `275b7a2e`, rests `d639
 - Issues: #3349 (product)
 - Commits: `b2497dd8`, `007b8b9b` — branch `fix/issue-batch-1023pm`
 - Round-3 tree: `r3-batch` (head `4e136a4b`)
-- Coverage: decide= persists on signed-in/plugin providers; identity stable (PluginID); plugin-declared endpoint kept when no override; explicit decision-shaped pick routes /v1/systemone end to end, is discoverable (Deciders/OfferedDeciders/Jev default), and picked chat models stay chat. Remaining: no real Command Code API verification (reporter verified the live endpoint).
+- Coverage: decide= persists; identity stable; plugin-declared endpoint kept when no override; explicit decision-shaped pick routes /v1/systemone end to end, is discoverable (Deciders/OfferedDeciders/Jev), AND is in the editor metadata (DecisionModels -> providerInfo deciders) so the page classifies it by name; keyless nameless local decision providers survive (accountOrPluginID by id, not by name/key presence); picked chat models stay chat. Remaining: no real Command Code API verification (reporter verified the live endpoint).
 - Upstream: unconfirmed
-- Verification: pass at `4e136a4b` — R2 chat-stays-chat, R3 discovery (Deciders/OfferedDeciders/Jev), R4 nameless independent provider survive: TestReviewV2* green on r3 head; whole provider package green; TestPluginPickedDecisionModelRoutes strengthened with discovery+default assertions and catalog feed check.
+- Verification: pass at `4e136a4b` — Round-4: TestReviewR3KeylessLocalDecisionProviderSurvives and TestReviewR3PickedDecisionMetadataAgreesWithRouting red at 885c1b8b (per review) -> green at 4e136a4b; TestProviderEditorDeciders* pin the JSON contract; whole provider package green; plugin SystemOne routing family green.
 - Comment on #3349: https://github.com/yetone/magpie/issues/3349#issuecomment-6364310053
 
 ### u-provider-a-balance-only-reading-knows-the-accoun-4fb09e6b
@@ -568,9 +568,9 @@ Round-3 trees (base `b437e4ad`): batch `4e136a4b`, union `275b7a2e`, rests `d639
 - Issues: #3365 (product)
 - Commits: `4b6d93d9` — branch `fix/issue-batch-1023pm`
 - Round-3 tree: `r3-batch` (head `4e136a4b`)
-- Coverage: R1: field-aware exceptions now read the field name as the ID rules do (fieldNameWords + strongCredential); hyphenated credential names, access/refresh tokens and JSON-escaped tool content no longer take the version/repo exceptions. R2 (10-24 earlier round): placeholder passwords learn when met as real credentials; reindexKnown rebuilds only learned values. Remaining: none known on the reported shapes.
+- Coverage: R1 (a0b2faa8): field-aware exceptions via fieldNameWords; R1-followup (bbd6e228): strongCredential reads the whole name the assignment rules read — compact apikey/APIKey and suffixed api_key_v2/password_primary no longer take the exceptions. R2 (fde6695f): placeholder passwords learn when met as real credentials; reindexKnown rebuilds only learned values. Remaining: none known on the reported shapes.
 - Upstream: unconfirmed
-- Verification: pass at `4e136a4b` — R1: TestReviewV2CredentialAssignments 24/24 green after a0b2faa8 (21 red before locally, 20 per review); R2 learning/rebuild semantics retained (fde6695f). Full redact package green; sentKnownSpans cache tests green.
+- Verification: pass at `4e136a4b` — Round-4: TestReviewR3CredentialNamesKeepTheirMeaning 8/8 red at 885c1b8b (per review) -> green at bbd6e228; the 24-matrix, benign controls, learning/rebuild, sent-cache tests green; whole redact package green.
 - Comment on #3365: https://github.com/yetone/magpie/issues/3365#issuecomment-6364536473
 
 ### u-gateway-a-union-s-array-half-leaves-the-object-h-b2336968
@@ -606,9 +606,9 @@ Round-3 trees (base `b437e4ad`): batch `4e136a4b`, union `275b7a2e`, rests `d639
 
 ## Branches (from git at this run)
 
-89 remote heads (this run's snapshot), 4 local-only, 1 symref(s) excluded.
+89 remote heads (this run's snapshot), 5 local-only, 1 symref(s) excluded.
 
-- `dev` maintenance/maintenance head `f2b70efb` — ledger head was 3aae9406
+- `dev` maintenance/maintenance head `70b8ce9e` — ledger head was 3aae9406
 - `fix/account-rest-cap` fix/single-fix head `c41b6feb` base `87d703c5` → fix_ids: u-provider-rest-cap-quota-rest-and-its-until-time--c41b6feb
 - `fix/autovision-catalog-images` fix/batch-chain head `7e156213` base `7aad6a50` → fix_ids: u-fix-gui-reap-plugin-hosts-before-web-update-reex-863a1e72, u-test-gui-wait-for-the-chosen-codex-subagent-stor-435c03ac, u-gateway-classify-chinese-hourly-usage-limits-as--942bf679, u-test-provider-invalidate-cached-misses-after-cla-873c5dfd, u-agent-use-vs-code-portable-data-for-settings-and-e4ca1b34, u-fix-tui-keep-agent-fields-readable-in-narrow-ter-cebfc283, u-agent-do-not-count-claude-exit-records-as-gatewa-18c0967e, u-test-gui-wait-for-the-quota-picker-save-to-be-re-c24a50e3, u-gui-preserve-the-original-url-across-protocol-sw-9f7ada4f, u-sessions-retain-pi-and-omp-reasoning-in-request--b506ff56, u-gateway-follow-kimi-tool-schema-reference-chains-f5ec664b, u-gateway-keep-a-severed-chat-stream-free-of-parti-a6a2c260, u-gateway-preserve-plaintext-codex-collaboration-t-b1ae66c7, u-gateway-carry-deepseek-reasoning-under-one-field-d5b46244, u-provider-let-the-grok-plugin-read-allowed-tool-c-852182f6, u-gateway-normalize-whole-tool-numbers-from-every--deefacd2, u-proc-recheck-tools-installed-within-a-directory--89bceb39, u-provider-retain-the-first-single-card-quota-refr-a11d605e, u-fix-gui-apply-left-display-to-custom-balance-per-15759adb, u-fix-gateway-omit-ollama-options-from-gemini-chat-a0b3c8f6, u-test-provider-keep-hold-assertions-independent-o-665af242, u-test-provider-drain-plugin-callbacks-before-swap-f85bd166, u-test-gui-isolate-the-window-s-usage-requests-fro-4671590d, u-gateway-recognize-a-relay-s-expired-reasoning-it-cf95652a, u-gateway-recognize-sensenova-s-guided-grammar-for-8f931a28, u-gateway-deliver-background-task-notifications-wi-b7726551, u-edit-index-json-arrays-without-replacing-their-e-1805ff94, u-gateway-retry-kimi-s-untyped-tool-roots-as-objec-2bddfe10, u-fix-provider-keep-usage-only-models-out-of-codex-a016fcee, u-gateway-keep-desktop-credential-probes-on-their--9fd7a9d4, u-gateway-include-inferred-and-user-set-image-inpu-7e156213
 - `fix/backup-unreadable-plugins` fix/batch-chain head `c43ab301` base `7aad6a50` → fix_ids: u-fix-gui-reap-plugin-hosts-before-web-update-reex-863a1e72, u-test-gui-wait-for-the-chosen-codex-subagent-stor-435c03ac, u-gateway-classify-chinese-hourly-usage-limits-as--942bf679, u-test-provider-invalidate-cached-misses-after-cla-873c5dfd, u-agent-use-vs-code-portable-data-for-settings-and-e4ca1b34, u-fix-tui-keep-agent-fields-readable-in-narrow-ter-cebfc283, u-agent-do-not-count-claude-exit-records-as-gatewa-18c0967e, u-test-gui-wait-for-the-quota-picker-save-to-be-re-c24a50e3, u-gui-preserve-the-original-url-across-protocol-sw-9f7ada4f, u-sessions-retain-pi-and-omp-reasoning-in-request--b506ff56, u-gateway-follow-kimi-tool-schema-reference-chains-f5ec664b, u-gateway-keep-a-severed-chat-stream-free-of-parti-a6a2c260, u-gateway-preserve-plaintext-codex-collaboration-t-b1ae66c7, u-gateway-carry-deepseek-reasoning-under-one-field-d5b46244, u-provider-let-the-grok-plugin-read-allowed-tool-c-852182f6, u-gateway-normalize-whole-tool-numbers-from-every--deefacd2, u-proc-recheck-tools-installed-within-a-directory--89bceb39, u-provider-retain-the-first-single-card-quota-refr-a11d605e, u-fix-gui-apply-left-display-to-custom-balance-per-15759adb, u-fix-gateway-omit-ollama-options-from-gemini-chat-a0b3c8f6, u-test-provider-keep-hold-assertions-independent-o-665af242, u-test-provider-drain-plugin-callbacks-before-swap-f85bd166, u-test-gui-isolate-the-window-s-usage-requests-fro-4671590d, u-gateway-recognize-a-relay-s-expired-reasoning-it-cf95652a, u-gateway-recognize-sensenova-s-guided-grammar-for-8f931a28, u-gateway-deliver-background-task-notifications-wi-b7726551, u-edit-index-json-arrays-without-replacing-their-e-1805ff94, u-gateway-retry-kimi-s-untyped-tool-roots-as-objec-2bddfe10, u-fix-provider-keep-usage-only-models-out-of-codex-a016fcee, u-gateway-keep-desktop-credential-probes-on-their--9fd7a9d4, u-gateway-include-inferred-and-user-set-image-inpu-7e156213, u-gateway-apply-privacy-policy-to-direct-system-on-ee1b018b, u-agent-advertise-hermes-model-vision-capabilities-d03d4a7b, u-backup-plugin-stop-carrying-an-unreadable-plugin-c43ab301
@@ -697,10 +697,11 @@ Round-3 trees (base `b437e4ad`): batch `4e136a4b`, union `275b7a2e`, rests `d639
 - `r3-batch` fix/batch-chain head `4e136a4b` base `b437e4ad` → fix_ids: u-provider-antigravity-s-disabled-ids-are-left-out-8b4ecbac, u-gateway-preserve-plaintext-codex-collaboration-t-b1ae66c7, u-provider-decide-set-on-a-signed-in-provider-stay-b2497dd8, u-provider-a-balance-only-reading-knows-the-accoun-4fb09e6b, u-gateway-an-ordinary-chat-upstream-that-says-noth-600fa01c, u-redact-a-placeholder-url-s-password-and-version--4b6d93d9, u-gateway-a-subagent-s-task-reaches-a-responses-ap-67b57000 — forward-appended over the reviewed 885c1b8b; read back
 - `r3-rests` fix/single-fix head `d639c8d7` base `b437e4ad` → fix_ids: u-fix-gateway-persist-provider-rest-deadlines-acro-8d72abec — not pushed
 - `r3-union` fix/single-fix head `275b7a2e` base `b437e4ad` → fix_ids: u-gateway-a-schema-s-type-union-beside-items-keeps-c638203e, u-gateway-a-union-s-array-half-leaves-the-object-h-b2336968 — not pushed
-- `fix/provider-detect-test-scroll` fix/unknown head `348fb756` base `7aad6a50` — not pushed
-- `fix/web-signal-shutdown-2` fix/unknown head `0815c918` base `0815c918` — not pushed
-- `fix/webdav-digest-auth` fix/unknown head `0437ae4c` base `7aad6a50` — not pushed
-- `r4-work` fix/unknown head `4e136a4b` base `b437e4ad`
+- `fix/provider-detect-test-scroll` local-only (historical snapshot, unavailable on this machine) head `348fb756`
+- `fix/web-signal-shutdown-2` local-only (historical snapshot, unavailable on this machine) head `0815c918`
+- `fix/webdav-digest-auth` local-only (historical snapshot, unavailable on this machine) head `0437ae4c`
+- `r4-work` local-only (historical snapshot, unavailable on this machine) head `4e136a4b`
+- `r5-work` local-only (historical snapshot, unavailable on this machine) head `2309249f`
 
 ## Archive
 

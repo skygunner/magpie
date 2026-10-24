@@ -43,7 +43,32 @@ umask 022 用于测试。
 | M4 | 校验器：新增 9 类负例 + MD 保留 fix_ids + %(symref) 判据 + totals 计算 + 候选从图派生 + evidence receipt | generate.py + evidence/ | 九负例拒、正确数据过 | 完成（--selftest 14 负例全拒=原 5+新 9；merge_branch_records 把 JSON 归属合入实时行，head 漂移显式标注；totals 重算比对；候选三方一致校验；evidence/round4/manifest.json） |
 | M5 | 最终回归与收口 | 全部 | 最终 head 全量 nogui 串行（失败有同环境基线）、diff/gofmt/vet、推送读回、PLAN/草稿一致 | 完成（见 M6 记录与本节 evidence） |
 
+## 2026-10-24 第五轮返工（ZCode 会话七）：r4 验收限定范围
+
+r4 独立验收（magpie-r4-review）确认三项上轮修复已接收；本轮限定范围＝两个新代码回归
+（R4-A token 复合 key 字段泄漏 P1；R4-B 公开 -plugin ID 签出后 picks 被当独立 provider P2）
++ 两个维护校验问题（R4-C local-only 历史记录缺 where 在异 clone KeyError；R4-D 四个归档
+门槛未独立生效）+ 文档/草稿/manifest 订正。边界不变：普通快进推送、读回 SHA、无上游交互、
+无归档删除、不碰 fix/codex-expiry-window。上游 main 现场为 dd1e8822（与审查抓取一致），
+触及文件自 b437e4ad 无漂移，r3-batch 追加提交有效。环境 go1.26.8/Bun 1.4.4/umask 022。
+
+| M | 目标 | 范围 | 验收 | 状态 |
+|---|---|---|---|---|
+| M0 | 版本/边界固定 | PLAN+工作树 | 四 refs 与审查一致；漂移记录 | 完成 |
+| M1 | R4-A：token_signing_key/token_encryption_key 6 项泄漏 | internal/redact | 新 6 项红→绿；旧 8+24+三输入+良性+B/cache 绿；全包绿 | 进行中 |
+| M2 | R4-B：openai-plugin 签出后 picks 被当独立 provider | internal/provider | 新签出探针红→绿；正控/原 C/D/V2/R3、撞名、remote refresh、gui deciders 全绿；providers-accounts.md 修正 | 待做 |
+| M3 | R4-C：local-only 记录缺 where 异 clone KeyError | docs/fork/generate.py | 记录契约统一（merge/count/render）；原机与缺席模拟都可生成 | 待做 |
+| M4 | R4-D：四个归档门槛独立生效 | docs/fork/generate.py + selftest | 新 4 负例逐条拒绝；原 14 负例保持；正确数据过 | 待做 |
+| M5 | 文档/草稿/manifest 订正 + 最终全量 + 推送读回 | 维护分支 + 产品分支 | 订正七项落地；manifest started/范围收窄；全量串行+基线；读回 | 完成（见下） |
+
 # 长程任务计划：为 magpie 上游修复 issue 并推送 PR
+
+### 第五轮订正注记（2026-10-24）
+
+- 第三轮报告"远端 heads 89 = 85 + 3 r3 + 1 origin 杂散分支"中对 origin 的解释不成立：`refs/remotes/origin/HEAD` 是符号引用不是分支，当时快照里也没有 `refs/heads/origin`。历史数字不改写；r4 审查时 89 heads 含新加入的 fix/codex-expiry-window（另一 agent 的工作）。
+- manifest 的 run.started 无有效 UTC（原为 "~05:55Z" 占位）：改为 unknown，并收窄第三失败的复验声明（保留一份整包重跑日志，撤回未存档的"第二次重跑/单测日志"表述）。
+- r3-union/r3-rests 的 "not pushed" 旧 note 已更新为已推送读回；local-only 历史快照记录（3 条）的 "not pushed" 是当时机器状态的事实，保留不改写。
+
 
 > 创建：2026-10-22。执行者：ZCode（skygunner fork）。
 > 上游：yetone/magpie（main）；fork：skygunner/magpie。

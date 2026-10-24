@@ -18,7 +18,7 @@
       "name": "full nogui suite",
       "argv": "GOTOOLCHAIN=go1.26.8 GOFLAGS=-tags=nogui go test ./... -timeout 45m (umask 022, serial)",
       "head": "4e136a4bd2403af0fe6216c6f0a6c8906de53f4b",
-      "started": "2026-10-24T~05:55Z",
+      "started": "unknown (raw process metadata not retained; the suite log itself carries no wall-clock start)",
       "exit": 1,
       "result": "66 packages ok, 3 failures",
       "log": "full-suite-r3batch-4e136a4b.log",
@@ -42,10 +42,11 @@
           "test": "TestClaudeAccountServesModelsListedSinceItsFetch",
           "pkg": "internal/provider",
           "known": "#3174/#3284-class load-order flake",
-          "assessment": "isolated rerun PASS; whole internal/provider package rerun PASS twice afterwards (one interim run hit the known #3284 TestOpenCodeSessionOnEveryCall instead); no product path of this round touches that test's cache logic",
+          "assessment": "matches the #3174 mechanism (cached credential miss; 873c5dfd records the deterministic probe). A diagnostic in the review package reproduces the same miss at both b437e4ad and 4e136a4b with the invalidate control green, so this is not a new product defect of this round. Treated as a known load-order flake class: the isolated rerun passed and one whole-package rerun passed (provider-package-rerun-green.log). The manifest previously claimed a second package rerun and an isolated-run log that were not separately saved; that claim is withdrawn \u2014 the saved logs are this package rerun and the two baseline logs.",
           "evidence": "provider-package-rerun-green.log"
         }
-      ]
+      ],
+      "note": "generated_at is the manifest write time, after the run; the run predates it by ~10 minutes of sleeps and package time, exact UTC start unrecoverable"
     },
     {
       "name": "internal/provider package rerun (post-suite)",
