@@ -1,0 +1,66 @@
+{
+  "round": "r6-review-rework-round7",
+  "generated_at": "2026-10-24T04:31:13Z",
+  "tree": {
+    "branch": "r3-batch",
+    "base": "b437e4adb4dba82446e0d625b040a8e2d95004b4",
+    "head": "7f927133be68a452f662d0c7445a1432e66c426a",
+    "review_patch_applied": false,
+    "note": "clean delivery head; the r6 review's candidate diff is the committed 7f927133 itself"
+  },
+  "environment": {
+    "os": "Linux 6.18 amd64 (CachyOS, bash as /bin/sh)",
+    "go": "go1.26.8 via GOTOOLCHAIN",
+    "bun": "1.4.4",
+    "umask_for_tests": "022",
+    "config_isolation": "testenv sandbox + temp XDG/HOME per test"
+  },
+  "runs": [
+    {
+      "name": "full nogui suite",
+      "argv": "GOTOOLCHAIN=go1.26.8 GOFLAGS=-tags=nogui go test ./... -timeout 45m (umask 022, serial)",
+      "head": "7f927133be68a452f662d0c7445a1432e66c426a",
+      "exit": 1,
+      "result": "66 packages ok, 3 packages FAIL, 19 no-test packages (recounted from the raw log; the round-6 record's 67-ok was an erratum)",
+      "failures": [
+        {
+          "test": "TestClaudeClientCacheAbsentUnchanged",
+          "pkg": "internal/gateway",
+          "known": "#3280 (bash as /bin/sh)",
+          "baseline": "evidence/round4/baseline-3280-clean-upstream-a93190ae.log (same environment, clean upstream/main a93190ae)"
+        },
+        {
+          "test": "TestPluginSOCKSProxy",
+          "pkg": "internal/plugin",
+          "known": "#2207 (local Bun 1.4.4)",
+          "baseline": "evidence/round4/baseline-2207-clean-upstream-a93190ae.log"
+        },
+        {
+          "test": "TestOpenCodeSessionOnEveryCall",
+          "pkg": "internal/provider",
+          "known": "#3284 (red only under a full run's load; the r6 review traced the mechanism \u2014 decisions' session low counter past openCodeRealSession's range, same as 30b23a3f)",
+          "assessment": "isolated rerun on this head green immediately after the suite; production and test files identical across b437e4ad/1952329f/820eb896 per the review",
+          "evidence": "isolated-3284.log (head recorded in-log)"
+        }
+      ],
+      "log": "full-suite-r3batch-7f927133.log",
+      "log_sha256": "f0dde7c7a68bb91abde8949d7d9aa0d8a7494d5bb1fef8f5a0b481f657a384b0"
+    },
+    {
+      "name": "TestOpenCodeSessionOnEveryCall isolated",
+      "argv": "go test ./internal/provider -run 'TestOpenCodeSessionOnEveryCall' -count=1 -v",
+      "head": "7f927133be68a452f662d0c7445a1432e66c426a",
+      "exit": 0,
+      "result": "PASS",
+      "log": "isolated-3284.log",
+      "log_sha256": "6cbcbebd4aa2118c8e2e45feb9bf6b1adc7aedbdbf336efebf1436e672b73196"
+    }
+  ],
+  "not_run": {
+    "windows_native": "no environment",
+    "macos_native": "no environment",
+    "real_vendors": "none called; fakes/stubs and sandboxed config only",
+    "real_daemon_restart": "not performed"
+  },
+  "summary": "No new failures: #3280/#2207 known with baselines, #3284 known load flake green in isolation on this head. Full-suite green NOT achieved."
+}

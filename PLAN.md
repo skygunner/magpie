@@ -61,6 +61,35 @@ r4 独立验收（magpie-r4-review）确认三项上轮修复已接收；本轮�
 | M4 | R4-D：四个归档门槛独立生效 | docs/fork/generate.py + selftest | 新 4 负例逐条拒绝；原 14 负例保持；正确数据过 | 待做 |
 | M5 | 文档/草稿/manifest 订正 + 最终全量 + 推送读回 | 维护分支 + 产品分支 | 订正七项落地；manifest started/范围收窄；全量串行+基线；读回 | 完成（见下） |
 
+## 2026-10-24 第六轮返工（ZCode 会话八）：r5 验收限定范围
+
+r5 独立验收确认 R4-A/C/D 与原 openai-plugin 签出场景已接收；剩余＝R5-PROVIDER-ID
+（P2：cline-plugin 独立 provider 被误归属隐藏）+ R5-DELIVERY-CHAIN（P2：deliveries
+commits 漏本轮 3 个新提交）+ 草稿/PLAN 文字订正。边界不变。现场 refs 与审查一致
+（r3-batch 1952329f，upstream/main 现场值见 git）。
+
+| M | 目标 | 范围 | 验收 | 状态 |
+|---|---|---|---|---|
+| M0 | 版本固定 | PLAN+工作树 | refs 一致；探针就位 | 完成 |
+| M1 | R5-PROVIDER-ID：cline-plugin 独立 provider 被隐藏 | internal/provider | 新探针红→绿；R4 签出/V2/R3/R4 全家绿；provider 全包绿 | 完成 820eb896（-plugin 归属仅当 PluginID 契约真会后缀 raw id；15 探针全绿、provider 全包绿） |
+| M2 | R5-DELIVERY-CHAIN：r3-batch commits 补全（25 条，含本轮 820eb896）+ 完整性校验 | docs/fork + generate.py | delivery-check 三条 exit0；新增截断负例共 19 负例全拒 | 完成（commits 由 rev-list 重生成；完整性 gate 拒截断） |
+| M3 | 草稿/PLAN 文字订正 | 草稿+PLAN | #3365 绿 head、#3370 首段、#2008 三链分开、本轮表 | 完成 |
+| M4 | 最终全量 nogui + evidence + 推送读回 | 全部 | 串行全量；失败分类；读回 | 完成（820eb896 全量；evidence/round6。注：该表在 cbd4ed9b 提交时被遗漏，本轮补交） |
+
+## 2026-10-24 第七轮返工（ZCode 会话九）：r6 验收限定收口
+
+r6 独立验收接收 delivery 链/19 负例/便携脚本/草稿订正/原 R5 反例；唯一剩余产品项＝
+R5-PROVIDER-ID 的组合场景（raw cline 已保存 Decide picks 时，空闲的 cline-plugin 仍被
+误认领）。审查已提供最小候选 patch（stored-endpoint 条件补 !accountPicksEntry）与配套
+反例测试，均经定向验证。边界不变。
+
+| M | 目标 | 范围 | 验收 | 状态 |
+|---|---|---|---|---|
+| M0 | 版本固定（820eb896/cbd4ed9b） | PLAN+工作树 | refs 一致；候选/测试哈希核对 | 完成 |
+| M1 | stored-endpoint 补 !accountPicksEntry | internal/provider | 新反例红→绿；R3/R4/R5/V2/撞名/refresh/SystemOne 全绿；provider 全包 | 完成 7f927133 |
+| M2 | 台账同步 + 三处记录订正 | docs/fork + PLAN | delivery/portable/selftest 三检查过；66 包口径/isolated-3284 身份/PLAN 遗漏补交 | 完成 |
+| M3 | 最终全量 nogui 一次 + evidence + 推送读回 | 全部 | 串行全量；失败分类精确；读回 | 完成（7f927133 全量：66 ok/3 FAIL/19 no-test，exit1；#3280/#2207 基线引用，#3284 本 head 单测绿（日志带 head）；evidence/round7） |
+
 # 长程任务计划：为 magpie 上游修复 issue 并推送 PR
 
 ### 第五轮订正注记（2026-10-24）

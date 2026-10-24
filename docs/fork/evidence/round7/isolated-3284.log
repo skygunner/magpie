@@ -1,0 +1,8 @@
+=== RUN   TestOpenCodeSessionOnEveryCall
+--- PASS: TestOpenCodeSessionOnEveryCall (0.00s)
+PASS
+ok  	github.com/yetone/magpie/internal/provider	0.007s
+exit=0
+head: 7f927133be68a452f662d0c7445a1432e66c426a
+argv: GOTOOLCHAIN=go1.26.8 go test ./internal/provider -run 'TestOpenCodeSessionOnEveryCall' -count=1 -v
+env: go1.26.8 / Linux 6.18 amd64 / umask 022 / isolated worktree /tmp/r6-batch

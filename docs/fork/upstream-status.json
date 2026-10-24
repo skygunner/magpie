@@ -13,10 +13,10 @@
     },
     "r3": {
       "base": "b437e4adb4dba82446e0d625b040a8e2d95004b4",
-      "batch_head": "820eb89647d5f89f916005db852712c3ebdec022",
+      "batch_head": "7f927133be68a452f662d0c7445a1432e66c426a",
       "union_head": "275b7a2ea558fcc25c24b71ec077bfe000e83f04",
       "rests_head": "d639c8d79f3be8f49c8acbcfbe518828210c32da",
-      "pushed": "pushed and read back 2026-10-24 (round 6): batch 820eb896 (25 commits), union 275b7a2e, rests d639c8d7",
+      "pushed": "pushed and read back 2026-10-24 (round 7): batch 7f927133 (26 commits), union 275b7a2e, rests d639c8d7",
       "chains": {
         "r3-union": [
           "ad7beadd6dbffd8f5a36458b25dce330436ca8bd",
@@ -1498,7 +1498,7 @@
       "verify": {
         "state": "pass",
         "evidence": "Composition retained and re-run on r3 head: TestNativeRelay* , Copilot native (TestCopilotUltraSubagentWithWebSearch, TestCopilotRelayedUnlessAskedToSeal — the earlier \"no fixture\" claim was wrong), reply-side encrypted_function_args.",
-        "head": "820eb89647d5f89f916005db852712c3ebdec022"
+        "head": "7f927133be68a452f662d0c7445a1432e66c426a"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -1507,7 +1507,7 @@
         "candidate": false
       },
       "branch_v2": "r3-batch",
-      "rework_head": "820eb89647d5f89f916005db852712c3ebdec022",
+      "rework_head": "7f927133be68a452f662d0c7445a1432e66c426a",
       "delivery": "r3-batch"
     },
     {
@@ -2513,7 +2513,7 @@
       "verify": {
         "state": "pass",
         "evidence": "Round-5: TestReviewR4SignedOutDecisionPicksStaySettings (public -plugin id after real plugin.SignOut) red at 4e136a4b -> green at 2309249f; native-decision default priority control green; whole provider package green (1765).",
-        "head": "820eb89647d5f89f916005db852712c3ebdec022"
+        "head": "7f927133be68a452f662d0c7445a1432e66c426a"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -2522,7 +2522,7 @@
         "candidate": false
       },
       "branch_v2": "r3-batch",
-      "rework_head": "820eb89647d5f89f916005db852712c3ebdec022",
+      "rework_head": "7f927133be68a452f662d0c7445a1432e66c426a",
       "delivery": "r3-batch"
     },
     {
@@ -2602,7 +2602,7 @@
       "verify": {
         "state": "pass",
         "evidence": "Endings matrix replaced by the review's stronger TestReviewV2ResponsesEndings (status, incomplete_details, single terminal event); relayReply fixture now valid JSON (TestReviewV2RelayFixtureIsValidJSON); empty-reply retry/failure and title exemption retained. 113867ad.",
-        "head": "820eb89647d5f89f916005db852712c3ebdec022"
+        "head": "7f927133be68a452f662d0c7445a1432e66c426a"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -2611,7 +2611,7 @@
         "candidate": false
       },
       "branch_v2": "r3-batch",
-      "rework_head": "820eb89647d5f89f916005db852712c3ebdec022",
+      "rework_head": "7f927133be68a452f662d0c7445a1432e66c426a",
       "delivery": "r3-batch"
     },
     {
@@ -2647,7 +2647,7 @@
       "verify": {
         "state": "pass",
         "evidence": "Round-5: TestReviewR4TokenKeyCompoundsStaySecret (token_signing_key/token_encryption_key x3 paths) 6/6 red at 4e136a4b -> green at c7acc938; all prior matrices and controls green; whole redact package green.",
-        "head": "820eb89647d5f89f916005db852712c3ebdec022"
+        "head": "7f927133be68a452f662d0c7445a1432e66c426a"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -2656,7 +2656,7 @@
         "candidate": false
       },
       "branch_v2": "r3-batch",
-      "rework_head": "820eb89647d5f89f916005db852712c3ebdec022",
+      "rework_head": "7f927133be68a452f662d0c7445a1432e66c426a",
       "delivery": "r3-batch"
     },
     {
@@ -2745,7 +2745,7 @@
       "verify": {
         "state": "pass",
         "evidence": "Bare rewrite retired in favor of PlainAgentMessage (97a8a0c2); composition through /backend-api/codex/responses green; sealed refused 400.",
-        "head": "820eb89647d5f89f916005db852712c3ebdec022"
+        "head": "7f927133be68a452f662d0c7445a1432e66c426a"
       },
       "upstream": {
         "status": "unconfirmed"
@@ -2754,7 +2754,7 @@
         "candidate": false
       },
       "branch_v2": "r3-batch",
-      "rework_head": "820eb89647d5f89f916005db852712c3ebdec022",
+      "rework_head": "7f927133be68a452f662d0c7445a1432e66c426a",
       "delivery": "r3-batch"
     }
   ],
@@ -4471,7 +4471,7 @@
     },
     {
       "branch": "r3-batch",
-      "head": "820eb89647d5f89f916005db852712c3ebdec022",
+      "head": "7f927133be68a452f662d0c7445a1432e66c426a",
       "kind": "fix",
       "base": "b437e4adb4dba82446e0d625b040a8e2d95004b4",
       "fix_ids": [
@@ -4537,7 +4537,7 @@
     "r3-batch": {
       "branch": "r3-batch",
       "base": "b437e4adb4dba82446e0d625b040a8e2d95004b4",
-      "head": "820eb89647d5f89f916005db852712c3ebdec022",
+      "head": "7f927133be68a452f662d0c7445a1432e66c426a",
       "commits": [
         "16289db2755a9ceb4408f100156563f41c8541a6",
         "7cbf4396acb2a4264d63e96a3002ec668b445772",
@@ -4563,10 +4563,11 @@
         "c7acc938fea62da2fcfc90db722103e68169559e",
         "2309249f4ab9b94b0ec658afdffd0269e1bc0d9e",
         "1952329fbfbd390406c58598c56e7b1fbc8e39ec",
-        "820eb89647d5f89f916005db852712c3ebdec022"
+        "820eb89647d5f89f916005db852712c3ebdec022",
+        "7f927133be68a452f662d0c7445a1432e66c426a"
       ],
       "pushed": true,
-      "read_back": "2026-10-24 origin/r3-batch=820eb896 (round-6 append 820eb896: -plugin alias claims only when the contract suffixes the raw id)",
+      "read_back": "2026-10-24 origin/r3-batch=7f927133 (round-7 append: an account's own decide= picks claim no alias)",
       "replaces": "fix/issue-batch-1023pm-v2 (95537ceb, itself replacing fix/issue-batch-1023pm 007b8b9b)"
     },
     "r3-union": {

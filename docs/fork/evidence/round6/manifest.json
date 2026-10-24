@@ -19,7 +19,7 @@
       "argv": "GOTOOLCHAIN=go1.26.8 GOFLAGS=-tags=nogui go test ./... -timeout 45m (umask 022, serial)",
       "head": "820eb89647d5f89f916005db852712c3ebdec022",
       "exit": 1,
-      "result": "67 packages ok, 3 failures",
+      "result": "66 packages ok, 3 failures, 19 no-test packages (erratum 2026-10-24: first recorded as 67 ok; the non-verbose log carries no per-test PASS events, so \"67 = PASS events\" is not an explanation \u2014 the correct count from the raw log is 66 ok / 3 FAIL / 19 no-test)",
       "log": "full-suite-r3batch-820eb896.log",
       "log_sha256": "0033972858ad637f70ceaec1268f4e45dbdbb88cf4f66dbdc6b48aa3552b27d7",
       "failures": [
@@ -42,16 +42,18 @@
           "assessment": "isolated rerun green immediately after the suite",
           "evidence": "isolated-3284-green.log"
         }
-      ]
+      ],
+      "erratum": "The first version of this manifest and the round-6 closeout report said 67 packages ok. Recounted from the raw log on the r6 review: 66 ok. Original log and SHA256 unchanged."
     },
     {
       "name": "TestOpenCodeSessionOnEveryCall isolated",
       "argv": "go test ./internal/provider -run TestOpenCodeSessionOnEveryCall -count=1 -v",
-      "head": "1952329fbfbd390406c58598c56e7b1fbc8e39ec",
+      "head": "unknown-at-record-time (the manifest first wrote 1952329f, but the raw log carries no head; the run belonged to the round-6 session whose suite head was 820eb896 \u2014 recorded here as uncertain, not rewritten)",
       "exit": 0,
       "result": "PASS",
       "log": "isolated-3284-green.log",
-      "log_sha256": "f4cacba79e7d32e84804b138474edd6c6616937510f0e1137cb07ff0d37196a9"
+      "log_sha256": "f4cacba79e7d32e84804b138474edd6c6616937510f0e1137cb07ff0d37196a9",
+      "note": "The r6 review supplied its own isolated rerun with the head recorded (evidence/round7/../magpie-r6-review evidence); see round7 manifest for the current-head run."
     }
   ],
   "not_run": {

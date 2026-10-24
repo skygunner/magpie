@@ -1,0 +1,7 @@
+{"head": "820eb89647d5f89f916005db852712c3ebdec022", "worktree": "/workspace/scratch/6f1268796e0f/audit-r6-provider", "command": ["/workspace/scratch/6f1268796e0f/go-review-toolchain/go/bin/go", "test", "-tags", "nogui", "./internal/provider", "-run", "^TestOpenCodeSessionOnEveryCall$", "-count=1", "-v", "-timeout", "180s"], "started_at": "2026-10-24T03:59:29.848739+00:00", "umask": "022", "temporary_home": true}
+=== RUN   TestOpenCodeSessionOnEveryCall
+--- PASS: TestOpenCodeSessionOnEveryCall (0.01s)
+PASS
+ok  	github.com/yetone/magpie/internal/provider	0.020s
+
+{"exit_code": 0, "elapsed_seconds": 1.4605108350006049}
