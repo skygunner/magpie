@@ -264,6 +264,13 @@ func (t codexSocket) socket(req *http.Request, msg []byte) (*http.Response, erro
 		if req.Context().Err() != nil {
 			return nil, req.Context().Err()
 		}
+		if websocket.CloseStatus(err) == websocket.StatusMessageTooBig {
+			// the backend's WebSocket takes no turn this big whole (#3444,
+			// lostornot; xiaoan17's synthetic PNG: the same pixels in 18 MB
+			// of JSON refused, 566 bytes taken): over HTTP, as before the
+			// socket. The host isn't shunned — its smaller turns fit.
+			return nil, errCodexSocketFallBack
+		}
 		return nil, fmt.Errorf("codex websocket: %w", err)
 	}
 	header := http.Header{}
@@ -284,6 +291,11 @@ func (t codexSocket) socket(req *http.Request, msg []byte) (*http.Response, erro
 			body.Close()
 			if req.Context().Err() != nil {
 				return nil, req.Context().Err()
+			}
+			if websocket.CloseStatus(err) == websocket.StatusMessageTooBig {
+				// the message was taken and then refused, before anything
+				// of the reply came (#3444): over HTTP, as above
+				return nil, errCodexSocketFallBack
 			}
 			if errors.Is(err, io.EOF) && len(body.pending) == 0 {
 				return nil, errors.New("codex websocket: closed before the reply began")

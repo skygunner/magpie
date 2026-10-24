@@ -298,3 +298,47 @@ func TestCodexSocketOnlyForStreamedTurns(t *testing.T) {
 		t.Fatalf("%d posts, %d sockets", posts, sockets)
 	}
 }
+
+// A backend that answers the socket's message with a
+// StatusMessageTooBig close — chatgpt.com does, of one turn big with
+// image history (#3444, lostornot; xiaoan17's synthetic PNG, the same
+// pixels in 18 MB) — has the turn sent over HTTP instead, which takes
+// it, and its smaller turns still go over the socket: the host isn't
+// shunned for one big message.
+func TestCodexSocketMessageTooBigGoesOverHTTP(t *testing.T) {
+	socketOn(t)
+	var sockets, posts atomic.Int32
+	chatgpt(t, func(w http.ResponseWriter, r *http.Request) {
+		if strings.EqualFold(r.Header.Get("Upgrade"), "websocket") {
+			sockets.Add(1)
+			c, err := websocket.Accept(w, r, nil)
+			if err != nil {
+				return
+			}
+			defer c.CloseNow()
+			c.SetReadLimit(-1)
+			if _, _, err := c.Read(r.Context()); err != nil {
+				return
+			}
+			// the message taken whole, then refused for its size
+			c.Close(websocket.StatusMessageTooBig, "")
+			return
+		}
+		posts.Add(1)
+		io.ReadAll(r.Body)
+		w.Header()["Content-Type"] = nil
+		io.WriteString(w, sse(
+			`event: response.created`+"\n"+`data: {"type":"response.created","response":{"id":"r1"}}`,
+			`event: response.completed`+"\n"+`data: {"type":"response.completed","response":{"id":"r1","usage":{"input_tokens":3,"output_tokens":1}}}`))
+	})
+	for range 2 {
+		code, body := codexPost(t, `{"model":"gpt-5.5","stream":true,"input":"ping"}`)
+		if code != 200 || !strings.Contains(body, "event: response.completed\ndata: ") {
+			t.Fatalf("%d, the turn didn't come back whole over HTTP: %s", code, body)
+		}
+	}
+	// each turn tried the socket first: too big is a turn's own, not the host's
+	if posts := posts.Load(); posts != 2 || sockets.Load() != 2 {
+		t.Fatalf("%d HTTP posts, %d sockets", posts, sockets.Load())
+	}
+}
