@@ -451,6 +451,16 @@ func targetOf(a *agent.Agent) *Target {
 		// MemoryUserDir in internal/contract/config/paths.go, esengine/
 		// DeepSeek-Reasonix d460758e)
 		t.Instructions = filepath.Join(reasonixState(a), "REASONIX.md")
+		// its MCP servers are [[plugins]] in the config.toml magpie
+		// already writes its provider into, each named by a name of its
+		// own: type stdio (which it takes as the default) with
+		// command/args/env, http or sse with a url (internal/contract/
+		// config/, #3401, FuchaZ). Its skills are <reasonix home>/skills,
+		// the ~/.claude/skills convention dir read beside its own
+		// (internal/ext/skill, ConventionDirs)
+		t.MCP = &mcpFile{Path: a.Path, Format: fmtReasonix}
+		t.Skills = filepath.Join(a.Dir, "skills")
+		t.SkillsAlso = []string{"claude"}
 	case "zed":
 		// Zed reads its MCP servers from context_servers in the settings.json
 		// magpie sets its model in (~/.config/zed, $XDG_CONFIG_HOME/zed,
