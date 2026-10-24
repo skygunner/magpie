@@ -1,0 +1,70 @@
+{
+ "fetched_at": "2026-10-24T07:15:16Z",
+ "source": "GitHub API repos/yetone/magpie/issues/comments/{id}",
+ "comments": [
+  {
+   "id": 6380614794,
+   "issue": 3439,
+   "user": "skygunner",
+   "created_at": "2026-10-24T05:56:00Z",
+   "updated_at": "2026-10-24T05:56:00Z",
+   "body_sha256": "5f0318f3d82dcffc1618e725a38323e7c24c2c2bbe2e5f13125acad3909032c6"
+  },
+  {
+   "id": 6380622846,
+   "issue": 3375,
+   "user": "skygunner",
+   "created_at": "2026-10-24T05:56:58Z",
+   "updated_at": "2026-10-24T05:56:58Z",
+   "body_sha256": "925495d7c304321224150e288a326dce9f5460fe427a9225712e5d9050ddee33"
+  },
+  {
+   "id": 6380630767,
+   "issue": 3433,
+   "user": "skygunner",
+   "created_at": "2026-10-24T05:57:54Z",
+   "updated_at": "2026-10-24T05:57:54Z",
+   "body_sha256": "e44ecf1ecf5c97130f44243dde6d200d6239a97e178a7d8d22130251eef393e1"
+  },
+  {
+   "id": 6380779544,
+   "issue": 3392,
+   "user": "skygunner",
+   "created_at": "2026-10-24T06:14:29Z",
+   "updated_at": "2026-10-24T06:14:29Z",
+   "body_sha256": "34f5d9d2c2aee8231dd75fe1698bc79f6d9aa7a8b036f6ad833e723cc06f8e5e"
+  },
+  {
+   "id": 6380789247,
+   "issue": 3444,
+   "user": "skygunner",
+   "created_at": "2026-10-24T06:15:33Z",
+   "updated_at": "2026-10-24T06:15:33Z",
+   "body_sha256": "96264e9b278314c9e9c8dba4095a28c518cef3b33d0dd11f1bfd99bf896470c9"
+  },
+  {
+   "id": 6380798386,
+   "issue": 3440,
+   "user": "skygunner",
+   "created_at": "2026-10-24T06:16:34Z",
+   "updated_at": "2026-10-24T06:16:34Z",
+   "body_sha256": "d2b3dbb24feff75e2b98c9d26cbd42ea1865bfd4b2928b9dbdc6a3f884a0ab3e"
+  },
+  {
+   "id": 6380807714,
+   "issue": 3447,
+   "user": "skygunner",
+   "created_at": "2026-10-24T06:17:34Z",
+   "updated_at": "2026-10-24T06:17:34Z",
+   "body_sha256": "cd8be1cc50790687d9b3c73e896706eba8608c2cc697e8180770d563ece563b4"
+  },
+  {
+   "id": 6380817606,
+   "issue": 3401,
+   "user": "skygunner",
+   "created_at": "2026-10-24T06:18:36Z",
+   "updated_at": "2026-10-24T06:18:36Z",
+   "body_sha256": "b817f00b64fc5da103f67e3706c53de5068616dd08f2342cd453749078d2187c"
+  }
+ ]
+}

@@ -16,7 +16,7 @@
    "evidence": "docs/fork/evidence/upstream-sync-2026-10-24/comments.json",
    "note": "Only the specified existing comments were updated. This does not change upstream-adoption or product-verification status."
   },
-  "checked_at": "2026-10-24T16:20:00Z",
+  "checked_at": "2026-10-24T07:14:36Z",
   "last_checked_upstream_sha": "dd1e8822d916f8aeb085db4db93fc3d79e2263ed",
   "review_refs": {
    "batch": "95537ceb898a4f947f056af8f832663cc015c83c",
@@ -2779,7 +2779,7 @@
    ],
    "category": "product",
    "title": "gateway: an upstream naming the type an unknown variant `custom` turns custom tools to functions (#3392, kongkongklng)",
-   "coverage": "xAI's 422 serde wording joins customToolRefusal; the #2656 translate-as-functions path then covers the model. Verified: reporter wording red on base, green at head; Custom* 21 tests.",
+   "coverage": "xAI's 422 serde wording joins customToolRefusal; the #2656 translate-as-functions path then covers the model; both 400 and 422 statuses pinned to take a group to its next member. REMAINING scope: the issue's Claude 400 half is not delivered — no error body was reported for it, so nothing is known to fix; awaiting the reporter's capture. Real xAI upstream not called.",
    "commits": [
     "8ecab5903548f4499d39e411e35190bce794b006"
    ],
@@ -2865,7 +2865,7 @@
    ],
    "category": "product",
    "title": "gateway, provider: the account's own Codex models compact at the long-conversation threshold too (#3440, Sinnhu)",
-   "coverage": "Native entries cap at settings.Compact() with the backend window as max; user window wins; full window caps none; ~compact ETag marker always carried. Verified: four-way assertions red on base, green at head; provider/codexcat/agent green.",
+   "coverage": "Native entries cap at settings.Compact() with the backend window as max; user window wins; full window caps none; ~compact ETag marker always carried. DESIGN-SENSITIVE, upstream decision pending: the default 272K (CompactAt 0 cannot tell a picked 272K from never-touched) is pushed onto the account's own models for every failover user, changing the #674 contract that a model with none set keeps the backend's window; ggbdpq's traced diagnosis (2026-10-24T06:30:09Z, comment 6380921629) leaves the scope/wording levers to the maintainer. Verified locally: four-way assertions red on base, green at head; provider/codexcat/agent green. NOT confirmed by upstream; not to be treated as an uncontested bug fix or cherry-picked as one.",
    "commits": [
     "e9926d706ec6d377686b239767cc111af4dc3697"
    ],
@@ -2890,11 +2890,13 @@
    },
    "verify": {
     "state": "pass",
-    "evidence": "Red-green on the fix branch: reporter wording/shape red on dd1e8822, green at head; targeted package suites green (gateway/provider/codexcat/agent/library per fix); three-platform build+vet clean; full nogui run recorded this round.",
+    "evidence": "Local red-green only (four-way window assertions; provider/codexcat/agent suites). No real ChatGPT backend; a Codex App that never asks magpie's model list is out of reach by design. Status: design_sensitive / upstream_decision_pending.",
     "head": "fd4bcb54e53462e0e9bfa894846c3909875c5444"
    },
    "upstream": {
-    "status": "unconfirmed"
+    "status": "unconfirmed",
+    "decision": "upstream_decision_pending",
+    "note": "maintainer product call required; drafted correction awaits authorization"
    },
    "archive": {
     "candidate": false
@@ -2908,7 +2910,7 @@
    ],
    "category": "product",
    "title": "gateway: a search's pages are cited on the text that follows them (#3447, HuHong-Tao)",
-   "coverage": "Hit.Cited carries the excerpt the model saw; renderAnthropic and the stream encoder cite it (web_search_result_location, empty encrypted_index); no excerpt, no citation. Verified: encoder-only revert red; Search|Anthropic 221 green.",
+   "coverage": "Hit.Cited carries the excerpt the model saw; renderAnthropic and the stream encoder cite it (web_search_result_location, empty encrypted_index); no excerpt, no citation; multi-search accumulation (round-10 rework, accumulateCitations: search order, first excerpt wins on a repeated URL, cleared by the first real text). OVERLAP: ggbdpq delivered an independent fix before this rework (hunt76-a-websearch-citations, 69068ead, posted 2026-10-24T06:36:17Z), which also keeps a searcher's own cited_text and corrects this account's delivery post: deepseek/deepseek-flash on api.deepseek.com is relayed (searchHosts[Anthropic]), not searched-for. Verified: review probe red 4/4 on the round head, green after; Search|Anthropic green.",
    "commits": [
     "e5a05c44230ae8f2b4540ed35b197460e6146e47"
    ],
@@ -2933,7 +2935,7 @@
    },
    "verify": {
     "state": "pass",
-    "evidence": "Red-green on the fix branch: reporter wording/shape red on dd1e8822, green at head; targeted package suites green (gateway/provider/codexcat/agent/library per fix); three-platform build+vet clean; full nogui run recorded this round.",
+    "evidence": "Red-green on the fix branch: review_r10_multi_search_test.go 4/4 red on 4f353657, green at rework head; single-search/no-excerpt/Anthropic suites green. No real DSH client.",
     "head": "fd4bcb54e53462e0e9bfa894846c3909875c5444"
    },
    "upstream": {
@@ -2951,7 +2953,7 @@
    ],
    "category": "product",
    "title": "library: Reasonix Studio takes MCP servers, skills and project skills (#3401, FuchaZ)",
-   "coverage": "fmtReasonix [[plugins]] array tables (put/read/del keeping the user's), skills dir + SkillsAlso claude, project .reasonix/skills; hooks unwired (event names unknown). Verified: red on base (no MCP target); library 410 green.",
+   "coverage": "fmtReasonix [[plugins]] array tables (put/read/del keeping the user's), skills dir + SkillsAlso claude, project .reasonix/skills. PARTIAL by scope: hooks remain not implemented (Reasonix's hook event names unknown, .reasonix/settings.json documented but no schema to wire); no native Windows verification (paths exercised through sandboxed home variables only).",
    "commits": [
     "fd4bcb54e53462e0e9bfa894846c3909875c5444"
    ],
@@ -4753,7 +4755,7 @@
   },
   {
    "branch": "fix/issue-batch-1024pm",
-   "head": "4f353657a5407df0a4b60b48d6e8670016cc8121",
+   "head": "14c1551e9672758c656ed2fd6b4db69ac1300b15",
    "kind": "product",
    "base": "dd1e8822d916f8aeb085db4db93fc3d79e2263ed",
    "fix_ids": [
@@ -4764,7 +4766,7 @@
     "u-library-reasonix-studio-takes-mcp-servers-ski-3401-fd4bcb54"
    ],
    "replaced_by": "",
-   "note": "round-10 batch on upstream main dd1e8822 (v0.1.1364); pushed, read back; head 4f353657 = product fd4bcb54 + docs",
+   "note": "round-10 batch on upstream main dd1e8822 (v0.1.1364) + r10-review rework; head 14c1551 = product rework; pushed, read back",
    "category": "product"
   }
  ],
@@ -4908,12 +4910,13 @@
    "author": "skygunner",
    "language": "zh-CN",
    "status": "published_verified",
-   "published_at": "2026-10-24T16:55:00Z",
-   "verified_at": "2026-10-24T16:55:00Z",
+   "published_at": "2026-10-24T06:14:29Z",
+   "verified_at": "2026-10-24T07:14:36Z",
    "delivery": "fix/issue-batch-1024pm",
    "delivery_head": "fd4bcb54e53462e0e9bfa894846c3909875c5444",
-   "body_sha256": "",
-   "evidence": "docs/fork/evidence/round10/manifest.json"
+   "body_sha256": "34f5d9d2c2aee8231dd75fe1698bc79f6d9aa7a8b036f6ad833e723cc06f8e5e",
+   "evidence": "docs/fork/evidence/round11/comment-readback.json",
+   "body_updated_at": "2026-10-24T06:14:29Z"
   },
   {
    "issue": 3444,
@@ -4924,12 +4927,13 @@
    "author": "skygunner",
    "language": "zh-CN",
    "status": "published_verified",
-   "published_at": "2026-10-24T16:55:00Z",
-   "verified_at": "2026-10-24T16:55:00Z",
+   "published_at": "2026-10-24T06:15:33Z",
+   "verified_at": "2026-10-24T07:14:36Z",
    "delivery": "fix/issue-batch-1024pm",
    "delivery_head": "fd4bcb54e53462e0e9bfa894846c3909875c5444",
-   "body_sha256": "",
-   "evidence": "docs/fork/evidence/round10/manifest.json"
+   "body_sha256": "96264e9b278314c9e9c8dba4095a28c518cef3b33d0dd11f1bfd99bf896470c9",
+   "evidence": "docs/fork/evidence/round11/comment-readback.json",
+   "body_updated_at": "2026-10-24T06:15:33Z"
   },
   {
    "issue": 3440,
@@ -4940,12 +4944,13 @@
    "author": "skygunner",
    "language": "zh-CN",
    "status": "published_verified",
-   "published_at": "2026-10-24T16:55:00Z",
-   "verified_at": "2026-10-24T16:55:00Z",
+   "published_at": "2026-10-24T06:16:34Z",
+   "verified_at": "2026-10-24T07:14:36Z",
    "delivery": "fix/issue-batch-1024pm",
    "delivery_head": "fd4bcb54e53462e0e9bfa894846c3909875c5444",
-   "body_sha256": "",
-   "evidence": "docs/fork/evidence/round10/manifest.json"
+   "body_sha256": "d2b3dbb24feff75e2b98c9d26cbd42ea1865bfd4b2928b9dbdc6a3f884a0ab3e",
+   "evidence": "docs/fork/evidence/round11/comment-readback.json",
+   "body_updated_at": "2026-10-24T06:16:34Z"
   },
   {
    "issue": 3447,
@@ -4956,12 +4961,13 @@
    "author": "skygunner",
    "language": "zh-CN",
    "status": "published_verified",
-   "published_at": "2026-10-24T16:55:00Z",
-   "verified_at": "2026-10-24T16:55:00Z",
+   "published_at": "2026-10-24T06:17:34Z",
+   "verified_at": "2026-10-24T07:14:36Z",
    "delivery": "fix/issue-batch-1024pm",
    "delivery_head": "fd4bcb54e53462e0e9bfa894846c3909875c5444",
-   "body_sha256": "",
-   "evidence": "docs/fork/evidence/round10/manifest.json"
+   "body_sha256": "cd8be1cc50790687d9b3c73e896706eba8608c2cc697e8180770d563ece563b4",
+   "evidence": "docs/fork/evidence/round11/comment-readback.json",
+   "body_updated_at": "2026-10-24T06:17:34Z"
   },
   {
    "issue": 3401,
@@ -4972,12 +4978,13 @@
    "author": "skygunner",
    "language": "en",
    "status": "published_verified",
-   "published_at": "2026-10-24T16:55:00Z",
-   "verified_at": "2026-10-24T16:55:00Z",
+   "published_at": "2026-10-24T06:18:36Z",
+   "verified_at": "2026-10-24T07:14:36Z",
    "delivery": "fix/issue-batch-1024pm",
    "delivery_head": "fd4bcb54e53462e0e9bfa894846c3909875c5444",
-   "body_sha256": "",
-   "evidence": "docs/fork/evidence/round10/manifest.json"
+   "body_sha256": "b817f00b64fc5da103f67e3706c53de5068616dd08f2342cd453749078d2187c",
+   "evidence": "docs/fork/evidence/round11/comment-readback.json",
+   "body_updated_at": "2026-10-24T06:18:36Z"
   },
   {
    "issue": 3439,
@@ -4988,12 +4995,13 @@
    "author": "skygunner",
    "language": "zh-CN",
    "status": "published_verified",
-   "published_at": "2026-10-24T16:55:00Z",
-   "verified_at": "2026-10-24T16:55:00Z",
+   "published_at": "2026-10-24T05:56:00Z",
+   "verified_at": "2026-10-24T07:14:36Z",
    "delivery": "fix/issue-batch-1024pm",
    "delivery_head": "fd4bcb54e53462e0e9bfa894846c3909875c5444",
-   "body_sha256": "",
-   "evidence": "docs/fork/evidence/round10/manifest.json"
+   "body_sha256": "5f0318f3d82dcffc1618e725a38323e7c24c2c2bbe2e5f13125acad3909032c6",
+   "evidence": "docs/fork/evidence/round11/comment-readback.json",
+   "body_updated_at": "2026-10-24T05:56:00Z"
   },
   {
    "issue": 3375,
@@ -5004,12 +5012,13 @@
    "author": "skygunner",
    "language": "en",
    "status": "published_verified",
-   "published_at": "2026-10-24T16:55:00Z",
-   "verified_at": "2026-10-24T16:55:00Z",
+   "published_at": "2026-10-24T05:56:58Z",
+   "verified_at": "2026-10-24T07:14:36Z",
    "delivery": "fix/issue-batch-1024pm",
    "delivery_head": "fd4bcb54e53462e0e9bfa894846c3909875c5444",
-   "body_sha256": "",
-   "evidence": "docs/fork/evidence/round10/manifest.json"
+   "body_sha256": "925495d7c304321224150e288a326dce9f5460fe427a9225712e5d9050ddee33",
+   "evidence": "docs/fork/evidence/round11/comment-readback.json",
+   "body_updated_at": "2026-10-24T05:56:58Z"
   },
   {
    "issue": 3433,
@@ -5020,12 +5029,13 @@
    "author": "skygunner",
    "language": "zh-CN",
    "status": "published_verified",
-   "published_at": "2026-10-24T16:55:00Z",
-   "verified_at": "2026-10-24T16:55:00Z",
+   "published_at": "2026-10-24T05:57:54Z",
+   "verified_at": "2026-10-24T07:14:36Z",
    "delivery": "fix/issue-batch-1024pm",
    "delivery_head": "fd4bcb54e53462e0e9bfa894846c3909875c5444",
-   "body_sha256": "",
-   "evidence": "docs/fork/evidence/round10/manifest.json"
+   "body_sha256": "e44ecf1ecf5c97130f44243dde6d200d6239a97e178a7d8d22130251eef393e1",
+   "evidence": "docs/fork/evidence/round11/comment-readback.json",
+   "body_updated_at": "2026-10-24T05:57:54Z"
   }
  ],
  "deliveries": {
@@ -5099,18 +5109,19 @@
   "fix/issue-batch-1024pm": {
    "branch": "fix/issue-batch-1024pm",
    "base": "dd1e8822d916f8aeb085db4db93fc3d79e2263ed",
-   "head": "4f353657a5407df0a4b60b48d6e8670016cc8121",
+   "head": "14c1551e9672758c656ed2fd6b4db69ac1300b15",
    "commits": [
     "8ecab5903548f4499d39e411e35190bce794b006",
     "b834f286f8e20ac1a9b08505aabcced5904ad114",
     "e9926d706ec6d377686b239767cc111af4dc3697",
     "e5a05c44230ae8f2b4540ed35b197460e6146e47",
     "fd4bcb54e53462e0e9bfa894846c3909875c5444",
-    "4f353657a5407df0a4b60b48d6e8670016cc8121"
+    "4f353657a5407df0a4b60b48d6e8670016cc8121",
+    "14c1551e9672758c656ed2fd6b4db69ac1300b15"
    ],
    "pushed": true,
-   "read_back": "2026-10-24 origin/fix/issue-batch-1024pm=4f353657",
-   "note": "round-10 batch: five fixes (8ecab590 #3392, b834f286 #3444, e9926d70 #3440, e5a05c44 #3447, fd4bcb54 #3401) plus the subsystem-pages docs commit (4f353657); full nogui run recorded at product head fd4bcb54 (docs-only commit after); comments published and verified (8)."
+   "read_back": "2026-10-24 origin/fix/issue-batch-1024pm=14c1551e (rework push; prior 4f353657 read back at delivery)",
+   "note": "round-10 batch + r10-review rework: five fixes (8ecab590 #3392, b834f286 #3444, e9926d70 #3440, e5a05c44 #3447, fd4bcb54 #3401), docs (4f353657), and the #3447 multi-search rework (14c1551: accumulateCitations + 422 status control, review probe red 4/4 on 4f353657, green here). #3447 overlap: ggbdpq delivered independently (hunt76-a-websearch-citations, 69068ead) before this rework. #3440 is design_sensitive/upstream_decision_pending. Full nogui at 14c1551: 68 ok / 2 pre-existing FAIL (#3280/#2207) / 19 no-test; evidence docs/fork/evidence/round11/."
   }
  }
 }

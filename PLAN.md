@@ -1,3 +1,55 @@
+## 2026-10-24 第十轮返工（ZCode 会话十一）：r10 审查限定范围
+
+独立审查（magpie-r10-review，REVIEW.md + NEXT-PROMPT.txt）确认五个交付的定向测试
+全绿、全量口径精确（68 ok / 2 预存 FAIL / 19 no-test，基线复现），但确定：①#3447
+多搜索 citations 覆盖缺陷（P2，红测试在审查包 tests/ 已验证红：two_searches 与
+later_empty_search 的 whole/stream 四检查全失败）；②#3440 属产品默认行为扩张
+（ggbdpq 已 downgrade 为诊断并明确留给维护者决定；先认领重叠需纠正）；③台账八条
+comment_publications 的 published_at/verified_at 全误填 2026-10-24T16:55:00Z、
+body_sha256 全空、meta.checked_at 疑似本地钟写成 UTC；④#3401 需标 partial、
+#3392 需记剩余范围。**最新上游事实**：ggbdpq 已于 06:36:17Z 在 #3447 发布完整交付
+（hunt76-a-websearch-citations，head 69068ead，并指正我方交付帖「两条路由都走代搜
+管线」的说法——deepseek 官方在 searchHosts[Anthropic] 是 passthrough）。边界：
+不发上游评论/PR（草稿待授权）、不 force-push、不归档删除、不碰他人 worktree；
+fork 分支普通快进推送沿用既有授权。
+
+| M | 目标 | 修改范围 | 验收 | 验证命令 | 状态 |
+|---|---|---|---|---|---|
+| M0 | 复现与固定 | 产品树 internal/gateway + API | 六提交顺序核实；红测试 4/4 失败于 4f353657；8 条评论真实 UTC 拿到；ggbdpq 最新动作入档 | go test -run TestReviewMultipleSearchCitations；gh api | 完成（六提交与远端读回一致；探针 4/4 红；created_at 与审查所列逐条吻合；ggbdpq #3447 已于 06:36:17Z 交付 69068ead、#3440 06:30:09Z downgrade 为诊断） |
+| M1 | #3447 多搜索 citations 累计（P2） | internal/gateway/anthropic.go（流式+whole 两处累计：URL 去重保序、无摘录不造、首个真实 text 后清空） | 审查探针红→绿；单次搜索/无摘要/其他 Anthropic/Responses 回归绿 | go test ./internal/gateway -run 'Citation\|Search\|Anthropic' | 完成 14c1551（accumulateCitations；探针绿；Search\|Anthropic + Custom 422 控制绿；提交已 amend 移除误加的伪造 Co-author） |
+| M2 | #3440 产品决策整理 + 草稿 | dev docs + 草稿文件 | 单元状态改 design_sensitive/upstream_decision_pending；覆盖描述改口径；一条谨慎更正草稿（不发送，致谢先认领、承认默认行为扩张、列三备选） | python3 docs/fork/generate.py | 完成（单元 upstream.decision=upstream_decision_pending、coverage/evidence 改口径；草稿 docs/fork/comment-draft-3440-r10-rework.md 含 A/B/C 备选与两处认领重叠更正，未发送） |
+| M3 | 台账真实时间与哈希 | docs/fork/upstream-status.json + prior-comments.json + generate.py | published_at=GitHub created_at（8 条各自实际值）；verified_at=本轮新读回时刻；body_sha256 从 API 取 body 计算并验证作者/issue；#3401 标 partial、#3392 剩余范围入 coverage；不碰历史七条 | gh api + python3 json 校验 | 完成（8 条 published_at=created_at 逐条核实、verified_at=2026-10-24T07:14:36Z 实际读回、body_sha256 从 API body 计算并断言作者/issue、body_updated_at 记录；meta.checked_at 改 07:14:36Z；证据 evidence/round11/comment-readback.json；历史条目未动；generate.py+selftest 过） |
+| M4 | 最终收口 | 产品树 + dev | 新 head 定向包+全量回归（预存红引用基线）；gofmt/vet/diff --check；推送读回；SHA/日志/剩余范围清单 | go test -tags nogui ./... | 完成（全量于 14c1551：68 ok / 2 预存 FAIL #3280+#2207 / 19 no-test，零新增；分支推送读回 14c1551；dev 台账随本轮提交推送） |
+
+### 本轮记录（2026-10-24 完成）
+
+- 产品提交：**14c1551e9672758c656ed2fd6b4db69ac1300b15**（fix/issue-batch-1024pm，
+  dd1e8822..14c1551 共 7 commits：8ecab590/b834f286/e9926d70/e5a05c44/fd4bcb54/
+  4f353657/14c1551）。红→绿：审查探针 review_r10_multi_search_test.go 于 4f353657
+  4/4 红（two_searches、later_empty_search 的 whole/stream）、14c1551 全绿；
+  Search\|Anthropic 与 Custom（含 422 状态控制）绿。已普通推送，读回一致。
+- 全量 nogui（14c1551，GOTOOLCHAIN=go1.26.8 umask 022 串行）：**68 ok / 2 包 FAIL /
+  19 no-test，exit 1**；FAIL＝#3280 TestClaudeClientCacheAbsentUnchanged 与 #2207
+  TestPluginSOCKSProxy，干净 dd1e8822 基线同红（round10 已证），零新增。日志：
+  docs/fork/evidence/round11/full-suite-14c1551.log。审查提到的 provider 包 #3284
+  偶发在本轮全量与定向跑中未出现。
+- 台账：8 条 comment_publications 的 published_at 逐条改为 GitHub created_at
+  （05:56:00Z–06:18:36Z），verified_at=2026-10-24T07:14:36Z（本轮真实 API 读回），
+  body_sha256 从 API body 计算（作者/issue/时间断言后写入），历史七条未动；
+  meta.checked_at 同步为真实 UTC。单元口径：#3440
+  upstream_decision_pending/design_sensitive（coverage 与 verify.evidence 写明
+  默认行为扩张与 #674 合同冲突）；#3401 partial（hooks 未实现 remain、无原生
+  Windows 验证）；#3392 记剩余范围（Claude 400 无错误体，无从修）；#3447 记
+  ggbdpq 重叠交付与指正。generate.py + selftest 过。
+- 草稿（未发送，待单独授权）：docs/fork/comment-draft-3440-r10-rework.md——
+  致谢 ggbdpq 先认领与诊断、承认 e9926d70 默认行为扩张并更正交付口径、列出
+  A（维持 #674）/B（扩作用域=现状）/C（仅文案）三备选请维护者定，含 #3447
+  「两路由均代搜」说法的更正（deepseek 官方为 passthrough）。
+- 未解决/剩余范围：①#3440 等维护者产品决定（草稿未发）；②#3447 上游侧
+  ggbdpq 已交付独立修复，我方分支保留为备选，无进一步上游动作；③#3392 的
+  Claude 400 半边等报告者错误体；④#3401 hooks 等事件名、原生 Windows 未验证；
+  ⑤#3444 真实大图后端未对照。
+
 ## 2026-10-24 新一轮修复（ZCode 会话十）：#3375–#3447 巡检后的未认领 issue
 
 上游新开 69 个 open issue（#3375–#3447）。逐条读帖并扫描评论区后：
