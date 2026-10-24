@@ -74,6 +74,9 @@ var projectSkillsDirs = map[string]string{
 	"qoder-cn":    ".qoder/skills",
 	"codebuddy":   ".codebuddy/skills",
 	"commandcode": ".commandcode/skills",
+	// Reasonix reads .reasonix/skills first and the shared .agents/skills
+	// beside it (internal/ext/skill, ConventionDirs; #3401)
+	"reasonix": ".reasonix/skills",
 }
 
 // ProjectSkillsDir is the folder, in a project, an agent reads its skills

@@ -78,7 +78,7 @@ func toolsOffOf(t *Target) toolsOffHow {
 //     mcp-config-reference.md, NousResearch/hermes-agent c5733167)
 func (f *mcpFile) toolsKey() []string {
 	switch f.Format {
-	case fmtCodex, fmtCrush:
+	case fmtCodex, fmtCrush, fmtReasonix:
 		return []string{"disabled_tools"}
 	case fmtGemini:
 		return []string{"excludeTools"}
