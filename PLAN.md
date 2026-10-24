@@ -36,8 +36,8 @@ MAGPIE_TRUST_PROXY=1，回帖指路）、#3441（重试风暴，等更多数据�
 
 ### 本轮记录（2026-10-24 完成）
 
-- 交付分支 `fix/issue-batch-1024pm`（base dd1e8822 = v0.1.1364，5 commits，head
-  fd4bcb54）：#3392 8ecab590、#3444 b834f286、#3440 e9926d70、#3447 e5a05c44、
+- 交付分支 `fix/issue-batch-1024pm`（base dd1e8822 = v0.1.1364，6 commits＝5 修复
+  + 1 文档，head 4f353657；产品 head fd4bcb54）：#3392 8ecab590、#3444 b834f286、#3440 e9926d70、#3447 e5a05c44、
   #3401 fd4bcb54。每题红→绿实录见各 milestone 状态列。已推 skygunner/magpie 并
   读回一致。
 - 回帖 8 条全部以 skygunner 发布并经 API 读回验证（5 修复交付 + #3439/#3375
@@ -51,9 +51,12 @@ MAGPIE_TRUST_PROXY=1，回帖指路）、#3441（重试风暴，等更多数据�
   docs/fork/evidence/round10/（full-suite-fd4bcb54.log + manifest.json）。
 - 三平台 build+vet（windows/amd64、darwin/arm64、darwin/amd64，nogui）干净。
 - 台账：upstream-status.json 增 5 units（全 40 位 SHA + 交付评论）、92 分支记录、
-  comment_publications 15 条；prior-comments.json 增 5 行（77 行）；REQUIRED_SET
-  扩至 77 项（product 60）；generate.py 校验过（65 units / 69 unit-covered /
-  90 remote heads）+ selftest 负例全拒。UPSTREAM_STATUS.md 已再生。
+  comment_publications 15 条、deliveries 增 fix/issue-batch-1024pm（6 commit 全链，
+  head 4f353657＝产品 fd4bcb54 + 文档提交）；prior-comments.json 增 5 行（77 行）；
+  REQUIRED_SET 扩至 77 项（product 60）；generate.py 校验过（65 units /
+  69 unit-covered / 90 remote heads）+ selftest 负例全拒。UPSTREAM_STATUS.md 已再生。
+- 文档义务：五个修复的语义变更已写入子系统页（gateway-routing 三处、
+  providers-accounts 一处、library 一处，commit 4f353657），随分支推送读回。
 - 放弃项与理由：#3434（见 M7 行）；#3383（moejs/记录保留的性能重构超出单轮
   风险预算）；#3436（Kelivo 快照匹配需重写 conversation 续接判定，报告者已具
   备完整离线复现，留待其交付或下轮）；#3441（8 分钟重试风暴——数据不足以定位

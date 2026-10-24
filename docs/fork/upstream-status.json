@@ -4753,7 +4753,7 @@
   },
   {
    "branch": "fix/issue-batch-1024pm",
-   "head": "fd4bcb54e53462e0e9bfa894846c3909875c5444",
+   "head": "4f353657a5407df0a4b60b48d6e8670016cc8121",
    "kind": "product",
    "base": "dd1e8822d916f8aeb085db4db93fc3d79e2263ed",
    "fix_ids": [
@@ -4764,7 +4764,7 @@
     "u-library-reasonix-studio-takes-mcp-servers-ski-3401-fd4bcb54"
    ],
    "replaced_by": "",
-   "note": "round-10 batch on upstream main dd1e8822 (v0.1.1364); pushed, read back",
+   "note": "round-10 batch on upstream main dd1e8822 (v0.1.1364); pushed, read back; head 4f353657 = product fd4bcb54 + docs",
    "category": "product"
   }
  ],
@@ -5095,6 +5095,22 @@
    "branch": "dev",
    "kind": "maintenance",
    "note": "snapshot_at 2026-10-24 from source_ref dev; the maintenance branch does not record its own head inside its own files"
+  },
+  "fix/issue-batch-1024pm": {
+   "branch": "fix/issue-batch-1024pm",
+   "base": "dd1e8822d916f8aeb085db4db93fc3d79e2263ed",
+   "head": "4f353657a5407df0a4b60b48d6e8670016cc8121",
+   "commits": [
+    "8ecab5903548f4499d39e411e35190bce794b006",
+    "b834f286f8e20ac1a9b08505aabcced5904ad114",
+    "e9926d706ec6d377686b239767cc111af4dc3697",
+    "e5a05c44230ae8f2b4540ed35b197460e6146e47",
+    "fd4bcb54e53462e0e9bfa894846c3909875c5444",
+    "4f353657a5407df0a4b60b48d6e8670016cc8121"
+   ],
+   "pushed": true,
+   "read_back": "2026-10-24 origin/fix/issue-batch-1024pm=4f353657",
+   "note": "round-10 batch: five fixes (8ecab590 #3392, b834f286 #3444, e9926d70 #3440, e5a05c44 #3447, fd4bcb54 #3401) plus the subsystem-pages docs commit (4f353657); full nogui run recorded at product head fd4bcb54 (docs-only commit after); comments published and verified (8)."
   }
  }
 }
