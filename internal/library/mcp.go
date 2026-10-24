@@ -185,6 +185,10 @@ const (
 	// fmtZed is Zed's settings.json context_servers: command/args/env, or
 	// url/headers, which Zed speaks streamable HTTP to
 	fmtZed
+	// fmtReasonix is Reasonix Studio's [[plugins]] in its config.toml:
+	// type stdio (the default, said anyway) beside command/args/env, http
+	// or sse beside a url (internal/contract/config/, #3401)
+	fmtReasonix
 )
 
 // mcpFile is the file an agent keeps its user-wide MCP servers in.
@@ -593,6 +597,22 @@ func (f *mcpFile) encode(s *Server) ordered {
 			add("args", list(s.Args))
 			optional("env", s.Env)
 		}
+	case fmtReasonix:
+		add("name", s.Name)
+		if s.Remote() {
+			t := s.Transport
+			if t == "" {
+				t = "http"
+			}
+			add("type", t)
+			add("url", s.URL)
+			optional("headers", s.Headers)
+		} else {
+			add("type", "stdio")
+			add("command", s.Command)
+			add("args", list(s.Args))
+			optional("env", s.Env)
+		}
 	case fmtAntigravity:
 		// Antigravity tells SSE from streamable HTTP itself; "type" only
 		// lets magpie read an SSE server back as one (agy keeps the key)
@@ -736,6 +756,17 @@ func (f *mcpFile) decode(name string, m map[string]any) (*Server, bool) {
 			local(str(m, "command"), m["args"], m["env"])
 			for _, n := range codexEnvVars(m["env_vars"]) {
 				ref(&s.Env, n, "${"+n+"}")
+			}
+		}
+	case fmtReasonix:
+		switch str(m, "type") {
+		case "http":
+			remote("http", str(m, "url"), m["headers"])
+		case "sse":
+			remote("sse", str(m, "url"), m["headers"])
+		case "", "stdio":
+			if str(m, "command") != "" {
+				local(str(m, "command"), m["args"], m["env"])
 			}
 		}
 	case fmtGemini:
@@ -892,7 +923,7 @@ func (f *mcpFile) parseEntries(raw []byte) (map[string]map[string]any, error) {
 	var doc map[string]any
 	var err error
 	switch f.Format {
-	case fmtCodex, fmtGrok:
+	case fmtCodex, fmtGrok, fmtReasonix:
 		err = toml.Unmarshal(raw, &doc)
 	case fmtGoose, fmtHermes:
 		err = yaml.Unmarshal(raw, &doc)
@@ -901,6 +932,21 @@ func (f *mcpFile) parseEntries(raw []byte) (map[string]map[string]any, error) {
 	}
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", f.Path, err)
+	}
+	if f.Format == fmtReasonix {
+		// Reasonix keeps its servers in an array of tables, each named by
+		// a field of its own (#3401)
+		plugins, _ := doc["plugins"].([]any)
+		for _, v := range plugins {
+			m, ok := v.(map[string]any)
+			if !ok {
+				continue
+			}
+			if name, _ := m["name"].(string); name != "" {
+				out[name] = m
+			}
+		}
+		return out, nil
 	}
 	// the key can be a path: ZCode keeps them in mcp.servers
 	var all map[string]any = doc
@@ -1030,7 +1076,8 @@ var owned = map[mcpFormat][]string{
 	fmtKimi:   {"transport", "type", "url", "headers", "command", "args", "env"},
 	fmtDevin:  {"transport", "type", "url", "headers", "command", "args", "env"},
 	// enabled and the timeouts are the user's
-	fmtGrok: {"type", "url", "headers", "command", "args", "env"},
+	fmtGrok:     {"type", "url", "headers", "command", "args", "env"},
+	fmtReasonix: {"name", "type", "url", "headers", "command", "args", "env"},
 	// the flat shape's keys go when magpie writes the entry again
 	fmtCline:       {"transport", "type", "transportType", "url", "headers", "command", "args", "cwd", "env"},
 	fmtCommandCode: {"transport", "type", "url", "headers", "command", "args", "env"},
@@ -1127,6 +1174,16 @@ func (f *mcpFile) putEntry(s *Server, o ordered) error {
 	switch f.Format {
 	case fmtCodex, fmtGrok:
 		return putCodex(f.Path, s.Name, o)
+	case fmtReasonix:
+		m := map[string]any{}
+		for _, e := range o {
+			m[e.k] = e.v
+		}
+		b, err := toml.Marshal(map[string]any{"plugins": []any{m}})
+		if err != nil {
+			return err
+		}
+		return edit.SetTOMLArrayTable(f.Path, "plugins", "name", s.Name, string(b))
 	case fmtGoose:
 		m := map[string]any{}
 		for _, e := range o {
@@ -1171,6 +1228,8 @@ func (f *mcpFile) del(name string) error {
 		return nil
 	case fmtCodex, fmtGrok:
 		return delCodex(f.Path, name, true)
+	case fmtReasonix:
+		return edit.DelTOMLArrayTable(f.Path, "plugins", "name", name)
 	case fmtGoose:
 		return edit.DelYAML(f.Path, "extensions."+name)
 	case fmtHermes:
