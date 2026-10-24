@@ -217,16 +217,19 @@ func accountOrPluginID(id string) bool {
 	// raw id keeps its own id (plain cline is cline, so cline-plugin is
 	// free for an independent provider of the user's), and a reserved,
 	// preset or stored-endpoint raw id gains -plugin (#3349 review, r4
-	// follow-up; the r5 review's cline-plugin counter-example). The
-	// stored-endpoint term reads the file directly, not customIDs,
-	// which judges these very entries.
+	// follow-up; the r5 review's cline-plugin counter-example, and its
+	// stored-picks combination: the account's own decide= picks under
+	// the raw id are no self-built provider, so they claim no alias).
+	// The stored-endpoint term reads the file directly — not customIDs,
+	// which judges these very entries — and skips an account's picks
+	// entries the way customIDs does.
 	if rest, ok := strings.CutSuffix(id, "-plugin"); ok && rest != "" {
 		if PluginServes(rest) {
 			return false
 		}
 		if slices.Contains(accountIDs, rest) || Preset(rest) != nil ||
 			rest == "magpie" || rest == autoID || rest == strings.TrimSuffix(GroupPrefix, "/") ||
-			slices.ContainsFunc(load().Providers, func(p Provider) bool { return p.ID == rest && hasEndpoint(p) }) {
+			slices.ContainsFunc(load().Providers, func(p Provider) bool { return p.ID == rest && hasEndpoint(p) && !accountPicksEntry(p) }) {
 			return accountOrPluginID(rest)
 		}
 		return false
