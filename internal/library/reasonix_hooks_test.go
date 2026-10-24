@@ -32,7 +32,7 @@ func TestReasonixHooksOwnShapeAndPreservation(t *testing.T) {
 		t.Fatalf("post hook: %v %+v", err, entries)
 	}
 	e := entries[0]
-	if e["command"] != "fmt" || e["timeout"] != float64(2000) || e["matcher"] != nil || !strings.Contains(e["match"].(string), "edit") || len(read(t, path)) == 0 {
+	if e["command"] != "fmt" || e["timeout"] != float64(2000) || e["matcher"] != nil || e["match"] != "^(edit_file|write_file|multi_edit)$" || len(read(t, path)) == 0 {
 		t.Fatalf("bad entry: %+v", e)
 	}
 	if got := gjson.Get(read(t, path), "hooks.Stop").Array(); len(got) != 2 || !strings.Contains(got[0].Raw, "say mine") || !strings.Contains(got[1].Raw, "notify") {

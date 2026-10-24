@@ -188,7 +188,7 @@ func hookSpecOf(t *Target) (*hookSpec, string) {
 			native: []string{"PreToolUse", "PostToolUse", "PostToolUseFailure", "PermissionRequest", "UserPromptSubmit",
 				"Stop", "StopFailure", "PostLLMCall", "SessionStart", "SessionEnd", "SubagentStart", "SubagentStop",
 				"Notification", "PreCompact"},
-			tools: map[string]string{"shell": "^(shell|run_shell_command|Bash)$", "edit": "^(edit|write_file|apply_patch)$"},
+			tools: map[string]string{"shell": "^bash$", "edit": "^(edit_file|write_file|multi_edit)$"},
 			ms:    true, reasonix: true,
 		}, ""
 	case "grok":
