@@ -2778,23 +2778,30 @@
     3392
    ],
    "category": "product",
-   "title": "gateway: an upstream naming the type an unknown variant `custom` turns custom tools to functions (#3392, kongkongklng)",
-   "coverage": "xAI's 422 serde wording joins customToolRefusal; the #2656 translate-as-functions path then covers the model; both 400 and 422 statuses pinned to take a group to its next member. REMAINING scope: the issue's Claude 400 half is not delivered — no error body was reported for it, so nothing is known to fix; awaiting the reporter's capture. Real xAI upstream not called.",
+   "title": "gateway: xAI's own API takes neither a sealed item's null content nor a system turn in messages (#3392, kongkongklng)",
+   "coverage": "xAI's 422 serde wording joins customToolRefusal (8ecab590); the #2656 translate-as-functions path then covers the model; both 400 and 422 statuses pinned to take a group to its next member. Follow-up halves delivered in d8ad9ab2 after the reporter merged 8ecab590 and captured both error bodies: Codex's replay of a sealed reasoning item carries \"content\": null, which xAI answers 'Could not decode the compaction blob' — the null is dropped on both the relayed and the translated request (xaiBody); Claude Code's mid-conversation system turn, which xAI's Messages answers 'Invalid message role', folds into the top-level system. Real xAI upstream not called; the reporter is asked to run a round.",
    "commits": [
-    "8ecab5903548f4499d39e411e35190bce794b006"
+    "8ecab5903548f4499d39e411e35190bce794b006",
+    "d8ad9ab2ae999a9920b0945d3beba42b27eb27fc"
    ],
    "commit_details": [
     {
      "sha": "8ecab5903548f4499d39e411e35190bce794b006",
      "title": "gateway: an upstream naming the type an unknown variant `custom` turns custom tools to functions (#3392, kongkongklng)",
      "url": "https://github.com/skygunner/magpie/commit/8ecab5903548f4499d39e411e35190bce794b006"
+    },
+    {
+     "sha": "d8ad9ab2ae999a9920b0945d3beba42b27eb27fc",
+     "title": "gateway: xAI's own API takes neither a sealed item's null content nor a system turn in messages (#3392, kongkongklng)",
+     "url": "https://github.com/skygunner/magpie/commit/d8ad9ab2ae999a9920b0945d3beba42b27eb27fc"
     }
    ],
    "branch": "fix/issue-batch-1024pm",
    "base": "dd1e8822d916f8aeb085db4db93fc3d79e2263ed",
    "comments": {
     "3392": [
-     "https://github.com/yetone/magpie/issues/3392#issuecomment-6380779544"
+     "https://github.com/yetone/magpie/issues/3392#issuecomment-6380779544",
+     "https://github.com/yetone/magpie/issues/3392#issuecomment-6386768624"
     ]
    },
    "sources": {
@@ -2804,8 +2811,8 @@
    },
    "verify": {
     "state": "pass",
-    "evidence": "Red-green on the fix branch: reporter wording/shape red on dd1e8822, green at head; targeted package suites green (gateway/provider/codexcat/agent/library per fix); three-platform build+vet clean; full nogui run recorded this round.",
-    "head": "fd4bcb54e53462e0e9bfa894846c3909875c5444"
+    "evidence": "Round-10 evidence stands for 8ecab590. d8ad9ab2: red/green on fix/issue-batch-1024pm (TestXAITakesCodexsSealedReasoningBack, TestXAILearnsCustomToolsThenTakesTheReplay, TestXAIFoldsClaudesSystemTurn red with the shaping off, green at head, reporter wording); gofmt clean; three vets and three builds clean; full nogui in a sandbox HOME 66 packages ok with the same 7 failures as clean 14c1551e baselined the same session (docs/fork/evidence/round14/).",
+    "head": "d8ad9ab2ae999a9920b0945d3beba42b27eb27fc"
    },
    "upstream": {
     "status": "unconfirmed"
@@ -4758,7 +4765,7 @@
   },
   {
    "branch": "fix/issue-batch-1024pm",
-   "head": "14c1551e9672758c656ed2fd6b4db69ac1300b15",
+   "head": "d8ad9ab2ae999a9920b0945d3beba42b27eb27fc",
    "kind": "product",
    "base": "dd1e8822d916f8aeb085db4db93fc3d79e2263ed",
    "fix_ids": [
@@ -5073,6 +5080,23 @@
    "delivery_head": "cf87dc37c09e5b6fbadebfd7ebc8adcd9f102290",
    "body_sha256": "b9b6e0ddb250760ca210ffd92249a6a3e10b9f88612b3a06164b232604cc2b10",
    "evidence": "docs/fork/evidence/round13/closeout.md"
+  },
+  {
+   "issue": 3392,
+   "fix_id": "u-gateway-an-upstream-naming-the-type-an-unknown-3392-8ecab590",
+   "comment_id": 6386768624,
+   "url": "https://github.com/yetone/magpie/issues/3392#issuecomment-6386768624",
+   "role": "delivery_followup",
+   "author": "skygunner",
+   "language": "zh-CN",
+   "status": "published_verified",
+   "published_at": "2026-10-24T16:37:27Z",
+   "verified_at": "2026-10-24T16:41:15Z",
+   "body_updated_at": "2026-10-24T16:37:27Z",
+   "delivery": "fix/issue-batch-1024pm",
+   "delivery_head": "d8ad9ab2ae999a9920b0945d3beba42b27eb27fc",
+   "body_sha256": "b60f9d1399f3c21de51810a3c849c5b6fcc8e0136cc650c333f3d8b318e0052a",
+   "evidence": "docs/fork/evidence/round14/closeout.md"
   }
  ],
  "deliveries": {
@@ -5146,7 +5170,7 @@
   "fix/issue-batch-1024pm": {
    "branch": "fix/issue-batch-1024pm",
    "base": "dd1e8822d916f8aeb085db4db93fc3d79e2263ed",
-   "head": "14c1551e9672758c656ed2fd6b4db69ac1300b15",
+   "head": "d8ad9ab2ae999a9920b0945d3beba42b27eb27fc",
    "commits": [
     "8ecab5903548f4499d39e411e35190bce794b006",
     "b834f286f8e20ac1a9b08505aabcced5904ad114",
@@ -5154,10 +5178,11 @@
     "e5a05c44230ae8f2b4540ed35b197460e6146e47",
     "fd4bcb54e53462e0e9bfa894846c3909875c5444",
     "4f353657a5407df0a4b60b48d6e8670016cc8121",
-    "14c1551e9672758c656ed2fd6b4db69ac1300b15"
+    "14c1551e9672758c656ed2fd6b4db69ac1300b15",
+    "d8ad9ab2ae999a9920b0945d3beba42b27eb27fc"
    ],
    "pushed": true,
-   "read_back": "2026-10-24 origin/fix/issue-batch-1024pm=14c1551e (rework push; prior 4f353657 read back at delivery)",
+   "read_back": "2026-10-25 origin/fix/issue-batch-1024pm=d8ad9ab2 (3392 follow-up push; prior: 2026-10-24 origin/fix/issue-batch-1024pm=14c1551e (rework push; prior 4f353657 read back at delivery))",
    "note": "round-10 batch + r10-review rework: five fixes (8ecab590 #3392, b834f286 #3444, e9926d70 #3440, e5a05c44 #3447, fd4bcb54 #3401), docs (4f353657), and the #3447 multi-search rework (14c1551: accumulateCitations + 422 status control, review probe red 4/4 on 4f353657, green here). #3447 overlap: ggbdpq delivered independently (hunt76-a-websearch-citations, 69068ead) before this rework. #3440 is design_sensitive/upstream_decision_pending. Full nogui at 14c1551: 68 ok / 2 pre-existing FAIL (#3280/#2207) / 19 no-test; evidence docs/fork/evidence/round11/."
   },
   "fix/reasonix-library-complete-1024": {
