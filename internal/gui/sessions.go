@@ -109,6 +109,15 @@ func sessionRoutes(mux *http.ServeMux, w Windows) {
 		for _, g := range gateway {
 			ext = append(ext, gatewayListed(g))
 		}
+		// a native session's own file was told zeros for the calls a
+		// vendor counted no cache of: their prompt joins back from the
+		// ledger, so the row's hit rate leaves them out (#3470)
+		unknown := usage.NativeSessionUnknown(time.Time{}, nativeKeys)
+		for i := range list {
+			if !list[i].Gateway {
+				list[i].CacheUnknown += unknown[list[i].Agent+"|"+list[i].ID]
+			}
+		}
 		list = sessions.MergeExternal(list, ext)
 		if len(list) > n {
 			list = list[:n]

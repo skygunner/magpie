@@ -81,7 +81,7 @@ func TestKimiCodeSessions(t *testing.T) {
 	if j.Title != "Port the parser" || j.Cwd != "" {
 		t.Fatalf("june: %+v", j)
 	}
-	if j.Tokens != (Tokens{200820, 12283, 2641152, 0, 0}) {
+	if j.Tokens != (Tokens{200820, 12283, 2641152, 0, 0, 0}) {
 		t.Fatalf("june tokens %+v", j.Tokens)
 	}
 	if m := model(j, "kimi-code/kimi-for-coding"); m.Tokens != j.Tokens {
@@ -100,13 +100,13 @@ func TestKimiCodeSessions(t *testing.T) {
 
 	// 1.4's workDir
 	c := find(t, ss, "kimi", kimiCancel)
-	if c.Cwd != "/work/kimi-old" || c.Tokens != (Tokens{15726, 2009, 132096, 0, 0}) {
+	if c.Cwd != "/work/kimi-old" || c.Tokens != (Tokens{15726, 2009, 132096, 0, 0, 0}) {
 		t.Fatalf("cancel: %+v", c)
 	}
 
 	// 1.5's cwd, createdAt in ms
 	e := find(t, ss, "kimi", kimiEarly)
-	if e.Cwd != "/work/kimi" || e.Title != "Review the diff" || e.Tokens != (Tokens{20888, 2176, 317440, 0, 0}) {
+	if e.Cwd != "/work/kimi" || e.Title != "Review the diff" || e.Tokens != (Tokens{20888, 2176, 317440, 0, 0, 0}) {
 		t.Fatalf("early: %+v", e)
 	}
 	if !e.Start.Equal(time.UnixMilli(1786134177385)) || !e.Last.Equal(at("2026-08-07T20:25:57.753Z")) {
@@ -292,7 +292,7 @@ func TestKimiCodeSessionFork(t *testing.T) {
 	fork("session_f0000000-0000-4000-8000-000000000003", true, at("2026-07-01T00:00:00Z").UnixMilli())
 
 	ss := List(0)
-	if s := find(t, ss, "kimi", kimiCancel); s.Tokens != (Tokens{15726, 2009, 132096, 0, 0}) {
+	if s := find(t, ss, "kimi", kimiCancel); s.Tokens != (Tokens{15726, 2009, 132096, 0, 0, 0}) {
 		t.Fatalf("the source changed: %+v", s.Tokens)
 	}
 	for _, id := range []string{"session_f0000000-0000-4000-8000-000000000001", "session_f0000000-0000-4000-8000-000000000002", "session_f0000000-0000-4000-8000-000000000003"} {
@@ -323,7 +323,7 @@ func TestWSLKimiCode(t *testing.T) {
 			e = &s
 		}
 	}
-	if e == nil || e.WSL != "Ubuntu" || e.Tokens != (Tokens{20888, 2176, 317440, 0, 0}) {
+	if e == nil || e.WSL != "Ubuntu" || e.Tokens != (Tokens{20888, 2176, 317440, 0, 0, 0}) {
 		t.Fatalf("the distro's Kimi session: %+v", e)
 	}
 	want := `wsl.exe -d 'Ubuntu' --cd '/work/kimi' -e sh -lc 'exec ${SHELL:-sh} -lic ''kimi --session ` + kimiEarly + `'''`

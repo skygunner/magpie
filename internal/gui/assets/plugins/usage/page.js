@@ -2764,8 +2764,9 @@ function renderSessions() {
       t("Tokens in and out per session: the middle session's, and what nine in ten stay under"), stale ? "stale" : "");
     tile(fmtN(tot.input + tot.output), t("tokens"), t("{a} in · {b} out", { a: fmtN(tot.input), b: fmtN(tot.output) }));
     tile(c ? "≈" + c : "—", t("cost"), unpricedModels || t("at effective prices"), unpricedNote);
-    // input leaves out what was read from the cache and written to it
-    const prompt = tot.input + tot.cache_read + tot.cache_write;
+    // input leaves out what was read from the cache and written to it; a
+    // vendor that counted no cache leaves its whole prompt out (#3470)
+    const prompt = tot.input + tot.cache_read + tot.cache_write - (tot.cache_unknown || 0);
     tile(fmtN(tot.cache_read), t("cache read"), tot.cache_read && prompt ? t("hit rate {p}", { p: Math.round(100 * tot.cache_read / prompt) + "%" }) : "", tot.cache_write ? t("{n} written", { n: fmtN(tot.cache_write) }) : "");
     tile(active == null ? "—" : fmtDur(active), t("active"), active == null ? t("not kept by model") : t(days === 1 ? "on {n} day" : "on {n} days", { n: days }),
       t("The time the sessions were at work: the pauses between one message and the next, each under five minutes"), "dur");

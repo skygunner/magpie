@@ -193,3 +193,35 @@ func TestGatewayWindowsShareOneProjection(t *testing.T) {
 		}
 	}
 }
+
+// TestGatewaySessionCountsCacheUnknown: a call whose vendor counted no
+// cache (Kiro's magpie_cache_unknown, #3464) is no miss of the session's
+// hit rate either (#3470): the projection keeps its prompt apart, and a
+// session the agent also keeps a file of - whose file was told zeros -
+// hands the amount back for the native row to leave out.
+func TestGatewaySessionCountsCacheUnknown(t *testing.T) {
+	resetUsageTest(t)
+	at := time.Now()
+	Append(Record{Time: at.Add(-2 * time.Minute), Agent: "claude", Session: "s1", Provider: "kiro", Model: "claude-5", Input: 900, Status: 200, CacheUnknown: true})
+	Append(Record{Time: at.Add(-time.Minute), Agent: "claude", Session: "s1", Provider: "opencode", Model: "glm", Input: 100, CacheRead: 900, CacheWrite: 100, Status: 200})
+	got := GatewaySessions(time.Time{}, nil)
+	if len(got) != 1 {
+		t.Fatalf("sessions: %+v", got)
+	}
+	s := got[0]
+	if s.CacheUnknown != 900 {
+		t.Fatalf("unknown = %d, want the Kiro prompt of 900", s.CacheUnknown)
+	}
+	// as every hit rate over Tokens counts it, on Totals' rule (#3464):
+	// 900 read of the 1,100 prompt the vendors did count - not of the
+	// 2,000 the Kiro prompt would dilute it to
+	if p := s.Input + s.CacheRead + s.CacheWrite - s.CacheUnknown; p != 1100 || 100*s.CacheRead/p != 81 {
+		t.Fatalf("prompt %d, hit %d%%", p, 100*s.CacheRead/p)
+	}
+	if u := NativeSessionUnknown(time.Time{}, map[string]bool{"claude|s1": true}); u["claude|s1"] != 900 {
+		t.Fatalf("native unknown = %v, want 900", u)
+	}
+	if u := NativeSessionUnknown(time.Time{}, nil); u != nil {
+		t.Fatalf("no native keys, no join: %v", u)
+	}
+}
