@@ -61,11 +61,11 @@ func TestWorkBuddyCalls(t *testing.T) {
 	}
 	// input with the cache read taken out of it, as its summary counts it:
 	// 1200 - 1000
-	if m.Model != "hy3" || m.Tokens != (Tokens{200, 80, 1000, 0, 0}) || !m.Time.Equal(ms(1790503205000)) {
+	if m.Model != "hy3" || m.Tokens != (Tokens{200, 80, 1000, 0, 0, 0}) || !m.Time.Equal(ms(1790503205000)) {
 		t.Fatalf("the reply: %+v", m)
 	}
 	// the second reply's own total is its last line's: 9999 − 7777 cached
-	if n := cs["m2"]; n.Tokens != (Tokens{2222, 888, 7777, 0, 0}) {
+	if n := cs["m2"]; n.Tokens != (Tokens{2222, 888, 7777, 0, 0, 0}) {
 		t.Fatalf("the second reply: %+v", n)
 	}
 	// three brought over from its older history: input_tokens, no cache, and
@@ -103,7 +103,7 @@ func TestWorkBuddyCallsSkipsMagpiesGateway(t *testing.T) {
 	if !ok {
 		t.Fatalf("no call for the user's own custom provider: %+v", cs)
 	}
-	if m.Model != "glm-5" || m.Tokens != (Tokens{1200, 80, 0, 0, 0}) {
+	if m.Model != "glm-5" || m.Tokens != (Tokens{1200, 80, 0, 0, 0, 0}) {
 		t.Fatalf("the user's own: %+v", m)
 	}
 }

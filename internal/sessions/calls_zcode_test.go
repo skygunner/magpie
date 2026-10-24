@@ -35,10 +35,10 @@ func TestZCodeCalls(t *testing.T) {
 	if _, dup := cs["msg_z3"]; dup {
 		t.Fatalf("a call made to magpie's gateway was read from the database too: %+v", cs["msg_z3"])
 	}
-	if b := cs["msg_z4"]; b.Model != "glm-5.1-air" || b.Tokens != (Tokens{50, 5, 0, 0, 0}) {
+	if b := cs["msg_z4"]; b.Model != "glm-5.1-air" || b.Tokens != (Tokens{50, 5, 0, 0, 0, 0}) {
 		t.Fatalf("the subagent's reply: %+v", b)
 	}
-	if c := cs["msg_z5"]; c.Tokens != (Tokens{10, 1, 0, 0, 0}) {
+	if c := cs["msg_z5"]; c.Tokens != (Tokens{10, 1, 0, 0, 0, 0}) {
 		t.Fatalf("ses_zcC's reply: %+v", c)
 	}
 }

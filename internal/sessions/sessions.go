@@ -52,6 +52,13 @@ type Tokens struct {
 	// CacheWrite1h is how many of CacheWrite were written to be kept for an
 	// hour, where the agent says (Claude Code's cache_creation)
 	CacheWrite1h int `json:"cache_write_1h,omitempty"`
+	// CacheUnknown is how many of the prompt's tokens were spent on calls
+	// whose vendor counted no cache (#3470): the gateway knows (the
+	// plugin's magpie_cache_unknown), the agent's own session file can't —
+	// it was told zeros. A hit rate over Tokens leaves them out of its
+	// denominator, as usage.Totals does (#3464). Zero when nothing said
+	// so.
+	CacheUnknown int `json:"cache_unknown,omitempty"`
 }
 
 func (t *Tokens) add(u Tokens) {
@@ -60,6 +67,7 @@ func (t *Tokens) add(u Tokens) {
 	t.CacheRead += u.CacheRead
 	t.CacheWrite += u.CacheWrite
 	t.CacheWrite1h += u.CacheWrite1h
+	t.CacheUnknown += u.CacheUnknown
 }
 
 func (t *Tokens) sub(u Tokens) {
@@ -68,6 +76,7 @@ func (t *Tokens) sub(u Tokens) {
 	t.CacheRead -= u.CacheRead
 	t.CacheWrite -= u.CacheWrite
 	t.CacheWrite1h -= u.CacheWrite1h
+	t.CacheUnknown -= u.CacheUnknown
 }
 
 // ccCacheCreation is Claude Code's cache writes split by how long they are

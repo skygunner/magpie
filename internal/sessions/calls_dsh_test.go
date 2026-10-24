@@ -50,14 +50,14 @@ func TestDshCalls(t *testing.T) {
 	// really answered, once here as a nameless local session. dsh-gw holds
 	// one such call and one of its own.
 	// dsh-gw's own call is kept; only its gateway one is left out
-	if gw := by["dsh-gw"]; len(gw) != 1 || gw[0].Upstream != "jieyue" || gw[0].Tokens != (Tokens{30, 7, 0, 0, 0}) {
+	if gw := by["dsh-gw"]; len(gw) != 1 || gw[0].Upstream != "jieyue" || gw[0].Tokens != (Tokens{30, 7, 0, 0, 0, 0}) {
 		t.Fatalf("dsh-gw's own call: %+v", gw)
 	}
 	for _, c := range cs {
 		if c.Upstream == "magpie" || c.Upstream == "dial" {
 			t.Fatalf("a call through magpie's gateway was counted here: %+v", c)
 		}
-		if c.Tokens == (Tokens{700, 90, 5000, 0, 0}) {
+		if c.Tokens == (Tokens{700, 90, 5000, 0, 0, 0}) {
 			t.Fatalf("the gateway's own call was counted here: %+v", c)
 		}
 	}
@@ -74,7 +74,7 @@ func TestDshCalls(t *testing.T) {
 	// carry: spent once, in dsh-a
 	seeded := 0
 	for _, c := range cs {
-		if c.Tokens == (Tokens{100, 20, 1000, 0, 0}) {
+		if c.Tokens == (Tokens{100, 20, 1000, 0, 0, 0}) {
 			seeded++
 		}
 	}
@@ -89,22 +89,22 @@ func TestDshCalls(t *testing.T) {
 	// Call.Requested what was asked for, and Call.Upstream the provider the
 	// file recorded — all three are what the Requests table's columns read.
 	if a[0].Model != "deepseek-v4-flash-sg" || a[0].Requested != "deepseek-v4-flash" ||
-		a[0].Upstream != "workbuddy-ai" || a[0].Tokens != (Tokens{10, 5, 200, 0, 0}) {
+		a[0].Upstream != "workbuddy-ai" || a[0].Tokens != (Tokens{10, 5, 200, 0, 0, 0}) {
 		t.Fatalf("dsh-a's newest call (asked deepseek-v4-flash, answered deepseek-v4-flash-sg): %+v", a[0])
 	}
-	if a[1].Tokens != (Tokens{7, 3, 0, 0, 0}) {
+	if a[1].Tokens != (Tokens{7, 3, 0, 0, 0, 0}) {
 		t.Fatalf("the subagent's call: %+v", a[1])
 	}
 	// answered with the very model asked for: not a swap, and the two agree
 	if a[2].Model != "deepseek-v4-pro" || a[2].Requested != "deepseek-v4-pro" ||
-		a[2].Upstream != "deepseek" || a[2].Tokens != (Tokens{100, 20, 1000, 0, 0}) ||
+		a[2].Upstream != "deepseek" || a[2].Tokens != (Tokens{100, 20, 1000, 0, 0, 0}) ||
 		!a[2].Time.Equal(ms(1790503205000)) {
 		t.Fatalf("dsh-a's first call: %+v", a[2])
 	}
-	if c := by["dsh-c"][0]; c.Tokens != (Tokens{50, 10, 0, 0, 0}) {
+	if c := by["dsh-c"][0]; c.Tokens != (Tokens{50, 10, 0, 0, 0, 0}) {
 		t.Fatalf("dsh-c's own call: %+v", c)
 	}
-	if d := by["dsh-d"][0]; d.Tokens != (Tokens{1, 2, 0, 0, 0}) {
+	if d := by["dsh-d"][0]; d.Tokens != (Tokens{1, 2, 0, 0, 0, 0}) {
 		t.Fatalf("dsh-d's own call: %+v", d)
 	}
 }

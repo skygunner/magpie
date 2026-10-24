@@ -23,6 +23,37 @@ func GatewaySessionWindowExcept(since time.Time, nativeKeys map[string]bool) ([]
 	return gatewaySessionSnapshot(since, nativeKeys)
 }
 
+// NativeSessionUnknown says, for each native-keyed session (key
+// "agent|id"), how many prompt tokens its calls' vendors counted no cache
+// of (#3470): the agent's own session file can't tell - the gateway told
+// it zeros - so the sessions read joins it back from the ledger side,
+// where the plugin's magpie_cache_unknown stayed. Read from the one kept
+// projection, so an ask costs no log pass. Days before since are left out
+// (all time when since is zero); the join is whole-session, as the list
+// row it feeds is.
+func NativeSessionUnknown(since time.Time, nativeKeys map[string]bool) map[string]int {
+	if len(nativeKeys) == 0 {
+		return nil
+	}
+	from := ""
+	if d, ok := localMidnight(since); ok {
+		from = d
+	}
+	out := map[string]int{}
+	for _, s := range gatewayProjection().sessions {
+		if !nativeKeys[s.Agent+"|"+s.ID] {
+			continue
+		}
+		for _, d := range s.Daily {
+			if from != "" && d.Date < from {
+				continue
+			}
+			out[s.Agent+"|"+s.ID] += d.CacheUnknown
+		}
+	}
+	return out
+}
+
 type GatewayDayUsage struct {
 	Date, Agent, Model string
 	sessions.Tokens
@@ -128,6 +159,7 @@ func gatewaySessionFrom(s GatewaySession, date string) (GatewaySession, bool) {
 		w.CacheRead += d.CacheRead
 		w.CacheWrite += d.CacheWrite
 		w.CacheWrite1h += d.CacheWrite1h
+		w.CacheUnknown += d.CacheUnknown
 		at, ok := models[d.Model]
 		if !ok {
 			at = len(w.Models)
@@ -248,6 +280,7 @@ func gatewayDays(ss []GatewaySession) []GatewayDayUsage {
 			v.CacheRead += d.CacheRead
 			v.CacheWrite += d.CacheWrite
 			v.CacheWrite1h += d.CacheWrite1h
+			v.CacheUnknown += d.CacheUnknown
 			v.Cost += d.Cost
 			v.Priced = v.Priced && d.Priced
 			groups[k] = v
@@ -319,7 +352,8 @@ func buildGatewaySessions(snapshot *logSnapshot, since time.Time, nativeKeys map
 				cost = r.CostAt(*p)
 			}
 		}
-		tokens := sessions.Tokens{Input: r.Input, Output: r.Output, CacheRead: r.CacheRead, CacheWrite: r.CacheWrite, CacheWrite1h: r.CacheWrite1h}
+		tokens := sessions.Tokens{Input: r.Input, Output: r.Output, CacheRead: r.CacheRead, CacheWrite: r.CacheWrite, CacheWrite1h: r.CacheWrite1h,
+			CacheUnknown: r.cacheUnknownIn()}
 		model := r.Model // priced above by the id it was made under
 		if alias != nil {
 			model = keep.of(alias(model))
@@ -336,6 +370,7 @@ func buildGatewaySessions(snapshot *logSnapshot, since time.Time, nativeKeys map
 			d.CacheRead += tokens.CacheRead
 			d.CacheWrite += tokens.CacheWrite
 			d.CacheWrite1h += tokens.CacheWrite1h
+			d.CacheUnknown += tokens.CacheUnknown
 			d.Cost += cost
 			d.Priced = d.Priced && priced
 			if d.first.IsZero() || r.Time.Before(d.first) {
@@ -350,6 +385,7 @@ func buildGatewaySessions(snapshot *logSnapshot, since time.Time, nativeKeys map
 		s.CacheRead += r.CacheRead
 		s.CacheWrite += r.CacheWrite
 		s.CacheWrite1h += r.CacheWrite1h
+		s.CacheUnknown += tokens.CacheUnknown
 		m := models[k][model]
 		if m == nil {
 			m = &GatewayModel{Model: model, Priced: true}
@@ -408,6 +444,7 @@ func (m *GatewayModel) addRecord(r Record, p *catalog.Price) {
 	m.CacheRead += r.CacheRead
 	m.CacheWrite += r.CacheWrite
 	m.CacheWrite1h += r.CacheWrite1h
+	m.CacheUnknown += r.cacheUnknownIn()
 	if r.Input+r.Output == 0 {
 		return
 	}

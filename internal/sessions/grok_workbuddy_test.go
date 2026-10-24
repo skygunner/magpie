@@ -28,10 +28,10 @@ func TestGrok(t *testing.T) {
 		t.Fatalf("grok: %+v", g)
 	}
 	// the cache out of the input, the subagent's turn in once
-	if m := model(g, "grok-4.7-build"); m.Tokens != (Tokens{700, 100, 2800, 0, 0}) {
+	if m := model(g, "grok-4.7-build"); m.Tokens != (Tokens{700, 100, 2800, 0, 0, 0}) {
 		t.Fatalf("build: %+v", m)
 	}
-	if m := model(g, "grok-4.7-mini"); m.Tokens != (Tokens{300, 30, 100, 0, 0}) {
+	if m := model(g, "grok-4.7-mini"); m.Tokens != (Tokens{300, 30, 100, 0, 0, 0}) {
 		t.Fatalf("mini, the subagent's in: %+v", m)
 	}
 	// the hook that ran as it was closed, a day on, isn't when it was at work
@@ -47,7 +47,7 @@ func TestGrok(t *testing.T) {
 	}
 	// the fork: what it copied counted in the session it came from
 	f := find(t, ss, "grok", grokFork)
-	if f.Tokens != (Tokens{100, 30, 300, 0, 0}) || f.Title != "Parser port, another way" {
+	if f.Tokens != (Tokens{100, 30, 300, 0, 0, 0}) || f.Title != "Parser port, another way" {
 		t.Fatalf("fork: %+v", f)
 	}
 	if !f.Start.Equal(at("2026-09-27T09:00:00.25Z")) || !f.Last.Equal(at("2026-09-27T09:00:30Z")) {
@@ -90,7 +90,7 @@ func TestWorkBuddy(t *testing.T) {
 	}
 	// a reply's usage counted once, however many of its lines carry it: the
 	// last line's is the reply's own total, here m2's (9999 − 7777 cached)
-	if m := model(w, "hy3"); m.Tokens != (Tokens{2422, 968, 8777, 0, 0}) {
+	if m := model(w, "hy3"); m.Tokens != (Tokens{2422, 968, 8777, 0, 0, 0}) {
 		t.Fatalf("hy3: %+v", m)
 	}
 	if !w.Start.Equal(at("2026-09-27T10:00:00Z")) || !w.Last.Equal(at("2026-09-27T10:00:10Z")) {
@@ -102,7 +102,7 @@ func TestWorkBuddy(t *testing.T) {
 	if o.Cwd != "/work/wb-old" || o.Title != "Quarterly report" {
 		t.Fatalf("old: %+v", o)
 	}
-	if m := model(o, "auto"); m.Tokens != (Tokens{5500, 130, 0, 0, 0}) {
+	if m := model(o, "auto"); m.Tokens != (Tokens{5500, 130, 0, 0, 0, 0}) {
 		t.Fatalf("auto: %+v", m)
 	}
 
