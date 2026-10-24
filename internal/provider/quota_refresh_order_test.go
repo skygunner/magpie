@@ -334,3 +334,107 @@ func TestQuotaMergeStartsWithNoCards(t *testing.T) {
 		})
 	}
 }
+
+// #3139's second report (Lemonawa): the first single-card refresh of a
+// key's balance or plan, before the page has ever read the whole list,
+// kept the read out of the cache, so every card read fell back to the
+// reading just written on disk and carried its date — the client showed
+// "暂无最新" of a read made seconds ago. Both key cards go through the
+// same mergeCards the Claude fix (a11d605e) opens; these reproduce the
+// report's five steps on each kind, against a fake balance endpoint the
+// report's own shape.
+func TestFirstKeyCardRefreshStaysFresh(t *testing.T) {
+	for _, kind := range []string{"balance", "plan"} {
+		t.Run(kind, func(t *testing.T) {
+			isolateRefreshes(t)
+			calls := 0
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Header.Get("Authorization") != "Bearer sk-1234" {
+					w.WriteHeader(http.StatusUnauthorized)
+					return
+				}
+				calls++
+				if kind == "balance" {
+					fmt.Fprintf(w, `{"data":{"balance":12.34}}`)
+				} else {
+					fmt.Fprintf(w, `{"usage":{"rolling":{"percent":42}}}`)
+				}
+			}))
+			t.Cleanup(srv.Close)
+			// the plan read is asked of the hosts a plan is known at, so
+			// the plan provider speaks OpenCode Go's and the transport
+			// brings it to the fake (as TestRefreshUsageKeepsNewerKeyReading
+			// does); the balance read goes to the fake's own URL, the
+			// report's $data.balance path
+			chat := "https://opencode.ai/zen/go/v1"
+			if kind == "balance" {
+				chat = srv.URL + "/v1"
+			}
+			p := Provider{ID: "test-balance", Name: "Test Balance", Key: "sk-1234", Chat: chat}
+			if kind == "balance" {
+				p.BalanceURL, p.BalancePath = srv.URL+"/balance", "$data.balance"
+			} else {
+				old := http.DefaultClient.Transport
+				http.DefaultClient.Transport = rewrite{srv}
+				t.Cleanup(func() { http.DefaultClient.Transport = old })
+			}
+			if err := Save(p); err != nil {
+				t.Fatal(err)
+			}
+			ctx := context.Background()
+			card := func() *SubscriptionQuota {
+				t.Helper()
+				return cardOf(CachedCards(time.Now()), "test-balance", "")
+			}
+			// 1: a cold start has no card of it
+			if q := card(); q != nil {
+				t.Fatalf("a cold start has a card: %+v", *q)
+			}
+			// 2: the refresh reads it, and the card it leaves is fresh —
+			// no date, the read's own time
+			RefreshUsage(ctx, "test-balance", "")
+			assertFresh := func() {
+				t.Helper()
+				q := card()
+				// a balance card dates its read (ReadAt); a plan card's
+				// freshness is AsOf nil alone, which plan cards never set
+				if q == nil || q.Error != "" || q.AsOf != nil || kind == "balance" && q.ReadAt == nil {
+					t.Fatalf("card after the first refresh: %+v, want fresh", q)
+				}
+				if kind == "balance" {
+					if q.Balance != "$12.34" {
+						t.Fatalf("balance %q, want $12.34", q.Balance)
+					}
+				} else if len(q.Windows) != 1 || q.Windows[0].Used != 42 {
+					t.Fatalf("windows %+v, want 42", q.Windows)
+				}
+			}
+			assertFresh()
+			// 3: reading the cards again asks nothing and stays fresh
+			assertFresh()
+			if calls != 1 {
+				t.Fatalf("cards read asked again: %d calls", calls)
+			}
+			// 4: the page's whole read asks again and stays fresh
+			if kind == "balance" {
+				keyBalanceCache.Lock()
+				keyBalanceCache.at = time.Time{}
+				keyBalanceCache.Unlock()
+				if qs := KeyBalances(ctx); len(qs) != 1 || qs[0].Error != "" || qs[0].AsOf != nil {
+					t.Fatalf("whole read: %+v", qs)
+				}
+			} else {
+				planQuotaCache.Lock()
+				planQuotaCache.at = time.Time{}
+				planQuotaCache.Unlock()
+				if qs := PlanQuotas(ctx); len(qs) != 1 || qs[0].Error != "" || qs[0].AsOf != nil {
+					t.Fatalf("whole read: %+v", qs)
+				}
+			}
+			assertFresh()
+			if calls != 2 {
+				t.Fatalf("whole read made %d calls", calls)
+			}
+		})
+	}
+}
