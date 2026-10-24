@@ -394,3 +394,20 @@ TestProgram 红）。TestPluginSOCKSProxy 红是已知 #2207（本机 Bun 1.4.3�
 - 临时物清理：/tmp/magpie-bisect、/tmp/magpie-probe worktree 已删；调试测试文件
   （zz_probe/zz_debug）已删；无遗留 debug 输出。
 - docker1 未用到（无需测试容器）。
+
+## 2026-10-24 上游交付说明同步（用户明确授权）
+
+本轮仅同步 #3349/#3365/#3370/#3374/#2008 的既有交付留言及 fork 维护记录。
+用户本轮授权更新上游留言，覆盖此前返工阶段“草稿不发送”的限制；不涉及 PR、产品修改或归档删除。
+当前产品头：r3-batch 7f927133、r3-union 275b7a2e、r3-rests d639c8d7；维护起点 c1e0d235。
+
+| M | 目标 | 修改范围 | 验收标准 | 验证方式 | 状态 |
+|---|---|---|---|---|---|
+| S0 | 固定身份、版本与待发布正文 | 5 个线程、7 条本人留言；原文备份与更正正文 | 账号 skygunner；SHA 读回一致；语言、范围、依赖及证据准确 | GitHub GET；本地 git/既有证据核对 | 完成 |
+| S1 | 更新旧交付说明 | 5 条主更正 + 2 条历史转向提示 | 原 permalink 不变；原文折叠保留；逐条读回正文一致 | GitHub 更新及 GET 读回 | 完成：7/7 正文一致 |
+| S2 | 持久化发布记录 | docs/fork 台账、发布记录、摘要及 PLAN | receipts/body hashes 可复核；台账校验过；普通推送 dev 后 SHA 一致 | generate.py --selftest/--write；git diff --check；远端读回 | 发布回执 7/7、19 项台账负例与 diff 检查通过；待推送读回 |
+
+发布完成：5 个线程、7 条既有留言已编辑并逐条读回一致；新建留言 0，删除留言 0。
+原文、最终正文、GitHub updated_at 和 SHA256 回执：docs/fork/evidence/upstream-sync-2026-10-24/comments.json。
+最后一次 GitHub 更新为 2026-10-24T04:46:54Z；本轮读回核对完成于 2026-10-24T04:47:56Z。
+本轮不重跑产品测试；沿用对应 exact head 的已有验证，明确保留全量 exit=1 与未执行环境。

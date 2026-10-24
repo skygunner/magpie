@@ -1,6 +1,21 @@
 {
   "meta": {
     "schema": 2,
+    "last_communication_sync": {
+      "completed_at": "2026-10-24T04:47:56Z",
+      "repository": "yetone/magpie",
+      "issues": [
+        3349,
+        3365,
+        3370,
+        3374,
+        2008
+      ],
+      "comments_updated": 7,
+      "new_comments": 0,
+      "evidence": "docs/fork/evidence/upstream-sync-2026-10-24/comments.json",
+      "note": "Only the specified existing comments were updated. This does not change upstream-adoption or product-verification status."
+    },
     "checked_at": "2026-10-24T05:30:00Z",
     "last_checked_upstream_sha": "b437e4adb4dba82446e0d625b040a8e2d95004b4",
     "review_refs": {
@@ -226,8 +241,8 @@
       "base": "upstream/main at rebuild; r3 base b437e4adb4dba82446e0d625b040a8e2d95004b4",
       "comments": {
         "2008": [
-          "https://github.com/yetone/magpie/issues/2008#issuecomment-6348175184",
-          "https://github.com/yetone/magpie/issues/2008#issuecomment-6364369875"
+          "https://github.com/yetone/magpie/issues/2008#issuecomment-6364369875",
+          "https://github.com/yetone/magpie/issues/2008#issuecomment-6348175184"
         ]
       },
       "sources": {
@@ -4533,6 +4548,127 @@
     ],
     "deletions_this_round": 0
   },
+  "comment_publications": [
+    {
+      "issue": 3349,
+      "fix_id": "u-provider-decide-set-on-a-signed-in-provider-stay-b2497dd8",
+      "comment_id": 6364310053,
+      "url": "https://github.com/yetone/magpie/issues/3349#issuecomment-6364310053",
+      "role": "delivery_correction",
+      "author": "skygunner",
+      "language": "en",
+      "status": "published_verified",
+      "updated_at": "2026-10-24T04:46:43Z",
+      "verified_at": "2026-10-24T04:47:56Z",
+      "delivery": "r3-batch",
+      "delivery_head": "7f927133be68a452f662d0c7445a1432e66c426a",
+      "body_sha256": "02850c1e80dd442274d34f797e522fdce759f53bac83eca1021d3c2f0347a88a",
+      "previous_body_sha256": "3239366b2a0031144611ad1f3614b5c2c7cdf18280e16f5bc8a44786983fa119",
+      "evidence": "docs/fork/evidence/upstream-sync-2026-10-24/comments.json"
+    },
+    {
+      "issue": 3349,
+      "fix_id": "u-provider-decide-set-on-a-signed-in-provider-stay-b2497dd8",
+      "comment_id": 6364831515,
+      "url": "https://github.com/yetone/magpie/issues/3349#issuecomment-6364831515",
+      "role": "redirect",
+      "author": "skygunner",
+      "language": "en",
+      "status": "published_verified",
+      "updated_at": "2026-10-24T04:46:45Z",
+      "verified_at": "2026-10-24T04:47:56Z",
+      "delivery": "r3-batch",
+      "delivery_head": "7f927133be68a452f662d0c7445a1432e66c426a",
+      "body_sha256": "d7f7e7e7a6841e8f449956da319bfc95d963b1e65875c69d76760ae821129f70",
+      "previous_body_sha256": "d0896eac764fd506116cc9ad9ffd825e8476723ea35648a053ef4acb4c846368",
+      "evidence": "docs/fork/evidence/upstream-sync-2026-10-24/comments.json"
+    },
+    {
+      "issue": 3365,
+      "fix_id": "u-redact-a-placeholder-url-s-password-and-version--4b6d93d9",
+      "comment_id": 6364536473,
+      "url": "https://github.com/yetone/magpie/issues/3365#issuecomment-6364536473",
+      "role": "delivery_correction",
+      "author": "skygunner",
+      "language": "zh-CN",
+      "status": "published_verified",
+      "updated_at": "2026-10-24T04:46:47Z",
+      "verified_at": "2026-10-24T04:47:56Z",
+      "delivery": "r3-batch",
+      "delivery_head": "7f927133be68a452f662d0c7445a1432e66c426a",
+      "body_sha256": "1eeb4b5d7554ad33cb10ed9e405a0464f671cab057ebd96438e09765d7690530",
+      "previous_body_sha256": "977e2d7d9c1ad14117e307977bb9aac74036674b8b94f1e33b2333f4045cc2c8",
+      "evidence": "docs/fork/evidence/upstream-sync-2026-10-24/comments.json"
+    },
+    {
+      "issue": 3370,
+      "fix_id": "u-gateway-a-union-s-array-half-leaves-the-object-h-b2336968",
+      "comment_id": 6363745685,
+      "url": "https://github.com/yetone/magpie/issues/3370#issuecomment-6363745685",
+      "role": "delivery_correction",
+      "author": "skygunner",
+      "language": "zh-CN",
+      "status": "published_verified",
+      "updated_at": "2026-10-24T04:46:48Z",
+      "verified_at": "2026-10-24T04:47:56Z",
+      "delivery": "r3-union",
+      "delivery_head": "275b7a2ea558fcc25c24b71ec077bfe000e83f04",
+      "body_sha256": "b354dbe82bffba8aaa9a03ff02025e053f5967deabf3e9d959caf1c092255f4d",
+      "previous_body_sha256": "4ac627118604472e7494e45bf529069af0ad9f39344a996c3dd90a082ee258be",
+      "evidence": "docs/fork/evidence/upstream-sync-2026-10-24/comments.json"
+    },
+    {
+      "issue": 3374,
+      "fix_id": "u-gateway-a-subagent-s-task-reaches-a-responses-ap-67b57000",
+      "comment_id": 6364109042,
+      "url": "https://github.com/yetone/magpie/issues/3374#issuecomment-6364109042",
+      "role": "delivery_correction",
+      "author": "skygunner",
+      "language": "en",
+      "status": "published_verified",
+      "updated_at": "2026-10-24T04:46:50Z",
+      "verified_at": "2026-10-24T04:47:56Z",
+      "delivery": "r3-batch",
+      "delivery_head": "7f927133be68a452f662d0c7445a1432e66c426a",
+      "body_sha256": "44e7fa6e22ce870f93e03f5ead4eed74cc907ecb520c0c19bcfa1da3141c76d0",
+      "previous_body_sha256": "32ac2ca4c4a561575cbe568dff97504e3b7e487199462d7f190ae63bc05ba945",
+      "evidence": "docs/fork/evidence/upstream-sync-2026-10-24/comments.json"
+    },
+    {
+      "issue": 2008,
+      "fix_id": "u-fix-gateway-persist-provider-rest-deadlines-acro-8d72abec",
+      "comment_id": 6364369875,
+      "url": "https://github.com/yetone/magpie/issues/2008#issuecomment-6364369875",
+      "role": "delivery_correction",
+      "author": "skygunner",
+      "language": "en",
+      "status": "published_verified",
+      "updated_at": "2026-10-24T04:46:52Z",
+      "verified_at": "2026-10-24T04:47:56Z",
+      "delivery": "r3-rests",
+      "delivery_head": "d639c8d79f3be8f49c8acbcfbe518828210c32da",
+      "body_sha256": "73517efee8ffca4bb5b6039700fb571274afb16656d9feaa5228f9593ae676c1",
+      "previous_body_sha256": "6095c783569ef7e601ae34840cbb6fb3a7ed96121c7b885579b6d060cc6c63c8",
+      "evidence": "docs/fork/evidence/upstream-sync-2026-10-24/comments.json"
+    },
+    {
+      "issue": 2008,
+      "fix_id": "u-fix-gateway-persist-provider-rest-deadlines-acro-8d72abec",
+      "comment_id": 6348175184,
+      "url": "https://github.com/yetone/magpie/issues/2008#issuecomment-6348175184",
+      "role": "redirect",
+      "author": "skygunner",
+      "language": "en",
+      "status": "published_verified",
+      "updated_at": "2026-10-24T04:46:54Z",
+      "verified_at": "2026-10-24T04:47:56Z",
+      "delivery": "r3-rests",
+      "delivery_head": "d639c8d79f3be8f49c8acbcfbe518828210c32da",
+      "body_sha256": "7dc3dcf36092056b528f2f347e262a8d8521754c760a2577e95a8c87013b5ee3",
+      "previous_body_sha256": "84d5547be14d2255c4a4571ab3be1a23870bff288735377000c78323309f0e2e",
+      "evidence": "docs/fork/evidence/upstream-sync-2026-10-24/comments.json"
+    }
+  ],
   "deliveries": {
     "r3-batch": {
       "branch": "r3-batch",
