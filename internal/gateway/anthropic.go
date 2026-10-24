@@ -1566,7 +1566,7 @@ func (e *anthropicEncoder) event(ev Event) {
 			"content_block": searchResultBlock(id, ev.Hits)})
 		e.w.event("content_block_stop", map[string]any{"type": "content_block_stop", "index": e.index})
 		e.index++
-		e.citing = ev.Hits
+		e.citing = accumulateCitations(e.citing, ev.Hits)
 	case KError:
 		e.close()
 		typ := "api_error"
@@ -1647,7 +1647,7 @@ func renderAnthropic(res Result, model string) []byte {
 			content = append(content,
 				map[string]any{"type": "server_tool_use", "id": id, "name": "web_search", "input": map[string]any{"query": p.Text}},
 				searchResultBlock(id, p.Hits))
-			citing = p.Hits
+			citing = accumulateCitations(citing, p.Hits)
 		}
 	}
 	id := anthropicID(res.ID)
@@ -1664,6 +1664,24 @@ func renderAnthropic(res Result, model string) []byte {
 	}
 	b, _ := json.Marshal(reply)
 	return b
+}
+
+// accumulateCitations adds src's pages that carry an excerpt to the pages a
+// reply's earlier searches found: several searches may run before the text
+// that reads them (#3447), and each page quoted once is cited once, in
+// search order. A page cited already keeps its first excerpt, and one
+// nothing was quoted of adds nothing — none is invented.
+func accumulateCitations(dst, src []Hit) []Hit {
+	for _, h := range src {
+		if h.Cited == "" {
+			continue
+		}
+		if slices.ContainsFunc(dst, func(p Hit) bool { return p.URL == h.URL }) {
+			continue
+		}
+		dst = append(dst, h)
+	}
+	return dst
 }
 
 // citationsOf is the citations a text block that follows a search of hits

@@ -212,8 +212,13 @@ func TestCustomToolRefusalWordings(t *testing.T) {
 		if !customToolRefusal.Match(wordsOf([]byte(b))) {
 			t.Errorf("not known: %s", b)
 		}
+		// both bad-request statuses take the next member: xAI's is a 422
+		// (#3392), DeepSeek's a 400 (#2656)
 		if !shapeRefused(400, []byte(b)) {
-			t.Errorf("no next member over: %s", b)
+			t.Errorf("no next member over a 400: %s", b)
+		}
+		if !shapeRefused(422, []byte(b)) {
+			t.Errorf("no next member over a 422: %s", b)
 		}
 	}
 	for _, b := range []string{
