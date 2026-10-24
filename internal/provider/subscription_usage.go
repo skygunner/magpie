@@ -46,6 +46,11 @@ type QuotaWindow struct {
 	Amount float64 `json:"amount,omitempty"`
 	Limit  float64 `json:"limit,omitempty"`
 	Unit   string  `json:"unit,omitempty"`
+	// AmountUnknown: the vendor gave the window a limit but no count of
+	// what was used (a plugin's "amount": null) — Amount's 0 is not known,
+	// not nothing used, so the count says the vendor's own words instead
+	// (#3487).
+	AmountUnknown bool `json:"amountUnknown,omitempty"`
 	// RunsOutAt is when the soonest of what is left is lost, and RunsOut
 	// how much (in Unit), when it runs out apart from the window's reset:
 	// WorkBuddy's credits come in packages that each end on their own
@@ -1246,7 +1251,7 @@ func compactNumber(n float64) string {
 // "355 / 500 credits" used, or what is left of it when left (#659); the
 // vendor's Display when it doesn't count in amounts.
 func (w QuotaWindow) Count(left bool) string {
-	if w.Limit <= 0 {
+	if w.Limit <= 0 || w.AmountUnknown {
 		return w.Display
 	}
 	n := w.Amount

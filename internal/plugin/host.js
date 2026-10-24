@@ -2389,7 +2389,7 @@ async function usageOf(provider, account) {
       resetsAt: when(w?.resetsAt),
       resetSecs: Math.max(0, Math.round(num(w?.resetSecs))),
       display: text(w?.display),
-      amount: Math.max(0, num(w?.amount)),
+      amount: w?.amount == null ? null : Math.max(0, num(w?.amount)), // null kept: the vendor said no count (#3487)
       limit: Math.max(0, num(w?.limit)),
       unit: text(w?.unit),
       span: Math.max(0, num(w?.span)),

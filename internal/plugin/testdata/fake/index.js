@@ -243,6 +243,9 @@ export const FakePlugin = async ({ client }) => ({
             runsOutAt: Math.floor(born / 1000) + 2 * 86400, runsOut: 80 },
           // a run-out the host can't read is not told
           { name: "Extra", used: 250, display: "$2.50", aside: true, runsOutAt: "not a date", runsOut: "12" },
+          // its count is not said: a limit with the amount null explicit
+          // (#3487: cloudflare-workers-ai 0.0.3 answered amount: null)
+          { name: "Daily", used: 0, resetsAt: Math.floor(born / 1000) + 86400, span: 86400, amount: null, limit: 10000, unit: "Neurons" },
         ],
       }
     },
