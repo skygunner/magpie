@@ -28,6 +28,7 @@ import (
 //	Codex        <codex home>/hooks.json     the same shape
 //	Gemini CLI   ~/.gemini/settings.json     the same shape, timeout in ms
 //	Cursor       ~/.cursor/hooks.json        hooks.<event>: [{command, timeout, matcher}], version 1
+//	Reasonix      <Reasonix home>/settings.json hooks.<Event>: [{match, command, timeout_ms}]
 //
 // A portable event ("turn-end") is the same moment in each agent, under
 // each one's own name; an agent's own event ("codex:PermissionRequest")
@@ -71,17 +72,18 @@ var HookTools = []string{"shell", "edit"}
 
 // hookSpec is how one agent keeps its hooks.
 type hookSpec struct {
-	path   string
-	events map[string]string // portable → the agent's own
-	native []string          // every event the agent has
-	tools  map[string]string // shell, edit → the agent's matcher for them
-	flat   bool              // Cursor: an entry is the command itself, not a group of them
-	ms     bool              // Gemini: timeouts in milliseconds
-	toml   bool              // Grok: hooks are [[hooks.<Event>]] tables in config.toml, not JSON
+	path     string
+	events   map[string]string // portable → the agent's own
+	native   []string          // every event the agent has
+	tools    map[string]string // shell, edit → the agent's matcher for them
+	flat     bool              // Cursor: an entry is the command itself, not a group of them
+	ms       bool              // Gemini, Reasonix: timeouts in milliseconds
+	reasonix bool              // Reasonix: direct {match, command, timeout} entries, not Claude's nested groups
+	toml     bool              // Grok: hooks are [[hooks.<Event>]] tables in config.toml, not JSON
 }
 
 // hookAgents are the agents magpie can give hooks to.
-var hookAgents = []string{"claude", "codex", "cursor", "gemini", "grok", "grok-app"}
+var hookAgents = []string{"claude", "codex", "cursor", "gemini", "grok", "grok-app", "reasonix"}
 
 // grokHookEvents are the events the Grok CLI fires (docs/user-guide/10-hooks.md),
 // shared by Grok Build and the Grok App that runs it. Only the ones magpie
@@ -176,6 +178,19 @@ func hookSpecOf(t *Target) (*hookSpec, string) {
 			tools: map[string]string{"shell": "Shell", "edit": "Write"},
 			flat:  true,
 		}, ""
+	case "reasonix":
+		// Reasonix Studio 2.50.0: hooks.<Event>[] contains direct entries
+		// with match (a full tool-name regex), command, and timeout in ms.
+		return &hookSpec{
+			path: filepath.Join(t.Agent.Dir, "settings.json"),
+			events: map[string]string{"turn-end": "Stop", "after-tool": "PostToolUse", "before-tool": "PreToolUse",
+				"prompt": "UserPromptSubmit", "session-start": "SessionStart"},
+			native: []string{"PreToolUse", "PostToolUse", "PostToolUseFailure", "PermissionRequest", "UserPromptSubmit",
+				"Stop", "StopFailure", "PostLLMCall", "SessionStart", "SessionEnd", "SubagentStart",
+				"SubagentStop", "Notification", "PreCompact"},
+			tools: map[string]string{"shell": "^bash$", "edit": "^(?:write_file|edit_file|multi_edit)$"},
+			ms:    true, reasonix: true,
+		}, ""
 	case "grok":
 		// Grok Build: [[hooks.<Event>]] tables in ~/.grok/config.toml
 		return grokHookSpec(filepath.Join(grokDir(), "config.toml")), ""
@@ -189,6 +204,19 @@ func hookSpecOf(t *Target) (*hookSpec, string) {
 
 // event is the agent's own name for h's event, or why it has none.
 func (sp *hookSpec) event(agent string, h *Hook) (string, error) {
+	if sp.reasonix {
+		// Invalid native regexes are refused before they reach Reasonix;
+		// portable tool kinds are its exact anchored tool-name matches.
+		match := h.Matcher
+		if !strings.Contains(h.Event, ":") {
+			match = sp.tools[h.Matcher]
+		}
+		if match != "" {
+			if _, err := regexp.Compile(match); err != nil {
+				return "", fmt.Errorf("Reasonix match %q is not a regular expression: %w", match, err)
+			}
+		}
+	}
 	if a, ev, ok := strings.Cut(h.Event, ":"); ok {
 		if !sameHookFamily(a, agent) {
 			return "", fmt.Errorf("%s is an event of another agent's", ev)
@@ -222,7 +250,16 @@ func (sp *hookSpec) entry(h *Hook, ev string) json.RawMessage {
 		return json.RawMessage(grokHookBlock(ev, m, h.Command, timeout))
 	}
 	var v any
-	if sp.flat {
+	if sp.reasonix {
+		entry := map[string]any{"command": h.Command}
+		if m != "" {
+			entry["match"] = m
+		}
+		if timeout > 0 {
+			entry["timeout"] = timeout
+		}
+		v = entry
+	} else if sp.flat {
 		v = struct {
 			Command string `json:"command"`
 			Timeout int    `json:"timeout,omitempty"`

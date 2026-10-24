@@ -73,6 +73,47 @@ agents RTK, a CLI that cuts shell output down before the model reads it.
 - A read of the page (`Read`, `Glance`) follows the links on the way to a few hundred paths, most of them many times over: each agent's skills folder for each skill, CC Switch's and the shared folder for each source. While the read holds the lock, `resolve` looks at each entry on the way once (`lookPart` in [`linkmemo.go`](../../internal/library/linkmemo.go)): one `Lstat`, and a `Readlink` for a link. Nothing is kept past the read, so a link made or moved on disk between two visits shows on the second. An entry that couldn't be looked at for another reason than its not being there is unknown and looked at again. One read had taken ~10,000 looks; on oxyuan's Windows machine that was ~1.3s a visit (#1771).
 - Skills installed together (`InstallSkills`, `InstallMarketSkill`, `AddNewSkills`, through `installFrom` and `installChange`) install each on its own. One the library lists from the same source, or a folder in the library's own skills folder holding exactly that skill's files (left by an install that stopped before the library was saved), is had already and goes in `Result.Had`. Its files are never written, so the user's edits stay. Another skill by that name, listed or only in the folder, or a folder that can't be read, is left as it is and goes in `Result.Skipped` with why. The rest are installed and named in `Result.Installed`. Only when nothing was installed or had does the change fail, with the first reason.
 
+## Reasonix Studio Library (#3401)
+
+Reasonix Studio 2.50.0 uses its own Library files (see
+[Reasonix's hook contract](https://github.com/esengine/DeepSeek-Reasonix/blob/studio-v2.50.0/internal/ext/hook/hook.go)
+and [skill conventions](https://github.com/esengine/DeepSeek-Reasonix/blob/studio-v2.50.0/internal/contract/config/paths.go)):
+
+- **MCP:** `[[plugins]]` in the Reasonix home `config.toml`, alongside the
+  user's providers. Each named server takes `type = "stdio"` with
+  `command`/`args`/`env`, or `type = "http"`/`"sse"` with a URL and optional
+  headers; tools turned off use `disabled_tools`. The array-table editor
+  updates only magpie's entries and leaves the user's settings and plugins.
+- **Skills:** `<Reasonix home>/skills` is its own folder; `~/.claude/skills`
+  is also read through `SkillsAlso: claude`. Reasonix independently reads
+  `~/.agents/skills`: it belongs in `readsShared`, not a `SkillsAlso` path
+  alias. The library accounts for already-shared skills instead of writing
+  another link. Project skills go in `.reasonix/skills`; Reasonix itself
+  also scans project `.agents`, `.agent` and `.claude` conventions, which
+  are not additional magpie project targets.
+- **Hooks:** `<Reasonix home>/settings.json` (separate from `config.toml`)
+  holds `hooks.<Event>[]` as a flat array of `{command, match?, timeout?}`.
+  It does **not** use Claude's `{matcher, hooks:[…]}` groups. `match` is
+  an anchored tool-name regular expression: the portable shell matcher
+  names `bash`, while edit names `write_file`, `edit_file` or `multi_edit`.
+  Timeouts are milliseconds (the portable Library timeout is seconds).
+  The native events match the vendor's `hook.Events` list: `PreToolUse`,
+  `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`,
+  `UserPromptSubmit`, `Stop`, `StopFailure`, `PostLLMCall`, `SessionStart`,
+  `SessionEnd`, `SubagentStart`, `SubagentStop`, `Notification`, `PreCompact`.
+  An invalid native regular expression is refused; unreadable files are
+  left as they are. User-owned or user-edited hooks and unrelated fields
+  are preserved on sync and removal.
+- **Runtime boundary:** paths come from the agent's resolved Reasonix home,
+  including `REASONIX_HOME` and Windows Studio's home. The library writes
+  only for a detected installation; its tests exercise the actual serializer
+  without fabricating a native CLI. Studio may need a reload to see updates.
+
+Covered by `TestReasonixPluginsMCP`, `TestReasonixHookWireFormat`,
+`TestReasonixHookSyncPreservesUser`,
+`TestReasonixHookBadFileAndModifiedEntry` and
+`TestReasonixSharedSkillAccounting`.
+
 ## Verification
 
 ```sh
