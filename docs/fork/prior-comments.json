@@ -651,5 +651,50 @@
   "type": "issue",
   "url": "https://github.com/yetone/magpie/issues/3147",
   "title": "Usage: read the agy model from conversations/*.db; agy calls are recorded with an empty model"
+ },
+ "3392": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3392#issuecomment-6380779544"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3392",
+  "title": "「bug」　调用x.ai的bug，claude调用400错误、codex调用422错误"
+ },
+ "3444": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3444#issuecomment-6380789247"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3444",
+  "title": "[Bug] Codex 官方模型经 Magpie 返回 502：WebSocket 收到 StatusMessageTooBig 关闭帧"
+ },
+ "3440": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3440#issuecomment-6380798386"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3440",
+  "title": "[Bug] Codex 官方订阅下「272K 时压缩」未生效，单次输入已达 359K"
+ },
+ "3447": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3447#issuecomment-6380807714"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3447",
+  "title": "[Bug] `web_search_20250305`: text 块始终没有 `citations[]`，依赖 `cited_text` 的客户端只能拿到 url+title（DSH 的  ..."
+ },
+ "3401": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3401#issuecomment-6380817606"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3401",
+  "title": "library: Reasonix Studio gets no MCP servers, skills or hooks"
  }
 }

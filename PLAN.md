@@ -1,3 +1,64 @@
+## 2026-10-24 新一轮修复（ZCode 会话十）：#3375–#3447 巡检后的未认领 issue
+
+上游新开 69 个 open issue（#3375–#3447）。逐条读帖并扫描评论区后：
+**已被他人认领/交付**（跳过不撞车）：#3377（Azir-11 websocket 补丁 + ggbdpq 验证）、
+#3382/#3388/#3399/#3416/#3418/#3427/#3435（ggbdpq）、#3386/#3421/#3424（JoeyWu 补丁）、
+#3397/#3398/#3419/#3420（JoeyWu 自带修法）、#3426（wssz527 自己的实现）；
+**报告者自带参考实现**（跳过）：#3423（louisgreen0726 分支）、#3425/#3429（chiperman
+提交）、#3430（mdwsk88 参考）、#3437（标题即 patch included）、#3442（xinghui 分支+测试）；
+**功能请求/产品决策**（跳过）：#3378 opencode2、#3381（double2tea 自备分支）、#3384/
+#3389 ZCode 券与套餐、#3385/#3400/#3428 路由策略增强、#3387 数据屏接口、#3391/#3438/
+#3445 UI 建议、#3395/#3396/#3443 新能力；
+**维护者域**（跳过）：#3376/#3393/#3402–#3415/#3422 yetone 的 GUI/CI 红名单；
+**信息不足/设计使然**（回帖说明或要数据）：#3375（本地回环免鉴权是设计，Anarlog 的
+key 探测无法区分）、#3379/#3390（仅截图、无文本可定位）、#3394（仅截图）、#3433
+（要 vscode 插件请求头）、#3439（XFF→非本地判定是 #1022 的隧道防护，已有
+MAGPIE_TRUST_PROXY=1，回帖指路）、#3441（重试风暴，等更多数据）、#3383（性能，
+本轮不动 moejs/记录保留，工作量与风险超一轮）。
+**修**：#3392、#3444、#3440、#3447、#3401，弹性项 #3434/#3436。
+
+- 现场：worktree `../magpie-fix-1024`，分支 `fix/issue-batch-1024pm` 基于
+  upstream/main `dd1e8822`（= v0.1.1364，含 a2e98cd7 的 codex_socket.go——dev 树
+  落后 101 提交，全部调查已在新树复核）。边界沿用：每修一题红→绿、包内全绿、
+  三平台 build/vet、全量 nogui 串行、push fork 读回、issue 回帖（中英随题）。
+
+| M | 目标 | 修改范围 | 验收 | 验证命令 | 状态 |
+|---|---|---|---|---|---|
+| M0 | 现场固定 + 候选甄别 | 本节 | 上表；refs 对齐 | git/worktree/gh 扫描 | 完成 |
+| M1 | #3392：xAI 422 "unknown variant `custom`" 不在 customToolRefusal 内，翻译兜底不触发 | internal/gateway/custom_tool.go | 报告者错误原文红→绿；DeepSeek 原例不回归 | go test ./internal/gateway -run CustomTool | 完成 8ecab590（红→绿实拍；Custom* 21 测试绿） |
+| M2 | #3444：codex websocket Write 遇 StatusMessageTooBig 关闭帧 → 回退 HTTP 而非 502 | internal/gateway/codex_socket.go | 假 ws 服务器回 1009 关闭帧，测试断言走 HTTP 完成 | go test ./internal/gateway -run CodexSocket | 完成 b834f286（红＝报告者 502 原文复现；CodexSocket|CodexTurn 8 绿） |
+| M3 | #3440：官方订阅原生模型不套全局 272K 压缩（CodexNativeWindow 不读 settings.Compact） | internal/gateway/codex_backend.go + internal/provider/codex_models.go（ETag 标记） | 475000 条目在默认/自定义阈值下被压到 272K/自定义并保留 max；用户自设窗口优先；FullContext 不压；tag 变化触发重取 | go test ./internal/gateway ./internal/provider -run 'Native.*Window|Compact' | 完成 e9926d70（默认 272K/自定义 300K/FullContext/用户窗口四断言；provider+codexcat+agent 全绿；两处 ETag 期望随 CodexListTag 公式更新） |
+| M4 | #3447：magpie 自搜管线的 Anthropic 回复 text 块无 citations[]，下游只拿 url+title | internal/gateway ir.go/search_api.go/search.go/anthropic.go | Hit 带 Cited；renderAnthropic 与流式编码器在 text 块给 citations（web_search_result_location，cited_text≤150 字符）；无 snippet 时不造 | 同上 -run 'Citation|Search' | 完成 e5a05c44（whole+streamed 两路断言；Search|Anthropic 221 绿；仅回退编码器时红） |
+| M5 | #3401：Reasonix Studio 进 Library（MCP [[plugins]] TOML、skills、项目目录） | internal/library/ | `library mcp/skill` 对 reasonix 可用；现有 agent 不回归 | go test ./internal/library/... | 完成 fd4bcb54（fmtReasonix 数组表写入/读回/删除保留用户项；skills+项目目录；library 410 绿；hooks 未接——事件名未知，已在回帖说明） |
+| M6 | 回帖类：#3439/#3375 指路（TRUST_PROXY/本地信任模型）、#3433 要数据 | 上游评论 | 草稿→发布→读回 | gh | 完成（#3439 comment 6380614794；#3375 comment 6380622846；#3433 comment 6380630767） |
+| M7 | 弹性：#3434 路由按 native turn 续判（保新 task 语义） | internal/gateway/rules.go | 报告者 4 步协议测试 1–4 全过 | -run 'Turn|Classif' | 放弃：报告者已有本地原型与完整协议语义（delegation 仍须立新 task 等），改动横跨 rules.go 键控与原生元数据管道，回归面大且撞车风险高（其将自行交付） |
+| M8 | 全量回归 + 推送 + 回帖发布 + 台账 | 全部 + docs/fork | 全量 nogui 一次（预存红引用基线）；分支读回；修复回帖；台账 JSON/MD 重建 | go test -tags nogui ./...；python3 docs/fork/generate.py | 完成（见本轮记录） |
+
+### 本轮记录（2026-10-24 完成）
+
+- 交付分支 `fix/issue-batch-1024pm`（base dd1e8822 = v0.1.1364，5 commits，head
+  fd4bcb54）：#3392 8ecab590、#3444 b834f286、#3440 e9926d70、#3447 e5a05c44、
+  #3401 fd4bcb54。每题红→绿实录见各 milestone 状态列。已推 skygunner/magpie 并
+  读回一致。
+- 回帖 8 条全部以 skygunner 发布并经 API 读回验证（5 修复交付 + #3439/#3375
+  指路 + #3433 要数据）：3392→6380779544、3444→6380789247、3440→6380798386、
+  3447→6380807714、3401→6380817606、3439→6380614794、3375→6380622846、
+  3433→6380630767。
+- 全量 nogui（串行，head fd4bcb54，GOTOOLCHAIN=go1.26.8 umask 022）：
+  **68 包 ok / 2 包 FAIL / 19 no-test**，exit 1。FAIL＝TestClaudeClientCacheAbsentUnchanged
+  （gateway，#3280）与 TestPluginSOCKSProxy（plugin，#2207）；同环境在干净
+  dd1e8822 基线工作树上复跑此两测试**同样失败**——零新增失败。日志与基线说明：
+  docs/fork/evidence/round10/（full-suite-fd4bcb54.log + manifest.json）。
+- 三平台 build+vet（windows/amd64、darwin/arm64、darwin/amd64，nogui）干净。
+- 台账：upstream-status.json 增 5 units（全 40 位 SHA + 交付评论）、92 分支记录、
+  comment_publications 15 条；prior-comments.json 增 5 行（77 行）；REQUIRED_SET
+  扩至 77 项（product 60）；generate.py 校验过（65 units / 69 unit-covered /
+  90 remote heads）+ selftest 负例全拒。UPSTREAM_STATUS.md 已再生。
+- 放弃项与理由：#3434（见 M7 行）；#3383（moejs/记录保留的性能重构超出单轮
+  风险预算）；#3436（Kelivo 快照匹配需重写 conversation 续接判定，报告者已具
+  备完整离线复现，留待其交付或下轮）；#3441（8 分钟重试风暴——数据不足以定位
+  单一可修点）；#3379/#3390/#3394（仅截图无文本）。
+
 ## 2026-10-24 第三轮返工（ZCode 会话五）：R1–R4 + 台账收口
 
 独立审查（Magpie-v2-independent-review，REVIEW.txt）在精确 head 上复现 R1–R4、

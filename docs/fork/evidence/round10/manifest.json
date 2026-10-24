@@ -1,0 +1,18 @@
+{
+  "round": 10,
+  "date": "2026-10-24",
+  "branch": "fix/issue-batch-1024pm",
+  "base": "dd1e8822d916f8aeb085db4db93fc3d79e2263ed",
+  "head": "fd4bcb54e53462e0e9bfa894846c3909875c5444",
+  "issues_fixed": [3392, 3444, 3440, 3447, 3401],
+  "issues_replied_only": [3439, 3375, 3433],
+  "full_suite": {
+    "command": "GOTOOLCHAIN=go1.26.8 umask 022 go test -tags nogui ./... -timeout 45m -count=1",
+    "ok": 68, "no_test_files": 19, "failed_packages": ["internal/gateway", "internal/plugin"],
+    "failed_tests": ["TestClaudeClientCacheAbsentUnchanged (#3280, pre-existing)", "TestPluginSOCKSProxy (#2207, pre-existing)"],
+    "baseline": "both tests re-run on a clean dd1e8822 worktree in the same environment: both FAIL there too; no new failures from this round",
+    "log": "full-suite-fd4bcb54.log"
+  },
+  "cross_platform": "build+vet (nogui) on windows/amd64, darwin/arm64, darwin/amd64: clean",
+  "push": "fix/issue-batch-1024pm pushed to skygunner/magpie, read back: fd4bcb54e53462e0e9bfa894846c3909875c5444"
+}
