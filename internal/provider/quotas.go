@@ -128,8 +128,11 @@ type QuotaSpan struct {
 	// counts it so ("credits")
 	Amount float64 `json:"amount,omitempty"`
 	Limit  float64 `json:"limit,omitempty"`
-	Unit   string  `json:"unit,omitempty"`
-	Pool   string  `json:"pool,omitempty"` // the shared pool the window draws on ("Gemini")
+	// AmountUnknown: the vendor gave the window a limit but no count of
+	// what was used; the count says the vendor's own words instead (#3487)
+	AmountUnknown bool   `json:"amountUnknown,omitempty"`
+	Unit          string `json:"unit,omitempty"`
+	Pool          string `json:"pool,omitempty"` // the shared pool the window draws on ("Gemini")
 	// Holds and HoldsWhy are the window's whole as the Usage page's card
 	// tells it (QuotaWindow.Holds, #2333): reckoned when ReckonHolds is
 	// set, else left out.
@@ -186,7 +189,7 @@ func quotaReport(subs, plans, balances []SubscriptionQuota, now time.Time) []Quo
 			// as the usage page shows them
 			for _, w := range PooledWindows(q.Windows) {
 				s := QuotaSpan{Unlimited: w.Unlimited, Name: w.Name, Used: w.Used, Remaining: max(0, 100-w.Used), ResetsAt: w.ResetsAt, Display: w.Display,
-					Amount: w.Amount, Limit: w.Limit, Unit: w.Unit, Pool: w.Pool, Holds: w.Holds, HoldsWhy: w.HoldsWhy}
+					Amount: w.Amount, Limit: w.Limit, Unit: w.Unit, AmountUnknown: w.AmountUnknown, Pool: w.Pool, Holds: w.Holds, HoldsWhy: w.HoldsWhy}
 				if s.ResetsAt == nil && w.ResetSecs > 0 {
 					t := now.Add(time.Duration(w.ResetSecs) * time.Second)
 					s.ResetsAt = &t

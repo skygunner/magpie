@@ -156,8 +156,13 @@ func quotaOfPlugin(q SubscriptionQuota, u plugin.Usage) SubscriptionQuota {
 	}
 	for _, x := range u.Windows {
 		w := QuotaWindow{Name: x.Name, Used: x.Used, ResetSecs: x.ResetSecs, Display: x.Display,
-			Amount: x.Amount, Limit: x.Limit, Unit: x.Unit,
+			Limit: x.Limit, Unit: x.Unit,
 			Span: time.Duration(x.Span * float64(time.Second)), Model: strings.ToLower(x.Model), Aside: x.Aside}
+		if x.Amount != nil {
+			w.Amount = *x.Amount
+		} else if x.Limit > 0 {
+			w.AmountUnknown = true // it counts in amounts but said no count (#3487)
+		}
 		if t, err := time.Parse(time.RFC3339, x.ResetsAt); err == nil {
 			w.ResetsAt = &t
 		}

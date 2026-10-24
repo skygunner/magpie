@@ -125,10 +125,16 @@ func writeQuotaHist(h quotaHist) {
 
 var spanWords = regexp.MustCompile(`(?i)(\d+)\s*-?\s*(h|hr|hour|d|day|w|wk|week|month)s?\b`)
 
+// quotaSpanLimit is the longest window a vendor runs (a year and a bit):
+// past it a span is a misread unit — a plugin's milliseconds read as
+// seconds charted a "Daily" from a thousand days back (#3487) — so the
+// window's name says the span instead.
+const quotaSpanLimit = 400 * 24 * time.Hour
+
 // windowSpan is how long a window runs: as its vendor said, else as its
 // name says ("5 hours", "7d", "Weekly"), else 0, not known.
 func windowSpan(w QuotaWindow) time.Duration {
-	if w.Span > 0 {
+	if w.Span > 0 && w.Span <= quotaSpanLimit {
 		return w.Span
 	}
 	unit := map[string]time.Duration{"h": time.Hour, "hr": time.Hour, "hour": time.Hour, "d": 24 * time.Hour, "day": 24 * time.Hour,

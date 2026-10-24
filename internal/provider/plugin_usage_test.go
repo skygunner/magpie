@@ -51,7 +51,7 @@ func TestPluginUsage(t *testing.T) {
 			t.Fatalf("%s: %d accounts' usage, want 3: %+v", agent, len(u), u)
 		}
 		q := u["a@fake"]
-		if q.Error != "" || q.Plan != "Fake Pro" || q.Provider != "fakeco" || q.Name != "FakeCo" || len(q.Windows) != 3 {
+		if q.Error != "" || q.Plan != "Fake Pro" || q.Provider != "fakeco" || q.Name != "FakeCo" || len(q.Windows) != 4 {
 			t.Fatalf("%s: a@fake = %+v", agent, q)
 		}
 		if q.Until == nil || q.Until.Year() != 2030 || q.Renew != "auto" {
@@ -79,6 +79,19 @@ func TestPluginUsage(t *testing.T) {
 		}
 		if extra.RunsOutAt != nil || extra.RunsOut != 0 || w.RunsOutAt != nil {
 			t.Fatalf("%s: extra runs out %v, %v; five hours %v", agent, extra.RunsOutAt, extra.RunsOut, w.RunsOutAt)
+		}
+		// a window whose count the vendor doesn't say (amount: null) is
+		// not a full allowance: the count says the vendor's own words, or
+		// nothing (#3487)
+		daily := q.Windows[3]
+		if daily.Name != "Daily" || daily.Limit != 10000 || daily.Amount != 0 || !daily.AmountUnknown {
+			t.Fatalf("%s: daily = %+v", agent, daily)
+		}
+		if got := daily.Count(true); got != "" {
+			t.Errorf("%s: an unknown count says %q", agent, got)
+		}
+		if week.AmountUnknown || w.AmountUnknown {
+			t.Errorf("%s: a said count reads unknown: %+v %+v", agent, week, w)
 		}
 		if e := u["API key"].Error; e != "an API key has no plan" {
 			t.Fatalf("%s: the key's usage error = %q (%v)", agent, e, u)

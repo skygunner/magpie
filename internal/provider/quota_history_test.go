@@ -203,3 +203,24 @@ func TestMergeQuotaHistory(t *testing.T) {
 		t.Error("a broken file merged")
 	}
 }
+
+// TestQuotaHistoryMillisecondSpan: a plugin that sends its span in
+// milliseconds (read as seconds: a 1000-day "Daily") must not chart the
+// window from two years back (#3487, cloudflare-workers-ai 0.0.3): past
+// every window a vendor runs, the span is a misread unit, and the window's
+// name says it instead.
+func TestQuotaHistoryMillisecondSpan(t *testing.T) {
+	testenv.SetHome(t, t.TempDir())
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	t0 := time.Date(2026, 10, 24, 12, 0, 0, 0, time.UTC)
+	r := t0.Add(12 * time.Hour)
+	noteQuotaHistory([]SubscriptionQuota{{Provider: "cloudflare-workers-ai", Name: "Workers AI", User: "a@x.com",
+		Windows: []QuotaWindow{{Name: "Daily", Used: 107.56, ResetsAt: &r, Span: 86400000 * time.Second}}}}, t0)
+	line := lineOf(t, QuotaHistories(t0.Add(-time.Hour), "", ""), "a@x.com", "Daily")
+	if len(line) != 1 || line[0].Start == nil {
+		t.Fatalf("daily = %+v", line)
+	}
+	if !line[0].Start.Equal(r.Add(-24 * time.Hour)) {
+		t.Errorf("start = %v, want %v: the name's day, not the span's 1000 days", line[0].Start, r.Add(-24*time.Hour))
+	}
+}
