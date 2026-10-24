@@ -71,17 +71,18 @@ var HookTools = []string{"shell", "edit"}
 
 // hookSpec is how one agent keeps its hooks.
 type hookSpec struct {
-	path   string
-	events map[string]string // portable → the agent's own
-	native []string          // every event the agent has
-	tools  map[string]string // shell, edit → the agent's matcher for them
-	flat   bool              // Cursor: an entry is the command itself, not a group of them
-	ms     bool              // Gemini: timeouts in milliseconds
-	toml   bool              // Grok: hooks are [[hooks.<Event>]] tables in config.toml, not JSON
+	path     string
+	events   map[string]string // portable → the agent's own
+	native   []string          // every event the agent has
+	tools    map[string]string // shell, edit → the agent's matcher for them
+	flat     bool              // Cursor: an entry is the command itself, not a group of them
+	ms       bool              // Gemini: timeouts in milliseconds
+	toml     bool              // Grok: hooks are [[hooks.<Event>]] tables in config.toml, not JSON
+	reasonix bool              // Reasonix: flat match/command/timeout entries
 }
 
 // hookAgents are the agents magpie can give hooks to.
-var hookAgents = []string{"claude", "codex", "cursor", "gemini", "grok", "grok-app"}
+var hookAgents = []string{"claude", "codex", "cursor", "gemini", "grok", "grok-app", "reasonix"}
 
 // grokHookEvents are the events the Grok CLI fires (docs/user-guide/10-hooks.md),
 // shared by Grok Build and the Grok App that runs it. Only the ones magpie
@@ -176,6 +177,20 @@ func hookSpecOf(t *Target) (*hookSpec, string) {
 			tools: map[string]string{"shell": "Shell", "edit": "Write"},
 			flat:  true,
 		}, ""
+	case "reasonix":
+		// Reasonix Studio 2.50: hooks.<Event>[] in its own settings.json,
+		// unlike Claude’s nested groups; match is an anchored regex and
+		// timeout is milliseconds (internal/ext/hook, #3401).
+		return &hookSpec{
+			path: filepath.Join(t.Agent.Dir, "settings.json"),
+			events: map[string]string{"turn-end": "Stop", "after-tool": "PostToolUse", "before-tool": "PreToolUse",
+				"prompt": "UserPromptSubmit", "session-start": "SessionStart"},
+			native: []string{"PreToolUse", "PostToolUse", "PostToolUseFailure", "PermissionRequest", "UserPromptSubmit",
+				"Stop", "StopFailure", "PostLLMCall", "SessionStart", "SessionEnd", "SubagentStart", "SubagentStop",
+				"Notification", "PreCompact"},
+			tools: map[string]string{"shell": "^(shell|run_shell_command|Bash)$", "edit": "^(edit|write_file|apply_patch)$"},
+			ms:    true, reasonix: true,
+		}, ""
 	case "grok":
 		// Grok Build: [[hooks.<Event>]] tables in ~/.grok/config.toml
 		return grokHookSpec(filepath.Join(grokDir(), "config.toml")), ""
@@ -222,7 +237,13 @@ func (sp *hookSpec) entry(h *Hook, ev string) json.RawMessage {
 		return json.RawMessage(grokHookBlock(ev, m, h.Command, timeout))
 	}
 	var v any
-	if sp.flat {
+	if sp.reasonix {
+		v = struct {
+			Command string `json:"command"`
+			Timeout int    `json:"timeout,omitempty"`
+			Match   string `json:"match,omitempty"`
+		}{h.Command, timeout, m}
+	} else if sp.flat {
 		v = struct {
 			Command string `json:"command"`
 			Timeout int    `json:"timeout,omitempty"`
