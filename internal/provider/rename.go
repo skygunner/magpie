@@ -209,6 +209,16 @@ func accountOrPluginID(id string) bool {
 			return true
 		}
 	}
+	// a stored entry may carry the plugin's public id (<raw>-plugin, the
+	// PluginID contract) while the raw side is what Auths and Cached
+	// know — the account's settings survive a sign-out, and the plugin
+	// still shows in Cached without its accounts. Resolve the public id
+	// to the raw one and judge that; an id whose raw side nothing claims
+	// is an independent provider of the user's, its -plugin suffix
+	// notwithstanding (#3349 review, r4 follow-up)
+	if rest, ok := strings.CutSuffix(id, "-plugin"); ok && rest != "" {
+		return accountOrPluginID(rest)
+	}
 	return false
 }
 
