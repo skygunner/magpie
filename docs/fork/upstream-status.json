@@ -1131,22 +1131,29 @@
    ],
    "category": "product",
    "title": "provider: retain the first single-card quota refresh",
-   "coverage": "Delivered scope per commit body and issue thread.",
+   "coverage": "a11d605e: the nil-cache early return in mergeCards removed, so a successful first single-card refresh — a Claude subscription's, the report — stays fresh instead of falling back to a dated disk snapshot (AsOf); a whole-page read's timestamp untouched; a newer single-card reading kept over an older empty batch. 47f44679: the second report (Lemonawa) isolated the same drop on a key's balance card and asked the key-card kinds be covered: KeyBalances and PlanQuotas commit through the same mergeCards, so the fix already served them; TestFirstKeyCardRefreshStaysFresh now reproduces the report's five isolated steps on both kinds against a fake balance endpoint of the posted shape and is red with the old mergeCards. Real vendors not called; the reporter asked to rerun the steps on the fix.",
    "commits": [
-    "a11d605e014cd87bff83d2ec3485297dcdd37e86"
+    "a11d605e014cd87bff83d2ec3485297dcdd37e86",
+    "47f44679c94bb22b22647e63d6b48a33c51e392d"
    ],
    "commit_details": [
     {
      "sha": "a11d605e014cd87bff83d2ec3485297dcdd37e86",
      "title": "provider: retain the first single-card quota refresh",
      "url": "https://github.com/skygunner/magpie/commit/a11d605e014cd87bff83d2ec3485297dcdd37e86"
+    },
+    {
+     "sha": "47f44679c94bb22b22647e63d6b48a33c51e392d",
+     "title": "provider: the first single-card refresh of a key's balance or plan stays fresh too (#3139, Lemonawa)",
+     "url": "https://github.com/skygunner/magpie/commit/47f44679c94bb22b22647e63d6b48a33c51e392d"
     }
    ],
    "branch": "fix/initial-single-quota-refresh",
    "base": "see delivery: historical; base recorded in the unit branch map",
    "comments": {
     "3139": [
-     "https://github.com/yetone/magpie/issues/3139#issuecomment-6351281868"
+     "https://github.com/yetone/magpie/issues/3139#issuecomment-6351281868",
+     "https://github.com/yetone/magpie/issues/3139#issuecomment-6386993902"
     ]
    },
    "sources": {
@@ -1155,9 +1162,9 @@
     "coauthors": []
    },
    "verify": {
-    "state": "unverified_this_round",
-    "evidence": "Delivered with red-green recorded in the commit body; not independently re-run this round. See prior/72-thread-evidence.json for the delivered-time evidence chain.",
-    "head": ""
+    "state": "pass",
+    "evidence": "47f44679, this round, worktree magpie-quota-3139: red/green (old mergeCards back in: balance, plan and the Claude repro all FAIL; restored: green); targeted Quota/Refresh/Cards/Balance/Plan run 175 tests ok; the four first/keeps-newer tests -race -count=3, 57 ok; gofmt and package vet clean. Full suite not run for this commit (provider-package change; round-14 log covers the session's other delivery).",
+    "head": "47f44679c94bb22b22647e63d6b48a33c51e392d"
    },
    "upstream": {
     "status": "unconfirmed"
@@ -2962,7 +2969,7 @@
    ],
    "category": "product",
    "title": "library: Reasonix Studio takes MCP servers, skills and project skills (#3401, FuchaZ)",
-   "coverage": "Original fd4bcb54 delivered Reasonix [[plugins]] MCP, skills and project .reasonix/skills. Standalone follow-up branch fix/reasonix-library-complete-1024 (base dd1e8822; commits e3bcacfc -> 0281ada7 -> cf87dc37) now additionally implements native hooks.<Event>[] with match regex and millisecond timeout, preserving user hooks on removal, plus readsShared accounting of ~/.agents/skills. Library full suite PASS; Linux and Windows/amd64 static vet PASS; nogui all packages 68 ok/2 existing FAIL (#3280/#2207)/19 no-test with umask 022, exit=1. Studio 2.50.0 native Windows run is pending reporter verification. Fork branch read back cf87dc37; not yet adopted upstream.",
+   "coverage": "Original fd4bcb54 delivered Reasonix [[plugins]] MCP, skills and project .reasonix/skills. Standalone follow-up branch fix/reasonix-library-complete-1024 (base dd1e8822; commits e3bcacfc -> 0281ada7 -> cf87dc37) now additionally implements native hooks.<Event>[] with match regex and millisecond timeout, preserving user hooks on removal, plus readsShared accounting of ~/.agents/skills. Library full suite PASS; Linux and Windows/amd64 static vet PASS; nogui all packages 68 ok/2 existing FAIL (#3280/#2207)/19 no-test with umask 022, exit=1. Studio 2.50.0 native Windows verification received (comment 6385801640, FuchaZ, 2026-10-24): cf87dc37 built with Go 1.26.8 and run against a real Studio 2.50.0 on Windows 11 — PreToolUse/PostToolUse probes fired around a real bash call (native tool-name match), a user-owned Stop hook and six [[plugins]] preserved byte-identical through add and remove both ways, shared ~/.agents/skills accounted. Remaining unverified: the Electron GUI path itself (CLI shares the loader and settings.json). Two non-blocking observations (match double-anchored under Reasonix's own wrapping — kept, it is the recorded canonical shape the real-app verification covered; the sync ✓ line names files written, not sections) answered in comment 6387030804. Fork branch read back cf87dc37; not yet adopted upstream.",
    "commits": [
     "fd4bcb54e53462e0e9bfa894846c3909875c5444"
    ],
@@ -3569,7 +3576,7 @@
   },
   {
    "branch": "fix/initial-single-quota-refresh",
-   "head": "a11d605e014cd87bff83d2ec3485297dcdd37e86",
+   "head": "47f44679c94bb22b22647e63d6b48a33c51e392d",
    "kind": "fix",
    "base": "7aad6a50ea981fcfef0c7182c193cd6e6d7fb61d",
    "fix_ids": [
@@ -3741,7 +3748,7 @@
   },
   {
    "branch": "fix/issue-batch-20261023-k",
-   "head": "a11d605e014cd87bff83d2ec3485297dcdd37e86",
+   "head": "47f44679c94bb22b22647e63d6b48a33c51e392d",
    "kind": "fix",
    "base": "7aad6a50ea981fcfef0c7182c193cd6e6d7fb61d",
    "fix_ids": [
@@ -5096,6 +5103,40 @@
    "delivery": "fix/issue-batch-1024pm",
    "delivery_head": "d8ad9ab2ae999a9920b0945d3beba42b27eb27fc",
    "body_sha256": "b60f9d1399f3c21de51810a3c849c5b6fcc8e0136cc650c333f3d8b318e0052a",
+   "evidence": "docs/fork/evidence/round14/closeout.md"
+  },
+  {
+   "issue": 3139,
+   "fix_id": "u-provider-retain-the-first-single-card-quota-refr-a11d605e",
+   "comment_id": 6386993902,
+   "url": "https://github.com/yetone/magpie/issues/3139#issuecomment-6386993902",
+   "role": "delivery_followup",
+   "author": "skygunner",
+   "language": "zh-CN",
+   "status": "published_verified",
+   "published_at": "2026-10-24T16:58:22Z",
+   "verified_at": "2026-10-24T17:03:17Z",
+   "body_updated_at": "2026-10-24T16:58:22Z",
+   "delivery": "fix/initial-single-quota-refresh",
+   "delivery_head": "47f44679c94bb22b22647e63d6b48a33c51e392d",
+   "body_sha256": "0807581009dd012674d5bfaf653caf2f39736bdb4f4bedea4b6fa7cd6163c3c8",
+   "evidence": "docs/fork/evidence/round14/closeout.md"
+  },
+  {
+   "issue": 3401,
+   "fix_id": "u-library-reasonix-studio-takes-mcp-servers-ski-3401-fd4bcb54",
+   "comment_id": 6387030804,
+   "url": "https://github.com/yetone/magpie/issues/3401#issuecomment-6387030804",
+   "role": "verification_ack",
+   "author": "skygunner",
+   "language": "zh-CN",
+   "status": "published_verified",
+   "published_at": "2026-10-24T17:01:52Z",
+   "verified_at": "2026-10-24T17:03:17Z",
+   "body_updated_at": "2026-10-24T17:01:52Z",
+   "delivery": "fix/reasonix-library-complete-1024",
+   "delivery_head": "cf87dc37c09e5b6fbadebfd7ebc8adcd9f102290",
+   "body_sha256": "a24c21d109cf61ae8e98a4f2e53bb24de34f1a9290402787690193f46878fb8e",
    "evidence": "docs/fork/evidence/round14/closeout.md"
   }
  ],
