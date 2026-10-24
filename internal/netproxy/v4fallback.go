@@ -50,6 +50,21 @@ func markV4(addr string) {
 	v4Only.at[addr] = time.Now()
 }
 
+func unmarkV4(addr string) {
+	v4Only.Lock()
+	defer v4Only.Unlock()
+	delete(v4Only.at, addr)
+}
+
+// noAddress says err is the resolver answering that the name has no
+// address of the kind asked (#3519: Windows maps WSAHOST_NOT_FOUND and
+// DNS_INFO_NO_RECORDS to it, as #265 met): there is nothing to fall back
+// to, and the mark's reason is gone with that answer.
+func noAddress(err error) bool {
+	var dns *net.DNSError
+	return errors.As(err, &dns) && dns.IsNotFound
+}
+
 // v4Fallback has t dial a host:port whose IPv6 failed over IPv4, and
 // watch connections to an IPv6 address for failing so.
 func v4Fallback(t *http.Transport) {
@@ -59,7 +74,14 @@ func v4Fallback(t *http.Transport) {
 	}
 	t.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
 		if network == "tcp" && !v4Since(addr).IsZero() {
-			network = "tcp4"
+			// a host with no IPv4 to be dialed instead has no reason to
+			// stay marked: the answer that says so clears it, and this
+			// goes on over IPv6 as it was (#3519)
+			c, err := dial(ctx, "tcp4", addr)
+			if !noAddress(err) {
+				return c, err
+			}
+			unmarkV4(addr)
 		}
 		c, err := dial(ctx, network, addr)
 		if err != nil || c == nil {
@@ -149,7 +171,14 @@ func v4Retry(t *http.Transport, req *http.Request) (*http.Response, error) {
 		}
 		again.Body = body
 	}
-	return t.RoundTrip(again)
+	res2, err2 := t.RoundTrip(again)
+	if err2 != nil {
+		// the IPv6 failure that started this is the one to say, not the
+		// IPv4 dial's own answer to a retry that couldn't have worked
+		// either (#3519)
+		return res, err
+	}
+	return res2, err2
 }
 
 func idempotent(m string) bool {
