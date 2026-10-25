@@ -86,7 +86,11 @@ func day(path string) *dayAgg {
 		return a
 	}
 	a := newDay()
-	a.size = read(path, a.add)
+	a.size = read(path, func(r Record) {
+		if !r.putBack() { // a put-back line is no request
+			a.add(r)
+		}
+	})
 	store.days[path] = a
 	return a
 }

@@ -10,7 +10,8 @@ import (
 
 // The body a request went with is kept in memory for the latest keepSent
 // requests only, never on disk, and not past sentMax; what the answer put
-// back is memory's too, added to as it is told.
+// back is a line of its own in the record's day (#3540), added to as it
+// is told.
 func TestSentAndBackInMemory(t *testing.T) {
 	now := time.Date(2026, 10, 24, 9, 0, 0, 0, time.Local)
 	dir := sandbox(t, now)
@@ -34,7 +35,7 @@ func TestSentAndBackInMemory(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(string(b), "here") || strings.Contains(string(b), `"back"`) || !strings.Contains(string(b), `"took":812`) {
+	if strings.Contains(string(b), "here") || !strings.Contains(string(b), `"back":{"`+p+`":2}`) || !strings.Contains(string(b), `"took":812`) {
 		t.Fatalf("disk: %s", b)
 	}
 

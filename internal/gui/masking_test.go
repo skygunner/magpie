@@ -77,6 +77,12 @@ func TestMaskingRecordsAPI(t *testing.T) {
 	if get("/api/masking/record?key="+strconv.FormatInt(rec.Key, 10), &one); one.Snips[p] != sent || !one.Values[0].Known {
 		t.Fatalf("record %+v", one)
 	}
+	// what the answer put back, as the page's step reads it (#3540)
+	maskrec.Restored(rec.Key, map[string]int{p: 3})
+	one = maskedRecord{}
+	if get("/api/masking/record?key="+strconv.FormatInt(rec.Key, 10), &one); one.Back[p] != 3 {
+		t.Fatalf("put back %+v", one.Back)
+	}
 	if code := get("/api/masking/record?key=1", nil); code != http.StatusNotFound {
 		t.Fatalf("no such record: %d", code)
 	}

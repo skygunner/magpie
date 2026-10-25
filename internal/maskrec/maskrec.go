@@ -7,7 +7,9 @@
 // key's prefix, and its length). The value behind a placeholder is known
 // only to the masker's memory while magpie runs (gwmw.Teller.Value), and
 // the text around it as the vendor saw it is kept in memory only, for the
-// latest records.
+// latest records. What the answer put back is a line of its own in the
+// record's day (Restored), so its count is there after a restart and in a
+// window that didn't serve the gateway.
 //
 // A day is a file of its own, one request a line, under
 // ~/.config/magpie/masking, kept keepDays days and keepBytes in all.
@@ -77,8 +79,8 @@ type Record struct {
 	Snips map[string]string `json:"snips,omitempty"`
 	// Took is how long masking the request took, in microseconds
 	Took int64 `json:"took,omitempty"`
-	// Back: by placeholder, the places the answer had it put back; in
-	// memory only, told once the answer is done (Restored)
+	// Back: by placeholder, the places the answer had it put back;
+	// Restored writes it to the record's own day, as a line of its own
 	Back map[string]int `json:"back,omitempty"`
 	// Sent is the request as the vendor got it; in memory only, for the
 	// latest keepSent, and never in a list (SentOf)
@@ -291,16 +293,21 @@ func at(key int64) int {
 }
 
 // withSnips is r with what memory has for it: its snips and what the
-// answer put back.
+// answer put back, memory's having the latest.
 func withSnips(r Record) Record {
 	if i := at(r.Key); i >= 0 {
-		r.Snips, r.Back = store.snips[i].Snips, store.snips[i].Back
+		r.Snips = store.snips[i].Snips
+		if len(store.snips[i].Back) > 0 {
+			r.Back = store.snips[i].Back
+		}
 	}
 	return r
 }
 
 // Restored tells the record of key what its answer put back: by
-// placeholder, the places. Memory only, as the snips are.
+// placeholder, the places. Memory has it at once; the day's file gets a
+// line of its own, so the count is there in a window that didn't serve the
+// gateway, and after a restart (putBack).
 func Restored(key int64, put map[string]int) {
 	if key == 0 || len(put) == 0 {
 		return
@@ -317,6 +324,43 @@ func Restored(key int64, put map[string]int) {
 		}
 		store.snips[i].Back = back
 	}
+	if inTest() {
+		return
+	}
+	// the request's own day, where its record is, not today's: an answer
+	// that comes back after midnight is read with its record still
+	path := filepath.Join(Dir(), time.Unix(0, key).Local().Format(dayForm)+".jsonl")
+	if _, err := os.Stat(path); err != nil {
+		return // its day is pruned: there is no record to tell
+	}
+	b, err := json.Marshal(Record{Key: key, Back: put})
+	if err != nil {
+		return
+	}
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0o600)
+	if err != nil {
+		return
+	}
+	f.Write(append(b, '\n'))
+	f.Close()
+}
+
+// putBack says r is a line Restored wrote, not a request's: a key and what
+// its answer put back, no values and no places.
+func (r Record) putBack() bool { return r.N == 0 && len(r.Values) == 0 && len(r.Back) > 0 }
+
+// withBack is r with what its answer put back, as the day's file has it.
+func withBack(r Record, back map[string]int) Record {
+	if len(back) == 0 {
+		return r
+	}
+	if r.Back == nil {
+		r.Back = map[string]int{}
+	}
+	for p, n := range back {
+		r.Back[p] += n
+	}
+	return r
 }
 
 // SentOf is the request of key as the vendor got it, while memory keeps
@@ -369,7 +413,17 @@ func List(before int64, limit int, f Filter) ([]Record, bool) {
 			continue
 		}
 		var day []Record
+		back := map[int64]map[string]int{}
 		read(fs[i].path, func(r Record) {
+			if r.putBack() {
+				if back[r.Key] == nil {
+					back[r.Key] = map[string]int{}
+				}
+				for p, n := range r.Back {
+					back[r.Key][p] += n
+				}
+				return
+			}
 			if (before == 0 || r.Key < before) && f.takes(r) {
 				day = append(day, r)
 			}
@@ -378,7 +432,7 @@ func List(before int64, limit int, f Filter) ([]Record, bool) {
 			if len(out) == limit {
 				return out, true
 			}
-			out = append(out, withSnips(day[j]))
+			out = append(out, withSnips(withBack(day[j], back[day[j].Key])))
 		}
 	}
 	if inTest() {
@@ -409,6 +463,12 @@ func Get(key int64) (Record, bool) {
 	var got Record
 	ok := false
 	read(filepath.Join(Dir(), day+".jsonl"), func(r Record) {
+		if r.putBack() {
+			if r.Key == key {
+				got = withBack(got, r.Back)
+			}
+			return
+		}
 		if r.Key == key {
 			got, ok = r, true
 		}

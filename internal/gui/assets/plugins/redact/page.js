@@ -680,7 +680,7 @@ function maskSteps(r, o) {
     r.blocked ? ["none", t("Put back"), t("Nothing was sent")]
       : back ? ["", t(back === 1 ? "Put back 1" : "Put back {n}", { n: fmtN(back) }), t("In the answer, before {agent} got it", { agent: a })]
       : memory ? ["none", t("Nothing to put back"), t("The answer named no placeholder")]
-      : ["none", t("Put back"), t("Not known after a restart")],
+      : ["none", t("Put back"), t("Nothing was put back, or the answer didn't finish")],
   ];
   steps.forEach(([cls, title, sub], i) => {
     const li = el("li", cls);
@@ -789,9 +789,9 @@ function maskContent(r, o, info) {
     // was in memory, and is no longer
     if (!r.blocked) sec.append(el("p", "msk-gone", o.vals.size
       ? t("This request's whole text is no longer in memory: magpie keeps it for the newest requests only. The lines around each value are still here.")
-      : t("What was written is kept in memory only, and magpie has restarted since. Still here: each value's kind, length and first characters, and the line around each placeholder as the vendor got it.")));
+      : t("What was written is kept in memory only, by the magpie that sent the request: a restart, or this window, has none of it. Still here: each value's kind, length and first characters, and the line around each placeholder as the vendor got it.")));
     items = maskSnipTexts(r).map((text) => ({ leaf: { path: "", role: "", text } }));
-    if (!items.length) sec.append(el("div", "msk-none", t("The text around them was kept in memory only, and magpie has restarted since")));
+    if (!items.length) sec.append(el("div", "msk-none", t("The text around them was kept in memory only, by the magpie that sent the request")));
   }
   const list = el("div", "msk-msgs" + (view === "both" ? " both" : ""));
   if (view === "both") {
@@ -889,12 +889,12 @@ function maskHow(r, o, info) {
     const w = [...(where.get(x.p) || [])];
     if (w.length) add(t("Where"), w[0] + (w.length > 1 ? " +" + (w.length - 1) : ""));
     const n = r.back?.[x.p] || 0;
-    add(t("In the answer"), n ? t(n === 1 ? "Put back 1" : "Put back {n}", { n: fmtN(n) }) : r.blocked ? "—" : memory || r.back ? t("Not named") : t("Not known after a restart"));
+    add(t("In the answer"), n ? t(n === 1 ? "Put back 1" : "Put back {n}", { n: fmtN(n) }) : r.blocked ? "—" : memory || r.back ? t("Not named") : t("Not in the record"));
     b.append(top, mid, meta);
     b.onclick = () => { o.pick = o.pick === x.p ? "" : x.p; drawMaskOne(); };
     aside.append(b);
   }
-  aside.append(el("p", "msk-note", t("A value itself is in this computer's memory only: shown while it is pointed at or picked, and gone once magpie restarts. The record on disk keeps its kind, length and first characters.")));
+  aside.append(el("p", "msk-note", t("A value itself is in the sending magpie's memory only: shown while it is pointed at or picked, and gone once it restarts. The record on disk keeps its kind, length and first characters.")));
   return aside;
 }
 // a value picked lights its places; the rest fade
