@@ -5579,10 +5579,11 @@ func (s *Server) forwardTranslated(ctx context.Context, p provider.Provider, to 
 				continue
 			}
 		}
-		if p.IsVertex() && res.StatusCode == http.StatusBadRequest && vertexSignatureRefused.Match(b) {
-			// a call's signature Vertex AI won't take (a client changed
-			// it, or another API gave it, the conversation having moved):
-			// the calls waved through instead, for this request
+		if (p.IsVertex() || to == provider.CodeAssist) && res.StatusCode == http.StatusBadRequest && signatureRefused.Match(b) {
+			// a signature this Gemini path won't take (a client changed
+			// it, or another backend gave it, the conversation having
+			// moved from Vertex AI's Gemini to Antigravity's, #3572): the
+			// calls waved through instead, for this request, once
 			if r, had := withoutSignatures(req); had {
 				req = r
 				continue

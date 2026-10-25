@@ -106,23 +106,26 @@ func vertexEffort(req *Request, levels []string) *Request {
 	return &r
 }
 
-// vertexSignatureRefused is Vertex AI turning a call's thought signature
-// away as one it didn't give: "Invalid thought signature.".
-var vertexSignatureRefused = regexp.MustCompile(`(?i)invalid thought signature`)
+// signatureRefused is a Gemini path turning a thought signature away as one
+// it didn't give: Vertex AI's "Invalid thought signature.", and Code Assist's
+// (Antigravity) "Corrupted thought signature." for one another backend gave
+// the conversation (#3572).
+var signatureRefused = regexp.MustCompile(`(?i)(invalid|corrupted) thought signature`)
 
-// withoutSignatures is req with no thought signature on its calls, each of
-// which then goes to Vertex AI waved through (skipSignature); false when it
-// had none.
+// withoutSignatures is req with no thought signature on its calls or its
+// signed text, each of which then goes waved through (skipSignature); false
+// when it had none. A request keeps the signatures its target takes: this is
+// only ever asked again after one that target refused.
 func withoutSignatures(req *Request) (*Request, bool) {
 	had := false
 	msgs := slices.Clone(req.Messages)
 	for i, m := range msgs {
-		if !slices.ContainsFunc(m.Parts, func(p Part) bool { return p.Kind == ToolCall && p.Signature != "" }) {
+		if !slices.ContainsFunc(m.Parts, func(p Part) bool { return p.Signature != "" }) {
 			continue
 		}
 		parts := slices.Clone(m.Parts)
 		for j := range parts {
-			if parts[j].Kind == ToolCall {
+			if parts[j].Signature != "" {
 				parts[j].Signature = ""
 			}
 		}

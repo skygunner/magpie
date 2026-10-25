@@ -1,0 +1,137 @@
+package gateway
+
+import (
+	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/yetone/magpie/internal/provider"
+)
+
+// antigravityServes is a gateway whose Antigravity account answers the model
+// with say, and which says what each Code Assist request it was sent held.
+func antigravityServes(t *testing.T, model string, say func(n int) (int, string)) (*Server, func() []string) {
+	t.Helper()
+	fresh(t)
+	dir := filepath.Dir(provider.Path())
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	logins := []map[string]any{{
+		"agent": "antigravity", "user": "u@example.com", "on": true,
+		"auth": map[string]any{"access_token": "u", "refresh_token": "ref", "project": "p1",
+			"expiry_date": time.Now().Add(time.Hour).UnixMilli()},
+	}}
+	if err := os.WriteFile(filepath.Join(dir, "logins.json"), mustJSON(logins), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	old := http.DefaultClient
+	http.DefaultClient = &http.Client{Transport: countTransport(func(r *http.Request) (*http.Response, error) {
+		var body string
+		switch {
+		case strings.HasSuffix(r.URL.Path, "latest-arm64-mac.yml"):
+			body = "version: 2.9.1\n"
+		case strings.Contains(r.URL.Path, ":loadCodeAssist"):
+			body = `{"currentTier":{"id":"standard-tier"},"cloudaicompanionProject":"p1"}`
+		case strings.Contains(r.URL.Path, ":fetchAvailableModels"):
+			body = fmt.Sprintf(`{"models":{%q:{}}}`, model)
+		default:
+			return nil, fmt.Errorf("unexpected request to %s", r.URL)
+		}
+		return &http.Response{StatusCode: 200, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body))}, nil
+	})}
+	t.Cleanup(func() { http.DefaultClient = old })
+	p, err := provider.Find("antigravity")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := p.Fetch(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	var mu sync.Mutex
+	var asked []string
+	s := New()
+	s.client = &http.Client{Transport: countTransport(func(r *http.Request) (*http.Response, error) {
+		if !strings.Contains(r.URL.Host, "googleapis.com") {
+			return http.DefaultTransport.RoundTrip(r)
+		}
+		b, _ := io.ReadAll(r.Body)
+		mu.Lock()
+		asked = append(asked, string(b))
+		n := len(asked)
+		mu.Unlock()
+		rec := httptest.NewRecorder()
+		code, out := say(n)
+		rec.Header().Set("Content-Type", "text/event-stream")
+		rec.WriteHeader(code)
+		io.WriteString(rec, out)
+		return rec.Result(), nil
+	})}
+	return s, func() []string {
+		mu.Lock()
+		defer mu.Unlock()
+		return append([]string(nil), asked...)
+	}
+}
+
+// A conversation that moved from Vertex AI's Gemini to Antigravity's carries
+// the signatures Vertex AI gave its calls, and Antigravity turns one away as
+// "Corrupted thought signature." (#3572): the request is asked once more
+// without the history's signatures, as Vertex AI's own refusal already was,
+// and the signature the target takes is still sent.
+func TestAntigravityRetriesCorruptedSignature(t *testing.T) {
+	const sunny = `data: {"response":{"candidates":[{"content":{"role":"model","parts":[{"text":"sunny"}]},"finishReason":"STOP"}],"usageMetadata":{"promptTokenCount":5,"candidatesTokenCount":2}}}`
+	s, sent := antigravityServes(t, "gemini-3.8-flash", func(n int) (int, string) {
+		if n == 1 {
+			return http.StatusBadRequest, `{"error":{"code":400,"message":"Corrupted thought signature.","status":"INVALID_ARGUMENT"}}`
+		}
+		return http.StatusOK, sunny
+	})
+	code, out := turnOn(t, s, `{"model":"antigravity/gemini-3.8-flash","max_tokens":100,"messages":[
+		{"role":"user","content":"weather in Paris?"},
+		{"role":"assistant","content":[{"type":"tool_use","id":"`+signedID("call_1", vertexCallSig)+`","name":"get_weather","input":{"city":"Paris"}}]},
+		{"role":"user","content":[{"type":"tool_result","tool_use_id":"`+signedID("call_1", vertexCallSig)+`","content":"sunny"}]}],
+		"tools":[{"name":"get_weather","input_schema":{"type":"object"}}]}`)
+	if code != http.StatusOK || !strings.Contains(out, "sunny") {
+		t.Fatalf("the turn: %d %s", code, out)
+	}
+	bodies := sent()
+	if len(bodies) != 2 {
+		t.Fatalf("Antigravity was asked %d times, want the refusal and one retry", len(bodies))
+	}
+	if !strings.Contains(bodies[0], vertexCallSig) {
+		t.Errorf("the signature Vertex AI gave went missing from the first request: %s", bodies[0])
+	}
+	if strings.Contains(bodies[1], vertexCallSig) {
+		t.Errorf("the retry carried the refused signature again: %s", bodies[1])
+	}
+	// the retry is waved through, as Vertex AI's own was
+	if !strings.Contains(bodies[1], skipSignature) {
+		t.Errorf("the retry's call was not waved through: %s", bodies[1])
+	}
+}
+
+// Other 400s are the client's: a signature retry is only for the one refusal.
+func TestAntigravityDoesNotRetryOtherBadRequests(t *testing.T) {
+	s, sent := antigravityServes(t, "gemini-3.8-flash", func(n int) (int, string) {
+		return http.StatusBadRequest, `{"error":{"code":400,"message":"API key not valid. Please pass a valid API key.","status":"INVALID_ARGUMENT"}}`
+	})
+	code, _ := turnOn(t, s, `{"model":"antigravity/gemini-3.8-flash","max_tokens":100,"messages":[
+		{"role":"user","content":"weather?"},
+		{"role":"assistant","content":[{"type":"tool_use","id":"`+signedID("call_1", vertexCallSig)+`","name":"get_weather","input":{}}]},
+		{"role":"user","content":[{"type":"tool_result","tool_use_id":"`+signedID("call_1", vertexCallSig)+`","content":"sunny"}]}],
+		"tools":[{"name":"get_weather","input_schema":{"type":"object"}}]}`)
+	if code != http.StatusBadRequest {
+		t.Fatalf("status %d, want the vendor's 400", code)
+	}
+	if n := len(sent()); n != 1 {
+		t.Fatalf("Antigravity was asked %d times for another 400, want once", n)
+	}
+}
