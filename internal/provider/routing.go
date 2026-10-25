@@ -518,7 +518,14 @@ func Allowances(agent string) map[string]Allowance {
 				if q.Error != "" || len(q.Windows) == 0 {
 					continue
 				}
-				all[user] = allowanceOf(q.Windows, time.Now()).restartedBy(resetRunsOut(agent, user, q.Windows, q.Resets))
+				a := allowanceOf(q.Windows, time.Now())
+				if len(a) == 0 {
+					// every window is its text or set aside: no share to rank the
+					// account on, as one never read (a plugin that doesn't say how
+					// much is used, #3650)
+					continue
+				}
+				all[user] = a.restartedBy(resetRunsOut(agent, user, q.Windows, q.Resets))
 			}
 			c.Lock()
 			now := time.Now()
@@ -749,7 +756,7 @@ func allowanceOf(ws []QuotaWindow, now time.Time) Allowance {
 	}
 	var a Allowance
 	for _, w := range ws {
-		if w.Aside {
+		if w.Aside || w.Text {
 			continue
 		}
 		l := Limit{Used: w.Used, Span: w.Span, Model: w.Model, Amount: w.Amount, Of: w.Limit, Unit: w.Unit, matches: w.matches, partial: w.partial, Name: w.Name, Credits: w.Credits}

@@ -13645,7 +13645,7 @@ function accountQuota(data, user, capFor = () => 0, settable = null) {
     fill.style.width = quotaFill(w) + "%";
     track.append(fill);
     capMark(track, w, capFor(w));
-    m.append(el("span", "aq-n", t(w.name)), ...(w.text ? [] : [track]), el("b", "", quotaText(w)));
+    m.append(el("span", "aq-n", t(w.name)), ...(quotaNoShare(w) ? [] : [track]), el("b", "", quotaText(w)));
     if (w.resetsAt) {
       const at = new Date(w.resetsAt);
       m.title = resetText(at, at.toLocaleString(intlLang()));
@@ -13682,7 +13682,7 @@ function poolLine(line, ws, q, capFor = () => 0, settable = null) {
       capMark(track, w, capFor(w));
       // each of a pool's windows is set apart: its own part of the meter
       const part = el("span", "aq-win");
-      part.append(el("span", "aq-k", w.window ? shortWindow(w.window) : ""), track, el("b", "", quotaText(w)));
+      part.append(el("span", "aq-k", w.window ? shortWindow(w.window) : ""), ...(quotaNoShare(w) ? [] : [track]), el("b", "", quotaText(w)));
       m.append(settable ? settable(part, w) : part);
     }
     const w = p.ws[0];
@@ -14038,14 +14038,20 @@ setInterval(refreshLanes, 2000);
 // own count, where it gives one, stands before the percentage.
 let quotaLeft = false;
 function to100(v) { return Math.max(0, Math.min(100, v)); }
+// quotaNoShare: the plugin didn't say how much of the window is used. Its
+// text is all there is, and no percentage may be read from it: 0 is a
+// reading, absent is not (#3650)
+function quotaNoShare(w) { return !!w.text || w.used == null; }
 function tipLines(...a) { return a.filter(Boolean).join("\n"); }
 function quotaFill(w) {
+  if (w.used == null) return 0;
   const used = Math.round(to100(w.used));
   return quotaLeft ? 100 - used : used;
 }
 function quotaText(w) {
   if (w.unlimited) return t("Unlimited");
   if (w.text) return w.display;
+  if (w.used == null) return w.display || t("No allowance reported");
   const used = to100(w.used);
   const n = quotaLeft ? 100 - used : used;
   const pct = t(quotaLeft ? "{n} left" : "{n} used", { n: (Number.isInteger(n) ? n : n.toFixed(1)) + "%" });
@@ -14060,7 +14066,7 @@ function quotaText(w) {
 // provider.WithWindowStarts). over says more is used than an even pace
 // would have, whichever way the meter reads.
 function quotaPace(w, now = Date.now()) {
-  if (w.unlimited || w.historyMissing || !w.startsAt || !w.resetsAt) return null;
+  if (w.unlimited || quotaNoShare(w) || w.historyMissing || !w.startsAt || !w.resetsAt) return null;
   const s = Date.parse(w.startsAt), e = Date.parse(w.resetsAt);
   if (!(e > s) || now < s || now >= e) return null;
   const d = to100(w.used) - (100 * (now - s)) / (e - s);
@@ -17383,8 +17389,8 @@ function panelQuotaCard(q) {
   const balance = q.balance && balanceRow(q, "What is left on the account besides its windows", false);
   // a pool's 5-hour and weekly rings, every pool's (a third pool once left
   // Claude's out: 01huadalang on Discord), else three
-  const fam = familyWindows(q.windows.filter((w) => !w.unlimited && !w.text));
-  const tx = q.windows.filter((w) => w.text).map((w) => t(w.name) + " " + w.display).join(" · ");
+  const fam = familyWindows(q.windows.filter((w) => !w.unlimited && !quotaNoShare(w)));
+  const tx = q.windows.filter((w) => quotaNoShare(w)).map((w) => t(w.name) + " " + w.display).join(" · ");
   if (!fam.length && (tx || q.windows.some((w) => w.unlimited))) {
     card.append(pqLine(tx || t("Unlimited"), q));
     if (balance) card.append(balance);
@@ -18377,7 +18383,7 @@ function quotaWindows(sub) {
     if (w.historyMissing) track.style.visibility = "hidden";
     track.append(fill);
     quota.append(labels);
-    if (!w.unlimited && !w.text) quota.append(track);
+    if (!w.unlimited && !quotaNoShare(w)) quota.append(track);
     // when it starts again, on the clock and how long until then
     let r = null;
     if (w.resetsAt) {
