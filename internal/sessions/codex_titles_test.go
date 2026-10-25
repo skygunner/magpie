@@ -59,13 +59,13 @@ func TestCodexTitlesIncrementalApplications(t *testing.T) {
 	}
 	// Prove that the append path doesn't reread earlier bytes. Names have no
 	// timestamp dependency, and adding a partial line must not publish it.
-	firstOffset := codexTitles.offset
+	firstOffset := stateOf(codexTitleIndexPath()).offset
 	f, _ := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0600)
 	partial := strings.TrimSuffix(line("Renamed"), "\n")
 	f.WriteString(partial)
 	f.Close()
-	if got := CodexTitles([]string{"main"})["main"]; got != "Generated" || codexTitles.offset != firstOffset {
-		t.Fatalf("partial row published: %s offset %d", got, codexTitles.offset)
+	if got := CodexTitles([]string{"main"})["main"]; got != "Generated" || stateOf(codexTitleIndexPath()).offset != firstOffset {
+		t.Fatalf("partial row published: %s offset %d", got, stateOf(codexTitleIndexPath()).offset)
 	}
 	f, _ = os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0600)
 	f.WriteString("\n")
@@ -109,7 +109,7 @@ func BenchmarkCodexTitleIndex(b *testing.B) {
 	b.Run("Cold10k", func(b *testing.B) {
 		b.ReportAllocs()
 		for b.Loop() {
-			codexTitles.path = ""
+			stateOf(codexTitleIndexPath()).path = ""
 			codexTitlesAt(path, ids)
 		}
 	})

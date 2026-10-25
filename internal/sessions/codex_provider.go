@@ -132,8 +132,14 @@ func CodexProviderIn(home string) string {
 // in sqlite_home when config.toml (or CODEX_SQLITE_HOME) names one.
 func codexStateDBs(home string) []string {
 	dir := home
-	if c := readCodexConfig(home); c.SQLiteHome != "" && home == CodexDir() {
+	// each folder's own config.toml says where its state DBs are, relative
+	// to the folder when relative (#3530); the env override is the folder
+	// this Codex runs with, the main one's
+	if c := readCodexConfig(home); c.SQLiteHome != "" {
 		dir = c.SQLiteHome
+		if !filepath.IsAbs(dir) {
+			dir = filepath.Join(home, dir)
+		}
 	}
 	if d := os.Getenv("CODEX_SQLITE_HOME"); d != "" && home == CodexDir() {
 		dir = d
