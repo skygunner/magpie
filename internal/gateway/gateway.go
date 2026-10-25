@@ -5747,7 +5747,7 @@ func refusedOptional(status int, msg, body []byte) []string {
 
 // NVIDIA names all rejected fields together. Match only a complete list of
 // quoted top-level names, not an invalid value or a nested field path.
-var unsupportedParameterList = regexp.MustCompile("(?i)^(?:NVIDIA NIM: )?(?:Validation: )?Unsupported parameter(?:s|\\(s\\)):\\s*([\"'\\x60][a-z_]+[\"'\\x60](?:,\\s*[\"'\\x60][a-z_]+[\"'\\x60])*)\\s*$")
+var unsupportedParameterList = regexp.MustCompile("(?i)^(?:[^:\r\n]+: )?(?:Validation: )?Unsupported parameter(?:s|\\(s\\)):\\s*([\"'\\x60][a-z_]+[\"'\\x60](?:,\\s*[\"'\\x60][a-z_]+[\"'\\x60])*)\\s*$")
 var parameterListName = regexp.MustCompile("[\"'\\x60]([a-z_]+)[\"'\\x60]")
 
 // Dropping the alias must preserve every setting, including on later requests
@@ -5799,7 +5799,7 @@ func unsupportedOptionalField(fault any, field string) bool {
 		}
 		if list := unsupportedParameterList.FindStringSubmatch(strings.TrimSpace(v)); list != nil {
 			for _, name := range parameterListName.FindAllStringSubmatch(list[1], -1) {
-				if name[1] == field {
+				if field == "" || name[1] == field {
 					return true
 				}
 			}

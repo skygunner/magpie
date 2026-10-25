@@ -1217,6 +1217,16 @@ var shapeWords = regexp.MustCompile(`(?i)failed to deserialize|unknown (item |co
 // "), as magpie tells it on.
 var unsaidWords = regexp.MustCompile(`(?i)(^|"|\\"|: )invalid request error trace_id: [0-9a-f]{16,}(\\?"|\s*$)`)
 
+// A named unsupported-parameter list is about the request, not the account.
+// Reuse the structured error reader so invalid-value input echoes do not count.
+func refusedParameterList(body []byte) bool {
+	var fault any
+	if decodeJSON(body, &fault) != nil {
+		fault = string(body)
+	}
+	return unsupportedOptionalField(fault, "")
+}
+
 // shapeRefused says a request failed over its shape alone: the next
 // member is asked, and this one doesn't rest, as nothing is wrong with it.
 // An upstream's word that the request is served on another API than the
@@ -1226,8 +1236,9 @@ var unsaidWords = regexp.MustCompile(`(?i)(^|"|\\"|: )invalid request error trac
 // a relay with a Chat URL alone, refusing tools with reasoning there).
 func shapeRefused(status int, body []byte) bool {
 	// the words are matched decoded, too (#1669)
+	raw := body
 	body = wordsOf(body)
-	return (status == 400 || status == 422) && (shapeWords.Match(body) || unsaidWords.Match(body) || customToolRefusal.Match(body) || wrongEndpoint(status, body)) &&
+	return (status == 400 || status == 422) && (shapeWords.Match(body) || refusedParameterList(raw) || unsaidWords.Match(body) || customToolRefusal.Match(body) || wrongEndpoint(status, body)) &&
 		!quotaWords.Match(body) && !unservedWords.Match(body) && !refusedWords.Match(body)
 }
 
@@ -1323,6 +1334,7 @@ func elsewhere(left []candidate, c candidate) []candidate {
 // this key or provider can't serve it — not the request itself at fault.
 func retryable(status int, body []byte) bool {
 	// the words are matched decoded, too (#1669)
+	raw := body
 	body = wordsOf(body)
 	switch {
 	case overflowed(status, body):
@@ -1339,7 +1351,7 @@ func retryable(status int, body []byte) bool {
 		// in front of zcode.z.ai): another provider goes another way
 		return true
 	case status == 400, status == 422:
-		return quotaWords.Match(body) || unservedWords.Match(body) || refusedWords.Match(body) || shapeWords.Match(body) || unsaidWords.Match(body) || regionWords.Match(body) || wrongEndpoint(status, body)
+		return quotaWords.Match(body) || unservedWords.Match(body) || refusedWords.Match(body) || shapeWords.Match(body) || refusedParameterList(raw) || unsaidWords.Match(body) || regionWords.Match(body) || wrongEndpoint(status, body)
 	}
 	return false
 }

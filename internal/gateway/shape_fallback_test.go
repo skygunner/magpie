@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -142,5 +143,43 @@ func TestGroupFailsOverCommandCodesBare400(t *testing.T) {
 		if got := shapeRefused(x.status, []byte(x.body)); got != x.want {
 			t.Errorf("shapeRefused(%d, %s) = %v", x.status, x.body, got)
 		}
+	}
+}
+
+func TestGroupFailsOverUnsupportedParameterList(t *testing.T) {
+	for _, status := range []int{400, 422} {
+		t.Run(fmt.Sprint(status), func(t *testing.T) {
+			fresh(t)
+			a := &scripted{replies: []reply{{status, "", nvidiaParameters}}}
+			b := &scripted{replies: []reply{{200, "", chatOK}}}
+			scriptedOn(t, "a", provider.Chat, a)
+			scriptedOn(t, "b", provider.Chat, b)
+			if err := provider.SaveGroup(provider.Group{Name: "G", Members: []string{"a/m", "b/m"}, Routing: provider.Ordered}); err != nil {
+				t.Fatal(err)
+			}
+			s := New()
+			for i := 1; i <= 2; i++ {
+				code, body := postAs(t, s, "", `{"model":"group/g","messages":[{"role":"user","content":"hi"}],"reasoning":{"effort":"high","summary":"auto"}}`)
+				if code != 200 || a.n != i || b.n != i {
+					t.Fatalf("status %d calls %d/%d: %s", code, a.n, b.n, body)
+				}
+				tr := s.trace.routes[len(s.trace.routes)-1]
+				if len(tr.Tries) != 2 || tr.Tries[0].Fail != failShape || tr.Tries[0].Rest != nil {
+					t.Fatalf("tries: %+v", tr.Tries)
+				}
+			}
+		})
+	}
+	for _, body := range []string{`{"error":{"message":"Unsupported value: high","code":"unsupported_value"}}`, `{"detail":[{"loc":["body","metadata"],"input":"Validation: Unsupported parameter(s): ` + "`reasoning`" + `"}]}`} {
+		if shapeRefused(400, []byte(body)) {
+			t.Errorf("value error classified as shape: %s", body)
+		}
+	}
+}
+
+func TestUnsupportedParameterListEscaped(t *testing.T) {
+	body := []byte(strings.ReplaceAll(nvidiaParameters, "`", `\u0060`))
+	if !retryable(400, body) || !shapeRefused(400, body) {
+		t.Fatal("escaped list must remain a shape refusal")
 	}
 }
