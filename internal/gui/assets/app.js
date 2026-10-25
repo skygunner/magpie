@@ -22549,15 +22549,6 @@ function editRedactRule(r, n, row) {
 // it). MAGPIE_ADDR, a whole host:port, comes first and the field shows it,
 // off (Chicring on Discord: the row was titled a port while it showed one).
 let portDraft = { value: null, err: "" };
-// portSays is the gateway's word on a port it couldn't take, in the page's
-// language: it says the port, so it is matched rather than looked up
-function portSays(m) {
-  let x;
-  if ((x = /^port (\d+) is in use by another program/.exec(m))) return t("Port {p} is in use by another program: pick another one", { p: x[1] });
-  if ((x = /^another magpie serves the gateway at (\S+):/.exec(m))) return t("Another magpie serves the gateway at {url}: set its port there, or quit it first", { url: x[1] });
-  if (/from 1024 to 65535/.test(m)) return t("A port is a number from 1024 to 65535");
-  return t(m);
-}
 function renderPort(s) {
   const box = $("#portList");
   const r = el("div", "row pref port-row");
@@ -22594,6 +22585,9 @@ function renderPort(s) {
         const n = res.port?.moved?.length || 0;
         if (res.port?.error) status(res.port.error, "err");
         else status(n ? t("Gateway on port {p}; {n} agents moved with it", { p, n }) : t("Gateway on port {p}", { p }), "ok", 2500);
+        // the move is the sidebar line's news too (#3531): it read the
+        // providers last, and kept saying the old port until a reload
+        renderSideGw({ url: res.settings?.gateway, running: true });
         renderSettings();
       })
       .catch((e) => { d.value = field.value; d.err = portSays(e.message); status(d.err, "err"); renderSettings(); });

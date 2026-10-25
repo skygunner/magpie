@@ -16059,3 +16059,14 @@ function translateStatic() {
   // they ran under the magpie and the window's buttons (kiwiflysky on X)
   window.fitTop?.();
 }
+
+// portSays is the gateway's word on a port it couldn't take, in the page's
+// language: it says the port, so it is matched rather than looked up
+// (Settings › Network's Apply, app.js renderPort)
+function portSays(m) {
+  let x;
+  if ((x = /^port (\d+) is in use by another program/.exec(m))) return t("Port {p} is in use by another program: pick another one", { p: x[1] });
+  if ((x = /^another magpie serves the gateway at (\S+):/.exec(m))) return t("Another magpie serves the gateway at {url}: set its port there, or quit it first", { url: x[1] });
+  if (/from 1024 to 65535/.test(m)) return t("A port is a number from 1024 to 65535");
+  return t(m);
+}
