@@ -425,10 +425,14 @@ no tokens and no conversation to open (`readable`). Resume is `agy --conversatio
 picks it up from any folder; when agy is set to use magpie it is the
 agent's launch command (the gateway's variables and `--model`) with
 `--conversation` after it (`sessions.AgyStart`, set by package agent).
-Subagents (`parent_conversation_id`) and agy in WSL are not read.
-Verification: `TestAgySessions`, `TestAgyTitleLater`, `TestAgyGrows`,
+Subagents (`parent_conversation_id`) are not read. A distro's agy is
+(#3595): `wslFiles` lists its `brain/` and reads its
+`conversation_summaries.db` through `\wsl.localhost`, the row's workspace
+URI naming a Linux folder, and a resume there is `agy --conversation <id>`
+through `wsl.exe` — `AgyStart`, the Windows twin's key and address, stays
+out. Verification: `TestAgySessions`, `TestAgyTitleLater`, `TestAgyGrows`,
 `TestAgyTranscript`, `TestAgyFolder`, `TestAgyRowOnly`, on conversations agy 1.3.5 and 1.4.7
-wrote in a sandbox.
+wrote in a sandbox, and `TestWSLSessionsListed`.
 
 A read of every call decodes each file's cached shard, and over a long
 history that is tens of thousands of files (#2278: 68k shards, 415 MB).

@@ -69,6 +69,7 @@ var wslAgents = []struct{ agent, dir string }{
 	{"pi", filepath.Join(".pi", "agent")},
 	{"omp", filepath.Join(".omp", "agent")},
 	{"kimi", ".kimi-code"},
+	{"agy", filepath.Join(".gemini", "antigravity-cli")},
 }
 
 // wslScan lists the session files under a distro's home.
@@ -87,6 +88,9 @@ func wslScan(home string) []file {
 			out = append(out, ompFilesIn(dir)...)
 		case "kimi":
 			out = append(out, kimiFilesIn(filepath.Join(dir, "sessions"))...)
+		case "agy":
+			// the distro's agy names Linux folders in its rows (#3595)
+			out = append(out, agyFilesIn(dir, "linux")...)
 		}
 	}
 	return out
@@ -100,6 +104,10 @@ type wslEntry struct {
 	Main  bool      `json:"main,omitempty"`
 	Size  int64     `json:"size"`
 	Mod   time.Time `json:"mod"`
+	// Agy is agy's row of conversation_summaries.db, which a distro's
+	// listing carries with the file: the row's title and folder name the
+	// conversation, and its change re-reads it (#3595)
+	Agy *agySummary `json:"agy,omitempty"`
 }
 
 // wslListing is a distro's files as last listed.
@@ -192,7 +200,11 @@ func wslFiles(agents ...string) []file {
 		cold := !l.Running || !up[n]
 		for _, e := range l.Files {
 			if want[e.Agent] {
-				out = append(out, file{agent: e.Agent, key: e.Key, path: e.Path, main: e.Main, size: e.Size, mod: e.Mod, wsl: n, cold: cold})
+				f := file{agent: e.Agent, key: e.Key, path: e.Path, main: e.Main, size: e.Size, mod: e.Mod, wsl: n, cold: cold}
+				if e.Agy != nil {
+					f.agy, f.rev = e.Agy, agyRev(*e.Agy)
+				}
+				out = append(out, f)
 			}
 		}
 	}
@@ -223,7 +235,7 @@ func wslList(gen uint64, done chan struct{}) {
 		}
 		l := &wslListing{Home: h.Home, Running: true, Files: []wslEntry{}}
 		for _, f := range wslScan(h.Home) {
-			l.Files = append(l.Files, wslEntry{Agent: f.agent, Key: f.key, Path: f.path, Main: f.main, Size: f.size, Mod: f.mod})
+			l.Files = append(l.Files, wslEntry{Agent: f.agent, Key: f.key, Path: f.path, Main: f.main, Size: f.size, Mod: f.mod, Agy: f.agy})
 		}
 		lists[h.Distro] = l
 	}

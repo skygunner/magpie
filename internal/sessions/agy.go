@@ -56,18 +56,24 @@ type agySummary struct {
 	Last time.Time
 }
 
-// agySummaries is conversation_summaries.db's rows, read again only when
-// the database (or its write-ahead log) changed. A read that fails keeps
-// the rows read before.
+// agySummaries are the rows of each conversation_summaries.db read, keyed
+// by its path, read again only when the database (or its write-ahead log)
+// changed: the distros' are read beside this computer's own (#3595). A
+// read that fails keeps the rows read before.
 var agySummaries struct {
 	sync.Mutex
-	path string
+	held map[string]agyHold
+}
+
+type agyHold struct {
 	rev  string
 	rows map[string]agySummary
 }
 
-// agySummariesOf are the rows of the conversation_summaries.db in dir.
-func agySummariesOf(dir string) map[string]agySummary {
+// agySummariesOf are the rows of the conversation_summaries.db in dir,
+// its workspace URIs read as folders of goos's kind (a distro's agy names
+// Linux folders, read through \\wsl.localhost as it is).
+func agySummariesOf(dir, goos string) map[string]agySummary {
 	path := filepath.Join(dir, "conversation_summaries.db")
 	rev := ""
 	for _, p := range []string{path, path + "-wal"} {
@@ -79,32 +85,35 @@ func agySummariesOf(dir string) map[string]agySummary {
 	}
 	agySummaries.Lock()
 	defer agySummaries.Unlock()
-	if agySummaries.path == path && agySummaries.rev == rev {
-		return agySummaries.rows
+	if agySummaries.held == nil {
+		agySummaries.held = map[string]agyHold{}
 	}
-	rows, ok := readAgySummaries(path)
+	if h := agySummaries.held[path]; h.rev == rev {
+		return h.rows
+	}
+	rows, ok := readAgySummaries(path, goos)
 	if !ok {
-		if agySummaries.path == path {
-			return agySummaries.rows
+		if h, had := agySummaries.held[path]; had {
+			return h.rows
 		}
 		return nil
 	}
-	agySummaries.path, agySummaries.rev, agySummaries.rows = path, rev, rows
+	agySummaries.held[path] = agyHold{rev: rev, rows: rows}
 	return rows
 }
 
 // readAgySummaries opens the database for the one read and closes it: it
 // is read again only when it changed.
-func readAgySummaries(path string) (map[string]agySummary, bool) {
+func readAgySummaries(path, goos string) (map[string]agySummary, bool) {
 	db, err := provider.OpenReadOnly(path)
 	if err != nil {
 		return nil, false
 	}
 	defer db.Close()
-	return agyRows(db)
+	return agyRows(db, goos)
 }
 
-func agyRows(db *sql.DB) (map[string]agySummary, bool) {
+func agyRows(db *sql.DB, goos string) (map[string]agySummary, bool) {
 	rows, err := db.Query("SELECT conversation_id, title, workspace_uris, last_modified_time FROM conversation_summaries")
 	if err != nil {
 		return nil, false
@@ -122,7 +131,7 @@ func agyRows(db *sql.DB) (map[string]agySummary, bool) {
 		json.Unmarshal([]byte(ws.String), &uris)
 		s := agySummary{Title: t.String, Last: agyTime(last)}
 		for _, u := range uris {
-			if s.Cwd = agyFolder(u, runtime.GOOS); s.Cwd != "" {
+			if s.Cwd = agyFolder(u, goos); s.Cwd != "" {
 				break
 			}
 		}
@@ -195,15 +204,16 @@ func agyTranscripts(dir string) []file {
 // agyFiles are agy's conversations on this computer, each with its row of
 // conversation_summaries.db: rev is that row, so a title agy writes after
 // the transcript reads the conversation again, and only that one.
-func agyFiles() []file { return agyFilesIn(AgyDir()) }
+func agyFiles() []file { return agyFilesIn(AgyDir(), runtime.GOOS) }
 
-// agyFilesIn is agyFiles of the agy data folder dir. A conversation with a
-// row and no transcript (#1718: agy keeps each one's
+// agyFilesIn is agyFiles of the agy data folder dir, its workspace URIs
+// read as folders of goos's kind (a WSL distro's are Linux's). A
+// conversation with a row and no transcript (#1718: agy keeps each one's
 // steps in conversations/<id>.db too, protobuf this doesn't read) is
 // listed from its row alone: its title, folder and time, and no tokens.
-func agyFilesIn(dir string) []file {
+func agyFilesIn(dir, goos string) []file {
 	out := agyTranscripts(dir)
-	rows := agySummariesOf(dir)
+	rows := agySummariesOf(dir, goos)
 	if len(out) == 0 && len(rows) == 0 {
 		return nil
 	}
@@ -458,6 +468,6 @@ func agyParts(l agyLine) []Part {
 // forgetAgySummaries forgets the rows read of conversation_summaries.db.
 func forgetAgySummaries() {
 	agySummaries.Lock()
-	agySummaries.path, agySummaries.rev, agySummaries.rows = "", "", nil
+	agySummaries.held = nil
 	agySummaries.Unlock()
 }

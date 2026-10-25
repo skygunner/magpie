@@ -31,6 +31,7 @@ func wslDistro(t *testing.T) (home string, running *bool) {
 	copyTree(t, "testdata/codex", filepath.Join(home, ".codex"))
 	copyTree(t, "testdata/pi", filepath.Join(home, ".pi", "agent"))
 	copyTree(t, "testdata/omp/agent", filepath.Join(home, ".omp", "agent"))
+	copyTree(t, "testdata/agy-sessions", filepath.Join(home, ".gemini", "antigravity-cli"))
 	on := true
 	WSLHomes = func() []WSLHome { return []WSLHome{{Distro: "Ubuntu", Home: home, Running: on}} }
 	t.Cleanup(func() { wslSettle(); WSLHomes = nil; Reset() })
@@ -38,8 +39,9 @@ func wslDistro(t *testing.T) (home string, running *bool) {
 	return home, &on
 }
 
-// The sessions of Claude Code, Codex, Pi and omp in a WSL distro are listed
-// with the distro, resumed there through wsl.exe; their calls count in usage.
+// The sessions of Claude Code, Codex, Pi, omp and agy in a WSL distro are
+// listed with the distro, resumed there through wsl.exe; their calls count
+// in usage.
 func TestWSLSessionsListed(t *testing.T) {
 	home, _ := wslDistro(t)
 	ss := List(0)
@@ -50,10 +52,20 @@ func TestWSLSessionsListed(t *testing.T) {
 		}
 		got[s.Agent] = s
 	}
-	for _, a := range []string{"claude", "codex", "pi", "omp"} {
+	for _, a := range []string{"claude", "codex", "pi", "omp", "agy"} {
 		if _, ok := got[a]; !ok {
 			t.Fatalf("no %s session from WSL in %+v", a, ss)
 		}
+	}
+	// agy's row names it: its title and folder from conversation_summaries.db,
+	// and a resume in the distro that leaves magpie's own launch out
+	ag := got["agy"]
+	if ag.Title != "Hello from the fake." || ag.Cwd != "/work/proj" || ag.Tokens.zero() {
+		t.Fatalf("agy: %+v", ag)
+	}
+	wantAgy := `wsl.exe -d 'Ubuntu' --cd '/work/proj' -e sh -lc 'exec ${SHELL:-sh} -lic ''agy --conversation ` + agyTwoTurns + `'''`
+	if ag.Resume != wantAgy {
+		t.Fatalf("agy resume\n got %s\nwant %s", ag.Resume, wantAgy)
 	}
 	cc := got["claude"]
 	if cc.ID != "11111111-2222-3333-4444-555555555555" || cc.Cwd != "/work/app" || cc.Tokens.zero() {
@@ -81,8 +93,9 @@ func TestWSLSessionsListed(t *testing.T) {
 	for _, c := range Calls(time.Time{}) {
 		calls[c.Agent]++
 	}
-	// Pi's and omp's too (#1951, Elenoxe: Pi in WSL on its own provider)
-	for _, a := range []string{"claude", "codex", "pi", "omp"} {
+	// Pi's and omp's too (#1951, Elenoxe: Pi in WSL on its own provider);
+	// agy's calls are its transcripts (#2097)
+	for _, a := range []string{"claude", "codex", "pi", "omp", "agy"} {
 		if calls[a] == 0 {
 			t.Fatalf("the distro's %s calls aren't counted: %v", a, calls)
 		}
@@ -278,8 +291,8 @@ func TestWSLOmpProfiles(t *testing.T) {
 // opened: that would start it.
 func TestWSLStoppedDistroKept(t *testing.T) {
 	home, running := wslDistro(t)
-	if n := len(List(0)); n != 7 {
-		t.Fatalf("want the 7 sessions, got %d", n)
+	if n := len(List(0)); n != 10 {
+		t.Fatalf("want the 10 sessions, got %d", n)
 	}
 	wslSettle()
 	Saved()
@@ -292,8 +305,8 @@ func TestWSLStoppedDistroKept(t *testing.T) {
 	}
 	for i := 0; i < 2; i++ {
 		ss := List(0)
-		if len(ss) != 7 {
-			t.Fatalf("pass %d: want the 7 sessions as last read, got %+v", i, ss)
+		if len(ss) != 10 {
+			t.Fatalf("pass %d: want the 10 sessions as last read, got %+v", i, ss)
 		}
 		for _, s := range ss {
 			if s.WSL != "Ubuntu" || s.Tokens.zero() || s.Resume == "" {
@@ -314,8 +327,8 @@ func TestWSLStoppedSinceNotOpened(t *testing.T) {
 	up := true
 	WSLRunning = func(d string) bool { return d == "Ubuntu" && up }
 	t.Cleanup(func() { WSLRunning = nil })
-	if n := len(List(0)); n != 7 {
-		t.Fatalf("want the 7 sessions, got %d", n)
+	if n := len(List(0)); n != 10 {
+		t.Fatalf("want the 10 sessions, got %d", n)
 	}
 	wslSettle()
 	project := filepath.Join(home, ".claude", "projects", "-work-app")
@@ -351,7 +364,7 @@ func TestWSLStoppedSinceNotOpened(t *testing.T) {
 		wslSess.Unlock()
 		ss := List(0)
 		wslSettle()
-		if len(ss) != 7 {
+		if len(ss) != 10 {
 			t.Fatalf("pass %d: the stopped distro was listed again: %d sessions", i, len(ss))
 		}
 		for _, s := range ss {
@@ -368,8 +381,8 @@ func TestWSLStoppedSinceNotOpened(t *testing.T) {
 	List(0)
 	wslSettle()
 	ss := List(0)
-	if len(ss) != 8 {
-		t.Fatalf("running again: want 8 sessions, got %d", len(ss))
+	if len(ss) != 11 {
+		t.Fatalf("running again: want 11 sessions, got %d", len(ss))
 	}
 }
 

@@ -42,8 +42,12 @@ func AgyDir() string {
 	return filepath.Join(home, ".gemini", "antigravity-cli")
 }
 
-// agyCallFiles are each conversation's transcript_full.jsonl.
-func agyCallFiles() []file { return agyTranscripts(AgyDir()) }
+// agyCallFiles are each conversation's transcript_full.jsonl, a WSL
+// distro's included (#3595).
+func agyCallFiles() []file {
+	out := agyTranscripts(AgyDir())
+	return append(out, wslFiles("agy")...)
+}
 
 type agyStep struct {
 	Step      *int   `json:"step_index"`
