@@ -87,7 +87,22 @@ func zcode(home string) *Agent {
 		},
 		Sync: func() error {
 			if !wired() {
-				return nil
+				// magpie's provider gone from both files: what ZCode's own settings
+				// page writes takes it out of provider_config.json alone, so this is
+				// something else that rewrote them (a restart or an update, #3246).
+				// Magpie puts back what it applied, unless the user disconnected it
+				// here; an older ZCode, with no rules file, keeps its providers in
+				// config.json alone and its removal is the user's.
+				if appliedOf("zcode").Fields["provider"] != magpieID || stashLoad()["zcode"+disconnectedKey] == "1" {
+					return nil
+				}
+				if _, err := os.Stat(rules); err != nil {
+					return nil
+				}
+				if err := zcodeRules(rules, true, false); err != nil {
+					return err
+				}
+				return edit.SetJSON(path, edit.KV{Path: key, Value: zcodeProviderJSON(path, false)})
 			}
 			// a ZCode that keeps its providers as rules, with magpie's taken
 			// out there, had it removed in ZCode: it isn't put back
