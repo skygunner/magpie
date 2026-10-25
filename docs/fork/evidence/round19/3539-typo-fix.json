@@ -1,0 +1,9 @@
+{
+ "comment_id": 6394204236,
+ "issue": 3539,
+ "author": "skygunner",
+ "updated_at": "2026-10-25T06:05:00Z",
+ "verified_at": "2026-10-25T06:05:16Z",
+ "body_sha256": "660419bf436f36583fab0b935aaa686bbb3722c23695a0a1912c75d4b43ab895",
+ "note": "typo fix (stray FRIENDLY removed); content otherwise unchanged"
+}

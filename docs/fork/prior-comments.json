@@ -837,5 +837,32 @@
   "type": "issue",
   "url": "https://github.com/yetone/magpie/issues/3303",
   "title": "npx cache bins"
+ },
+ "2741": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/2741#issuecomment-6394163102"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/2741",
+  "title": "commandcode host replay"
+ },
+ "3561": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3561#issuecomment-6394265586"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3561",
+  "title": "pii downloads proxy"
+ },
+ "3567": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3567#issuecomment-6394559364"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3567",
+  "title": "tui keep proc.Command"
  }
 }

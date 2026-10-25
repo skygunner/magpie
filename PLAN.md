@@ -322,6 +322,24 @@ internal/gateway/fallback.go 修改全程未触碰。
 
 累计真实修复：12（前三轮）+ 本轮 #2866、#2777、#3303 = **15 个不同 issue**。
 
+## 2026-10-25 第十五轮（ZCode 会话十七）：#2741、#3561、#3567 + #3327/#3539 甄别
+
+按 ROUND15-CONTINUE 执行（base = upstream/main `1b039a3c`）。他人未提交的
+internal/gateway/fallback.go 全程未触碰。
+
+| M | 目标 | 结果 |
+|---|---|---|
+| M1-A | #3327 Mistral empty_response | **BLOCKED_ARCHITECTURE**：#667 的空回复重问只存在于翻译 continuation 回路；OpenCode→mistral 的 Chat passthrough 完全没有 re-ask 机制——移植属架构改动而非本轮。response_error 标记本身真实且 vendor 特定，已入 candidates.json 供后续/维护者 |
+| M1-B | #2741 Command Code replay | 完成：`fix/commandcode-replay-reasoning` 741237cf——`chatReplaysReasoning` 对 commandcode 全域匹配（插件 id + `api.commandcode.ai`），#1462 式；不造 reasoning，只回放 turn 实际携带的。双 RED→GREEN；英文回帖 [6394163102](https://github.com/yetone/magpie/issues/2741#issuecomment-6394163102) |
+| M1-C | #3539 嵌套 413 | **TRIAGED_TO_PLUGIN**：结构化 `param.statusCode=413/isRetryable=false` 在 cline 插件 `failure()/errorResponse()` 内被拍扁成 message 字符串，magpie 只见 502 带字——按消息正则猜不安全（会误伤普通 502/429）；一行修在插件仓库。中文调查帖（含链路证据与插件侧修法）[6394204236](https://github.com/yetone/magpie/issues/3539#issuecomment-6394204236)，typo 编辑回执 evidence/round19/3539-typo-fix.json |
+| M2 | #3561 下载器 proxy | 完成：`fix/pii-download-proxy` 55dfe0a5——报告者诊断与 `proxied()` 方案（已致谢）：transport 走 `netproxy.Func`+`Dispatch`；行为 RED（假发布主机仅有代理一条路，旧代码直连且照常成功）→GREEN；pii 17 绿。**披露**：提交又落在 #2741 工作分支后拆出（无 force-push），远端 2741 分支保持单提交；文件不相交、各自可 cherry-pick，回帖已写明。英文回帖 [6394265586](https://github.com/yetone/magpie/issues/3561#issuecomment-6394265586)。#3191 留独立轮 |
+| 新发现 | 上游 main 红测试 | 回归归因时发现 `TestNoCommandBypassesProc` 在干净 `1b039a3c` 稳定红（-count=2）——上游当日 `75e78a5a`（keep.go）用 os/exec 弄红自家守卫；= 维护者自报 [#3567](https://github.com/yetone/magpie/issues/3567)（零评论，CI 40166079788，issue 自述修法）。完成：`fix/tui-keep-proc-command` 64bd29fa——`proc.Command` 一行修 + os/exec 移除；proc/tui 双包绿；英文回帖 [6394559364](https://github.com/yetone/magpie/issues/3567#issuecomment-6394559364) |
+| 回归 | 合并树 | 三修复合并树 9e7f5275：pii/proc/tui 全绿、守卫 -count=3 绿；package-suites 日志三红全部带据归因（#3280 已知、HandedOver 已知 flake、NoCommand=上游 #3567 已修），见 evidence/round19/README.md |
+
+台账：84 units / 106 远端 heads，REQUIRED_SET 95 项，generate.py+--selftest 过。
+
+累计真实修复：15（前四轮）+ 本轮 #2741、#3561、#3567 = **18 个不同 issue**。
+
 扩池补充审计（同轮晚些）：#2968（Cowork 配置目录未知，需 macOS 真机）、#3379/#3107（仅截图）、#3149（产品诉求）——均已带据入 candidates.json。
 
 累计真实修复：第十一轮 7 题 + 本轮 2 题新 issue（#3117、#3043）+ #3470 follow-up（同题补齐）= **9 个不同 issue**。距 30–60 目标尚远，候选池审计后的真实可得率是约束（见 candidates.json 的 15 条带据排除）；继续按轮推进。

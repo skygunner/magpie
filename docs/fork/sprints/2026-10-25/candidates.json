@@ -198,5 +198,37 @@
    2474,
    2786
   ]
- }
+ },
+ "round19": [
+  {
+   "checked_at": "2026-10-25T06:51:04Z",
+   "delivered": [
+    2741,
+    3561,
+    3567
+   ],
+   "dispositions": [
+    {
+     "issue": 3327,
+     "disposition": "BLOCKED_ARCHITECTURE",
+     "why": "the empty-reply retry (#667) lives in the translated continuation loop only; a Chat passthrough (OpenCode->mistral Chat) has no re-ask machinery at all — porting it into passthrough is an architectural change, not this round. The response_error content_validation marker is real and vendor-specific; noted for a future round or the maintainer."
+    },
+    {
+     "issue": 3539,
+     "disposition": "TRIAGED_TO_PLUGIN",
+     "why": "the structured param.statusCode=413/isRetryable=false is flattened to a message string inside the cline plugin failure()/errorResponse() (packages/cline/index.mjs); magpie only sees a 502 with words. Fixing by message regex is unsafe (would catch ordinary 502/429 wording); the one-line fix (inner param.statusCode passthrough) belongs to the plugin repo. Chinese investigation comment 6394204236 posted with the chain evidence."
+    },
+    {
+     "issue": 3191,
+     "disposition": "DEFERRED",
+     "why": "needs its own round: controlled h2 server with flow-control window filled, write-phase budget design, replay safety for partially-written bodies, failover semantics; reporter left full repro guidance."
+    },
+    {
+     "issue": 3567,
+     "disposition": "DELIVERED",
+     "why": "found live during round-19 regression attribution: upstream 75e78a5a broke the guard test on main; maintainer-filed with the one-line fix named; delivered 64bd29fa."
+    }
+   ]
+  }
+ ]
 }

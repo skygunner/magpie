@@ -47,15 +47,15 @@
    "batch_chain_note": "batch is a forward-append chain: the v2 base fa22bc64 carries 15 commits (34dcacff…95537ceb), rebased onto b437e4ad, then bbd6e228 and 4e136a4b this round; see deliveries.r3-batch"
   },
   "totals": {
-   "entries": 92,
-   "issues": 89,
+   "entries": 95,
+   "issues": 92,
    "prs": 3,
-   "product": 75,
+   "product": 78,
    "tests_ci": 9,
    "upstream_existing": 6,
    "other": 2,
-   "code_entries": 84,
-   "units": 81
+   "code_entries": 87,
+   "units": 84
   },
   "counts_note": "Generated from the JSON by docs/fork/generate.py; not hand-written. 64 code-linked entries are not 64 independent fixes: units are grouped by first primary fix commit (60 groups).",
   "fork": "skygunner/magpie",
@@ -3683,6 +3683,132 @@
    "archive": {
     "candidate": false
    }
+  },
+  {
+   "id": "u-gateway-command-codes-built-in-host-has-a-turns-reasoning--2741-741237cf",
+   "issues": [
+    2741
+   ],
+   "category": "product",
+   "title": "gateway: Command Code's built-in host has a turn's reasoning back too (#2741, m002346)",
+   "coverage": "chatReplaysReasoning matches commandcode wherever served (plugin id + api.commandcode.ai), #1462-style; no invented reasoning, replay only what the turn carried; gateway suite green except the known #3280.",
+   "commits": [
+    "741237cfc9e706db90976ecf17f78a31ac54ec65"
+   ],
+   "commit_details": [
+    {
+     "sha": "741237cfc9e706db90976ecf17f78a31ac54ec65",
+     "title": "gateway: Command Code's built-in host has a turn's reasoning back too (#2741, m002346)",
+     "url": "https://github.com/skygunner/magpie/commit/741237cfc9e706db90976ecf17f78a31ac54ec65"
+    }
+   ],
+   "branch": "fix/commandcode-replay-reasoning",
+   "base": "1b039a3c7247d0221fb0b8ed8ef89a35ffd8e9d6",
+   "comments": {
+    "2741": [
+     "https://github.com/yetone/magpie/issues/2741#issuecomment-6394163102"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false,
+    "credited": "",
+    "coauthors": []
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "red->green per commit body; affected packages green; combined tree 9e7f5275 pii/proc/tui ok and the guard green -count=3 (evidence/round19/README.md)",
+    "head": "741237cfc9e706db90976ecf17f78a31ac54ec65"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-pii-the-privacy-models-downloads-follow-settings-proxy-3561-55dfe0a5",
+   "issues": [
+    3561
+   ],
+   "category": "product",
+   "title": "pii: the privacy model's downloads follow Settings' Proxy (#3561, yuancjun)",
+   "coverage": "reporter's diagnosis and proxied() shape, credited: transport asks netproxy.Func via netproxy.Dispatch; behavior red->green with a fake release host whose only route is the counting proxy; http hop stands in for socks5h. Branch note: committed in #2741's worktree by slip, split to its own branch; remote #2741 branch stayed single-commit 741237cf; files disjoint, each cherry-picks alone (disclosed in the comment).",
+   "commits": [
+    "55dfe0a52959fa85726efbcf84f5a3f702a897cd"
+   ],
+   "commit_details": [
+    {
+     "sha": "55dfe0a52959fa85726efbcf84f5a3f702a897cd",
+     "title": "pii: the privacy model's downloads follow Settings' Proxy (#3561, yuancjun)",
+     "url": "https://github.com/skygunner/magpie/commit/55dfe0a52959fa85726efbcf84f5a3f702a897cd"
+    }
+   ],
+   "branch": "fix/pii-download-proxy",
+   "base": "1b039a3c7247d0221fb0b8ed8ef89a35ffd8e9d6",
+   "comments": {
+    "3561": [
+     "https://github.com/yetone/magpie/issues/3561#issuecomment-6394265586"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": true,
+    "credited": "yuancjun (diagnosis and fix shape)",
+    "coauthors": []
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "red->green per commit body; affected packages green; combined tree 9e7f5275 pii/proc/tui ok and the guard green -count=3 (evidence/round19/README.md)",
+    "head": "55dfe0a52959fa85726efbcf84f5a3f702a897cd"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-tui-keeps-background-serve-is-made-with-proc.command-3567-64bd29fa",
+   "issues": [
+    3567
+   ],
+   "category": "product",
+   "title": "tui: keep's background serve is made with proc.Command (#3567, yetone)",
+   "coverage": "upstream 75e78a5a broke the repo guard on main (his own #3567, CI 40166079788); clean 1b039a3c checkout red -count=2; the one-line fix the issue names; batch/hide no-ops off Windows, path Linux-only at runtime.",
+   "commits": [
+    "64bd29fa416b352424dafb5cc2f338f27aa21254"
+   ],
+   "commit_details": [
+    {
+     "sha": "64bd29fa416b352424dafb5cc2f338f27aa21254",
+     "title": "tui: keep's background serve is made with proc.Command (#3567, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/64bd29fa416b352424dafb5cc2f338f27aa21254"
+    }
+   ],
+   "branch": "fix/tui-keep-proc-command",
+   "base": "1b039a3c7247d0221fb0b8ed8ef89a35ffd8e9d6",
+   "comments": {
+    "3567": [
+     "https://github.com/yetone/magpie/issues/3567#issuecomment-6394559364"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false,
+    "credited": "",
+    "coauthors": []
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "red->green per commit body; affected packages green; combined tree 9e7f5275 pii/proc/tui ok and the guard green -count=3 (evidence/round19/README.md)",
+    "head": "64bd29fa416b352424dafb5cc2f338f27aa21254"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
   }
  ],
  "pointed_elsewhere": [
@@ -5609,6 +5735,42 @@
    "replaced_by": "",
    "note": "M0: #3531 cherry-picked standalone ref, GUI verified at that head; original ref kept",
    "category": "product"
+  },
+  {
+   "branch": "fix/commandcode-replay-reasoning",
+   "head": "741237cfc9e706db90976ecf17f78a31ac54ec65",
+   "kind": "product",
+   "base": "1b039a3c7247d0221fb0b8ed8ef89a35ffd8e9d6",
+   "fix_ids": [
+    "u-gateway-command-codes-built-in-host-has-a-turns-reasoning--2741-741237cf"
+   ],
+   "replaced_by": "",
+   "note": "round-19 one-issue-one-branch",
+   "category": "product"
+  },
+  {
+   "branch": "fix/pii-download-proxy",
+   "head": "55dfe0a52959fa85726efbcf84f5a3f702a897cd",
+   "kind": "product",
+   "base": "1b039a3c7247d0221fb0b8ed8ef89a35ffd8e9d6",
+   "fix_ids": [
+    "u-pii-the-privacy-models-downloads-follow-settings-proxy-3561-55dfe0a5"
+   ],
+   "replaced_by": "",
+   "note": "round-19 one-issue-one-branch",
+   "category": "product"
+  },
+  {
+   "branch": "fix/tui-keep-proc-command",
+   "head": "64bd29fa416b352424dafb5cc2f338f27aa21254",
+   "kind": "product",
+   "base": "1b039a3c7247d0221fb0b8ed8ef89a35ffd8e9d6",
+   "fix_ids": [
+    "u-tui-keeps-background-serve-is-made-with-proc.command-3567-64bd29fa"
+   ],
+   "replaced_by": "",
+   "note": "round-19 one-issue-one-branch",
+   "category": "product"
   }
  ],
  "archive_policy": {
@@ -6234,6 +6396,57 @@
    "body_sha256": "755faa4e53e168f677ed9a5945b55561c9d406f9fd6d95d8278c53d43abf1940",
    "evidence": "docs/fork/evidence/round18/comment-sync-corrected.json",
    "body_updated_at": "2026-10-25T05:34:38Z"
+  },
+  {
+   "issue": 2741,
+   "fix_id": "u-gateway-command-codes-built-in-host-has-a-turns-reasoning--2741-741237cf",
+   "comment_id": 6394163102,
+   "url": "https://github.com/yetone/magpie/issues/2741#issuecomment-6394163102",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T05:59:32Z",
+   "verified_at": "2026-10-25T06:51:40Z",
+   "delivery": "fix/commandcode-replay-reasoning",
+   "delivery_head": "741237cfc9e706db90976ecf17f78a31ac54ec65",
+   "body_sha256": "ee90c2cdd83068a79f62d29fc74952bc298617805eaf7154cc2dde3d2a55ef4a",
+   "evidence": "docs/fork/evidence/round19/README.md",
+   "body_updated_at": "2026-10-25T05:59:32Z"
+  },
+  {
+   "issue": 3561,
+   "fix_id": "u-pii-the-privacy-models-downloads-follow-settings-proxy-3561-55dfe0a5",
+   "comment_id": 6394265586,
+   "url": "https://github.com/yetone/magpie/issues/3561#issuecomment-6394265586",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T06:12:29Z",
+   "verified_at": "2026-10-25T06:51:40Z",
+   "delivery": "fix/pii-download-proxy",
+   "delivery_head": "55dfe0a52959fa85726efbcf84f5a3f702a897cd",
+   "body_sha256": "96cf67b9f499e5603f0da27a7b75e3bdf96c5bd6a48068a7d9dcbb1c8b95d01d",
+   "evidence": "docs/fork/evidence/round19/README.md",
+   "body_updated_at": "2026-10-25T06:12:29Z"
+  },
+  {
+   "issue": 3567,
+   "fix_id": "u-tui-keeps-background-serve-is-made-with-proc.command-3567-64bd29fa",
+   "comment_id": 6394559364,
+   "url": "https://github.com/yetone/magpie/issues/3567#issuecomment-6394559364",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T06:49:50Z",
+   "verified_at": "2026-10-25T06:51:40Z",
+   "delivery": "fix/tui-keep-proc-command",
+   "delivery_head": "64bd29fa416b352424dafb5cc2f338f27aa21254",
+   "body_sha256": "c31ab0307291d4d3829110df906232aca216f64bbea7fcc70a21c0575cf5817f",
+   "evidence": "docs/fork/evidence/round19/README.md",
+   "body_updated_at": "2026-10-25T06:49:50Z"
   }
  ],
  "deliveries": {
@@ -6453,6 +6666,40 @@
    "pushed": true,
    "read_back": "2026-10-25 equal",
    "note": "proc: npx's cache bins are the user's tool folders (#3303, Moody-Sin)"
+  },
+  "fix/commandcode-replay-reasoning": {
+   "branch": "fix/commandcode-replay-reasoning",
+   "base": "1b039a3c7247d0221fb0b8ed8ef89a35ffd8e9d6",
+   "head": "741237cfc9e706db90976ecf17f78a31ac54ec65",
+   "commits": [
+    "741237cfc9e706db90976ecf17f78a31ac54ec65"
+   ],
+   "pushed": true,
+   "read_back": "2026-10-25 equal",
+   "note": "gateway: Command Code's built-in host has a turn's reasoning back too (#2741, m0"
+  },
+  "fix/pii-download-proxy": {
+   "branch": "fix/pii-download-proxy",
+   "base": "1b039a3c7247d0221fb0b8ed8ef89a35ffd8e9d6",
+   "head": "55dfe0a52959fa85726efbcf84f5a3f702a897cd",
+   "commits": [
+    "741237cfc9e706db90976ecf17f78a31ac54ec65",
+    "55dfe0a52959fa85726efbcf84f5a3f702a897cd"
+   ],
+   "pushed": true,
+   "read_back": "2026-10-25 equal",
+   "note": "#3561; its history shares the #2741 commit (working-tree slip, no force-push; both cherry-pick alone, files disjoint, disclosed in the delivery comment), so the delivery chain carries both"
+  },
+  "fix/tui-keep-proc-command": {
+   "branch": "fix/tui-keep-proc-command",
+   "base": "1b039a3c7247d0221fb0b8ed8ef89a35ffd8e9d6",
+   "head": "64bd29fa416b352424dafb5cc2f338f27aa21254",
+   "commits": [
+    "64bd29fa416b352424dafb5cc2f338f27aa21254"
+   ],
+   "pushed": true,
+   "read_back": "2026-10-25 equal",
+   "note": "tui: keep's background serve is made with proc.Command (#3567, yetone)"
   }
  }
 }
