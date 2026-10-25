@@ -153,7 +153,11 @@ func (p Provider) ModelTest() string {
 		return ""
 	}
 	for _, pr := range p.Speaks() {
-		if pr == Chat || pr == Responses || pr == Anthropic || pr == Gemini && p.Gemini != "" {
+		// a plugin's Code Assist is its fetch's own address (plugins.go):
+		// the envelope goes to the plugin, which sends the publisher's
+		// generateContent (#3460). A Google sign-in's has no request of its
+		// own (testsTranslated).
+		if pr == Chat || pr == Responses || pr == Anthropic || pr == Gemini && p.Gemini != "" || pr == CodeAssist && p.IsPlugin() {
 			return ""
 		}
 	}
@@ -192,6 +196,11 @@ func tinyBody(q Provider, proto Protocol, model string) (url, body string) {
 		return q.mantleBase(q.Responses, model) + "/responses", fmt.Sprintf(`{"model":%q,"input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"hi"}]}],"max_output_tokens":16}`, model)
 	case Anthropic:
 		return q.Anthropic + "/v1/messages", fmt.Sprintf(`{"model":%q,"max_tokens":16,"messages":[{"role":"user","content":"hi"}]}`, model)
+	case CodeAssist:
+		// the envelope pluginFetch unwraps into the publisher's
+		// generateContent, as a Google sign-in's requests are built
+		return q.Base(CodeAssist) + "/v1internal:streamGenerateContent?alt=sse",
+			fmt.Sprintf(`{"model":%q,"request":{"contents":[{"role":"user","parts":[{"text":"hi"}]}],"generationConfig":{"maxOutputTokens":16}}}`, model)
 	case Gemini:
 		if q.IsVertex() {
 			return vertexTest(q, model)
@@ -289,7 +298,7 @@ func (p Provider) testOne(ctx context.Context, model string) Result {
 	}
 	var protos []Protocol
 	for _, pr := range p.Speaks() {
-		if pr == Chat || pr == Responses || pr == Anthropic || pr == Gemini {
+		if pr == Chat || pr == Responses || pr == Anthropic || pr == Gemini || pr == CodeAssist && p.IsPlugin() {
 			protos = append(protos, pr)
 		}
 	}
