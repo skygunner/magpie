@@ -268,8 +268,10 @@ func modelFits(s string, a, b int, kind string) bool {
 		}
 		return !hexRe.MatchString(v) || cued(s, a, secretCues)
 	case "EMAIL":
-		// a URL's user:password@host is no address, as for the rule's (#3538)
-		return wordByte(v[0]) && !modCacheRe.MatchString(v) && !inUserinfo(s, a)
+		// a URL's user:password@host is no address, as for the rule's
+		// (#3538), and neither is a path's piece, as a systemd unit is
+		// (#3629)
+		return wordByte(v[0]) && !modCacheRe.MatchString(v) && !inUserinfo(s, a) && !inPath(s, a, b)
 	}
 	return true
 }
