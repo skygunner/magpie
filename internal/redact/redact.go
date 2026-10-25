@@ -375,7 +375,8 @@ func realEmail(v string) bool {
 	if fileHost(host) {
 		return false
 	}
-	for _, fake := range []string{"example.com", "example.org", "example.net", "localhost", ".test", ".invalid", ".example"} {
+	// .local is a mDNS name, no domain (user@host.local, #3541)
+	for _, fake := range []string{"example.com", "example.org", "example.net", "localhost", ".test", ".invalid", ".example", ".local"} {
 		if host == strings.TrimPrefix(fake, ".") || strings.HasSuffix(host, fake) {
 			return false
 		}
