@@ -3199,14 +3199,16 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 				continue
 			}
 		}
-		if !last && hw.failed() && shapeRefused(hw.code(), hw.errBody()) {
-			// a request this vendor's API can't read (xAI's 422 over an
-			// input item it doesn't know, #350) another's may: the next is
-			// asked once, as each is, and this one doesn't rest
+		if !last && hw.failed() && (hw.bareRequest || shapeRefused(hw.code(), hw.errBody())) {
+			// Another member may take this request. Neither a shape refusal
+			// nor a bare one establishes a fault with the account.
 			if other == nil {
 				other = &Try{Status: call.Status, Error: call.Error}
 			}
-			try.Fail = failShape
+			try.Fail = failOther
+			if !hw.bareRequest {
+				try.Fail = failShape
+			}
 			s.trace.update(tr, func(t *Route) { t.Tries[len(t.Tries)-1] = try })
 			skipped = append(skipped, c.label()+": "+call.Error)
 			continue
@@ -7168,6 +7170,9 @@ func writeError(w http.ResponseWriter, proto provider.Protocol, status int, msg 
 // ChatGPT backend's invalid_access_program on access_programs.cyber
 // (magpie-releases#18) reaches the agent as the backend said it.
 func writeVendorError(w http.ResponseWriter, proto provider.Protocol, status int, msg string, body []byte) int {
+	if h, ok := w.(*holdWriter); ok {
+		h.bareRequest = bareRequestRefused(status, body)
+	}
 	var code, param any
 	if e := gjson.GetBytes(body, "error"); e.IsObject() {
 		if c := e.Get("code"); c.Type == gjson.String && c.String() != "" {

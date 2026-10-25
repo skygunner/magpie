@@ -211,7 +211,7 @@ func (s *Server) serveDecideTries(w http.ResponseWriter, r *http.Request, body [
 		}
 		if status >= 400 {
 			fail, rest = s.decideFailed(c, status, header, b)
-			if !last && retryable(status, b) {
+			if !last && (retryable(status, b) || bareRequestRefused(status, b)) {
 				tried(status, errMsg, fail, rest, used)
 				skipped = append(skipped, fmt.Sprintf("%s: %s", c.label(), errMsg))
 				continue
