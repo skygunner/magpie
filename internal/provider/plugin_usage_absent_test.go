@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -32,5 +33,21 @@ func TestPluginWindowWithoutUsedIsNoReading(t *testing.T) {
 	}})
 	if a := allowanceOf(only.Windows, now); len(a) != 0 {
 		t.Errorf("a window that said nothing is an allowance: %+v", a)
+	}
+}
+
+// A window that said nothing has no share in the allowance routing ranks
+// on, through the decode a plugin's reply takes: the window whose used was
+// never sent is absent from it, while one that said 0 is there (#3650).
+// This one compiles on the base too, so it is the regression that fails
+// before the fix.
+func TestAWindowWithoutUsedIsNoAllowance(t *testing.T) {
+	var u plugin.Usage
+	if err := json.Unmarshal([]byte(`{"windows":[{"name":"Credits","display":"0 / 5000"},{"name":"Daily","used":0,"limit":100,"display":"0 / 100"}]}`), &u); err != nil {
+		t.Fatal(err)
+	}
+	q := quotaOfPlugin(SubscriptionQuota{Provider: "loomy-plugin", User: "u"}, u)
+	if a := allowanceOf(q.Windows, time.Now()); len(a) != 1 || a[0].Name != "Daily" {
+		t.Fatalf("the allowance: %+v", a)
 	}
 }
