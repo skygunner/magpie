@@ -1,0 +1,31 @@
+{
+ "read_at": "2026-10-25T12:36:50Z",
+ "comments": [
+  {
+   "comment_id": 6395007475,
+   "url": "https://github.com/yetone/magpie/issues/3392#issuecomment-6395007475",
+   "issue": 3392,
+   "author": "skygunner",
+   "language": "zh-CN",
+   "created_at": "2026-10-25T07:43:11Z",
+   "updated_at": "2026-10-25T07:43:11Z",
+   "body_len": 1195,
+   "body_sha256": "6ba805f64201ce22c37c7433e90218de0f9f60e16fbdb104c94b68b817d3b9d0",
+   "delivery_head": "c172b65d9715b1e1eef410542cfff43f7cc66234",
+   "note": "the third-round delivery comment, posted by the earlier session and recorded here (its closeout was missing)"
+  },
+  {
+   "comment_id": 6397710434,
+   "url": "https://github.com/yetone/magpie/issues/3392#issuecomment-6397710434",
+   "issue": 3392,
+   "author": "skygunner",
+   "language": "zh-CN",
+   "created_at": "2026-10-25T12:35:51Z",
+   "updated_at": "2026-10-25T12:35:51Z",
+   "body_len": 1300,
+   "body_sha256": "3da72c90a7c49bd492a233d5e8cc5d4c336cae8f9e8a5b3d36f54727d5a753c9",
+   "delivery_head": "bf84dd4f86d236771ef3e8a3751a8b91f4a9c1a8",
+   "note": "the fourth-round delivery comment"
+  }
+ ]
+}

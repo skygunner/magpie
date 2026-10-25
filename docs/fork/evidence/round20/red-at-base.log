@@ -1,0 +1,8 @@
+--- FAIL: TestXAITakesANullRequiredToolSchema (0.00s)
+    xai_body_test.go:248: 400 {"error":{"message":"Fake: Invalid request content: Schema validation failed: [standard_violation] /required: null is not of type \"array\"","type":"invalid_request_error"},"type":"error"}
+        
+        xAI got {"max_tokens":128000,"messages":[{"content":[{"text":"hello","type":"text"}],"role":"user"}],"model":"grok-4.7","stream":true,"thinking":{"type":"disabled"},"tools":[{"description":"Run a command","input_schema":{"properties":{"command":{"type":"string"}},"required":["command"],"type":"object"},"name":"Bash"},{"description":"Search","input_schema":{"properties":{"query":{"type":"string"}},"type":"object"},"name":"mcp__server__search"},{"description":"Nested","input_schema":{"properties":{"b":{"type":"number"},"opts":{"properties":{"a":{"type":"string"}},"type":"object"}},"type":"object"},"name":"mcp__server__nested"},{"description":"Union","input_schema":{"properties":{"filter":{"anyOf":[{"properties":{"id":{"type":"string"}},"required":null,"type":"object"},{"type":"string"}]}},"type":"object"},"name":"mcp__server__union"},{"description":"Pair","input_schema":{"items":[{"properties":{"first":{"type":"string"}},"required":null,"type":"object"}],"type":"object"},"name":"mcp__server__pair"}]}
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.018s
+FAIL
+RED-EXIT=1

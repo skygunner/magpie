@@ -342,6 +342,19 @@ internal/gateway/fallback.go 全程未触碰。
 
 扩池补充审计（同轮晚些）：#2968（Cowork 配置目录未知，需 macOS 真机）、#3379/#3107（仅截图）、#3149（产品诉求）——均已带据入 candidates.json。
 
+## 2026-10-25 #3392 跟进轮（issue follow-up）：xAI null required 的数组嵌套缺口 + 第三轮补记
+
+报告者 10:08Z 复测：codex 已通，claude 仍 400 同一条 `/required: null is not of type "array"`。重读 c172b65d（其交付会话未做台账收口，本轮补记）发现真实缺口：`dropNullRequired` 只沿对象递归、不进数组——zod union 的 `anyOf` 分支或元组 `items` 里挂的 null 原样穿到 xAI。
+
+| M | 目标 | 结果 |
+|---|---|---|
+| M1 | 数组递归修复 | 完成：`fix/issue-batch-1024pm` bf84dd4f——`dropNullRequired` 增 `[]any` 分支，对象与数组同样递归；TestXAITakesANullRequiredToolSchema 扩 anyOf+items-tuple 两工具，c172b65d 上红（报告者原文逐字复现，null 在 anyOf/items 里可见）→ bf84dd4f 绿；定向 23 项绿 |
+| M2 | 全量与静态 | 完成：gateway 包 nogui 修复头/基线同 sandbox HOME 各一次（~254s），4 红两侧逐个相同（TestClaudeClientCacheAbsentUnchanged、TestCodexFittedImagesPastTheBudget、TestMarshalRawIsEncodingJSON、FuzzMarshalRaw，与 c172b65d 提交信息同晨记录一致）＝零新增；gofmt、vet（linux/linux-nogui/windows）、build（linux/linux-nogui/windows）干净 |
+| M3 | 交付与读回 | 完成：普通 push c172b65d→bf84dd4f，ls-remote 读回一致；中文回帖 [6397710434](https://github.com/yetone/magpie/issues/3392#issuecomment-6397710434)（含「先确认构建包含 c172b65d」与「再失败就贴 input_schema 原文」两个可执行请求）；两条评论 API 读回 SHA256 入 evidence/round20/comment-readback.json |
+| M4 | 台账补记 | 完成：unit 追加 c172b65d+bf84dd4f、coverage/verify/deliveries/branch head 更新；上一会话遗漏的 6395007475 一并补记为 delivery_followup；prior-comments.json 同步；generate.py --write + --selftest 过（84 units / 106 远端 heads） |
+
+边界：真实 xAI 未调用；报告者复测与 input_schema 原文待回。本轮不算新 issue（#3392 已在台账），不占 sprint 第十六轮编号。
+
 累计真实修复：第十一轮 7 题 + 本轮 2 题新 issue（#3117、#3043）+ #3470 follow-up（同题补齐）= **9 个不同 issue**。距 30–60 目标尚远，候选池审计后的真实可得率是约束（见 candidates.json 的 15 条带据排除）；继续按轮推进。
 
 ## 2026-10-25 第十一轮（ZCode 会话十三）：#3448–#3520 巡检 + 未认领 issue 修复
