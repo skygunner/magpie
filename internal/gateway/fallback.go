@@ -30,6 +30,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/tidwall/gjson"
 	"github.com/yetone/magpie/internal/provider"
 	"github.com/yetone/magpie/internal/settings"
 )
@@ -1286,6 +1287,43 @@ func refusedParameterList(body []byte) bool {
 	return unsupportedOptionalField(fault, "")
 }
 
+// bareRequestRefused recognizes the whole, unexplained messages from NVIDIA
+// NIM and SenseNova (#3035). Another member may answer, but these words say
+// nothing about the key's health. Read before error translation loses metadata.
+func bareRequestRefused(status int, body []byte) bool {
+	if status != 400 && status != 422 || retryable(status, body) || overflowed(status, body) {
+		return false
+	}
+	message := string(body)
+	if root := gjson.ParseBytes(body); root.IsObject() {
+		if !gjson.ValidBytes(body) {
+			return false
+		}
+		for _, e := range []gjson.Result{root, root.Get("error")} {
+			if code := e.Get("code").String(); code != "" && code != fmt.Sprint(status) && code != "invalid_request_error" {
+				return false
+			}
+			if typ := e.Get("type").String(); typ != "" && typ != "error" && typ != "invalid_request_error" {
+				return false
+			}
+			for _, field := range []string{"param", "detail", "details", "status"} {
+				if e.Get(field).String() != "" {
+					return false
+				}
+			}
+		}
+		if e := root.Get("error"); e.Exists() {
+			if !e.IsObject() {
+				return false
+			}
+			root = e
+		}
+		message = root.Get("message").String()
+	}
+	message = strings.TrimSpace(message)
+	return strings.EqualFold(message, "Invalid request") || strings.EqualFold(message, "inference request is invalid")
+}
+
 // shapeRefused says a request failed over its shape alone: the next
 // member is asked, and this one doesn't rest, as nothing is wrong with it.
 // An upstream's word that the request is served on another API than the
@@ -1712,6 +1750,8 @@ type holdWriter struct {
 	failure    int       // the status the stream's error stands for
 	failMsg    string
 	sharedPool bool // an OpenRouter upstream pool rejected this attempt
+
+	bareRequest bool // an unexplained request refusal, read before error translation
 
 	// turnedAway: the account is asked with the system prompt Antigravity
 	// answers with a 429 whatever quota it has left — Claude Code's, its
@@ -2474,7 +2514,7 @@ func (h *holdWriter) failed() bool {
 	if h.refused {
 		return !h.passing
 	}
-	return !h.passing && h.code() >= 400 && retryable(h.code(), h.errBody())
+	return !h.passing && h.code() >= 400 && (retryable(h.code(), h.errBody()) || h.bareRequest && h.failure == 0)
 }
 
 // mayAskAgain tells whether a failure now is still held, for the request

@@ -28,6 +28,7 @@ func TestOverflowTheVendorDidntSay(t *testing.T) {
 	}{
 		{"502 anthropic", "/v1/messages", big, 502, `{"error":{"message":"We are experiencing capacity issues"}}`, 400, 1, "prompt is too long"},
 		{"400 chat", "/v1/chat/completions", big, 400, `{"error":{"message":"Invalid request parameters"}}`, 400, 1, "context_length_exceeded"},
+		{"400 bare request", "/v1/chat/completions", big, 400, nvidiaBareRequest, 400, 1, "context_length_exceeded"},
 		// Text alone well past the window is enough to ask for compaction.
 		{"413 bytes", "/v1/messages", big, 413, `{"error":{"message":"Request Entity Too Large"}}`, 400, 1, "prompt is too long"},
 		{"413 request_too_large", "/v1/messages", big, 413, `{"error":{"type":"request_too_large","message":"Request exceeds the maximum size"}}`, 400, 1, "prompt is too long"},
