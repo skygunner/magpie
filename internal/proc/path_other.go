@@ -153,6 +153,12 @@ func userDirs(everyNode bool) []string {
 			known = append(known, bins[0])
 		}
 	}
+	// npx's cache: a package run with npx (@deepseek-ai/dsh's dsh, #3303)
+	// lands under ~/.npm/_npx/<hash>, its bins in that tree's .bin - never
+	// on PATH, so one started this way was CLI not found while it ran
+	if hashes, err := filepath.Glob(filepath.Join(home, ".npm", "_npx", "*", "node_modules", ".bin")); err == nil {
+		known = append(known, hashes...)
+	}
 	if everyNode {
 		known = append(known, filepath.Join(home, ".local/share/pnpm"), npmPrefix(home))
 		known = append(known, nodeBins(filepath.Join(home, ".local/share/mise/installs/node"))...)
