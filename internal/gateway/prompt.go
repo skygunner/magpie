@@ -43,6 +43,11 @@ var partOrder = []string{PartSystem, PartTools, PartSkills, PartMemory, PartFile
 // Prompt is a request's prompt, part by part.
 type Prompt struct {
 	Window int `json:"window,omitempty"` // the context window of the model that answered, when known
+	// Est: what the estimator read from the body, before scaling to a
+	// count. A prompt nothing was counted of is scaled by the factor a
+	// counted prompt of its conversation was, and its own estimate is
+	// what that factor is read from (#3169)
+	Est int `json:"est,omitempty"`
 	// Tokens: the prompt, as the vendor counted it when Counted, the parts
 	// scaled to it; estimated from the body before that
 	Tokens  int  `json:"tokens"`
@@ -240,6 +245,7 @@ func (b *promptBuilder) prompt() *Prompt {
 		p.Tokens += part.Tokens
 		p.Parts = append(p.Parts, part)
 	}
+	p.Est = p.Tokens
 	return p
 }
 
@@ -319,16 +325,7 @@ func (p *Prompt) calibrate(counted, window int) {
 	if est <= 0 {
 		return
 	}
-	scale := float64(counted) / float64(est)
-	sum := 0
-	for i := range p.Parts {
-		part := &p.Parts[i]
-		part.Tokens = int(float64(part.Tokens)*scale + 0.5)
-		for j := range part.Items {
-			part.Items[j].Tokens = int(float64(part.Items[j].Tokens)*scale + 0.5)
-		}
-		sum += part.Tokens
-	}
+	sum := p.scaleParts(float64(counted) / float64(est))
 	// what rounding left goes to the largest part, so they add up
 	if n := len(p.Parts); n > 0 && sum != counted {
 		big := 0
@@ -340,6 +337,20 @@ func (p *Prompt) calibrate(counted, window int) {
 		p.Parts[big].Tokens += counted - sum
 	}
 	p.Tokens, p.Counted = counted, true
+}
+
+// scaleParts scales every part and item by scale, and returns their sum.
+func (p *Prompt) scaleParts(scale float64) int {
+	sum := 0
+	for i := range p.Parts {
+		part := &p.Parts[i]
+		part.Tokens = int(float64(part.Tokens)*scale + 0.5)
+		for j := range part.Items {
+			part.Items[j].Tokens = int(float64(part.Items[j].Tokens)*scale + 0.5)
+		}
+		sum += part.Tokens
+	}
+	return sum
 }
 
 // --- text: instruction files, reminders, harness messages ---
@@ -1189,6 +1200,18 @@ func (p *Prompt) calibrated(counted, window int) *Prompt {
 	}
 	c.calibrate(counted, window)
 	return &c
+}
+
+// scaledBy is the estimate scaled by scale, as a copy, still an estimate:
+// what an uncounted prompt is shown at beside its conversation's counted
+// ones (promptShown).
+func (p *Prompt) scaledBy(scale float64, window int) *Prompt {
+	c := p.calibrated(0, window)
+	if c == nil || scale <= 0 {
+		return c
+	}
+	c.Tokens = c.scaleParts(scale)
+	return c
 }
 
 // promptCounted is the prompt the vendor counted for the try that

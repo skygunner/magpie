@@ -988,7 +988,7 @@ func (s *Server) codexUpstreamOn(w http.ResponseWriter, r *http.Request, rest st
 				t.Flow, try.Flow = flow, flow
 				t.Usage = routeUsage("openai", model, uu)
 				if prompt != nil {
-					t.Prompt = prompt.calibrated(promptCounted(t.Usage), window)
+					t.Prompt = s.trace.promptShown(t, prompt, window)
 				}
 				try.Served, try.Swapped = served, swapped(model, served)
 				t.Served, t.Swapped = try.Served, try.Swapped

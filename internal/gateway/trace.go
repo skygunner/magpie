@@ -717,6 +717,56 @@ func (t *trace) update(r *Route, f func(r *Route)) {
 	r.Seq = t.seq
 }
 
+// promptShown is p as the Routing page shows route r's prompt: scaled to
+// what the vendor counted, or, when nothing was counted — the agent
+// cancelled the request (a 499), so no usage came back — by the factor the
+// same conversation's last counted prompt was scaled by. The estimator
+// reads about four characters a token, and on a body that tokenizes lower
+// an uncounted prompt read 1.5 to 1.6 times every counted one beside it,
+// every part inflated alike, which read as a context blow-up (#3169,
+// Sealt: 525,109 against 320,900–346,000). Nothing to scale to: what was
+// read from the body.
+//
+// Called under the trace's lock, from update.
+func (t *trace) promptShown(r *Route, p *Prompt, window int) *Prompt {
+	counted := promptCounted(r.Usage)
+	if p == nil || counted > 0 {
+		return p.calibrated(counted, window)
+	}
+	if scale, ok := t.countedScale(r); ok {
+		return p.scaledBy(scale, window)
+	}
+	return p.calibrated(0, window)
+}
+
+// countedScale is the factor the same conversation's last counted prompt
+// was scaled by — what the vendor counted of it over what was estimated of
+// its body — for a prompt nothing was counted of.
+func (t *trace) countedScale(r *Route) (float64, bool) {
+	for i := len(t.routes) - 1; i >= 0; i-- {
+		o := t.routes[i]
+		if o == r || o.Prompt == nil || !o.Prompt.Counted || o.Prompt.Est <= 0 || o.Prompt.Tokens <= 0 {
+			continue
+		}
+		if conversation(o, r) {
+			return float64(o.Prompt.Tokens) / float64(o.Prompt.Est), true
+		}
+	}
+	return 1, false
+}
+
+// conversation tells two of the same agent's requests of one conversation:
+// its session, or, an agent that names no session, its first turn.
+func conversation(a, b *Route) bool {
+	if a.Agent != b.Agent {
+		return false
+	}
+	if a.Session != "" || b.Session != "" {
+		return a.Session != "" && a.Session == b.Session
+	}
+	return a.Conv != "" && a.Conv == b.Conv
+}
+
 // gatewayTrace tells this gateway's routing to another magpie on the same
 // computer, which does not serve the gateway and so has no trace of its own
 // (#2606, fatcutegg: the trace is the serving process's, and a second magpie

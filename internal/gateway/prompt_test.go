@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -10,6 +11,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/yetone/magpie/internal/provider"
@@ -316,6 +318,133 @@ func TestFilesOfCommand(t *testing.T) {
 		if got := filesOfCommand(cmd); !slices.Equal(got, want) {
 			t.Errorf("%q: %q, want %q", cmd, got, want)
 		}
+	}
+}
+
+// Uncounted — the agent cancelled the request (a 499), so no vendor usage
+// came back — a prompt was shown at the estimator's own scale, about four
+// characters a token, and read 1.5 to 1.6 times every counted request
+// beside it in the same conversation, each part inflated alike: 525,109
+// against 320,900–346,000 (#3169, Sealt). The estimate is scaled by the
+// factor the conversation's last counted prompt was scaled by, so it reads
+// beside them, and it still reads as Estimated.
+func TestUncountedPromptReadsBesideItsCountedNeighbour(t *testing.T) {
+	fresh(t)
+	// the reporter's shape: one request of a long turn, then the next one
+	// in the same conversation, which the agent cancelled
+	file := strings.Repeat("func reconcile(c *cache) error { return c.read(locked) } // one line of the file a tool read\n", 120)
+	system := "You are an agent working in a coding session. " + strings.Repeat("Follow the project's instructions and answer briefly. ", 20)
+	tools := []any{
+		map[string]any{"name": "read_file", "description": strings.Repeat("Read a file from the workspace. ", 12),
+			"input_schema": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string"}}}},
+		map[string]any{"name": "run_terminal_command", "description": strings.Repeat("Run a command in the workspace. ", 12),
+			"input_schema": map[string]any{"type": "object", "properties": map[string]any{"command": map[string]any{"type": "string"}}}},
+	}
+	msgs := []any{
+		map[string]any{"role": "user", "content": []any{map[string]any{"type": "text", "text": "the reconcile test fails only on a cached read; find why and fix it"}}},
+		map[string]any{"role": "assistant", "content": []any{
+			map[string]any{"type": "text", "text": "Reading the file first."},
+			map[string]any{"type": "tool_use", "id": "t1", "name": "read_file", "input": map[string]any{"path": "/work/reconcile.go"}},
+		}},
+		map[string]any{"role": "user", "content": []any{map[string]any{"type": "tool_result", "tool_use_id": "t1", "content": file}}},
+		map[string]any{"role": "assistant", "content": []any{map[string]any{"type": "text", "text": "The lock is taken after the read."}}},
+	}
+	body := func(msgs []any) []byte {
+		b, err := json.Marshal(map[string]any{"model": "cw/m1", "stream": false, "max_tokens": 64, "system": system, "tools": tools, "messages": msgs})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return b
+	}
+	one := body(msgs)
+	// the same turn one tool result later, a little longer than the first
+	two := body(append(append([]any{}, msgs...),
+		map[string]any{"role": "assistant", "content": []any{
+			map[string]any{"type": "tool_use", "id": "t2", "name": "run_terminal_command", "input": map[string]any{"command": "go test ./internal/gateway -run TestReconcile"}},
+		}},
+		map[string]any{"role": "user", "content": []any{map[string]any{"type": "tool_result", "tool_use_id": "t2", "content": "--- FAIL: TestReconcile (0.00s)\n    reconcile_test.go:41: the cache was read before the lock\n"}}},
+	))
+	est := promptOf(provider.Anthropic, one)
+	if est == nil || est.Tokens < 2000 {
+		t.Fatalf("the fixture's prompt %+v", est)
+	}
+	// the vendor counted about five eighths of what the estimate reads, as
+	// the reporter's did: 323,508 counted of a 525,109 estimate
+	counted := est.Tokens * 5 / 8
+	var calls atomic.Int32
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.Copy(io.Discard, r.Body)
+		if calls.Add(1) > 1 {
+			cancel() // the agent hung up: nothing is answered, nothing counted
+			<-r.Context().Done()
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		io.WriteString(w, `{"id":"msg_1","type":"message","role":"assistant","model":"m1","content":[{"type":"text","text":"ok"}],`+
+			`"stop_reason":"end_turn","usage":{"input_tokens":`+strconv.Itoa(counted)+`,"output_tokens":9}}`)
+	}))
+	defer srv.Close()
+	if err := provider.Save(provider.Provider{ID: "cw", Name: "CW", Anthropic: srv.URL, Models: []string{"m1"}, Key: "k",
+		Contexts: map[string]int{"m1": 200000}}); err != nil {
+		t.Fatal(err)
+	}
+	s := New()
+	send := func(b []byte, c context.Context) {
+		s.Handler().ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("POST", "/v1/messages", bytes.NewReader(b)).WithContext(c))
+	}
+	send(one, context.Background())
+	send(two, ctx)
+	rs := s.Trace(context.Background(), 0, 0).Routes
+	if len(rs) != 2 {
+		t.Fatalf("%d routes: %+v", len(rs), rs)
+	}
+	was, cnt := rs[0], rs[1]
+	if was.Prompt == nil || !was.Prompt.Counted || was.Prompt.Tokens != counted {
+		t.Fatalf("the counted prompt %+v, want %d", was.Prompt, counted)
+	}
+	if cnt.Status != 499 {
+		t.Fatalf("the cancelled request's status %d", cnt.Status)
+	}
+	p := cnt.Prompt
+	if p == nil || p.Counted {
+		t.Fatalf("the cancelled request's prompt %+v", p)
+	}
+	// the fixture is the report's: this body's own estimate reads 1.6x the
+	// counted value, far from the band checked below
+	raw := promptOf(provider.Anthropic, two)
+	if raw == nil || raw.Tokens*10 < counted*14 {
+		t.Fatalf("the fixture's estimate %+v is not the report's 1.6x of %d", raw, counted)
+	}
+	if lo, hi := counted*5/6, counted*7/6; p.Tokens < lo || p.Tokens > hi {
+		t.Fatalf("the cancelled request reads %d tokens against %d counted beside it; want %d to %d", p.Tokens, counted, lo, hi)
+	}
+	// and every part is scaled alike, as the report's table shows: each
+	// keeps the share of the estimate it was read at, and the system prompt
+	// and the tool definitions, which cannot have grown in between, read
+	// beside their counted selves
+	calibrated := map[string]int{}
+	for _, x := range was.Prompt.Parts {
+		calibrated[x.Kind] = x.Tokens
+	}
+	scale := float64(p.Tokens) / float64(raw.Tokens)
+	sum := 0
+	for _, x := range p.Parts {
+		sum += x.Tokens
+		if n := partOf(raw, x.Kind).Tokens; n > 0 {
+			if want := int(float64(n)*scale + 0.5); x.Tokens != want && x.Tokens != want+1 && x.Tokens != want-1 {
+				t.Errorf("the %s part reads %d, not %d: it kept a scale of its own", x.Kind, x.Tokens, want)
+			}
+		}
+		if n, ok := calibrated[x.Kind]; ok && (x.Kind == PartSystem || x.Kind == PartTools) {
+			if lo, hi := n*7/8, n*9/8; x.Tokens < lo || x.Tokens > hi {
+				t.Errorf("the %s part reads %d against %d counted; want %d to %d", x.Kind, x.Tokens, n, lo, hi)
+			}
+		}
+	}
+	if sum != p.Tokens {
+		t.Errorf("the parts add up to %d, not %d", sum, p.Tokens)
 	}
 }
 
