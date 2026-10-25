@@ -40,7 +40,10 @@ func TestBlockList(t *testing.T) {
 			}
 		})
 	}
-	for _, in := range []string{"", "# only a comment\n", "- id: a\n", "a: [1]\n", "[a]\n---\n[b]\n", "[ {id: a\n", "- [a, b]\n"} {
+	// a root flow sequence with block content after it: yaml takes it, so
+	// keeping only the sequence would delete those entries (#2674)
+	for _, in := range []string{"", "# only a comment\n", "- id: a\n", "a: [1]\n", "[a]\n---\n[b]\n", "[ {id: a\n", "- [a, b]\n",
+		"[]\n- id: a\n", "[ {id: x} ]\n- id: a\n", "--- []\n- id: a\n", "--- [ {id: x} ]\n- id: a\n"} {
 		if got, ok := BlockList(in); ok {
 			t.Fatalf("%q taken for a flow list: %q", in, got)
 		}

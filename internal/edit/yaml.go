@@ -496,6 +496,18 @@ func BlockList(raw string) (string, bool) {
 		}
 		end--
 	}
+	// yaml takes a root flow sequence with block content after it, which
+	// dsh itself doesn't: writing the sequence back would delete those
+	// entries, so a file with any is left to its owner (#2674)
+	last, ok := flowEnd(lines, seq.Line, seq.Column)
+	if !ok || last > end {
+		return "", false
+	}
+	for _, l := range lines[last:end] {
+		if t := strings.TrimSpace(l); t != "" && !strings.HasPrefix(t, "#") {
+			return "", false
+		}
+	}
 	out := append([]string{}, lines[:start]...)
 	if len(seq.Content) == 0 {
 		out = append(out, "[]")
@@ -512,6 +524,59 @@ func BlockList(raw string) (string, bool) {
 	}
 	out = append(out, lines[end:]...)
 	return strings.Join(out, "\n") + "\n", true
+}
+
+// flowEnd is the line a flow sequence starting at line, col (1-based, in
+// runes) ends on: brackets counted, quoted scalars and a trailing comment
+// skipped. false when the start is past the text or no bracket closes it.
+func flowEnd(lines []string, line, col int) (int, bool) {
+	if line < 1 || line > len(lines) {
+		return 0, false
+	}
+	depth := 0
+	var quote rune
+	for i := line - 1; i < len(lines); i++ {
+		rs := []rune(lines[i])
+		j := 0
+		if i == line-1 {
+			if col-1 > len(rs) {
+				return 0, false
+			}
+			j = col - 1
+		}
+		for ; j < len(rs); j++ {
+			c := rs[j]
+			switch {
+			case quote == '\'':
+				if c == '\'' {
+					if j+1 < len(rs) && rs[j+1] == '\'' {
+						j++
+						continue
+					}
+					quote = 0
+				}
+			case quote == '"':
+				if c == '\\' {
+					j++
+				} else if c == '"' {
+					quote = 0
+				}
+			case c == '\'' || c == '"':
+				quote = c
+			case c == '[' || c == '{':
+				depth++
+			case c == ']' || c == '}':
+				depth--
+				if depth == 0 {
+					return i + 1, true
+				}
+				if depth < 0 {
+					return 0, false
+				}
+			}
+		}
+	}
+	return 0, false
 }
 
 // unflow writes n's mappings and sequences in block style.
