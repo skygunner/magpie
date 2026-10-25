@@ -469,6 +469,13 @@ func dshParse(path, raw string) (head []string, items []dshItem, err error) {
 		case t != "" && !strings.HasPrefix(t, "#") && !strings.HasPrefix(l, " "):
 			return nil, nil, fmt.Errorf("%s is not a list of entries magpie can edit", path)
 		default:
+			// a comment or a blank line between entries is kept as its own, not
+			// as the previous entry's last lines: an entry magpie writes again
+			// replaces its lines whole, and the comment went with them (#3329)
+			if !strings.HasPrefix(l, " ") {
+				items = append(items, dshItem{lines: []string{l}})
+				continue
+			}
 			items[len(items)-1].lines = append(items[len(items)-1].lines, l)
 		}
 		it := &items[len(items)-1]
