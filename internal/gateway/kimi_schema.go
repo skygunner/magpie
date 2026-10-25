@@ -285,7 +285,9 @@ func kimiToolRefTypes(p provider.Provider, to provider.Protocol, body []byte) []
 
 // collectRefTargets adds, for each local $ref under node (a schema of the
 // tool schema root) whose target Kimi would refuse untyped, where the
-// target opens and the type it is given.
+// target opens and the type it is given; inside a target that has a type,
+// each oneOf of objects with none is given object, which Kimi expands and
+// refuses the same way (#3566, objectUnions).
 func collectRefTargets(body []byte, root, node gjson.Result, ins *[]typeInsert) {
 	walkSchema(node, func(s gjson.Result) {
 		ref := s.Get(`\$ref`)
@@ -293,11 +295,38 @@ func collectRefTargets(body []byte, root, node gjson.Result, ins *[]typeInsert) 
 			return
 		}
 		t, ok := refTarget(root, ref.String())
-		if !ok || !t.IsObject() || t.Index <= 0 || t.Index >= len(body) || body[t.Index] != '{' || !untypedForKimi(t) {
+		if !ok || !t.IsObject() || t.Index <= 0 || t.Index >= len(body) || body[t.Index] != '{' {
 			return
 		}
-		if typ := kimiSchemaType(root, t); typ != "" {
-			*ins = append(*ins, typeInsert{t.Index, typ})
+		if untypedForKimi(t) {
+			if typ := kimiSchemaType(root, t); typ != "" {
+				*ins = append(*ins, typeInsert{t.Index, typ})
+			}
+			return
+		}
+		objectUnions(root, t, ins)
+	})
+}
+
+// objectUnions adds, for each schema under node that is a oneOf with no
+// type whose every branch is an object, where it opens. Kimi expands a
+// typed $ref target and refuses an untyped union inside it — 400 "detected
+// infinite recursion without termination condition" — though the schema
+// has no cycle, and typing the union object passes (#3566). A union of
+// other types, one whose branches say nothing, an anyOf, and a union only
+// a cycle resolves (schemaTypes' depth runs out) are left as they were.
+func objectUnions(root, node gjson.Result, ins *[]typeInsert) {
+	walkSchema(node, func(s gjson.Result) {
+		if s.Get("type").Exists() || s.Get("anyOf").Exists() || !s.Get("oneOf").IsArray() {
+			return
+		}
+		for _, b := range s.Get("oneOf").Array() {
+			if ts := schemaTypes(root, b, 0); len(ts) != 1 || !ts["object"] {
+				return
+			}
+		}
+		if s.Index > 0 {
+			*ins = append(*ins, typeInsert{s.Index, `"object"`})
 		}
 	})
 }
