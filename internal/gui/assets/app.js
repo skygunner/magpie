@@ -14088,8 +14088,7 @@ function paceLine(w) {
 const countFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
 function quotaCount(w) {
   if (!(w.limit > 0)) return w.display || "";
-  // the vendor gave a limit but no count of what was used (#3487): the
-  // count is not a full allowance, it is not said
+  // a limit the vendor gives no count for is not a full allowance (#3487)
   if (w.amountUnknown) return w.display || ("\u2014 / " + countFormat.format(w.limit) + (w.unit ? " " + t(w.unit) : "")).trim();
   const amount = Math.max(0, w.amount || 0), n = quotaLeft ? Math.max(0, w.limit - amount) : amount;
   return (countFormat.format(n) + " / " + countFormat.format(w.limit) + (w.unit ? " " + t(w.unit) : "")).trim();
