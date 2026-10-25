@@ -937,3 +937,8 @@ top-level fields. The `reasoning` alias is removable only when it contains
 just `effort`, identical to a retained nonempty `reasoning_effort`. This
 condition is checked again when applying a remembered refusal; sole,
 conflicting, or richer reasoning controls are kept.
+
+If an explicit unsupported-parameter list remains after compatibility handling,
+`refusedParameterList` classifies it as request shape for both failure detection
+and group fallback. The next member is tried without cooldown; invalid-value
+input echoes are not parameter refusals.
