@@ -189,7 +189,8 @@ func wbFetchImageModels(ctx context.Context, client *http.Client, p provider.Pro
 		Code json.RawMessage `json:"code"`
 		Msg  string          `json:"msg"`
 		Data struct {
-			Models []wbImageModel `json:"models"`
+			Models          []wbImageModel `json:"models"`
+			ModelPromotions []wbImageModel `json:"modelPromotions"`
 		} `json:"data"`
 	}
 	if err := json.Unmarshal(b, &env); err != nil {
@@ -198,13 +199,26 @@ func wbFetchImageModels(ctx context.Context, client *http.Client, p provider.Pro
 	if c := strings.Trim(string(env.Code), `"`); c != "" && c != "0" && c != "null" {
 		return nil, fmt.Errorf("%s's config: %s (%s)", p.Name, env.Msg, c)
 	}
+	return wbDrawingModels(env.Data.Models, env.Data.ModelPromotions), nil
+}
+
+// wbDrawingModels is the image models of the lists a config keeps them in:
+// WorkBuddy AI's international build lists them in modelPromotions, its
+// models holding the chat ones (#3037). A promotion with no id isn't a
+// model, and one both lists carry is kept once, where it first is.
+func wbDrawingModels(lists ...[]wbImageModel) []wbImageModel {
 	var out []wbImageModel
-	for _, m := range env.Data.Models {
-		if m.ID != "" && (m.tagged("text-to-image") || m.tagged("image-to-image")) {
+	kept := map[string]bool{}
+	for _, ms := range lists {
+		for _, m := range ms {
+			if m.ID == "" || kept[m.ID] || !(m.tagged("text-to-image") || m.tagged("image-to-image")) {
+				continue
+			}
+			kept[m.ID] = true
 			out = append(out, m)
 		}
 	}
-	return out, nil
+	return out
 }
 
 // wbDrawers are the models a WorkBuddy plan draws with: those its config

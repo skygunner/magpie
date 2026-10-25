@@ -19,7 +19,8 @@ import (
 // which lists image models by tag among its chat models, and its images
 // API, which answers OpenAI's shape inside WorkBuddy's {code, msg, data}.
 type wbStudio struct {
-	models string // the config's models
+	models     string // the config's models
+	promotions string // the config's modelPromotions, when it keeps its image models there
 
 	mu     sync.Mutex
 	asked  []string // method and path
@@ -41,7 +42,11 @@ func (s *wbStudio) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	s.mu.Unlock()
 	w.Header().Set("Content-Type", "application/json")
 	if r.URL.Path == "/v3/config" {
-		io.WriteString(w, `{"code":0,"msg":"OK","data":{"agents":[{"name":"cli","models":["hy3"]}],"models":`+s.models+`}}`)
+		prom := ""
+		if s.promotions != "" {
+			prom = `,"modelPromotions":` + s.promotions
+		}
+		io.WriteString(w, `{"code":0,"msg":"OK","data":{"agents":[{"name":"cli","models":["hy3"]}],"models":`+s.models+prom+`}}`)
 		return
 	}
 	io.WriteString(w, s.answer(r.URL.Path, body))
@@ -256,5 +261,46 @@ func TestWorkBuddyPluginDraws(t *testing.T) {
 			res.Body.Close()
 		}
 		t.Fatalf("sent elsewhere: %v", err)
+	}
+}
+
+// WorkBuddy AI's international build keeps its image models in the config's
+// modelPromotions (#3037): the ones tagged as drawing are found there, a
+// video model and a promotion with no id are not, and one listed in both
+// models and modelPromotions is drawn once.
+func TestWorkBuddyAIDrawersInModelPromotions(t *testing.T) {
+	st := &wbStudio{
+		models: `[{"id":"gpt-5.5","name":"GPT-5.5","tags":[]},{"id":"gpt-image-2.5-sunburst","name":"GPT-Image-2.5-Sunburst","tags":["text-to-image","image-to-image"]}]`,
+		promotions: `[{"id":"gpt-image-2.5-sunburst","name":"GPT-Image-2.5-Sunburst","tags":["text-to-image","image-to-image"]},
+			{"id":"seedance-2.5","name":"Seedance-2.5","tags":["text-to-video","image-to-video"]},
+			{"id":"gpt-image-2.5-pro","name":"GPT-Image-2.5-Pro","tags":["text-to-image"]},
+			{"title":"Try GPT-Image"}]`,
+		answer: func(path string, body map[string]any) string {
+			return `{"code":0,"msg":"OK","data":{"data":[{"b64_json":"` + base64.StdEncoding.EncodeToString(pngBytes) + `"}]}}`
+		},
+	}
+	p := wbSignedIn(t, provider.WorkBuddyAIID, st)
+	if _, err := wbImageModelsOf(context.Background(), wbConfigClient, p, true); err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	shapes := map[string]bool{}
+	for _, m := range Drawers(p) {
+		got = append(got, m.ID)
+		shapes[m.ID] = m.Images
+	}
+	if strings.Join(got, ",") != "gpt-image-2.5-sunburst,gpt-image-2.5-pro" {
+		t.Fatalf("drawers %v", got)
+	}
+	// one tagged image-to-image edits; one that draws from a prompt alone doesn't
+	if !shapes["gpt-image-2.5-sunburst"] || shapes["gpt-image-2.5-pro"] {
+		t.Fatalf("images taken: %v", shapes)
+	}
+	code, a, raw := postImages(t, New(), "/v1/images/generations", "application/json", `{"model":"workbuddy-ai/gpt-image-2.5-pro","prompt":"a magpie"}`)
+	if code != 200 || len(a.Data) != 1 || a.Data[0].B64 == "" {
+		t.Fatalf("%d %s", code, raw)
+	}
+	if body, _ := st.got("/v1/images/generations"); body["model"] != "gpt-image-2.5-pro" {
+		t.Fatalf("sent %v", body)
 	}
 }
