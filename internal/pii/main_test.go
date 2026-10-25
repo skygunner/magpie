@@ -120,11 +120,13 @@ func fakeServe(mode string) {
 // test's own; it gives the file the stand-in logs to.
 func fakeInstall(t *testing.T, mode string, vulkan bool) string {
 	t.Helper()
+	waitUpgrade() // an upgrade of the install before reads dir still (#3628)
 	d := t.TempDir()
 	was, wasSize, wasIdle := dir, modelSize, idleAfter
 	dir, modelSize = func() string { return d }, 4
 	t.Cleanup(func() {
 		Stop()
+		waitUpgrade() // the upgrade goroutine reads dir while it runs (#3628)
 		srv.mu.Lock()
 		srv.cpu, srv.gpuLost, srv.failed = false, "", ""
 		srv.mu.Unlock()

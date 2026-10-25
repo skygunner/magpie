@@ -120,6 +120,42 @@ func ensureServe(ctx context.Context) error {
 // upgrading is set while upgrade runs.
 var upgrading atomic.Bool
 
+// upgradeDone closes when the upgrade goroutine last started is done;
+// upgradeMu holds it. waitUpgrade gives it an owner: a test that puts the
+// package's vars (dir, serveTag, oldTags) back waits for it first, so the
+// goroutine reads them only while they are its own (#3628).
+var (
+	upgradeMu   sync.Mutex
+	upgradeDone = closedChan()
+)
+
+// closedChan is a channel already done, as upgrade's is when none runs.
+func closedChan() chan struct{} {
+	d := make(chan struct{})
+	close(d)
+	return d
+}
+
+// goUpgrade runs upgrade as an owned goroutine (start's).
+func goUpgrade() {
+	upgradeMu.Lock()
+	done := make(chan struct{})
+	upgradeDone = done
+	upgradeMu.Unlock()
+	go func() {
+		defer close(done)
+		upgrade()
+	}()
+}
+
+// waitUpgrade waits for the upgrade under way, if one is.
+func waitUpgrade() {
+	upgradeMu.Lock()
+	done := upgradeDone
+	upgradeMu.Unlock()
+	<-done
+}
+
 // upgrade fetches serveTag's pf-serve where only an older one is on disk
 // (magpie was updated since the model was downloaded), ends the old one so
 // that the next request starts the new, and deletes the old. One that

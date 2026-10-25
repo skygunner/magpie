@@ -223,7 +223,10 @@ func TestDownloadUnsupported(t *testing.T) {
 func oldInstall(t *testing.T, want map[string][]byte) (string, *files) {
 	t.Helper()
 	wasTag, wasOld, wasBase, wasServe := serveTag, oldTags, serveBase, serveSHA
-	t.Cleanup(func() { serveTag, oldTags, serveBase, serveSHA = wasTag, wasOld, wasBase, wasServe })
+	t.Cleanup(func() {
+		waitUpgrade() // the upgrade goroutine reads the tags while it runs (#3628)
+		serveTag, oldTags, serveBase, serveSHA = wasTag, wasOld, wasBase, wasServe
+	})
 	serveTag = "pf-old"
 	log := fakeInstall(t, "ok", false)
 	f := &files{m: want}
