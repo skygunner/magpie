@@ -68,7 +68,8 @@ func (c *traceCursor) claude(line []byte, bodies bool) []TraceSpan {
 	if o.SessionID != "" {
 		c.session = o.SessionID
 	}
-	if o.Entrypoint == "claude-desktop" {
+	// third-party gateway mode too (claude-desktop-3p, #3117)
+	if strings.HasPrefix(o.Entrypoint, "claude-desktop") {
 		c.agent = "claude-desktop"
 	}
 	type block struct {

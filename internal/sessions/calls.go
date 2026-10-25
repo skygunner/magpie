@@ -660,7 +660,10 @@ func claudeCallLine(st *callFile, b []byte) {
 	if c.Session == "" {
 		c.Session = st.Session
 	}
-	if st.Agent == "claude" && l.Entrypoint == "claude-desktop" {
+	// Desktop's Code tab writes Claude Code records under its own
+	// entrypoint, third-party gateway mode included (claude-desktop-3p,
+	// #3117): the prefix is Desktop's, the CLI's entrypoints are not
+	if st.Agent == "claude" && strings.HasPrefix(string(l.Entrypoint), "claude-desktop") {
 		c.Agent = "claude-desktop"
 	}
 	if l.APIError {

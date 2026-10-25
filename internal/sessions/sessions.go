@@ -229,6 +229,10 @@ type state struct {
 	Dsh *dshCarry `json:"dsh,omitempty"`
 	// Cline: the messages file its counts were read from
 	Cline *clineCarry `json:"cline,omitempty"`
+	// Desktop: a Claude Code record whose entrypoint says Desktop wrote it
+	// ("claude-desktop…", third-party gateway mode included, #3117) - the
+	// file stands in Claude Code's folder, the session is Desktop's.
+	Desktop bool `json:"desktop,omitempty"`
 }
 
 // day is one local date's share of a file: tokens by model, and the time
@@ -1270,6 +1274,13 @@ func assemble(fs []file, price func(string) *catalog.Price, codexTitle func(stri
 func assembleListed(fs []file, price func(string) *catalog.Price, codexTitle func(string) string) (Session, bool) {
 	sortSessionFiles(fs)
 	s := Session{Agent: fs[0].agent, Path: fs[0].path, Models: []Model{}, WSL: fs[0].wsl}
+	// a Claude Code file Desktop wrote is Desktop's session (#3117)
+	for _, f := range fs {
+		if st := cache[f.path]; st != nil && st.Desktop {
+			s.Agent = "claude-desktop"
+			break
+		}
+	}
 	for _, f := range fs {
 		s.ReadOnly = s.ReadOnly || f.readOnly
 	}

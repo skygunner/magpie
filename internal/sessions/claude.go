@@ -56,12 +56,22 @@ var (
 	ccUsage   = []byte(`"usage":{`)
 	ccSession = []byte(`"sessionId":"`)
 	ccTop     = []byte(`{"type":"`)
+	// ccDesktopEntry is the entrypoint value Desktop writes, third-party
+	// gateway mode included: a prefix, so the mode suffix rides along
+	// (#3117)
+	ccDesktopEntry = []byte(`"entrypoint":"claude-desktop`)
 )
 
 // claudeLine reads a line, telling from its first bytes what it is: most of
 // a long session is tool results and attachments, read for their time
 // alone, and a reply's usage is decoded without its content.
 func claudeLine(s *state, b []byte, main bool) {
+	// Desktop's Code tab writes Claude Code records under its own
+	// entrypoint, third-party gateway mode included ("claude-desktop-3p",
+	// #3117): the session is Desktop's whatever mode it runs in
+	if !s.Desktop && bytes.Contains(b, ccDesktopEntry) {
+		s.Desktop = true
+	}
 	h := b[:min(len(b), 1024)]
 	if bytes.HasPrefix(h, ccTop) {
 		// a line of Claude Code's own: a title, a summary, a mode…
