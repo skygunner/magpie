@@ -656,3 +656,12 @@ still follows the existing Not set up folding rules. The dialog explains that
 restoring visibility does not pin an unconfigured agent into the main list.
 See `agent-bulk-visibility.test.cjs` for persistence, partial selection, failed
 saves, narrow layouts and all five languages in Chromium and WebKit.
+
+### Usage links to routing history
+
+Usage routing links pass their trusted click to `openRoute`. Navigation waits
+for the Routing view to open, reveals the selected story with `scrollOnPurpose`,
+and records the arrival so asynchronous page loads do not restore the old
+scroll position. Picking a request within Routing still preserves the reader’s
+position. `usage-routing-visible.test.cjs` covers an already-scrolled history
+view in both browser engines and all five languages.

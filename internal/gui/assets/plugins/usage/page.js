@@ -975,7 +975,7 @@ function ledDetail(r, cols) {
   // (with the Routing page switched off there is nowhere to see it)
   if (r.route_id && !featuresOff.has("routing")) {
     const go = el("button", "text led-route-link", t("View routing"));
-    go.onclick = (e) => { e.stopPropagation(); window.openRoute(r.route_id, r.t).catch((err) => status(err.message, "err")); };
+    go.onclick = (e) => { e.stopPropagation(); window.openRoute(r.route_id, r.t, { event: e }).catch((err) => status(err.message, "err")); };
     const dd = el("dd");
     dd.append(go);
     dl.append(el("dt", "", t("Routing")), dd);
@@ -1929,7 +1929,7 @@ function renderLedger() {
     if (routed) {
       when.title = t("View routing");
       // the link opens the route, not the row's details as well
-      when.onclick = (e) => { e.stopPropagation(); window.openRoute(r.route_id, r.t).catch((err) => status(err.message, "err")); };
+      when.onclick = (e) => { e.stopPropagation(); window.openRoute(r.route_id, r.t, { event: e }).catch((err) => status(err.message, "err")); };
     }
     td(when, "when", new Date(r.t).toLocaleString(intlLang()));
     const who = el("span", "who");

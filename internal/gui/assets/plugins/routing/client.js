@@ -2459,6 +2459,7 @@ function routingPage(part) {
   // o.context: opened to see its context window (the Usage page's
   // Context tab), which shows unfolded for it
   window.openRoute = async (id, time, o = {}) => {
+    const go = o.event && window.scrollOnPurpose?.(o.event, 3000);
     let r = routes.get(id);
     if (!r) {
       const res = await fetch("/api/gateway/route?id=" + encodeURIComponent(id) + "&day=" + encodeURIComponent(time.slice(0, 10)));
@@ -2474,9 +2475,14 @@ function routingPage(part) {
     }
     if (!matchesPurpose(r)) purpose = [];
     offline("");
-    window.show("routing");
+    if (!await window.show("routing")) return;
     if (o.context) ctxFor = r.id;
     pick(r);
+    // Usage navigation asks to see this story; selecting within Routing stays put.
+    if (go) {
+      log.scrollIntoView({ block: "start", behavior: "instant" });
+      window.arrived?.(document.getElementById("view-routing"));
+    }
   };
 
   // what a call was for when it isn't a turn of the conversation, as
