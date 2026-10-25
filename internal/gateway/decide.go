@@ -609,7 +609,7 @@ func withEffort(proto provider.Protocol, body []byte, effort string) []byte {
 		if v.ReasoningEffort == "" || v.ReasoningEffort == "none" {
 			return body
 		}
-		return withFields(body, map[string]any{"reasoning_effort": effort})
+		return withBodyEffort(proto, body, effort)
 	case provider.Responses:
 		if v.Reasoning == nil || v.Reasoning.Effort == "" || v.Reasoning.Effort == "none" {
 			return body
@@ -723,7 +723,7 @@ func withFixedEffort(proto provider.Protocol, body []byte, effort string) []byte
 	}
 	switch proto {
 	case provider.Chat:
-		return withFields(body, map[string]any{"reasoning_effort": effort})
+		return withBodyEffort(proto, body, effort)
 	case provider.Responses:
 		var v struct {
 			Reasoning map[string]any `json:"reasoning"`

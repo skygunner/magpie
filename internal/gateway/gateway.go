@@ -6984,7 +6984,12 @@ func withBodyEffort(proto provider.Protocol, body []byte, effort string) []byte 
 		v.OutputConfig["effort"] = effort
 		return withFields(body, map[string]any{"output_config": v.OutputConfig})
 	case provider.Chat:
-		return withFields(body, map[string]any{"reasoning_effort": effort})
+		// Keep a proven duplicate aligned when fitting or overriding the level.
+		fields := map[string]any{"reasoning_effort": effort}
+		if redundantReasoning(body) {
+			fields["reasoning"] = map[string]string{"effort": effort}
+		}
+		return withFields(body, fields)
 	case provider.Responses:
 		var v struct {
 			Reasoning map[string]any `json:"reasoning"`

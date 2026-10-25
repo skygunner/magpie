@@ -934,3 +934,8 @@ If an explicit unsupported-parameter list remains after compatibility handling,
 `refusedParameterList` classifies it as request shape for both failure detection
 and group fallback. The next member is tried without cooldown; invalid-value
 input echoes are not parameter refusals.
+
+When Chat effort is fitted or a group overrides it, an effort-only alias
+that was identical is updated along with the top-level effort. This keeps
+the alias eligible for safe compatibility repair without rewriting conflicting
+or richer client settings.
