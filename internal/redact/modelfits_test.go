@@ -68,3 +68,31 @@ func TestModelFindsStillMasked(t *testing.T) {
 		}
 	}
 }
+
+// A cue is a word of its own where the value is: the text before a value
+// says what it is only when it names it. The model took a log's
+// "tool_call" for a phone's "call", telemetry's and hotel's "tel" too, and
+// monkey's and keyboard's "key" for a secret's (#3585).
+func TestModelCueIsAWord(t *testing.T) {
+	for _, c := range []struct {
+		before string
+		cues   []string
+		want   bool
+	}{
+		{"phone: ", phoneCues, true},
+		{"tel: ", phoneCues, true},
+		{"手机 ", phoneCues, true},
+		{"api_key=", secretCues, true},
+		{"apiKey=", secretCues, true},
+		{"tool_call ", phoneCues, false},
+		{"callback ", phoneCues, false},
+		{"telemetry ", phoneCues, false},
+		{"hotel ", phoneCues, false},
+		{"monkey ", secretCues, false},
+		{"keyboard ", secretCues, false},
+	} {
+		if got := cued(c.before, len(c.before), c.cues); got != c.want {
+			t.Errorf("%q cued %v, want %v", c.before, got, c.want)
+		}
+	}
+}

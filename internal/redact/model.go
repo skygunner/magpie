@@ -388,20 +388,43 @@ var (
 
 var (
 	accountCues = []string{"account", "acct", "a/c", "iban", "routing", "sort code", "card", "账号", "帐号", "账户", "帐户", "卡号", "户名"}
-	secretCues  = []string{"key", "token", "secret", "password", "passwd", "密钥", "密码", "令牌"}
+	secretCues  = []string{"key", "api_key", "apikey", "token", "secret", "password", "passwd", "密钥", "密码", "令牌"}
 	phoneCues   = []string{"phone", "tel", "mobile", "cell", "call", "whatsapp", "sms", "电话", "手机", "联系", "致电"}
 )
 
-// cued says one of cues is in the 40 bytes before at, in any case.
+// cued says one of cues is a word of its own in the 40 bytes before at,
+// in any case: it starts a word and ends one. A cue inside a longer word
+// says nothing of the value: a log's tool_call or a callback is no phone's
+// "call", telemetry's and hotel's "tel" neither, nor monkey's or
+// keyboard's "key" a secret's (#3585). A camelCase or an underscore join
+// is a word's start or end, so apiKey and api_key still cue.
 func cued(s string, at int, cues []string) bool {
-	before := strings.ToLower(s[max(0, at-40):at])
+	before := s[max(0, at-40):at]
 	for _, c := range cues {
-		if strings.Contains(before, c) {
-			return true
+		for i := 0; i+len(c) <= len(before); i++ {
+			if strings.EqualFold(before[i:i+len(c)], c) && cueStarts(before, i) && cueEnds(before, i+len(c)) {
+				return true
+			}
 		}
 	}
 	return false
 }
+
+// cueStarts says i starts a word of s: s's start, after a byte that is no
+// word's, or at a camelCase join (apiKey's Key).
+func cueStarts(s string, i int) bool {
+	return i == 0 || !wordByte(s[i-1]) || upperByte(s[i]) && lowerByte(s[i-1])
+}
+
+// cueEnds says j ends a word of s: s's end, before a byte that is no
+// word's, or at a camelCase or underscore join (apiKey's Key, api_key's
+// api_).
+func cueEnds(s string, j int) bool {
+	return j == len(s) || !wordByte(s[j]) || s[j] == '_' || upperByte(s[j]) && lowerByte(s[j-1])
+}
+
+func upperByte(c byte) bool { return c >= 'A' && c <= 'Z' }
+func lowerByte(c byte) bool { return c >= 'a' && c <= 'z' }
 
 // patternWords says v is three or more words joined by |, as a grep's or
 // a regexp's alternatives are.
