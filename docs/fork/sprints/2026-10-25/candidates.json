@@ -95,7 +95,32 @@
    "title": "reset-card early spend",
    "disposition": "OURS_PENDING",
    "why": "our fix/codex-expiry-window e75480ec already pushed; awaiting maintainer; no new count"
+  },
+  {
+   "issue": 2968,
+   "title": "Cowork misses autoCompactWindow",
+   "disposition": "NEED_NATIVE_PLATFORM",
+   "why": "magpie writes only ~/.claude/settings.json; the reporter names no path for Cowork's own config dir and confirming it needs a macOS Desktop install — asked nothing further to avoid a guessing fix"
+  },
+  {
+   "issue": 3379,
+   "title": "gemini returns a problem",
+   "disposition": "REPORTER_DATA",
+   "why": "a screenshot alone"
+  },
+  {
+   "issue": 3107,
+   "title": "image models need a text model",
+   "disposition": "REPORTER_DATA",
+   "why": "screenshots alone, no text"
+  },
+  {
+   "issue": 3149,
+   "title": "non-429 cooled down",
+   "disposition": "PRODUCT_DECISION",
+   "why": "asks magpie to drop vendor-429 resting altogether; that is the routing rest design, maintainer's call"
   }
  ],
- "scan": "zero-comment open issues pages 1-4 (622 total), comments:0 bug-titled filter, plus #3448-#3520 and active backlog audited in round15"
+ "scan": "zero-comment open issues pages 1-4 (622 total), comments:0 bug-titled filter, plus #3448-#3520 and active backlog audited in round15",
+ "closed_at": "2026-10-25T02:03:38Z"
 }

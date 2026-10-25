@@ -288,6 +288,8 @@ R5-PROVIDER-ID 的组合场景（raw cline 已保存 Decide picks 时，空闲�
 | M3 | 扩池 | 完成：零评论池 622 扫 4 页 + 上轮全量分诊复核。新排除（带据）：#3430/#3442/#2918（他人完整补丁 OTHER_PATCH_READY）、#3537（需真实订阅）、#3190（2b80641d 故意行为，需真实 Codex 后端验证）、#3156（快照语义产品决策）、#2951/#2952/#3118/#3477（信息不足）、#3108（defer）。candidates.json 全账 |
 | M5 | 账本 | 完成：sprints/2026-10-25/{deliveries.jsonl,candidates.json,followup.json}；upstream-status.json 75 units/95 heads，REQUIRED_SET 86 项，generate.py+--selftest 过；全量 nogui 于合并树 bc193d08（三题无冲突合并，证据 evidence/round16-full-suite-combined.log） |
 
+扩池补充审计（同轮晚些）：#2968（Cowork 配置目录未知，需 macOS 真机）、#3379/#3107（仅截图）、#3149（产品诉求）——均已带据入 candidates.json。
+
 累计真实修复：第十一轮 7 题 + 本轮 2 题新 issue（#3117、#3043）+ #3470 follow-up（同题补齐）= **9 个不同 issue**。距 30–60 目标尚远，候选池审计后的真实可得率是约束（见 candidates.json 的 15 条带据排除）；继续按轮推进。
 
 ## 2026-10-25 第十一轮（ZCode 会话十三）：#3448–#3520 巡检 + 未认领 issue 修复
