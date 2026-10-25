@@ -44,8 +44,8 @@ func TestCodexTakesCCSwitchTables(t *testing.T) {
 		if err := cx.Fields[0].Set("fake/m1"); err != nil {
 			t.Fatal(err)
 		}
-		if c := table("custom"); c["base_url"] != v1 || c["experimental_bearer_token"] != "sk-relay" || c["requires_openai_auth"] != "true" {
-			t.Fatalf("auth %q: custom not through magpie:\n%s", auth, read())
+		if c := table("custom"); c["base_url"] != v1 || c["experimental_bearer_token"] != "sk-relay" || c["requires_openai_auth"] != "true" || c["supports_websockets"] != "false" {
+			t.Fatalf("auth %q: custom not through magpie without its websocket:\n%s", auth, read())
 		}
 		if table("cc-switch-2")["base_url"] != "https://old.example/v1" || table("mine")["base_url"] != "https://mine.example/v1" {
 			t.Fatalf("auth %q: other tables changed:\n%s", auth, read())
@@ -73,6 +73,11 @@ func TestCodexTakesCCSwitchTables(t *testing.T) {
 		}
 		if table("custom")["base_url"] != "https://relay2.example/v1" {
 			t.Fatalf("auth %q: own model:\n%s", auth, read())
+		}
+		// the table had no websocket of its own, so the one magpie wrote
+		// is gone with magpie
+		if _, ok := table("custom")["supports_websockets"]; ok {
+			t.Fatalf("auth %q: websocket left on the table Codex stepped off magpie:\n%s", auth, read())
 		}
 		// and a reset gives it back too
 		if err := cx.Fields[0].Set("fake/m1"); err != nil {
@@ -192,6 +197,11 @@ func TestCodexCCSwitchOfficialOpenAIMirror(t *testing.T) {
 	codexURL := here(homeFailover).codexURL()
 	if tb["base_url"] != codexURL {
 		t.Fatalf("mirror table base_url = %q, want %q", tb["base_url"], codexURL)
+	}
+	// CC Switch had the official endpoint's websocket on; magpie's
+	// backend answers an upgrade 426, so it goes off while it is borrowed
+	if tb["supports_websockets"] != "false" {
+		t.Fatalf("mirror table supports_websockets = %q, want false:\n%s", tb["supports_websockets"], readFailover())
 	}
 	if strings.Contains(readFailover(), "openai_base_url") {
 		t.Fatalf("mirror failover wrote openai_base_url:\n%s", readFailover())
@@ -325,5 +335,24 @@ func TestCodexTakesCCSwitchMirrorForItsThreads(t *testing.T) {
 	}
 	if table("custom")["base_url"] != "https://mine.example/v1" {
 		t.Fatalf("hand-set base_url lost:\n%s", read())
+	}
+}
+
+// Codex tries a Responses WebSocket at every session for a provider table
+// that says it takes one: magpie's gateway answers an upgrade 426, so the
+// session logged an ERROR and fell back to HTTP (#3449). The table magpie
+// writes for itself, and one it writes for a thread, say they take none.
+func TestCodexOwnTableSaysNoWebsockets(t *testing.T) {
+	home, read := codexHome(t, "", "")
+	cx := codex(home)
+	if err := cx.Fields[0].Set("fake/m1"); err != nil {
+		t.Fatal(err)
+	}
+	tb, err := edit.GetTOMLTable(filepath.Join(home, ".codex", "config.toml"), "model_providers.magpie")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if tb["supports_websockets"] != "false" {
+		t.Fatalf("magpie's provider table says supports_websockets = %q, want false:\n%s", tb["supports_websockets"], read())
 	}
 }

@@ -459,11 +459,70 @@ func codexIn(at place) *Agent {
 		}
 		return tok
 	}
+	// Codex tries a Responses WebSocket at every session for a provider
+	// table that says it takes one, and magpie answers an upgrade of its
+	// Responses route 426 (#3449): each session logged an ERROR and fell
+	// back to HTTP. A table magpie writes for itself says it takes none;
+	// one it only borrows from CC Switch keeps the value it had in the
+	// stash, for websocketsBack.
+	websocketsOff := func(id string) error {
+		was := map[string]string{}
+		json.Unmarshal([]byte(stashLoad()[at.key("codex.websockets")]), &was)
+		if _, kept := was[id]; !kept {
+			t, err := edit.GetTOMLTable(path, "model_providers."+id)
+			if err != nil {
+				return err
+			}
+			if v := t["supports_websockets"]; v != "false" {
+				was[id] = v
+				b, _ := json.Marshal(was)
+				stash(map[string]string{at.key("codex.websockets"): string(b)})
+			}
+		}
+		return edit.SetTOMLKey(path, "model_providers."+id, "supports_websockets", false)
+	}
+	// websocketsBack gives back the tables that no longer go through
+	// magpie the value websocketsOff took, and takes the key out of one
+	// that had none (Codex's own default is off)
+	websocketsBack := func() error {
+		was := map[string]string{}
+		json.Unmarshal([]byte(stashLoad()[at.key("codex.websockets")]), &was)
+		left := map[string]string{}
+		for id, v := range was {
+			t, err := edit.GetTOMLTable(path, "model_providers."+id)
+			if err != nil {
+				return err
+			}
+			if u := t["base_url"]; u == at.v1() || u == at.codexURL() {
+				left[id] = v // still through magpie
+				continue
+			}
+			if v == "" {
+				err = edit.DelTOMLKey(path, "model_providers."+id, "supports_websockets")
+			} else {
+				err = edit.SetTOMLKey(path, "model_providers."+id, "supports_websockets", v == "true")
+			}
+			if err != nil {
+				return err
+			}
+		}
+		if len(left) == 0 {
+			forget(at.key("codex.websockets"))
+			return nil
+		}
+		b, _ := json.Marshal(left)
+		stash(map[string]string{at.key("codex.websockets"): string(b)})
+		return nil
+	}
 	putProvider := func() error {
 		kvs := []edit.KV{
 			{Path: "name", Value: "magpie"},
 			{Path: "base_url", Value: at.v1()},
 			{Path: "wire_api", Value: "responses"},
+			// magpie's Responses route speaks HTTP alone, an upgrade
+			// answered 426: told so, Codex doesn't try a WebSocket at
+			// every session (#3449)
+			{Path: "supports_websockets", Value: false},
 			{Path: "experimental_bearer_token", Value: keptBearerToken("model_providers." + magpieID)},
 			// Codex offers its built-in image tool (image_gen.imagegen) and
 			// the other OpenAI-provider tools only to a provider it reads as
@@ -643,6 +702,7 @@ func codexIn(at place) *Agent {
 				edit.KV{Path: "name", Value: id},
 				edit.KV{Path: "base_url", Value: at.v1()},
 				edit.KV{Path: "wire_api", Value: "responses"},
+				edit.KV{Path: "supports_websockets", Value: false},
 				edit.KV{Path: "experimental_bearer_token", Value: keptBearerToken("model_providers." + id)},
 			); err != nil {
 				return err
@@ -673,10 +733,18 @@ func codexIn(at place) *Agent {
 			if !ok || named[id] || !isCCSwitchMirror(id) {
 				continue
 			}
-			if t, _ := edit.GetTOMLTable(path, n); t["base_url"] != "" {
+			t, _ := edit.GetTOMLTable(path, n)
+			// one an earlier magpie took is on its backend already, its
+			// websocket still on: told so too
+			if u := t["base_url"]; u != "" && u != at.codexURL() {
 				continue
 			}
-			if err := edit.SetTOMLKey(path, n, "base_url", at.codexURL()); err != nil {
+			if t["base_url"] == "" {
+				if err := edit.SetTOMLKey(path, n, "base_url", at.codexURL()); err != nil {
+					return err
+				}
+			}
+			if err := websocketsOff(id); err != nil {
 				return err
 			}
 			if !slices.Contains(taken, id) {
@@ -706,6 +774,9 @@ func codexIn(at place) *Agent {
 				return err
 			}
 		}
+		if err := websocketsBack(); err != nil {
+			return err
+		}
 		forget(at.key("codex.mirrors"))
 		return nil
 	}
@@ -724,6 +795,9 @@ func codexIn(at place) *Agent {
 		was := map[string]string{}
 		json.Unmarshal([]byte(stashLoad()[at.key("codex.tables")]), &was)
 		for id, u := range ccSwitchTables() {
+			if err := websocketsOff(id); err != nil {
+				return err
+			}
 			if u == at.v1() {
 				continue
 			}
@@ -756,6 +830,9 @@ func codexIn(at place) *Agent {
 				return err
 			}
 		}
+		if err := websocketsBack(); err != nil {
+			return err
+		}
 		forget(at.key("codex.tables"))
 		return nil
 	}
@@ -783,7 +860,10 @@ func codexIn(at place) *Agent {
 		forget(at.key("codex.mirror_failover"))
 		t, _ := edit.GetTOMLTable(path, "model_providers."+p)
 		if t["base_url"] == at.codexURL() {
-			return edit.DelTOMLKey(path, "model_providers."+p, "base_url")
+			if err := edit.DelTOMLKey(path, "model_providers."+p, "base_url"); err != nil {
+				return err
+			}
+			return websocketsBack()
 		}
 		return nil
 	}
@@ -892,11 +972,22 @@ func codexIn(at place) *Agent {
 					return err
 				}
 				stash(map[string]string{at.key("codex.mirror_failover"): p})
+				if err := websocketsOff(p); err != nil {
+					return err
+				}
+			case on && hasGateway:
+				// one an earlier magpie pointed here: its websocket off too
+				if err := websocketsOff(p); err != nil {
+					return err
+				}
 			case !on && hasGateway:
 				if err := edit.DelTOMLKey(path, "model_providers."+p, "base_url"); err != nil {
 					return err
 				}
 				forget(at.key("codex.mirror_failover"))
+				if err := websocketsBack(); err != nil {
+					return err
+				}
 			}
 			return nil
 		}
