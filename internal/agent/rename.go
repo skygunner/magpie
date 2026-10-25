@@ -4,6 +4,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/yetone/magpie/internal/access"
 	"github.com/yetone/magpie/internal/provider"
 )
 
@@ -56,6 +57,10 @@ func RenameProvider(from, to string) ([]string, error) {
 		}
 	}
 	if err := provider.Rename(from, to); err != nil {
+		return nil, err
+	}
+	// the gateway keys held to its models or accounts follow it (#3630)
+	if _, err := access.RenameProvider(from, to); err != nil {
 		return nil, err
 	}
 	var moved []string
