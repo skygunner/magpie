@@ -5716,7 +5716,7 @@ const tierField = "service_tier"
 // vendor, Kimi's and Qwen's thinking switches) take that a request does
 // without: an upstream that refuses one by name is asked again without it.
 var optionalFields = []string{"store", "metadata", tierField, cacheKeyField, "prompt_cache_retention",
-	"prompt_cache_options", "safety_identifier", "stream_options", "parallel_tool_calls", "verbosity", "thinking", "enable_thinking"}
+	"prompt_cache_options", "safety_identifier", "stream_options", "parallel_tool_calls", "verbosity", "thinking", "enable_thinking", "reasoning"}
 
 // refusedOptional lists optional fields an upstream explicitly rejects as
 // unsupported. An invalid value must reach the client without dropping the
@@ -5738,11 +5738,27 @@ func refusedOptional(status int, msg, body []byte) []string {
 		if _, ok := m[f]; !ok {
 			continue
 		}
-		if unsupportedOptionalField(fault, f) {
+		if (f != "reasoning" || redundantReasoning(body)) && unsupportedOptionalField(fault, f) {
 			out = append(out, f)
 		}
 	}
 	return out
+}
+
+// NVIDIA names all rejected fields together. Match only a complete list of
+// quoted top-level names, not an invalid value or a nested field path.
+var unsupportedParameterList = regexp.MustCompile("(?i)^(?:NVIDIA NIM: )?(?:Validation: )?Unsupported parameter(?:s|\\(s\\)):\\s*([\"'\\x60][a-z_]+[\"'\\x60](?:,\\s*[\"'\\x60][a-z_]+[\"'\\x60])*)\\s*$")
+var parameterListName = regexp.MustCompile("[\"'\\x60]([a-z_]+)[\"'\\x60]")
+
+// Dropping the alias must preserve every setting, including on later requests
+// after an upstream's refusal has been remembered.
+func redundantReasoning(body []byte) bool {
+	var m map[string]json.RawMessage
+	var reasoning map[string]json.RawMessage
+	var effort, alias string
+	return decodeJSON(body, &m) == nil && decodeJSON(m["reasoning"], &reasoning) == nil && len(reasoning) == 1 &&
+		decodeJSON(m["reasoning_effort"], &effort) == nil && effort != "" &&
+		decodeJSON(reasoning["effort"], &alias) == nil && alias == effort
 }
 
 var unknownOptionalField = regexp.MustCompile("(?i)\\b(?:unknown (?:name|field|parameter)|unsupported (?:parameter|field|property|argument)|unrecognized (?:request )?(?:argument|parameter)(?: supplied)?):?\\s*['\"\\x60]([a-z_]+)['\"\\x60]")
@@ -5780,6 +5796,13 @@ func unsupportedOptionalField(fault any, field string) bool {
 			// [400] can be a status prefix. Look past it for a JSON
 			// error object before falling back to the original prose.
 			rest = rest[i+int(dec.InputOffset()):]
+		}
+		if list := unsupportedParameterList.FindStringSubmatch(strings.TrimSpace(v)); list != nil {
+			for _, name := range parameterListName.FindAllStringSubmatch(list[1], -1) {
+				if name[1] == field {
+					return true
+				}
+			}
 		}
 		for _, match := range unknownOptionalField.FindAllStringSubmatchIndex(v, -1) {
 			if v[match[2]:match[3]] != field {
@@ -5860,7 +5883,7 @@ func hasOptionalErrorObject(fault any) bool {
 func (s *Server) withoutRefused(providerID string, proto provider.Protocol, body []byte) []byte {
 	var drop []string
 	for _, f := range optionalFields {
-		if !s.fits(providerID, f, proto) {
+		if !s.fits(providerID, f, proto) && (f != "reasoning" || redundantReasoning(body)) {
 			drop = append(drop, f)
 		}
 	}

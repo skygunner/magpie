@@ -921,3 +921,11 @@ go test -tags nogui ./internal/provider -run 'TestGroup|TestCodexCreditsSwitch|T
 
 The gateway's `TestMain` gives the package a home of its own, so these tests
 never read real providers or accounts.
+
+### Explicit parameter lists
+
+`refusedOptional` recognizes NVIDIA-style lists of explicitly unsupported
+top-level fields. The `reasoning` alias is removable only when it contains
+just `effort`, identical to a retained nonempty `reasoning_effort`. This
+condition is checked again when applying a remembered refusal; sole,
+conflicting, or richer reasoning controls are kept.
