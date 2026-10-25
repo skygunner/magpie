@@ -122,5 +122,81 @@
   }
  ],
  "scan": "zero-comment open issues pages 1-4 (622 total), comments:0 bug-titled filter, plus #3448-#3520 and active backlog audited in round15",
- "closed_at": "2026-10-25T02:03:38Z"
+ "closed_at": "2026-10-25T02:03:38Z",
+ "coverage": {
+  "checked_at": "2026-10-25T03:08:28Z",
+  "zero_comment_paging": "full pagination to exhaustion: 7 pages, 623 distinct open issues (sprints/2026-10-25/zero-comment-audit.json holds every entry with author and title); 169 yetone-filed (maintainer domain); 116 bug-titled non-maintainer candidates triaged by title",
+  "next_round_pool": [
+   {
+    "n": 3330,
+    "what": "provider test 503 from a Claude-Code-only group sub2api"
+   },
+   {
+    "n": 3327,
+    "what": "Mistral GLM-5.3-flash empty tool turns (response_error empty_)"
+   },
+   {
+    "n": 3303,
+    "what": "dsh via npx stays CLI not found (proc discovery)"
+   },
+   {
+    "n": 3235,
+    "what": "Qoder CN model picks not saved"
+   },
+   {
+    "n": 3191,
+    "what": "request-body write stalls forever on a reused HTTP/2 connection"
+   },
+   {
+    "n": 2892,
+    "what": "every magpie CLI command starts its own plugin host beside a running desktop app"
+   },
+   {
+    "n": 2866,
+    "what": "Atom fallback hides Chinese notes"
+   },
+   {
+    "n": 2838,
+    "what": "Claude subscription shows Pro after Max upgrade"
+   },
+   {
+    "n": 2836,
+    "what": "Google draw: OpenAI-compat layer maps images/generations to Imagen predict wrongly"
+   },
+   {
+    "n": 2822,
+    "what": "chat-only relay declaring responses in /v1/models still translated"
+   },
+   {
+    "n": 2815,
+    "what": "Homebrew claude-code@latest cask gets no update"
+   },
+   {
+    "n": 2777,
+    "what": "daily check-in goes through the global proxy, not the account proxy"
+   },
+   {
+    "n": 2741,
+    "what": "Command Code stealth/reflection models 400 on replayed turns"
+   },
+   {
+    "n": 2736,
+    "what": "Codex spend-credits setting not effective"
+   },
+   {
+    "n": 2308,
+    "what": "codex_app detection: standalone probe pipe closed"
+   },
+   {
+    "n": 2274,
+    "what": "Codex remote compaction loops hours on a cheap routing model then 502"
+   }
+  ],
+  "others_with_reference_fixes_seen": [
+   2795,
+   2284,
+   2474,
+   2786
+  ]
+ }
 }

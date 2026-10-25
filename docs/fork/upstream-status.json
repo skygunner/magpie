@@ -47,15 +47,15 @@
    "batch_chain_note": "batch is a forward-append chain: the v2 base fa22bc64 carries 15 commits (34dcacff…95537ceb), rebased onto b437e4ad, then bbd6e228 and 4e136a4b this round; see deliveries.r3-batch"
   },
   "totals": {
-   "entries": 86,
-   "issues": 83,
+   "entries": 89,
+   "issues": 86,
    "prs": 3,
-   "product": 69,
+   "product": 72,
    "tests_ci": 9,
    "upstream_existing": 6,
    "other": 2,
-   "code_entries": 78,
-   "units": 75
+   "code_entries": 81,
+   "units": 78
   },
   "counts_note": "Generated from the JSON by docs/fork/generate.py; not hand-written. 64 code-linked entries are not 64 independent fixes: units are grouped by first primary fix commit (60 groups).",
   "fork": "skygunner/magpie",
@@ -3431,6 +3431,132 @@
    "archive": {
     "candidate": false
    }
+  },
+  {
+   "id": "u-sessions-a-second-codex-folders-name-index-and-state-dbs-a-3530-8b9022cd",
+   "issues": [
+    3530
+   ],
+   "category": "product",
+   "title": "sessions: a second Codex folder's name index and state DBs are read as its own (#3530, yetone)",
+   "coverage": "per-folder title caches over appdir.CodexHomes (pass-freeze kept, #3493); codexStateDBs honours each folder config sqlite_home relative to it; CODEX_SQLITE_HOME stays the main folder. Double red->green. Branch note: the fork branch head moved on to include #3531 (7597f816) after a working-tree slip; single-issue pickup is cherry-pick 8b9022cd, which touches only internal/sessions.",
+   "commits": [
+    "8b9022cd0d570aea6d6be0ad0168d9c223354ffd"
+   ],
+   "commit_details": [
+    {
+     "sha": "8b9022cd0d570aea6d6be0ad0168d9c223354ffd",
+     "title": "sessions: a second Codex folder's name index and state DBs are read as its own (#3530, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/8b9022cd0d570aea6d6be0ad0168d9c223354ffd"
+    }
+   ],
+   "branch": "fix/codex-multi-home-sessions",
+   "base": "641b1217f271774d110e58d5e69bc3911459a56c",
+   "comments": {
+    "3530": [
+     "https://github.com/yetone/magpie/issues/3530#issuecomment-6392564071"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false,
+    "credited": "",
+    "coauthors": []
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "red->green per commit body; package suites green; combined full nogui at round17 merge (69 ok, #3280 and #2207 pre-existing); three-platform build/vet",
+    "head": "8b9022cd0d570aea6d6be0ad0168d9c223354ffd"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-provider-a-trae-cn-claim-takes-its-credits-alone-extra_cre-3529-0a2a0d74",
+   "issues": [
+    3529
+   ],
+   "category": "product",
+   "title": "provider: a Trae CN claim takes its credits alone, extra_credits only when credits are not said (#3529, yetone)",
+   "coverage": "matches trae 0.2.21 plugin semantics; runs only for a Trae CN plugin older than 0.2.17; synthetic fixtures, no live incident claimed (plugins#194).",
+   "commits": [
+    "0a2a0d74e38741a5bedb9b525b575ebe9ebecd9a"
+   ],
+   "commit_details": [
+    {
+     "sha": "0a2a0d74e38741a5bedb9b525b575ebe9ebecd9a",
+     "title": "provider: a Trae CN claim's credits come alone, extra_credits only when credits are not said (#3529, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/0a2a0d74e38741a5bedb9b525b575ebe9ebecd9a"
+    }
+   ],
+   "branch": "fix/trae-checkin-credits",
+   "base": "641b1217f271774d110e58d5e69bc3911459a56c",
+   "comments": {
+    "3529": [
+     "https://github.com/yetone/magpie/issues/3529#issuecomment-6392564252"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false,
+    "credited": "",
+    "coauthors": []
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "red->green per commit body; package suites green; combined full nogui at round17 merge (69 ok, #3280 and #2207 pre-existing); three-platform build/vet",
+    "head": "0a2a0d74e38741a5bedb9b525b575ebe9ebecd9a"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gui-the-sidebars-gateway-line-moves-with-the-port-3531-7597f816",
+   "issues": [
+    3531
+   ],
+   "category": "product",
+   "title": "gui: the sidebar's gateway line moves with the port (#3531, yetone)",
+   "coverage": "renderSideGw from the save answer; portSays moved to i18n.js (budget does not count it; matching vendor words is a translation job) giving 605 bytes for 168; TestCoreScriptBudget holds 1,321,347/1,321,424; Playwright red->green both engines en+zh; sidebar/api-key-theme reds pre-exist on clean upstream main.",
+   "commits": [
+    "7597f8160c674dd83696ade94d93a4274d6a952a"
+   ],
+   "commit_details": [
+    {
+     "sha": "7597f8160c674dd83696ade94d93a4274d6a952a",
+     "title": "gui: the sidebar's gateway line moves with the port (#3531, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/7597f8160c674dd83696ade94d93a4274d6a952a"
+    }
+   ],
+   "branch": "fix/sidebar-gateway-line",
+   "base": "641b1217f271774d110e58d5e69bc3911459a56c",
+   "comments": {
+    "3531": [
+     "https://github.com/yetone/magpie/issues/3531#issuecomment-6392783800"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false,
+    "credited": "",
+    "coauthors": []
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "red->green per commit body; package suites green; combined full nogui at round17 merge (69 ok, #3280 and #2207 pre-existing); three-platform build/vet",
+    "head": "7597f8160c674dd83696ade94d93a4274d6a952a"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
   }
  ],
  "pointed_elsewhere": [
@@ -5265,6 +5391,42 @@
    "replaced_by": "",
    "note": "round-16 one-issue-one-branch",
    "category": "product"
+  },
+  {
+   "branch": "fix/codex-multi-home-sessions",
+   "head": "8b9022cd0d570aea6d6be0ad0168d9c223354ffd",
+   "kind": "product",
+   "base": "641b1217f271774d110e58d5e69bc3911459a56c",
+   "fix_ids": [
+    "u-sessions-a-second-codex-folders-name-index-and-state-dbs-a-3530-8b9022cd"
+   ],
+   "replaced_by": "",
+   "note": "round-17; fork branch head later moved to 7597f816 (includes #3531) after a working-tree slip; single-issue pickup cherry-picks the 40-hex SHA",
+   "category": "product"
+  },
+  {
+   "branch": "fix/trae-checkin-credits",
+   "head": "0a2a0d74e38741a5bedb9b525b575ebe9ebecd9a",
+   "kind": "product",
+   "base": "641b1217f271774d110e58d5e69bc3911459a56c",
+   "fix_ids": [
+    "u-provider-a-trae-cn-claim-takes-its-credits-alone-extra_cre-3529-0a2a0d74"
+   ],
+   "replaced_by": "",
+   "note": "round-17",
+   "category": "product"
+  },
+  {
+   "branch": "fix/sidebar-gateway-line",
+   "head": "7597f8160c674dd83696ade94d93a4274d6a952a",
+   "kind": "product",
+   "base": "641b1217f271774d110e58d5e69bc3911459a56c",
+   "fix_ids": [
+    "u-gui-the-sidebars-gateway-line-moves-with-the-port-3531-7597f816"
+   ],
+   "replaced_by": "",
+   "note": "round-17",
+   "category": "product"
   }
  ],
  "archive_policy": {
@@ -5788,6 +5950,57 @@
    "body_sha256": "acfb8f701df16ea1a68543e3cbf9c1df9136691d70f0206d0fa4c883c092a7b2",
    "evidence": "docs/fork/sprints/2026-10-25/deliveries.jsonl",
    "body_updated_at": "2026-10-25T01:49:56Z"
+  },
+  {
+   "issue": 3530,
+   "fix_id": "u-sessions-a-second-codex-folders-name-index-and-state-dbs-a-3530-8b9022cd",
+   "comment_id": 6392564071,
+   "url": "https://github.com/yetone/magpie/issues/3530#issuecomment-6392564071",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T02:40:42Z",
+   "verified_at": "2026-10-25T03:09:02Z",
+   "delivery": "fix/codex-multi-home-sessions",
+   "delivery_head": "8b9022cd0d570aea6d6be0ad0168d9c223354ffd",
+   "body_sha256": "b7038c1559cac1bf0b982f0186a5b3f892181f7bac50c4deadcd6c8ff8bcd43b",
+   "evidence": "docs/fork/sprints/2026-10-25/deliveries.jsonl",
+   "body_updated_at": "2026-10-25T02:40:42Z"
+  },
+  {
+   "issue": 3529,
+   "fix_id": "u-provider-a-trae-cn-claim-takes-its-credits-alone-extra_cre-3529-0a2a0d74",
+   "comment_id": 6392564252,
+   "url": "https://github.com/yetone/magpie/issues/3529#issuecomment-6392564252",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T02:40:44Z",
+   "verified_at": "2026-10-25T03:09:02Z",
+   "delivery": "fix/trae-checkin-credits",
+   "delivery_head": "0a2a0d74e38741a5bedb9b525b575ebe9ebecd9a",
+   "body_sha256": "da009b7271d6db2ce9cb13af88eae80a996edbce0e21b7f6927040a30ad23d58",
+   "evidence": "docs/fork/sprints/2026-10-25/deliveries.jsonl",
+   "body_updated_at": "2026-10-25T02:40:44Z"
+  },
+  {
+   "issue": 3531,
+   "fix_id": "u-gui-the-sidebars-gateway-line-moves-with-the-port-3531-7597f816",
+   "comment_id": 6392783800,
+   "url": "https://github.com/yetone/magpie/issues/3531#issuecomment-6392783800",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T03:07:20Z",
+   "verified_at": "2026-10-25T03:09:02Z",
+   "delivery": "fix/sidebar-gateway-line",
+   "delivery_head": "7597f8160c674dd83696ade94d93a4274d6a952a",
+   "body_sha256": "4a67d618112533e44df5df4c72c8db0fc8823bf8be9d48dce993e327c1d19d68",
+   "evidence": "docs/fork/sprints/2026-10-25/deliveries.jsonl",
+   "body_updated_at": "2026-10-25T03:07:20Z"
   }
  ],
  "deliveries": {
@@ -5939,6 +6152,41 @@
    "pushed": true,
    "read_back": "2026-10-25 equal",
    "note": "#3470 follow-up; base is the cherry-picked first half (same issue)"
+  },
+  "fix/codex-multi-home-sessions": {
+   "branch": "fix/codex-multi-home-sessions",
+   "base": "641b1217f271774d110e58d5e69bc3911459a56c",
+   "head": "7597f8160c674dd83696ade94d93a4274d6a952a",
+   "commits": [
+    "8b9022cd0d570aea6d6be0ad0168d9c223354ffd",
+    "7597f8160c674dd83696ade94d93a4274d6a952a"
+   ],
+   "pushed": true,
+   "read_back": "2026-10-25 equal (head includes #3531; #3530 pickup cherry-picks 8b9022cd)",
+   "note": "#3530 + slipped-in #3531"
+  },
+  "fix/trae-checkin-credits": {
+   "branch": "fix/trae-checkin-credits",
+   "base": "641b1217f271774d110e58d5e69bc3911459a56c",
+   "head": "0a2a0d74e38741a5bedb9b525b575ebe9ebecd9a",
+   "commits": [
+    "0a2a0d74e38741a5bedb9b525b575ebe9ebecd9a"
+   ],
+   "pushed": true,
+   "read_back": "2026-10-25 equal",
+   "note": "#3529 single fix"
+  },
+  "fix/sidebar-gateway-line": {
+   "branch": "fix/sidebar-gateway-line",
+   "base": "641b1217f271774d110e58d5e69bc3911459a56c",
+   "head": "7597f8160c674dd83696ade94d93a4274d6a952a",
+   "commits": [
+    "8b9022cd0d570aea6d6be0ad0168d9c223354ffd",
+    "7597f8160c674dd83696ade94d93a4274d6a952a"
+   ],
+   "pushed": true,
+   "read_back": "2026-10-25 equal",
+   "note": "#3531; its history shares the #3530 commit (both cherry-pick alone), so the delivery chain carries both"
   }
  }
 }

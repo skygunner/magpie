@@ -288,6 +288,22 @@ R5-PROVIDER-ID 的组合场景（raw cline 已保存 Decide picks 时，空闲�
 | M3 | 扩池 | 完成：零评论池 622 扫 4 页 + 上轮全量分诊复核。新排除（带据）：#3430/#3442/#2918（他人完整补丁 OTHER_PATCH_READY）、#3537（需真实订阅）、#3190（2b80641d 故意行为，需真实 Codex 后端验证）、#3156（快照语义产品决策）、#2951/#2952/#3118/#3477（信息不足）、#3108（defer）。candidates.json 全账 |
 | M5 | 账本 | 完成：sprints/2026-10-25/{deliveries.jsonl,candidates.json,followup.json}；upstream-status.json 75 units/95 heads，REQUIRED_SET 86 项，generate.py+--selftest 过；全量 nogui 于合并树 bc193d08（三题无冲突合并，证据 evidence/round16-full-suite-combined.log） |
 
+## 2026-10-25 第十三轮（ZCode 会话十五）：#3530、#3529、#3531 + M0 证据重做
+
+按 ROUND13-CONTINUE 执行（base = upstream/main `641b1217`）。
+
+| M | 目标 | 结果 |
+|---|---|---|
+| M0 | round16 HandedOver 证据 | 完成：干净 b027ca26 与合并树各 3 bursts 原始日志（evidence/round17/handedover-rerun-*.log，每次含 HEAD/命令/逐行输出/exit）——基线 1/3 红、合并 2/3 红，flake 在未触碰基线复现，预存归因成立；README 修正日志路径（round16-full-suite-combined.log 在上级目录，SHA256 7f1be897… 与原始日志吻合）+ manifest.json；partial 的 handedover-baseline-check.txt 保留为当时原样 |
+| M1-A | #3530 Codex 多 HOME | 完成：`fix/codex-multi-home-sessions` 8b9022cd——per-folder 标题缓存（pass-freeze #3493 语义保留）、codexStateDBs 尊重各 folder 的 sqlite_home（相对该 folder），CODEX_SQLITE_HOME 限定主 folder；双 RED→GREEN；英文回帖 [6392564071](https://github.com/yetone/magpie/issues/3530#issuecomment-6392564071)。**披露**：工作树操作失误使 #3531 提交落进同一条链（8b9022cd → 7597f816），不 force-push；单题取用 cherry-pick 各自 SHA（两题文件不相交），已在两处回帖写明 |
+| M1-B | #3529 Trae credits | 完成：`fix/trae-checkin-credits` 0a2a0d74——claim credits 单取（extra_credits 仅在 credits 未说时），绝不取和；synthetic fixtures（如实声明无线上事故）；RED→GREEN；英文回帖 [6392564252](https://github.com/yetone/magpie/issues/3529#issuecomment-6392564252) |
+| M2 | #3531 侧栏端口 | 完成：`fix/sidebar-gateway-line` 7597f816——save 应答画侧栏行；portSays 移入 i18n.js 腾 605 字节（预算不动，TestCoreScriptBudget 1,321,347/1,321,424）；Playwright 双引擎 en+zh RED→GREEN；sidebar/api-key-theme 的 12 红经干净树对照为预存；英文回帖 [6392783800](https://github.com/yetone/magpie/issues/3531#issuecomment-6392783800)（含披露） |
+| M2 甄别 | #3536/#3539/#3528/#3522/#3526/#3511 | #3536 需逐 agent 外部源码验证 startup timeout 语义（无本机证据不猜）；#3539 的 413 failover 是 #700 设计（per-vendor 字节上限），报告者亦声明不能归因 magpie——不修；#3528/#3522 产品语义待维护者；#3526（Edward4226 06ebeb75 已交叉验证）、#3511（ggbdpq 认领）不重复 |
+| M3 | 全量分页 | 完成：零评论 open 623 条 7 页到穷尽（zero-comment-audit.json 每条含 author/title）；169 条 yetone 域；116 条 bug 标题初筛；下轮候选 16 条入 candidates.json coverage |
+| 合并回归 | 3530+3529 合并树 | 完成：69 ok / 2 包 FAIL（#3280、#2207 已知预存）/ 19 no-test，零新增（evidence/round17-full-suite-combined.log）；三平台 build/vet、gofmt 干净 |
+
+累计真实修复：9（前两轮）+ 本轮 #3530、#3529、#3531 三个新 issue = **12 个不同 issue**（#3470/#3470-follow-up 不重复计）。
+
 扩池补充审计（同轮晚些）：#2968（Cowork 配置目录未知，需 macOS 真机）、#3379/#3107（仅截图）、#3149（产品诉求）——均已带据入 candidates.json。
 
 累计真实修复：第十一轮 7 题 + 本轮 2 题新 issue（#3117、#3043）+ #3470 follow-up（同题补齐）= **9 个不同 issue**。距 30–60 目标尚远，候选池审计后的真实可得率是约束（见 candidates.json 的 15 条带据排除）；继续按轮推进。

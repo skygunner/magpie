@@ -1,0 +1,15 @@
+=== baseline-b027ca26 tree=b027ca264dd579e415d05a9a235f1be54919d434 date=2026-10-25T02:26:27Z ===
+command: GOTOOLCHAIN=go1.26.8 go test ./internal/gateway -run TestHandedOverGateway -count=4  (x3 bursts)
+--- burst 1 ---
+ok  	github.com/yetone/magpie/internal/gateway	1.159s
+burst 1 exit=0
+--- burst 2 ---
+ok  	github.com/yetone/magpie/internal/gateway	1.164s
+burst 2 exit=0
+--- burst 3 ---
+--- FAIL: TestHandedOverGatewayFinishesItsStream (0.01s)
+    handover_test.go:142: request 0 during the handover: Post "http://127.0.0.1:43839/v1/chat/completions": EOF
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.888s
+FAIL
+burst 3 exit=1

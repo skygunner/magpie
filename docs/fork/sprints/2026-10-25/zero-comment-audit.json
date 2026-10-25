@@ -1,0 +1,3753 @@
+{
+ "checked_at": "2026-10-25T03:07:47Z",
+ "query": "repo:yetone/magpie is:issue is:open comments:0",
+ "total_count_reported": 623,
+ "pages_fetched": 7,
+ "items_fetched": 623,
+ "distinct_issues": 623,
+ "range": [
+  222,
+  3546
+ ],
+ "note": "full pagination to exhaustion; per-issue disposition for the bug-titled and the maintainer-filed ones in candidates.json; the rest are feature requests, screenshots-only, platform-specific, or other contributors' domains, triaged on title and author in this file",
+ "issues": [
+  {
+   "n": 3546,
+   "author": "noahachao",
+   "title": "智谱 coding plan 的模型路由问题",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3545,
+   "author": "xiele88787",
+   "title": "workbuddy限流问题",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3544,
+   "author": "mxl2498",
+   "title": "Feature: detect agents' CLIs outside the system PATH (managed Node dirs), or let users add custom CL",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3543,
+   "author": "mxdlzg",
+   "title": "Cache does not accumulate properly when requesting via route or gateway",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3541,
+   "author": "yetone",
+   "title": "redact: user@host.local is counted as an email",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3540,
+   "author": "yetone",
+   "title": "masking: put-back counts and sent text live only in the gateway process's memory",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3539,
+   "author": "voidcraft-dev",
+   "title": "ClinePass：钉住 DeepSeek 官方后出现嵌套 413，按 502 重试三次；此前 CPA 同渠道未遇到",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3537,
+   "author": "DreamHoa",
+   "title": "[Bug] Grok 4.7 via Magpie causes premature completion in Claude Code's official Codex plugin",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3536,
+   "author": "yetone",
+   "title": "library: give a server's startup timeout to the other agents that have one (after #3168)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3535,
+   "author": "yetone",
+   "title": "gui tests: codex-resets-used (webkit zh) fold click not stable within 5s under the full suite",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3534,
+   "author": "Lemonawa",
+   "title": "[功能建议] Usage ingest 支持 req/served 等元数据，避免上报记录的请求模型、实际模型为空",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3533,
+   "author": "MistyOcean88",
+   "title": "添加账号比如auth认证时，是否可以配置不默认打开网页。",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3532,
+   "author": "ljq29",
+   "title": "docker版本部署的magpie， kimi work 插件 点击登录，提示下图而不是打开网页。",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3528,
+   "author": "yetone",
+   "title": "usage: a web search sent to Kimi Code's or WorkBuddy's search service, or to a search API, leaves no",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3527,
+   "author": "yetone",
+   "title": "ffe493773 (v0.1.1446) run record: the whole GUI suite had 12,471 tests and 165 reds, none from it",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3522,
+   "author": "yetone",
+   "title": "image drawing: a reply with text but no image fails as \"drew nothing\" (502) without trying the next ",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3516,
+   "author": "wc7086",
+   "title": "[Bug] Add to Home Screen on iOS doesn't use magpie's icon",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3515,
+   "author": "wc7086",
+   "title": "[Bug] iOS 27 Home Screen web app: the system top blur covers magpie web's header",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3512,
+   "author": "JoeyWu-tech",
+   "title": "agent: Claude Code's first write in a fresh magpie takes a #1985 proxy for a relay (a CLI pick write",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 3507,
+   "author": "ljq29",
+   "title": "插件页面一直转圈，没能打开下载",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3506,
+   "author": "ljq29",
+   "title": "迁移之前，它们无法使用：another magpie is moving subscriptions to plugins",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3503,
+   "author": "JoeyWu-tech",
+   "title": "gateway: TestStreamingRequestsLetTheirSentBodyGo reads the heap before every request is answered",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 3499,
+   "author": "yetone",
+   "title": "TestRelaunchStartsTheBundleWhenOpenNeverWorks: 30s wait ran out during a full package run (disk full",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3495,
+   "author": "Lemonawa",
+   "title": "[功能建议] Windows 自动更新重启后保留主窗口最小化状态",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3494,
+   "author": "yetone",
+   "title": "c819e00c4 (v0.1.1389) run record: parent is f5b1d36ff, and the full GUI run had 81 reds in 14 files,",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3492,
+   "author": "congee949",
+   "title": "[Bug] 供应商编辑弹窗在账号额度返回时整窗闪烁：swap 动画重播至 opacity 0.5 并下移 2px",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 3490,
+   "author": "Starfallan",
+   "title": "[FR]希望支持导入Pi的供应商配置",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3489,
+   "author": "evenchen6",
+   "title": "Web search: add Tencent Cloud WSA (SearchPro) as a search API",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3485,
+   "author": "yetone",
+   "title": "release: macos-15-intel signing finds no Developer ID identity, 3 of ~20 runs on 10-24 (v0.1.1392 ne",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3481,
+   "author": "semantic-craft",
+   "title": "gateway: Antigravity rejects tool schemas with union type + items: {} (HTTP 400 field predicate fail",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3477,
+   "author": "toujianjian",
+   "title": "使用magpie更改deepseekharness配置时，会导致dsh突然重启或崩溃",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3475,
+   "author": "mdwsk88",
+   "title": "[Bug] Claude Desktop 网关模式开了 Enable tool search 后，Copilot 拒绝 tool-search-tool-2025-10-19（400 unsuppor",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 3474,
+   "author": "yetone",
+   "title": "claude: after /model, haiku, opus and subagent tiers still name the previous main model until Follow",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3468,
+   "author": "yetone",
+   "title": "GUI test agent-models: webkit zh, the reopened model list doesn't close on a click elsewhere under w",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3466,
+   "author": "laacmilan",
+   "title": "[Feature] 不同agent支持中转站供应商不同的BASE_URL（接口协议）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3465,
+   "author": "yetone",
+   "title": "gui tests: routing-time 'a rule for hours of the day' red in WebKit on main 5a85a2a91 (Add a rule ou",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3463,
+   "author": "Lain-in-coding",
+   "title": "能不能在供应商管理页为每一个供应商增加额度查询功能？再增加一个测试能否连通功能【只通过能否获取到模型列表来判断是否连通】",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3461,
+   "author": "BuvkB",
+   "title": "[feat] Gateway key 支持设置到期时间（临时分享场景）：到期自动失效并标注已过期",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3459,
+   "author": "liminchuck-cpu",
+   "title": "【增加功能】额度-菜单栏显示额度，增加今天的toekn数显示，不带费用的",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3458,
+   "author": "wc7086",
+   "title": "[Feature] 用量 → 上下文：会话行百分比增加“当前值/峰值”选项并标注口径",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3457,
+   "author": "qiangxinglin",
+   "title": "[feat] cursor-local: Auto-review 分类器固定跑在对话模型上（10 秒超时），慢上游下退化成逐条人工审批",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3454,
+   "author": "Gruu6y",
+   "title": "routing: same-intent rules are first-match-wins; allow a rule-level weight so two identical intents ",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3449,
+   "author": "cyrushuang1995-cmyk",
+   "title": "Codex 经 magpie 网关时每次会话先尝试 WebSocket 被 426 拒、再回退 HTTP——每会话一条 ERROR 日志与启动延迟",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3448,
+   "author": "Simonxiaoxueboshi",
+   "title": "菜单栏直接显示每个供应商的用量，不用打开主窗口再点进去",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3445,
+   "author": "s1973",
+   "title": "路由页面下方请求这里显示排版优化、UI 优化",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3442,
+   "author": "xinghui",
+   "title": "[Bug] 智谱团队版 Provider 里同时开了个人套餐的 key 被识别成 Pro：配了 team org/project 时应优先读团队配额",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3441,
+   "author": "zane668",
+   "title": "[Bug] Large image-history request retries across Codex/Grok for almost 8 minutes, then is canceled",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3438,
+   "author": "5918vo",
+   "title": "哥，你这里的移除按钮点击后的错误信息能做得明显一点吗？还有能显示中文吗？",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3436,
+   "author": "phamvan12901-eng",
+   "title": "Claude 订阅：Kelivo 自动记忆改写较早历史导致续接失配，固定会话缓存键也无法避免（附离线复现）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3434,
+   "author": "e2720515-cloud",
+   "title": "bug(routing): Codex compaction can reclassify an unchanged native turn when transcript identity chan",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3430,
+   "author": "mdwsk88",
+   "title": "[Bug] 走 Messages API 的 Claude 回复，用量里的推理 token 恒为 0（aUsage 不读 output_tokens_details.thinking_tokens）",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 3429,
+   "author": "chiperman",
+   "title": "设置页打开时刷新，侧边栏底部的网关地址会慢一拍才出现",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 3428,
+   "author": "hxyinan",
+   "title": "routing: the seat carries when an allowance expires but not how much — strategies cannot rank by wha",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3420,
+   "author": "JoeyWu-tech",
+   "title": "davsync: TestSync, TestSyncTeraCloudStillSeesOtherWrites red when the local save lands in the push's",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 3419,
+   "author": "JoeyWu-tech",
+   "title": "imagemcp, davsync: TestFourKImageByURLIsSaved, TestStalledDownloadSaysWhereTheImageIs, TestSlowTrans",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 3415,
+   "author": "yetone",
+   "title": "gui tests: usage-fold red on main 3b10a403d",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3414,
+   "author": "yetone",
+   "title": "gui tests: usage-agents-hide red on main 3b10a403d",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3412,
+   "author": "yetone",
+   "title": "gui tests: routing-steady red on main 3b10a403d",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3411,
+   "author": "yetone",
+   "title": "gui tests: routing-rule-effort red on main 3b10a403d",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3410,
+   "author": "yetone",
+   "title": "gui tests: routing-pause red on main 3b10a403d",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3408,
+   "author": "yetone",
+   "title": "gui tests: routing-intent-entry red on main 3b10a403d",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3407,
+   "author": "yetone",
+   "title": "gui tests: redact-rule-edit red on main 3b10a403d",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3405,
+   "author": "yetone",
+   "title": "gui tests: quota-name-translated red on main 3b10a403d",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3404,
+   "author": "yetone",
+   "title": "gui tests: quota-count-wrap red on main 3b10a403d",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3403,
+   "author": "yetone",
+   "title": "gui tests: old-webkit red on main 3b10a403d",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3402,
+   "author": "yetone",
+   "title": "gui tests: menu-input-scroll red on main 3b10a403d",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3400,
+   "author": "DylanLIiii",
+   "title": "Allow effort overrides on nested routing-group members",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3398,
+   "author": "JoeyWu-tech",
+   "title": "TestCodexDriftReached and TestCodexBehindReverseProxy go red when two log inserts land in one clock ",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 3397,
+   "author": "JoeyWu-tech",
+   "title": "TestBunProxyLoginWithReservedCharacters is red with Bun 1.3: the request line names port 80",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 3396,
+   "author": "LisztVan",
+   "title": "[Feature Request] Permission-scoped backend actions/RPC for Page Plugins",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3395,
+   "author": "wang1078564969",
+   "title": "添加 kimi 的耗时和速度",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3393,
+   "author": "yetone",
+   "title": "GUI suite: 43 reds in a whole run beside two other GUI suites (causes not printed)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3391,
+   "author": "YoYoSenRan",
+   "title": "[体验优化 / UI] 用量页请求明细表格建议调高「缓存读取」折叠优先级，优先折叠「发送模型」「推理强度」",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3390,
+   "author": "youngtreebig-droid",
+   "title": "ChatGPT订阅用完后，开启Magpie依然提示Codex 和工作使用额度已用完",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3384,
+   "author": "TruthBug",
+   "title": "[功能建议] ZCode / GLM Coding Plan:五小时额度耗尽时自动使用充值券,周额度耗尽时自动使用重置券",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3381,
+   "author": "double2tea",
+   "title": "Async image tasks for OpenAI-compatible relays — branch ready",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3379,
+   "author": "xiaohan2025",
+   "title": "使用gemini模型时，返回如下问题",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3378,
+   "author": "teotis",
+   "title": "agent没有支持到opencode2，一代都已经不推了",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3376,
+   "author": "yetone",
+   "title": "gui tests: routing-effort-change's 600px 'level sent is cut' red under load (Chromium en)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3372,
+   "author": "mtul0729",
+   "title": "Linux 自启没按 XDG Autostart 走：$XDG_CONFIG_DIRS 被忽略，「关闭」也无法表达",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3371,
+   "author": "ltx15382710886-png",
+   "title": "[Feature] switched off 的提供商仍能每日自动签到（只停路由，不停签到）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3369,
+   "author": "zisen123",
+   "title": "[feat] Claude Code 的 /model 太杂乱：希望只显示 magpie 提供的模型",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3368,
+   "author": "xswings",
+   "title": "多个密钥时固定首选禁止自动切换",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3366,
+   "author": "chenmonster",
+   "title": "🌐Windows系统上希望这块内容与设置的语言一致",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3364,
+   "author": "stlomib",
+   "title": "特殊网关的模型配置支持",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3361,
+   "author": "cynicalight",
+   "title": "[UX] 菜单栏用量配色按排名变化，希望与服务商品牌色一致（附修复分支）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3356,
+   "author": "kupakupar",
+   "title": "[Bug] Re-enabling library sync overwrites newer server content with excluded local data (tested fix)",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3355,
+   "author": "EawenZhao",
+   "title": "[Feature Request] Claude Desktop Gateway: configure a dedicated Auto Mode classifier model",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3354,
+   "author": "Orkady",
+   "title": "[feat] 内置预设新增 Agnes AI（OpenAI 兼容，国际 / 国内双接入点）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3348,
+   "author": "codephage2020",
+   "title": "上下文超限之后，不要把同一份请求原样丢给下一个成员",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3343,
+   "author": "Magixyne",
+   "title": "机密过于敏感肌，很多正常内容被误判且无法调整",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3342,
+   "author": "cola4565",
+   "title": "codex Startup error after update",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3341,
+   "author": "Beyfish",
+   "title": "Windows: the app (and its gateway) disappears mid-stream under load and never comes back",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3338,
+   "author": "Magixyne",
+   "title": "跨模型路由分组时工具调用异常",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3335,
+   "author": "GH2019",
+   "title": "需要从 cockpit tools 中导入账号数据",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3334,
+   "author": "Indekkusu545",
+   "title": "[feat] MCP 自定义 OAuth 应用支持显式配置 scopes（Microsoft Entra ID）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3333,
+   "author": "yakicool",
+   "title": "Use localhost for Claude Code running under WSL1",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3331,
+   "author": "westlinkin",
+   "title": "BUG 本地会话的用量，无法获取到价格，所以也就无法显示费用",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3330,
+   "author": "lwwtl",
+   "title": "provider test: Test as Claude Code gets 503 from a sub2api Claude Code-only group (fix on fork)",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3328,
+   "author": "pitigre-fan",
+   "title": "windows11 迁移本地exe文件位置后，点击更新找不到路径，能否自动寻找一下",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3327,
+   "author": "infinitr0us",
+   "title": "[bug] Mistral's GLM-5.3-flash ends some tool turns empty (response_error: empty_response), and magpi",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3325,
+   "author": "yujianbinm",
+   "title": "API的模型给路由组用",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3324,
+   "author": "yetone",
+   "title": "routing: Routing history's day files follow the server's day, not the viewer's",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3323,
+   "author": "yetone",
+   "title": "sessions: the Sessions tab groups by the server's day and hour, not the viewer's",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3322,
+   "author": "StudentWeis",
+   "title": "[bug] macOS 打开上下文详情弹窗后，标题栏无法拖动窗口",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3321,
+   "author": "moxuanchen",
+   "title": "用量页：按天积分统计不应只支持 WorkBuddy，所有积分插件都应覆盖",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3319,
+   "author": "areslp",
+   "title": "Plugin accounting: unknown token usage, late stream failures, and generic account-credit observation",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3317,
+   "author": "banyeshuiwujiao",
+   "title": "Feature request: opt-in \"model-first\" vision — send images to the model, describe only if it refuses",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3316,
+   "author": "novskidev",
+   "title": "Pls add Jcode Support",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3315,
+   "author": "laacmilan",
+   "title": "【Feature】脱敏能否实现关键词导入或者其他批量功能",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3314,
+   "author": "beanu",
+   "title": "【Feature】Mac版本增加用量余额 桌面小组件",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3313,
+   "author": "kinhit",
+   "title": "Magpie mcp image 无法调用 Nano Banana 生图 — 问题反馈",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3312,
+   "author": "hustxjs",
+   "title": "免费额度用完需要提醒",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3310,
+   "author": "JavaBoy6",
+   "title": "[Bug] Copilot 持续 403 forbidden：新会话直接请求成功，旧 Magpie 进程需重启恢复",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3309,
+   "author": "skygunner",
+   "title": "GUI/WebKit: Detect APIs result replacement moves the held dialog and clicked button 22px",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 3308,
+   "author": "yetone",
+   "title": "gui: the tray panel's Claude Code subagent effort square isn't disabled when no subagent model is se",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3307,
+   "author": "yetone",
+   "title": "gui tests: agent-field-names (chromium ja, .ag-link not stable in 5s) and api-key-theme (colour read",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3304,
+   "author": "Ran-Xing",
+   "title": "[RFC / 合作探讨] 探讨构建跨工具（Claude Code/Pi/Codex）的“前置消息整理与意图软路由”插件设想",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3303,
+   "author": "Moody-Sin",
+   "title": "dsh 只用 npx 启动（PATH 上没有 dsh）时整行停在 CLI not found：配置目录已找到，模型和接线却给不了",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3301,
+   "author": "Amour1688",
+   "title": "支持生成过程中的实时 TPS（已有本地实现）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3300,
+   "author": "yetone",
+   "title": "GUI test red under load: library-loading's rail click times out at 5s in webkit",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3299,
+   "author": "yetone",
+   "title": "GUI test red under load: library-pick-remove reads the remove-all post before it is recorded",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3297,
+   "author": "buddhism5080",
+   "title": "Settings › Allowances: a switch for replaying a spent key's 429 without asking again",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3295,
+   "author": "yetone",
+   "title": "gui tests: switch-only (chromium 420 de) 'a tick has magpie only switch Codex's sign-in': element no",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3293,
+   "author": "yetone",
+   "title": "gui tests: routing-auto-reset 'a Codex reset used by itself is in the story' (webkit en) times out c",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3292,
+   "author": "yetone",
+   "title": "gui tests: provider-fetch-again 'a fetched provider's editor fetches its models again' (chromium ja ",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3291,
+   "author": "HengYangDS",
+   "title": "Library-only use: preserve agent model configuration and Codex sessions during inspection/startup",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3290,
+   "author": "limuyang2",
+   "title": "minimax code 为何不支持mcp管理？",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3278,
+   "author": "yetone",
+   "title": "routing-day-window: \"the wide model's row was never drawn\" under load (chromium ja 420px)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3275,
+   "author": "yetone",
+   "title": "gui tests: update-wait (chromium en) and usage-alert (webkit en, stuck Settings head intercepts) red",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3272,
+   "author": "StudentWeis",
+   "title": "[Bug] macOS 托盘面板白屏，后台代理仍可用：WebKit GPUProcess 无响应后未恢复（0.1.1320）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3271,
+   "author": "ybbms777",
+   "title": "[feat] Anthropic 格式上游原样转发（未知字段不删）+ auto mode review 按实际落点判断",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3270,
+   "author": "qianjindexiaozu",
+   "title": "供应商中的qoder消失",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3268,
+   "author": "hibaliqya-yonma",
+   "title": "用量界面：为 GLM 增加自动使用 5 小时、周额度重置卡的独立开关",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3267,
+   "author": "iomect",
+   "title": "多个官方账号希望能区分开来选择路由",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3265,
+   "author": "DIYgod",
+   "title": "[功能建议] 菜单栏面板的额度曲线按最长窗口（周）展示",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3262,
+   "author": "xiaozhu1337",
+   "title": "[feat] 支持配置一个默认模型检查mcp/skill的安全性",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3261,
+   "author": "dongseric49101",
+   "title": "[feature] 建议把同步数据中的的供应商中的代理移除",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3256,
+   "author": "cyberElar",
+   "title": "[Bug] Linux 全局 OOM：magpie.service 内 Node 进程 RSS 约 8 GiB，服务历史峰值 16.8G",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3254,
+   "author": "jstar0",
+   "title": "accounts: switching to or forgetting a Claude account while Claude Code runs on its folder removes t",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3252,
+   "author": "shihaoH",
+   "title": "路由页面信息架构优化：拆分「视图 / 账号与密钥 / 路由组」，减少长页面中的查找和滚动",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3250,
+   "author": "yangdm2015",
+   "title": "[Feature] Opt-in Claude Code compaction before planned account rotation",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3249,
+   "author": "Fyhax1ki",
+   "title": "建议优化 MCP 命令配置输入框",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3247,
+   "author": "ilya-bogin-keenable",
+   "title": "Search API that works without a key: Keenable as a `magpie search add` option",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3246,
+   "author": "qu-mou",
+   "title": "[Bug] ZCode 接入 magpie 后用一段时间会自动退出接入状态，需要手动重新接入",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3245,
+   "author": "MisonL",
+   "title": "A plugin's check-in time can only be set by the host: could plugins get `recheck` or a schedule?",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3239,
+   "author": "dongseric49101",
+   "title": "[feature]资源库skills中同仓库的其他skill根据group显示,支持展开和收缩",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3237,
+   "author": "fflrichard",
+   "title": "假如设置一个 provider 为远程的 magpie，如果此时远程有 gpt 和 gemini 的模型，转发 gemini 请求的时候，不能以 gemini 的协议转发。",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3236,
+   "author": "dustinyejun",
+   "title": "Droid 接入时未同步模型的 compactionTokenLimitPerModel",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3235,
+   "author": "x0rz4",
+   "title": "Qoder CN 无法保存模型选择",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3232,
+   "author": "wuzhidexiaoming",
+   "title": "Responses SSE: a single \response.created frame arrives internally corrupted (chars dropped mid-JSON)",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3231,
+   "author": "ice-fortress",
+   "title": "[feat][紧急] 支持官方登录原生账号及 WS 中转、反代上游的端到端 WebSocket 接入与转发",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3230,
+   "author": "usufu",
+   "title": "[Feature] Remote Magpie 支持继承远端工作窗口，保留与最大上下文容量的区别",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3228,
+   "author": "wizd",
+   "title": "[Bug] Windows (NTFS) 下读取 Cursor 会话引发天量磁盘写穿（单日累计写 >480GB / 读 >500GB）导致系统假死",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3227,
+   "author": "yetone",
+   "title": "gui tests: fonts webkit 'font menu search and keys fit narrow windows' picks nothing after Enter, in",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3225,
+   "author": "derdani82",
+   "title": "[功能建议] 优化路由组管理：弹窗配置、清理已关闭供应商的模型、批量操作与精简说明",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3220,
+   "author": "yetone",
+   "title": "gui tests: plugin-page red under a whole-suite run (frame.waitForFunction 8s timeout), green alone",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3219,
+   "author": "yetone",
+   "title": "gui tests: model-id-space red under a whole-suite run (own-model list empty), green alone",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3217,
+   "author": "usufu",
+   "title": "[Feature] 将“不带供应商的模型 ID”扩展到 Codex 原生目录，明确内部模型发现行为",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3216,
+   "author": "Evopower",
+   "title": "Remote magpie 同时接入 Devin 和 Claude Code 后，同名模型只剩截断的数字 id，分不清来源",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3215,
+   "author": "yuluo-yx",
+   "title": "I have already performed repairs and it is now functioning properly, but this issue still persists.",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3214,
+   "author": "yuluo-yx",
+   "title": "bug: statueline magpie not show anything",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3212,
+   "author": "AgentWings",
+   "title": "gateway: on loopback any program can call as any agent, with no key",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3211,
+   "author": "yetone",
+   "title": "GUI test agent-models-all-hidden: chromium zh \"Hide all\" click times out at 5s under load (element n",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3210,
+   "author": "xxk8",
+   "title": "[Bug/GUI] Agents 页展开「安装其他 agent」右侧抖动；移除账户/密钥要等服务端才消失",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3208,
+   "author": "AgentWings",
+   "title": "go: Go 1.26.10 and x/net 0.60 close the net/http, TLS and x509 advisories the gateway reaches",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3206,
+   "author": "ObsidianArch02",
+   "title": "gateway: server-managed tools (web_search/web_fetch) silently dropped on translated routes — 200 OK,",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3204,
+   "author": "HwH-z1x",
+   "title": "[小改进]需要为非官方反代插件导入后的供应商提供自由设置图标功能",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3203,
+   "author": "mameikagou",
+   "title": "[Feature] 支持 stays=20m：配置路由组的空闲保持时间（附已验证实现分支）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3202,
+   "author": "nodlles",
+   "title": "[Bug] 从「用量 → 请求 → 查看路由」后，无法恢复路由页之前的状态",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3199,
+   "author": "usufu",
+   "title": "[Feature/Bug] 自定义 Responses 供应商支持 Codex 原生模型目录，保留上游工作窗口与最大窗口",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3198,
+   "author": "whofly2016",
+   "title": "plugin, provider: keep organizations under the same email apart with their own quota pools",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3196,
+   "author": "dbydd",
+   "title": "[优化] 一些关于重试机制的观察与改进意见",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3195,
+   "author": "Fermin214",
+   "title": "[Feature] 页面插件的独立持久化存储：是否有超出 options 请求上限的推荐方案？",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3194,
+   "author": "mylastfree",
+   "title": "Semgrep MCP OAuth fails with invalid_target (resource parameter rejected)",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3191,
+   "author": "LuwenOosten",
+   "title": "gateway: request-body write can stall forever on a reused HTTP/2 connection — no timeout applies and",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3190,
+   "author": "RunMintOn",
+   "title": "[Bug] Codex subscription drops client max_output_tokens",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3189,
+   "author": "kongtou20070406",
+   "title": "[Enhancement] 对已结束但 arguments 仍是非法 JSON 的上游工具调用提供校验与明确诊断",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3188,
+   "author": "wtj-0527",
+   "title": "provider: read sub2api rate_limits marked \"unit\": \"percent\" as shares, not dollars",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3187,
+   "author": "wtj-0527",
+   "title": "import: let a link name its key's Balance URL (balance=), on its endpoints' host",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3186,
+   "author": "StormTian",
+   "title": "Codex: config.toml left with no openai_base_url / no model and CC Switch's table at a dead port afte",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3180,
+   "author": "yetone",
+   "title": "gui tests: phone-web chromium saw the page pulled back 20px after a flick under load (passes alone)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3178,
+   "author": "yetone",
+   "title": "gui: TestDockJoinLeadsCommandTab fails again in a full local run (#1651 shape: front but last in Com",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3171,
+   "author": "DylanLIiii",
+   "title": "[feat] web-search MCP 应透传供应商的结构化结果，而不是压成纯文本",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3169,
+   "author": "Sealt",
+   "title": "Routing context card: an uncounted prompt reads 1.5–1.6x its neighbours, with no anchor to the last ",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3167,
+   "author": "jiangjxuan",
+   "title": "任务栏右下角点击程序图标会导致程序闪退",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3166,
+   "author": "Parcheal",
+   "title": "gateway: a Responses upstream cut after the reply began ends the turn; no continuation path (prefill",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3164,
+   "author": "Morphone0429",
+   "title": "[Performance / 功能建议] 路由分组内 API key 达数百个时页面异常卡顿，建议支持「仅显示当前命中 key」过滤",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3163,
+   "author": "chengbot-ai",
+   "title": "[Bug] 资源库›技能：取消「查找技能」后输入框被清空，再点按钮静默无反应（无法重新打开选择页）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3162,
+   "author": "axgiroud312-byte",
+   "title": "[功能建议] 为每个导入的订阅添加消费记录、月度支出统计和到期信息",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3160,
+   "author": "yiliang114",
+   "title": "[Performance] 托盘面板「额度」页打开后长时间停在骨架屏：建议先用最近配额渲染（stale-while-revalidate）",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 3159,
+   "author": "985329733",
+   "title": "[体验建议] 用量统计页的几个指标关系看不懂",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3158,
+   "author": "MisonL",
+   "title": "[Feature] A separate IP allowlist for the web admin page, distinct from the API gateway's",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3157,
+   "author": "MisonL",
+   "title": "[Feature] Classify looping animations as \"status\" vs \"decorative\", and only stop the latter when mot",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3156,
+   "author": "AvatarGanymede",
+   "title": "[bug] 修改路由组的模型列表后，实时路由里的组成员仍是旧的，重启 magpie 才更新",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3155,
+   "author": "MisonL",
+   "title": "[Feature] An in-app \"reduce motion\" switch that only affects magpie itself",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3154,
+   "author": "catnuko",
+   "title": "能否支持一下qoderwake cn",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3149,
+   "author": "SammySnake-d",
+   "title": "【BUG】magpie会自主的把非429限流问题自动冷却，即使上游根本不是额度耗尽",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3146,
+   "author": "derdani82",
+   "title": "[功能建议] 自定义供应商默认基于 Base URL 自动探测余额／额度接口，失败后支持手动配置",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3142,
+   "author": "CnsMaple",
+   "title": "WorkBuddy: user-level rules load from `~/.workbuddy/rules/`, not `AGENTS.md`",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3140,
+   "author": "Mrhe525",
+   "title": "设置-模型-搜索API 增加元宝搜索",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3138,
+   "author": "1127363108",
+   "title": "不调路由设置的情况下切换模型",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3137,
+   "author": "cjyrainbow",
+   "title": "agent: Windows 上 Codex Desktop 跑在 WSL（NAT）时，\"Codex 经代理连 magpie\"警告的判断和修复建议都对不上实际情况",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 3134,
+   "author": "dakango",
+   "title": "点击托盘图标，打开快捷面板的速度明显变慢了好多",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3133,
+   "author": "mslxl",
+   "title": "自动创建路由组功能对多个provider提供的deepseek会创建重名但不同内容的路由组",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 3132,
+   "author": "Sumisser",
+   "title": "[Feature Request] 基于任务难度的模型能力阶梯路由（通过 Jev/轻量判定任务难度替代显式意图分类）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3130,
+   "author": "realchenwenqiao",
+   "title": "[Bug] Codex Approve for me 经 Magpie 连续 quota 429，解除接入后官方直连审批通过（Windows 对照）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3128,
+   "author": "long1973m",
+   "title": "[Bug] 路由组成员列表：不同 provider 的同名模型显示完全一样，无法分辨顺序（WorkBuddy 国内版 / 国际版）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3126,
+   "author": "e2720515-cloud",
+   "title": "feat(codex): per-source-group composer prediction routing independent of substantive task routing",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3124,
+   "author": "fanbuz",
+   "title": "[feat] 支持多个独立命名的网关配置，按 OpenAI / Anthropic 等应用场景分别接入",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 3123,
+   "author": "fangzhengjin",
+   "title": "隐私设置项不全",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3122,
+   "author": "chengbot-ai",
+   "title": "[bug] 资源库技能：只有一个来源时「按来源」不显示分组头（也没有分组 chips / 折叠）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3120,
+   "author": "e2720515-cloud",
+   "title": "feat(routing): opt-in per-group classifier-error policy to use default rules instead of inheriting p",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3119,
+   "author": "witt-bit",
+   "title": "添加mcp不支持额外字段",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3118,
+   "author": "luzhuang",
+   "title": "[Bug]用Magpie代理claude的token 使用claude客户端的图片好像会重复发送",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3114,
+   "author": "guotree",
+   "title": "[Bug] antigravity cli用量统计界面模型名称、费用、输出速度都是横杠",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3108,
+   "author": "realnovicedev",
+   "title": "[Bug] panic when autostarted at login - Ubuntu",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3107,
+   "author": "kongxiangyiren",
+   "title": "[bug] 当没有加对应供应商的文本模型时无法使用其对应的生图模型",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3103,
+   "author": "yetone",
+   "title": "gui tests: plugin-updates red once in chromium ja 1024 under a full run (the dot's colour read as ''",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3102,
+   "author": "sdasd172",
+   "title": "cluade desktop 没办法选择推理高度了",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3101,
+   "author": "yetone",
+   "title": "gui tests: currency 'a currency chosen before a restart' webkit zh times out on #usageCost b under t",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3096,
+   "author": "yetone",
+   "title": "gui tests: routing-rule-remove reads the rule count once after Remove, red now and then alone on mai",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3093,
+   "author": "Jonedave3",
+   "title": "monkeycode plugin",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3092,
+   "author": "makise2060",
+   "title": "提示我安装目录没有权限，迁移别的目录，迁移后大部分图标异常再无法恢复",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3090,
+   "author": "keeuu",
+   "title": "routing: Free first silently spends In order when no member's cost is known (patch ready)",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 3086,
+   "author": "tlerbao",
+   "title": "[Bug] macOS 下所有带滚动条的页面无法使用鼠标滚轮滚动",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3082,
+   "author": "docanknow",
+   "title": "[功能建议] 对于路由模式的供应商允许透传或自定义请求头",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3081,
+   "author": "klarkxy",
+   "title": "[Feature] MiniMax M Plan 支持类似 Codex 的窗口硬激活，复用现有预热机制",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3080,
+   "author": "hugefiver",
+   "title": "[feat] agents: pick the API format per agent, and per model where the agent's config has a place for",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3078,
+   "author": "yetone",
+   "title": "gui: lightweight.test.cjs red on main 75e769a9f (switch posts nothing)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3075,
+   "author": "mxwangyou-png",
+   "title": "codex切换了其他模型之后对话几十轮再切换会原生gpt模型会出现问题",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3074,
+   "author": "zzjcool",
+   "title": "plugin: a request's body is base64-encoded again for the host at 4x, and the queue it waits in count",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 3073,
+   "author": "mmmmtyf",
+   "title": "seedence",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3072,
+   "author": "yetone",
+   "title": "gui tests: library-chip-fan chromium zh reduce measures the chips before they fan out, under whole-s",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 3071,
+   "author": "AnxForever",
+   "title": "group: one command to point every agent at a routing group (work / personal switching)",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 3070,
+   "author": "ReneXiong",
+   "title": "[UX] OpenCode Zen 添加页的「Jev 端点」文案容易误解为普通 API 端点",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3069,
+   "author": "zzjcool",
+   "title": "gateway: image requests judge size by something other than the bytes held (draw.go has no per-image ",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 3067,
+   "author": "Hambaobao",
+   "title": "[Feature] Routing: show a short session ID to distinguish sessions in the same working directory",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3066,
+   "author": "AvatarGanymede",
+   "title": "[视觉优化] 用量-概览处的刷新按钮建议常驻在供应商名称旁边",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3065,
+   "author": "doufum",
+   "title": "[Feature Request] 支持在 UI 或配置中自定义模型的上下文大小 (contextWindow)，避免同步时覆盖下游 Agent 的手动配置",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3063,
+   "author": "CangWeiohh",
+   "title": "dsh中提示已达到输出 token 上限, 输入继续, 仍然提示",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3060,
+   "author": "Raymond-Hear",
+   "title": "在ChatGPT中使用workbuddy模型时，出现无法发送消息的提示",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3059,
+   "author": "xuewei123ok",
+   "title": "用谷歌反重力路由gemini的模型无法接入",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3057,
+   "author": "frankdzh",
+   "title": "Drawer image models are invisible to clients that read output_modalities",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3050,
+   "author": "biubiubiu-max",
+   "title": "可以增加 Tok\\s 功能吗？",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3048,
+   "author": "mdddj",
+   "title": "智谱glm 增加余额展示",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3047,
+   "author": "zisen123",
+   "title": "[feat] 支持插件按模型声明原生 web_search 能力，而非仅 provider 级",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3046,
+   "author": "Kevinzz224",
+   "title": "[feat] Hermes Agent 的 reasoning effort 选项缺 max / ultra（面板最高只能到 xhigh）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3042,
+   "author": "huangchulan578527086-netizen",
+   "title": "zcode: Qoder models show raw ids (qoder/dfmodel), lose their output cap, and selection fails to pers",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3041,
+   "author": "laacmilan",
+   "title": "[BUG]子代理会使用非本AGENT设置可用的供应商",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3038,
+   "author": "KQAR",
+   "title": "plugins: let a plugin say its costs are its vendor's own, so they go before models.dev's (patch on a",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3033,
+   "author": "huskytech1",
+   "title": "【BUG】删除路由规则时会出现 UI 重叠",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3032,
+   "author": "zminds",
+   "title": "[Feature] Library: per-machine MCP servers & skills — sync everywhere, enable only on the listed mac",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3031,
+   "author": "zysicyj",
+   "title": "能不能支持下rerank和embeding模型",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3028,
+   "author": "iblogc",
+   "title": "部分供应商的免费模型在组路由时免费标记不显示",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3026,
+   "author": "sryimnoob123",
+   "title": "[feat] Optional same-member grace window before failover, to keep the prompt cache warm",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3025,
+   "author": "whiteS18",
+   "title": "ACP安装的 agent不能被识别",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3023,
+   "author": "kongkongklng",
+   "title": "mac最新版codexbug",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3019,
+   "author": "Vast-Unhurried",
+   "title": "图标大小不一致",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3018,
+   "author": "Yone0712",
+   "title": "用 magpie 给 Codex 配好模型后，ChatGPT 账号和云端会话都不见了",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3016,
+   "author": "dengtongcai",
+   "title": "路由组：由「模式（Patterns）」匹配进组的模型无法调整顺序",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3015,
+   "author": "laacmilan",
+   "title": "[BUG] codex不能自适应BaseURL",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3014,
+   "author": "ji233-Sun",
+   "title": "[Feature] Provider 编辑器：支持对每个选中模型分别配置上下文窗口、Max output 等参数",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3013,
+   "author": "ianfksyd",
+   "title": "gateway: a GLM Coding Plan's key out of its window is read as a rate limit through the Anthropic end",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3012,
+   "author": "bigbitbox",
+   "title": "[Kimi 额度] 区分 /usages 空响应与新 quota model 兼容缺口，改善不可用提示",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3009,
+   "author": "whiteS18",
+   "title": "antigravity测试模型失败",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3008,
+   "author": "olafchou",
+   "title": "供应商无法删除",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3005,
+   "author": "yugaosi140",
+   "title": "【问题】用量页「本地会话」行：请求模型为空、供应商只显示 agent 内部 ID；且失败请求不展示原始错误信息",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3004,
+   "author": "lakako",
+   "title": "我在一个供应商里配置了四个密钥，都选了启用，为什么在路由里会显示启用两个？",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3003,
+   "author": "acsfreerun",
+   "title": "[Feature Request] 增加 Grok Build 会话的删除功能",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3002,
+   "author": "veontw",
+   "title": "codex订阅直连模型的可见subagent列表中，看不到magpie的自定义模型",
+   "assoc": "NONE"
+  },
+  {
+   "n": 3001,
+   "author": "yetone",
+   "title": "gui tests: usage-ledger's trace route callback outlives its page (page.waitForTimeout after close), ",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2999,
+   "author": "424385117",
+   "title": "codex 使用deepseek v4.1 flash 1m ,查看路由，到200k 就触发自动压缩，怎么解决",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2998,
+   "author": "NkAntony777",
+   "title": "agent: MiniMax Code 改了「数据目录」后，magpie 仍把 provider 写到 `~/.minimax`，因此桌面版的模型选择器里看不到",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2996,
+   "author": "yetone",
+   "title": "gui tests: grip-inset (chromium) runs past node's 600s test timeout under load, on origin/main 79160",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2994,
+   "author": "wwf8s4tgcp-cpu",
+   "title": "意见",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2993,
+   "author": "Justin1989",
+   "title": "【问题】DSH 拿不到缓存命中数据，显示缓存命中率为 0%",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2992,
+   "author": "sdasd172",
+   "title": "codex的上下文长度和实际请求模型不符",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2991,
+   "author": "qiaoqiao888",
+   "title": "claude code desktop 桌面版版本一样，但是都是英文，桌面版应该是已经更新了语言等信息。",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2990,
+   "author": "thesixgod6",
+   "title": "cline 钉住deepseek官方上游掉缓存",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2985,
+   "author": "AvatarGanymede",
+   "title": "[feat] 账号打码请直接显示 ***，不要用模糊的伪文字/马赛克效果",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2984,
+   "author": "yetone",
+   "title": "gui tests: account-alias (#usageMask click) and fonts (page.reload) red under a 6-wide run at load ~",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2983,
+   "author": "yetone",
+   "title": "test: internal/gui failed once while verifying 9588501c0, test name not captured",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2982,
+   "author": "yetone",
+   "title": "test: TestDshSetEffortWritesALegacyEntryWithTheCatalog's TempDir cleanup failed once on Windows (.co",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2979,
+   "author": "tmuer",
+   "title": "trae cn签到失败，显示‘不符合签到条件’",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2978,
+   "author": "Lanjunyee",
+   "title": "点击菜单栏图标时，额度页面弹窗反复抖动并改变大小",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2977,
+   "author": "AvatarGanymede",
+   "title": "[bug] 技能安装弹窗每点一次「加入资源库」就整体下移，网络慢时反复点击会持续漂移",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2976,
+   "author": "body-cmd",
+   "title": "Cline 等网关类供应商：用量记录捕获实际上游元数据（provider_metadata.systemFingerprint），支持同渠道指纹变化提示",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2975,
+   "author": "ming-kang",
+   "title": "[feat] A third Claude bridge system-prompt mode: a trimmed Claude Code prompt",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2971,
+   "author": "Cyb3rN8",
+   "title": "[feat] 接管 Claude Code 时一并写入 ENABLE_TOOL_SEARCH=true（否则 CC 对非官方 BASE_URL 关闭 MCP tool search，全部工具 sche",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2970,
+   "author": "sryimnoob123",
+   "title": "[Feature] WorkBuddy daily check-in: stagger accounts instead of pressing them all in the same instan",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2968,
+   "author": "qq406175258-del",
+   "title": "[Bug] Claude Desktop Cowork 未继承 Magpie「长对话」压缩预算（autoCompactWindow）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2967,
+   "author": "GaoHu1997",
+   "title": "webdav 增加模拟功能",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2964,
+   "author": "VincentSit",
+   "title": "[Feature Request] OpenRouter 固定 DeepInfra 时 Deferred Tools 返回 400，希望支持 Provider 级别的协议兼容降级",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2963,
+   "author": "LJ996007",
+   "title": "Windows版UI优化",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2962,
+   "author": "AvatarGanymede",
+   "title": "[feat] 路由组设置支持统一/批量编辑，或可编辑新建组的默认模板",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2961,
+   "author": "ZzZ-hu",
+   "title": "macOS: `magpie daemon install` uses ProcessType=Background, which throttles the gateway",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2958,
+   "author": "kupakupar",
+   "title": "[Fix proposal] DSH-generated DeepSeek models need explicit thinking compatibility",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2957,
+   "author": "hheei",
+   "title": "[Feature Request] Target-aware Library Manager: Manage Remote/SSH Agent Environments (Skills, MCPs, ",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2952,
+   "author": "BuWH",
+   "title": "[Bug] Codex 同一 session 中 Copilot Grok 失败后切换 GPT 6.1 Sol，回复重复两次",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2951,
+   "author": "BuWH",
+   "title": "[Bug] Codex 经 Magpie 使用 Copilot 的 Grok 模型时报 HTTP 422",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2950,
+   "author": "yetone",
+   "title": "gui tests: sidebar's \"the list opens and folds as it plays\" red under load (samples getAnimations() ",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2948,
+   "author": "coda1997",
+   "title": "Support a custom npm registry (replace registry.npmjs.org, not just fall back) for networks that blo",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2947,
+   "author": "leezn",
+   "title": "插件商汤小浣熊，登录一直获取不到登录状态",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2944,
+   "author": "fushengliuyi",
+   "title": "技能这块不支持自定义导入技能包",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2941,
+   "author": "wyonghao",
+   "title": "Support for GitHub Copilot CLI: auto-setup, and  --resume  fails when the session was not created vi",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2940,
+   "author": "lgh06",
+   "title": "[provider] QwenCloud / AlibabaCloud PAYG and Token Plan endpoints support",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2938,
+   "author": "witt-bit",
+   "title": "trae-cn会话自动终端",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2935,
+   "author": "yetone",
+   "title": "GUI test agent-expand-steady: 'slid open: 208' on WebKit 980px under load (one sampled frame)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2931,
+   "author": "lisker",
+   "title": "codex使用登录方式选择magpie api方式时，UI界面会回到英文",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2930,
+   "author": "gadgj",
+   "title": "Claude Code 网关模型发现（gateway model discovery）不显示任何模型 —— 建议适配其模型 ID 过滤规则",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2928,
+   "author": "sanjie83",
+   "title": "[UX] 用量总览与简化视图区分网关流量和本地会话日志",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2927,
+   "author": "liangjinyuan-sihan",
+   "title": "关于magpie反代workbuddy的限流与429问题",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2926,
+   "author": "MiHeron",
+   "title": "deepseek官方api额度用完后，旧apikey依旧402，换了新的apikey才可以继续工作",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2924,
+   "author": "onenewcode",
+   "title": "agy cli 适配bug",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2922,
+   "author": "wufeng1234567",
+   "title": "magpie 0.1.1280  使用workbuddy 国内版本的ds v 4.1f1017模型 对接到dsh 0.2.0-rc.2  有概率触发 本轮运行失败WorkBuddy: Invalid ",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2921,
+   "author": "BaiRong-NUC",
+   "title": "github copilot 额度没有后，路由功能好像没法识别，",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2920,
+   "author": "yhong91",
+   "title": "[feat] Per-group icon for routing groups + remote magpie icon passthrough",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2919,
+   "author": "321sssrt-bit",
+   "title": "[feat] Gateway key limits: 支持按模型分别限额",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2918,
+   "author": "NineSu",
+   "title": "[bug] 模型 id 的区域前缀（WorkBuddy 的 cn:）让能力元数据全部落空：推理档位空、Codex 推理强度回落「中」（catalog 把第一个冒号当尾部 tag 切）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2917,
+   "author": "smallcat2333",
+   "title": "[feat] 适配飞书 CodeM（企业级 AI Coding Agent）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2915,
+   "author": "itsXuSt",
+   "title": "Request: allow a PR for UOS AI agent support",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2913,
+   "author": "whengu",
+   "title": "[功能请求]请默认不要修改本地其他agent的配置, 这很吓人, 而且导致其他应用的配置丢失",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2912,
+   "author": "versun",
+   "title": "[Feature] decision group 增加 race 路由：并发请求全部成员，最先成功的回复胜出",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 2909,
+   "author": "MrZhang-Developer",
+   "title": "magpie 配置Claude desktop有提示，配置之后打开claude desktop提示The provider rejected your credentials. Re-enter th",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2907,
+   "author": "MrScallion",
+   "title": "Trae IDE as an agent: no config file, a cloud model API, and a mandatory local encryption step",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2903,
+   "author": "yetone",
+   "title": "ci: TestWorkBuddyDrawsWithItsConfigsModels red on ubuntu race: the edit's plugin fetch \"answered no ",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2902,
+   "author": "ericbrownz",
+   "title": "[Bug] 用量页把「客户端取消」计为失败；macOS 上取消的子原因（系统睡眠）本可识别",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2896,
+   "author": "LiangNiang",
+   "title": "Settings: pick the default video generation model (like Image generation)",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2894,
+   "author": "yanglei-somle",
+   "title": "[Feature / Optimization] Claude Desktop 转译至 OpenAI Responses 协议时，前缀缓存被锁定在固定大小（49k/39k），无法随上下文累积（附实测分",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2892,
+   "author": "timonwong",
+   "title": "[Bug] While the desktop app runs, every magpie CLI command starts its own plugin host and singleton ",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 2891,
+   "author": "LuwenOosten",
+   "title": "gateway: Codex passthrough 在响应头前被调用方取消时误报 502（附复现、补丁与挂起诊断建议）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2888,
+   "author": "alexanderhawl",
+   "title": "magpie 路由组添加 trae cn 中的deepseek v4.1 flash 只有 116k 大小",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2886,
+   "author": "a1354585892",
+   "title": "macOS系统，当前版本Version 0.1.1290 (0.1.1290)，软件会自动聚焦唤起",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2884,
+   "author": "Sukira114",
+   "title": "【功能建议】子代理的配置",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2882,
+   "author": "Xiaoyu666123",
+   "title": "记录不了codex的使用量",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2880,
+   "author": "smallcat2333",
+   "title": "[feat] 可置顶、可拖动的极简悬浮窗（常驻显示当前路由与额度）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2877,
+   "author": "Euraxluo",
+   "title": "[feat] CLI 支持会话正文检索与渐进披露式历史探查（magpie sessions search / show）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2876,
+   "author": "foobra",
+   "title": "[feat] 窗口自动预热增加 Antigravity 页签：窗口重置时预热 / 每日定时预热 / 每账号时间表",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2875,
+   "author": "wangdada8208",
+   "title": "provider: a pool of proxies, moved on when a vendor rate-limits by the address a request leaves from",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2874,
+   "author": "CHANGGELY",
+   "title": "[feat] 用量页按模型展示限流恢复倒计时，便于手动调整账号顺序",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2868,
+   "author": "WTHH031230",
+   "title": "[Bug] 主模型用 Claude 订阅时，子代理的报告正文丢失（只收到“已发送”提示）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2867,
+   "author": "yetone",
+   "title": "agent: drift details besides Codex's proxied one are shown in English in every language",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2866,
+   "author": "ReneXiong",
+   "title": "[bug] Atom fallback can hide Chinese notes when translated headings stay English",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2864,
+   "author": "FaintGhost",
+   "title": "[feat] Pi Durable / Pi Pocket：没有 pi CLI 也应被识别并接管（读写同一份 ~/.pi/agent）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2863,
+   "author": "yhong91",
+   "title": "[feat] 自动分组增加「排除已关闭 provider」开关",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2861,
+   "author": "tianxia3111",
+   "title": "[feat] Browser (Docker) Web UI has no text size setting; UI text is fixed at 13px",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2859,
+   "author": "yetone",
+   "title": "TestClaudeAccountsSpentFallBackToCodex: a fixed 30s wait goes red under load, and its request outliv",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2856,
+   "author": "CHANGGELY",
+   "title": "[feat] 多账号一键自动签到（Trae CN / WorkBuddy 国内版），并在签到后直接反代使用",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2849,
+   "author": "yetone",
+   "title": "provider: a Volcengine (and any plan/region preset) provider's keys can't be on different plans — 套餐",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2848,
+   "author": "yetone",
+   "title": "TestRTKCheckLatestDoesNotWaitForThePackageManager bounds the draw at 2s of wall-clock time, red unde",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2846,
+   "author": "sapal-s",
+   "title": "kimicode配置问题",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2839,
+   "author": "yiyiSmallti",
+   "title": "[Feature Request] 用量统计（Usage）日期筛选支持更细的时间粒度（时/分/秒）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2838,
+   "author": "yiyiSmallti",
+   "title": "[Bug] Claude subscription upgraded to Max still displays as Pro plan",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2836,
+   "author": "kinhit",
+   "title": "[Bug] Google 供应商无法生图：OpenAI 兼容层将 /images/generations 映射为 Imagen predict， Gemini / Nano Banana 系列图像模型",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2835,
+   "author": "0x7c07",
+   "title": "An editor chat's downloaded Claude Code or Codex is taken for a folder left behind (\"CLI not found\")",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2832,
+   "author": "guzi171",
+   "title": "有关模型计费问题",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2831,
+   "author": "Leexunhuan743",
+   "title": "关闭各种列表排序，拖动一致性的建议",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2830,
+   "author": "nianlee-official",
+   "title": "skills文件夹路径自定义",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2828,
+   "author": "ayuayue",
+   "title": "[Feature Request] WorkBuddy 支持导入 WB2API 认证文件，复用已有登录态",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2824,
+   "author": "oxsean",
+   "title": "gui: a risk warning's text is squeezed into a narrow column beside its buttons",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2822,
+   "author": "JJ-Lin",
+   "title": "[bug] Chat-only 中转站在 /v1/models 声明了 responses（supported_endpoint_types），Magpie 仍只走 Chat，带工具的请求仍失败（#2",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2818,
+   "author": "dipolar-cn",
+   "title": "omp use PI_CONFIG_DIR env, rtk.ts use omp default dir",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2816,
+   "author": "lokic7123-star",
+   "title": "WorkBuddy AI: distinguish activity rewards from automatic check-in",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 2815,
+   "author": "GinWU05",
+   "title": "[bug] Agents: a Claude Code from Homebrew's claude-code@latest cask gets no update button (branch re",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 2810,
+   "author": "LuYquan",
+   "title": "Windows 上与 Clash Verge Rev 同时运行时两个应用窗口黑屏（功能正常）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2808,
+   "author": "Kyou12138",
+   "title": "test: eight Codex keychain tests fail on Windows (secret_auth_storage default) on main d783df46",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2807,
+   "author": "misaka9981",
+   "title": "[feat] OpenCode Zen 支持复用本地 OpenCode v2 Console OAuth 登录态及自动续期",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2805,
+   "author": "broven",
+   "title": "panel: a balance card shows only its provider's name, so two balances under one provider look the sa",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 2804,
+   "author": "mtul0729",
+   "title": "linux: duplicate tray icon on COSMIC — dropTrayName() re-registers an item the watcher kept",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2803,
+   "author": "Kerwin0224",
+   "title": "plugin providers: 刷新一个供应商要跑完整轮串行列举（本机 40–55 秒），超过所有入口的 20/30 秒预算，插件供应商一起报 context deadline exceeded",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2802,
+   "author": "cjyrainbow",
+   "title": "[Bug] 桌面端codex连接WSL使用，magpie接入报错但能接通，不过无法以chatgpt登录",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 2801,
+   "author": "Chichengmo",
+   "title": "路由页 / 网关页的布局层级：实时内容被选择器与配置区块挤占，建议重构首屏信息层级",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2799,
+   "author": "broven",
+   "title": "plugin providers: a plugin can't add a provider per configuration (providers fixed at load)",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 2796,
+   "author": "xinvxueyuan",
+   "title": "[Feature Request] 支持 WinGet、Scoop 和 PowerShell 一键安装",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2795,
+   "author": "flangnocchi",
+   "title": "[Bug/改进] 辅助请求会话归属修复、会话组默认折叠与未标识请求统一分组（附参考修复）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2793,
+   "author": "yee94",
+   "title": "feat: 提供请求级最终路由成员与计费结果，支持混价组准确归因及 keepAlive 后 failover",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2792,
+   "author": "Jindequan",
+   "title": "Plugin market: git-hosted plugins, and plugins serving image/video models — branch ready, PRs seem l",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2790,
+   "author": "litingyes",
+   "title": "commandcode/deepseek/deepseek-v4-flash 在 codex 中压缩会话失败",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2789,
+   "author": "turtle4512",
+   "title": "gateway: trae-cn 长任务把工具调用写成 <call:tool>/<tool_call name=…> 等文字，未被回收成调用（200+stop，代理任务中断）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2788,
+   "author": "wangjianjq",
+   "title": "claude code更新了分类器，但是贵应用好像还不支持",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2787,
+   "author": "SKTRekaf",
+   "title": "Plugin pages don't load in the Windows desktop window since 0.1.1285 (\"page didn't answer\")",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2786,
+   "author": "SadWood",
+   "title": "[Bug] omp 连续切换角色模型与推理程度时弹窗偶发漂移到左上角（附修复与回归验证）",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 2785,
+   "author": "pluo",
+   "title": "[UX] Magpie does not memorize its window position after startup",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2783,
+   "author": "tsy0716",
+   "title": "Usage ingest: let a reporter correct or withdraw a record it reported",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2782,
+   "author": "tsy0716",
+   "title": "Usage: time a reasoning reply's answer from its first answer content, including a tool call",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2781,
+   "author": "yolopunk",
+   "title": "[Agent] 新增 Nanobot(HKUDS/nanobot)支持(附完整实现,分支在 fork)",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2777,
+   "author": "a1286743184",
+   "title": "[Bug] Daily check-in goes out through the global proxy, not the account's own (accountProxies ignore",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2773,
+   "author": "kumamaki",
+   "title": "droid: magpie-written custom models expose no reasoning effort (clamped to none)",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2772,
+   "author": "SpookySandwich",
+   "title": "[Feature] Run each model family in its own native harness (Claude Code, Codex, Antigravity) when rou",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2771,
+   "author": "li1how",
+   "title": "[Bug] Windows Magpie does not discover DeepSeek Harness sessions stored in WSL",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2770,
+   "author": "li1how",
+   "title": "[Feature] Discover native VS Code Copilot Chat sessions in Sessions",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2769,
+   "author": "li1how",
+   "title": "[Bug] Library reports a stdio MCP server as unhealthy when its command is available only in WSL",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2768,
+   "author": "li1how",
+   "title": "[Bug] VS Code Copilot Chat in WSL NAT receives an unreachable loopback endpoint and an unsuitable ga",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2766,
+   "author": "yetone",
+   "title": "test: TestDiffLines' 2s bound on a 7,000-line table fails under load (2.04s, diff right)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2764,
+   "author": "ysq3058301557-a11y",
+   "title": "添加自定义供应商不支持蚂蚁",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2761,
+   "author": "yetone",
+   "title": "usage: TestSummaryInvalidatesSameStampPrice fails under load (filememo trusts the stamp once it is 2",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2759,
+   "author": "kindmesdilabso",
+   "title": "[bug] 在导入供应商时，导入来源目前有5个。在最右边的open code显示不全",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2758,
+   "author": "yetone",
+   "title": "Command Code: a model served on Responses still goes through chat completions for Codex",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2755,
+   "author": "tianxia3111",
+   "title": "usage: the daily-consumption bar chart's tooltip shows raw thousand-separated integers while the res",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2751,
+   "author": "yetone",
+   "title": "gui: 1acd79cdf (context threshold hint) has no clean full GUI suite run",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2749,
+   "author": "yetone",
+   "title": "plugins: the Settle bring-up turns a user's own CLI-picked Essentials into All (5a2414acd)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2747,
+   "author": "xiaozhu1337",
+   "title": "[严重缓存问题] OpenCode 会话 ID 映射不持久化：重启后同一 Pi 会话生成新 ses_，疑似触发命中率 98.6%→14.1%",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2746,
+   "author": "kudi68",
+   "title": "gui: the model picker blames the provider for a group's listed=no, and names every group but the one",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2741,
+   "author": "geeknonerd",
+   "title": "[Bug] Command Code built-in: stealth/reflection models 400 on replayed turns — reasoning_content is ",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2738,
+   "author": "bigmanBass666",
+   "title": "腾讯ima有没有考虑接入一下? 它额度也挺多的",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2736,
+   "author": "lexleizou",
+   "title": "[Bug] Codex 额度卡片中的「使用积分」设置不生效",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2735,
+   "author": "ayuayue",
+   "title": "Windows + mise：agent 探测找不到 mise 管的 node 里 npm -g 装的 CLI，Pi 一直 CLI not found",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2734,
+   "author": "yetone",
+   "title": "gui tests: usage-range reads one range twice under load on main f191d6423",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2733,
+   "author": "yetone",
+   "title": "gui tests: tencent-access-key webkit en: the Add sheet's Tencent Cloud tile never holds still for 5s",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2732,
+   "author": "yetone",
+   "title": "gui tests: side-toggle's WebKit 'the two trade places as one motion' reads the transition before it ",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2731,
+   "author": "Guislabert",
+   "title": "Add TinyFish as a free Web Search provider (search + fetch are genuinely free)",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2730,
+   "author": "liangxyz",
+   "title": "[BUG] 路由组中使用模式匹配自动加入的官方deepseek无法排序",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2728,
+   "author": "yetone",
+   "title": "middleware: TestDocsExample red under load (strategies.fewest-tokens: took too long)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2719,
+   "author": "yetone",
+   "title": "TestBurstTellsNoSpeed/chat_burst: red under load, the first word read 434ms late",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2708,
+   "author": "wuasakura",
+   "title": "magpie GUI 白屏问题反馈报告",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2706,
+   "author": "kupakupar",
+   "title": "feat(middleware): expose a hook for the final editable upstream request body",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2703,
+   "author": "yetone",
+   "title": "gui tests: sessions-paging's 250ms keystroke bar is red under load (253-284ms)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2702,
+   "author": "yetone",
+   "title": "test: TestPluginLoginInstallsItsCLIFirst's TempDir cleanup fails on macOS CI: something writes .conf",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2700,
+   "author": "yetone",
+   "title": "gui tests: usage-ledger-abort red under load on main: #usageReload still busy after the 4s wait (lin",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2699,
+   "author": "yetone",
+   "title": "test: TestDesktopSubagentUnsetDoesNotDecode counts another goroutine's allocation in a whole-package",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2698,
+   "author": "yetone",
+   "title": "Codex desktop: send button stays disabled when the signed-in ChatGPT account's own limit is used up,",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2691,
+   "author": "codetodamoon",
+   "title": "用了https://factory.ai/的插件，resume之后继续聊天会403",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2690,
+   "author": "DamienZCollins",
+   "title": "gateway: a Codex title a Chinese or Japanese model labels keeps only the title",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2687,
+   "author": "yetone",
+   "title": "test: TestOnUsageRows fails under load when strategies.seen overruns its 20ms limit",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2684,
+   "author": "yetone",
+   "title": "gui tests: sidebar.test.cjs '#prefs pressed darkens' and 'the list unrolls' red under load (fixed 25",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2679,
+   "author": "yetone",
+   "title": "MCP hub: magpie as one MCP server that routes to the Library's servers (@minggang123 on X)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2674,
+   "author": "yetone",
+   "title": "edit.BlockList drops block entries that follow a flow list in a dsh patch list",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2673,
+   "author": "yetone",
+   "title": "test: TestRestartWhenIdle restarts \"in a tool chain's gap\" under load (30ms sleep vs 80ms idleSettle",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2669,
+   "author": "yetone",
+   "title": "gui: after the Codex editor's models filter is typed in and cleared, the first click on Cancel does ",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2666,
+   "author": "codysk",
+   "title": "plugins: a gateway strategy can't name itself (i18n) or take per-member settings like weight does",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2665,
+   "author": "codysk",
+   "title": "routing strategies: seats carry only the model's own windows — the aside pool windows (a subscriptio",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2664,
+   "author": "Cyb3rN8",
+   "title": "[feat] 桌面端管理 Remote magpie：从本机常驻的 magpie 打开远端的控制台",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2661,
+   "author": "yetone",
+   "title": "tests: most packages don't stop a test from reaching the network",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2648,
+   "author": "yetone",
+   "title": "gui tests: gateway-key-models red under load, the server badge's menu never shows after the work key",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2640,
+   "author": "yetone",
+   "title": "gui tests: name-suffix-where-named clicks .row.provider while Providers' skeleton rows still match i",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2632,
+   "author": "yetone",
+   "title": "test: TestPluginLoginTakesTheLapseOff's TempDir is written into after the test ends (full run under ",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2631,
+   "author": "yetone",
+   "title": "gui tests: github-sync.test.cjs never exits after a subtest times out under load (a browser launched",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2629,
+   "author": "yetone",
+   "title": "GUI tests: agent-bulk-visibility's fixed 5s wait and agent-connect-* cases near the 180s timeout go ",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2619,
+   "author": "yetone",
+   "title": "tray panel: a share-over-LAN switch",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2618,
+   "author": "yetone",
+   "title": "speed switch says \"usual speed\" while the agent's own service_tier: priority still sends every reque",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2617,
+   "author": "yetone",
+   "title": "groups: option to decide a rule per request within a turn, not once per turn",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2616,
+   "author": "yetone",
+   "title": "gateway: serve /v1/completions with FIM (prompt + suffix) for IDE inline completion",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2615,
+   "author": "yetone",
+   "title": "tray: let the user pick another tray icon",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2614,
+   "author": "yetone",
+   "title": "routing: subscription accounts can't be routed By weight (weights exist for API keys only)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2609,
+   "author": "3ZEROS12",
+   "title": "Windows self-update fails if binary is moved to another folder while running",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2604,
+   "author": "yetone",
+   "title": "gui test: tray-usage-redraw chromium 560px reads the pill's open class once, red under load",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2603,
+   "author": "klarkxy",
+   "title": "[feat] DSH：区分新会话默认思考强度与切换模型时的默认策略",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2601,
+   "author": "bluesky4485",
+   "title": "是否考虑在供应商的模型设置中增加个标识，用来标记向量模型？",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2600,
+   "author": "cjyrainbow",
+   "title": "可考虑增加对Claude Desktop和Claude Code支持自定义上下文窗口",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 2598,
+   "author": "wang1078564969",
+   "title": "建议 路由看板 ui 优化",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2597,
+   "author": "mengyianx",
+   "title": "资源库：粘贴 GitHub 链接装到的技能跟随默认分支 HEAD，而不是 Releases 稳定版",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 2592,
+   "author": "z10g",
+   "title": "[bug] 开着 Clash TUN / Surge 增强模式时，web_fetch 对所有 URL 都报私有地址",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2590,
+   "author": "yetone",
+   "title": "gui tests: plugin-other-ways is red on main — the moved subscription's password field never shows",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2588,
+   "author": "xiaosheng1126",
+   "title": "[bug] macOS 触控板双指滑动无法滚动页面，必须拖拽右侧滚动条",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2585,
+   "author": "yetone",
+   "title": "usage: a short reply's few-chunk window reads several times the vendor's speed (DeepSeek 894 tok/s)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2584,
+   "author": "yetone",
+   "title": "CloudCLI: list magpie's models in its model picker",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2581,
+   "author": "zhenhuamo",
+   "title": "codex 额度用完了，使用magpie 无法发送信息",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2571,
+   "author": "yetone",
+   "title": "test: routing-request-metrics is red in WebKit on main: the metric menu's Cost item never shows (63b",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2570,
+   "author": "yetone",
+   "title": "test: TestStreamErrorKeptOpenFailsOverAtOnce/chat/one_limited answered after 4.0s (>3s) under load",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2569,
+   "author": "yetone",
+   "title": "sessions: OpenCode, ZCode and dsh sessions count no tools or skills on the Sessions page",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2566,
+   "author": "colmugx",
+   "title": "Expose model-scoped account quota and session source attribution for status displays",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2565,
+   "author": "yetone",
+   "title": "test: TestQuietCodexStreamKeptAliveThroughReplyWriters/a_middleware gets the reply unchanged under l",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2564,
+   "author": "yetone",
+   "title": "gui tests: rest-try-now's 'a key resting for its quota is tried again from Routing' red on origin/ma",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2555,
+   "author": "yetone",
+   "title": "test: TestSkillRelinkKeepsUnreadableCopy reports the source's unreadable file as a problem in the fu",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2546,
+   "author": "yygutn",
+   "title": "提个建议: 用量:会话 的Agent分类, 最好支持开关或者自动识别",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2543,
+   "author": "yetone",
+   "title": "test: TestAgentGoneInTheRetryPause/group_replan reads the route before it ends again under the full ",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2542,
+   "author": "yetone",
+   "title": "gui tests: plugin-gateway red in chromium only at load ~340 (page.goto 5s), green at ~250",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2541,
+   "author": "yetone",
+   "title": "gateway: TestQueueRefusalIsInTheUsageLedger counts b's queue timeout as a second 429 under load",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2538,
+   "author": "yurisachan",
+   "title": "workbuddy 登录支持企业微信登录",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2537,
+   "author": "finger-tap",
+   "title": "添加对opencodereview工具的配置",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2535,
+   "author": "yetone",
+   "title": "test: TestVendorThatStopsMidAnswerIsSaid red under load (relay's first bytes not out in 300ms)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2534,
+   "author": "yetone",
+   "title": "usage: count subagent calls for every agent (Claude Code's by its agent-id header), split main vs su",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2527,
+   "author": "ixianming",
+   "title": "Qoder CN 接入 magpie，使用供应商接口时，接口报错",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2519,
+   "author": "yetone",
+   "title": "Gateway keys: an account preference (company account first, personal as fallback)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2518,
+   "author": "yetone",
+   "title": "Gateway keys: show what last used each key (User-Agent, model), edit its speed and models in place",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2516,
+   "author": "yetone",
+   "title": "Gateway keys: a key can carry a speed (Fast / Ultrafast) for every request made with it",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2514,
+   "author": "yetone",
+   "title": "plugins: a provider plugin can say which service tiers a model serves, and Codex offers them",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2510,
+   "author": "yetone",
+   "title": "A key made under Gateway keys, in an agent's config, is reported as not reaching magpie",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2505,
+   "author": "h4rk8s",
+   "title": "支持 DSH 压缩请求标记及会话用量归属",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 2503,
+   "author": "LBM-OASIG",
+   "title": "[BUG]claude desktop没法压缩上下文",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2497,
+   "author": "yetone",
+   "title": "[feat] Privacy: don't keep the bodies of calls made with a gateway key unless the owner turns it on ",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2496,
+   "author": "yetone",
+   "title": "[feat] Gateway keys: pick a key's models with the Agents model picker (search, by provider)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2495,
+   "author": "yetone",
+   "title": "[feat] Routing: show the headers magpie sent upstream (scrubbed), to check e.g. x-opencode-session",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2493,
+   "author": "iomect",
+   "title": "magpie的网关 是否支持最新版codex的async_compaction特性?",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2491,
+   "author": "yetone",
+   "title": "sessions: a skill used in Codex, Hermes, Kimi, Droid or Cursor, or called up with its slash command ",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2490,
+   "author": "yetone",
+   "title": "agent: Codex 0.163's background compaction (features.async_compaction) on/off and threshold in Setti",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2486,
+   "author": "qq33357486",
+   "title": "gateway: a call the model wrote the way a run is told the conversation's calls were made goes to the",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2485,
+   "author": "qq33357486",
+   "title": "gateway: an image note left in a history told again reads as an image sent with the turn whose file ",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2484,
+   "author": "wyq0x55",
+   "title": "[Feature] 为意图分流规则添加可选短名称，简化 Routing 路由记录",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2483,
+   "author": "whzxc",
+   "title": "provider: 让插件向内置 Codex 订阅提供\"刷新权由插件持有\"的账号——Magpie 只用 access token 路由，从不自行续期",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2482,
+   "author": "littleRoike",
+   "title": "[功能建议] 支持为 Kimi Code 套餐 Key 的额度窗口设置用量上限",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2480,
+   "author": "zane668",
+   "title": "Claude Code Message Threads：未支持增量会话时建议明确拒绝并触发完整重发",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2476,
+   "author": "hello532",
+   "title": "看路由那里，增加开个关，只要连的连接即可，不用有喜鹊在动。这样多AGENT的话CPU会高。不知道是不是这个原因",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2474,
+   "author": "Koohoko",
+   "title": "[Bug] Routing 的「未提供会话标识」分组无法折叠（附补丁与前后截图）",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 2470,
+   "author": "bird7code",
+   "title": "会话记录留存",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2469,
+   "author": "chainray01",
+   "title": "BUG：app 页面滚动出现闪烁",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2468,
+   "author": "neohob",
+   "title": "[Bug] Command Code \"browser\" sign-in can't complete in a remote/Docker deployment — the callback is ",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2467,
+   "author": "lzskyline",
+   "title": "能否增加OMO Slim插件的支持",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2464,
+   "author": "moliyadi",
+   "title": "[Feature Request] Support configuring secondary node addresses for cross-network agent model access",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2457,
+   "author": "taotao52",
+   "title": "观测中的上下文出现了个node的，但是这是什么呢",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2456,
+   "author": "AnxForever",
+   "title": "[feat] 增加 Prime Relay（primerelay.online）内置预设：分组隔离的 key 需要不写 Anthropic base",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 2453,
+   "author": "yetone",
+   "title": "gui tests: tray-usages red alone on origin/main 008571462 (chromium en: ticking a menu-bar card scro",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2417,
+   "author": "Morganwan90",
+   "title": "[feat] 同步和备份：支持按份数或天数设置备份保留策略",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2396,
+   "author": "gif156359098",
+   "title": "[UI/UX 建议] 顶部菜单布局下，设置页分区标签栏建议滚动吸顶",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2393,
+   "author": "dmidafe368",
+   "title": "[Feature] 命名代理：可复用的代理列表 + 供应商下拉引用 + 连通性测试",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2381,
+   "author": "MiFaZhan",
+   "title": "gui: Plugins 页「非官方插件 · GitHub」加一个「未安装」筛选，与类型筛选联动（补丁见内）",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 2374,
+   "author": "rocona",
+   "title": "[feat] Agent 插件支持“仅连接”模式，不强制选择模型",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2371,
+   "author": "yetone",
+   "title": "gui tests: agent-connect chromium en: Chromium launch hung 180s under load in a full run (passes alo",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2370,
+   "author": "yetone",
+   "title": "gui tests: bare-ids chromium 420 zh-TW: a click scrolled the page by 84px under load (passes alone)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2363,
+   "author": "paulwalker9315-debug",
+   "title": "[feat] 资源库技能：在分组之外增加标签（多维度归类 + 按标签筛选）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2329,
+   "author": "mkit777",
+   "title": "[feat] 支持插件为自定义模型配置独立图标",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2311,
+   "author": "betacatZ",
+   "title": "会话点击没有反应",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2308,
+   "author": "ASD-max",
+   "title": "[Bug] Library 对 Codex 宿主专用 codex_app 的检测兼容：novar / 独立探测 pipe closed",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2307,
+   "author": "strategypay",
+   "title": "[功能建议] 插件模型切换时显示倍率及剩余额度（如 Trae 模型）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2306,
+   "author": "SivanCola",
+   "title": "mac上卸载了claude desktop后，agent还能继续看到",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2301,
+   "author": "LukeZ1988",
+   "title": "[bug] 在会话不显示 MiniMax Code 的会话",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2299,
+   "author": "ll905518294",
+   "title": "希望图像模型或者视频模型也支持像对话模型一样的配置，可以仅显示选择的模型，可以右键设置。",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2296,
+   "author": "meifu2027",
+   "title": "[功能建议] 将自动检查与自动下载更新分开配置，避免意外消耗计量代理流量",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2291,
+   "author": "MuiseDestiny",
+   "title": "更新、取消更新按钮建议优化",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2289,
+   "author": "eachann1024",
+   "title": "Pi model list hides routing groups when only picked models are shown",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 2288,
+   "author": "xisdumpling",
+   "title": "[UI/UX 建议] 优化路由列表排版：消除模型名截断与指标折行重叠",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2284,
+   "author": "JuckZ",
+   "title": "[Bug] Codex 桌面对话导出到 Langfuse 重复旧回复，并缺少提示词和工具关联（附复现与修复参考）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2282,
+   "author": "yetone",
+   "title": "library: Takes accepts an agent that isn't installed at all (no folder, no CLI), while Targets leave",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2274,
+   "author": "huangzuomin",
+   "title": "[Bug] Codex remote compaction loops for hours on a cheap routing model, then 502 'compaction: the mo",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2258,
+   "author": "yetone",
+   "title": "gui tests: refusal-retries-setting red alone on origin/main 00501401a at ja 420 (chromium and webkit",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2225,
+   "author": "yetone",
+   "title": "release: deb and rpm packages for Linux (no AppImage)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2218,
+   "author": "yetone",
+   "title": "sessions-folder-delete: \"Cannot read properties of null (reading 'y')\" in WebKit under load",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2174,
+   "author": "yetone",
+   "title": "gui tests: routing-live-patch folded samples the head 400ms after each trace step, which a loaded ma",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2172,
+   "author": "yetone",
+   "title": "gui test: removed-groups-menu-scroll \"the page didn't scroll under the menu\" red under parallel load",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2171,
+   "author": "Liskoi-jin",
+   "title": "请教：Remote Magpie 下如何强制将所有 Opus 请求路由到 group/smart-split？",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2165,
+   "author": "Vocllum",
+   "title": "[feat] 支持通用事件 hook（OpenCode 的 hooks.event），并覆盖账户移除事件",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 2161,
+   "author": "desayVincent",
+   "title": "Feature: built-in reverse tunnel / one-command so remote ZCode can use Magpie on a local PC",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2160,
+   "author": "Ziqi-Cui",
+   "title": "[Feature] Codex 主模型与子代理可选模型列表支持独立配置，默认共用",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2159,
+   "author": "schild",
+   "title": "增加本地会话记忆系统",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2135,
+   "author": "tianxia3111",
+   "title": "[Feature Request] refresh a provider's model list on a schedule, and take matching models by rule",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2117,
+   "author": "yetone",
+   "title": "web: in a container, leave out Agents and Library; keep the gateway and web UI on separate ports",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2110,
+   "author": "Emaj77",
+   "title": "希望remote magpie可以在路由里看到具体模型路由",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2107,
+   "author": "yetone",
+   "title": "TestGatewayHeldByAContainer flakes under load: the cold GET / builds the catalog (Keychain, Cursor a",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2105,
+   "author": "sy0u1ti",
+   "title": "[feat] 路由组：一个总开关让所有组只列出本组（不用逐个设置）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2101,
+   "author": "yetone",
+   "title": "routing: a group member reached only when a rule names it, never as failover (#1915)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2099,
+   "author": "yetone",
+   "title": "gui: a sign-in's risk step squeezes its warning to nothing at narrow widths, and German \"Trotzdem an",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2093,
+   "author": "cooladam201212",
+   "title": "只要一开magpie，即使什么都不做，过一会风扇就开始呼呼响",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2070,
+   "author": "ARCJ137442",
+   "title": "[Feature Request] 为 API 提供商增加备注，并在导入 CC Switch 配置时保留备注",
+   "assoc": "NONE"
+  },
+  {
+   "n": 2066,
+   "author": "yetone",
+   "title": "gui tests: model-copy-id 'chromium zh: a chip's right-click copies the model's id' failed once under",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 2061,
+   "author": "yetone",
+   "title": "provider tests: one run ended in a bare FAIL with no test named (passed 3 reruns)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1996,
+   "author": "yetone",
+   "title": "gui tests: session-terminal is red in WebKit on main: footer.foot covers the Session terminal button",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1992,
+   "author": "devfox403",
+   "title": "关于MCP和skill管理的功能：自定义添加skill/mcp仓库 、从本地自定义添加未安装的skill、mcp文件夹/文件。",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1983,
+   "author": "pluo",
+   "title": "路由页面：建议把“请求”section置于“实时路由”section之前",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1971,
+   "author": "yetone",
+   "title": "gateway test: TestRateLimitIsWaitedOut \"an hour away\" took 1.9s against its 1s bound under heavy loa",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1963,
+   "author": "yetone",
+   "title": "tests: TestKimiHeldBurstTellsNoSpeed steady case reads 38 tok/s (want 50) under load",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1961,
+   "author": "Olayeeeyo",
+   "title": "[UX] Antigravity 账号 signed out 后无「重新登录」入口；添加账号会出现短暂 401/畸形请求提示，刷新后又恢复",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1949,
+   "author": "yetone",
+   "title": "gui tests: agent-stale-copies and copilot-ghe fail under parallel load with route callbacks outlivin",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1948,
+   "author": "Nxir",
+   "title": "gui test: Usage ledger pill extends past the narrow view in WebKit full run",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 1930,
+   "author": "Moody-Sin",
+   "title": "[bug]",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1924,
+   "author": "yetone",
+   "title": "test: routing-save-blank's wheel loop overshoots Save under load (chromium en)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1905,
+   "author": "yetone",
+   "title": "gui tests: routing-wb-restricted 420px 'the button can't be reached' under a full routing-* run",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1903,
+   "author": "yetone",
+   "title": "library: a skill set aside across disks or with a stuck file is left half-emptied, and the error doe",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1892,
+   "author": "yetone",
+   "title": "test: TestHistoryKeepsDaysAndDropsOld kept the oldest big day under the full go test run (load ~27)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1880,
+   "author": "yetone",
+   "title": "TestPluginUsageRecordsCacheTokens: movedFake's Find(factory) finds no provider under the full gatewa",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1876,
+   "author": "yetone",
+   "title": "test: usage-ledger \"request routing links\" misses the route's Export POST under a loaded GUI run",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1875,
+   "author": "yetone",
+   "title": "Claude Code 的压缩窗口按模型写进 modelSettings，不再写全局 env（#1741 (b)）",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1872,
+   "author": "yetone",
+   "title": "[Bug] Linux Wayland：轻量模式下 `magpie panel` 建了面板窗口却不显示（Gdk-CRITICAL GDK_IS_WINDOW）",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1866,
+   "author": "yetone",
+   "title": "gui test: text-size \"zh, dark: nothing runs off the side at 150%\" fails in WebKit under parallel loa",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1841,
+   "author": "yetone",
+   "title": "tests: internal/agent tests reset HOME/USERPROFILE but not APPDATA/LOCALAPPDATA, so on Windows they ",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1825,
+   "author": "yetone",
+   "title": "3e88fc09d holds the Get started card under the auto-mode subject; two sessions shared one index agai",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1814,
+   "author": "yetone",
+   "title": "gui test: signin-proxy (Chromium de 380) times out finding the Custom… item in the re-opened proxy m",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1753,
+   "author": "crazy0x70",
+   "title": "Pi can't be connected to magpie",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1749,
+   "author": "myne-top",
+   "title": "[bug]GUI 上的小bug,有一段路有线没有正确渲染虚线",
+   "assoc": "CONTRIBUTOR"
+  },
+  {
+   "n": 1748,
+   "author": "marsxxl",
+   "title": "[Bug] 经 magpie 使用 Codex 时反复出现「Selected model is at capacity」，等待后任务仍失败",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1747,
+   "author": "ShineBreaker",
+   "title": "[Bug] Linux/Guix: startup writes a desktop entry whose Exec is the loader (os.Executable() under a w",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1744,
+   "author": "hamwong233",
+   "title": "这里有一点被遮盖",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1742,
+   "author": "iefnaf",
+   "title": "provider/claude on macOS: the fresh sign-in goes to ~/.claude/.credentials.json beside an emptied ke",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1739,
+   "author": "yetone",
+   "title": "[idea] 从本地会话分析出建议：哪些技能拖了后腿、哪类任务换个路由组更好",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1738,
+   "author": "po1arbear",
+   "title": "Claude Desktop compaction remains pending with GPT via Magpie on a large context",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1736,
+   "author": "iceloon",
+   "title": "通过magpie经常报120-second Proxy 的错误，直连都没问题，gpt和grok模型都遇到了。",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1733,
+   "author": "PennyVibe",
+   "title": "[feat] 在路由页面显示请求使用的网关密钥",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1730,
+   "author": "liu-zhengdong",
+   "title": "issue 状态应当收敛",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1729,
+   "author": "wangabo",
+   "title": "Antigravity Gemini via Codex: frequent streamGenerateContent EOF/502, occasional \"invalid argument\" ",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1728,
+   "author": "hh0592821",
+   "title": "[bug] 本地测试的 ZenMux 插件已发现生图模型，但「设置 → 模型 → 生图模型」不显示",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1723,
+   "author": "Jeremy-Hibiki",
+   "title": "添加 Kimi 渠道下 Responses API 的支持",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1718,
+   "author": "zk020106",
+   "title": "[feat] 会话记录支持 Antigravity CLI（agy）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1715,
+   "author": "shuizhongyueming",
+   "title": "[feat] library 分发支持 Kimi Code：它有用户级指令文件 ~/.kimi-code/AGENTS.md",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1713,
+   "author": "321sssrt-bit",
+   "title": "feat: 路由组中的 Devin Opus 支持请求级 Fast / 闪电开关",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1712,
+   "author": "Achordchan",
+   "title": "功能越来越多了，是时候出一个新手引导了",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1710,
+   "author": "wking0408",
+   "title": "【建议】minmax区分国内站和国际站",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1708,
+   "author": "IamMiao",
+   "title": "[Feature Request] 在 Agents 模型选择器中增加第二行，显示有效价格、上下文长度和图片输入支持",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1703,
+   "author": "Super-YYQ",
+   "title": "【功能建议】供应商代理中的自定义添加“填入系统代理”类似功能",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1701,
+   "author": "nianlee-official",
+   "title": "增加自定义审阅模型的选择和自定义上下文压缩长度",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1697,
+   "author": "Dudung1018",
+   "title": "使用问题：自定义路由组中厂商失败 但是未更换别的",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1696,
+   "author": "BennettChina",
+   "title": "[Feature] 方案显示当前在用的方案名称",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1695,
+   "author": "blackrion",
+   "title": "[Feature Request] 把 Snow CLI 纳入 Library：共享 instructions / MCP servers / skills",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1694,
+   "author": "YXCerk",
+   "title": "[Bug] macOS：点击菜单栏图标后，快捷面板顶部与系统菜单栏重叠",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1693,
+   "author": "lin2670",
+   "title": "【建议】允许为「已有已知档位」的模型手动追加思考档位（reasoning levels）",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1690,
+   "author": "MrScallion",
+   "title": "[feat] 增加对Trae Agent的自定义模型配置接管",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1689,
+   "author": "xiepeng1",
+   "title": "能否让不同的模型进入codex原生的模型选择器里",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1688,
+   "author": "ferocknew",
+   "title": "【建议】代理是否可以选择哪个供应商，毕竟国外部分才需要走代理",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1686,
+   "author": "wlj521",
+   "title": "claude desktop调用magpie不走messages协议了",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1684,
+   "author": "ProudBenzene",
+   "title": "新版侧边栏UI中Magpie的软件图标离macOS红绿灯过近",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1682,
+   "author": "loosekite",
+   "title": "[bug] Pi provider plugins skip custom auth.apiKey.login",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1681,
+   "author": "ScarfQian",
+   "title": "「BUG」当使用magpie的「接入」功能的时候，之前的对话全部报错。需要分支或者新对话才能解决。当选择了不带供应商模型名称后还是有这个问题。",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1666,
+   "author": "yetone",
+   "title": "gui tests: agent-models-own.test.cjs failed once (Chromium, de, 420px) alongside other GUI files",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1583,
+   "author": "yetone",
+   "title": "GUI test agent-expand-steady: 'the switch moved' 19 !== 18 on WebKit 980px under load",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1579,
+   "author": "yetone",
+   "title": "test: tencent-cloud.test.cjs (WebKit, en) failed once in a parallel GUI run",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1577,
+   "author": "yetone",
+   "title": "test: waitPast's 5s limit fails plugin sign-in tests under load (\"still installing\")",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1550,
+   "author": "yetone",
+   "title": "gui tests: menu-scroll 'track' subtests flaky in chromium on main",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1548,
+   "author": "IamMiao",
+   "title": "[Feature Request] 优化模型价格展示与模型选择器：显示实际有效计费价、上下文长度及图片支持，避免路由配置误判",
+   "assoc": "NONE"
+  },
+  {
+   "n": 1542,
+   "author": "yetone",
+   "title": "routing: the view's scrollbar comes and goes in the first layout, so WebKit reports a ResizeObserver",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1537,
+   "author": "yetone",
+   "title": "gui: a click on a chip in the Library's Select bar can scroll the page ~10px in WebKit under load (l",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1529,
+   "author": "yetone",
+   "title": "GUI test routing-context-fold red in WebKit on main: the header covers the fold button",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1503,
+   "author": "yetone",
+   "title": "gateway: 推理回传要求改由端点能力决定，验证后再去掉模型名/Host 特判 (#1445 拆分 ③④)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1502,
+   "author": "yetone",
+   "title": "gateway: Chat 的 reasoning_details 按类型保留，Gemini thinkingConfig 不提前折算成 effort (#1445 拆分 ②)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1501,
+   "author": "yetone",
+   "title": "gateway: Responses 推理按原类型保留——明文、摘要与原生 item，含流式事件 (#1445 拆分 ①)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1442,
+   "author": "yetone",
+   "title": "search-api.test.cjs (WebKit, zh) flaky: the row is redrawn between two steps during page load",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1441,
+   "author": "yetone",
+   "title": "routing-blocked (en, Chromium) flaky: the view keeps scrolling for a few frames after the day click",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1434,
+   "author": "yetone",
+   "title": "test flake: member-model-setting.test.cjs fails in WebKit about 1 run in 48",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1426,
+   "author": "yetone",
+   "title": "gui test: sessions-toolbar fails under parallel load (150% text zoom → compact picker)",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1376,
+   "author": "yetone",
+   "title": "gui tests: rate-limited-sink red in WebKit — the WorkBuddy AI pool's 'Goes to the back' is outside t",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1356,
+   "author": "yetone",
+   "title": "usage: TestDesktopSessionAccountMetadata fails on Windows (DesktopDataDirs()[1] is not the 3p folder",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1345,
+   "author": "yetone",
+   "title": "test: usage-ledger-fit.test.cjs fails under a parallel GUI run",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 1344,
+   "author": "yetone",
+   "title": "test: routing-shape.test.cjs flakes on main (\"picking the request moved the page\")",
+   "assoc": "OWNER"
+  },
+  {
+   "n": 897,
+   "author": "ezdemo",
+   "title": "Magpie 对接 OpenDesign 订阅",
+   "assoc": "NONE"
+  },
+  {
+   "n": 222,
+   "author": "jing2uo",
+   "title": "Magpie 的 Flatpak 安装（FlatPark）",
+   "assoc": "NONE"
+  }
+ ]
+}
