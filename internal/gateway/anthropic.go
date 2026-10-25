@@ -1328,6 +1328,15 @@ type aUsage struct {
 	// Kiro caches but tells only credits, never tokens (zeewell on X).
 	// It is read, never told: anthropic() leaves it false.
 	CacheUnknown bool `json:"magpie_cache_unknown,omitempty"`
+	// OutputTokensDetails is how much of OutputTokens was thinking, which
+	// every Messages reply that thinks says here — Anthropic, Copilot,
+	// Bedrock and a relay alike — and which nothing read until #3430
+	OutputTokensDetails *aTokenDetails `json:"output_tokens_details,omitempty"`
+}
+
+// aTokenDetails is the breakdown of a reply's output tokens.
+type aTokenDetails struct {
+	ThinkingTokens int `json:"thinking_tokens"`
 }
 
 type aCacheCreation struct {
@@ -1337,6 +1346,9 @@ type aCacheCreation struct {
 
 func (u aUsage) usage() Usage {
 	out := Usage{Input: u.InputTokens, Output: u.OutputTokens, CacheRead: u.CacheReadInputTokens, CacheWrite: u.CacheCreationInputTokens, cacheUnknown: u.CacheUnknown}
+	if d := u.OutputTokensDetails; d != nil {
+		out.Reasoning = d.ThinkingTokens
+	}
 	if c := u.CacheCreation; c != nil {
 		out.cacheCreationReported = true
 		out.cacheCreationHasCounts = c.Ephemeral5m+c.Ephemeral1h > 0
@@ -1352,6 +1364,11 @@ func (u Usage) anthropic() aUsage {
 	out := aUsage{InputTokens: u.Input, OutputTokens: u.Output, CacheReadInputTokens: u.CacheRead, CacheCreationInputTokens: u.CacheWrite}
 	if h := min(u.CacheWrite1h, u.CacheWrite); u.cacheCreationReported || h > 0 {
 		out.CacheCreation = &aCacheCreation{Ephemeral5m: u.CacheWrite - h, Ephemeral1h: h}
+	}
+	// a reply that thought says how much was thinking, so Claude Code reads
+	// the same counts from a Chat or Responses upstream (#3430)
+	if u.Reasoning > 0 {
+		out.OutputTokensDetails = &aTokenDetails{ThinkingTokens: u.Reasoning}
 	}
 	return out
 }
