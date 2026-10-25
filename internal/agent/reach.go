@@ -136,6 +136,26 @@ func surelyMagpie(v, want string) bool {
 	return ok && known
 }
 
+// surelyMagpieNow is surelyMagpie waited for: an answer magpie has given
+// at base, however old, as a read takes it, or an answer asked and waited
+// for now (magpieProbe's own 3s bound) when there is none, which the next
+// surelyMagpie is given too. A read only starts that probe and goes on, so
+// in a process that has only read, a write that keeps the address would
+// take the proxy for the user's own endpoint and write magpie's own
+// address there (#3512); Codex's writes wait the same way (codexProxyOK).
+// An address that is no proxyBase, magpie's own included, asks nothing, so
+// a local write waits for nothing. A var for tests.
+var surelyMagpieNow = func(v, want string) bool {
+	base, ok := proxyBase(v, want)
+	if !ok {
+		return false
+	}
+	if ok, known := magpieAt(base); known {
+		return ok
+	}
+	return probedNow("magpie "+base, func() bool { return magpieProbe(base) })
+}
+
 var reach struct {
 	sync.Mutex
 	m map[string]reachAnswer

@@ -620,6 +620,12 @@ func claudeIn(at place) *Agent {
 		}
 		return at.gw()
 	}
+	// ask: a write keeps the address, writes magpie's model and key, and
+	// stashes what the user had, so it has magpie's answer at a proxy before
+	// any of that, waited for (surelyMagpieNow), where a read only starts the
+	// probe and goes on (#3512). At magpie's own address, or one that isn't a
+	// proxy to it, nothing is asked and a write waits for nothing.
+	ask := func() { surelyMagpieNow(env("ANTHROPIC_BASE_URL"), at.gw()) }
 	// the main model while routed: settings.json's model, which Claude
 	// Code's /model saves, so a model picked there holds for its next
 	// sessions too (the owner: 去掉 ANTHROPIC_MODEL，让 /model 的选择对新会话也生效)
@@ -2025,6 +2031,13 @@ func claudeIn(at place) *Agent {
 	})
 
 	var self *Agent
+	// every field's write has magpie's answer first, the model pick that
+	// rewrites the tiers and Disconnect's defaults among them
+	for i := range fields {
+		if set := fields[i].Set; set != nil {
+			fields[i].Set = func(v string) error { ask(); return set(v) }
+		}
+	}
 	self = &Agent{
 		ID: "claude", Name: "Claude Code", Icon: "claudecode-color", Aliases: []string{"cc", "claude-code"},
 		UA:  []string{"claude-cli", "claude-code"},
@@ -2035,6 +2048,7 @@ func claudeIn(at place) *Agent {
 		// installed, on Anthropic's endpoint, where this brings back the
 		// endpoint, token and model the user had
 		Unwire: func() error {
+			ask()
 			was, err := unroute()
 			if err != nil {
 				return err
@@ -2062,6 +2076,7 @@ func claudeIn(at place) *Agent {
 		// the catalog's models, with their levels, as Claude Code is told
 		// them, while magpie's are the ones it has
 		Sync: func() error {
+			ask()
 			if !routed() {
 				return desktopOnly()
 			}
