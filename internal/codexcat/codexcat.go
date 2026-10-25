@@ -141,8 +141,13 @@ type model struct {
 	// the model's whole window when Context is the working one
 	// (settings.Working): Codex's model_context_window may raise it
 	// that far, as it does OpenAI's own models'
-	MaxContext *int   `json:"max_context_window,omitempty"`
-	Tiers      []tier `json:"service_tiers"`
+	MaxContext *int `json:"max_context_window,omitempty"`
+	// the percent of the window Codex uses: an entry without one is read
+	// as 95% of it, so 272000 came out 258400 (#3553). Codex's own entry
+	// keeps the percent Codex gave it (ownEntry); the window magpie writes
+	// is the window it means.
+	Percent int    `json:"effective_context_window_percent,omitempty"`
+	Tiers   []tier `json:"service_tiers"`
 	// Without the search, Codex puts every MCP tool's schema (a
 	// ChatGPT sign-in's apps' among them) in every request, 190K
 	// tokens before the first word (#258); with it, they are named in
@@ -254,7 +259,7 @@ func entriesAt(ms []catalog.Model, after int, effort string) []any {
 			if m.Compact > 0 {
 				w = min(c, m.Compact)
 			}
-			e.Context = &w
+			e.Context, e.Percent = &w, 100
 			if w < c {
 				e.MaxContext = &c
 			}
