@@ -65,3 +65,44 @@ func TestNvidiaParameterListBoundaries(t *testing.T) {
 		}
 	}
 }
+
+func TestNvidiaReasoningAfterMemberEffort(t *testing.T) {
+	f := &fake{t: t, reply: optionalFieldReply(provider.Chat)}
+	f.refuse = func(b []byte) (int, string) {
+		var m map[string]json.RawMessage
+		json.Unmarshal(b, &m)
+		if m["reasoning"] != nil || m["enable_thinking"] != nil {
+			return 400, nvidiaParameters
+		}
+		if string(m["reasoning_effort"]) != `"xhigh"` {
+			t.Errorf("member effort lost: %s", b)
+		}
+		return 0, ""
+	}
+	setup(t, provider.Chat, f)
+	if err := provider.SetModelEfforts("fake/m1", []string{"low", "high", "xhigh"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := provider.SaveGroup(provider.Group{Name: "G", Members: []string{"fake/m1:xhigh"}, Routing: provider.Ordered}); err != nil {
+		t.Fatal(err)
+	}
+	s := New()
+	code, body := postAs(t, s, "", `{"model":"group/g","messages":[{"role":"user","content":"hi"}],"reasoning_effort":"high","reasoning":{"effort":"high"},"enable_thinking":true}`)
+	if code != 200 || f.calls != 2 {
+		t.Fatalf("status %d after %d calls: %s", code, f.calls, body)
+	}
+	for _, adapt := range []func(provider.Protocol, []byte, string) []byte{withEffort, withFixedEffort, withBodyEffort} {
+		original := []byte(`{"reasoning_effort":"high","reasoning":{"effort":"high"}}`)
+		if got := adapt(provider.Chat, original, "xhigh"); !redundantReasoning(got) {
+			t.Errorf("aliases diverged: %s", got)
+		}
+		for _, alias := range []string{`{"effort":"low"}`, `{"effort":"high","summary":"auto"}`} {
+			got := adapt(provider.Chat, []byte(`{"reasoning_effort":"high","reasoning":`+alias+`}`), "xhigh")
+			var m map[string]json.RawMessage
+			json.Unmarshal(got, &m)
+			if string(m["reasoning"]) != alias {
+				t.Errorf("nonredundant alias changed: %s", got)
+			}
+		}
+	}
+}
