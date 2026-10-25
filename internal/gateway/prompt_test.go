@@ -10,7 +10,9 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/yetone/magpie/internal/provider"
 )
@@ -356,4 +358,91 @@ func TestRouteTellsItsPrompt(t *testing.T) {
 	if rs[0].Conv == "" || !strings.HasPrefix(rs[0].Conv, "magpie-") {
 		t.Fatalf("conversation %q", rs[0].Conv)
 	}
+}
+
+// A request still in flight carries the window of the model routing asks, as
+// the finished route does: the live card said the model's window wasn't
+// known while the same model's window was known everywhere else (#3614). A
+// model whose window nothing knows carries none, rather than one invented.
+func TestLiveRouteCarriesTheWindow(t *testing.T) {
+	for _, c := range []struct {
+		name   string
+		model  string
+		window int
+		known  bool
+		group  string
+	}{
+		{"known", "cw/m1", 200000, true, ""},
+		// the reporter's shape: a routing group, whose first member's window
+		// is what routing decided on
+		{"group", "group/flash", 200000, true, "Flash"},
+		{"unknown", "cw/unknown-window", 0, false, ""},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			fresh(t)
+			reached := make(chan struct{})
+			release := make(chan struct{})
+			var letGo sync.Once
+			releaseNow := func() { letGo.Do(func() { close(release) }) }
+			up := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				io.Copy(io.Discard, r.Body)
+				close(reached)
+				<-release
+				w.Header().Set("Content-Type", "application/json")
+				io.WriteString(w, `{"id":"msg_1","type":"message","role":"assistant","model":"m1","content":[{"type":"text","text":"ok"}],
+					"stop_reason":"end_turn","usage":{"input_tokens":1200,"output_tokens":9}}`)
+			}))
+			t.Cleanup(up.Close)
+			t.Cleanup(releaseNow) // before up.Close: a failed wait must not hold the server
+			contexts := map[string]int{}
+			if c.known {
+				contexts["m1"] = c.window
+			}
+			if err := provider.Save(provider.Provider{ID: "cw", Name: "CW", Anthropic: up.URL, Key: "k",
+				Models: []string{"m1", "unknown-window"}, Contexts: contexts}); err != nil {
+				t.Fatal(err)
+			}
+			if c.group != "" {
+				if err := provider.SaveGroup(provider.Group{Name: c.group, Members: []string{"cw/m1"}, Routing: provider.Ordered}); err != nil {
+					t.Fatal(err)
+				}
+			}
+			b, _ := os.ReadFile("testdata/context/claude-code.json")
+			var q map[string]any
+			json.Unmarshal(b, &q)
+			q["model"], q["stream"] = c.model, false
+			body, _ := json.Marshal(q)
+			s := New()
+			done := make(chan struct{})
+			go func() {
+				defer close(done)
+				s.Handler().ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("POST", "/v1/messages", strings.NewReader(string(body))))
+			}()
+			<-reached
+			live := liveRoute(t, s)
+			if live.Prompt.Window != c.window {
+				t.Fatalf("in-flight route's window %d, want %d: %+v", live.Prompt.Window, c.window, live.Prompt)
+			}
+			releaseNow()
+			<-done
+		})
+	}
+}
+
+// liveRoute waits for the newest route to be in flight with its prompt read,
+// the trace waking on every change, and returns it as the page reads it.
+func liveRoute(t *testing.T, s *Server) *Route {
+	t.Helper()
+	after := int64(0)
+	for deadline := time.Now().Add(10 * time.Second); time.Now().Before(deadline); {
+		st := s.Trace(t.Context(), after, time.Second)
+		after = st.Seq
+		for i := range st.Routes {
+			if r := &st.Routes[i]; !r.Done && r.Prompt != nil {
+				return r
+			}
+		}
+	}
+	t.Fatal("no in-flight route with a prompt")
+	return nil
 }

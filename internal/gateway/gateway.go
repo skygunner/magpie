@@ -2387,7 +2387,14 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 	if masked != nil {
 		textBody = masked
 	}
-	promptRead := s.inspectPrompt(tr, from, body, textBody)
+	// the window the live card carries while the request runs (#3614): the
+	// first model routing asks, as the route's end records the one that
+	// answered
+	window := 0
+	if len(cands) > 0 {
+		window = windowOf(cands[0].p, cands[0].model)
+	}
+	promptRead := s.inspectPrompt(tr, from, body, textBody, window)
 	var lastTried provider.Provider // the last try's, for its model's context window and the usage's endpoint
 	var skipped []string
 	sent := ""       // the reasoning the last try's model was asked for

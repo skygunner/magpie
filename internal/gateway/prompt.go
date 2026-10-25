@@ -1214,10 +1214,12 @@ func windowFor(id, model string) int {
 }
 
 // inspectPrompt reads the request's prompt beside it, putting the estimate
-// in the trace as soon as it is read; wait returns it, for the route's
-// end to scale to what was counted. masked is the body as the vendor would
-// get it with masking on, kept a while for the card's text (PromptText).
-func (s *Server) inspectPrompt(tr *Route, from provider.Protocol, body, masked []byte) (wait func() *Prompt) {
+// in the trace as soon as it is read, with window: the context window of the
+// model routing asks, which the live card reads while the request is still
+// in flight (#3614); wait returns it, for the route's end to scale to what
+// was counted. masked is the body as the vendor would get it with masking
+// on, kept a while for the card's text (PromptText).
+func (s *Server) inspectPrompt(tr *Route, from provider.Protocol, body, masked []byte, window int) (wait func() *Prompt) {
 	ch := make(chan *Prompt, 1)
 	go func() {
 		p := promptOf(from, body)
@@ -1225,7 +1227,7 @@ func (s *Server) inspectPrompt(tr *Route, from provider.Protocol, body, masked [
 			s.trace.keepBody(tr.ID, from, masked)
 			s.trace.update(tr, func(t *Route) {
 				if t.Prompt == nil {
-					t.Prompt = p
+					t.Prompt = p.calibrated(0, window)
 				}
 			})
 		}

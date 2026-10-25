@@ -950,7 +950,18 @@ func (s *Server) codexUpstreamOn(w http.ResponseWriter, r *http.Request, rest st
 		if m := noteMasked(r, "chat", maskedHits, string(body), tr.ID, "openai", model); m != nil {
 			s.trace.update(tr, func(t *Route) { t.Masked = m })
 		}
-		promptRead := s.inspectPrompt(tr, provider.Responses, body, body)
+		// the window Codex holds the conversation to, not models.dev's for
+		// the id, which is OpenAI's API's (netube on Discord: 922K on
+		// Routing for a Codex Plus account's 272K): the live card carries it
+		// from the start (#3614), and the route's end records it again
+		codexWindow := func() int {
+			user := ""
+			if on != nil && on.Account != nil {
+				user = on.Account.User
+			}
+			return cmp.Or(provider.CodexWindow(user, model), catalog.ContextOf(model))
+		}
+		promptRead := s.inspectPrompt(tr, provider.Responses, body, body, codexWindow())
 		end = func(status int, msg string, tokens, out int) {
 			ms := time.Since(start).Milliseconds()
 			ttft, text := first.ms()
@@ -959,16 +970,9 @@ func (s *Server) codexUpstreamOn(w http.ResponseWriter, r *http.Request, rest st
 				replyDigest = titleReplyDigest(titleReply.buf.Bytes(), nil)
 			}
 			prompt := promptRead() // outside the trace's lock, which reading it takes
-			// the window Codex holds the conversation to, not models.dev's
-			// for the id, which is OpenAI's API's (netube on Discord: 922K
-			// on Routing for a Codex Plus account's 272K)
 			window := 0
 			if prompt != nil {
-				user := ""
-				if on != nil && on.Account != nil {
-					user = on.Account.User
-				}
-				window = cmp.Or(provider.CodexWindow(user, model), catalog.ContextOf(model))
+				window = codexWindow()
 			}
 			s.trace.update(tr, func(t *Route) {
 				// the last try: the turn asked again for an overload has one each
