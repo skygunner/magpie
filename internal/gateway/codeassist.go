@@ -840,6 +840,39 @@ type codeAssistDecoder struct {
 	// held is text that may be the start of a call the model wrote out as
 	// text (see textCall), kept back until it is one or isn't
 	held string
+	// gen is the generation being read: the responseId it began with, the
+	// candidatesTokenCount it has reached, and whether any of it reached
+	// the client. done: it restarted after saying something, so the reply
+	// was ended there and the rest of the stream is the abandoned
+	// generation's, dropped.
+	gen    string
+	tokens int
+	said   bool
+	done   bool
+}
+
+// restarted says c begins another generation than the one being read: it
+// names another responseId, its candidatesTokenCount has gone back, or it
+// brings content after the finishReason that ended the one before. Code
+// Assist restarted a reply inside one SSE response (#3248), and each
+// generation's text parts arrived as deltas of the same answer, two to four
+// partial answers glued end to end with nothing saying the reply began
+// again.
+func (d *codeAssistDecoder) restarted(c geminiChunk) bool {
+	if id := c.ResponseID; id != "" && d.gen != "" && id != d.gen {
+		return true
+	}
+	if u := c.UsageMetadata; u != nil && u.Candidates > 0 && u.Candidates < d.tokens {
+		return true
+	}
+	if d.stopped {
+		for _, cand := range c.Candidates {
+			if len(cand.Content.Parts) > 0 {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (d *codeAssistDecoder) decode(data string, emit func(Event)) error {
@@ -865,6 +898,29 @@ func (d *codeAssistDecoder) decode(data string, emit func(Event)) error {
 	if ch.Response != nil {
 		c = *ch.Response
 	}
+	if d.done {
+		return nil
+	}
+	if d.restarted(c) {
+		if d.said {
+			// Two answers do not make one: the client is told the reply
+			// began again, so the agent asks again rather than keeping
+			// the abandoned prefix and the whole answer after it
+			d.done = true
+			emit(Event{Kind: KError, Status: http.StatusServiceUnavailable,
+				Text: "Antigravity restarted its answer in the middle of the reply, so this one is incomplete: ask again"})
+			return nil
+		}
+		// Nothing of it reached the client: the abandoned prefix goes and
+		// the generation that restarted is read as the answer
+		d.gen, d.tokens, d.stopped, d.tools, d.held, d.usage = "", 0, false, false, "", nil
+	}
+	if id := c.ResponseID; id != "" && d.gen == "" {
+		d.gen = id
+	}
+	if u := c.UsageMetadata; u != nil {
+		d.tokens = max(d.tokens, u.Candidates)
+	}
 	if c.UsageMetadata != nil {
 		u := c.UsageMetadata
 		d.usage = &Usage{Input: max(u.Prompt-u.Cached, 0), CacheRead: u.Cached,
@@ -886,6 +942,7 @@ func (d *codeAssistDecoder) decode(data string, emit func(Event)) error {
 			switch {
 			case p.FunctionCall != nil:
 				d.flush(emit)
+				d.said = true
 				id := p.FunctionCall.ID
 				if id == "" {
 					id = "call_" + newID()
@@ -902,6 +959,7 @@ func (d *codeAssistDecoder) decode(data string, emit func(Event)) error {
 			case p.Thought:
 				d.flush(emit)
 				if p.Text != "" {
+					d.said = true
 					emit(Event{Kind: KThink, Text: p.Text})
 				}
 				if p.Signature != "" {
@@ -912,8 +970,10 @@ func (d *codeAssistDecoder) decode(data string, emit func(Event)) error {
 				// thought images, drafts on the way, stay with the
 				// reasoning above (#620)
 				d.flush(emit)
+				d.said = true
 				emit(Event{Kind: KImage, Name: p.InlineData.MimeType, Text: p.InlineData.Data})
 			case p.Text != "" || p.Signature != "":
+				d.said = d.said || p.Text != ""
 				d.text(p.Text, emit)
 				if p.Signature != "" {
 					// Gemini's signature on its text, after it (#1445)
