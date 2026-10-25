@@ -101,3 +101,25 @@ func TestKnownReindexed(t *testing.T) {
 		t.Fatalf("%q", out)
 	}
 }
+
+// A value a rule finds by its context is masked wherever else it is in
+// the same text, as the known values are in the turns after: the context
+// is at the one place only (#3601).
+func TestKnownValueMaskedInTheSameText(t *testing.T) {
+	const key = "sk_w3axCByTQgK1PxqPhfKTrJOLBqz6sbZv"
+	const text = "OPENAI_API_KEY=" + key + " then again " + key
+	out, n := Mask(text, Options{Secrets: true})
+	ps := placeholderRe.FindAllString(out, -1)
+	if n != 2 || len(ps) != 2 || ps[0] != ps[1] || strings.Contains(out, key) {
+		t.Fatalf("%d masked, %d placeholders: %q", n, len(ps), out)
+	}
+	// in a made-up key's form too
+	out, n = Mask(text, Options{Secrets: true, Shape: true})
+	if n != 2 || strings.Count(out, key) != 0 {
+		t.Fatalf("shaped: %d masked: %q", n, out)
+	}
+	// a piece of a longer word is not the key again
+	if out, n := Mask("OPENAI_API_KEY="+key+" also x"+key+"y", Options{Secrets: true}); n != 1 || strings.Contains(out, key+" also") {
+		t.Fatalf("inside a longer word: %d masked: %q", n, out)
+	}
+}

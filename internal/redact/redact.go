@@ -781,6 +781,13 @@ func mask(raw string, o Options, put func(kind, v string) string, escaped bool) 
 	// after the rules', so where a rule finds the same value it keeps the
 	// kind it has always had
 	found = append(found, modelSpans(raw, o)...) // the model was asked about raw
+	if escaped {
+		found = outsideEscapes(raw, found)
+	}
+	// a value the rules or the model found here goes masked wherever else
+	// it is in the same text too, as a known one does in the turns after:
+	// the context that found it is at the one place only (#3601)
+	found = append(found, repeatSpans(raw, found)...)
 	if o.sent {
 		found = append(found, sentKnownSpans(s, o)...)
 	} else {
@@ -790,6 +797,46 @@ func mask(raw string, o Options, put func(kind, v string) string, escaped bool) 
 		found = outsideEscapes(raw, found)
 	}
 	return apply(raw, noNumbers(s, noIDs(s, found)), put, o)
+}
+
+// repeatSpans are where a value another finder found is again in the same
+// text, out of the context that found it: what goes to the vendor twice
+// may not go as written once (#3601). A piece of a longer word is not the
+// value again (standsAlone), nor a piece of another value the finders
+// found.
+func repeatSpans(s string, found []span) []span {
+	var out []span
+	for _, f := range found {
+		if f.by == ByWord || f.by == ByKnown {
+			continue
+		}
+		v := s[f.start:f.end]
+		if len(v) < minKnown || strings.Count(s, v) < 2 {
+			continue
+		}
+		for at := 0; ; {
+			i := strings.Index(s[at:], v)
+			if i < 0 {
+				break
+			}
+			a, b := at+i, at+i+len(v)
+			at = b
+			if a == f.start && b == f.end || !standsAlone(f.kind, s, a, b) {
+				continue
+			}
+			inside := false
+			for _, g := range found {
+				if g.start <= a && b <= g.end {
+					inside = true
+					break
+				}
+			}
+			if !inside {
+				out = append(out, span{a, b, f.kind, f.by})
+			}
+		}
+	}
+	return out
 }
 
 // unescapedView is s, JSON text, as long as s and read as the vendor reads
