@@ -484,11 +484,55 @@ func combinedSessionStats(days int) sessions.Stats {
 		e.Daily = gatewayDays(g)
 		ext = append(ext, e)
 	}
+	// a native session's file was told zeros for the calls a vendor
+	// counted no cache of: their prompt joins its day rows back from the
+	// kept projection, so the days' hit rate leaves them out too (#3470)
+	joinDayUnknown(st, usage.NativeSessionUnknownByDay(since, nativeKeys))
 	daily := make([]sessions.ExternalDayUsage, 0, len(gd))
 	for _, d := range gd {
 		daily = append(daily, sessions.ExternalDayUsage{Date: d.Date, Agent: d.Agent, Model: d.Model, Tokens: d.Tokens, Cost: d.Cost, Priced: d.Priced})
 	}
 	return sessions.MergeExternalStats(st, daily, ext)
+}
+
+// joinDayUnknown adds each native session's per-day cache_unknown to the
+// stats' day rows: the row of the day, the agent and the folder the calls
+// were made under - the tile sums the days, so the amount is what matters
+// (#3470). A day the file counted nothing on (its calls were the unknown
+// ones alone, or a zone boundary moved them) gets a row of its own, whose
+// empty model no filter lists. Unknown days (before the range) drop.
+func joinDayUnknown(st sessions.Stats, bySession map[string]map[string]int) {
+	if len(bySession) == 0 || len(st.Sessions) == 0 {
+		return
+	}
+	byDay := map[string]int{}
+	for i := range st.Days {
+		byDay[st.Days[i].Date] = i
+	}
+	for _, s := range st.Sessions {
+		days, ok := bySession[s.Agent+"|"+s.ID]
+		if !ok {
+			continue
+		}
+		for date, n := range days {
+			i, ok := byDay[date]
+			if !ok {
+				continue
+			}
+			d := &st.Days[i]
+			placed := false
+			for j := range d.Usage {
+				if d.Usage[j].Agent == s.Agent && (s.Cwd == "" || d.Usage[j].Cwd == s.Cwd) {
+					d.Usage[j].CacheUnknown += n
+					placed = true
+					break
+				}
+			}
+			if !placed {
+				d.Usage = append(d.Usage, sessions.Usage{Agent: s.Agent, Cwd: s.Cwd, Tokens: sessions.Tokens{CacheUnknown: n}})
+			}
+		}
+	}
 }
 
 // warmSessions reads every session file once magpie is up, so the Sessions

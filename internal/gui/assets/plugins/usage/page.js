@@ -2688,10 +2688,10 @@ function renderSessions() {
 
   // the range's totals, of every session under the filters
   const used = rows.filter((r) => byAgent(r) && byModel(r) && byFolder(r));
-  const tot = { input: 0, output: 0, cache_read: 0, cache_write: 0, cost: 0, unpriced: 0 };
+  const tot = { input: 0, output: 0, cache_read: 0, cache_write: 0, cache_unknown: 0, cost: 0, unpriced: 0 };
   const unpriced = new Set();
   for (const r of used) {
-    for (const k of ["input", "output", "cache_read", "cache_write", "cost"]) tot[k] += r[k];
+    for (const k of ["input", "output", "cache_read", "cache_write", "cache_unknown", "cost"]) tot[k] += r[k] || 0;
     if (!r.priced) unpriced.add(r.model);
   }
   tot.unpriced = unpriced.size;

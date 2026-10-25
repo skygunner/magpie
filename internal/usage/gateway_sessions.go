@@ -54,6 +54,38 @@ func NativeSessionUnknown(since time.Time, nativeKeys map[string]bool) map[strin
 	return out
 }
 
+// NativeSessionUnknownByDay is NativeSessionUnknown again, by the local
+// date the calls were made on (#3470): agent|id -> date -> the prompt its
+// vendor counted no cache of that day, for the stats' day rows to join.
+func NativeSessionUnknownByDay(since time.Time, nativeKeys map[string]bool) map[string]map[string]int {
+	if len(nativeKeys) == 0 {
+		return nil
+	}
+	from := ""
+	if d, ok := localMidnight(since); ok {
+		from = d
+	}
+	out := map[string]map[string]int{}
+	for _, s := range gatewayProjection().sessions {
+		if !nativeKeys[s.Agent+"|"+s.ID] {
+			continue
+		}
+		for _, d := range s.Daily {
+			if from != "" && d.Date < from {
+				continue
+			}
+			if d.CacheUnknown == 0 {
+				continue
+			}
+			if out[s.Agent+"|"+s.ID] == nil {
+				out[s.Agent+"|"+s.ID] = map[string]int{}
+			}
+			out[s.Agent+"|"+s.ID][d.Date] += d.CacheUnknown
+		}
+	}
+	return out
+}
+
 type GatewayDayUsage struct {
 	Date, Agent, Model string
 	sessions.Tokens
