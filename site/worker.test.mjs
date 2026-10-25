@@ -2,7 +2,7 @@
 // (freecss on Discord). GitHub and the edge cache are stood in for.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import worker, { served, goTarget, sponsorTarget } from "./worker.js";
+import worker, { served, goTarget, sponsorTarget, notes, inLang } from "./worker.js";
 
 const EN = "### Features\n\n- One thing (#1)\n\n### Install\n\nDownload it.";
 const ZH = "### 新功能\n\n- 一件事 (#1)";
@@ -503,4 +503,29 @@ test("sponsors: the home page and the READMEs link every sponsor through /go", a
     }
   const home = readFileSync(pages.home[0], "utf8");
   for (const s of SPONSORS.filter((s) => s.home)) assert.ok(home.includes(`href="/go/${s.id}/home"`), s.id);
+});
+
+// #2866 (ReneXiong): the release workflow keeps the English heading over
+// the translated list, so a Chinese Improvements section opens with an
+// English "Improvements". The marker went before the first heading with a
+// Han character in it - the install heading - so the zh answer was the
+// install section alone (which the client strips, dropping the release)
+// and the en answer carried the Chinese bullets after the English ones.
+// The split goes at the first Chinese-led block, under the heading it
+// belongs to.
+const MIXED = "<h2>Improvements</h2>\n<ul>\n<li>Improved session overview performance by reading each session file once.</li>\n</ul>\n<h2>Improvements</h2>\n<ul>\n<li>通过仅读取一次会话文件来计算统计信息和原生会话，提升了会话概览性能。</li>\n<li>修复了会话列表中重复出现的同名条目。</li>\n</ul>\n<h2>安装</h2>\n<p>从 usemagpie.ai 下载，或运行安装脚本。已安装的 magpie 会自动更新。</p>";
+
+test("notes: the Chinese section under an English heading splits at its first block", () => {
+  const md = notes(MIXED);
+  const cut = md.indexOf("<!-- lang:zh -->");
+  assert.ok(cut >= 0, "no marker in " + md);
+  const en = inLang(md, "en"), zh = inLang(md, "zh");
+  assert.match(en, /Improved session overview performance/);
+  assert.doesNotMatch(en, /通过仅读取/);
+  assert.match(zh, /通过仅读取一次会话文件/);
+  assert.match(zh, /修复了会话列表中重复出现的同名条目/);
+  assert.match(zh, /安装/);
+  assert.doesNotMatch(zh, /Improved session overview performance/);
+  const zhTail = md.slice(cut);
+  assert.ok(zhTail.indexOf("## Improvements") >= 0 && zhTail.indexOf("## Improvements") < zhTail.indexOf("通过仅读取"), "the translated list keeps its heading:\n" + md);
 });

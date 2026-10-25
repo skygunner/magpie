@@ -516,24 +516,39 @@ function inline(html) {
 
 const HAN = /\p{Script=Han}/u;
 
+// zhLed is whether a block reads as Chinese: Han characters, and more of
+// them than Latin letters - a brand name inside an English line does not
+// make the line Chinese. The release workflow keeps the English heading
+// over the translated list ("Improvements" above Chinese bullets, #2866),
+// so where the Chinese begins is a block's own words, not a heading's
+// alone.
+function zhLed(text) {
+  const han = (text.match(/\p{Script=Han}/gu) || []).length;
+  if (!han) return false;
+  const latin = (text.match(/[A-Za-z]/g) || []).length;
+  return han >= latin;
+}
+
 // notes turns a release's HTML (as the feed has it) back into markdown:
 // headings, bullets and paragraphs. GitHub drops the HTML comment the
-// Chinese notes start under, so it goes back before the first heading in
-// Chinese that follows an English one.
+// Chinese notes start under, so it goes back before the first Chinese-led
+// block that follows English - under the heading that block sits behind,
+// when it has one (#2866).
 export function notes(html) {
   const lines = [];
-  let english = false, zh = false, prev = "";
+  let english = false, zh = false, prev = "", headingAt = -1;
   for (const [, tag, body] of html.matchAll(/<(h[1-6]|li|p|pre)\b[^>]*>([\s\S]*?)<\/\1>/g)) {
     const text = tag === "pre" ? unhtml(body.replace(/<[^>]+>/g, "")).trim() : inline(body);
     if (!text) continue;
+    if (!zh && english && zhLed(text)) {
+      const at = tag[0] === "h" ? lines.length : headingAt >= 0 ? headingAt : lines.length;
+      lines.splice(at, 0, "", ZH);
+      zh = true;
+    }
     if (tag[0] === "h") {
-      const isZh = HAN.test(text);
-      if (isZh && english && !zh) {
-        lines.push("", ZH);
-        zh = true;
-      }
-      if (!isZh) english = true;
+      if (!zhLed(text)) english = true;
       lines.push("", "#".repeat(+tag[1]) + " " + text);
+      headingAt = lines.length - 2;
     } else if (tag === "li") {
       if (prev !== "li") lines.push("");
       lines.push("- " + text);
@@ -554,7 +569,7 @@ const ZH = "<!-- lang:zh -->";
 // inLang is the notes in lang: zh (zh-CN, zh-Hans, ...) the Chinese when
 // there is some, else the English, which is everything above the marker.
 // An app from before lang asks with none, and gets the English alone.
-function inLang(notes, lang) {
+export function inLang(notes, lang) {
   notes = notes || "";
   const i = notes.indexOf(ZH);
   if (i < 0) return notes;
