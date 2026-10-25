@@ -246,6 +246,11 @@ var (
 	// answer ("切换其他模型", "switch to the other models"): its limit is
 	// the model's, and the model alone rests
 	otherModels = regexp.MustCompile(`(?i)switch(?:ing)? to (?:the )?other models?|切换(?:到)?其他模型`)
+	// modelRateLimit: a 429 that says the limit it hit is the model's own
+	// ("Model tpm limit exceeded", SophNet's console limits each model by
+	// a TPM and RPM of its own): the key's other models still answer, and
+	// the model alone rests (#3619, zisen123)
+	modelRateLimit = regexp.MustCompile(`(?i)\bmodel (?:[a-z0-9_.:/-]+ )?(?:tpm|rpm|qps|requests?|rate) limit`)
 	// clineFreeLimit: Cline's refusal of a free model whose day's allowance
 	// is used up, 429 "Daily free limit reached on model deepseek/deepseek-
 	// v4-flash. Try again in 23h 59m", as its own clients read it (cline/
@@ -1120,6 +1125,13 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
 	// models is the model's limit: the others still answer (WorkBuddy's
 	// "您也可以切换其他模型继续使用", #1669)
 	if pooled || unserved || modelBackoff || why == failQuota && resetsWhen.Match(wordsOf(body)) && otherModels.Match(wordsOf(body)) {
+		id = c.restID()
+	}
+	// a rate limit that says it is the model's own ("Model tpm limit
+	// exceeded") is that model's too: the key still serves its siblings,
+	// which grey out on the Routing page otherwise, answered with a local
+	// 429 that names another model's error (#3619, zisen123)
+	if why == failRate && modelRateLimit.Match(wordsOf(body)) {
 		id = c.restID()
 	}
 	// Cline's daily limit of one free model is that model's: its others,
