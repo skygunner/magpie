@@ -161,6 +161,13 @@ var rules = append([]rule{
 	// any value of four or more is taken, digits only too (CyberCaius on
 	// Discord); a sentence's closing stop is no part of it.
 	{kind: "PASSWORD", re: cjkNamed(cjkPasswordNames), fold: lowerAll(cjkPasswordNames), back: 64, ahead: 100, ok: notAVariable},
+	// a password said in words in an English message: my password is …, the
+	// password: … . The words say it is prose, where a config has
+	// password = …, so a value of four or more is taken, a short one too
+	// (#3574); a word that follows one in prose (the password is required,
+	// your password was changed) is no password. Its kind is the config's,
+	// so a value masked there first keeps its placeholder here.
+	{kind: "SECRET", re: prosePasswordNamed, ok: prosePassword},
 	// a key, a secret or a token after its name the same way: 密钥为 …,
 	// 令牌是 …, 金鑰： … . A key of digits only is taken after 为, 是, ：
 	// or = when it has six or more and counts nothing, so 密钥为12231241
@@ -264,6 +271,17 @@ func notAVariable(v string) bool {
 		return false
 	}
 	return strings.Trim(v, "*xX.") != ""
+}
+
+// prosePasswordNamed is a password after the words that say it is one in a
+// message (my password is, your password:, password is), and the value.
+var prosePasswordNamed = regexp.MustCompile(`(?i)\b(?:(?:my|your|our|his|her|their|the|this|that)[ \t]+password[ \t]*(?:[:=]|is|was)?|password[ \t]+(?:is|was))[ \t]*(?:\\?["'“「])?(` + secretCh + `{3,63}[A-Za-z0-9_\-/+=~!@#%^&*])`)
+
+// prosePassword is a password said in words: four or more that count a
+// digit, as a password in a message has, where a word in prose about one
+// (the password is required) is none.
+func prosePassword(v string) bool {
+	return notAVariable(v) && strings.ContainsAny(v, digits)
 }
 
 // keyValue is a key's or a token's value, not a word or a number: letters
