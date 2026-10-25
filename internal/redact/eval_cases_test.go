@@ -196,7 +196,7 @@ var evalCases = []evalCase{
 	{
 		ID: "hex-lines", From: "d3db461bb",
 		Text: "hex40 ok? 1 2f1d0c9b8a7e6f5d4c3b2a1908f7e6d5c4b3a291\n919585d1700e515ac38da49e31bc60a527fc15c2 ok? 1",
-		Keep: []evalValue{{V: "2f1d0c9b8a7e6f5d4c3b2a1908f7e6d5c4b3a291", Kind: "SECRET", Known: "#3597"}, {V: "919585d1700e515ac38da49e31bc60a527fc15c2", Kind: "SECRET"}},
+		Keep: []evalValue{{V: "2f1d0c9b8a7e6f5d4c3b2a1908f7e6d5c4b3a291", Kind: "SECRET"}, {V: "919585d1700e515ac38da49e31bc60a527fc15c2", Kind: "SECRET"}},
 	},
 	{
 		ID: "go-caches", From: "d3db461bb",

@@ -30,6 +30,7 @@ func TestModelMisreadsNotMasked(t *testing.T) {
 		{`"id":"srvtoolu_01AbCdEfGhIjKlMnOp"`, "srvtoolu_01AbCdEfGhIjKlMnOp", "secret"},
 		{"<task-id>a97c9bc67cc1f1e27</task-id>", ">a97c9bc67cc1f1e27", "secret"},
 		{"hex40 ok? 1 2f1d0c9b8a7e6f5d4c3b2a1908f7e6d5c4b3a291", "2f1d0c9b8a7e6f5d4c3b2a1908f7e6d5c4b3a291", "secret"},
+		{"1 2f1d0c9b8a7e6f5d4c3b2a1908f7e6d5c4b3a291\nhex40 ok?", "1 2f1d0c9b8a7e6f5d4c3b2a1908f7e6d5c4b3a291", "secret"},
 		{"919585d1700e515ac38da49e31bc60a527fc15c2 ok? 1", "919585d1700e515ac38da49e31bc60a527fc15c2 ok? 1", "secret"},
 		// names in Go's module cache, a path's piece
 		{"/Users/x/Library/Caches/go-build/63700b7ab65fd1d3@v63", "63700b7ab65fd1d3@v63", "secret"},

@@ -262,8 +262,9 @@ func modelFits(s string, a, b int, kind string) bool {
 			return false
 		}
 		// a bare hex run is a hash or an id unless something calls it a key;
-		// one with words after it is a hash in a tool's output
-		if f := strings.Fields(v); len(f) > 1 && hexRe.MatchString(f[0]) || modCacheRe.MatchString(v) {
+		// one with words after it is a hash in a tool's output, and one
+		// with only counts beside it is too ("1 2f1d…", #3597)
+		if f := strings.Fields(v); len(f) > 1 && (hexRe.MatchString(f[0]) || numberedHash(f)) || modCacheRe.MatchString(v) {
 			return false
 		}
 		return !hexRe.MatchString(v) || cued(s, a, secretCues)
@@ -355,6 +356,27 @@ func countDigits(v string) int {
 		}
 	}
 	return n
+}
+
+// numberedHash says a span's fields are a hex run with nothing but counts
+// around it, as a tool's output lines a hash up ("1 2f1d…", #3597).
+func numberedHash(f []string) bool {
+	for i, w := range f {
+		if !hexRe.MatchString(w) {
+			continue
+		}
+		counts := true
+		for j, o := range f {
+			if j != i && strings.Trim(o, digits) != "" {
+				counts = false
+				break
+			}
+		}
+		if counts {
+			return true
+		}
+	}
+	return false
 }
 
 func isASCII(v string) bool {
