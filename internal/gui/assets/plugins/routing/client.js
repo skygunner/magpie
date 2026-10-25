@@ -2414,11 +2414,23 @@ function routingPage(part) {
     return [s.slice(0, hit.i), name, s.slice(hit.i + hit.n.length)].filter((x) => x !== "");
   }
 
+  // groupAsNow is the group a request asked for as it is now: the story
+  // names the models the group has, and one added or removed since the
+  // request went is the one named, as the groups below the requests name
+  // it (#3156). A group since deleted, or one this page has not read, is
+  // the route's own.
+  function groupAsNow(g) {
+    const now = groups?.groups?.find((x) => x.id === g.id);
+    if (!now) return { name: g.name, members: treeText(g) };
+    return { name: now.name || g.name, members: now.members.map((id) => memberLabel(now, id)).join(now.routing === "order" ? " → " : " · ") };
+  }
+
   function renderSteps(r) {
     const items = [];
     const main = r.order.find((x) => !x.fallback);
+    const group = r.group && groupAsNow(r.group);
     items.push([r.group
-      ? t("{agent} asked for the routing group {name}: {members}", { agent: agentName(r.agent), name: r.group.name, members: treeText(r.group) })
+      ? t("{agent} asked for the routing group {name}: {members}", { agent: agentName(r.agent), name: group.name, members: group.members })
       : main && main.model !== r.model && wentOn(r) === r.model
       ? t("{agent} asked for {model}: {name} serves it, and the vendor is asked for {sent}", { agent: agentName(r.agent), model: r.model, name: main.name, sent: main.model })
       : t("{agent} asked for {model}", { agent: agentName(r.agent), model: r.model }) + " → " + (main?.name || r.provider), ""]);
@@ -4281,6 +4293,14 @@ function routingPage(part) {
       models: refs(x.models), deciders: refs(x.deciders), pools: objs(x.pools),
       templates: objs(x.templates).filter((tp) => tp.group && typeof tp.group === "object").map((tp) => ({ ...tp, group: group(tp.group) })) };
   }
+  // toldGroups draws the story again as the groups now are: its sentence
+  // names the group's models, so an edit is told at once and not at the
+  // next request routed (#3156)
+  function toldGroups() {
+    if (!logR) return;
+    stepsKey = "";
+    renderSteps(logR);
+  }
   // quiet: the window focused again; the same groups aren't drawn again
   async function loadGroups(quiet) {
     let next;
@@ -4290,6 +4310,7 @@ function routingPage(part) {
     if (pBox) renderPanel();
     if (headOf) header(...headOf);
     if (!gEdit && !gsec.contains(document.activeElement)) renderGroups(); // not under someone's hands
+    toldGroups();
   }
   const groupDirty = () => !!gEdit && gEdit.was !== undefined &&
     (JSON.stringify(gEdit.draft) !== gEdit.was || !!gsec.querySelector(".rt-patadd input")?.value.trim());
@@ -4309,6 +4330,7 @@ function routingPage(part) {
       groups = groupsFrom(await api("groups/" + action, body));
       if (action === "save" && gEdit) { gMorph = [gEdit.id, body.id]; gSaved = body.id; }
       gEdit = null;
+      toldGroups();
       renderGroups();
       // The editor closed on its Save, and the page is shorter by its height: the
       // click-hold then has nothing of the editor left to hold, and left to the
