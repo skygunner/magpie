@@ -16,6 +16,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/yetone/magpie/internal/netproxy"
 	"github.com/yetone/magpie/internal/source"
 )
 
@@ -30,11 +31,16 @@ var dl struct {
 
 // client has no timeout: the model takes minutes on a slow line. A
 // download that stops getting bytes is ended by stall instead, and one
-// whose server doesn't answer by the header timeout.
+// whose server doesn't answer by the header timeout. Its transport asks
+// netproxy.Func — Settings' Proxy — as update's downloader and every other
+// request of magpie's does: cloned at init, before netproxy.Install, it
+// kept ProxyFromEnvironment, which the app has nothing to read, and both
+// downloads went direct on a proxy-only network (#3561, yuancjun).
 var client = func() *http.Client {
 	t := http.DefaultTransport.(*http.Transport).Clone()
+	t.Proxy = netproxy.Func
 	t.ResponseHeaderTimeout = 60 * time.Second
-	return &http.Client{Transport: t}
+	return &http.Client{Transport: netproxy.Dispatch(t)}
 }()
 
 // stallAfter is how long a download waits for its next byte.
