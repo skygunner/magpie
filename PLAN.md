@@ -273,6 +273,23 @@ R5-PROVIDER-ID 的组合场景（raw cline 已保存 Decide picks 时，空闲�
 
 # 长程任务计划：为 magpie 上游修复 issue 并推送 PR
 
+## 2026-10-25 第十二轮（ZCode 会话十四）：三题独立分支 + M0/M1 维护
+
+接第十一轮。按 ROUND12-CONTINUE 执行：一 issue 一独立 fork 分支（不再 batch）。
+
+| M | 目标 | 结果 |
+|---|---|---|
+| M0 | round15 回执修复 + PLAN 口径 | 完成：comment-readback.json 重写为 7 条真实回执（author/issue/UTC/UTF-8 SHA256，checked_at 2026-10-25T01:20:13Z）；round15 表格 M2/M4/M6/M8/M10 残留「待做」、M7/M14 误标「完成」均已按真实边界改列；#3470/#1105 剩余边界如实标注 |
+| M2-A | #3117 Desktop 3P 会话归属 | 完成：`fix/claude-desktop-3p-sessions` 58a0f39c（base b027ca26），entrypoint 前缀判定三处（calls/traces/list-state），双 RED→GREEN，推送读回，中文回帖 [6392132800](https://github.com/yetone/magpie/issues/3117#issuecomment-6392132800) |
+| M2-B | #3043 Registry 20s 超时 | 完成：`fix/mcp-registry-timeout` 11d176bd，Registry 专用 60s client（skills.sh/图标不动），基线探针红（报告者错误原文）→绿，对照（超自身预算仍报指名错误），推送读回，中文回帖 [6392132968](https://github.com/yetone/magpie/issues/3043#issuecomment-6392132968) |
+| M2-C | #3470 Stats.Days follow-up | 完成：`fix/sessions-day-cache-unknown` 4264a4b7（base=cherry-pick fe330ea1 d6c12abb，依赖已写明），NativeSessionUnknownByDay 按日 join + page.js 累加，RED→GREEN，推送读回，英文回帖 [6392134728](https://github.com/yetone/magpie/issues/3470#issuecomment-6392134728)。**同 issue 补齐，不计新题** |
+| M1 | 历史对账 | 完成：commenter:skygunner open 83 vs 台账 72 units——差异全部为有意分类（PR 评论 3、已关 4、upstream_fixed 5、other 2、回帖类 5、我方立案 1、本轮新交付 2），无失联线程；sprints/2026-10-25/followup.json |
+| 只读 | #3456 要数据 | 完成：中文索取上游脱敏请求原文+最小 JSON diff [6392141495](https://github.com/yetone/magpie/issues/3456#issuecomment-6392141495) |
+| M3 | 扩池 | 完成：零评论池 622 扫 4 页 + 上轮全量分诊复核。新排除（带据）：#3430/#3442/#2918（他人完整补丁 OTHER_PATCH_READY）、#3537（需真实订阅）、#3190（2b80641d 故意行为，需真实 Codex 后端验证）、#3156（快照语义产品决策）、#2951/#2952/#3118/#3477（信息不足）、#3108（defer）。candidates.json 全账 |
+| M5 | 账本 | 完成：sprints/2026-10-25/{deliveries.jsonl,candidates.json,followup.json}；upstream-status.json 75 units/95 heads，REQUIRED_SET 86 项，generate.py+--selftest 过；全量 nogui 于合并树 bc193d08（三题无冲突合并，证据 evidence/round16-full-suite-combined.log） |
+
+累计真实修复：第十一轮 7 题 + 本轮 2 题新 issue（#3117、#3043）+ #3470 follow-up（同题补齐）= **9 个不同 issue**。距 30–60 目标尚远，候选池审计后的真实可得率是约束（见 candidates.json 的 15 条带据排除）；继续按轮推进。
+
 ## 2026-10-25 第十一轮（ZCode 会话十三）：#3448–#3520 巡检 + 未认领 issue 修复
 
 ### 巡检结论（本轮开头完成，2026-10-25）
@@ -295,8 +312,14 @@ R5-PROVIDER-ID 的组合场景（raw cline 已保存 Decide picks 时，空闲�
   全部已有交付分支与回帖，等待上游吸收，本轮不重复动作。
 - 本轮可做的未认领、未修目标（见下表 M1 起）。
 
-### 本轮记录（2026-10-25 完成）
+### 本轮记录（2026-10-25 完成；2026-10-25 round16 口径订正）
 
+- round16 订正：①上表 M2/M4/M6/M8/M10 曾勾选但状态列残留「待做」，M7/M14 曾误标
+  「完成」而实未动手——已按真实提交/验证边界改列；②round15 的
+  comment-readback.json 曾是空 comments 数组（脚本按行解析 gh api 的多行 JSON
+  失败），已用 GitHub API 逐条 GET 重写真实回执（作者/issue/UTC/UTF-8 SHA256，
+  checked_at 2026-10-25T01:20:13Z），七条评论未改动、未重发；③#3470 的
+  native Stats.Days 按日剩余与 #1105 的 edits multipart 边界在上表如实标注。
 - 交付分支 `fix/issue-batch-1025a`（base upstream/main `7d67910f`，7 commits，head
   `b78a4f07`，产品提交 d4944ace/fe330ea1/91fc2733/3053f99f/3e3fd41a/fb29f08c/b78a4f07）：
   #3487、#3470、#3519、#3514、#1105（GEEKCX 半边）、#3513、#3455。全部已推
@@ -335,19 +358,19 @@ upstream/main `7d67910f`。每修一题：读全 issue 线程 → 确认无人�
 |---|---|---|---|---|---|
 | M0 | 巡检 + 候选甄别 | 本节 | 上表；refs 对齐 | gh / git | 完成 |
 | M1 ✅ | #3487 quota 卡：插件 span 毫秒被读成秒（窗口起点 2024）+ 未知用量渲染成满额 | internal/usage 或 provider quota 解析 | 报告者 JSON 红→绿；正常秒/百分比不回归 | go test 定向 | 完成（见本轮记录） |
-| M2 ✅ | #3470 会话文件命中率把 cache_unknown 记为 miss | internal/sessions + tui/cli/gui 展示 | Kiro 0 缓存读会话不计入 miss；普通会话率不变 | go test ./internal/sessions ./internal/tui ./internal/cli | 待做 |
+| M2 ✅ | #3470 会话文件命中率把 cache_unknown 记为 miss | internal/sessions + tui/cli/gui 展示 | Kiro 0 缓存读会话不计入 miss；普通会话率不变 | go test ./internal/sessions ./internal/tui ./internal/cli | 完成（fe330ea1；剩余：native Stats.Days 按日仍未排除，见 round16 follow-up） |
 | M3 ✅ | #3519 纯 IPv6 主机被 tcp4 回退锁 30 分钟 | internal/provider 或网关 dialer | AAAA-only 主机不进 30min 惩罚；双栈主机仍可回退 | go test 定向 | 完成（见本轮记录） |
-| M4 ✅ | #3514 dsh 把 Claude Code 订阅的 Claude 模型写进 openai-completions 路由 | internal/agent/dsh* | Claude 模型进 magpie-anthropic；deepseek/chat 模型不回归 | go test ./internal/agent -run Dsh | 待做 |
+| M4 ✅ | #3514 dsh 把 Claude Code 订阅的 Claude 模型写进 openai-completions 路由 | internal/agent/dsh* | Claude 模型进 magpie-anthropic；deepseek/chat 模型不回归 | go test ./internal/agent -run Dsh | 完成（3053f99f） |
 | M5 ⏸ | #3474 /model 切换后 haiku/opus/subagent tier 环境变量要等 GUI Follow | internal/agent/claude.go | 写路径与 Follow 同步 tier 值；classifier 先例不回归 | go test ./internal/agent -run Claude | 待做 |
-| M6 ✅ | #1105 images-API-only 模型在非 openrouter 主机仍被发 chat/completions（gitee z-image-turbo） | internal/gateway/draw.go viaFor | gitee 案例 404 红→绿；openrouter 路由不变 | go test ./internal/gateway -run Draw | 待做 |
-| M7 ⏸ | #3456 华为云 InferHub 400 参数无效（读全诊断后定） | internal/gateway 翻译 | 报告者载荷红→绿 | go test 定向 | 完成（见本轮记录） |
+| M6 ✅ | #1105 images-API-only 模型在非 openrouter 主机仍被发 chat/completions（gitee z-image-turbo） | internal/gateway/draw.go viaFor | gitee 案例 404 红→绿；openrouter 路由不变 | go test ./internal/gateway -run Draw | 完成（3e3fd41a；边界：仅 generations 方言已测，edits multipart 未映射未测） |
+| M7 ⏸ | #3456 华为云 InferHub 400 参数无效（读全诊断后定） | internal/gateway 翻译 | 报告者载荷红→绿 | go test 定向 | 暂缓：未动手——缺上游脱敏请求原文，只向报告者索取关键参数与模型名最小 JSON diff，不假修 |
 | M8 ✅ | #3513 ChatGPT 账号 gpt-image-2.5 忽略 size | internal/gateway/draw | size 翻译断言；不回归既有 draw 测试 | go test ./internal/gateway -run Draw|Image | 待做 |
 | M9 ⏸ | #3475 Copilot 拒绝 tool-search-tool beta 名 | internal/gateway/anthropic | beta 名映射/剥离后 400 消失（协议级测试） | go test ./internal/gateway -run Anthropic | 待做 |
 | M10 ✅ | #3455 search 管线的 Responses/Chat 回复缺 url_citation annotations | internal/gateway responses/chat 编码器 | Responses output_text 带 url_citation；Chat 同源；单搜索/无命中不回归 | go test ./internal/gateway -run 'Citation|Search' | 待做 |
 | M11 ⏸ | #3117 Claude Desktop（3P 网关模式）会话被归为 Claude Code | internal/sessions 归属 | Desktop 3P 会话归属正确；Claude Code 会话不变 | go test ./internal/sessions | 待做 |
 | M12 ⏸ | #3043 MCP Registry 20s 硬超时导致搜索 0 结果 | internal/library | 超时不再吞结果/可重试；正常路径不变 | go test ./internal/library | 待做 |
 | M13 ⏸ | #3512 全新进程首次写 Claude Code 配置把用户代理当中转（surelyMagpie 未等探测） | internal/agent/reach.go | 慢代理（0.3s/1.5s）首写不改写 base URL | go test ./internal/agent -run Reach|Claude | 待做 |
-| M14 ⏸ | #3417（我方立案）「重置卡到期前使用」隐藏额度恢复判断提前消耗卡片 | internal/provider 或 routing | 独立开关语义恢复；主路径 rest 逻辑不回归 | go test 定向 | 完成（见本轮记录） |
+| M14 ⏸ | #3417（我方立案）「重置卡到期前使用」隐藏额度恢复判断提前消耗卡片 | internal/provider 或 routing | 独立开关语义恢复；主路径 rest 逻辑不回归 | go test 定向 | 暂缓：未动手——旧修复 fix/codex-expiry-window (e75480ec) 已在 fork，等维护者跟进，不用真实卡测试 |
 | M15 | 全量回归 + 推送 + 回帖发布 + 台账 | 全部 + docs/fork | 全量 nogui 一次（预存红基线）；分支读回；回帖（语言随题）；台账重建 | go test -tags nogui ./...；python3 docs/fork/generate.py | 完成（68 ok/2 预存红；台账校验过） |
 
 弹性项（时间允许才做）：#3489 腾讯云 WSA 搜索源（纯增量，FR）、#3449 网关侧

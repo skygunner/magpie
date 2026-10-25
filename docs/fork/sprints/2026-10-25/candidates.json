@@ -1,0 +1,101 @@
+{
+ "checked_at": "2026-10-25T01:56:07Z",
+ "delivered_this_round": [
+  3117,
+  3043,
+  3470
+ ],
+ "audited": [
+  {
+   "issue": 3537,
+   "title": "Grok 4.7 premature completion in Codex plugin",
+   "disposition": "NEEDS_REAL_ACCOUNT",
+   "why": "reporter not asserting magpie at fault; needs Codex App Server + real Grok subscription tracing"
+  },
+  {
+   "issue": 3477,
+   "title": "dsh restarts when magpie model settings change",
+   "disposition": "REPORTER_DATA",
+   "why": "no logs, no repro steps, one sentence"
+  },
+  {
+   "issue": 3190,
+   "title": "Codex subscription drops client max_output_tokens",
+   "disposition": "PRODUCT_DECISION",
+   "why": "removal introduced deliberately in 2b80641d (requests shaped as Codex CLI makes them); whether the ChatGPT backend accepts the field needs a real Codex account to verify"
+  },
+  {
+   "issue": 3430,
+   "title": "Messages reasoning tokens always 0",
+   "disposition": "OTHER_PATCH_READY",
+   "why": "mdwsk88 reference fix 9feac29c6 with real Copilot A/B data and full suite"
+  },
+  {
+   "issue": 3442,
+   "title": "Zhipu team plan read first",
+   "disposition": "OTHER_PATCH_READY",
+   "why": "xinghui branch zhipu-team-plan-read-first, tests + verified"
+  },
+  {
+   "issue": 2918,
+   "title": "cn: prefix breaks catalog lookup",
+   "disposition": "OTHER_PATCH_READY",
+   "why": "NineSu branch catalog-cn-marker-prefix with local models.dev verification"
+  },
+  {
+   "issue": 2951,
+   "title": "Copilot Grok 422",
+   "disposition": "REPORTER_DATA",
+   "why": "reporter states not reproduced, no upstream error body, no sanitized request log; needs a real Copilot account"
+  },
+  {
+   "issue": 2952,
+   "title": "Copilot Grok then GPT duplicate replies",
+   "disposition": "REPORTER_DATA",
+   "why": "same reporter, same missing evidence"
+  },
+  {
+   "issue": 3156,
+   "title": "live routing shows stale group members",
+   "disposition": "PRODUCT_DECISION",
+   "why": "GroupRef is the request-time snapshot by design (gateway/trace.go groupRef at request time); reporter asks it to show current config instead — maintainer's call which semantics the trace description carries"
+  },
+  {
+   "issue": 3118,
+   "title": "claude client resends images",
+   "disposition": "REPORTER_DATA",
+   "why": "body is a fragment of AI analysis output, no repro"
+  },
+  {
+   "issue": 3108,
+   "title": "autostart panic on Ubuntu",
+   "disposition": "DEFER",
+   "why": "wails app-layer nil pointer at login; candidates for a later round (autostart environment ordering)"
+  },
+  {
+   "issue": 3475,
+   "title": "Copilot tool-search beta name",
+   "disposition": "OTHER_PATCH_READY",
+   "why": "mdwsk88 eed4be36f with real Copilot Business runs; asked-by ROUND12 not to re-port uncredited"
+  },
+  {
+   "issue": 3512,
+   "title": "surelyMagpie first-write race",
+   "disposition": "OTHER_PATCH_READY",
+   "why": "JoeyWu cd2c6acd stacked on his own #3480 d970371e; reporter notes cold-start Apply/Disconnect still open"
+  },
+  {
+   "issue": 3456,
+   "title": "Huawei CodeArts/InferHub 400",
+   "disposition": "REPORTER_DATA",
+   "why": "asked reporter for the archived upstream request body and minimal JSON diff (comment 6392141495)"
+  },
+  {
+   "issue": 3417,
+   "title": "reset-card early spend",
+   "disposition": "OURS_PENDING",
+   "why": "our fix/codex-expiry-window e75480ec already pushed; awaiting maintainer; no new count"
+  }
+ ],
+ "scan": "zero-comment open issues pages 1-4 (622 total), comments:0 bug-titled filter, plus #3448-#3520 and active backlog audited in round15"
+}

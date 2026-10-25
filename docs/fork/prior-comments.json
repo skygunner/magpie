@@ -713,12 +713,13 @@
  },
  "3470": {
   "urls": [
+   "https://github.com/yetone/magpie/issues/3470#issuecomment-6392134728",
    "https://github.com/yetone/magpie/issues/3470#issuecomment-6389269893"
   ],
   "category": "product",
   "type": "issue",
   "url": "https://github.com/yetone/magpie/issues/3470",
-  "title": "session hit rates cache_unknown"
+  "title": "#3470 session hit rates + day-rows follow-up (both deliveries)"
  },
  "3519": {
   "urls": [
@@ -764,5 +765,23 @@
   "type": "issue",
   "url": "https://github.com/yetone/magpie/issues/3455",
   "title": "url_citation on Responses/Chat search replies"
+ },
+ "3117": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3117#issuecomment-6392132800"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3117",
+  "title": "Desktop 3P entrypoint"
+ },
+ "3043": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3043#issuecomment-6392132968"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3043",
+  "title": "Registry own budget"
  }
 }

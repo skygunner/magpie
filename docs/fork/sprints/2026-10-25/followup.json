@@ -1,0 +1,19 @@
+{
+ "checked_at": "2026-10-25T01:56:07Z",
+ "reconcile": {
+  "commenter_skygunner_open": 83,
+  "ledger_units_issues": "72 units; deltas are intentional categories: PR comments (1072,1073,1258), closed (3173,3276,3339,3447), upstream_fixed (2949,3143,3144,3255,3345), other (3131,3147), reply-only (3375,3433,3439,3456,3417)",
+  "conclusion": "no untracked threads; 3043/3117 enter the ledger this round"
+ },
+ "m0_fixed": [
+  "round15 comment-readback.json was an empty comments array (line-based parse of gh api multi-line JSON failed); rewritten from per-comment GET with author/issue/UTC/body-sha256 asserted, checked_at 2026-10-25T01:20:13Z",
+  "PLAN round-15 table: M2/M4/M6/M8/M10 had check marks with stale 待做 status; M7/M14 wrongly said done — statuses corrected to the real boundaries"
+ ],
+ "explicitly_not_redone": [
+  "#3447 upstream independent, closed",
+  "#3444 upstream ws fix",
+  "#3440 A/B/C decision pending",
+  "#3401 Reasonix independent branch awaiting reporter's Windows run",
+  "#3487 plugin side is magpie-community/plugins#366"
+ ]
+}

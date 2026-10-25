@@ -1,0 +1,4 @@
+ok  	github.com/yetone/magpie/internal/gateway	1.151s
+-- burst 1 --
+ok  	github.com/yetone/magpie/internal/gateway	1.141s
+-- burst 2 --

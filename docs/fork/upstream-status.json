@@ -47,15 +47,15 @@
    "batch_chain_note": "batch is a forward-append chain: the v2 base fa22bc64 carries 15 commits (34dcacff…95537ceb), rebased onto b437e4ad, then bbd6e228 and 4e136a4b this round; see deliveries.r3-batch"
   },
   "totals": {
-   "entries": 84,
-   "issues": 81,
+   "entries": 86,
+   "issues": 83,
    "prs": 3,
-   "product": 67,
+   "product": 69,
    "tests_ci": 9,
    "upstream_existing": 6,
    "other": 2,
-   "code_entries": 76,
-   "units": 72
+   "code_entries": 78,
+   "units": 75
   },
   "counts_note": "Generated from the JSON by docs/fork/generate.py; not hand-written. 64 code-linked entries are not 64 independent fixes: units are grouped by first primary fix commit (60 groups).",
   "fork": "skygunner/magpie",
@@ -3299,6 +3299,138 @@
    "archive": {
     "candidate": false
    }
+  },
+  {
+   "id": "u-sessions-claude-desktops-third-party-mode-is-the-desktops-by-3117-58a0f39c",
+   "issues": [
+    3117
+   ],
+   "category": "product",
+   "title": "sessions: Claude Desktop's third-party mode is the Desktop's, by its entrypoint (#3117, quiode)",
+   "coverage": "entrypoint prefix claude-desktop* on the calls read, the traces read and the listed session (Desktop mark on the file state); the gateway side already recorded claude-desktop so native row and gateway projection join again. CLI records untouched (control).",
+   "commits": [
+    "58a0f39cdb72eb6c655220d9f24719d1da558587"
+   ],
+   "commit_details": [
+    {
+     "sha": "58a0f39cdb72eb6c655220d9f24719d1da558587",
+     "title": "sessions: Claude Desktop's third-party mode is the Desktop's, by its entrypoint (#3117, quiode)",
+     "url": "https://github.com/skygunner/magpie/commit/58a0f39cdb72eb6c655220d9f24719d1da558587"
+    }
+   ],
+   "branch": "fix/claude-desktop-3p-sessions",
+   "base": "b027ca264dd579e415d05a9a235f1be54919d434",
+   "comments": {
+    "3117": [
+     "https://github.com/yetone/magpie/issues/3117#issuecomment-6392132800"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false,
+    "credited": "",
+    "coauthors": []
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "red->green as the commit records; package suites green; combined full nogui at merge bc193d08 (evidence round16 log); three-platform build/vet per-branch clean",
+    "head": "58a0f39cdb72eb6c655220d9f24719d1da558587"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-library-the-mcp-registry-is-asked-with-a-budget-of-its-own-3043-11d176bd",
+   "issues": [
+    3043
+   ],
+   "category": "product",
+   "title": "library: the MCP Registry is asked with a budget of its own (#3043, shupivot)",
+   "coverage": "registryClient 60s beside the market 20s (skills.sh, icons unchanged); named SearchError on real timeout; client seq guard already keeps stale answers from overwriting newer keywords. Baseline probe red with the reporter sentence verbatim.",
+   "commits": [
+    "11d176bd74827d854c91680e7fc7f34d5fe9a08a"
+   ],
+   "commit_details": [
+    {
+     "sha": "11d176bd74827d854c91680e7fc7f34d5fe9a08a",
+     "title": "library: the MCP Registry is asked with a budget of its own (#3043, shupivot)",
+     "url": "https://github.com/skygunner/magpie/commit/11d176bd74827d854c91680e7fc7f34d5fe9a08a"
+    }
+   ],
+   "branch": "fix/mcp-registry-timeout",
+   "base": "b027ca264dd579e415d05a9a235f1be54919d434",
+   "comments": {
+    "3043": [
+     "https://github.com/yetone/magpie/issues/3043#issuecomment-6392132968"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false,
+    "credited": "",
+    "coauthors": []
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "red->green as the commit records; package suites green; combined full nogui at merge bc193d08 (evidence round16 log); three-platform build/vet per-branch clean",
+    "head": "11d176bd74827d854c91680e7fc7f34d5fe9a08a"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-sessions-a-native-sessions-day-rows-leave-out-the-prompt-a-v-3470-4264a4b7",
+   "issues": [
+    3470
+   ],
+   "category": "product",
+   "title": "sessions: a native session's day rows leave out the prompt a vendor didn't count (#3470 follow-up, yetone)",
+   "coverage": "follow-up on fe330ea1 (cherry-picked d6c12abb as this branch base, dependency written): NativeSessionUnknownByDay joins the kept projection per day onto the stats day rows (own row when the file counted nothing, empty model no filter lists); page.js sums cache_unknown; gateway-only days counted once.",
+   "commits": [
+    "d6c12abb834982bb96a7f93e1866aced4551dc6c",
+    "4264a4b773f3c6dd7f7fa492d7ecdc05f13ffb92"
+   ],
+   "commit_details": [
+    {
+     "sha": "d6c12abb834982bb96a7f93e1866aced4551dc6c",
+     "title": "sessions: a hit rate leaves out the prompt a vendor didn't count (#3470, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/d6c12abb834982bb96a7f93e1866aced4551dc6c"
+    },
+    {
+     "sha": "4264a4b773f3c6dd7f7fa492d7ecdc05f13ffb92",
+     "title": "sessions: a native session's day rows leave out the prompt a vendor didn't count (#3470 follow-up, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/4264a4b773f3c6dd7f7fa492d7ecdc05f13ffb92"
+    }
+   ],
+   "branch": "fix/sessions-day-cache-unknown",
+   "base": "b027ca264dd579e415d05a9a235f1be54919d434",
+   "comments": {
+    "3470": [
+     "https://github.com/yetone/magpie/issues/3470#issuecomment-6392134728"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false,
+    "credited": "",
+    "coauthors": []
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "red->green as the commit records; package suites green; combined full nogui at merge bc193d08 (evidence round16 log); three-platform build/vet per-branch clean",
+    "head": "4264a4b773f3c6dd7f7fa492d7ecdc05f13ffb92"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
   }
  ],
  "pointed_elsewhere": [
@@ -5097,6 +5229,42 @@
    "replaced_by": "",
    "note": "round-15",
    "category": "product"
+  },
+  {
+   "branch": "fix/claude-desktop-3p-sessions",
+   "head": "58a0f39cdb72eb6c655220d9f24719d1da558587",
+   "kind": "product",
+   "base": "b027ca264dd579e415d05a9a235f1be54919d434",
+   "fix_ids": [
+    "u-sessions-claude-desktops-third-party-mode-is-the-desktops-by-3117-58a0f39c"
+   ],
+   "replaced_by": "",
+   "note": "round-16 one-issue-one-branch",
+   "category": "product"
+  },
+  {
+   "branch": "fix/mcp-registry-timeout",
+   "head": "11d176bd74827d854c91680e7fc7f34d5fe9a08a",
+   "kind": "product",
+   "base": "b027ca264dd579e415d05a9a235f1be54919d434",
+   "fix_ids": [
+    "u-library-the-mcp-registry-is-asked-with-a-budget-of-its-own-3043-11d176bd"
+   ],
+   "replaced_by": "",
+   "note": "round-16 one-issue-one-branch",
+   "category": "product"
+  },
+  {
+   "branch": "fix/sessions-day-cache-unknown",
+   "head": "4264a4b773f3c6dd7f7fa492d7ecdc05f13ffb92",
+   "kind": "product",
+   "base": "b027ca264dd579e415d05a9a235f1be54919d434",
+   "fix_ids": [
+    "u-sessions-a-native-sessions-day-rows-leave-out-the-prompt-a-v-3470-4264a4b7"
+   ],
+   "replaced_by": "",
+   "note": "round-16 one-issue-one-branch",
+   "category": "product"
   }
  ],
  "archive_policy": {
@@ -5569,6 +5737,57 @@
    "body_sha256": "9a909b34ffce43335422797ac3e56980cdf1e4d8c3ee731c5df8eec461b0dbe4",
    "evidence": "docs/fork/evidence/round15/comment-readback.json",
    "body_updated_at": "2026-10-24T20:40:41Z"
+  },
+  {
+   "issue": 3117,
+   "fix_id": "u-sessions-claude-desktops-third-party-mode-is-the-desktops-by-3117-58a0f39c",
+   "comment_id": 6392132800,
+   "url": "https://github.com/yetone/magpie/issues/3117#issuecomment-6392132800",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T01:49:42Z",
+   "verified_at": "2026-10-25T01:56:42Z",
+   "delivery": "fix/claude-desktop-3p-sessions",
+   "delivery_head": "58a0f39cdb72eb6c655220d9f24719d1da558587",
+   "body_sha256": "a89ef74dc3d4ce2bf1c4a1eecb7d63b9337c385225c97902dde7ec40cc6800af",
+   "evidence": "docs/fork/sprints/2026-10-25/deliveries.jsonl",
+   "body_updated_at": "2026-10-25T01:49:42Z"
+  },
+  {
+   "issue": 3043,
+   "fix_id": "u-library-the-mcp-registry-is-asked-with-a-budget-of-its-own-3043-11d176bd",
+   "comment_id": 6392132968,
+   "url": "https://github.com/yetone/magpie/issues/3043#issuecomment-6392132968",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "zh-CN",
+   "status": "published_verified",
+   "published_at": "2026-10-25T01:49:43Z",
+   "verified_at": "2026-10-25T01:56:42Z",
+   "delivery": "fix/mcp-registry-timeout",
+   "delivery_head": "11d176bd74827d854c91680e7fc7f34d5fe9a08a",
+   "body_sha256": "3219b2d008f5cb598850835c9b0a54964b799ecf3a5baf6fe8bba84cc49f206e",
+   "evidence": "docs/fork/sprints/2026-10-25/deliveries.jsonl",
+   "body_updated_at": "2026-10-25T01:49:43Z"
+  },
+  {
+   "issue": 3470,
+   "fix_id": "u-sessions-a-native-sessions-day-rows-leave-out-the-prompt-a-v-3470-4264a4b7",
+   "comment_id": 6392134728,
+   "url": "https://github.com/yetone/magpie/issues/3470#issuecomment-6392134728",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T01:49:56Z",
+   "verified_at": "2026-10-25T01:56:42Z",
+   "delivery": "fix/sessions-day-cache-unknown",
+   "delivery_head": "4264a4b773f3c6dd7f7fa492d7ecdc05f13ffb92",
+   "body_sha256": "acfb8f701df16ea1a68543e3cbf9c1df9136691d70f0206d0fa4c883c092a7b2",
+   "evidence": "docs/fork/sprints/2026-10-25/deliveries.jsonl",
+   "body_updated_at": "2026-10-25T01:49:56Z"
   }
  ],
  "deliveries": {
@@ -5686,6 +5905,40 @@
    "pushed": true,
    "read_back": "2026-10-25 origin/fix/issue-batch-1025a=b78a4f07 (read back equal)",
    "note": "round-15 batch: seven fixes (#3487 d4944ace, #3470 fe330ea1, #3519 91fc2733, #3514 3053f99f, #1105 3e3fd41a, #3513 fb29f08c, #3455 b78a4f07) on upstream/main 7d67910f; seven delivery comments published and read back; full nogui + three-platform build/vet in evidence/round15."
+  },
+  "fix/claude-desktop-3p-sessions": {
+   "branch": "fix/claude-desktop-3p-sessions",
+   "base": "b027ca264dd579e415d05a9a235f1be54919d434",
+   "head": "58a0f39cdb72eb6c655220d9f24719d1da558587",
+   "commits": [
+    "58a0f39cdb72eb6c655220d9f24719d1da558587"
+   ],
+   "pushed": true,
+   "read_back": "2026-10-25 equal",
+   "note": "#3117 single fix"
+  },
+  "fix/mcp-registry-timeout": {
+   "branch": "fix/mcp-registry-timeout",
+   "base": "b027ca264dd579e415d05a9a235f1be54919d434",
+   "head": "11d176bd74827d854c91680e7fc7f34d5fe9a08a",
+   "commits": [
+    "11d176bd74827d854c91680e7fc7f34d5fe9a08a"
+   ],
+   "pushed": true,
+   "read_back": "2026-10-25 equal",
+   "note": "#3043 single fix"
+  },
+  "fix/sessions-day-cache-unknown": {
+   "branch": "fix/sessions-day-cache-unknown",
+   "base": "b027ca264dd579e415d05a9a235f1be54919d434",
+   "head": "4264a4b773f3c6dd7f7fa492d7ecdc05f13ffb92",
+   "commits": [
+    "d6c12abb834982bb96a7f93e1866aced4551dc6c",
+    "4264a4b773f3c6dd7f7fa492d7ecdc05f13ffb92"
+   ],
+   "pushed": true,
+   "read_back": "2026-10-25 equal",
+   "note": "#3470 follow-up; base is the cherry-picked first half (same issue)"
   }
  }
 }
