@@ -16,14 +16,16 @@ import (
 // the plugin's fetch: status, and a claim answered with claimCode (0
 // claims).
 type fakeTraeCheckin struct {
-	mu        sync.Mutex
-	enable    bool
-	checked   bool
-	claimCode int
-	claimMsg  string // the claim's message with claimCode
-	expired   bool   // the plugin marks the sign-in expired (code 1001)
-	old       bool   // a plugin before 0.1.4: chat completions only
-	paths     []string
+	mu           sync.Mutex
+	enable       bool
+	checked      bool
+	claimCode    int
+	claimMsg     string // the claim's message with claimCode
+	expired      bool   // the plugin marks the sign-in expired (code 1001)
+	old          bool   // a plugin before 0.1.4: chat completions only
+	paths        []string
+	claimCredits *float64 // the claim's credits, nil: the field is left out
+	claimExtra   *float64 // the claim's extra_credits, nil: left out
 }
 
 func (f *fakeTraeCheckin) serve(t *testing.T) *httptest.Server {
@@ -50,7 +52,14 @@ func (f *fakeTraeCheckin) serve(t *testing.T) *httptest.Server {
 				return
 			}
 			f.checked = true
-			json.NewEncoder(w).Encode(map[string]any{"code": 0, "credits": 100, "extra_credits": 0})
+			answer := map[string]any{"code": 0}
+			if f.claimCredits != nil {
+				answer["credits"] = *f.claimCredits
+			}
+			if f.claimExtra != nil {
+				answer["extra_credits"] = *f.claimExtra
+			}
+			json.NewEncoder(w).Encode(answer)
 		default:
 			w.WriteHeader(404)
 		}
@@ -238,3 +247,37 @@ func TestTraeCheckinOnTheCard(t *testing.T) {
 		t.Fatal("qs changed")
 	}
 }
+
+// The Go check-in's fallback takes the claim's credits, else its
+// extra_credits, never their sum — what trae 0.2.21's plugin took
+// (magpie-community/plugins@ba9801c, #3529): a claim answering both at
+// 100 shows 100, the account's day's credit, not 200. No real claim has
+// been seen naming either field (plugins#194), so this is the protocol
+// kept right on synthetic answers.
+func TestTraeCheckinTakesOneCreditNotTheirSum(t *testing.T) {
+	ctx := context.Background()
+	now := time.Date(2026, 10, 25, 9, 0, 0, 0, beijing)
+	for _, c := range []struct {
+		name          string
+		credits, true *float64
+		extra, lie    *float64
+		want          float64
+	}{
+		{"both at 100 show 100", f64(100), nil, f64(100), nil, 100},
+		{"extra alone when no credits", nil, nil, f64(50), nil, 50},
+		{"credits alone", f64(80), nil, nil, nil, 80},
+		{"neither: the status says", nil, nil, nil, nil, 100},
+	} {
+		f := &fakeTraeCheckin{enable: true, claimCredits: c.credits, claimExtra: c.extra}
+		f.serve(t)
+		rs := traeCheckinFixture(t, &now).checkinNow(ctx, false)
+		if rs[0].Outcome != CheckinClaimed {
+			t.Fatalf("%s: %+v", c.name, rs)
+		}
+		if rs[0].Credit != c.want {
+			t.Errorf("%s: credit %v, want %v", c.name, rs[0].Credit, c.want)
+		}
+	}
+}
+
+func f64(n float64) *float64 { return &n }

@@ -133,11 +133,18 @@ func traeCheckin(ctx context.Context, a traeAccount) WorkBuddyCheckin {
 	if got.Code != 0 {
 		return traeRefused(got.Code, got.Message)
 	}
+	// the claim's credits, else its extra_credits, never their sum — what
+	// trae 0.2.21's plugin took for an account whose credits and
+	// extra_credits both read 100 and showed 200 (#3529); a claim that
+	// names neither stands for the status's count, as before
 	credit := got.Credits
+	if credit == 0 {
+		credit = got.ExtraCredits
+	}
 	if credit == 0 {
 		credit = st.Credits
 	}
-	return WorkBuddyCheckin{Outcome: CheckinClaimed, Credit: credit + got.ExtraCredits}
+	return WorkBuddyCheckin{Outcome: CheckinClaimed, Credit: credit}
 }
 
 // traeRefused is what a code Trae answered with comes to: an answer for
