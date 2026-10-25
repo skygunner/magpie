@@ -6143,12 +6143,12 @@
    "language": "en",
    "status": "published_verified",
    "published_at": "2026-10-25T02:40:42Z",
-   "verified_at": "2026-10-25T03:09:02Z",
+   "verified_at": "2026-10-25T05:37:51Z",
    "delivery": "fix/codex-multi-home-sessions",
    "delivery_head": "8b9022cd0d570aea6d6be0ad0168d9c223354ffd",
-   "body_sha256": "b7038c1559cac1bf0b982f0186a5b3f892181f7bac50c4deadcd6c8ff8bcd43b",
-   "evidence": "docs/fork/sprints/2026-10-25/deliveries.jsonl",
-   "body_updated_at": "2026-10-25T02:40:42Z"
+   "body_sha256": "6bc8357e955c5929ea695d50c45686f8896e2e6a8653c5b86b6b6dc4569e7413",
+   "evidence": "docs/fork/evidence/round18/comment-sync-corrected.json",
+   "body_updated_at": "2026-10-25T03:39:54Z"
   },
   {
    "issue": 3529,
@@ -6177,12 +6177,12 @@
    "language": "en",
    "status": "published_verified",
    "published_at": "2026-10-25T03:07:20Z",
-   "verified_at": "2026-10-25T03:09:02Z",
+   "verified_at": "2026-10-25T05:37:51Z",
    "delivery": "fix/sidebar-gateway-line",
    "delivery_head": "7597f8160c674dd83696ade94d93a4274d6a952a",
-   "body_sha256": "4a67d618112533e44df5df4c72c8db0fc8823bf8be9d48dce993e327c1d19d68",
-   "evidence": "docs/fork/sprints/2026-10-25/deliveries.jsonl",
-   "body_updated_at": "2026-10-25T03:07:20Z"
+   "body_sha256": "7aa50506110ab8bd2b5a2aaea66b3040a21f648f7ef36131d795937eb853d256",
+   "evidence": "docs/fork/evidence/round18/comment-sync-corrected.json",
+   "body_updated_at": "2026-10-25T03:39:56Z"
   },
   {
    "issue": 2866,
@@ -6196,7 +6196,7 @@
    "published_at": "2026-10-25T03:44:39Z",
    "verified_at": "2026-10-25T04:07:59Z",
    "delivery": "fix/atom-zh-sections",
-   "delivery_head": "7aa044082c8b1511",
+   "delivery_head": "7aa044082c8b15111614bf4a5a0b46f2fdec01f3",
    "body_sha256": "87e72ea92da763ec81e78847639e1ce0d04fbea44f196d687a78644ab08e571a",
    "evidence": "docs/fork/sprints/2026-10-25/deliveries.jsonl",
    "body_updated_at": "2026-10-25T03:44:39Z"
@@ -6213,7 +6213,7 @@
    "published_at": "2026-10-25T03:57:11Z",
    "verified_at": "2026-10-25T04:07:59Z",
    "delivery": "fix/checkin-account-proxy",
-   "delivery_head": "69eaf0948db1b681",
+   "delivery_head": "69eaf0948db1b6812505ea90ef65131f84cefefe",
    "body_sha256": "e9252ef2aa262aa503d9927869c8ceed4776d06bea36da3119242ae5bd240ae3",
    "evidence": "docs/fork/sprints/2026-10-25/deliveries.jsonl",
    "body_updated_at": "2026-10-25T03:57:11Z"
@@ -6228,12 +6228,12 @@
    "language": "zh-CN",
    "status": "published_verified",
    "published_at": "2026-10-25T04:06:55Z",
-   "verified_at": "2026-10-25T04:07:59Z",
+   "verified_at": "2026-10-25T05:37:51Z",
    "delivery": "fix/dsh-npx-config-writes",
-   "delivery_head": "b8f2a4c8b0d87ff1",
-   "body_sha256": "ffdaeb8d81f1c09ed027020d59a5b65841ad72ac75a52e9033b7537eb89c532a",
-   "evidence": "docs/fork/sprints/2026-10-25/deliveries.jsonl",
-   "body_updated_at": "2026-10-25T04:06:55Z"
+   "delivery_head": "b8f2a4c8b0d87ff17e8b121925ded1ed80a79b47",
+   "body_sha256": "755faa4e53e168f677ed9a5945b55561c9d406f9fd6d95d8278c53d43abf1940",
+   "evidence": "docs/fork/evidence/round18/comment-sync-corrected.json",
+   "body_updated_at": "2026-10-25T05:34:38Z"
   }
  ],
  "deliveries": {

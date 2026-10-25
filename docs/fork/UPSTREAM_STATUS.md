@@ -799,9 +799,9 @@ Round-3 trees (base `b437e4ad`): batch `7f927133`, union `275b7a2e`, rests `d639
 
 ## Branches (from git at this run)
 
-103 remote heads (this run's snapshot), 7 local-only, 1 symref(s) excluded.
+103 remote heads (this run's snapshot), 6 local-only, 1 symref(s) excluded.
 
-- `dev` maintenance/maintenance head `370d4aba` — ledger head was 3aae9406
+- `dev` maintenance/maintenance head `5251837d` — ledger head was 3aae9406
 - `fix/account-rest-cap` fix/single-fix head `c41b6feb` base `87d703c5` → fix_ids: u-provider-rest-cap-quota-rest-and-its-until-time--c41b6feb
 - `fix/atom-zh-sections` fix/product head `7aa04408` base `42976f9a` → fix_ids: u-update-the-feeds-chinese-section-is-found-by-its-blocks-no-2866-7aa04408 — round-18 one-issue-one-branch
 - `fix/autovision-catalog-images` fix/batch-chain head `7e156213` base `7aad6a50` → fix_ids: u-fix-gui-reap-plugin-hosts-before-web-update-reex-863a1e72, u-test-gui-wait-for-the-chosen-codex-subagent-stor-435c03ac, u-gateway-classify-chinese-hourly-usage-limits-as--942bf679, u-test-provider-invalidate-cached-misses-after-cla-873c5dfd, u-agent-use-vs-code-portable-data-for-settings-and-e4ca1b34, u-fix-tui-keep-agent-fields-readable-in-narrow-ter-cebfc283, u-agent-do-not-count-claude-exit-records-as-gatewa-18c0967e, u-test-gui-wait-for-the-quota-picker-save-to-be-re-c24a50e3, u-gui-preserve-the-original-url-across-protocol-sw-9f7ada4f, u-sessions-retain-pi-and-omp-reasoning-in-request--b506ff56, u-gateway-follow-kimi-tool-schema-reference-chains-f5ec664b, u-gateway-keep-a-severed-chat-stream-free-of-parti-a6a2c260, u-gateway-preserve-plaintext-codex-collaboration-t-b1ae66c7, u-gateway-carry-deepseek-reasoning-under-one-field-d5b46244, u-provider-let-the-grok-plugin-read-allowed-tool-c-852182f6, u-gateway-normalize-whole-tool-numbers-from-every--deefacd2, u-proc-recheck-tools-installed-within-a-directory--89bceb39, u-provider-retain-the-first-single-card-quota-refr-a11d605e, u-fix-gui-apply-left-display-to-custom-balance-per-15759adb, u-fix-gateway-omit-ollama-options-from-gemini-chat-a0b3c8f6, u-test-provider-keep-hold-assertions-independent-o-665af242, u-test-provider-drain-plugin-callbacks-before-swap-f85bd166, u-test-gui-isolate-the-window-s-usage-requests-fro-4671590d, u-gateway-recognize-a-relay-s-expired-reasoning-it-cf95652a, u-gateway-recognize-sensenova-s-guided-grammar-for-8f931a28, u-gateway-deliver-background-task-notifications-wi-b7726551, u-edit-index-json-arrays-without-replacing-their-e-1805ff94, u-gateway-retry-kimi-s-untyped-tool-roots-as-objec-2bddfe10, u-fix-provider-keep-usage-only-models-out-of-codex-a016fcee, u-gateway-keep-desktop-credential-probes-on-their--9fd7a9d4, u-gateway-include-inferred-and-user-set-image-inpu-7e156213
@@ -910,7 +910,6 @@ Round-3 trees (base `b437e4ad`): batch `7f927133`, union `275b7a2e`, rests `d639
 - `fix/webdav-digest-auth` local-only (historical snapshot, unavailable on this machine) head `0437ae4c`
 - `r4-work` local-only (historical snapshot, unavailable on this machine) head `4e136a4b`
 - `r5-work` local-only (historical snapshot, unavailable on this machine) head `1952329f`
-- `round18-combined` local-only (historical snapshot, unavailable on this machine) head `5985a6b1`
 
 ## Archive
 
