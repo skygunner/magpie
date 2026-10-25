@@ -1987,7 +1987,7 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 		}
 	}
 	var hit *RuleHit
-	var ruleAt, words string
+	var ruleAt, words, native string
 	var ruleReq *Request // parsed for the rules of the group or a group in it
 	// a classifier's own call to a group (a group's classifier may be one)
 	// asks no classifier in turn: one that is, however far round, the group
@@ -2000,11 +2000,12 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 		return g.Ruled() || slices.ContainsFunc(m.Via, provider.Group.Ruled)
 	}) {
 		if req, err := parse(from, body); err == nil {
-			ruleReq, ruleAt, words = req, ruleKey(g, r.Header, req), firstWords(req)
+			native = nativeTurn(r, body, call.Kind)
+			ruleReq, ruleAt, words = req, ruleKey(g, r.Header, req, native), firstWords(req)
 		}
 	}
 	if ruleReq != nil && g.Ruled() {
-		hit = ruleFor(ruleAt, g, ms, ruleReq, agent, ask)
+		hit = ruleFor(ruleAt, g, ms, ruleReq, agent, ask, native)
 	}
 	// Some clients send images even when the selected model is known to
 	// accept text only. Reject a new image and omit images from history.
@@ -2264,7 +2265,7 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 	var nested []NestedRule
 	var nestedAt []string
 	if ruleReq != nil && !modelRuled(hit, ms, cands) {
-		nested, nestedAt, cands, pl = s.nestedRules(ruleAt, ruleReq, agent, ask, ruled, cands, pl, aff)
+		nested, nestedAt, cands, pl = s.nestedRules(ruleAt, ruleReq, agent, ask, native, ruled, cands, pl, aff)
 	}
 	// the effort a group's decision model picked for the turn: the
 	// outermost group's that did

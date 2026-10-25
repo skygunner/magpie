@@ -101,11 +101,15 @@ type Classified struct {
 }
 
 type turnRule struct {
-	turn  int
-	use   string // "" when no rule matched
-	n     int
-	at    time.Time
-	input int // the tokens the vendor counted the conversation's last request as
+	turn int
+	// native: the agent's own turn id, when it named one. Its decision
+	// holds while that is still the turn, whatever the transcript's count
+	// reads as after a compaction (#3434)
+	native string
+	use    string // "" when no rule matched
+	n      int
+	at     time.Time
+	input  int // the tokens the vendor counted the conversation's last request as
 	// intent is what the classifier said the turn's first message is
 	intent string
 	effort string // the reasoning it picked for the turn
@@ -125,9 +129,37 @@ var turnRules = struct {
 }{m: map[string]turnRule{}}
 
 // ruleKey is the conversation a group's rules keep a turn's decision for:
-// the agent's session and the conversation's first words (firstWords).
-func ruleKey(g provider.Group, in http.Header, req *Request) string {
-	return provider.GroupPrefix + g.ID + "|" + conversationID(in, nil) + "|" + firstWords(req)
+// the agent's session, and the task (taskOf).
+func ruleKey(g provider.Group, in http.Header, req *Request, native string) string {
+	return provider.GroupPrefix + g.ID + "|" + conversationID(in, nil) + "|" + taskOf(req, native)
+}
+
+// taskOf is what a group's rules hold a turn's decision by, one task from
+// the next: the agent's own turn when it names one — a compaction replaces
+// the transcript's first words and its parsed turn count, not the turn
+// (#3434) — else the conversation's first words. The turn's id is a digest
+// here, as the first words are.
+func taskOf(req *Request, native string) string {
+	if native != "" {
+		sum := sha256.Sum256([]byte(native))
+		return "turn\x00" + hex.EncodeToString(sum[:12])
+	}
+	return firstWords(req)
+}
+
+// nativeTurn is the turn an agent names for its request, as Codex does in
+// client_metadata's x-codex-turn-metadata (turn_id). A helper's call — a
+// title, a description, a subagent's own task — names none: its own first
+// words tell it from the conversation's turn.
+func nativeTurn(r *http.Request, body []byte, kind string) string {
+	if kind != "" {
+		return ""
+	}
+	id := strings.TrimSpace(requestSessionMetadata(r.Header, body).Turn)
+	if len(id) > 128 || strings.ContainsAny(id, "\r\n\t") {
+		return ""
+	}
+	return id
 }
 
 // firstWords tells an agent's subagents from it: they share its session
@@ -172,7 +204,7 @@ func firstWords(req *Request) string {
 // effort (provider.EffortAuto) has it pick as the turn begins, when the
 // agent asked for reasoning, and the turn keeps it. It returns nil for a
 // group that decides nothing.
-func ruleFor(key string, g provider.Group, ms []provider.Member, req *Request, agent string, ask classifier) *RuleHit {
+func ruleFor(key string, g provider.Group, ms []provider.Member, req *Request, agent string, ask classifier, native string) *RuleHit {
 	if !g.Ruled() || req == nil {
 		return nil
 	}
@@ -191,6 +223,11 @@ func ruleFor(key string, g provider.Group, ms []provider.Member, req *Request, a
 	turnRules.Unlock()
 	if had && now.Sub(tr.at) > stickKeep {
 		had = false
+	}
+	if had && native != "" && tr.native == native {
+		// the turn the agent names, still: a compaction rewrote the
+		// transcript's first words and its count, not the task (#3434)
+		turn, within = tr.turn, true
 	}
 	if had && tr.input > q.Tokens {
 		q.Tokens = tr.input // what the vendor counted last, a floor: the conversation only grew since
@@ -267,7 +304,7 @@ func ruleFor(key string, g provider.Group, ms []provider.Member, req *Request, a
 		}
 		if grown, ok := outgrown(g, ctx, hit, q); ok {
 			hit = grown
-			turnRules.m[key] = turnRule{turn: turn, use: hit.Use, n: hit.N, at: now, input: tr.input, intent: q.Intent, effort: tr.effort, wanted: tr.wanted, answered: tr.answered, size: size, hour: tr.hour}
+			turnRules.m[key] = turnRule{turn: turn, native: native, use: hit.Use, n: hit.N, at: now, input: tr.input, intent: q.Intent, effort: tr.effort, wanted: tr.wanted, answered: tr.answered, size: size, hour: tr.hour}
 			return hit
 		}
 		if had {
@@ -342,7 +379,7 @@ func ruleFor(key string, g provider.Group, ms []provider.Member, req *Request, a
 	if cur, ok := turnRules.m[key]; ok {
 		input, answered, hour = cur.input, cur.answered, cur.hour // answered while the classifier was asked
 	}
-	turnRules.m[key] = turnRule{turn: turn, use: hit.Use, n: hit.N, at: now, input: input, intent: q.Intent, effort: hit.Pick, wanted: hit.Wanted, answered: answered, size: size, hour: hour}
+	turnRules.m[key] = turnRule{turn: turn, native: native, use: hit.Use, n: hit.N, at: now, input: input, intent: q.Intent, effort: hit.Pick, wanted: hit.Wanted, answered: answered, size: size, hour: hour}
 	if len(turnRules.m) > 4096 {
 		for k, tr := range turnRules.m {
 			if now.Sub(tr.at) > stickKeep {
@@ -472,7 +509,7 @@ func keepsEffort(tr turnRule, pick string, tokens int, now time.Time) bool {
 // their own key (at, the group's, and the group's way down), asking ask
 // of the message as the group's own rules do. It gives what each decided
 // and their keys.
-func (s *Server) nestedRules(at string, req *Request, agent string, ask classifier, ms []provider.Member, cands []candidate, pl planned, aff *Affinity) ([]NestedRule, []string, []candidate, planned) {
+func (s *Server) nestedRules(at string, req *Request, agent string, ask classifier, native string, ms []provider.Member, cands []candidate, pl planned, aff *Affinity) ([]NestedRule, []string, []candidate, planned) {
 	var out []NestedRule
 	var keys []string
 	for depth := 0; ; depth++ { // as deep as the one going first is
@@ -492,7 +529,7 @@ func (s *Server) nestedRules(at string, req *Request, agent string, ask classifi
 				subMs = append(subMs, m.Below(depth+1))
 			}
 		}
-		h := ruleFor(at, sub, subMs, req, agent, ask)
+		h := ruleFor(at, sub, subMs, req, agent, ask, native)
 		keys = append(keys, at)
 		out = append(out, NestedRule{Group: sub.ID, Name: sub.Name, Rule: h})
 		if h == nil || h.Use == "" {
