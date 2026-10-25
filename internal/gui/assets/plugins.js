@@ -25,6 +25,8 @@
   let tab = "discover";
   try { tab = localStorage.getItem("magpie.pluginTab") || tab; } catch {}
   let query = "";
+  // the panel's way here and its search: Discover, looking for lookFor (#3579)
+  let lookFor = new URLSearchParams(location.search).get("find");
   let hits = null;       // npm's answer for query: { q, list } | { q, loading } | { q, error }
   let searchTimer = 0;
   const busy = new Map(); // package → "add" | "remove" | "upgrade" | "off"
@@ -232,6 +234,7 @@
   }
 
   async function load() {
+    if (lookFor !== null) { window.pluginQuery(lookFor); lookFor = null; }
     if (!mine && !listings) draw();
     const parts = [
       loadMine().then(() => { draw(); window.renderPluginDot?.(); }),

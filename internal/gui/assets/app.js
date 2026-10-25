@@ -7495,7 +7495,7 @@ function morePluginsTile(q) {
 
 // openPlugins: the Plugins tab, looking for q when there is one
 async function openPlugins(q) {
-  if (mode !== "window") { api("window/main?view=plugins", {}).catch(() => {}); return; }
+  if (mode !== "window") { api("window/main?view=plugins&find=" + encodeURIComponent(q || ""), {}).catch(() => {}); return; }
   if (!await show("plugins")) return;
   window.pluginQuery?.(q || "");
 }

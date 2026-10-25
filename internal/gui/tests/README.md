@@ -344,6 +344,12 @@ Plugins" row and its "look for a plugin" link open Plugins on Discover,
 after Built-in or Installed was the tab open last (outloudvi on Discord).
 English and Chinese, Chromium and WebKit, with the API faked.
 
+`panel-plugins-discover.test.cjs` checks the tray panel's way to Plugins
+(#3579): the call the panel makes carries what was looked for, and the
+window it opens lands on Discover, looking for it, with Installed kept as
+the tab open last. English and Chinese, Chromium and WebKit, with the API
+faked.
+
 `plugin-git.test.cjs` checks a plugin installed from a git repository: the
 market's field says it takes a GitHub repo, and Install sends
 `github:owner/repo` as typed; Installed names it by the package its

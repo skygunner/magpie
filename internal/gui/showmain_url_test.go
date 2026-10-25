@@ -2,19 +2,24 @@ package gui
 
 import (
 	"net/url"
+	"strings"
 	"testing"
 )
 
 // The panel's link to one request opens the Routing page on it: its req is
 // a parameter of the window's page, not part of the view's name (it was
 // escaped whole in v0.1.458, so the window opened on no tab at all); a tab
-// named on the command line is only ever a name.
+// named on the command line is only ever a name. The panel's way to Plugins
+// carries what was looked for (#3579).
 func TestMainURL(t *testing.T) {
 	for _, c := range []struct {
 		view, want string
 	}{
 		{mainView(url.Values{"view": {"routing"}, "req": {"42"}}), "/?view=routing&req=42&lang=en"},
 		{mainView(url.Values{"view": {"settings"}}), "/?view=settings&lang=en"},
+		{mainView(url.Values{"view": {"plugins"}}), "/?view=plugins&lang=en"},
+		{mainView(url.Values{"view": {"plugins"}, "find": {"fakeco"}}), "/?view=plugins&find=fakeco&lang=en"},
+		{mainView(url.Values{"view": {"plugins"}, "find": {"a&b c"}}), "/?view=plugins&find=a%26b+c&lang=en"},
 		{mainView(url.Values{"view": {"usage"}, "tab": {"requests"}, "provider": {"relay team"}, "agent": {"claude-desktop"}}), "/?view=usage&tab=requests&provider=relay+team&agent=claude-desktop&lang=en"},
 		{mainView(url.Values{"view": {"usage"}, "tab": {"usage"}, "provider": {"codex"}}), "/?view=usage&tab=usage&provider=codex&lang=en"},
 		{mainView(url.Values{"view": {"usage"}, "tab": {"usage"}, "card": {"codex|a+b&c@test"}}), "/?view=usage&tab=usage&card=codex%7Ca%2Bb%26c%40test&lang=en"},
@@ -31,6 +36,9 @@ func TestMainURL(t *testing.T) {
 		}
 		if c.view == "routing&req=42" && (u.Query().Get("view") != "routing" || u.Query().Get("req") != "42") {
 			t.Errorf("%q: view %q req %q", got, u.Query().Get("view"), u.Query().Get("req"))
+		}
+		if strings.Contains(c.view, "find=") && u.Query().Get("find") == "" {
+			t.Errorf("%q: find %q", got, u.Query().Get("find"))
 		}
 	}
 }

@@ -203,7 +203,9 @@ func publicRoute(r gateway.Route, pub func(string) string) gateway.Route {
 // panel's Routing tab asks for it, Masking on one request's record (key)
 // when a masked call's badge there does, or the Usage page's Requests on one
 // provider or agent when its Usage tab does, its Overview (the allowances)
-// when a menu-bar cell's click does. Anything but an id, or a name of the
+// when a menu-bar cell's click does. Plugins is the tray panel's way there,
+// looking for what was looked for (find), so it opens on Discover rather
+// than the tab visited last (#3579). Anything but an id, or a name of the
 // kind a provider or an agent has, is dropped.
 func mainView(q url.Values) string {
 	view := q.Get("view")
@@ -227,6 +229,10 @@ func mainView(q url.Values) string {
 			if v := q.Get(k); mainName.MatchString(v) {
 				view += "&" + k + "=" + url.QueryEscape(v)
 			}
+		}
+	case "plugins":
+		if find := q.Get("find"); find != "" {
+			view += "&find=" + url.QueryEscape(find)
 		}
 	}
 	// the panel's picker making a routing group of a model kept for groups
