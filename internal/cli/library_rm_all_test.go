@@ -110,3 +110,53 @@ func TestLibraryMCPAddNoAgents(t *testing.T) {
 		t.Fatalf("added to claude: %q", got)
 	}
 }
+
+// magpie library instructions set with no agent on them says the text is
+// saved and given to no agent: it said "every agent already has it"
+// (#3598). With an agent on, an unchanged save keeps saying so.
+func TestLibraryInstructionsSetNoAgents(t *testing.T) {
+	h := t.TempDir()
+	for k, v := range map[string]string{"HOME": h, "USERPROFILE": h, "XDG_CONFIG_HOME": filepath.Join(h, ".config"), "CLAUDE_CONFIG_DIR": "", "CODEX_HOME": "", "APPDATA": "", "LOCALAPPDATA": ""} {
+		t.Setenv(k, v)
+	}
+	if err := os.MkdirAll(filepath.Join(h, ".claude"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(h, ".claude/settings.json"), []byte("{}"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	f := filepath.Join(h, "instr.txt")
+	if err := os.WriteFile(f, []byte("line\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	out := func(args ...string) string {
+		t.Helper()
+		r, w, err := os.Pipe()
+		if err != nil {
+			t.Fatal(err)
+		}
+		old := os.Stdout
+		os.Stdout = w
+		done := make(chan string)
+		go func() { b, _ := io.ReadAll(r); done <- string(b) }()
+		err = libraryCmd(append([]string{"library", "instructions"}, args...))
+		w.Close()
+		os.Stdout = old
+		s := <-done
+		r.Close()
+		if err != nil {
+			t.Fatalf("library instructions %v: %v", args, err)
+		}
+		return s
+	}
+	got := out("set", f)
+	if strings.Contains(got, "every agent") || !strings.Contains(got, "given to no agent yet") || !strings.Contains(got, "magpie library instructions agents") {
+		t.Fatalf("saved to none: %q", got)
+	}
+	if got := out("agents", "claude"); !strings.Contains(got, "written into claude") {
+		t.Fatalf("given to claude: %q", got)
+	}
+	if got := out("set", f); !strings.Contains(got, "every agent already has it") {
+		t.Fatalf("already written, still said: %q", got)
+	}
+}

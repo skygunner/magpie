@@ -46,9 +46,10 @@ func libraryCmd(args []string) error {
 		return libraryStatus()
 	}
 	var (
-		res    *library.Result
-		err    error
-		unused string // a server just added that no agent is given
+		res     *library.Result
+		err     error
+		unused  string // a server just added that no agent is given
+		noAgent bool   // instructions just saved that no agent is given
 	)
 	switch sub, rest := args[1], args[2:]; sub {
 	case "sync":
@@ -78,6 +79,9 @@ func libraryCmd(args []string) error {
 			}
 			text := string(b)
 			res, err = library.SaveInstructions(library.InstructionsChange{Shared: &text})
+			if err == nil && strings.TrimSpace(text) != "" && instructionsGivenToNone() {
+				noAgent = true
+			}
 		case rest[0] == "agents" && len(rest) == 2:
 			var as []string
 			if as, err = libraryAgents(rest[1], "instructions"); err == nil {
@@ -189,6 +193,13 @@ func libraryCmd(args []string) error {
 		// every agent having it already
 		fmt.Println(green.Render("✓"), unused, "is in the library, given to no agent yet")
 		fmt.Println(muted.Render("  magpie library mcp agents " + unused + " <a,b…> gives it to them"))
+		return nil
+	}
+	if noAgent && len(res.Changed) == 0 && len(res.Problems) == 0 {
+		// the shared text saved with no agent on it is written nowhere,
+		// which isn't every agent having it already
+		fmt.Println(green.Render("✓"), "the text is in the library, given to no agent yet")
+		fmt.Println(muted.Render("  magpie library instructions agents <a,b…> gives it to them"))
 		return nil
 	}
 	printLibraryResult(res)
@@ -363,6 +374,21 @@ func printLibraryResult(res *library.Result) {
 	if res.Backup != "" {
 		fmt.Println(muted.Render("  what was there before is kept in " + res.Backup))
 	}
+}
+
+// instructionsGivenToNone says no agent gets the shared instructions: the
+// text is kept and written nowhere (#3598).
+func instructionsGivenToNone() bool {
+	v, err := library.ReadInstructions()
+	if err != nil {
+		return false
+	}
+	for _, a := range v.Agents {
+		if a.On {
+			return false
+		}
+	}
+	return true
 }
 
 func libraryStatus() error {
