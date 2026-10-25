@@ -27,6 +27,16 @@ var bedrockBetas = map[string]string{
 	"advanced-tool-use-2025-11-20": "tool-search-tool-2025-10-19",
 }
 
+// copilotBetas are betas of Bedrock's and Vertex's that Copilot's Messages
+// API names in another way: Claude Desktop's gateway mode runs Claude Code
+// with experimental betas off, so its tool search is asked as
+// tool-search-tool-2025-10-19, which Copilot turns away (400 unsupported
+// beta header(s)); it serves the same deferred tools as Anthropic's own
+// advanced-tool-use-2025-11-20 (#3475).
+var copilotBetas = map[string]string{
+	"tool-search-tool-2025-10-19": "advanced-tool-use-2025-11-20",
+}
+
 // bedrockRefuses are betas Bedrock has turned away (#176), left out from
 // the first request rather than learned from a refusal.
 var bedrockRefuses = []string{
@@ -70,6 +80,11 @@ func (s *Server) betas(p provider.Provider, asked []string) []string {
 				}
 				if slices.Contains(bedrockRefuses, b) {
 					continue
+				}
+			}
+			if p.Account != nil && p.Account.Agent == "copilot" {
+				if to, ok := copilotBetas[b]; ok {
+					b = to
 				}
 			}
 			if !s.fits(p.ID, betaKey(b), provider.Anthropic) || slices.Contains(out, b) {
