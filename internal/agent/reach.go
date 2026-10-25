@@ -228,6 +228,16 @@ func (a *Agent) pointedAt() string {
 // that doesn't answer from here while the gateway answers on loopback; nil
 // when it answers, isn't asked yet, or the gateway itself is down (then
 // nothing would, and that is no fault of the address).
+// The unreachable detail is a notice too, for the reader's language: the
+// GUI shows it through tNotice (#2867).
+var (
+	driftUnreachableFirewall = newNotice("{agent} is pointed at magpie at {addr}, where magpie listens for WSL, but nothing answers there from WSL {wsl}: Windows' firewall keeps WSL out. Allow magpie in when Windows asks, or, in PowerShell as administrator: {command}. On Windows 11, networkingMode=mirrored under [wsl2] in %UserProfile%\\.wslconfig lets WSL reach magpie at 127.0.0.1 instead.")
+	driftUnreachableNothing  = newNotice("{agent} is pointed at magpie at {addr}, where nothing answers from this computer, though magpie answers at {url}.")
+	driftUnreachableForward  = newNotice("Whatever forwarded {host} to magpie isn't listening now; start it again, or point {agent} at {url}.")
+	driftUnreachableWSLNat   = newNotice("Under WSL's NAT networking, Windows as WSL sees it reaches magpie only while something listens on {host}: magpie itself with Settings › Network and sharing › Share on local network on (it then listens on every address, and asks other computers for a gateway key), or a forward of your own (netsh interface portproxy, which may need setting up again after Windows restarts). Once it answers here and WSL still can't connect, Windows' firewall may be keeping WSL out: allow the port {port} for the WSL network. On Windows 11, networkingMode=mirrored under [wsl2] in %UserProfile%\\.wslconfig lets WSL reach magpie at 127.0.0.1 instead.")
+	driftUnreachableMoved    = newNotice("WSL {distro} reaches Windows at {to} now, not {addr} as before: Use {to} points {agent} there.")
+)
+
 func (a *Agent) unreachable(on Field, now string) *Drift {
 	addr := a.pointedAt()
 	if !offLoopback(addr) {
@@ -250,23 +260,18 @@ func (a *Agent) unreachable(on Field, now string) *Drift {
 	if inside {
 		// magpie listens there itself (gateway/wsl.go): what keeps WSL out
 		// is Windows' firewall
-		d.Detail = a.Name + " is pointed at magpie at " + addr + ", where magpie listens for WSL, but nothing answers there from WSL " + a.WSL + ": Windows' firewall keeps WSL out. " +
-			"Allow magpie in when Windows asks, or, in PowerShell as administrator: " + wslFirewallCommand() + ". " +
-			"On Windows 11, networkingMode=mirrored under [wsl2] in %UserProfile%\\.wslconfig lets WSL reach magpie at 127.0.0.1 instead."
+		d.Detail = driftUnreachableFirewall.say("agent", a.Name, "addr", addr, "wsl", a.WSL, "command", wslFirewallCommand())
 		return d
 	}
-	d.Detail = a.Name + " is pointed at magpie at " + addr + ", where nothing answers from this computer, though magpie answers at " + gateway.URL() + ". "
+	d.Detail = driftUnreachableNothing.say("agent", a.Name, "addr", addr, "url", gateway.URL()) + " "
 	if a.WSL != "" || runtime.GOOS == "windows" {
-		d.Detail += "Under WSL's NAT networking, Windows as WSL sees it reaches magpie only while something listens on " + host +
-			": magpie itself with Settings › Network and sharing › Share on local network on (it then listens on every address, and asks other computers for a gateway key), or a forward of your own (netsh interface portproxy, which may need setting up again after Windows restarts). " +
-			"Once it answers here and WSL still can't connect, Windows' firewall may be keeping WSL out: allow the port " + gateway.Port() + " for the WSL network. " +
-			"On Windows 11, networkingMode=mirrored under [wsl2] in %UserProfile%\\.wslconfig lets WSL reach magpie at 127.0.0.1 instead."
+		d.Detail += driftUnreachableWSLNat.say("host", host, "port", gateway.Port())
 	} else {
-		d.Detail += "Whatever forwarded " + host + " to magpie isn't listening now; start it again, or point " + a.Name + " at " + gateway.URL() + "."
+		d.Detail += driftUnreachableForward.say("host", host, "url", gateway.URL(), "agent", a.Name)
 	}
 	if to, distro := wslMovedFrom(addr); to != "" {
 		d.Move = to
-		d.Detail += " WSL " + distro + " reaches Windows at " + to + " now, not " + addr + " as before: Use " + to + " points " + a.Name + " there."
+		d.Detail += " " + driftUnreachableMoved.say("distro", distro, "to", to, "addr", addr, "agent", a.Name)
 	}
 	return d
 }

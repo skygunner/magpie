@@ -150,6 +150,18 @@ type Drift struct {
 	Move string `json:"move,omitempty"`
 }
 
+// A drift detail is a notice, as the advice an agent gives is: the GUI
+// shows it through tNotice, which translates it in the reader's language
+// (#2867).
+var (
+	driftReplaced = newNotice("{agent}'s config was changed outside magpie: {field} is {now}, not {want} as magpie set it")
+	driftDefault  = newNotice("{agent}'s config was changed outside magpie: {field} is the agent's default, not {want} as magpie set it")
+
+	driftElsewhere = newNotice("{agent}'s last request ({time}) went to {host}, not magpie — it was started before magpie set it up and still runs on its old config: quit and reopen it")
+	driftRefused   = newNotice("{agent} couldn't reach magpie at {time} — magpie wasn't running then, so it has none of magpie's models: quit and reopen it")
+	driftUnreached = newNotice("{agent} was used at {time} but none of its requests reached magpie — one started before magpie set it up still runs on its old config: restart it")
+)
+
 // started is when this process — and the gateway in it — came up: before
 // then, a request the gateway missed says nothing about the agent.
 var started = time.Now()
@@ -206,8 +218,13 @@ func (a *Agent) Drift() *Drift {
 		if !ok || picked || now == want || !magpieValue(a, f, want, vals) || magpieValue(a, f, now, vals) || sameGroup(want, now) {
 			continue
 		}
-		return &Drift{Kind: "replaced", Field: f.Key, Now: vals[f.Key], Want: want,
-			Detail: a.Name + "'s config was changed outside magpie: " + f.Label + " is " + orDefault(vals[f.Key]) + ", not " + want + " as magpie set it"}
+		d := &Drift{Kind: "replaced", Field: f.Key, Now: vals[f.Key], Want: want}
+		if vals[f.Key] == "" {
+			d.Detail = driftDefault.say("agent", a.Name, "field", f.Label, "want", want)
+		} else {
+			d.Detail = driftReplaced.say("agent", a.Name, "field", f.Label, "now", vals[f.Key], "want", want)
+		}
+		return d
 	}
 	if onMagpie || joined {
 		if d := a.unreachable(on, vals[on.Key]); d != nil {
@@ -225,17 +242,17 @@ func (a *Agent) Drift() *Drift {
 			// came through
 			case !sameHost(to, gateway.URL()) && !sameHost(to, a.pointedAt()) && lastSeen(a.ID).Before(at.Add(-2*time.Second)):
 				return &Drift{Kind: "bypassed", Field: on.Key, Now: vals[on.Key], Want: vals[on.Key],
-					Detail: a.Name + "'s last request (" + at.Format("15:04") + ") went to " + hostOf(to) + ", not magpie — it was started before magpie set it up and still runs on its old config: quit and reopen it"}
+					Detail: driftElsewhere.say("agent", a.Name, "time", at.Format("15:04"), "host", hostOf(to))}
 			case refused:
 				return &Drift{Kind: "bypassed", Field: on.Key, Now: vals[on.Key], Want: vals[on.Key],
-					Detail: a.Name + " couldn't reach magpie at " + at.Format("15:04") + " — magpie wasn't running then, so it has none of magpie's models: quit and reopen it"}
+					Detail: driftRefused.say("agent", a.Name, "time", at.Format("15:04"))}
 			}
 		}
 	}
 	if a.LastUsed != nil && onMagpie {
 		if used := a.LastUsed(); bypassed(used, rec.At, lastSeen(a.ID)) {
 			return &Drift{Kind: "bypassed", Field: on.Key, Now: vals[on.Key], Want: vals[on.Key],
-				Detail: a.Name + " was used at " + used.Format("15:04") + " but none of its requests reached magpie — one started before magpie set it up still runs on its old config: restart it"}
+				Detail: driftUnreached.say("agent", a.Name, "time", used.Format("15:04"))}
 		}
 	}
 	return nil
@@ -908,6 +925,12 @@ func sameHost(a, b string) bool { return hostOf(a) == hostOf(b) }
 // that reaches magpie another way (reachesMagpie: a reverse proxy, #1985)
 // holds. So does a key of the gateway's own the user put in place of
 // magpie's (keyHolds).
+var (
+	wiringGone     = newNotice("{agent}'s {key} ({file}) is gone, so it no longer reaches magpie")
+	wiringReplaced = newNotice("{agent}'s {key} ({file}) is {value}, not magpie's gateway at {want}")
+	wiringChanged  = newNotice("{agent}'s {key} ({file}) was changed, so magpie's gateway won't take its requests")
+)
+
 func wiringOff(name, file string, get func(string) (string, bool), kvs ...string) string {
 	for i := 0; i+1 < len(kvs); i += 2 {
 		k, want := kvs[i], kvs[i+1]
@@ -915,14 +938,14 @@ func wiringOff(name, file string, get func(string) (string, bool), kvs ...string
 		if keyHolds(v, want) || v != "" && reachesMagpie(v, want) {
 			continue
 		}
-		where := name + "'s " + k + " (" + filepath.Base(file) + ")"
+		kv := []string{"agent", name, "key", k, "file", filepath.Base(file)}
 		switch {
 		case v == "":
-			return where + " is gone, so it no longer reaches magpie"
+			return wiringGone.say(kv...)
 		case strings.Contains(strings.ToLower(k), "url"):
-			return where + " is " + v + ", not magpie's gateway at " + want
+			return wiringReplaced.say(append(kv, "value", v, "want", want)...)
 		default:
-			return where + " was changed, so magpie's gateway won't take its requests"
+			return wiringChanged.say(kv...)
 		}
 	}
 	return ""
