@@ -304,6 +304,24 @@ R5-PROVIDER-ID 的组合场景（raw cline 已保存 Decide picks 时，空闲�
 
 累计真实修复：9（前两轮）+ 本轮 #3530、#3529、#3531 三个新 issue = **12 个不同 issue**（#3470/#3470-follow-up 不重复计）。
 
+## 2026-10-25 第十四轮（ZCode 会话十六）：M0 standalone refs + #2866、#2777、#3303
+
+按 ROUND14-CONTINUE 执行（base = upstream/main `42976f9a`）。主仓库他人未提交的
+internal/gateway/fallback.go 修改全程未触碰。
+
+| M | 目标 | 结果 |
+|---|---|---|
+| M0 | 独立分支交付形状修正 | 完成（无 force-push）：`fix/codex-multi-home-sessions-standalone-1025` = 8b9022cd（单提交、仅 internal/sessions）；`fix/sidebar-gateway-line-standalone-1025` = 71d5d7c0（7597f816 cherry-pick 到干净 641b1217，仅 gui/i18n/测试），新 head 上重验：TestCoreScriptBudget 过、Playwright 4/4、sidebar/api-key-theme 12 预存红对照一致。两条原帖评论以 Pickup note 编辑增补（保留原文，API 读回 author/UTC/SHA256，evidence/round18/pickup-note-readback.json）；#3529 未动 |
+| M1-A | #2866 Atom 中文分段 | 完成：`fix/atom-zh-sections` 7aa04408——zhLed 块级切分（Han≥Latin）落在所属标题下；RED=报告者混排 fixture（zh 半边只剩安装段/en 混入中文条目）→GREEN；site 32 测试（原 21）+internal/update 47 绿；英文回帖 [6393086996](https://github.com/yetone/magpie/issues/2866#issuecomment-6393086996) |
+| M1-B | #2777 签到账户代理 | 完成：`fix/checkin-account-proxy` 69eaf094——CheckinVia（ViaLogin）包全部五个 runner 构造（Trae/MiniMax/Qoder/WorkBuddy+插件 AccountCheckin）；契约测试 RED→GREEN（账户自有出口/无自己代理跟 provider/全无留空）；provider 42s 全绿；英文回帖 [6393185272](https://github.com/yetone/magpie/issues/2777#issuecomment-6393185272)；边界如实：未对真实厂商压签到 |
+| M1-C | #3303 DSH npx | 完成：`fix/dsh-npx-config-writes` b8f2a4c8——userDirs 补 ~/.npm/_npx/*/node_modules/.bin（仅按文件发现，缓存内不执行）；proc+agent 双层 RED→GREEN；卸载残留闸门保持；回帖 [6393262850](https://github.com/yetone/magpie/issues/3303#issuecomment-6393262850)；边界：Linux 测试验证，无原生 Windows/macOS 运行（Windows FindTool 本就覆盖） |
+| M2 | #3191 网络题 | 评估后留独立一轮：写阶段无界是 ResponseHeaderTimeout 之后的真缺口，但修复涉 TryNet.Send 结构+failover 语义+stall 后连接复用三件事，报告者已给出可复现指引（可控 h2 服务+大 body 填流控窗口），下轮首要候选。#3330/#2892 OTHER_PATCH_READY；#2822/#2836/#2736 产品语义待维护者 |
+
+合并回归：三题合并树串行全量 nogui（evidence/round18-full-suite-combined.log）。
+台账：81 units / 103 远端 heads，REQUIRED_SET 92 项，generate.py+--selftest 过。
+
+累计真实修复：12（前三轮）+ 本轮 #2866、#2777、#3303 = **15 个不同 issue**。
+
 扩池补充审计（同轮晚些）：#2968（Cowork 配置目录未知，需 macOS 真机）、#3379/#3107（仅截图）、#3149（产品诉求）——均已带据入 candidates.json。
 
 累计真实修复：第十一轮 7 题 + 本轮 2 题新 issue（#3117、#3043）+ #3470 follow-up（同题补齐）= **9 个不同 issue**。距 30–60 目标尚远，候选池审计后的真实可得率是约束（见 candidates.json 的 15 条带据排除）；继续按轮推进。

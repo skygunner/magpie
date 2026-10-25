@@ -1,0 +1,25 @@
+{
+ "checked_at": "2026-10-25T03:40:23Z",
+ "edits": [
+  {
+   "comment_id": 6392564071,
+   "issue": 3530,
+   "author": "skygunner",
+   "url": "https://github.com/yetone/magpie/issues/3530#issuecomment-6392564071",
+   "updated_at": "2026-10-25T03:39:54Z",
+   "verified_at": "2026-10-25T03:40:23Z",
+   "body_sha256": "6bc8357e955c5929ea695d50c45686f8896e2e6a8653c5b86b6b6dc4569e7413",
+   "standalone_branch": "fix/codex-multi-home-sessions-standalone-1025 @ 8b9022cd"
+  },
+  {
+   "comment_id": 6392783800,
+   "issue": 3531,
+   "author": "skygunner",
+   "url": "https://github.com/yetone/magpie/issues/3531#issuecomment-6392783800",
+   "updated_at": "2026-10-25T03:39:56Z",
+   "verified_at": "2026-10-25T03:40:23Z",
+   "body_sha256": "7aa50506110ab8bd2b5a2aaea66b3040a21f648f7ef36131d795937eb853d256",
+   "standalone_branch": "fix/sidebar-gateway-line-standalone-1025 @ 71d5d7c0"
+  }
+ ]
+}

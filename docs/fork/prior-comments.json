@@ -810,5 +810,32 @@
   "type": "issue",
   "url": "https://github.com/yetone/magpie/issues/3531",
   "title": "sidebar gateway line moves"
+ },
+ "2866": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/2866#issuecomment-6393086996"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/2866",
+  "title": "Atom zh block split"
+ },
+ "2777": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/2777#issuecomment-6393185272"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/2777",
+  "title": "check-in account proxy"
+ },
+ "3303": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3303#issuecomment-6393262850"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3303",
+  "title": "npx cache bins"
  }
 }

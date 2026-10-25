@@ -47,15 +47,15 @@
    "batch_chain_note": "batch is a forward-append chain: the v2 base fa22bc64 carries 15 commits (34dcacff…95537ceb), rebased onto b437e4ad, then bbd6e228 and 4e136a4b this round; see deliveries.r3-batch"
   },
   "totals": {
-   "entries": 89,
-   "issues": 86,
+   "entries": 92,
+   "issues": 89,
    "prs": 3,
-   "product": 72,
+   "product": 75,
    "tests_ci": 9,
    "upstream_existing": 6,
    "other": 2,
-   "code_entries": 81,
-   "units": 78
+   "code_entries": 84,
+   "units": 81
   },
   "counts_note": "Generated from the JSON by docs/fork/generate.py; not hand-written. 64 code-linked entries are not 64 independent fixes: units are grouped by first primary fix commit (60 groups).",
   "fork": "skygunner/magpie",
@@ -3557,6 +3557,132 @@
    "archive": {
     "candidate": false
    }
+  },
+  {
+   "id": "u-update-the-feeds-chinese-section-is-found-by-its-blocks-no-2866-7aa04408",
+   "issues": [
+    2866
+   ],
+   "category": "product",
+   "title": "update: the feed's Chinese section is found by its blocks, not a heading's characters (#2866, ReneXiong)",
+   "coverage": "zhLed block split (Han >= Latin) under the heading it belongs to; English-heading Chinese lists split at their first block, not the install heading; brand-name Han in English lines does not split. 32 site tests green (was 21), internal/update 47.",
+   "commits": [
+    "7aa044082c8b15111614bf4a5a0b46f2fdec01f3"
+   ],
+   "commit_details": [
+    {
+     "sha": "7aa044082c8b15111614bf4a5a0b46f2fdec01f3",
+     "title": "update: the feed's Chinese section is found by its blocks, not a heading's characters (#2866, ReneXiong)",
+     "url": "https://github.com/skygunner/magpie/commit/7aa044082c8b15111614bf4a5a0b46f2fdec01f3"
+    }
+   ],
+   "branch": "fix/atom-zh-sections",
+   "base": "42976f9a082a533995b601e28a01537b8e1c2052",
+   "comments": {
+    "2866": [
+     "https://github.com/yetone/magpie/issues/2866#issuecomment-6393086996"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false,
+    "credited": "",
+    "coauthors": []
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "red->green per commit body; package suites green; combined full nogui at the round-18 merge (evidence round18 log); cross builds clean",
+    "head": "7aa044082c8b15111614bf4a5a0b46f2fdec01f3"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-provider-a-daily-check-in-goes-out-through-its-accounts-ow-2777-69eaf094",
+   "issues": [
+    2777
+   ],
+   "category": "product",
+   "title": "provider: a daily check-in goes out through its account's own proxy (#2777, a1286743184)",
+   "coverage": "CheckinVia (ViaLogin) wraps all five runner builders: Trae CN, MiniMax, Qoder, WorkBuddy and the plugins AccountCheckin; account without own proxy follows the provider, none leaves empty. Contract red->green on an isolated providers.json; no real vendor pressed.",
+   "commits": [
+    "69eaf0948db1b6812505ea90ef65131f84cefefe"
+   ],
+   "commit_details": [
+    {
+     "sha": "69eaf0948db1b6812505ea90ef65131f84cefefe",
+     "title": "provider: a daily check-in goes out through its account's own proxy (#2777, a1286743184)",
+     "url": "https://github.com/skygunner/magpie/commit/69eaf0948db1b6812505ea90ef65131f84cefefe"
+    }
+   ],
+   "branch": "fix/checkin-account-proxy",
+   "base": "42976f9a082a533995b601e28a01537b8e1c2052",
+   "comments": {
+    "2777": [
+     "https://github.com/yetone/magpie/issues/2777#issuecomment-6393185272"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false,
+    "credited": "",
+    "coauthors": []
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "red->green per commit body; package suites green; combined full nogui at the round-18 merge (evidence round18 log); cross builds clean",
+    "head": "69eaf0948db1b6812505ea90ef65131f84cefefe"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-proc-npxs-cache-bins-are-the-users-tool-folders-3303-b8f2a4c8",
+   "issues": [
+    3303
+   ],
+   "category": "product",
+   "title": "proc: npx's cache bins are the user's tool folders (#3303, Moody-Sin)",
+   "coverage": "userDirs adds ~/.npm/_npx/*/node_modules/.bin; discovery by files only, nothing in the cache executed; uninstall case keeps the gate; Linux verified by test, no native Windows/macOS run (Windows FindTool unchanged).",
+   "commits": [
+    "b8f2a4c8b0d87ff17e8b121925ded1ed80a79b47"
+   ],
+   "commit_details": [
+    {
+     "sha": "b8f2a4c8b0d87ff17e8b121925ded1ed80a79b47",
+     "title": "proc: npx's cache bins are the user's tool folders (#3303, Moody-Sin)",
+     "url": "https://github.com/skygunner/magpie/commit/b8f2a4c8b0d87ff17e8b121925ded1ed80a79b47"
+    }
+   ],
+   "branch": "fix/dsh-npx-config-writes",
+   "base": "42976f9a082a533995b601e28a01537b8e1c2052",
+   "comments": {
+    "3303": [
+     "https://github.com/yetone/magpie/issues/3303#issuecomment-6393262850"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false,
+    "credited": "",
+    "coauthors": []
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "red->green per commit body; package suites green; combined full nogui at the round-18 merge (evidence round18 log); cross builds clean",
+    "head": "b8f2a4c8b0d87ff17e8b121925ded1ed80a79b47"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
   }
  ],
  "pointed_elsewhere": [
@@ -5427,6 +5553,62 @@
    "replaced_by": "",
    "note": "round-17",
    "category": "product"
+  },
+  {
+   "branch": "fix/atom-zh-sections",
+   "head": "7aa044082c8b15111614bf4a5a0b46f2fdec01f3",
+   "kind": "product",
+   "base": "42976f9a082a533995b601e28a01537b8e1c2052",
+   "fix_ids": [
+    "u-update-the-feeds-chinese-section-is-found-by-its-blocks-no-2866-7aa04408"
+   ],
+   "replaced_by": "",
+   "note": "round-18 one-issue-one-branch",
+   "category": "product"
+  },
+  {
+   "branch": "fix/checkin-account-proxy",
+   "head": "69eaf0948db1b6812505ea90ef65131f84cefefe",
+   "kind": "product",
+   "base": "42976f9a082a533995b601e28a01537b8e1c2052",
+   "fix_ids": [
+    "u-provider-a-daily-check-in-goes-out-through-its-accounts-ow-2777-69eaf094"
+   ],
+   "replaced_by": "",
+   "note": "round-18 one-issue-one-branch",
+   "category": "product"
+  },
+  {
+   "branch": "fix/dsh-npx-config-writes",
+   "head": "b8f2a4c8b0d87ff17e8b121925ded1ed80a79b47",
+   "kind": "product",
+   "base": "42976f9a082a533995b601e28a01537b8e1c2052",
+   "fix_ids": [
+    "u-proc-npxs-cache-bins-are-the-users-tool-folders-3303-b8f2a4c8"
+   ],
+   "replaced_by": "",
+   "note": "round-18 one-issue-one-branch",
+   "category": "product"
+  },
+  {
+   "branch": "fix/codex-multi-home-sessions-standalone-1025",
+   "head": "8b9022cd0d570aea6d6be0ad0168d9c223354ffd",
+   "kind": "product",
+   "base": "641b1217f271774d110e58d5e69bc3911459a56c",
+   "fix_ids": [],
+   "replaced_by": "",
+   "note": "M0: #3530 single-commit pickup ref; original ref kept",
+   "category": "product"
+  },
+  {
+   "branch": "fix/sidebar-gateway-line-standalone-1025",
+   "head": "71d5d7c026bae2bbe104f14f26ecbe85b33dc29c",
+   "kind": "product",
+   "base": "641b1217f271774d110e58d5e69bc3911459a56c",
+   "fix_ids": [],
+   "replaced_by": "",
+   "note": "M0: #3531 cherry-picked standalone ref, GUI verified at that head; original ref kept",
+   "category": "product"
   }
  ],
  "archive_policy": {
@@ -6001,6 +6183,57 @@
    "body_sha256": "4a67d618112533e44df5df4c72c8db0fc8823bf8be9d48dce993e327c1d19d68",
    "evidence": "docs/fork/sprints/2026-10-25/deliveries.jsonl",
    "body_updated_at": "2026-10-25T03:07:20Z"
+  },
+  {
+   "issue": 2866,
+   "fix_id": "u-update-the-feeds-chinese-section-is-found-by-its-blocks-no-2866-7aa04408",
+   "comment_id": 6393086996,
+   "url": "https://github.com/yetone/magpie/issues/2866#issuecomment-6393086996",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T03:44:39Z",
+   "verified_at": "2026-10-25T04:07:59Z",
+   "delivery": "fix/atom-zh-sections",
+   "delivery_head": "7aa044082c8b1511",
+   "body_sha256": "87e72ea92da763ec81e78847639e1ce0d04fbea44f196d687a78644ab08e571a",
+   "evidence": "docs/fork/sprints/2026-10-25/deliveries.jsonl",
+   "body_updated_at": "2026-10-25T03:44:39Z"
+  },
+  {
+   "issue": 2777,
+   "fix_id": "u-provider-a-daily-check-in-goes-out-through-its-accounts-ow-2777-69eaf094",
+   "comment_id": 6393185272,
+   "url": "https://github.com/yetone/magpie/issues/2777#issuecomment-6393185272",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T03:57:11Z",
+   "verified_at": "2026-10-25T04:07:59Z",
+   "delivery": "fix/checkin-account-proxy",
+   "delivery_head": "69eaf0948db1b681",
+   "body_sha256": "e9252ef2aa262aa503d9927869c8ceed4776d06bea36da3119242ae5bd240ae3",
+   "evidence": "docs/fork/sprints/2026-10-25/deliveries.jsonl",
+   "body_updated_at": "2026-10-25T03:57:11Z"
+  },
+  {
+   "issue": 3303,
+   "fix_id": "u-proc-npxs-cache-bins-are-the-users-tool-folders-3303-b8f2a4c8",
+   "comment_id": 6393262850,
+   "url": "https://github.com/yetone/magpie/issues/3303#issuecomment-6393262850",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "zh-CN",
+   "status": "published_verified",
+   "published_at": "2026-10-25T04:06:55Z",
+   "verified_at": "2026-10-25T04:07:59Z",
+   "delivery": "fix/dsh-npx-config-writes",
+   "delivery_head": "b8f2a4c8b0d87ff1",
+   "body_sha256": "ffdaeb8d81f1c09ed027020d59a5b65841ad72ac75a52e9033b7537eb89c532a",
+   "evidence": "docs/fork/sprints/2026-10-25/deliveries.jsonl",
+   "body_updated_at": "2026-10-25T04:06:55Z"
   }
  ],
  "deliveries": {
@@ -6187,6 +6420,39 @@
    "pushed": true,
    "read_back": "2026-10-25 equal",
    "note": "#3531; its history shares the #3530 commit (both cherry-pick alone), so the delivery chain carries both"
+  },
+  "fix/atom-zh-sections": {
+   "branch": "fix/atom-zh-sections",
+   "base": "42976f9a082a533995b601e28a01537b8e1c2052",
+   "head": "7aa044082c8b15111614bf4a5a0b46f2fdec01f3",
+   "commits": [
+    "7aa044082c8b15111614bf4a5a0b46f2fdec01f3"
+   ],
+   "pushed": true,
+   "read_back": "2026-10-25 equal",
+   "note": "update: the feed's Chinese section is found by its blocks, not a heading's chara"
+  },
+  "fix/checkin-account-proxy": {
+   "branch": "fix/checkin-account-proxy",
+   "base": "42976f9a082a533995b601e28a01537b8e1c2052",
+   "head": "69eaf0948db1b6812505ea90ef65131f84cefefe",
+   "commits": [
+    "69eaf0948db1b6812505ea90ef65131f84cefefe"
+   ],
+   "pushed": true,
+   "read_back": "2026-10-25 equal",
+   "note": "provider: a daily check-in goes out through its account's own proxy (#2777, a128"
+  },
+  "fix/dsh-npx-config-writes": {
+   "branch": "fix/dsh-npx-config-writes",
+   "base": "42976f9a082a533995b601e28a01537b8e1c2052",
+   "head": "b8f2a4c8b0d87ff17e8b121925ded1ed80a79b47",
+   "commits": [
+    "b8f2a4c8b0d87ff17e8b121925ded1ed80a79b47"
+   ],
+   "pushed": true,
+   "read_back": "2026-10-25 equal",
+   "note": "proc: npx's cache bins are the user's tool folders (#3303, Moody-Sin)"
   }
  }
 }
