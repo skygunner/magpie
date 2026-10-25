@@ -85,13 +85,13 @@ var pluginCheckinProviders = func() []pluginCheckinProvider {
 			acct := l.acct.Key
 			id := pp.ID
 			p.accounts = append(p.accounts, pluginCheckinAcct{User: l.User, On: l.On, key: pluginCheckinKey(id, acct), legacy: pluginCheckinLegacyKey(id, l.acct), card: card,
-				do: func(ctx context.Context) WorkBuddyCheckin {
+				do: CheckinVia(id, l.User, func(ctx context.Context) WorkBuddyCheckin {
 					c, err := plugin.AccountCheckin(ctx, id, acct)
 					if err != nil {
 						return wbCheckinFailed(err)
 					}
 					return WorkBuddyCheckin{Outcome: c.Outcome, Credit: c.Credit, Streak: c.Streak, Msg: c.Message}
-				}})
+				})})
 		}
 		if len(p.accounts) > 0 {
 			out = append(out, p)

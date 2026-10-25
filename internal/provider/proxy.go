@@ -59,6 +59,15 @@ func ProxyOf(id string) string {
 	return ""
 }
 
+// CheckinVia is a daily check-in run as the account: through the proxy its
+// own reads and requests take (ViaLogin). The check-in loop carried no
+// account in its ctx, so the one signed call a day went out on the global
+// proxy while everything else of the account took its own (#2777). A user
+// with no proxy of their own gets none of another's.
+func CheckinVia(provider, user string, do func(context.Context) WorkBuddyCheckin) func(context.Context) WorkBuddyCheckin {
+	return func(ctx context.Context) WorkBuddyCheckin { return do(ViaLogin(ctx, provider, user)) }
+}
+
 // ProxyOfLogin is the proxy requests made on behalf of the account user
 // of the subscription id go through (gakki: one Codex account through one
 // proxy, another through another): the account's own, or else the

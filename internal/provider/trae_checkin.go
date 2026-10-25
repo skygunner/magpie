@@ -98,7 +98,7 @@ func newTraeCheckiner(accounts func() []traeAccount) checkiner {
 	return checkiner{path: traeCheckinPath(), now: time.Now, mu: &traeCheckinMu, by: "trae", label: "trae", accounts: func() []checkinAcct {
 		var out []checkinAcct
 		for _, a := range accounts() {
-			out = append(out, checkinAcct{User: a.User, On: a.On, key: traeCheckinKey(a), provider: cmp.Or(a.card, TraeCNID), do: func(ctx context.Context) WorkBuddyCheckin { return traeCheckin(ctx, a) }})
+			out = append(out, checkinAcct{User: a.User, On: a.On, key: traeCheckinKey(a), provider: cmp.Or(a.card, TraeCNID), do: CheckinVia(cmp.Or(a.card, TraeCNID), a.User, func(ctx context.Context) WorkBuddyCheckin { return traeCheckin(ctx, a) })})
 		}
 		return out
 	}}
