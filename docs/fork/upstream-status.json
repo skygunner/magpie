@@ -16,7 +16,7 @@
    "evidence": "docs/fork/evidence/upstream-sync-2026-10-24/comments.json",
    "note": "Only the specified existing comments were updated. This does not change upstream-adoption or product-verification status."
   },
-  "checked_at": "2026-10-24T07:14:36Z",
+  "checked_at": "2026-10-25T17:59:30Z",
   "last_checked_upstream_sha": "dd1e8822d916f8aeb085db4db93fc3d79e2263ed",
   "review_refs": {
    "batch": "95537ceb898a4f947f056af8f832663cc015c83c",
@@ -47,15 +47,15 @@
    "batch_chain_note": "batch is a forward-append chain: the v2 base fa22bc64 carries 15 commits (34dcacff…95537ceb), rebased onto b437e4ad, then bbd6e228 and 4e136a4b this round; see deliveries.r3-batch"
   },
   "totals": {
-   "entries": 95,
-   "issues": 92,
+   "entries": 101,
+   "issues": 98,
    "prs": 3,
-   "product": 78,
+   "product": 84,
    "tests_ci": 9,
    "upstream_existing": 6,
    "other": 2,
-   "code_entries": 87,
-   "units": 84
+   "code_entries": 93,
+   "units": 90
   },
   "counts_note": "Generated from the JSON by docs/fork/generate.py; not hand-written. 64 code-linked entries are not 64 independent fixes: units are grouped by first primary fix commit (60 groups).",
   "fork": "skygunner/magpie",
@@ -3823,6 +3823,246 @@
    "archive": {
     "candidate": false
    }
+  },
+  {
+   "id": "u-redact-hex-run-with-a-count-before-it-is-no-secret-3597-50f6e8b5",
+   "issues": [
+    3597
+   ],
+   "category": "product",
+   "title": "redact: a hash with a count before it goes as written (#3597)",
+   "coverage": "numberedHash reads every field of the model's span: a hex run with nothing but counts around it is a tool-output hash, as one with words after it was; the masking evaluation's hex-lines case dropped its Known. Rules path unchanged (rules alone kept it).",
+   "commits": [
+    "50f6e8b5dea715e59f400a89541be728eb9ed1a5"
+   ],
+   "commit_details": [
+    {
+     "sha": "50f6e8b5dea715e59f400a89541be728eb9ed1a5",
+     "title": "redact: a hash with a count before it goes as written (#3597)",
+     "url": "https://github.com/skygunner/magpie/commit/50f6e8b5dea715e59f400a89541be728eb9ed1a5"
+    }
+   ],
+   "branch": "fix/redact-hex-count",
+   "base": "3173440ca3be3eb0a855870d92faeadea6785aaa",
+   "comments": {
+    "3597": [
+     "https://github.com/yetone/magpie/issues/3597#issuecomment-6400908682"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "red=TestModelMisreadsNotMasked with the model's span verbatim; full internal/redact nogui 82 ok; eval replay unchanged; see docs/fork/evidence/round22/comment-readback.json and README.md",
+    "head": "50f6e8b5dea715e59f400a89541be728eb9ed1a5"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-redact-repeats-of-a-found-value-are-masked-in-the-same-text-3601-08352789",
+   "issues": [
+    3601
+   ],
+   "category": "product",
+   "title": "redact: a value a rule found is masked wherever it is in the same text (#3601)",
+   "coverage": "repeatSpans takes a rule- or model-found value to every place it is in the same text under the finder's kind (one placeholder both places), bounded by standsAlone and not inside another found value; Preview alike; known-values memory timing unchanged.",
+   "commits": [
+    "08352789de1b17e35e05f374adf159ec2d914c5f"
+   ],
+   "commit_details": [
+    {
+     "sha": "08352789de1b17e35e05f374adf159ec2d914c5f",
+     "title": "redact: a value a rule found is masked wherever it is in the same text (#3601)",
+     "url": "https://github.com/skygunner/magpie/commit/08352789de1b17e35e05f374adf159ec2d914c5f"
+    }
+   ],
+   "branch": "fix/redact-repeat-secret",
+   "base": "3173440ca3be3eb0a855870d92faeadea6785aaa",
+   "comments": {
+    "3601": [
+     "https://github.com/yetone/magpie/issues/3601#issuecomment-6400908955"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "red=TestKnownValueMaskedInTheSameText (reporter fixture); full internal/redact nogui 83 ok; see docs/fork/evidence/round22/comment-readback.json and README.md",
+    "head": "08352789de1b17e35e05f374adf159ec2d914c5f"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-cli-instructions-set-no-agent-says-given-to-no-agent-3598-8977ba98",
+   "issues": [
+    3598
+   ],
+   "category": "product",
+   "title": "cli: library instructions set with no agent on says the text went to no agent (#3598)",
+   "coverage": "Follows fba554c7's mcp wording: says the text is in the library, given to no agent yet, names the agents command; an unchanged save with an agent on and an empty set keep the old line; agent state read from InstructionsView.",
+   "commits": [
+    "8977ba980e7206aea8383fe863c630fd7928ebf8"
+   ],
+   "commit_details": [
+    {
+     "sha": "8977ba980e7206aea8383fe863c630fd7928ebf8",
+     "title": "cli: library instructions set with no agent on says the text went to no agent (#3598)",
+     "url": "https://github.com/skygunner/magpie/commit/8977ba980e7206aea8383fe863c630fd7928ebf8"
+    }
+   ],
+   "branch": "fix/library-instructions-no-agent",
+   "base": "3173440ca3be3eb0a855870d92faeadea6785aaa",
+   "comments": {
+    "3598": [
+     "https://github.com/yetone/magpie/issues/3598#issuecomment-6400912188"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "red=TestLibraryInstructionsSetNoAgents (reporter sequence); internal/cli+library nogui 789 ok; see docs/fork/evidence/round22/comment-readback.json and README.md",
+    "head": "8977ba980e7206aea8383fe863c630fd7928ebf8"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gateway-model-rate-limit-rests-by-restid-3619-466a153c",
+   "issues": [
+    3619
+   ],
+   "category": "product",
+   "title": "gateway: a 429 that says the model's own limit rests that model alone (#3619)",
+   "coverage": "modelRateLimit (limit kind named, model name or none between) rests by restID on failRate, beside otherModels and clineFreeLimit; siblings keep serving; a rate limit naming no model rests the key as before; gateway-routing.md documents the decision.",
+   "commits": [
+    "466a153cba7865a6b5e974298177ff5a630756bd"
+   ],
+   "commit_details": [
+    {
+     "sha": "466a153cba7865a6b5e974298177ff5a630756bd",
+     "title": "gateway: a 429 that says the model's own limit rests that model alone (#3619)",
+     "url": "https://github.com/skygunner/magpie/commit/466a153cba7865a6b5e974298177ff5a630756bd"
+    }
+   ],
+   "branch": "fix/sophnet-model-429",
+   "base": "3173440ca3be3eb0a855870d92faeadea6785aaa",
+   "comments": {
+    "3619": [
+     "https://github.com/yetone/magpie/issues/3619#issuecomment-6400912438"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "red=TestModelRateLimitRestsTheModel (reporter JSON verbatim + 3 forms); full internal/gateway nogui 5172 ok with the known #3280 environmental red; see docs/fork/evidence/round22/comment-readback.json and README.md",
+    "head": "466a153cba7865a6b5e974298177ff5a630756bd"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-redact-systemd-unit-in-a-path-is-no-email-3629-9e906567",
+   "issues": [
+    3629
+   ],
+   "category": "product",
+   "title": "redact: a systemd unit in a path is no address (#3629)",
+   "coverage": "emailAt adds a path bound (slash against either side; trailing backslash only when not a JSON-escaped quote) to the rule and modelFits; the PHONE half (bare JSON byte counters) was already fixed by fc91e58b after the reporter's 0.1.1413 build, locked in the same test. Remaining: a bare systemd unit word with no path around it (systemctl status name@inst.service) still reads as an address - left for the maintainer.",
+   "commits": [
+    "9e906567f5be2f3f6852f23125ec2c3116284d6c"
+   ],
+   "commit_details": [
+    {
+     "sha": "9e906567f5be2f3f6852f23125ec2c3116284d6c",
+     "title": "redact: a systemd unit in a path is no address (#3629)",
+     "url": "https://github.com/skygunner/magpie/commit/9e906567f5be2f3f6852f23125ec2c3116284d6c"
+    }
+   ],
+   "branch": "fix/masking-unit-and-bytes",
+   "base": "3173440ca3be3eb0a855870d92faeadea6785aaa",
+   "comments": {
+    "3629": [
+     "https://github.com/yetone/magpie/issues/3629#issuecomment-6400915163"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "red=TestSystemdUnitIsNoEmail; full internal/redact nogui 83 ok; see docs/fork/evidence/round22/comment-readback.json and README.md",
+    "head": "9e906567f5be2f3f6852f23125ec2c3116284d6c"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-sessions-agy-wsl-listing-and-resume-3595-96311a8a",
+   "issues": [
+    3595
+   ],
+   "category": "product",
+   "title": "sessions: an agy in a WSL distro is read with its conversations and calls (#3595)",
+   "coverage": "wslAgents+wslScan list agy's brain/ and conversation_summaries.db through the distro home (Linux workspace folders), wslEntry carries the row so titles name distro conversations and re-read on change, agy summaries held per database, calls from the same transcripts, resume through wslResume with AgyStart left out as resumeCommand planned; gateway-sessions.md updated. Not verified against a real WSL agy (fixture-tree tests only).",
+   "commits": [
+    "96311a8ae26114360275f2a95f8b8bb549eeb227"
+   ],
+   "commit_details": [
+    {
+     "sha": "96311a8ae26114360275f2a95f8b8bb549eeb227",
+     "title": "sessions: an agy in a WSL distro is read with its conversations and calls (#3595)",
+     "url": "https://github.com/skygunner/magpie/commit/96311a8ae26114360275f2a95f8b8bb549eeb227"
+    }
+   ],
+   "branch": "fix/agy-wsl-sessions",
+   "base": "3173440ca3be3eb0a855870d92faeadea6785aaa",
+   "comments": {
+    "3595": [
+     "https://github.com/yetone/magpie/issues/3595#issuecomment-6401147159"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "red=TestWSLSessionsListed extended (no agy from WSL before); internal/sessions nogui 649 ok; full nogui suite at the head with all four reds attributed to pre-existing environmental failures red on the clean base too; see docs/fork/evidence/round22/comment-readback.json and README.md",
+    "head": "96311a8ae26114360275f2a95f8b8bb549eeb227"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
   }
  ],
  "pointed_elsewhere": [
@@ -5785,6 +6025,78 @@
    "replaced_by": "",
    "note": "round-19 one-issue-one-branch",
    "category": "product"
+  },
+  {
+   "branch": "fix/redact-hex-count",
+   "head": "50f6e8b5dea715e59f400a89541be728eb9ed1a5",
+   "kind": "product",
+   "base": "3173440ca3be3eb0a855870d92faeadea6785aaa",
+   "fix_ids": [
+    "u-redact-hex-run-with-a-count-before-it-is-no-secret-3597-50f6e8b5"
+   ],
+   "replaced_by": "",
+   "note": "round-22 one-issue-one-branch",
+   "category": "product"
+  },
+  {
+   "branch": "fix/redact-repeat-secret",
+   "head": "08352789de1b17e35e05f374adf159ec2d914c5f",
+   "kind": "product",
+   "base": "3173440ca3be3eb0a855870d92faeadea6785aaa",
+   "fix_ids": [
+    "u-redact-repeats-of-a-found-value-are-masked-in-the-same-text-3601-08352789"
+   ],
+   "replaced_by": "",
+   "note": "round-22 one-issue-one-branch",
+   "category": "product"
+  },
+  {
+   "branch": "fix/library-instructions-no-agent",
+   "head": "8977ba980e7206aea8383fe863c630fd7928ebf8",
+   "kind": "product",
+   "base": "3173440ca3be3eb0a855870d92faeadea6785aaa",
+   "fix_ids": [
+    "u-cli-instructions-set-no-agent-says-given-to-no-agent-3598-8977ba98"
+   ],
+   "replaced_by": "",
+   "note": "round-22 one-issue-one-branch",
+   "category": "product"
+  },
+  {
+   "branch": "fix/sophnet-model-429",
+   "head": "466a153cba7865a6b5e974298177ff5a630756bd",
+   "kind": "product",
+   "base": "3173440ca3be3eb0a855870d92faeadea6785aaa",
+   "fix_ids": [
+    "u-gateway-model-rate-limit-rests-by-restid-3619-466a153c"
+   ],
+   "replaced_by": "",
+   "note": "round-22 one-issue-one-branch",
+   "category": "product"
+  },
+  {
+   "branch": "fix/masking-unit-and-bytes",
+   "head": "9e906567f5be2f3f6852f23125ec2c3116284d6c",
+   "kind": "product",
+   "base": "3173440ca3be3eb0a855870d92faeadea6785aaa",
+   "fix_ids": [
+    "u-redact-systemd-unit-in-a-path-is-no-email-3629-9e906567"
+   ],
+   "replaced_by": "",
+   "note": "round-22 one-issue-one-branch",
+   "category": "product"
+  },
+  {
+   "branch": "fix/agy-wsl-sessions",
+   "head": "96311a8ae26114360275f2a95f8b8bb549eeb227",
+   "kind": "product",
+   "base": "3173440ca3be3eb0a855870d92faeadea6785aaa",
+   "fix_ids": [
+    "u-sessions-agy-wsl-listing-and-resume-3595-96311a8a"
+   ],
+   "replaced_by": "",
+   "note": "round-22 one-issue-one-branch",
+   "category": "product"
   }
  ],
  "archive_policy": {
@@ -6495,6 +6807,108 @@
    "body_sha256": "3da72c90a7c49bd492a233d5e8cc5d4c336cae8f9e8a5b3d36f54727d5a753c9",
    "evidence": "docs/fork/evidence/round20/comment-readback.json",
    "body_updated_at": "2026-10-25T12:35:51Z"
+  },
+  {
+   "issue": 3597,
+   "fix_id": "u-redact-hex-run-with-a-count-before-it-is-no-secret-3597-50f6e8b5",
+   "comment_id": 6400908682,
+   "url": "https://github.com/yetone/magpie/issues/3597#issuecomment-6400908682",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T17:36:40Z",
+   "verified_at": "2026-10-25T17:59:30Z",
+   "delivery": "fix/redact-hex-count",
+   "delivery_head": "50f6e8b5dea715e59f400a89541be728eb9ed1a5",
+   "body_sha256": "82ea771bd81fee5ee8d0a06bbfb8c14c6889d96ebe4ea86948ca7b4d7230c6f4",
+   "evidence": "docs/fork/evidence/round22/comment-readback.json",
+   "body_updated_at": "2026-10-25T17:36:40Z"
+  },
+  {
+   "issue": 3601,
+   "fix_id": "u-redact-repeats-of-a-found-value-are-masked-in-the-same-text-3601-08352789",
+   "comment_id": 6400908955,
+   "url": "https://github.com/yetone/magpie/issues/3601#issuecomment-6400908955",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T17:36:41Z",
+   "verified_at": "2026-10-25T17:59:30Z",
+   "delivery": "fix/redact-repeat-secret",
+   "delivery_head": "08352789de1b17e35e05f374adf159ec2d914c5f",
+   "body_sha256": "a01c6022be4fded5844d68b979dc16f807b546cd2b19a1fc9e344e9305370851",
+   "evidence": "docs/fork/evidence/round22/comment-readback.json",
+   "body_updated_at": "2026-10-25T17:36:41Z"
+  },
+  {
+   "issue": 3598,
+   "fix_id": "u-cli-instructions-set-no-agent-says-given-to-no-agent-3598-8977ba98",
+   "comment_id": 6400912188,
+   "url": "https://github.com/yetone/magpie/issues/3598#issuecomment-6400912188",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T17:37:00Z",
+   "verified_at": "2026-10-25T17:59:30Z",
+   "delivery": "fix/library-instructions-no-agent",
+   "delivery_head": "8977ba980e7206aea8383fe863c630fd7928ebf8",
+   "body_sha256": "a1226c94547826e66d6bc91c747b15c461e8f73c7e052b89935a52e6f66e16aa",
+   "evidence": "docs/fork/evidence/round22/comment-readback.json",
+   "body_updated_at": "2026-10-25T17:37:00Z"
+  },
+  {
+   "issue": 3619,
+   "fix_id": "u-gateway-model-rate-limit-rests-by-restid-3619-466a153c",
+   "comment_id": 6400912438,
+   "url": "https://github.com/yetone/magpie/issues/3619#issuecomment-6400912438",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T17:37:01Z",
+   "verified_at": "2026-10-25T17:59:30Z",
+   "delivery": "fix/sophnet-model-429",
+   "delivery_head": "466a153cba7865a6b5e974298177ff5a630756bd",
+   "body_sha256": "d7429810baec69b09d0a8e5f7b7a57fee738b572c28588c123827bb3dc5336a8",
+   "evidence": "docs/fork/evidence/round22/comment-readback.json",
+   "body_updated_at": "2026-10-25T17:37:01Z"
+  },
+  {
+   "issue": 3629,
+   "fix_id": "u-redact-systemd-unit-in-a-path-is-no-email-3629-9e906567",
+   "comment_id": 6400915163,
+   "url": "https://github.com/yetone/magpie/issues/3629#issuecomment-6400915163",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "zh-CN",
+   "status": "published_verified",
+   "published_at": "2026-10-25T17:37:17Z",
+   "verified_at": "2026-10-25T17:59:30Z",
+   "delivery": "fix/masking-unit-and-bytes",
+   "delivery_head": "9e906567f5be2f3f6852f23125ec2c3116284d6c",
+   "body_sha256": "603959820f8bc6baaf4c378316f38e8a800cc6f59c744ff768804ca022c3510e",
+   "evidence": "docs/fork/evidence/round22/comment-readback.json",
+   "body_updated_at": "2026-10-25T17:37:17Z"
+  },
+  {
+   "issue": 3595,
+   "fix_id": "u-sessions-agy-wsl-listing-and-resume-3595-96311a8a",
+   "comment_id": 6401147159,
+   "url": "https://github.com/yetone/magpie/issues/3595#issuecomment-6401147159",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T17:58:46Z",
+   "verified_at": "2026-10-25T17:59:30Z",
+   "delivery": "fix/agy-wsl-sessions",
+   "delivery_head": "96311a8ae26114360275f2a95f8b8bb549eeb227",
+   "body_sha256": "c4d772e428c1e56544aac33d24d484624e749dfe67fb31bb9138c69f038bd62b",
+   "evidence": "docs/fork/evidence/round22/comment-readback.json",
+   "body_updated_at": "2026-10-25T17:58:46Z"
   }
  ],
  "deliveries": {
@@ -6750,6 +7164,54 @@
    "pushed": true,
    "read_back": "2026-10-25 equal",
    "note": "tui: keep's background serve is made with proc.Command (#3567, yetone)"
+  },
+  "fix/redact-hex-count": {
+   "branch": "fix/redact-hex-count",
+   "base": "3173440ca3be3eb0a855870d92faeadea6785aaa",
+   "head": "50f6e8b5dea715e59f400a89541be728eb9ed1a5",
+   "commits": [
+    "50f6e8b5dea715e59f400a89541be728eb9ed1a5"
+   ]
+  },
+  "fix/redact-repeat-secret": {
+   "branch": "fix/redact-repeat-secret",
+   "base": "3173440ca3be3eb0a855870d92faeadea6785aaa",
+   "head": "08352789de1b17e35e05f374adf159ec2d914c5f",
+   "commits": [
+    "08352789de1b17e35e05f374adf159ec2d914c5f"
+   ]
+  },
+  "fix/library-instructions-no-agent": {
+   "branch": "fix/library-instructions-no-agent",
+   "base": "3173440ca3be3eb0a855870d92faeadea6785aaa",
+   "head": "8977ba980e7206aea8383fe863c630fd7928ebf8",
+   "commits": [
+    "8977ba980e7206aea8383fe863c630fd7928ebf8"
+   ]
+  },
+  "fix/sophnet-model-429": {
+   "branch": "fix/sophnet-model-429",
+   "base": "3173440ca3be3eb0a855870d92faeadea6785aaa",
+   "head": "466a153cba7865a6b5e974298177ff5a630756bd",
+   "commits": [
+    "466a153cba7865a6b5e974298177ff5a630756bd"
+   ]
+  },
+  "fix/masking-unit-and-bytes": {
+   "branch": "fix/masking-unit-and-bytes",
+   "base": "3173440ca3be3eb0a855870d92faeadea6785aaa",
+   "head": "9e906567f5be2f3f6852f23125ec2c3116284d6c",
+   "commits": [
+    "9e906567f5be2f3f6852f23125ec2c3116284d6c"
+   ]
+  },
+  "fix/agy-wsl-sessions": {
+   "branch": "fix/agy-wsl-sessions",
+   "base": "3173440ca3be3eb0a855870d92faeadea6785aaa",
+   "head": "96311a8ae26114360275f2a95f8b8bb549eeb227",
+   "commits": [
+    "96311a8ae26114360275f2a95f8b8bb549eeb227"
+   ]
   }
  }
 }

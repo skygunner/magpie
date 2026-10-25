@@ -1,3 +1,36 @@
+## 2026-10-26 第二十二轮（ZCode 会话）：#3597、#3601、#3598、#3619、#3629、#3595
+
+本会话开场先做现场甄别：**另一活跃会话正在本仓库工作**（fix/nvidia-parameters-routing
+02:43 起提交，03:02 仍在 amend/追加，#3035/#3635/#3636/#3624 归其所有，dev 工作区
+尚有它未提交的 fallback.go 草稿——本会话一度误撤，随即按原 diff 完整恢复 +9 -1，
+此后未再触碰）。本轮六题全部基于 upstream/main `3173440c`，一题一分支，worktree
+`../magpie-fix-1026`。
+
+选题边界照旧：零认领、上游未修（`git log --grep` 复核，M10 教训）、非产品决策、
+有报告者证据。四个是维护者自立（#3597/#3598/#3601/#3595），两个新报（#3619、#3629）。
+
+| M | 目标 | 修改范围 | 验收 | 验证命令 | 状态 |
+|---|---|---|---|---|---|
+| M1 | #3597 计数后随 hash 被模型 span 掩码 | internal/redact/model.go（numberedHash 读全字段） | 报告样例 span 红→绿；eval hex-lines 摘 Known | go test ./internal/redact | 完成 50f6e8b5（82 ok） |
+| M2 | #3601 同一请求内规则命中值的重复出现不掩码 | internal/redact/redact.go（repeatSpans） | 报告 fixture 红→绿；同 placeholder 两处；standsAlone 边界 | 同上 | 完成 08352789（83 ok） |
+| M3 | #3598 `library instructions set` 无 agent 时误说"every agent already has it" | internal/cli/library_cli.go（沿用 fba554c7 口径） | 报告序列红→绿；有 agent 且无变化仍说旧句 | go test ./internal/cli ./internal/library | 完成 8977ba98（789 ok） |
+| M4 | #3619 SophNet 模型级 429 误 rest 整把 key | internal/gateway/routing.go（modelRateLimit→restID）+ gateway-routing.md | 报告 JSON 逐字红→绿；兄弟模型不 rest；无名 rate 仍 rest key | go test ./internal/gateway | 完成 466a153c（5172 ok，#3280 预存） |
+| M5 | #3629 systemd 单元路径误判 EMAIL | internal/redact（emailAt 路径边界；JSON \" 尾随反斜杠不算路径） | 两条报告路径红→绿；散文 .service 域名仍掩码；PHONE 半边=fc91e58b 已修并锁回归 | go test ./internal/redact | 完成 9e906567（83 ok） |
+| M6 | #3595 WSL 内 agy 会话/调用不读 | internal/sessions（wslAgents+wslScan+wslEntry.Agy+按 db 缓存+calls 接线）+ gateway-sessions.md | distro agy 列表/命名/恢复/调用红→绿；AgyStart 保持不进 distro | go test ./internal/sessions | 完成 96311a8a（649 ok） |
+
+交付与收口：六分支普通推送读回一致；六条评论（3597/3601/3598/3619/3595 英文、
+3629 中文）发布并 API 读回（6400908682/6400908955/6400912188/6400912438/
+6400915163/6401147159，UTF-8 body SHA256 入 evidence/round22/comment-readback.json）。
+全量 nogui 于 96311a8a：**67 ok / 3 包 FAIL**（gateway=#3280、gui=TestCoreScriptBudget
+干净基线同红、plugin=#2207 本机 Bun），provider synctest 红仅高负载偶现且基线同样
+出现——负载 flake，非回归。darwin 交叉构建在 wails v3.0.0-beta.24 依赖本身失败，
+干净基线同红，未计入口径。台账 +6 units（90 总）、comment_publications 47、
+branches 113 远端 heads、REQUIRED_SET +6；generate.py --write/--selftest 过。
+
+边界：未调真实账号；#3629 的裸词 systemctl 形态留维护者（已在回帖说明）；
+#3595 未做真实 WSL agy 实测（fixture 走同一 listing 路径，回帖已声明）。
+本轮会话期间活跃会话的 dev 收口尚未推送；若推送冲突按惯例 rebase 重验。
+
 ## 2026-10-24 第十轮后续独立执行：#3401 完整补齐、#3440 产品决策、#3447 收口
 
 本节由本轮直接执行并记录，非 zcode 返工；**#3447 不再扩张实现**（上游独立实现 `1d6b72ad` 已被报告者在 Magpie 0.1.1371 + DSH 实测，issue 关闭），`fix/issue-batch-1024pm` 的旧混合补丁不提交上游。

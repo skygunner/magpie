@@ -866,5 +866,59 @@
   "type": "issue",
   "url": "https://github.com/yetone/magpie/issues/3567",
   "title": "tui keep proc.Command"
+ },
+ "3597": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3597#issuecomment-6400908682"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3597",
+  "title": "redact: a hash with a count before it goes as written (#3597)"
+ },
+ "3601": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3601#issuecomment-6400908955"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3601",
+  "title": "redact: a value a rule found is masked wherever it is in the same text (#3601)"
+ },
+ "3598": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3598#issuecomment-6400912188"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3598",
+  "title": "cli: library instructions set with no agent on says the text went to no agent (#3598)"
+ },
+ "3619": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3619#issuecomment-6400912438"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3619",
+  "title": "gateway: a 429 that says the model's own limit rests that model alone (#3619)"
+ },
+ "3629": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3629#issuecomment-6400915163"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3629",
+  "title": "redact: a systemd unit in a path is no address (#3629)"
+ },
+ "3595": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3595#issuecomment-6401147159"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3595",
+  "title": "sessions: an agy in a WSL distro is read with its conversations and calls (#3595)"
  }
 }

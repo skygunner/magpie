@@ -1,0 +1,78 @@
+{
+ "read_at": "2026-10-25T17:59:30Z",
+ "comments": [
+  {
+   "author": "skygunner",
+   "body_len": 946,
+   "comment_id": 6400908682,
+   "created_at": "2026-10-25T17:36:40Z",
+   "issue": 3597,
+   "url": "https://github.com/yetone/magpie/issues/3597#issuecomment-6400908682",
+   "language": "en",
+   "body_sha256": "82ea771bd81fee5ee8d0a06bbfb8c14c6889d96ebe4ea86948ca7b4d7230c6f4",
+   "delivery_branch": "fix/redact-hex-count",
+   "delivery_head": "50f6e8b5dea715e59f400a89541be728eb9ed1a5"
+  },
+  {
+   "author": "skygunner",
+   "body_len": 1313,
+   "comment_id": 6400908955,
+   "created_at": "2026-10-25T17:36:41Z",
+   "issue": 3601,
+   "url": "https://github.com/yetone/magpie/issues/3601#issuecomment-6400908955",
+   "language": "en",
+   "body_sha256": "a01c6022be4fded5844d68b979dc16f807b546cd2b19a1fc9e344e9305370851",
+   "delivery_branch": "fix/redact-repeat-secret",
+   "delivery_head": "08352789de1b17e35e05f374adf159ec2d914c5f"
+  },
+  {
+   "author": "skygunner",
+   "body_len": 991,
+   "comment_id": 6400912188,
+   "created_at": "2026-10-25T17:37:00Z",
+   "issue": 3598,
+   "url": "https://github.com/yetone/magpie/issues/3598#issuecomment-6400912188",
+   "language": "en",
+   "body_sha256": "a1226c94547826e66d6bc91c747b15c461e8f73c7e052b89935a52e6f66e16aa",
+   "delivery_branch": "fix/library-instructions-no-agent",
+   "delivery_head": "8977ba980e7206aea8383fe863c630fd7928ebf8"
+  },
+  {
+   "author": "skygunner",
+   "body_len": 1627,
+   "comment_id": 6400912438,
+   "created_at": "2026-10-25T17:37:01Z",
+   "issue": 3619,
+   "url": "https://github.com/yetone/magpie/issues/3619#issuecomment-6400912438",
+   "language": "en",
+   "body_sha256": "d7429810baec69b09d0a8e5f7b7a57fee738b572c28588c123827bb3dc5336a8",
+   "delivery_branch": "fix/sophnet-model-429",
+   "delivery_head": "466a153cba7865a6b5e974298177ff5a630756bd"
+  },
+  {
+   "author": "skygunner",
+   "body_len": 1212,
+   "comment_id": 6400915163,
+   "created_at": "2026-10-25T17:37:17Z",
+   "issue": 3629,
+   "url": "https://github.com/yetone/magpie/issues/3629#issuecomment-6400915163",
+   "language": "zh-CN",
+   "body_sha256": "603959820f8bc6baaf4c378316f38e8a800cc6f59c744ff768804ca022c3510e",
+   "delivery_branch": "fix/masking-unit-and-bytes",
+   "delivery_head": "9e906567f5be2f3f6852f23125ec2c3116284d6c"
+  },
+  {
+   "comment_id": 6401147159,
+   "url": "https://github.com/yetone/magpie/issues/3595#issuecomment-6401147159",
+   "issue": 3595,
+   "author": "skygunner",
+   "language": "en",
+   "created_at": "2026-10-25T17:58:46Z",
+   "body_len": 1743,
+   "body_sha256": "c4d772e428c1e56544aac33d24d484624e749dfe67fb31bb9138c69f038bd62b",
+   "delivery_branch": "fix/agy-wsl-sessions",
+   "delivery_head": "96311a8ae26114360275f2a95f8b8bb549eeb227",
+   "note": "the agy WSL delivery comment"
+  }
+ ]
+}
