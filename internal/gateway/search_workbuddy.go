@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/yetone/magpie/internal/provider"
 )
@@ -47,7 +48,15 @@ const (
 func wbSearches(p provider.Provider) bool { return drawsWorkBuddy(p) }
 
 // wbSearch asks p's WorkBuddy site to search the web.
-func (s *Server) wbSearch(ctx context.Context, p provider.Provider, query string) (string, []Hit, error) {
+func (s *Server) wbSearch(ctx context.Context, p provider.Provider, query string) (said string, hits []Hit, err error) {
+	start, status := time.Now(), 0
+	defer func() {
+		why := ""
+		if err != nil {
+			why = err.Error()
+		}
+		logSearchCall(p.ID, p.Where(), start, status, why)
+	}()
 	origin := p.Origin(ctx)
 	if origin == "" {
 		return "", nil, fmt.Errorf("%s: no site to search with", p.Name)
@@ -83,6 +92,7 @@ func (s *Server) wbSearch(ctx context.Context, p provider.Provider, query string
 		return "", nil, fmt.Errorf("%s: %w", p.Name, err)
 	}
 	defer res.Body.Close()
+	status = res.StatusCode
 	b, _ := io.ReadAll(io.LimitReader(res.Body, 4<<20))
 	if res.StatusCode >= 300 {
 		return "", nil, errors.New(p.Name + "'s search: " + provider.APIError(b, res.Status))
@@ -120,7 +130,7 @@ func (s *Server) wbSearch(ctx context.Context, p provider.Provider, query string
 	if len(pages) == 0 {
 		return "", nil, fmt.Errorf("%s found nothing", p.Name)
 	}
-	said, hits := pagesSaid(pages)
+	said, hits = pagesSaid(pages)
 	return said, hits, nil
 }
 

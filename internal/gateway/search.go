@@ -20,6 +20,7 @@ import (
 	"github.com/yetone/magpie/internal/netproxy"
 	"github.com/yetone/magpie/internal/provider"
 	"github.com/yetone/magpie/internal/settings"
+	"github.com/yetone/magpie/internal/usage"
 )
 
 // A client may offer its model the web search of the vendor it was made
@@ -1039,6 +1040,17 @@ func searchBody(p provider.Provider, model, query, effort string) map[string]any
 
 // SearchAgent is the User-Agent of the searches magpie makes for a model.
 const SearchAgent = "magpie-search/1"
+
+// logSearchCall is the Usage › Requests row of a search magpie sent a
+// search service or a search API itself (kimiSearch, wbSearch,
+// askSearchAPI): those write no row of their own (#3528). It is a call
+// with Kind web_search and no tokens, no model having been asked; Usage's
+// totals count it as they count any call, with no counting of their own
+// changed for it.
+func logSearchCall(providerID, host string, start time.Time, status int, why string) {
+	usage.Append(usage.Record{Time: start, Agent: usage.AgentOf(SearchAgent), Kind: "web_search",
+		Provider: providerID, Host: host, Status: status, Millis: time.Since(start).Milliseconds(), Error: why})
+}
 
 // round asks the model once and gives its reply's events, or the status
 // and message of a failure.

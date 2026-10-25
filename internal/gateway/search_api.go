@@ -201,9 +201,16 @@ func pagesSaid(pages []foundPage) (string, []Hit) {
 }
 
 // askSearchAPI asks one search API for the query.
-func (s *Server) askSearchAPI(ctx context.Context, a provider.SearchAPI, query string) ([]foundPage, error) {
+func (s *Server) askSearchAPI(ctx context.Context, a provider.SearchAPI, query string) (pages []foundPage, err error) {
+	start, status := time.Now(), 0
+	defer func() {
+		why := ""
+		if err != nil {
+			why = err.Error()
+		}
+		logSearchCall(a.Name(), a.Base(), start, status, why)
+	}()
 	var r *http.Request
-	var err error
 	post := func(path string, body any) {
 		b, _ := json.Marshal(body)
 		if r, err = http.NewRequestWithContext(ctx, http.MethodPost, a.Base()+path, bytes.NewReader(b)); err == nil {
@@ -286,6 +293,7 @@ func (s *Server) askSearchAPI(ctx context.Context, a provider.SearchAPI, query s
 		return nil, err
 	}
 	defer res.Body.Close()
+	status = res.StatusCode
 	b, _ := io.ReadAll(io.LimitReader(res.Body, 4<<20))
 	if res.StatusCode >= 300 && res.StatusCode < 400 && res.Header.Get("Location") != "" {
 		return nil, fmt.Errorf("%s: it sends the search on to %s, which isn't given its key; set that address instead", res.Status, res.Header.Get("Location"))
@@ -310,7 +318,7 @@ func (s *Server) askSearchAPI(ctx context.Context, a provider.SearchAPI, query s
 		}
 		return nil, errors.New(msg)
 	}
-	pages, err := readSearchAPI(a.Vendor, b)
+	pages, err = readSearchAPI(a.Vendor, b)
 	if err != nil {
 		return nil, fmt.Errorf("unexpected reply: %w", err)
 	}

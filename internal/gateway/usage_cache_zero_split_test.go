@@ -26,11 +26,19 @@ func cacheSplitRoundStart(fields string) string {
 
 func wantCacheLedger(t *testing.T, hour int) {
 	t.Helper()
-	records := usage.Load(time.Time{})
-	if len(records) != 1 {
-		t.Fatalf("ledger records = %d, want 1", len(records))
+	var turns []usage.Record
+	for _, r := range usage.Load(time.Time{}) {
+		// a search the turn made writes a row of its own, as a model's
+		// search always has (#3528); the turn's is the one with tokens
+		if r.Kind == "web_search" {
+			continue
+		}
+		turns = append(turns, r)
 	}
-	if u := records[0]; u.CacheWrite != 50 || u.CacheWrite1h != hour {
+	if len(turns) != 1 {
+		t.Fatalf("ledger records = %d, want 1", len(turns))
+	}
+	if u := turns[0]; u.CacheWrite != 50 || u.CacheWrite1h != hour {
 		t.Errorf("ledger writes: %d/hour%d, want 50/hour%d", u.CacheWrite, u.CacheWrite1h, hour)
 	}
 }

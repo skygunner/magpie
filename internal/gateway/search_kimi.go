@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/yetone/magpie/internal/provider"
 	"github.com/yetone/magpie/internal/settings"
@@ -98,7 +99,15 @@ func (s *Server) searchBy(ctx context.Context, p provider.Provider, model, query
 }
 
 // kimiSearch asks a Kimi Code plan's search service.
-func (s *Server) kimiSearch(ctx context.Context, p provider.Provider, query string) (string, []Hit, error) {
+func (s *Server) kimiSearch(ctx context.Context, p provider.Provider, query string) (said string, hits []Hit, err error) {
+	start, status := time.Now(), 0
+	defer func() {
+		why := ""
+		if err != nil {
+			why = err.Error()
+		}
+		logSearchCall(p.ID, p.Where(), start, status, why)
+	}()
 	// the service gives itself 30 s, as kimi-cli asks
 	// through the plan's own proxy, if it has one (#237, #1522)
 	ctx, cancel := context.WithTimeout(s.metered(p.Via(ctx), p, ""), searchTimeout/2)
@@ -127,6 +136,7 @@ func (s *Server) kimiSearch(ctx context.Context, p provider.Provider, query stri
 		return "", nil, fmt.Errorf("%s: %w", p.Name, err)
 	}
 	defer res.Body.Close()
+	status = res.StatusCode
 	b, _ := io.ReadAll(io.LimitReader(res.Body, 4<<20))
 	if res.StatusCode >= 300 {
 		return "", nil, errors.New(p.Name + ": " + provider.APIError(b, res.Status))
@@ -164,6 +174,6 @@ func (s *Server) kimiSearch(ctx context.Context, p provider.Provider, query stri
 	if len(pages) == 0 {
 		return "", nil, fmt.Errorf("%s %w", p.Name, errFoundNothing)
 	}
-	said, hits := pagesSaid(pages)
+	said, hits = pagesSaid(pages)
 	return said, hits, nil
 }
