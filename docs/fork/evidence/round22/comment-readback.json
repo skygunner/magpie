@@ -73,6 +73,19 @@
    "delivery_branch": "fix/agy-wsl-sessions",
    "delivery_head": "96311a8ae26114360275f2a95f8b8bb549eeb227",
    "note": "the agy WSL delivery comment"
+  },
+  {
+   "comment_id": 6401392845,
+   "url": "https://github.com/yetone/magpie/issues/3628#issuecomment-6401392845",
+   "issue": 3628,
+   "author": "skygunner",
+   "language": "en",
+   "created_at": "2026-10-25T18:20:46Z",
+   "body_len": 1132,
+   "body_sha256": "bc1ad55e70c3cb8c9699543b11cc3ce62f125b3cf703a499c7023ddac5787789",
+   "delivery_branch": "fix/pii-upgrade-race",
+   "delivery_head": "80cea91a8d58df163c98f3ec27f9749486a3fc17",
+   "note": "the round-22 addendum delivery comment"
   }
  ]
 }

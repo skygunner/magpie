@@ -27,6 +27,14 @@
 干净基线同红，未计入口径。台账 +6 units（90 总）、comment_publications 47、
 branches 113 远端 heads、REQUIRED_SET +6；generate.py --write/--selftest 过。
 
+增补（同会话稍后）：#3628（erickguan 报的 pii -race 数据竞争）——`fix/pii-upgrade-race`
+80cea91a：goUpgrade/waitUpgrade 归属 start 的 upgrade goroutine，fakeInstall/oldInstall
+在 setup 与 cleanup 两端先等待再动包变量（TestWarm 的第二次安装会与前一次 Warm 的
+upgrade 相争，比报告的 cleanup 早一步）。报告者的 `-race -count=2` 命令本机在干净
+基线红（3 处 DATA RACE + 2 测试失败）、修复头绿，-count=3 亦绿；英文回帖
+[6401392845](https://github.com/yetone/magpie/issues/3628#issuecomment-6401392845)
+读回入档。台账 91 units / 115 远端 heads。
+
 边界：未调真实账号；#3629 的裸词 systemctl 形态留维护者（已在回帖说明）；
 #3595 未做真实 WSL agy 实测（fixture 走同一 listing 路径，回帖已声明）。
 本轮会话期间活跃会话的 dev 收口尚未推送；若推送冲突按惯例 rebase 重验。

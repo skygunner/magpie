@@ -920,5 +920,14 @@
   "type": "issue",
   "url": "https://github.com/yetone/magpie/issues/3595",
   "title": "sessions: an agy in a WSL distro is read with its conversations and calls (#3595)"
+ },
+ "3628": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3628#issuecomment-6401392845"
+  ],
+  "category": "tests",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3628",
+  "title": "pii: the upgrade goroutine is owned, so a test's cleanup doesn't race it (#3628)"
  }
 }

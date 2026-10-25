@@ -35,6 +35,14 @@ delivery comment, all read back through the API:
   `systemctl status name@inst.service` form (no path) is recorded as
   left for the maintainer; #3595 was not tried against a real WSL agy.
 
+Addendum (same session, an hour later): #3628, fix/pii-upgrade-race
+80cea91a8d58df163c98f3ec27f9749486a3fc17, comment 6401392845 (read back,
+receipt in comment-readback.json). The reporter's command
+`go test -tags nogui -race -count=2 ./internal/pii/` was red on this box
+on the clean branch point (three DATA RACE warnings,
+TestOldServeRunsUntilUpgraded and TestWarm failing) and is green at the
+head, -count=3 with it; plain suites and linux+windows vet clean.
+
 Round-22 scope note: another live session owned #3035/#3635/#3636/#3624
 and their uncommitted dev-tree draft; this round did not touch those
 branches or issues.

@@ -45,6 +45,7 @@ REQUIRED_SET.update({n: "product" for n in (2866, 2777, 3303)})
 REQUIRED_SET.update({n: "product" for n in (2741, 3561, 3567)})
 REQUIRED_SET.update({n: "other" for n in (3131,3147)})
 REQUIRED_SET.update({n: "product" for n in (3597, 3601, 3598, 3619, 3629, 3595)})
+REQUIRED_SET.update({n: "tests" for n in (3628,)})
 PRS = {1072, 1073, 1258}
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 COMMENT_RE = re.compile(r"#issuecomment-([0-9]+)$")

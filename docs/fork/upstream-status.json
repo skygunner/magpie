@@ -16,7 +16,7 @@
    "evidence": "docs/fork/evidence/upstream-sync-2026-10-24/comments.json",
    "note": "Only the specified existing comments were updated. This does not change upstream-adoption or product-verification status."
   },
-  "checked_at": "2026-10-25T17:59:30Z",
+  "checked_at": "2026-10-25T18:30:30Z",
   "last_checked_upstream_sha": "dd1e8822d916f8aeb085db4db93fc3d79e2263ed",
   "review_refs": {
    "batch": "95537ceb898a4f947f056af8f832663cc015c83c",
@@ -47,15 +47,15 @@
    "batch_chain_note": "batch is a forward-append chain: the v2 base fa22bc64 carries 15 commits (34dcacff…95537ceb), rebased onto b437e4ad, then bbd6e228 and 4e136a4b this round; see deliveries.r3-batch"
   },
   "totals": {
-   "entries": 101,
-   "issues": 98,
+   "entries": 102,
+   "issues": 99,
    "prs": 3,
    "product": 84,
-   "tests_ci": 9,
+   "tests_ci": 10,
    "upstream_existing": 6,
    "other": 2,
-   "code_entries": 93,
-   "units": 90
+   "code_entries": 94,
+   "units": 91
   },
   "counts_note": "Generated from the JSON by docs/fork/generate.py; not hand-written. 64 code-linked entries are not 64 independent fixes: units are grouped by first primary fix commit (60 groups).",
   "fork": "skygunner/magpie",
@@ -4063,6 +4063,46 @@
    "archive": {
     "candidate": false
    }
+  },
+  {
+   "id": "u-pii-upgrade-goroutine-owned-tests-dont-race-it-3628-80cea91a",
+   "issues": [
+    3628
+   ],
+   "category": "tests",
+   "title": "pii: the upgrade goroutine is owned, so a test's cleanup doesn't race it (#3628)",
+   "coverage": "goUpgrade/waitUpgrade own start's upgrade goroutine; fakeInstall and oldInstall wait before their vars move, at setup as well as cleanup (TestWarm's second install raced the first Warm's upgrade); the reporter's -race -count=2 command is green, -count=3 too.",
+   "commits": [
+    "80cea91a8d58df163c98f3ec27f9749486a3fc17"
+   ],
+   "commit_details": [
+    {
+     "sha": "80cea91a8d58df163c98f3ec27f9749486a3fc17",
+     "title": "pii: the upgrade goroutine is owned, so a test's cleanup doesn't race it (#3628)",
+     "url": "https://github.com/skygunner/magpie/commit/80cea91a8d58df163c98f3ec27f9749486a3fc17"
+    }
+   ],
+   "branch": "fix/pii-upgrade-race",
+   "base": "3173440ca3be3eb0a855870d92faeadea6785aaa",
+   "comments": {
+    "3628": [
+     "https://github.com/yetone/magpie/issues/3628#issuecomment-6401392845"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "red=go test -tags nogui -race -count=2 ./internal/pii/ on clean main (3 DATA RACE warnings, TestOldServeRunsUntilUpgraded+TestWarm failing), green at 80cea91a; -count=3 green; plain suites and linux+windows vet clean; see docs/fork/evidence/round22/",
+    "head": "80cea91a8d58df163c98f3ec27f9749486a3fc17"
+   },
+   "upstream": {
+    "status": "unconfirmed"
+   },
+   "archive": {
+    "candidate": false
+   }
   }
  ],
  "pointed_elsewhere": [
@@ -6097,6 +6137,18 @@
    "replaced_by": "",
    "note": "round-22 one-issue-one-branch",
    "category": "product"
+  },
+  {
+   "branch": "fix/pii-upgrade-race",
+   "head": "80cea91a8d58df163c98f3ec27f9749486a3fc17",
+   "kind": "product",
+   "base": "3173440ca3be3eb0a855870d92faeadea6785aaa",
+   "fix_ids": [
+    "u-pii-upgrade-goroutine-owned-tests-dont-race-it-3628-80cea91a"
+   ],
+   "replaced_by": "",
+   "note": "round-22 addendum",
+   "category": "product"
   }
  ],
  "archive_policy": {
@@ -6909,6 +6961,23 @@
    "body_sha256": "c4d772e428c1e56544aac33d24d484624e749dfe67fb31bb9138c69f038bd62b",
    "evidence": "docs/fork/evidence/round22/comment-readback.json",
    "body_updated_at": "2026-10-25T17:58:46Z"
+  },
+  {
+   "issue": 3628,
+   "fix_id": "u-pii-upgrade-goroutine-owned-tests-dont-race-it-3628-80cea91a",
+   "comment_id": 6401392845,
+   "url": "https://github.com/yetone/magpie/issues/3628#issuecomment-6401392845",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T18:20:46Z",
+   "verified_at": "2026-10-25T18:30:30Z",
+   "delivery": "fix/pii-upgrade-race",
+   "delivery_head": "80cea91a8d58df163c98f3ec27f9749486a3fc17",
+   "body_sha256": "bc1ad55e70c3cb8c9699543b11cc3ce62f125b3cf703a499c7023ddac5787789",
+   "evidence": "docs/fork/evidence/round22/comment-readback.json",
+   "body_updated_at": "2026-10-25T18:20:46Z"
   }
  ],
  "deliveries": {
@@ -7211,6 +7280,14 @@
    "head": "96311a8ae26114360275f2a95f8b8bb549eeb227",
    "commits": [
     "96311a8ae26114360275f2a95f8b8bb549eeb227"
+   ]
+  },
+  "fix/pii-upgrade-race": {
+   "branch": "fix/pii-upgrade-race",
+   "base": "3173440ca3be3eb0a855870d92faeadea6785aaa",
+   "head": "80cea91a8d58df163c98f3ec27f9749486a3fc17",
+   "commits": [
+    "80cea91a8d58df163c98f3ec27f9749486a3fc17"
    ]
   }
  }
