@@ -26,13 +26,17 @@ func TestKimiEfforts(t *testing.T) {
 	t.Setenv("KIMI_CODE_HOME", "")
 	if err := provider.Save(provider.Provider{
 		ID: "think", Name: "Think", Chat: "https://example.test/v1", Key: "key",
-		Models: []string{"deep", "wide", "plain"},
+		Models: []string{"deep", "wide", "toggled", "plain"},
 	}); err != nil {
 		t.Fatal(err)
 	}
 	if err := catalog.SaveLive("think", "https://example.test/v1", []catalog.Model{
 		{ID: "deep", Efforts: []string{"none", "high", "max"}},
 		{ID: "wide", Efforts: []string{"low", "medium"}},
+		// thinks with a switch alone, its vendor's levels unknown: Kimi
+		// Code's K3.1 Pro, whose own table says thinking and always_thinking
+		// (#3399, kupakupar)
+		{ID: "toggled", Reasoning: true},
 		{ID: "plain"},
 	}); err != nil {
 		t.Fatal(err)
@@ -62,9 +66,13 @@ func TestKimiEfforts(t *testing.T) {
 	}
 	ms := read(path)
 	for k, want := range map[string]model{
-		"magpie/think/deep":  {[]string{"thinking", "tool_use"}, []string{"high", "max"}, "high"},
-		"magpie/think/wide":  {[]string{"thinking", "tool_use"}, []string{"low", "medium"}, ""},
-		"magpie/think/plain": {[]string{"tool_use"}, nil, ""},
+		// none is Kimi Code's own off, so this one may be asked for off
+		"magpie/think/deep": {[]string{"thinking", "tool_use"}, []string{"high", "max"}, "high"},
+		// no level turns thinking off, and none of the levels say whether:
+		// told thinking alone, Kimi Code ran it with thinking off (#3399)
+		"magpie/think/wide":    {[]string{"thinking", "always_thinking", "tool_use"}, []string{"low", "medium"}, ""},
+		"magpie/think/toggled": {[]string{"thinking", "always_thinking", "tool_use"}, nil, ""},
+		"magpie/think/plain":   {[]string{"tool_use"}, nil, ""},
 	} {
 		if got := ms[k]; !reflect.DeepEqual(got, want) {
 			t.Errorf("%s: %+v, want %+v", k, got, want)
