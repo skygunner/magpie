@@ -392,7 +392,7 @@ var evalCases = []evalCase{
 	{
 		ID: "tool-result-mixed", From: "true",
 		Text: "$ cat contacts.csv\nname,email,phone\nRina Kobayashi,rina.k@fastmail.com,+81 90-1234-5678\nOmar Haddad,omar.haddad@proton.me,+44 7700 900123",
-		Mask: []evalValue{{V: "Rina Kobayashi", Kind: "PERSON"}, {V: "rina.k@fastmail.com", Kind: "EMAIL"}, {V: "90-1234-5678", Kind: "PHONE", GuardKnown: "#3776"}, {V: "Omar Haddad", Kind: "PERSON"}, {V: "omar.haddad@proton.me", Kind: "EMAIL"}, {V: "7700 900123", Kind: "PHONE"}},
+		Mask: []evalValue{{V: "Rina Kobayashi", Kind: "PERSON"}, {V: "rina.k@fastmail.com", Kind: "EMAIL"}, {V: "90-1234-5678", Kind: "PHONE"}, {V: "Omar Haddad", Kind: "PERSON"}, {V: "omar.haddad@proton.me", Kind: "EMAIL"}, {V: "7700 900123", Kind: "PHONE"}},
 		Keep: []evalValue{{V: "contacts.csv", Kind: "EMAIL"}},
 	},
 }

@@ -72,6 +72,52 @@ func TestMask(t *testing.T) {
 	}
 }
 
+// A phone is masked in the shapes the world writes it, and the numbers
+// that only look like one go as written (#3776: a Japanese mobile in a
+// CSV, which only the local model found, and not with AstrLink Guard).
+func TestMaskPhoneShapes(t *testing.T) {
+	// the reporter's file, byte for byte
+	const csv = "$ cat contacts.csv\nname,email,phone\nRina Kobayashi,rina.k@fastmail.com,+81 90-1234-5678\nOmar Haddad,omar.haddad@proton.me,+44 7700 900123"
+	cases := []struct {
+		name  string
+		in    string
+		model map[string]string // value → label, a model that finds them
+		gone  []string
+		kept  []string
+	}{
+		{name: "japanese-mobile-in-csv", in: csv, gone: []string{"90-1234-5678"}, kept: []string{"Rina Kobayashi", "contacts.csv"}},
+		{name: "japanese-mobile-with-country-code", in: csv, model: map[string]string{"+81 90-1234-5678": "private_phone"}, gone: []string{"90-1234-5678"}},
+		{name: "japanese-mobile-bare-090", in: "call 090-1234-5678 tomorrow", gone: []string{"090-1234-5678"}},
+		{name: "japanese-mobile-bare-080", in: "call 080-9876-5432 tomorrow", gone: []string{"080-9876-5432"}},
+		{name: "chinese-mobile", in: "call +86 13812345678 tomorrow", gone: []string{"13812345678"}},
+		{name: "japanese-landline", in: "office +81 3-1234-5678, mobile is another number", kept: []string{"3-1234-5678"}},
+		{name: "prose-numbers", in: "build v0.1.14 took 3.5s on 24 rows", kept: []string{"v0.1.14", "3.5s", "24"}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			o := Options{Secrets: true, Personal: true}
+			if c.model != nil {
+				f := &fakeModel{values: c.model}
+				o.Model = f.find
+			}
+			out, _ := Mask(c.in, o)
+			for _, g := range c.gone {
+				if strings.Contains(unmarked(out), g) {
+					t.Errorf("%q still in %q", g, out)
+				}
+			}
+			for _, k := range c.kept {
+				if !strings.Contains(out, k) {
+					t.Errorf("%q gone from %q", k, out)
+				}
+			}
+			if back := Restore(out, false); back != c.in {
+				t.Errorf("round trip: %q → %q", c.in, back)
+			}
+		})
+	}
+}
+
 func TestMaskJSON(t *testing.T) {
 	body := `{"model":"sk-proj-notmasked-because-model-key","messages":[{"role":"user","content":[` +
 		`{"type":"text","text":"key: ` + openaiKey + `\nok"},` +
