@@ -95,17 +95,31 @@ func Forget() {
 	mu.Unlock()
 }
 
+// wake has every loop waiting on Written look at its files, with nothing
+// read forgotten: another process wrote one (Watch), which a look at the
+// disk tells.
+func wake() {
+	mu.Lock()
+	if written != nil {
+		close(written)
+		written = nil
+	}
+	mu.Unlock()
+}
+
 // written wakes what is waiting on Written: made while one waits, closed by
-// the next write (Forget) and gone with it, so a write no one waits on
-// closes nothing (a channel made in one synctest bubble can't be closed
-// from another: provider's tests, one bubble per subtest, since #3185).
+// the next write (Forget, or another process's that Watch is told of) and
+// gone with it, so a write no one waits on closes nothing (a channel made
+// in one synctest bubble can't be closed from another: provider's tests,
+// one bubble per subtest, since #3185).
 var written chan struct{}
 
-// Written is closed by the next write magpie makes (Forget): a loop that
-// follows magpie's files waits on it, and looks at them only every so
-// often for what another process wrote, rather than polling each second
-// for its own writes too (#3185: those polls woke an idle magpie ~12
-// times a second).
+// Written is closed by the next write magpie makes (Forget), or by
+// another process's that Watch is told of: a loop that follows magpie's
+// files waits on it, and looks at them only every so often (OthersEvery)
+// for what another process wrote, rather than polling each second for its
+// own writes too (#3185: those polls woke an idle magpie ~12 times a
+// second).
 func Written() <-chan struct{} {
 	mu.Lock()
 	defer mu.Unlock()
@@ -114,10 +128,6 @@ func Written() <-chan struct{} {
 	}
 	return written
 }
-
-// OthersEvery is how often such a loop looks for what another process
-// (the CLI, a second magpie) wrote.
-const OthersEvery = 5 * time.Second
 
 // gens is gen, read without mu.
 var gens atomic.Uint64
