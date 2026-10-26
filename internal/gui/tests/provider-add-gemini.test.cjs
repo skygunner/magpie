@@ -10,6 +10,7 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 const { test } = require("node:test");
 const { chromium, webkit } = require("playwright");
+const { openAddSheet } = require("./reader.cjs");
 
 const assets = path.resolve(__dirname, "../assets");
 const G = "https://relay.example.com/proxy/v1beta";
@@ -55,7 +56,7 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         await page.route("**/*", serve(lang, posts));
         await page.goto("http://magpie.test/?view=providers");
         const S = L[lang];
-        await page.locator("#addProvider").click();
+        await openAddSheet(page);
         await page.locator("#addSheet .custom-foot .custom").click();
         const ed = page.locator(".editor.new");
         await ed.locator(".base-url").waitFor();

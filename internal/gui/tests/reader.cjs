@@ -163,6 +163,18 @@ async function openPart(page, id) {
   await page.locator(`:is(#setTab-${id}, .nav-s[data-of=setTab-${id}]):visible`).press("Enter");
 }
 
+// addProvider opens the Providers page's add sheet the way the keyboard does,
+// for the same reason openPart does: a click on #addProvider waits for the
+// button's box over two animation frames, and on a loaded machine WebKit draws
+// no frames for seconds while the page's own tasks run on, so at 420px it sat
+// out the 5s page default (#3634). Enter on the focused button clicks it with
+// no frame to wait for, and the sheet unrolls as it does for a mouse: the app
+// takes a keyboard click as a reader's scroll (scrollOnPurpose reads
+// isTrusted, not the pointer).
+async function openAddSheet(page) {
+  await page.locator("#addProvider").press("Enter");
+}
+
 // agentRow is a connected agent as /api/state lists it, opened by its
 // Details; openAgentSettings opens it on the Agents page, where its own
 // settings are (Settings had them till the owner, 10-20), and waits till
@@ -176,4 +188,4 @@ async function openAgentSettings(page, id = "codex") {
   await page.waitForFunction(() => __settingsReads.asked > 0 && __settingsReads.asked === __settingsReads.drawn);
 }
 
-module.exports = { inView, reach, wheelTo, click, openPart, watchSettingsReads, settingsDrawn, agentRow, openAgentSettings };
+module.exports = { inView, reach, wheelTo, click, openPart, openAddSheet, watchSettingsReads, settingsDrawn, agentRow, openAgentSettings };
