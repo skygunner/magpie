@@ -616,6 +616,17 @@ func (s *Server) ListenAndServe(ctx context.Context) error {
 	defer stopFresh()
 	go pluginrt.KeepFresh(freshCtx, filememo.OthersEvery, settings.Path(), provider.Path(), plugin.ListPath(), plugin.ToolsPath(), access.Path())
 	srv := &http.Server{Handler: s.Front(), ReadHeaderTimeout: 30 * time.Second, IdleTimeout: 5 * time.Minute}
+	srv.ConnState = func(c net.Conn, st http.ConnState) {
+		if st != http.StateIdle && st != http.StateClosed && st != http.StateHijacked {
+			return
+		}
+		s.lnMu.Lock()
+		t, ok := s.ln.(*tlsListener)
+		s.lnMu.Unlock()
+		if ok {
+			t.connState(c)
+		}
+	}
 	// the magpie serving the gateway, and only it, keeps the saved accounts
 	// signed in, so two never refresh one sign-in at once
 	go provider.KeepLoginsAlive(ctx)
@@ -672,6 +683,16 @@ func (s *Server) ListenAndServe(ctx context.Context) error {
 		<-ctx.Done()
 		c, cancel := context.WithTimeout(context.Background(), s.drainFor())
 		defer cancel()
+		if Handover || s.handedOff.Load() {
+			// a handover: the TLS listener stops taking connections and the
+			// ones it took are seen to before the server's end (#3647)
+			s.lnMu.Lock()
+			t, ok := s.ln.(*tlsListener)
+			s.lnMu.Unlock()
+			if ok {
+				t.handOff(c)
+			}
+		}
 		srv.Shutdown(c)
 		s.subscription.abortAll()
 		provider.FlushServed() // what answered last, kept for the next start and the CLI

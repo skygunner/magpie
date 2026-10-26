@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -234,10 +235,20 @@ type tlsListener struct {
 	stopped chan struct{}
 	err     error // why accepting stopped, set before stopped closes
 	once    sync.Once
+
+	// a handover's end: accepting stops, and every connection taken is
+	// waited for until the server is done with it
+	mu         sync.Mutex
+	handingOff bool
+	accepting  bool              // the accept loop may still take a connection
+	sniffing   int               // connections taken, still waiting for their first byte
+	pending    map[net.Conn]bool // handed to the server, not yet done there
+	settled    chan struct{}     // closed once nothing is left to wait for
+	settleOnce sync.Once
 }
 
 func newTLSListener(ln net.Listener, cfg *tls.Config) *tlsListener {
-	l := &tlsListener{Listener: ln, cfg: cfg, conns: make(chan net.Conn), done: make(chan struct{}), stopped: make(chan struct{})}
+	l := &tlsListener{Listener: ln, cfg: cfg, conns: make(chan net.Conn), done: make(chan struct{}), stopped: make(chan struct{}), accepting: true, pending: make(map[net.Conn]bool), settled: make(chan struct{})}
 	go l.accept()
 	return l
 }
@@ -257,6 +268,16 @@ func (l *tlsListener) accept() {
 				}
 			}
 			l.err = err
+			l.mu.Lock()
+			l.accepting = false // nothing more is taken from here on
+			handover := l.handingOff
+			l.check()
+			l.mu.Unlock()
+			if handover {
+				// handed over: Shutdown's Close ends Accept
+				<-l.done
+				return
+			}
 			close(l.stopped)
 			return
 		}
@@ -265,11 +286,20 @@ func (l *tlsListener) accept() {
 			l.hand(tls.Server(c, l.cfg))
 			continue
 		}
+		l.mu.Lock()
+		l.sniffing++
+		l.mu.Unlock()
 		go l.sniff(c)
 	}
 }
 
 func (l *tlsListener) sniff(c net.Conn) {
+	defer func() {
+		l.mu.Lock()
+		l.sniffing--
+		l.check()
+		l.mu.Unlock()
+	}()
 	c.SetReadDeadline(time.Now().Add(sniffWait))
 	first := make([]byte, 1)
 	if _, err := io.ReadFull(c, first); err != nil {
@@ -286,10 +316,39 @@ func (l *tlsListener) sniff(c net.Conn) {
 }
 
 func (l *tlsListener) hand(c net.Conn) {
+	l.mu.Lock()
+	l.pending[c] = true
+	l.mu.Unlock()
 	select {
 	case l.conns <- c:
 	case <-l.done:
+		l.mu.Lock()
+		delete(l.pending, c) // the server never had it
+		l.mu.Unlock()
 		c.Close()
+	}
+}
+
+// connState notes the server being done with a connection handed to it:
+// its request was read and answered, the connection was hijacked, or it
+// was closed. The end of a handover waits for this before Shutdown, so a
+// request still to be read is read and answered rather than dropped by
+// the server's end.
+func (l *tlsListener) connState(c net.Conn) {
+	l.mu.Lock()
+	if l.pending[c] {
+		delete(l.pending, c)
+		l.check()
+	}
+	l.mu.Unlock()
+}
+
+// check closes settled once a handover's end has nothing left to wait
+// for: the accept loop is over, every taken connection was handed to the
+// server, and every one handed was seen to there. mu must be held.
+func (l *tlsListener) check() {
+	if l.handingOff && !l.accepting && l.sniffing == 0 && len(l.pending) == 0 {
+		l.settleOnce.Do(func() { close(l.settled) })
 	}
 }
 
@@ -301,6 +360,25 @@ func (l *tlsListener) Accept() (net.Conn, error) {
 		return nil, l.err
 	case <-l.done:
 		return nil, net.ErrClosed
+	}
+}
+
+// handOff is the listener's part of the end of a handover: it stops
+// taking connections and waits — within ctx — until every connection it
+// took has been handed to the server and seen to there (each within
+// sniffWait of its accept, the ones that say nothing cut as they were
+// before). Shutdown then begins with nothing unread on hand, so the
+// server answers what this computer had taken rather than dropping it at
+// its end (#3647).
+func (l *tlsListener) handOff(ctx context.Context) {
+	l.mu.Lock()
+	l.handingOff = true
+	l.Listener.Close()
+	l.check()
+	l.mu.Unlock()
+	select {
+	case <-l.settled:
+	case <-ctx.Done():
 	}
 }
 
