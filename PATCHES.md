@@ -105,3 +105,28 @@ Deployed 2026-10-27 AEST from code commit `dd670e6e67cdc4535917d9aa8bb2130abbf88
   Stopped rollback container: `magpie-pre-hindsight-20261026T175132Z`.
 - Upstream feature request: https://github.com/yetone/magpie/issues/3788.
   This is a request for maintainer feedback, not an upstream PR or acceptance.
+
+## Pending deployment: tool-count failover (#3794)
+
+Fork branch `fix/kilo-tools-count-fallback` adds a narrow request-shape
+match for an upstream's explicit tool-count limit, such as Kilo refusing
+129 tools with a maximum of 128. The next group member receives the full
+tool list; the refusing member stays eligible for a smaller request.
+The implementation, regression tests and contract are in `fallback.go`,
+`tool_count_fallback_test.go` and `docs/subsystems/gateway-routing.md`.
+Upstream feature request: https://github.com/yetone/magpie/issues/3794.
+
+Validation with Go 1.26.8: targeted gateway race tests pass five repetitions;
+native/Linux/Windows vet and builds pass. The compiled Linux gateway in a
+temporary HOME receives the same 129-tool request, gets the simulated Kilo
+400, and obtains a 200 from the next upstream with all 129 tools preserved.
+Full-suite checks are not green: Claude cache, PII GPU fixtures, plugin
+SOCKS handling and provider synctest/filememo failures also reproduce on
+the unchanged `a84d79cc` baseline. Go 1.27 and umask 027 add environment
+failures; final targeted checks use Go 1.26.8 and umask 022.
+
+Candidate image `magpie:0.1.1612-p3-tools` is built on docker1 from the
+existing p2 image with only the gateway binary replaced. Production still
+runs `magpie:0.1.1612-p2-hindsight`. Deployment is explicitly deferred by
+the user until a maintenance window; the image has only had isolated
+checks. Follow the deployment and rollback procedure above when scheduled.

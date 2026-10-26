@@ -7,6 +7,14 @@ doesn't speak the agent's API, the gateway translates. When an upstream
 fails before any of the reply is sent, the gateway moves to the next
 candidate.
 
+An explicit tool-count limit, such as Kilo's 400 "Invalid value for
+'tools': maximum number of items is 128", is a request-shape refusal
+(`shapeRefused` in `fallback.go`). The next candidate receives the full
+tool list, and the refusing member is not put on cooldown. With no
+candidate left, the caller receives the upstream error.
+`TestGroupFailsOverAToolCountLimit` covers streaming and non-streaming
+Chat requests, preserved tools and a subsequent request within the limit.
+
 This page covers how a request is routed. Plugins that change requests and
 replies are in [Gateway middleware](gateway-middleware.md). Subscriptions
 served by a plugin are in [Provider and plugin ownership](provider-plugins.md).
