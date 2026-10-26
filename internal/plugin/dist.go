@@ -61,6 +61,11 @@ var (
 // that leaves the branch or plugins/dist.
 var distFile = regexp.MustCompile(`^tgz/[A-Za-z0-9._-]+\.tgz$`)
 
+// lockDistTarball finds a dist tarball's file name in bun.lock's entries
+// ("@…@./dist/<file>", workspaces and packages alike); anything else that
+// names a dist/ tarball counts too, and only keeps one.
+var lockDistTarball = regexp.MustCompile(`dist/([A-Za-z0-9._-]+\.tgz)`)
+
 // distPkg is what the dist branch has of the package, nil when it has
 // none, the package isn't one of its scope, or the branch can't be read.
 func distPkg(ctx context.Context, name string) *distPackage {
@@ -187,7 +192,10 @@ func installDist(ctx context.Context, bun, name, version string) error {
 // pruneDist takes out the tarballs in plugins/dist that plugins/package.json
 // no longer names: one an update from npm, or a newer one, took the place
 // of. installMu held. One it can't tell about (package.json unreadable)
-// stays.
+// stays. One bun.lock still names stays too: bun resolves the lock's
+// entries on the next add, and a tarball it names that isn't there fails
+// that add for every plugin (#3622); the lock's entry goes when bun next
+// resolves the package, and the tarball with the next prune after it.
 func pruneDist() {
 	b, err := os.ReadFile(filepath.Join(Dir(), "package.json"))
 	if err != nil {
@@ -206,6 +214,11 @@ func pruneDist() {
 			named[rest] = true
 		} else if rest, ok := strings.CutPrefix(filepath.ToSlash(s), "dist/"); ok {
 			named[rest] = true
+		}
+	}
+	if lb, err := os.ReadFile(filepath.Join(Dir(), "bun.lock")); err == nil {
+		for _, m := range lockDistTarball.FindAllSubmatch(lb, -1) {
+			named[string(m[1])] = true
 		}
 	}
 	ents, err := os.ReadDir(filepath.Join(Dir(), "dist"))
