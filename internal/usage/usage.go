@@ -59,10 +59,13 @@ type Record struct {
 	Requested string `json:"req,omitempty"`
 	Served    string `json:"served,omitempty"`
 	// Upstream: the provider an aggregator (OpenRouter …) said answered
-	// behind it — DeepInfra, Novita — when its reply named one
-	Upstream string `json:"upstream,omitempty"`
-	Input    int    `json:"in"`
-	Output   int    `json:"out"`
+	// behind it — DeepInfra, Novita — when its reply named one, and
+	// CanonicalSlug the slug it named that provider by (ClinePass's
+	// deepseek/deepseek-v4.1-flash, private/… for a private pool, #3713)
+	Upstream      string `json:"upstream,omitempty"`
+	CanonicalSlug string `json:"canonicalSlug,omitempty"`
+	Input         int    `json:"in"`
+	Output        int    `json:"out"`
 	// CacheRead is the prompt tokens read from the vendor's cache, and
 	// CacheWrite those written to it (Anthropic's cache creation,
 	// cache_creation_input_tokens); neither is in Input. Both are written

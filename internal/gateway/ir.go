@@ -384,8 +384,11 @@ type Usage struct {
 	// one — which may not be the one it was asked for
 	Served string `json:"served,omitempty"`
 	// Upstream: the provider an aggregator says answered behind it
-	// (OpenRouter's "provider": DeepInfra, Novita …), when it says one
-	Upstream string `json:"upstream,omitempty"`
+	// (OpenRouter's "provider": DeepInfra, Novita …), when it says one,
+	// and CanonicalSlug the slug it names that provider by (ClinePass's
+	// deepseek/deepseek-v4.1-flash, private/… for a private pool, #3713)
+	Upstream      string `json:"upstream,omitempty"`
+	CanonicalSlug string `json:"canonicalSlug,omitempty"`
 	// RequestID: the id the vendor gave the request, from its reply's
 	// headers (Claude Code's own for a subscription); ErrType: what a
 	// failed request's error body called the error
@@ -465,6 +468,9 @@ func (u *Usage) add(v Usage) {
 	}
 	if v.Upstream != "" {
 		u.Upstream = v.Upstream
+	}
+	if v.CanonicalSlug != "" {
+		u.CanonicalSlug = v.CanonicalSlug
 	}
 	if v.Tier != "" {
 		u.Tier = v.Tier

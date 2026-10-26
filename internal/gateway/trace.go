@@ -126,8 +126,10 @@ type Route struct {
 	Served  string `json:"served,omitempty"`
 	Swapped bool   `json:"swapped,omitempty"`
 	Routed  bool   `json:"routed,omitempty"`
-	// Upstream: the provider an aggregator said answered behind it
-	Upstream string `json:"upstream,omitempty"`
+	// Upstream: the provider an aggregator said answered behind it, and
+	// CanonicalSlug the slug it named it by (#3713)
+	Upstream      string `json:"upstream,omitempty"`
+	CanonicalSlug string `json:"canonicalSlug,omitempty"`
 	// Prompt: what the prompt held, part by part, and the window it went
 	// into (prompt.go)
 	Prompt *Prompt `json:"prompt,omitempty"`
@@ -353,8 +355,10 @@ type Try struct {
 	Swapped bool   `json:"swapped,omitempty"`
 	Routed  bool   `json:"routed,omitempty"`
 	// Upstream: the provider an aggregator said answered behind it
-	// (OpenRouter's DeepInfra, Novita …)
-	Upstream string `json:"upstream,omitempty"`
+	// (OpenRouter's DeepInfra, Novita …), and CanonicalSlug the slug it
+	// named that provider by (ClinePass's, #3713)
+	Upstream      string `json:"upstream,omitempty"`
+	CanonicalSlug string `json:"canonicalSlug,omitempty"`
 	// Pin: the upstream the try asked the Cline API to serve it from
 	// (provider.ClinePassAsked), "" when it asked for none
 	Pin string `json:"pin,omitempty"`
