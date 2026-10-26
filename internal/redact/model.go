@@ -328,6 +328,13 @@ func modelFits(s string, a, b int, kind string) bool {
 		if a > 1 && (s[a-1] == '+' || s[a-1] == '/') && wordByte(s[a-2]) || b+1 < len(s) && (s[b] == '+' || s[b] == '/') && wordByte(s[b+1]) {
 			return false
 		}
+		// a count is no secret, though the model calls it one: a bare number
+		// after a word that counts it (a token count,
+		// <total_tokens>14902266 tokens left</…>) is #3775's. A numeric
+		// password has no counting word before it and stays masked.
+		if strings.Trim(v, digits) == "" && cued(s, a, countCues) {
+			return false
+		}
 		// a bare hex run is a hash or an id unless something calls it a key;
 		// one with words after it is a hash in a tool's output
 		if f := strings.Fields(v); len(f) > 1 && hexRe.MatchString(f[0]) || modCacheRe.MatchString(v) {
@@ -512,6 +519,9 @@ var (
 	accountCues = []string{"account", "acct", "a/c", "iban", "routing", "sort code", "card", "账号", "帐号", "账户", "帐户", "卡号", "户名"}
 	secretCues  = []string{"key", "token", "secret", "password", "passwd", "密钥", "密码", "令牌"}
 	phoneCues   = []string{"phone", "tel", "mobile", "cell", "call", "whatsapp", "sms", "电话", "手机", "联系", "致电"}
+	// what counts a number: a count is no secret, whatever the model says
+	// of it (a token count, <total_tokens>14902266 tokens left, #3775)
+	countCues = []string{"tokens", "count", "total", "left", "remaining", "items", "rows"}
 )
 
 // cued says one of cues is in the 40 bytes before at, in any case.

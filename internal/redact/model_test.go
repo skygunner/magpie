@@ -132,6 +132,47 @@ func TestModelSpanLeavesDelimiters(t *testing.T) {
 	}
 }
 
+// A count the model labels a secret is no secret: a bare number right after
+// a word that counts it (a token count, <total_tokens>14902266 tokens left),
+// which AstrLink Guard takes for one (#3775). A numeric password has no such
+// word before it and stays masked.
+func TestModelCountIsNoSecret(t *testing.T) {
+	const n = "14902266"
+	for _, c := range []struct {
+		name string
+		in   string
+		gone []string
+		kept []string
+	}{
+		{
+			name: "token-count",
+			in:   "<system-reminder><total_tokens>" + n + " tokens left</total_tokens></system-reminder>",
+			kept: []string{n},
+		},
+		{name: "row-count", in: "rows remaining: " + n, kept: []string{n}},
+		{name: "numeric-password", in: "the vault password is " + n + ", don't log it", gone: []string{n}},
+		{name: "numeric-password-in-a-file", in: "password = \"" + n + "\"", gone: []string{n}},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			f := &fakeModel{values: map[string]string{n: "secret"}}
+			out, _ := Mask(c.in, Options{Secrets: true, Model: f.find})
+			for _, g := range c.gone {
+				if strings.Contains(unmarked(out), g) {
+					t.Errorf("%q still in %q", g, out)
+				}
+			}
+			for _, k := range c.kept {
+				if !strings.Contains(out, k) {
+					t.Errorf("%q gone from %q", k, out)
+				}
+			}
+			if back := Restore(out, false); back != c.in {
+				t.Errorf("round trip: %q → %q", c.in, back)
+			}
+		})
+	}
+}
+
 // A request's texts go to the model once, together, each once: never its
 // ids, kinds or tools' definitions, which are never masked, nor what a
 // vendor sealed with a signature.
