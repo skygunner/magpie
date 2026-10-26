@@ -849,20 +849,10 @@ func (m model) viewList() string {
 	for _, a := range m.agents {
 		nameW = max(nameW, lipgloss.Width(a.Name))
 	}
-	var b strings.Builder
-	b.WriteString(m.header())
-	b.WriteString("\n\n")
-	// the rows around the one picked, as many as fit — a machine with more
-	// agents than the terminal has rows would otherwise scroll the highlight
-	// off and freeze the page, as the library page did (#2220)
-	visible := max(3, m.h-7)
-	start := 0
-	if m.row >= visible {
-		start = m.row - visible + 1
-	}
-	end := min(len(m.agents), start+visible)
-	for i := start; i < end; i++ {
-		a := m.agents[i]
+	// a row is one line, unless its fields don't fit: then they carry on
+	// under the name, so none is lost past the right edge (#3234)
+	rows := make([]string, len(m.agents))
+	for i, a := range m.agents {
 		sel := i == m.row
 		marker := "  "
 		name := sName.Render(padRight(a.Name, nameW))
@@ -873,7 +863,16 @@ func (m model) viewList() string {
 			marker = sCursor.Render("▸ ")
 			name = sNameOn.Render(padRight(a.Name, nameW))
 		}
+		indent := pad + strings.Repeat(" ", lipgloss.Width(marker)+nameW+2)
 		line := pad + marker + name + "  "
+		var lines []string
+		put := func(cell string) {
+			if m.w > 0 && lipgloss.Width(line)+lipgloss.Width(cell) > m.w && line != indent {
+				lines = append(lines, strings.TrimRight(line, " "))
+				line = indent
+			}
+			line += cell
+		}
 		for j, f := range a.Fields {
 			v := m.values[i][f.Key]
 			if v == "" && f.Quiet && !(sel && j == m.col) {
@@ -888,21 +887,48 @@ func (m model) viewList() string {
 			default:
 				cell = sValue.Render(v)
 			}
+			field := cell + " "
 			if j > 0 || f.Label != "model" {
-				line += sMuted.Render(" " + f.Label)
+				field = sMuted.Render(" "+f.Label) + field
 			}
-			line += cell + " "
+			put(field)
 		}
 		if i < len(m.failover) && m.failover[i] != "" {
-			line += sMuted.Render(" · " + m.failover[i])
+			put(sMuted.Render(" · " + m.failover[i]))
 		}
 		if sel {
-			p := tilde(a.Path)
+			p := sFaint.Render(tilde(a.Path))
 			if room := m.w - lipgloss.Width(line) - lipgloss.Width(p) - 2; room > 0 {
-				line += strings.Repeat(" ", room) + sFaint.Render(p)
+				line += strings.Repeat(" ", room) + p
+			} else {
+				put(p)
 			}
 		}
-		b.WriteString(line)
+		rows[i] = strings.TrimRight(strings.Join(append(lines, line), "\n"), " ")
+	}
+
+	var b strings.Builder
+	b.WriteString(m.header())
+	b.WriteString("\n\n")
+	if len(rows) == 0 {
+		return strings.TrimRight(b.String(), "\n")
+	}
+	// the rows around the one picked, as many as fit — a machine with more
+	// agents than the terminal has rows would otherwise scroll the highlight
+	// off and freeze the page, as the library page did (#2220). Counted in
+	// lines, as a row of many fields takes more than one.
+	budget := max(3, m.h-7)
+	start, end, used := m.row, m.row+1, strings.Count(rows[m.row], "\n")+1
+	for start > 0 && used+strings.Count(rows[start-1], "\n")+1 <= budget {
+		start--
+		used += strings.Count(rows[start], "\n") + 1
+	}
+	for end < len(rows) && used+strings.Count(rows[end], "\n")+1 <= budget {
+		used += strings.Count(rows[end], "\n") + 1
+		end++
+	}
+	for _, r := range rows[start:end] {
+		b.WriteString(r)
 		b.WriteString("\n")
 	}
 	return strings.TrimRight(b.String(), "\n")
