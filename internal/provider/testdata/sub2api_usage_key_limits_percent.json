@@ -1,0 +1,3 @@
+{"mode":"unrestricted","rate_limits":[
+  {"window":"5h","limit":100,"used":37.5,"remaining":62.5,"unit":"percent","reset_at":"2026-10-21T18:00:00Z"},
+  {"window":"7d","limit":100,"used":80,"remaining":20,"unit":"percent","reset_at":"2026-10-25T00:00:00Z"}]}
