@@ -341,6 +341,36 @@ func TestChatGPTAPIRefresh(t *testing.T) {
 	}
 }
 
+// A ChatGPT API account's allowance is read at its own vendor, never
+// Codex's: the first account of a side login is the active one
+// (listSideLogins), and a read that took that for Codex's own handed the
+// ChatGPT API account Codex's windows and plan (#3721, NoneMore).
+func TestChatGPTAPIQuotaIsNotCodex(t *testing.T) {
+	claudeHome(t) // a home with no Codex sign-in: nothing to borrow
+	auth, err := json.Marshal(siwcCreds{ClientID: "oaiapp_1", Subject: "user-1", Access: "at-1", Refresh: "rt-1", Expires: time.Now().Add(time.Hour)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, user := range []string{"me@example.com", "other@example.com"} {
+		if err := addSideLogin(savedLogin{Agent: ChatGPTAPIID, User: user, Plan: "plus", Auth: auth}, "", func(savedLogin) {}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	ls := siwcLoginList()
+	if len(ls) != 2 || !ls[0].Active || ls[1].Active {
+		t.Fatalf("logins %+v", ls)
+	}
+	for _, l := range ls {
+		q := loginQuota(context.Background(), l)
+		if q.Error != errSIWCUsage.Error() {
+			t.Errorf("%s (active %v): %q, want %q", l.User, l.Active, q.Error, errSIWCUsage)
+		}
+		if len(q.Windows) != 0 || q.Plan != "plus" || q.Provider != ChatGPTAPIID {
+			t.Errorf("%s: %+v", l.User, q)
+		}
+	}
+}
+
 // The request goes as Sign in with ChatGPT takes it: stored nowhere and
 // streamed, without the fields it refuses or the tools OpenAI would run
 // itself, a system message as a developer one; the agent's instructions
