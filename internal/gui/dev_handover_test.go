@@ -23,12 +23,11 @@ import (
 // first request it reads only after the handover began: net/http's Shutdown
 // closes such a connection without an answer, and the page sees the
 // connection end with nothing (#3648). The test drives the real devBackend
-// with the real signal. The steps are ordered by events: the backend is
-// seen to take the connection before the signal, and the connection is
-// handed on only once the end has begun. The one injected delay (the repo's
-// way to reproduce a timing failure) holds the request back past the
-// signal, as a busy machine would; without it the request would be read
-// before the handover and the bug would not show.
+// with the real signal. Every step is gated on an event rather than a
+// duration: the backend is seen to take the connection (held.took), the
+// signal is seen by the process and stopServing cancels the test's backend
+// context, and only then is the held connection handed on with its request
+// unread — as a busy machine would hold one — so the old code cuts it.
 func TestDevBackendHandoverAnswersAConnectionItTook(t *testing.T) {
 	if handoverSignal == nil {
 		t.Fatal("no handover signal on this platform")
@@ -82,9 +81,17 @@ func TestDevBackendHandoverAnswersAConnectionItTook(t *testing.T) {
 	if err := syscall.Kill(os.Getpid(), handoverSignal.(syscall.Signal)); err != nil {
 		t.Fatal(err)
 	}
-	// the end has begun, and is in Shutdown by now, before the connection
-	// is handed on and its request read — 20 runs red on the old code
-	time.Sleep(100 * time.Millisecond)
+	// The end has begun: the signal was seen, the backend's context was
+	// cancelled by stopServing, and only then is the connection handed on
+	// with its request unread. The order is on events (the signal handler
+	// has run, and stopServing has cancelled the context the test replaced),
+	// not on a duration, so a loaded runner cannot turn the precondition
+	// into a red for the wrong reason.
+	select {
+	case <-backendCtx.Done():
+	case <-time.After(10 * time.Second):
+		t.Fatal("the handover never began")
+	}
 	letGo()
 	if _, err := fmt.Fprintf(c, "GET /api/state HTTP/1.1\r\nHost: dev\r\n\r\n"); err != nil {
 		t.Fatal(err)
