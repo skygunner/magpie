@@ -140,7 +140,39 @@ func vscodeUserDir(k vscodeKind, home, cfg string) string {
 			cfg = filepath.Join(home, "AppData", "Roaming")
 		}
 	}
-	return filepath.Join(cfg, k.folder, "User")
+	dir := filepath.Join(cfg, k.folder, "User")
+	if p := vscodePortableUserDir(k); p != "" {
+		return p
+	}
+	return dir
+}
+
+// vscodePortableUserDir is the User folder of the k that runs from a folder
+// with a data folder in it, which turns VS Code's portable mode on and moves
+// its user data to data/user-data: Scoop's vscode is installed that way (its
+// manifest adds bin to PATH and persists data), so code.cmd is in
+// apps/vscode/current/bin and the real folder is
+// apps/vscode/current/data/user-data/User (#3260). The program on PATH wins
+// over the default folder even when that one exists: Scoop's install copies
+// %APPDATA%\Code into data\user-data, and it is the program on PATH that
+// reads its settings. A data folder made by its first run is what tells it
+// apart, so an install that never ran is left to the default folder.
+func vscodePortableUserDir(k vscodeKind) string {
+	bin, err := proc.Look(k.bin)
+	if err != nil || !vscodeCodeBinary(bin) {
+		return ""
+	}
+	if resolved, err := filepath.EvalSymlinks(bin); err == nil {
+		bin = resolved
+	}
+	// the app folder: the bin folder's parent, or the bin file's own
+	app := filepath.Dir(bin)
+	for _, d := range []string{app, filepath.Dir(app)} {
+		if isDir(filepath.Join(d, "data", "user-data")) {
+			return filepath.Join(d, "data", "user-data", "User")
+		}
+	}
+	return ""
 }
 
 func vscodeAt(dir string) *Agent { return vscodeKindAt(vscodeStable, dir) }
