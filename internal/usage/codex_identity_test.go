@@ -388,17 +388,23 @@ func TestCodexQueryPageRefreshesIdentityAndSharesJSONFields(t *testing.T) {
 	}
 }
 
-func TestLogRecordResponseIDRemainsCodexOnly(t *testing.T) {
-	row := Row{Record: logRecord(sessions.Call{Agent: "claude", ResponseID: "claude-response"})}
-	if row.ResponseID != "" || row.SessionRole != "" {
-		t.Fatalf("non-Codex call gained Codex identity data: %+v", row)
+func TestLogRecordKeepsAResponseIDAnyAgentNamed(t *testing.T) {
+	// a call the file names no id for gains none, and its row JSON says
+	// nothing about it
+	if row := logRecord(sessions.Call{Agent: "claude"}); row.ResponseID != "" {
+		t.Fatalf("a call without a response id gained one: %+v", row)
 	}
-	encoded, err := json.Marshal(row)
+	encoded, err := json.Marshal(Row{Record: logRecord(sessions.Call{Agent: "claude"})})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if containsJSONField(encoded, "response_id") || containsJSONField(encoded, "session_role") {
-		t.Fatalf("non-Codex row JSON changed: %s", encoded)
+		t.Fatalf("id-less row JSON changed: %s", encoded)
+	}
+	// an id the file names is kept, whoever made the call: the pairing
+	// that keeps a gateway-served call from counting twice reads it (#3674)
+	if row := logRecord(sessions.Call{Agent: "dsh", ResponseID: "resp-dsh"}); row.ResponseID != "resp-dsh" {
+		t.Fatalf("dsh's response id was lost from its usage row: %+v", row)
 	}
 	identities := map[string]sessions.CodexIdentity{"thread": {ID: "thread", Role: "main", RootSession: "thread"}}
 	call := sessions.Call{Agent: "claude", ThreadID: "thread"}

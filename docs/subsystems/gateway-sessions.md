@@ -699,3 +699,10 @@ row's model, usage, cost and kind.
 Compaction is already included in Codex's total consumption, so this marker
 does not add tokens or cost. This is Codex-only; Claude behavior and the POST
 `/v1/magpie/usage/requests` ingest allowlist are unchanged.
+
+dsh's session file names the vendor's reply by `responseId` too, so a dsh
+call the gateway served is paired with its record by that id and counted
+once (#3674), where dsh sends the gateway no session header and the
+provider its file names is not always one of magpie's; a call through a
+provider magpie names is still skipped at the read. The pairing stays
+Codex-only in what it carries: no `session_role`, no compaction marker.

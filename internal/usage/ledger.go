@@ -353,9 +353,13 @@ func logRecord(c sessions.Call) Record {
 		Input: c.Input, Output: c.Output, CacheRead: c.CacheRead, CacheWrite: c.CacheWrite, CacheWrite1h: c.CacheWrite1h, Reasoning: c.Reasoning, Effort: c.Effort,
 		Millis: c.Millis, TTFT: c.TTFT, Session: c.Session, RequestID: c.RequestID, Error: c.ErrorText, ErrType: c.Error, Subagent: sessions.SubagentOf(c.File), ParentAgent: sessions.SubagentParent(c.File)}
 	if c.Agent == "codex" {
-		r.ResponseID = c.ResponseID
 		r.Compaction = codexCompactionOf(c)
 	}
+	// any call the agent's file names by the vendor's response id keeps
+	// it, so the gateway's record of the same call is paired with it and
+	// counted once (#3674); the session row keeps it too, for the same
+	// pairing on the Requests page
+	r.ResponseID = c.ResponseID
 	if c.Agent == "codex" || c.Agent == "opencode" {
 		r.Requested, r.Served = c.Model, ""
 	}

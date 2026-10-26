@@ -198,6 +198,10 @@ type dshResponse struct {
 	Model         string `json:"model"`
 	Provider      string `json:"provider"`
 	ResponseModel string `json:"responseModel"`
+	// ResponseID is the id the vendor's own reply named: it matches the
+	// gateway's response_id, and pairs a dsh call the gateway served with
+	// its record so it is not counted twice (#3674)
+	ResponseID string `json:"responseId"`
 }
 
 // dshReplay is a reply's replay state, where dsh keeps what the vendor's own

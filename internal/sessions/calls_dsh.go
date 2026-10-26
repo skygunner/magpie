@@ -17,10 +17,10 @@ import (
 // installed and nothing at all for a dsh pointed straight at a vendor.
 //
 // A call through magpie's gateway is logged by the gateway as well, and dsh
-// sends it no session header, so the two records cannot be paired up
-// afterwards: it is left out here as OpenCode's and ZCode's are
-// (dshGatewayProvider), or it would be counted twice — once by the gateway
-// with the provider and account that really answered, and once here as a
+// sends it no session header, so the two records are paired by the
+// reply's responseId when it names one (#3674), or the call is left out
+// here where the provider says magpie; else it would be counted twice —
+// once by the gateway with the account that answered, and once here as a
 // nameless local session. The provider a session's record names is kept as
 // history (Upstream), never as proof of the route.
 
@@ -132,7 +132,10 @@ func dshCall(st *callFile, e dshEvent) (Call, bool) {
 	}
 	src := e.Data.Message.Source
 	// a call dsh sent through magpie's own gateway is the gateway's record
-	// to keep, not this one's: see dshGatewayProvider
+	// to keep, not this one's: see dshGatewayProvider. The provider names
+	// are not always there to tell the two apart (a reply that names
+	// another provider); then the pairing by the reply's responseId keeps
+	// the call from counting twice (#3674)
 	if dshGatewayProvider(src) {
 		return Call{}, false
 	}
@@ -147,12 +150,13 @@ func dshCall(st *callFile, e dshEvent) (Call, bool) {
 		answered = src.Model
 	}
 	c := Call{
-		Agent:     "dsh",
-		Time:      at,
-		Session:   st.Session,
-		Model:     answered,
-		Requested: src.Model,
-		Upstream:  dshUpstream(src),
+		Agent:      "dsh",
+		Time:       at,
+		Session:    st.Session,
+		Model:      answered,
+		Requested:  src.Model,
+		Upstream:   dshUpstream(src),
+		ResponseID: src.ReplayState.Response.ResponseID,
 		Tokens: Tokens{
 			Input:      u.Input,
 			Output:     u.Output,
@@ -195,12 +199,11 @@ func dshUpstream(src dshSource) string {
 // "magpie-anthropic", one route per protocol — agent.dshKinds — and "dial"
 // from before). A call
 // through it is logged by the gateway itself, and dsh sends the gateway no
-// session header (unlike Codex and OpenCode), so the two records cannot be
-// paired afterwards: the token counts differ call to call and there is no id
-// to match on. Such a call is therefore left out here, as OpenCode's and
-// ZCode's are (ocGatewayProvider), or it would be counted twice — once by the
-// gateway, with the provider and account that really answered, and once
-// here as a nameless local session.
+// session header (unlike Codex and OpenCode); the responseId a reply
+// names, which the gateway logs as response_id, pairs the two records now
+// (#3674), so only a call the reply named no id for would be counted
+// twice — once by the gateway, with the provider and account that really
+// answered, and once here as a nameless local session.
 //
 // It is the name alone: dsh's file records no baseURL, so a provider the user
 // added under one of those names, pointing at a vendor of their own, is taken

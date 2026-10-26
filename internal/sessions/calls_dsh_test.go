@@ -50,7 +50,8 @@ func TestDshCalls(t *testing.T) {
 	// really answered, once here as a nameless local session. dsh-gw holds
 	// one such call and one of its own.
 	// dsh-gw's own call is kept; only its gateway one is left out
-	if gw := by["dsh-gw"]; len(gw) != 1 || gw[0].Upstream != "jieyue" || gw[0].Tokens != (Tokens{30, 7, 0, 0, 0}) {
+	if gw := by["dsh-gw"]; len(gw) != 1 || gw[0].Upstream != "jieyue" || gw[0].Tokens != (Tokens{30, 7, 0, 0, 0}) ||
+		gw[0].ResponseID != "resp-local-jieyue" {
 		t.Fatalf("dsh-gw's own call: %+v", gw)
 	}
 	for _, c := range cs {

@@ -60,7 +60,13 @@ func codexResponseMatches(records []Record, calls []sessions.Call, duplicateCall
 			continue
 		}
 		record, call := recordRefs[0], callRefs[0]
-		if records[record].Agent == "codex" && !records[record].IsRejected() && records[record].Source != SourceReported && calls[call].Agent == "codex" {
+		// the pairing is within one agent: a dsh call matches a dsh record,
+		// a codex call a codex record, and only those (the codex identity
+		// fields the pair carries are Codex's own) — but no longer codex
+		// alone (#3674: dsh's session file names the id too)
+		sameAgent := records[record].Agent == calls[call].Agent &&
+			(records[record].Agent == "codex" || records[record].Agent == "dsh")
+		if sameAgent && !records[record].IsRejected() && records[record].Source != SourceReported {
 			pairs[record] = call
 		}
 	}
@@ -183,10 +189,11 @@ func cloneCodexChunks(chunks []*rowChunk) []*rowChunk {
 // rowResponseID is rowText's slot of Record.ResponseID.
 const rowResponseID = 25
 
-// codexChunkResponsePairs are the Codex calls the gateway and a session file
-// both name by one response id, gateway to local, and each local call's
-// compaction. Only the ids the gateway names are kept of the locals': a map
-// of every Codex call's id held each decoded chunk's strings.
+// codexChunkResponsePairs are the Codex and dsh calls the gateway and a
+// session file both name by one response id, gateway to local, and each
+// local call's compaction (#3674). Only the ids the gateway names are kept
+// of the locals': a map of every call's id held each decoded chunk's
+// strings.
 func codexChunkResponsePairs(gateways, locals []*rowChunk, duplicateLocal map[rowRef]bool) (map[rowRef]rowRef, map[rowRef]*bool) {
 	type pick struct {
 		gateways, locals   int
@@ -211,7 +218,7 @@ func codexChunkResponsePairs(gateways, locals []*rowChunk, duplicateLocal map[ro
 			}
 			p.gateways++
 			p.gateway = rowRef{chunk, i}
-			p.gatewayOK = isCodexRow(row) && !row.IsRejected() && row.Source != SourceReported
+			p.gatewayOK = (isCodexRow(row) || row.Agent == "dsh") && !row.IsRejected() && row.Source != SourceReported
 		}
 	}
 	lent := lentRows() // picks are looked up by a local's id, not keyed
@@ -230,7 +237,7 @@ func codexChunkResponsePairs(gateways, locals []*rowChunk, duplicateLocal map[ro
 			row := open.row(i)
 			p.locals++
 			p.local = ref
-			p.localOK = isCodexRow(row) && row.Source == "log"
+			p.localOK = (isCodexRow(row) || row.Agent == "dsh") && row.Source == "log"
 			p.compaction = row.Compaction
 		}
 	}
