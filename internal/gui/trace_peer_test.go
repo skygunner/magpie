@@ -2,10 +2,12 @@ package gui
 
 import (
 	"encoding/json"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -120,5 +122,57 @@ func TestConsoleKeepsTheNoticeFromAnOlderGateway(t *testing.T) {
 	}
 	if got.Mine {
 		t.Fatalf("an older gateway's routing was played as this console's own: %s", w.Body)
+	}
+}
+
+// A rest is held in the memory of the magpie that serves the gateway, so
+// the console of one that doesn't must ask it to lift one: Try now answered
+// 400 "nothing to lift" and lifted nothing where the routing is decided
+// (#3555, yetone).
+func TestTryNowLiftsARestOfTheServingMagpie(t *testing.T) {
+	h := t.TempDir()
+	t.Setenv("HOME", h)
+	t.Setenv("USERPROFILE", h)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(h, ".config"))
+	t.Setenv("XDG_CACHE_HOME", filepath.Join(h, ".cache"))
+	t.Setenv("XDG_DATA_HOME", filepath.Join(h, ".local", "share"))
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("MAGPIE_ADDR", ln.Addr().String())
+	var asked []byte
+	other := &http.Server{Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch {
+		case r.URL.Path == "/v1/magpie/unrest" && r.Method == "POST":
+			asked, _ = io.ReadAll(r.Body)
+			w.Write([]byte(`{"lifted":true}`))
+		default:
+			http.NotFound(w, r)
+		}
+	})}
+	go other.Serve(ln)
+	defer other.Close()
+	served.Store(nil)
+	t.Cleanup(func() { served.Store(nil) })
+
+	mux := http.NewServeMux()
+	traceRoutes(mux)
+	w := httptest.NewRecorder()
+	mux.ServeHTTP(w, httptest.NewRequest("POST", "/api/gateway/unrest", strings.NewReader(`{"key":"acct-b"}`)))
+	if w.Code != 200 || !strings.Contains(w.Body.String(), `"lifted":true`) {
+		t.Fatalf("%d %s", w.Code, w.Body)
+	}
+	if strings.TrimSpace(string(asked)) != `{"key":"acct-b"}` {
+		t.Errorf("the serving magpie was asked %q", asked)
+	}
+
+	// nothing answers there: the page is told as before
+	other.Close()
+	w = httptest.NewRecorder()
+	mux.ServeHTTP(w, httptest.NewRequest("POST", "/api/gateway/unrest", strings.NewReader(`{"key":"acct-b"}`)))
+	if w.Code != 400 || !strings.Contains(w.Body.String(), "nothing to lift") {
+		t.Fatalf("%d %s", w.Code, w.Body)
 	}
 }
