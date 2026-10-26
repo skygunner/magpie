@@ -274,3 +274,36 @@ func TestPromptCacheOptionsRefusedRetried(t *testing.T) {
 		}
 	}
 }
+
+// #3716 (fzh365): Hermes sends "options" with its Chat request, and Gemini
+// through magpie turns it away by name ("Invalid JSON payload received.
+// Unknown name \"options\""): asked again without it, and not sent it again;
+// a request without it is sent once.
+func TestOptionsFieldRefusedRetried(t *testing.T) {
+	f := &fake{t: t, reply: optionalFieldReply(provider.Chat)}
+	f.refuse = func(b []byte) (int, string) {
+		var v map[string]json.RawMessage
+		json.Unmarshal(b, &v)
+		if _, present := v["options"]; present {
+			return 400, `{"error":{"message":"Invalid JSON payload received. Unknown name \"options\": Cannot find field.","code":400}}`
+		}
+		return 0, ""
+	}
+	setup(t, provider.Chat, f)
+	srv := New()
+	path, body := optionalFieldAsk(provider.Chat)
+	calls := f.calls
+	code, reply := postTo(t, srv, path, string(withFields([]byte(body), map[string]any{"options": map[string]any{"temperature": 0.2}})))
+	if code != 200 || f.calls-calls != 2 {
+		t.Fatalf("with options: %d after %d calls, want 200 after 2: %s", code, f.calls-calls, reply)
+	}
+	var sent map[string]json.RawMessage
+	json.Unmarshal(f.got, &sent)
+	if sent["options"] != nil {
+		t.Errorf("options sent again after it was refused: %s", f.got)
+	}
+	calls = f.calls
+	if code, reply := postTo(t, srv, path, body); code != 200 || f.calls-calls != 1 {
+		t.Errorf("without options: %d after %d calls, want 200 after one: %s", code, f.calls-calls, reply)
+	}
+}
