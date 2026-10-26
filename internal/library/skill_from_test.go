@@ -420,6 +420,8 @@ func TestPastedRepoBindsSameCopy(t *testing.T) {
 	write(t, filepath.Join(h, ".claude/skills/extra/SKILL.md"), repo["skills/extra/SKILL.md"])
 	write(t, filepath.Join(h, ".claude/skills/extra/mine.md"), "my own notes\n")
 	write(t, filepath.Join(h, ".agents/skills/shared/SKILL.md"), repo["skills/shared/SKILL.md"])
+	// the skills CLI's own lock: it keeps and updates what it put in ~/.agents
+	write(t, filepath.Join(h, ".agents/.skill-lock.json"), `{"version":3,"skills":{"shared":{"source":"someone/upstream","sourceType":"github"}}}`)
 	dirLink(filepath.Join(h, ".agents/skills/shared"), filepath.Join(h, ".claude/skills/shared"))
 	ok(t)(ImportSkills([]string{"same", "extra", "shared"}))
 

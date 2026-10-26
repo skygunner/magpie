@@ -77,12 +77,17 @@ func TestSharedAgentsSkills(t *testing.T) {
 	ok(t)(ImportSkill("orchestration"))
 	ok(t)(ImportSkill("grilling"))
 	ok(t)(ImportSkill("orca-cli"))
-	// the shared folder is as it was
+	// #3657: a folder of the user's kept in the shared one is moved into
+	// the library, so the agents' ticks decide which of them have it; a
+	// link there stays where it points
 	for _, n := range []string{"orchestration", "orca-cli"} {
-		if fi, err := os.Lstat(filepath.Join(shared, n)); err != nil || !fi.IsDir() {
-			t.Errorf("%s left the shared folder: %v", n, err)
+		if _, err := os.Lstat(filepath.Join(shared, n)); !os.IsNotExist(err) {
+			t.Errorf("%s is still in the shared folder: %v", n, err)
 		}
-		if _, err := os.Stat(filepath.Join(shared, n, "scripts/run.sh")); err != nil {
+		if linked(skillDir(n)) {
+			t.Errorf("the library's %s is a link into the shared folder", n)
+		}
+		if _, err := os.Stat(filepath.Join(skillDir(n), "scripts/run.sh")); err != nil {
 			t.Errorf("%s's files: %v", n, err)
 		}
 	}
@@ -92,11 +97,13 @@ func TestSharedAgentsSkills(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(ext, "SKILL.md")); err != nil {
 		t.Error("the folder the shared link pointed to went")
 	}
-	// the library links to them
-	for n, want := range map[string]string{"orchestration": filepath.Join(shared, "orchestration"), "grilling": ext, "orca-cli": filepath.Join(shared, "orca-cli")} {
-		if !linked(skillDir(n)) || realDir(skillDir(n)) != realDir(want) {
-			t.Errorf("the library's %s isn't a link to %s", n, want)
-		}
+	// the library keeps the moved-in folders itself and links to where
+	// the shared folder's link pointed (#3657)
+	if linked(skillDir("orchestration")) || linked(skillDir("orca-cli")) {
+		t.Error("a moved-in skill is the library's own folder")
+	}
+	if !linked(skillDir("grilling")) || realDir(skillDir("grilling")) != realDir(ext) {
+		t.Errorf("the library's grilling isn't a link to %s", ext)
 	}
 	// the agents that had it have the library's; Codex and Gemini CLI read
 	// ~/.agents/skills, where all three are kept, so a link in their own
@@ -105,9 +112,9 @@ func TestSharedAgentsSkills(t *testing.T) {
 	if !ours(filepath.Join(h, ".pi/agent/skills/orchestration"), "orchestration") {
 		t.Error("pi's orchestration isn't the library's")
 	}
-	for _, d := range []string{".codex/skills/orchestration", ".gemini/skills/grilling", ".codex/skills/orca-cli"} {
-		if _, err := os.Lstat(filepath.Join(h, d)); !os.IsNotExist(err) {
-			t.Errorf("%s is there, besides the shared folder's: %v", d, err)
+	for _, d := range []string{".codex/skills/orchestration", ".codex/skills/orca-cli"} {
+		if !ours(filepath.Join(h, d), filepath.Base(d)) {
+			t.Errorf("%s: not the library's link", d)
 		}
 	}
 	if m, _ := filepath.Glob(filepath.Join(BackupDir(), "*", "codex", "skills", "orca-cli", "SKILL.md")); len(m) != 1 {
@@ -115,21 +122,55 @@ func TestSharedAgentsSkills(t *testing.T) {
 	}
 	v, _ := Read(nil)
 	for _, s := range v.Skills {
-		if s.Kind != "folder" {
-			t.Errorf("%s: %+v", s.Name, s)
-		}
-		// every agent reading the shared folder has it, ticked or not
-		for _, id := range []string{"codex", "gemini"} {
-			if !slices.Contains(s.Always, id) {
-				t.Errorf("%s: %s isn't said to have it always: %v", s.Name, id, s.Always)
+		// a link into the shared folder is still had by every agent reading
+		// it, ticked or not; one moved in is not (#3657)
+		if s.Name == "grilling" {
+			for _, id := range []string{"codex", "gemini"} {
+				if !slices.Contains(s.Always, id) {
+					t.Errorf("grilling: %s isn't said to have it always: %v", id, s.Always)
+				}
 			}
-		}
-		if slices.Contains(s.Always, "pi") || slices.Contains(s.Always, "claude") {
+		} else if len(s.Always) != 0 {
 			t.Errorf("%s: always %v", s.Name, s.Always)
 		}
 	}
 	if byName := found(); len(byName) != 0 {
 		t.Errorf("still found: %+v", byName)
+	}
+}
+
+// #3657: a skill of the user's kept in ~/.agents/skills and brought in is
+// moved into the library, so the ticks decide which agents have it: an
+// agent reading the shared folder gets the library's while ticked and
+// loses it once unticked, where a copy left there was read by all of them
+// whatever was ticked.
+func TestImportSharedSkillUnticksForItsReaders(t *testing.T) {
+	h := sandbox(t)
+	shared := filepath.Join(h, ".agents/skills/drawio-skill")
+	skill(t, shared, "drawio-skill", "Draw diagrams")
+	ok(t)(ImportSkill("drawio-skill"))
+	// the folder is the library's own now, and Goose, whose folder the
+	// shared one is, has the library's linked there: #3657, not a copy of
+	// the user's the ticks can never take away
+	if linked(skillDir("drawio-skill")) {
+		t.Error("the library's is a link into the shared folder")
+	}
+	if !ours(shared, "drawio-skill") {
+		t.Error("goose's entry in ~/.agents/skills isn't the library's link")
+	}
+	cx := filepath.Join(h, ".codex/skills/drawio-skill")
+	ok(t)(SkillAgents("drawio-skill", []string{"codex"}))
+	if !ours(cx, "drawio-skill") {
+		t.Error("codex hasn't it while ticked")
+	}
+	if v, err := Read(nil); err != nil || len(v.Skills) != 1 || slices.Contains(v.Skills[0].Always, "codex") || slices.Contains(v.Skills[0].Always, "goose") {
+		t.Errorf("said to have it always: %+v %v", v.Skills, err)
+	}
+	ok(t)(SkillAgents("drawio-skill", []string{}))
+	for _, p := range []string{cx, shared} {
+		if _, err := os.Lstat(p); !os.IsNotExist(err) {
+			t.Errorf("%s is there unticked: %v", p, err)
+		}
 	}
 }
 

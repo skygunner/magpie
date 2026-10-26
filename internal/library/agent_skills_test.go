@@ -155,8 +155,13 @@ func TestImportSharedSkillForKimi(t *testing.T) {
 	shared := filepath.Join(h, ".agents/skills/orca")
 	skill(t, shared, "orca", "Orca")
 	ok(t)(ImportSkill("orca"))
-	if fi, err := os.Lstat(shared); err != nil || !fi.IsDir() {
-		t.Errorf("the shared folder's skill: %v", err)
+	// #3657: the folder is moved into the library, and Kimi Code, whose
+	// folder the shared one is, has the library's linked back in it
+	if linked(skillDir("orca")) {
+		t.Error("the library's orca is a link into the shared folder")
+	}
+	if !ours(shared, "orca") {
+		t.Error("kimi's orca isn't the library's")
 	}
 	v, _ := Read(nil)
 	if len(v.Skills) != 1 || !slices.Equal(v.Skills[0].Agents, []string{"kimi"}) || len(v.Skills[0].Problems) != 0 {

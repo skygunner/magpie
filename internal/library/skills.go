@@ -1969,9 +1969,15 @@ func importSkill(l *Library, found []FoundSkill, name string) error {
 	// .git behind, and the skills CLI's lock names it where it was
 	from := (&tracer{}).folder(f.real)
 	src := &Source{Kind: "folder", Dir: f.real}
-	// one in the shared ~/.agents/skills (or a link into it) stays
-	// there, linked to: the shared folder is the user's, never emptied
-	shared := f.Shared != "" || within(f.real, realDir(sharedSkillsDir()))
+	// a link into the shared ~/.agents/skills, and a folder there that
+	// the skills CLI put and updates (its lock names it), stay as they
+	// are, linked to. A folder of the user's kept there is moved in like
+	// any other (#3657): left there and linked to from the library, every
+	// agent reading the shared folder had it whatever was ticked
+	cliSkill := false
+	if within(f.real, realDir(sharedSkillsDir())) {
+		_, cliSkill = (&tracer{}).lock()[name]
+	}
 	switch {
 	case f.Library != "":
 		// in the library's folder already (#595): listed where it is, a
@@ -1979,7 +1985,7 @@ func importSkill(l *Library, found []FoundSkill, name string) error {
 		if !linked(f.Library) {
 			src = nil
 		}
-	case f.Link != "" || shared:
+	case f.Link != "" || cliSkill:
 		// linked through the way the agent's own link goes, not to where
 		// it ends today: an app that keeps its skills in a versioned
 		// folder points its own link at the new one when it updates
