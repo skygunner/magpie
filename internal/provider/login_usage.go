@@ -6,6 +6,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 	"sync"
@@ -283,6 +284,12 @@ func loginProvider(l Login) string {
 	return l.Agent
 }
 
+// errSIWCUsage is what a ChatGPT API account's allowance reads as: OpenAI
+// publishes no way to read a plan's usage with such a sign-in, only the
+// page it is shown on, so magpie says that rather than borrowing Codex's
+// windows for an account that is not Codex's (#3721, NoneMore).
+var errSIWCUsage = errors.New("OpenAI doesn't let an app read this account's plan usage; it is shown at " + SIWCUsageURL)
+
 func loginQuota(ctx context.Context, l Login) SubscriptionQuota {
 	ctx = ViaLogin(ctx, loginProvider(l), l.User) // asked through the account's own proxy
 	if strings.HasPrefix(l.Agent, "plugin:") {
@@ -323,6 +330,14 @@ func loginQuota(ctx context.Context, l Login) SubscriptionQuota {
 		return SubscriptionQuota{Provider: l.Agent, Plan: l.Plan, Windows: []QuotaWindow{}, Error: "not signed in"}
 	}
 	q := SubscriptionQuota{Provider: l.Agent, Plan: l.Plan, Windows: []QuotaWindow{}}
+	if l.Agent == ChatGPTAPIID {
+		// OpenAI's Sign in with ChatGPT has no usage of its own magpie may
+		// read, and the account is a different one from Codex's: an
+		// account read as Codex's own took Codex's windows for its own
+		// (#3721, NoneMore)
+		q.Error = errSIWCUsage.Error()
+		return q
+	}
 	if l.Agent == "claude" && !l.Active {
 		// a saved account: what Claude Code told of it, or, when its card
 		// is refreshed, its /usage run in the account's own directory
@@ -340,7 +355,9 @@ func loginQuota(ctx context.Context, l Login) SubscriptionQuota {
 	var renew codexRenew
 	switch {
 	case l.Agent == "claude": // Claude Code reads its own (claudeWindows)
-	case l.Active:
+	case l.Agent == "codex" && l.Active:
+		// Active is the first account of an agent's own list, not a say of
+		// Codex's: only Codex's own sign-in is read from Codex's home
 		tok, accountID, err = codexToken(ctx, codexHome())
 		renew = func(ctx context.Context, stale string) (string, string, error) {
 			return codexTokenRenewing(ctx, codexHome(), stale)
