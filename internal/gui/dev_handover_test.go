@@ -97,24 +97,25 @@ func TestDevBackendHandoverAnswersAConnectionItTook(t *testing.T) {
 	// (go1.26.8 net/http/server.go:3151) before it closes its listeners
 	// (:3154), and the fix's finish closes its listener before it calls
 	// Shutdown, so the listener's Close beginning is the barrier in both
-	// directions. A signal can only land once the backend listens for it —
-	// the base registers after `go srv.Serve` — so if the close hasn't
-	// begun, the signal is said again; the wait is on the event, never on a
-	// duration.
-	begun := false
-	for attempt := 0; attempt < 5 && !begun; attempt++ {
-		if err := syscall.Kill(os.Getpid(), handoverSignal.(syscall.Signal)); err != nil {
-			t.Fatal(err)
-		}
+	// directions. The base registers its signal handler after Serve starts;
+	// retry on observed signal delivery until Close starts, with one failure deadline.
+	if err := syscall.Kill(os.Getpid(), handoverSignal.(syscall.Signal)); err != nil {
+		t.Fatal(err)
+	}
+	deadline := time.NewTimer(10 * time.Second)
+	defer deadline.Stop()
+waitForClose:
+	for {
 		select {
 		case <-held.closed:
-			begun = true
-		case <-time.After(2 * time.Second):
-			// the signal landed before the backend listened for it; say it again
+			break waitForClose
+		case <-sigSeen:
+			if err := syscall.Kill(os.Getpid(), handoverSignal.(syscall.Signal)); err != nil {
+				t.Fatal(err)
+			}
+		case <-deadline.C:
+			t.Fatal("the handover never began")
 		}
-	}
-	if !begun {
-		t.Fatal("the handover never began")
 	}
 	letGo()
 	if _, err := fmt.Fprintf(c, "GET /api/state HTTP/1.1\r\nHost: dev\r\n\r\n"); err != nil {
