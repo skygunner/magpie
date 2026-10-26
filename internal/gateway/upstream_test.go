@@ -3,6 +3,7 @@ package gateway
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -135,7 +136,7 @@ func TestUpstreamOf(t *testing.T) {
 		`not json "provider"`:                                           "",
 		`{"type":"response.created","response":{"provider":"Baseten"}}`: "Baseten",
 	} {
-		if got := upstreamOf([]byte(in)); got != want {
+		if got, _ := upstreamOf([]byte(in)); got != want {
 			t.Errorf("upstreamOf(%s) = %q; want %q", in, got, want)
 		}
 	}
@@ -173,24 +174,87 @@ func TestUpstreamOfClinePass(t *testing.T) {
 			last = d
 		}
 	}
-	if got := upstreamOf([]byte(last)); got != "deepseek" {
-		t.Errorf("real ClinePass chunk: upstreamOf = %q; want deepseek", got)
+	const slug = "deepseek/deepseek-v4.1-flash"
+	if got, gs := upstreamOf([]byte(last)); got != "deepseek" || gs != slug {
+		t.Errorf("real ClinePass chunk: upstreamOf = %q, %q; want deepseek, %q", got, gs, slug)
 	}
 	whole := strings.Replace(last, `"delta":{"provider_metadata"`, `"message":{"role":"assistant","content":"hi","provider_metadata"`, 1)
-	if got := upstreamOf([]byte(whole)); got != "deepseek" {
-		t.Errorf("one body: upstreamOf = %q; want deepseek", got)
+	if got, gs := upstreamOf([]byte(whole)); got != "deepseek" || gs != slug {
+		t.Errorf("one body: upstreamOf = %q, %q; want deepseek, %q", got, gs, slug)
 	}
-	for in, want := range map[string]string{
-		`{"choices":[{"delta":{"provider_metadata":{"gateway":{"routing":{"finalProvider":"novita"}}}}}]}`:                                         "novita",
-		`{"choices":[{"delta":{"content":"provider_metadata gateway routing \"finalProvider\":\"deepseek\""}}]}`:                                   "",
-		`{"choices":[{"delta":{"provider_metadata":{"gateway":{"routing":{"modelAttempts":[{"providerAttempts":[{"provider":"deepseek"}]}]}}}}}]}`: "",
-		`{"choices":[{"delta":{"provider_metadata":{"gateway":{"routing":{"finalProvider":{"id":"x"}}}}}}]}`:                                       "",
-		`{"choices":[{"delta":{"tool_calls":[{"function":{"arguments":"{\"finalProvider\":\"x\"}"}}]}}]}`:                                          "",
-		`{"provider":"Novita","choices":[{"delta":{"provider_metadata":{"gateway":{"routing":{"finalProvider":"deepseek"}}}}}]}`:                   "Novita",
+	for _, c := range []struct{ in, want, slug string }{
+		{in: `{"choices":[{"delta":{"provider_metadata":{"gateway":{"routing":{"finalProvider":"novita"}}}}}]}`, want: "novita"},
+		{in: `{"choices":[{"delta":{"content":"provider_metadata gateway routing \"finalProvider\":\"deepseek\""}}]}`},
+		{in: `{"choices":[{"delta":{"provider_metadata":{"gateway":{"routing":{"modelAttempts":[{"providerAttempts":[{"provider":"deepseek"}]}]}}}}}]}`},
+		{in: `{"choices":[{"delta":{"provider_metadata":{"gateway":{"routing":{"finalProvider":{"id":"x"}}}}}}]}`},
+		{in: `{"choices":[{"delta":{"tool_calls":[{"function":{"arguments":"{\"finalProvider\":\"x\"}"}}]}}]}`},
+		{in: `{"provider":"Novita","choices":[{"delta":{"provider_metadata":{"gateway":{"routing":{"finalProvider":"deepseek"}}}}}]}`, want: "Novita"},
+		// the slug is the one beside the provider that answered, never one
+		// of what was tried: a private pool's slug in providerAttempts says
+		// nothing about the answer (#3713)
+		{in: `{"choices":[{"delta":{"provider_metadata":{"gateway":{"routing":{"canonicalSlug":"deepseek/deepseek-v4.1-flash","finalProvider":"deepseek"}}}}}]}`, want: "deepseek", slug: slug},
+		{in: `{"choices":[{"message":{"provider_metadata":{"gateway":{"routing":{"canonicalSlug":"private/deepseek-v4p1-flash-1017-contributor"}}}}}]}`, slug: "private/deepseek-v4p1-flash-1017-contributor"},
+		{in: `{"choices":[{"delta":{"provider_metadata":{"gateway":{"routing":{"modelAttempts":[{"providerAttempts":[{"canonicalSlug":"private/deepseek-v4p1-flash-1017-contributor","provider":"deepseek"}]}]}}}}}]}`},
+		{in: `{"choices":[{"delta":{"content":"gateway routing \"canonicalSlug\":\"private/x\""}}]}`},
+		{in: `{"choices":[{"delta":{"provider_metadata":{"gateway":{"routing":{"canonicalSlug":{"id":"x"}}}}}}]}`},
 	} {
-		if got := upstreamOf([]byte(in)); got != want {
-			t.Errorf("upstreamOf(%s) = %q; want %q", in, got, want)
+		if got, gs := upstreamOf([]byte(c.in)); got != c.want || gs != c.slug {
+			t.Errorf("upstreamOf(%s) = %q, %q; want %q, %q", c.in, got, gs, c.want, c.slug)
 		}
+	}
+}
+
+// The canonicalSlug a ClinePass reply names beside the provider it answered
+// from (#3713, xdeers2) is kept with it, on the route, its try, the request
+// log and the usage record: the provider name alone cannot tell a private
+// pool (openai-compatible-private, slug private/…) from the official one.
+func TestClinePassSlugRecorded(t *testing.T) {
+	const slug = "deepseek/deepseek-v4.1-flash"
+	stream := clinePassStream(t)
+	fresh(t)
+	up := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		for _, l := range stream {
+			io.WriteString(w, l+"\n\n")
+		}
+	}))
+	t.Cleanup(up.Close)
+	p := provider.Provider{ID: "fake", Name: "Fake", Key: "k", Chat: up.URL + "/v1", Models: []string{"sol"}}
+	if err := provider.Save(p); err != nil {
+		t.Fatal(err)
+	}
+	body := `{"model":"fake/sol","max_tokens":100,"stream":true,"messages":[{"role":"user","content":"hi"}]}`
+	s := New()
+	rec := httptest.NewRecorder()
+	s.Handler().ServeHTTP(rec, httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(body)))
+	if rec.Code != 200 {
+		t.Fatalf("%d %s", rec.Code, rec.Body)
+	}
+	carries := func(what string, v any) {
+		t.Helper()
+		b, err := json.Marshal(v)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(string(b), `"canonicalSlug":"`+slug+`"`) {
+			t.Errorf("%s carries no canonicalSlug: %s", what, b)
+		}
+	}
+	if r := lastRoute(s); r.Upstream != "deepseek" || len(r.Tries) != 1 {
+		t.Fatalf("route upstream %q, tries %+v", r.Upstream, r.Tries)
+	} else {
+		carries("the route", r)
+		carries("its try", r.Tries[0])
+	}
+	if calls := s.Recent(); len(calls) == 0 {
+		t.Fatal("no request log")
+	} else {
+		carries("the request log", calls[0].Usage)
+	}
+	if u := usage.Load(time.Time{}); len(u) != 1 {
+		t.Fatalf("usage %+v", u)
+	} else {
+		carries("the usage record", u[0])
 	}
 }
 

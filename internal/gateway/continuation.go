@@ -541,7 +541,8 @@ func (s *Server) streamTranslated(w http.ResponseWriter, r *http.Request, p prov
 				serr = readSSEAlive(rd, func(_, data string) error {
 					tail.see([]byte(data))
 					st := upstreamStop([]byte(data))
-					u.add(Usage{Upstream: upstreamOf([]byte(data)), Stop: st, Tier: upstreamTier([]byte(data))})
+					up, slug := upstreamOf([]byte(data))
+					u.add(Usage{Upstream: up, CanonicalSlug: slug, Stop: st, Tier: upstreamTier([]byte(data))})
 					ended = ended || replyEnds(actual, data, st)
 					if err := dec(data, attemptSee); err != nil {
 						return err

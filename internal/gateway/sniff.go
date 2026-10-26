@@ -126,8 +126,13 @@ func (s *usageSniffer) parse(b []byte) {
 			s.u.ErrType = provider.ErrorType(body)
 		}
 	}
-	if up := upstreamOf(b); up != "" {
-		s.u.Upstream = up
+	if up, slug := upstreamOf(b); up != "" || slug != "" {
+		if up != "" {
+			s.u.Upstream = up
+		}
+		if slug != "" {
+			s.u.CanonicalSlug = slug
+		}
 	}
 	if st := upstreamStop(b); st != "" {
 		s.u.Stop = st
