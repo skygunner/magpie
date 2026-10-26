@@ -139,7 +139,7 @@ func TestRemoteMagpieGroupHistory(t *testing.T) {
 	saveRoute(Route{ID: 2, Time: now.Add(time.Second), Model: "office/fake/sol", Done: true, Status: 200,
 		Tries:  []Try{{ID: "office", Model: "fake/sol", Done: true, Status: 200, Served: "luna", Swapped: true}},
 		Served: "luna", Swapped: true})
-	_, rs, _ := History(now.Format(dayForm))
+	_, rs, _ := History(now.Format(dayForm), time.Local)
 	if len(rs) != 2 {
 		t.Fatalf("routes %+v", rs)
 	}

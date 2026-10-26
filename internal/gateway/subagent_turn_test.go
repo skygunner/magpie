@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/yetone/magpie/internal/provider"
 )
@@ -84,7 +85,7 @@ func TestHistoryKeepsSubagentID(t *testing.T) {
 	saveRoute(Route{ID: 1, Time: now, Agent: "claude-desktop", SubagentID: "worker", Done: true})
 	saveRoute(Route{ID: 2, Time: now, Agent: "claude-desktop", Done: true})
 	pruneHistory(HistoryDir(), now.AddDate(0, 0, 1))
-	_, routes, _ := History(now.Format(dayForm))
+	_, routes, _ := History(now.Format(dayForm), time.Local)
 	if len(routes) != 2 || routes[0].SubagentID != "worker" || routes[1].SubagentID != "" {
 		t.Fatalf("history: %+v", routes)
 	}

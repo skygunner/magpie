@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/yetone/magpie/internal/provider"
 )
@@ -103,7 +104,7 @@ func TestRouteKeepsItsFolderShort(t *testing.T) {
 		r.Time = now
 		saveRoute(r)
 	}
-	_, kept, _ := History(now.Format(dayForm))
+	_, kept, _ := History(now.Format(dayForm), time.Local)
 	var folders []string
 	for _, r := range kept {
 		folders = append(folders, r.Folder)

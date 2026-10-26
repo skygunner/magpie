@@ -15,6 +15,7 @@ import (
 	"github.com/yetone/magpie/internal/provider"
 	"github.com/yetone/magpie/internal/sessions"
 	"github.com/yetone/magpie/internal/usage"
+	"github.com/yetone/magpie/internal/usageapi"
 )
 
 // traceJSON is the gateway's routing trace since the page last asked.
@@ -351,7 +352,7 @@ func traceRoutes(mux *http.ServeMux) {
 			http.Error(rw, "invalid route day", http.StatusBadRequest)
 			return
 		}
-		if route, ok := gateway.HistoryRoute(id, day); ok {
+		if route, ok := gateway.HistoryRoute(id, day, usageapi.ZoneOf(r)); ok {
 			writeJSON(rw, pricedRoutes([]gateway.Route{route})[0])
 			return
 		}
@@ -382,7 +383,9 @@ func traceRoutes(mux *http.ServeMux) {
 	// disk — read whichever magpie serves the gateway
 	mux.HandleFunc("GET /api/gateway/history", func(rw http.ResponseWriter, r *http.Request) {
 		day := r.URL.Query().Get("day")
-		days, routes, cut := gateway.History(day)
+		// the reader's day (its ?tz=), which the history's files, named by
+		// this computer's days, are read in
+		days, routes, cut := gateway.History(day, usageapi.ZoneOf(r))
 		rememberTitleHistory(day, routes)
 		writeJSON(rw, map[string]any{"days": days, "routes": pricedRoutes(routes), "cut": cut})
 	})

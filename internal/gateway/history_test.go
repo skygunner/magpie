@@ -15,6 +15,8 @@ import (
 	"time"
 
 	"github.com/yetone/magpie/internal/provider"
+	"github.com/yetone/magpie/internal/testenv"
+	"github.com/yetone/magpie/internal/usage"
 )
 
 // historyNoon holds the history's clock at noon of a past day and returns
@@ -35,7 +37,7 @@ func TestHistoryKeepsSessionAndTokenTiers(t *testing.T) {
 	saveRoute(Route{ID: 1, Time: now, Session: "conversation", ParentSession: "parent-conversation", Kind: "thread_title", Usage: records, Done: true})
 	saveRoute(Route{ID: 2, Time: now, Tokens: 1000, Done: true}) // legacy route
 	pruneHistory(HistoryDir(), now.AddDate(0, 0, 1))
-	_, routes, _ := History(now.Format(dayForm))
+	_, routes, _ := History(now.Format(dayForm), time.Local)
 	if len(routes) != 2 || routes[0].Session != "conversation" || routes[0].ParentSession != "parent-conversation" || len(routes[0].Usage) != 1 || routes[0].Usage[0] != (RouteUsage{Provider: "relay", Model: "m", Input: 20, Output: 5, CacheRead: 100, CacheWrite: 40}) {
 		t.Fatalf("compressed history lost accounting: %+v", routes)
 	}
@@ -64,11 +66,11 @@ func TestHistoryKeepsDaysAndDropsOld(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(dir, yday.Format(dayForm)+".jsonl.gz")); err != nil {
 		t.Fatal("yesterday isn't gzipped:", err)
 	}
-	days, rs, _ := History(now.Format(dayForm))
+	days, rs, _ := History(now.Format(dayForm), time.Local)
 	if len(days) != 2 || days[0].Requests != 2 || days[1].Requests != 1 || len(rs) != 2 || rs[0].Model != "b" || rs[1].Model != "c" {
 		t.Fatalf("days %+v routes %+v", days, rs)
 	}
-	if _, rs, _ := History(yday.Format(dayForm)); len(rs) != 1 || rs[0].Model != "a" {
+	if _, rs, _ := History(yday.Format(dayForm), time.Local); len(rs) != 1 || rs[0].Model != "a" {
 		t.Fatalf("yesterday, gzipped: %+v", rs)
 	}
 	// over the bytes kept: the oldest go, today stays
@@ -104,7 +106,7 @@ func TestHistoryKeepsALateRouteWithItsDay(t *testing.T) {
 	kept := func(when string, ids ...int64) {
 		t.Helper()
 		want := []HistoryDay{{day, len(ids)}, {before.Format(dayForm), 1}}
-		days, rs, _ := History(day)
+		days, rs, _ := History(day, time.Local)
 		var got []int64
 		for _, r := range rs {
 			got = append(got, r.ID)
@@ -112,11 +114,11 @@ func TestHistoryKeepsALateRouteWithItsDay(t *testing.T) {
 		if !slices.Equal(days, want) || !slices.Equal(got, ids) {
 			t.Errorf("%s: days %+v, routes %v; want %+v, routes %v", when, days, got, want, ids)
 		}
-		if days, _, _ := History(""); !slices.Equal(days, want) {
+		if days, _, _ := History("", time.Local); !slices.Equal(days, want) {
 			t.Errorf("%s: days live %+v; want %+v", when, days, want)
 		}
 		for _, id := range ids {
-			if _, ok := HistoryRoute(id, yday); !ok {
+			if _, ok := HistoryRoute(id, yday, time.Local); !ok {
 				t.Errorf("%s: route %d not found", when, id)
 			}
 		}
@@ -198,7 +200,7 @@ func TestHistoryKeepsADayCutShort(t *testing.T) {
 			os.WriteFile(path+".gz", gz.Bytes(), 0o600)
 			os.WriteFile(path, []byte(c.file), 0o600)
 			pruneHistory(dir, now)
-			days, rs, _ := History(day)
+			days, rs, _ := History(day, time.Local)
 			var got []int64
 			for _, r := range rs {
 				got = append(got, r.ID)
@@ -273,7 +275,7 @@ func TestHistoryLeavesADayItCantRead(t *testing.T) {
 	}
 	os.Chmod(path+".gz", 0o600)
 	pruneHistory(dir, now)
-	days, rs, _ := History(day)
+	days, rs, _ := History(day, time.Local)
 	var got []int64
 	for _, r := range rs {
 		got = append(got, r.ID)
@@ -326,7 +328,7 @@ func TestHistoryDropsADayWhole(t *testing.T) {
 	for _, f := range historyFiles(dir) {
 		left = append(left, filepath.Base(f.path))
 	}
-	days, rs, _ := History(day)
+	days, rs, _ := History(day, time.Local)
 	var got []int64
 	for _, r := range rs {
 		got = append(got, r.ID)
@@ -390,16 +392,16 @@ func TestHistoryRouteOutsideDayLimit(t *testing.T) {
 		if at == yesterday {
 			gzipFile(path)
 		}
-		_, rows, cut := History(at.Format(dayForm))
+		_, rows, cut := History(at.Format(dayForm), time.Local)
 		if !cut || len(rows) != historyMax {
 			t.Fatalf("history: %d, cut %v", len(rows), cut)
 		}
 		id := at.UnixMilli() + 1
-		if r, ok := HistoryRoute(id, at); !ok || r.ID != id || r.Model != "model" {
+		if r, ok := HistoryRoute(id, at, time.Local); !ok || r.ID != id || r.Model != "model" {
 			t.Fatalf("route: %+v, found %v", r, ok)
 		}
 	}
-	if _, ok := HistoryRoute(42, now); ok {
+	if _, ok := HistoryRoute(42, now, time.Local); ok {
 		t.Fatal("found missing route")
 	}
 }
@@ -414,7 +416,7 @@ func TestHistoryRouteDayAndNoLock(t *testing.T) {
 	// A lookup must finish even while a history writer holds its mutex.
 	history.mu.Lock()
 	done := make(chan Route, 1)
-	go func() { r, _ := HistoryRoute(123, day); done <- r }()
+	go func() { r, _ := HistoryRoute(123, day, time.Local); done <- r }()
 	select {
 	case r := <-done:
 		history.mu.Unlock()
@@ -425,10 +427,10 @@ func TestHistoryRouteDayAndNoLock(t *testing.T) {
 		history.mu.Unlock()
 		t.Fatal("lookup waited for history mutex")
 	}
-	if _, ok := HistoryRoute(123, day.AddDate(0, 0, -2)); !ok {
+	if _, ok := HistoryRoute(123, day.AddDate(0, 0, -2), time.Local); !ok {
 		t.Fatal("next day was not checked")
 	}
-	if _, ok := HistoryRoute(123, day.AddDate(0, 0, 2)); ok {
+	if _, ok := HistoryRoute(123, day.AddDate(0, 0, 2), time.Local); ok {
 		t.Fatal("searched outside the three-day window")
 	}
 }
@@ -500,7 +502,7 @@ func TestHistoryReadsOnlyWhatWasAdded(t *testing.T) {
 		b.WriteString(line(i))
 	}
 	os.WriteFile(path, []byte(b.String()), 0o600)
-	if days, rs, cut := History(day); len(days) != 1 || days[0].Requests != n || len(rs) != historyMax || !cut || rs[0].ID != int64(n-historyMax+1) {
+	if days, rs, cut := History(day, time.Local); len(days) != 1 || days[0].Requests != n || len(rs) != historyMax || !cut || rs[0].ID != int64(n-historyMax+1) {
 		t.Fatalf("days %+v, %d routes from %v, cut %v", days, len(rs), rs[0].ID, cut)
 	}
 	blank := bytes.Repeat([]byte(" "), len(line(1))-1)
@@ -509,20 +511,20 @@ func TestHistoryReadsOnlyWhatWasAdded(t *testing.T) {
 	// a route added, and one being written
 	f.WriteAt([]byte(line(n+1)+line(n + 2)[:20]), int64(b.Len()))
 	f.Close()
-	days, _, _ := History("")
+	days, _, _ := History("", time.Local)
 	if len(days) != 1 || days[0].Requests != n+2 {
 		t.Fatalf("days %+v, want %d requests", days, n+2)
 	}
 	f, _ = os.OpenFile(path, os.O_WRONLY, 0)
 	f.WriteAt([]byte(line(n+2)), int64(b.Len()+len(line(n+1))))
 	f.Close()
-	days, rs, _ := History(day)
+	days, rs, _ := History(day, time.Local)
 	if len(days) != 1 || days[0].Requests != n+2 || len(rs) != historyMax || rs[len(rs)-1].ID != int64(n+2) {
 		t.Fatalf("days %+v, %d routes, last %d", days, len(rs), rs[len(rs)-1].ID)
 	}
 	// written over shorter: counted again from its start
 	os.WriteFile(path, []byte(line(1)), 0o600)
-	if days, rs, cut := History(day); len(days) != 1 || days[0].Requests != 1 || len(rs) != 1 || cut {
+	if days, rs, cut := History(day, time.Local); len(days) != 1 || days[0].Requests != 1 || len(rs) != 1 || cut {
 		t.Fatalf("written over: days %+v, %d routes, cut %v", days, len(rs), cut)
 	}
 }
@@ -541,12 +543,46 @@ func BenchmarkHistoryLook(b *testing.B) {
 	one, _ := json.Marshal(r)
 	one = append(one, '\n')
 	os.WriteFile(path, bytes.Repeat(one, 20000), 0o600)
-	History("")
+	History("", time.Local)
 	f, _ := os.OpenFile(path, os.O_WRONLY|os.O_APPEND, 0)
 	defer f.Close()
 	b.ResetTimer()
 	for b.Loop() {
 		f.Write(one)
-		History("")
+		History("", time.Local)
+	}
+}
+
+// #3324 (yetone): the history's files are named by this computer's days, and
+// a reader in another zone picking a day was given this computer's: a route
+// at 23:50 here is 00:50 the next day there. The files stay as they are, and
+// the reader's day is read in the reader's zone.
+func TestHistoryReadsTheReadersDay(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	// this computer's clock is UTC-11, the reader's UTC-10: an hour on
+	testenv.Zone(t, usage.Zone("Pacific/Midway"))
+	now := historyNoon(t)
+	late := time.Date(now.Year(), now.Month(), now.Day(), 23, 50, 0, 0, time.Local)
+	saveRoute(Route{ID: 7, Time: late, Model: "a", Done: true})
+	day, tomorrow := late.Format(dayForm), late.AddDate(0, 0, 1).Format(dayForm)
+	honolulu := usage.Zone("Pacific/Honolulu")
+	if _, routes, _ := History(day, time.Local); len(routes) != 1 || routes[0].ID != 7 {
+		t.Fatalf("the files are this computer's days: %s has %d routes, want route 7", day, len(routes))
+	}
+	if _, routes, _ := History(day, honolulu); len(routes) != 0 {
+		t.Errorf("%s there: %d routes, want none: 23:50 here is %s there", day, len(routes), tomorrow)
+	}
+	if _, routes, _ := History(tomorrow, honolulu); len(routes) != 1 || routes[0].ID != 7 {
+		t.Errorf("%s there: %d routes, want route 7", tomorrow, len(routes))
+	}
+	// the replay of one route finds it, whichever of the two days is named
+	for _, at := range []string{day, tomorrow} {
+		d, err := time.Parse(dayForm, at)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if r, ok := HistoryRoute(7, d, honolulu); !ok || r.ID != 7 {
+			t.Errorf("route 7 of %s there: %+v, found %v", at, r, ok)
+		}
 	}
 }
