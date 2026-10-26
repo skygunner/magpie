@@ -133,7 +133,12 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       await chips().filter({ hasText: /^medium$/ }).click();
       await chips().filter({ hasText: /^xhigh$/ }).click();
       await save();
-      await page.waitForFunction((s) => document.documentElement.innerText.includes(s), w.none);
+      // the reason stays under the levels while the editor is open: the
+      // pill says it for 3.5s and clears itself, so a wait on the pill is
+      // a race with that timer, and a click slow enough to outlast it
+      // left nothing to find (#3620)
+      await page.waitForFunction((s) => document.querySelector(".rt-gedit")?.innerText.includes(s) || document.querySelector("#status")?.textContent.includes(s), w.none);
+      assert(await ed.evaluate((e, s) => e.innerText.includes(s), w.none), "the reason is under the levels, not only in the pill");
       assert.equal(posts.length, 0, "nothing saved with no level");
       await row().locator(".segs .opt", { hasText: w.shared }).click();
       assert.equal(await row().locator(".rt-levels").isHidden(), true);

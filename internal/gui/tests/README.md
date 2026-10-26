@@ -537,7 +537,9 @@ WebKit, English and Chinese (#295: a member with low/high/max took medium and
 xhigh from the rest). "Its models' shared" names those levels; "Named" shows a
 toggle per level, starting from the shared ones, and toggling them moves
 nothing; saved, they go lowest first and the group's family stays. A group with
-its own opens on them, none picked is refused, and back to shared saves none.
+its own opens on them, none picked is refused (the reason stays under the
+levels while the editor is open, not only in the 3.5s pill, #3620), and back
+to shared saves none.
 
 `group-member-fast.test.cjs` sends a group's member in its vendor's fast mode,
 in Chromium and WebKit, English and Chinese (vs on Discord: "gpt-6.1 sol ·

@@ -761,6 +761,9 @@ button.rt-session { cursor: pointer; }
 /* the levels a group names for agents (#295): one toggle each */
 .rt-levels { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 6px; }
 .rt-levels[hidden] { display: none; }
+/* why Save refused the levels, under them until one is picked (as a rule's own refusal) */
+.rt-lneed { color: var(--amber, var(--muted)); font-size: 11.5px; }
+.rt-lneed[hidden] { display: none; }
 /* the field is the pill: the editor's boxed input (its border and focus ring) stays off it */
 .rt-cond input, .editor .rt-cond input[type="text"], .editor .rt-cond input[type="number"], .editor .rt-cond input:focus { box-shadow: none; border-radius: 0; }
 .editor .rt-cond input:focus-visible { box-shadow: none; border-radius: 0; }

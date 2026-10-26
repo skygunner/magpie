@@ -6329,9 +6329,16 @@ function routingPage(part) {
     let own = d.levels.length > 0;
     const shared = g && d.members.join() === g.members.join() ? g.shared || [] : null; // as saved
     const lHint = el("div", "hint");
+    // why Save refused the levels, under them until one is picked: the
+    // pill says it for 3.5s and clears itself, and the editor is still
+    // open after that (#3620)
+    const lNeed = el("div", "rt-lneed");
+    let lRefused = false;
     const chips = el("div", "rt-levels");
     const drawLevels = () => {
       chips.hidden = !own;
+      lNeed.hidden = !(lRefused && own && !d.levels.length);
+      lNeed.textContent = lNeed.hidden ? "" : t("Pick a level to offer, or leave them to its models");
       lHint.textContent = own
         ? t("Agents are offered these. A model without the level asked is sent the one it has nearest.")
         : shared?.length ? t("Agents are offered the levels every model has: {levels}.", { levels: shared.join(", ") })
@@ -6342,6 +6349,7 @@ function routingPage(part) {
       c.onclick = () => {
         d.levels = d.levels.includes(v) ? d.levels.filter((x) => x !== v) : LEVELS.filter((x) => x === v || d.levels.includes(x));
         c.classList.toggle("on", d.levels.includes(v));
+        drawLevels();
       };
       chips.append(c);
     }
@@ -6353,7 +6361,7 @@ function routingPage(part) {
         for (const c of chips.children) c.classList.toggle("on", d.levels.includes(c.textContent));
       }
       drawLevels();
-    }), chips, lHint);
+    }), chips, lHint, lNeed);
     drawLevels();
     ed.append(el("label", "", t("Levels")), lw);
 
@@ -6402,7 +6410,7 @@ function routingPage(part) {
       }
       if (d.rules.some((r) => r.intent) && !d.classifier) return status(t("Choose the model that tells which intent a message is"), "warn");
       if (d.effort === "auto" && !d.classifier) return status(t("Choose the model that rates how hard a turn is"), "warn");
-      if (own && !d.levels.length) return status(t("Pick a level to offer, or leave them to its models"), "warn");
+      if (own && !d.levels.length) { lRefused = true; drawLevels(); return status(t("Pick a level to offer, or leave them to its models"), "warn"); }
       saveBtn.classList.add("busy");
       // refused, Add can be pressed again (busy, it takes no clicks)
       groupAction("save", { id: idOf(), from: g?.id, name: d.name.trim() || idOf(), members: namedOf(d), match: d.match, routing: d.routing, pick: d.pick || "", affinity: d.affinity, sink: !!d.sink && sinkable(d.routing), firstToken: d.firstToken || 0, patience: d.patience || 0, rules: d.rules, effort: d.effort, classifier: d.rules.some((r) => r.intent) || d.effort === "auto" ? d.classifier : "", context: d.context || 0, levels: own ? d.levels : [], family: g?.family || "", fast: d.fast.filter((x) => d.members.includes(x)), off: d.off.filter((x) => d.members.includes(x)), weights: Object.fromEntries(Object.entries(d.weights).filter(([x, n]) => d.members.includes(x) && n > 1)), unlists: !!d.unlists }, t(g ? "{name} saved" : "{name} added", { name: d.name.trim() || idOf() }))
