@@ -31,7 +31,13 @@ func TestHandedOffTLSGatewayAnswersAConnectionWaitingForItsFirstByte(t *testing.
 		t.Fatal(err)
 	}
 	defer silent.Close()
-	time.Sleep(50 * time.Millisecond) // it is accepted, waiting for its first byte
+	// Precondition, not the behavior under test: the accept loop has taken
+	// this connection and is waiting for its first byte. The timing this test
+	// is about is injected below, by sending the first byte only once the
+	// handover has begun. This wait is deliberately far longer than a loopback
+	// accept takes, so a loaded runner does not turn the precondition into a
+	// failure; the assertion is on what the connection is answered, not on it.
+	time.Sleep(500 * time.Millisecond)
 
 	// when: the gateway hands over, and only then the connection speaks
 	old.HandOff()
