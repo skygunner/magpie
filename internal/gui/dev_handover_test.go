@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -23,11 +24,13 @@ import (
 // first request it reads only after the handover began: net/http's Shutdown
 // closes such a connection without an answer, and the page sees the
 // connection end with nothing (#3648). The test drives the real devBackend
-// with the real signal. Every step is gated on an event rather than a
-// duration: the backend is seen to take the connection (held.took), the
-// signal is seen by the process and stopServing cancels the test's backend
-// context, and only then is the held connection handed on with its request
-// unread — as a busy machine would hold one — so the old code cuts it.
+// with the real signal, and every step is gated on an event rather than a
+// duration or a goroutine-scheduling guess: the backend is seen to take the
+// connection (held.took), the handover is seen to have begun (held.closed —
+// see heldListener.Close for why that event orders the release after the
+// old code's shutdown mark and before the fix's Shutdown), and only then is
+// the held connection handed on with its request unread, as a busy machine
+// would hold one.
 func TestDevBackendHandoverAnswersAConnectionItTook(t *testing.T) {
 	if handoverSignal == nil {
 		t.Fatal("no handover signal on this platform")
@@ -44,12 +47,22 @@ func TestDevBackendHandoverAnswersAConnectionItTook(t *testing.T) {
 	wasHandover := gatewayHandoverForTest()
 	t.Cleanup(wasHandover)
 
+	// The test listens for the handover signal itself, before the backend
+	// can: the base registers its own Notify only after `go srv.Serve`, so
+	// a signal sent too early would otherwise take the process down. A
+	// signal the backend misses (it wasn't listening yet) leaves it in
+	// <-sig, which the bounded wait below reports loudly — never a quiet
+	// pass.
+	sigSeen := make(chan os.Signal, 8)
+	signal.Notify(sigSeen, handoverSignal)
+	t.Cleanup(func() { signal.Stop(sigSeen) })
+
 	tcp, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { tcp.Close() })
-	held := &heldListener{Listener: tcp, took: make(chan struct{}), let: make(chan struct{})}
+	held := &heldListener{Listener: tcp, took: make(chan struct{}), let: make(chan struct{}), closed: make(chan struct{})}
 	letGo := sync.OnceFunc(func() { close(held.let) })
 	t.Cleanup(letGo)
 	t.Setenv("MAGPIE_DEV_BACKEND", tcp.Addr().String())
@@ -78,18 +91,29 @@ func TestDevBackendHandoverAnswersAConnectionItTook(t *testing.T) {
 		t.Fatal("the backend never took the connection")
 	}
 
-	if err := syscall.Kill(os.Getpid(), handoverSignal.(syscall.Signal)); err != nil {
-		t.Fatal(err)
+	// The end must have marked the server shutting down before the
+	// connection is handed on with its request unread — that is the moment
+	// the old code cuts it. The old code's Shutdown marks the server
+	// (go1.26.8 net/http/server.go:3151) before it closes its listeners
+	// (:3154), and the fix's finish closes its listener before it calls
+	// Shutdown, so the listener's Close beginning is the barrier in both
+	// directions. A signal can only land once the backend listens for it —
+	// the base registers after `go srv.Serve` — so if the close hasn't
+	// begun, the signal is said again; the wait is on the event, never on a
+	// duration.
+	begun := false
+	for attempt := 0; attempt < 5 && !begun; attempt++ {
+		if err := syscall.Kill(os.Getpid(), handoverSignal.(syscall.Signal)); err != nil {
+			t.Fatal(err)
+		}
+		select {
+		case <-held.closed:
+			begun = true
+		case <-time.After(2 * time.Second):
+			// the signal landed before the backend listened for it; say it again
+		}
 	}
-	// The end has begun: the signal was seen, the backend's context was
-	// cancelled by stopServing, and only then is the connection handed on
-	// with its request unread. The order is on events (the signal handler
-	// has run, and stopServing has cancelled the context the test replaced),
-	// not on a duration, so a loaded runner cannot turn the precondition
-	// into a red for the wrong reason.
-	select {
-	case <-backendCtx.Done():
-	case <-time.After(10 * time.Second):
+	if !begun {
 		t.Fatal("the handover never began")
 	}
 	letGo()
@@ -119,12 +143,17 @@ func TestDevBackendHandoverAnswersAConnectionItTook(t *testing.T) {
 
 // heldListener holds the next connection it takes, once told to, until let
 // go: as a busy machine can hold the goroutine that took one, before
-// net/http notes it.
+// net/http notes it. Its Close tells the test it has begun, then lets the
+// real listener go: Shutdown calls Close holding net/http's own lock, so it
+// must not block here, and the event alone orders the test's release —
+// after the old code's shutdown mark, before the fix's Shutdown.
 type heldListener struct {
 	net.Listener
-	hold atomic.Bool
-	took chan struct{} // closed once it holds one
-	let  chan struct{} // closed to hand it on
+	hold    atomic.Bool
+	took    chan struct{} // closed once it holds one
+	let     chan struct{} // closed to hand it on
+	closed  chan struct{} // closed once Close has begun
+	closeOn sync.Once
 }
 
 func (l *heldListener) Accept() (net.Conn, error) {
@@ -134,6 +163,11 @@ func (l *heldListener) Accept() (net.Conn, error) {
 		<-l.let
 	}
 	return c, err
+}
+
+func (l *heldListener) Close() error {
+	l.closeOn.Do(func() { close(l.closed) })
+	return l.Listener.Close()
 }
 
 // gatewayHandoverForTest puts gateway.Handover back after the test; the
