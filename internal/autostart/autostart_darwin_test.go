@@ -30,6 +30,7 @@ func TestLaunchAgentLetsTheRelaunchLive(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
+	t.Setenv("APPIMAGE", "/opt/my apps/magpie.AppImage")
 	if err := Set(true); err != nil {
 		t.Fatal(err)
 	}
@@ -173,6 +174,7 @@ func TestSetThenTruncatedRecordReadsAsOff(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
+	t.Setenv("APPIMAGE", "/opt/my apps/magpie.AppImage")
 	if err := Set(true); err != nil {
 		t.Fatal(err)
 	}
@@ -219,6 +221,7 @@ func TestEnabledFollowsTheSystemsSwitch(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
+	t.Setenv("APPIMAGE", "/opt/my apps/magpie.AppImage")
 	prev := legacyStatus
 	t.Cleanup(func() { legacyStatus = prev })
 	var asked string

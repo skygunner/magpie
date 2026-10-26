@@ -9,6 +9,7 @@ package autostart
 import (
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -83,5 +84,30 @@ func self() (string, error) {
 	if strings.Contains(exe, "/AppTranslocation/") {
 		return "", errors.New("move magpie to Applications first, then turn this on")
 	}
+	// the magpie on PATH names this same file when a package manager put
+	// it there: the link is what survives an update (Nix's profile,
+	// Homebrew's bin), the versioned file it points at is not (#3621)
+	if p, err := exec.LookPath("magpie"); err == nil {
+		if abs, err := filepath.Abs(p); err == nil {
+			if r, err := filepath.EvalSymlinks(abs); err == nil && sameFile(r, exe) {
+				return abs, nil
+			}
+		}
+	}
+	// a build `go run` deletes when it ends starts nothing from the next
+	// login on
+	if strings.Contains(exe, string(filepath.Separator)+"go-build") {
+		return "", errors.New("this magpie is a build `go run` deletes when it ends: install magpie, then turn Open at login on")
+	}
 	return exe, nil
+}
+
+// sameFile: both names are of the one file on disk
+func sameFile(a, b string) bool {
+	x, err := os.Stat(a)
+	if err != nil {
+		return false
+	}
+	y, err := os.Stat(b)
+	return err == nil && os.SameFile(x, y)
 }
