@@ -132,6 +132,35 @@ type toolLoop struct {
 	turns int
 }
 
+// waitingOn is whether the call is the agent's "no new input" read of a
+// process still running: Codex's write_stdin with empty chars, whose result
+// says the same session the arguments name is running. Waiting on a live
+// process is not repeating work (Codex Desktop #3655: eight of these on a
+// command with no output yet stopped the turn), so a conversation ending in
+// one is no loop; a chars that is not empty, a result that does not name
+// the session, or a number it can't read counts the turn as work again.
+func waitingOn(c Part, results []string) bool {
+	if c.Name != "write_stdin" {
+		return false
+	}
+	var a struct {
+		Chars   string  `json:"chars"`
+		Session float64 `json:"session_id"`
+	}
+	if json.Unmarshal(c.Args, &a) != nil || strings.TrimSpace(a.Chars) != "" || a.Session == 0 {
+		return false
+	}
+	running := fmt.Sprintf("Process running with session ID %d", int64(a.Session))
+	for _, r := range results {
+		for _, line := range strings.Split(r, "\n") {
+			if strings.TrimSpace(line) == running {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // toolLoopOf is the loop msgs end in, when their last toolLoopRepeats
 // turns are one exchange: the same calls answered with the same results.
 func toolLoopOf(msgs []Message) (toolLoop, bool) {
@@ -140,6 +169,9 @@ func toolLoopOf(msgs []Message) (toolLoop, bool) {
 		return toolLoop{}, false
 	}
 	last := turns[len(turns)-1]
+	if last.wait {
+		return toolLoop{}, false
+	}
 	n := 0
 	for i := len(turns) - 1; i >= 0 && turns[i].sum == last.sum; i-- {
 		n++
@@ -152,9 +184,11 @@ func toolLoopOf(msgs []Message) (toolLoop, bool) {
 
 // exchange is one turn of tool use: the assistant's calls and the results
 // the agent sent back, summed without their ids, which differ every turn.
+// wait is the turn only waiting on a process still running (waitingOn).
 type exchange struct {
 	sum   uint64
 	calls []Part
+	wait  bool
 }
 
 // exchanges are the turns of tool use msgs end in, oldest first, back to
@@ -217,13 +251,18 @@ func exchangeOf(asked, said []Part) (exchange, bool) {
 	if len(calls) == 0 || !hasResult {
 		return exchange{}, false
 	}
+	wait := true // every call only waits on a process still running
 	keys := make([]string, 0, len(calls)+1)
 	for _, c := range calls {
 		got := results[c.ID]
 		delete(results, c.ID)
 		keys = append(keys, c.Name+"\x00"+steadyArgs(c.Args)+"\x00"+strings.Join(got, "\x01"))
+		if !waitingOn(c, got) {
+			wait = false
+		}
 	}
 	for _, got := range results { // results of no call here
+		wait = false
 		keys = append(keys, "\x00\x00"+strings.Join(got, "\x01"))
 	}
 	slices.Sort(keys)
@@ -236,7 +275,7 @@ func exchangeOf(asked, said []Part) (exchange, bool) {
 		h.Write([]byte(k))
 		h.Write([]byte{0xfe})
 	}
-	return exchange{sum: h.Sum64(), calls: calls}, true
+	return exchange{sum: h.Sum64(), calls: calls, wait: wait}, true
 }
 
 // steadyArgs is a call's arguments with their keys in one order, as two
