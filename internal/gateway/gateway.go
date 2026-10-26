@@ -2488,6 +2488,21 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 	}
 	for i := 0; i < len(cands); i++ {
 		c := cands[i]
+		// Opted-in cooldowns are hard holds, even when probeOne kept the last candidate.
+		if rest, ok := restOf(c.restID()); ok && c.p.ModelCooldown[c.model] > 0 && !c.p.NoFailRest() && (rest.Why == failSlow || rest.Why == failCanceled) {
+			if i < len(cands)-1 {
+				continue
+			}
+			call.Provider, call.To, call.Usage = c.p.ID, "", Usage{}
+			call.Status = http.StatusServiceUnavailable
+			call.Error = fmt.Sprintf("%s: model %s cooling down until %s", c.p.Name, c.model, rest.Until.UTC().Format(time.RFC3339))
+			w.Header().Set("Retry-After", strconv.Itoa(max(1, int((time.Until(rest.Until)+time.Second-1)/time.Second))))
+			s.trace.update(tr, func(t *Route) {
+				t.Tries = append(t.Tries, Try{ID: c.rest, Model: c.model, Start: time.Now(), Status: call.Status, Error: call.Error, Fail: rest.Why, Rest: &rest})
+			})
+			failTo(w, kept, from, call.Status, call.Error)
+			break
+		}
 		if j := s.laneMate(cands, i, isGroup, gaveWay); j > i {
 			// its key or account is full, and another of its provider's,
 			// or of its group, has a slot free: that one is asked first,
@@ -2542,7 +2557,7 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 		// a member of a group in the group is timed by the innermost
 		// group that sets a FirstToken (#2246), else by the group asked for
 		firstToken := cmp.Or(c.firstToken, g.FirstToken)
-		if isGroup && firstToken > 0 && !last && streams {
+		if isGroup && firstToken > 0 && !last {
 			// slow to start, the next member is asked (Group.FirstToken)
 			hw.firstWait = time.Duration(firstToken) * time.Second
 		}
@@ -2963,9 +2978,14 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 			ownMs, retriedMs, queuedMs = splitSent(sentMs, start, firstBegan, began, asked.Load(), queued)
 		}
 		if r.Context().Err() != nil && !hw.ended {
-			// the agent went away: nobody failed, and nobody else is asked
+			// The agent went away; opted-in models cool down, but no next candidate is asked.
 			call.Status, call.Error = canceled(r.Context())
 			try.Status, try.Error, try.Fail = call.Status, call.Error, failCanceled
+			if c.p.ModelCooldown[c.model] > 0 && asked.Load() > 0 {
+				if rest, ok := restUnresponsive(c, time.Now(), failCanceled, 499, 1); ok {
+					try.Rest = &rest
+				}
+			}
 			watched.attempt(call, try, c.p.ID, sent, hw, capture)
 			s.trace.update(tr, func(t *Route) { t.Tries[len(t.Tries)-1] = try })
 			break

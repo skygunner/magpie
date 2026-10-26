@@ -1205,6 +1205,15 @@ func remoteModelRest(c candidate, why string, header http.Header) bool {
 // rest after a failure that says nothing of why (RestCapOff) isn't
 // rested, nor its slow starts counted.
 func restSlow(c candidate, now time.Time) (Rest, bool) {
+	threshold := slowRests
+	if c.p.ModelCooldown[c.model] > 0 {
+		threshold = 1
+	}
+	return restUnresponsive(c, now, failSlow, http.StatusGatewayTimeout, threshold)
+}
+
+// Slow starts and opted-in client cancellations share the model/account ladder.
+func restUnresponsive(c candidate, now time.Time, why string, status, threshold int) (Rest, bool) {
 	if c.p.NoFailRest() {
 		return Rest{}, false
 	}
@@ -1212,23 +1221,31 @@ func restSlow(c candidate, now time.Time) (Rest, bool) {
 	prev, resting := restOf(id)
 	routed.Lock()
 	run := routed.slow[id]
-	if now.Sub(run.at) >= slowForget {
+	cap := c.p.RestCapOr(longestRetry)
+	forget := slowForget
+	if minutes := c.p.ModelCooldown[c.model]; minutes > 0 {
+		cap = time.Duration(min(minutes, 60)) * time.Minute
+		forget += cap
+	}
+	// A long cooldown is not evidence of recovery. Forget only after the
+	// cooldown could have elapsed plus the normal quiet interval.
+	if now.Sub(run.at) >= forget {
 		run.n = 0
 	}
-	if !resting || prev.Why != failSlow || run.n == 0 {
+	if !resting || (prev.Why != failSlow && prev.Why != failCanceled) || run.n == 0 {
 		run.n++
 	}
 	run.at = now
 	routed.slow[id] = run
 	routed.Unlock()
-	if run.n < slowRests {
+	if run.n < threshold {
 		return Rest{}, false
 	}
-	d, by := min(fallbackCooldown<<min(run.n-slowRests, 10), c.p.RestCapOr(longestRetry)), "cooldown"
-	if run.n > slowRests {
+	d, by := min(fallbackCooldown<<min(run.n-threshold, 10), cap), "cooldown"
+	if run.n > threshold {
 		by = "backoff"
 	}
-	r := Rest{Why: failSlow, Status: http.StatusGatewayTimeout, Until: now.Add(d), By: by, Failures: run.n, Key: id, Model: c.model}
+	r := Rest{Why: why, Status: status, Until: now.Add(d), By: by, Failures: run.n, Key: id, Model: c.model}
 	if a := c.p.Account; a != nil {
 		r.agent, r.user = a.UsageAgent(), a.User
 	}

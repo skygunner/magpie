@@ -197,6 +197,10 @@ type Provider struct {
 	// still stands over it. RestCapOff (-1): no rest at all after a
 	// failure that says nothing of why, a rate limit's as the gateway's own.
 	RestCap int `json:"restCap,omitempty"`
+	// ModelCooldown opts exact model IDs into aggressive timeout/cancel
+	// cooldowns. Values are exponential-backoff caps in minutes (1..60).
+	// Unset models retain the normal policy: a client cancellation rests nothing.
+	ModelCooldown map[string]int `json:"modelCooldown,omitempty"`
 	// LimitRestOff keeps its keys and accounts asked when the vendor says
 	// they are out of quota or answers 429 (zoecats on Discord: a local
 	// aggregator says "quota exhausted" for a moment while it switches
@@ -624,6 +628,7 @@ func (p Provider) clone() Provider {
 	p.PickedFrom = slices.Clone(p.PickedFrom)
 	p.Delisted = slices.Clone(p.Delisted)
 	p.AutoInclude = slices.Clone(p.AutoInclude)
+	p.ModelCooldown = maps.Clone(p.ModelCooldown)
 	p.Headers = maps.Clone(p.Headers)
 	p.ExtraBody = maps.Clone(p.ExtraBody)
 	p.AccountProxies = maps.Clone(p.AccountProxies)
@@ -846,7 +851,7 @@ func Save(p Provider) error {
 		if p.ID == "kiro" {
 			key = p.Key
 		}
-		p = Provider{ID: p.ID, Key: key, Models: p.Models, NoModels: p.NoModels, PickedFrom: p.PickedFrom, Delisted: p.Delisted, Unlisted: p.Unlisted, Off: p.Off, Fallback: p.Fallback, Routing: p.Routing, Sink: p.Sink, Affinity: p.Affinity, KeepLogin: p.KeepLogin, KeepLoginAs: p.KeepLoginAs, SwitchOnly: p.SwitchOnly, Contexts: p.Contexts, Family: p.Family, Proxy: p.Proxy, AccountProxies: p.AccountProxies, AccountModels: p.AccountModels, AccountCaps: p.AccountCaps, AccountWindowCaps: p.AccountWindowCaps, AccountNames: p.AccountNames, MaxConcurrency: p.MaxConcurrency, AccountConcurrency: p.AccountConcurrency, QueueLimit: p.QueueLimit, QueueWait: p.QueueWait, MaxRPM: p.MaxRPM, QuotaRest: p.QuotaRest, QuotaResetAt: p.QuotaResetAt, RestCap: p.RestCap, PinUpstream: p.PinUpstream, NativeCompaction: p.NativeCompaction, Hidden: hiddenAccount(p.ID), Quiet: quietAccount(p.ID), Tucked: tuckedAccount(p.ID)}
+		p = Provider{ID: p.ID, Key: key, Models: p.Models, NoModels: p.NoModels, PickedFrom: p.PickedFrom, Delisted: p.Delisted, Unlisted: p.Unlisted, Off: p.Off, Fallback: p.Fallback, Routing: p.Routing, Sink: p.Sink, Affinity: p.Affinity, KeepLogin: p.KeepLogin, KeepLoginAs: p.KeepLoginAs, SwitchOnly: p.SwitchOnly, Contexts: p.Contexts, Family: p.Family, Proxy: p.Proxy, AccountProxies: p.AccountProxies, AccountModels: p.AccountModels, AccountCaps: p.AccountCaps, AccountWindowCaps: p.AccountWindowCaps, AccountNames: p.AccountNames, MaxConcurrency: p.MaxConcurrency, AccountConcurrency: p.AccountConcurrency, QueueLimit: p.QueueLimit, QueueWait: p.QueueWait, MaxRPM: p.MaxRPM, QuotaRest: p.QuotaRest, QuotaResetAt: p.QuotaResetAt, RestCap: p.RestCap, ModelCooldown: p.ModelCooldown, PinUpstream: p.PinUpstream, NativeCompaction: p.NativeCompaction, Hidden: hiddenAccount(p.ID), Quiet: quietAccount(p.ID), Tucked: tuckedAccount(p.ID)}
 	} else {
 		p.AccountProxies = keyProxies(p) // a provider of keys proxies each key apart
 		if subscriptionID(p.ID) && !stored(p.ID) {
@@ -1345,6 +1350,14 @@ func normalize(p Provider) Provider {
 	p.QueueLimit, p.QueueWait = min(max(p.QueueLimit, 0), MaxQueueLimit), min(max(p.QueueWait, 0), MaxQueueWait)
 	p.MaxRPM = min(max(p.MaxRPM, 0), MaxRPMLimit)
 	p.QuotaRest = min(max(p.QuotaRest, 0), MaxQuotaRest)
+	p.ModelCooldown = maps.Clone(p.ModelCooldown)
+	for model, cap := range p.ModelCooldown {
+		if strings.TrimSpace(model) == "" || cap <= 0 {
+			delete(p.ModelCooldown, model)
+		} else {
+			p.ModelCooldown[model] = min(cap, 60)
+		}
+	}
 	if p.RestCap != RestCapOff {
 		p.RestCap = min(max(p.RestCap, 0), MaxQuotaRest)
 	}

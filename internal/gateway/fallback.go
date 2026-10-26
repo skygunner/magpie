@@ -2651,7 +2651,7 @@ func (h *holdWriter) keepQuiet() {
 // watch need know: its first content, anything sent on to the agent,
 // a failure, or a reply that isn't streamed.
 func (h *holdWriter) started() bool {
-	return h.first.first != 0 || h.passing || h.ended || h.failure != 0 || h.whole || h.status >= 400
+	return h.first.first != 0 || h.passing || h.ended || h.failure != 0 || h.whole && (h.streams || h.held.Len() > 0) || h.status >= 400
 }
 
 // endedIncomplete says a Responses event ends its reply cut short —
