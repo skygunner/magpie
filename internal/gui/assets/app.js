@@ -3818,8 +3818,10 @@ const SAME_SESSION = "Same as the session";
 function extraField(a, f) {
   if (f.key === "ultracode") return ultracodeToggle(a, f);
   const said = f.label === SUB_MODEL && codexSub(a) ? codexSubSaid(a, f) : null;
-  const set = !!(f.value || f.custom || said?.old);
+  const off = f.label === SUB_EFFORT && subEffortOff(a);
+  const set = !!((f.value || f.custom || said?.old) && !off);
   const b = el("button", "field extra" + (set ? " set" : ""));
+  b.disabled = off;
   b.append(svg(EXTRA_GLYPH[f.label] || EXTRA_GLYPH.tiers, 13, 1.5));
   const opt = optionFor(f, f.value);
   b.title = said ? t("{label}: {value}", { label: t(f.label), value: said.name }) + "\n" + said.line
@@ -3841,9 +3843,19 @@ function menuTitle(f) {
 // that model's default; Claude Code's (#536), including Desktop's Code
 // tab, at the effort its request asks for
 function subEffortTitle(a, f, opt) {
+  // Claude Code's subagents with no model: magpie writes no effort, so the
+  // square is Default and says why (#3308)
+  if (subEffortOff(a)) return t("{label}: {value}", { label: t(f.label), value: t("default") }) + "\n" + t("Set a subagent model first");
   return t("{label}: {value}", { label: t(f.label), value: effortName(opt || { value: f.value }) }) +
     (f.value ? "" : "\n" + t(a.id === "claude" || a.id.split("@wsl:")[0] === "claude-desktop" ? "the effort Claude Code asks for" : "the session's effort, or the subagent model's own default"));
 }
+// subEffortOff: Claude Code's subagents' effort with no model of their own.
+// Magpie writes no effort then (the old code wrote the main model at that
+// effort into CLAUDE_CODE_SUBAGENT_MODEL, pinning every subagent to it): a
+// level picked is kept for when a model is, and applies to nothing until
+// then. Codex's and Desktop's apply without a model, so only Claude Code's
+// reads Default and can't be used, as the window's control does (#3308)
+const subEffortOff = (a) => a.id.split("@wsl:")[0] === "claude" && !a.fields.find((f) => f.label === "subagents")?.value;
 
 // agentPrefsButton: the panel's line that opens the agent's own settings
 // (openAgentPrefs), named as its other lines are
