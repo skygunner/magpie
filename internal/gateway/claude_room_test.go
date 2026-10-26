@@ -14,6 +14,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/yetone/magpie/internal/provider"
@@ -26,7 +27,7 @@ import (
 func freshRoom(t *testing.T, most int) {
 	t.Helper()
 	old := claudeRoom
-	claudeRoom = &claudeRoomT{freed: make(chan struct{})}
+	claudeRoom = &claudeRoomT{}
 	memRuns.Lock()
 	known, n, why := memRuns.known, memRuns.n, memRuns.why
 	memRuns.known, memRuns.n, memRuns.why = true, 0, ""
@@ -397,4 +398,74 @@ func TestClaudeNoRoomPassesOnAndRestsNobody(t *testing.T) {
 		t.Fatalf("alone, asked %d times: %+v", len(tries), tries)
 	}
 	noneRested(t, "claude")
+}
+
+// #3690 (JoeyWu-tech): a Claude Code run ending after its synctest bubble
+// had gone — the run's own process outliving the test — closed a freed
+// channel that had been made in that bubble: "fatal error: close of
+// synctest channel from outside bubble". The channel is made by the asks
+// waiting for room and goes with them, so a release no one waits on closes
+// nothing (as filememo's written, #3632).
+func TestClaudeRoomEndsOutsideItsSynctestBubble(t *testing.T) {
+	freshRoom(t, 1)
+	room := claudeRoom
+	// a run that begins and ends inside a bubble
+	synctest.Test(t, func(t *testing.T) {
+		release, err := room.take(context.Background(), "inside")
+		if err != nil {
+			t.Fatalf("the room's run: %v", err)
+		}
+		release(false)
+	})
+	// one that begins in a bubble and ends after it
+	var ended func(left bool)
+	synctest.Test(t, func(t *testing.T) {
+		release, err := room.take(context.Background(), "outliving")
+		if err != nil {
+			t.Fatalf("the room's run: %v", err)
+		}
+		ended = release
+	})
+	ended(false)
+	if live, waiting := roomCounts(room); live != 0 || waiting != 0 {
+		t.Errorf("%d runs, %d waiting after both ended: want none", live, waiting)
+	}
+	// the room full, an ask waiting for it, and the run that held it
+	// freeing it: the ask waiting is woken, and takes the room
+	synctest.Test(t, func(t *testing.T) {
+		first, err := room.take(context.Background(), "first")
+		if err != nil {
+			t.Fatalf("the room's first run: %v", err)
+		}
+		freed := make(chan func(left bool), 1)
+		go func() {
+			release, err := room.take(context.Background(), "second")
+			if err != nil {
+				t.Errorf("the room's second run: %v", err)
+			}
+			freed <- release
+		}()
+		synctest.Wait()
+		if live, waiting := roomCounts(room); live != 1 || waiting != 1 {
+			t.Fatalf("%d runs, %d waiting: want one of each", live, waiting)
+		}
+		first(false)
+		synctest.Wait()
+		if second := <-freed; second == nil {
+			t.Fatal("the ask waiting for room never got it")
+		} else {
+			second(false)
+		}
+	})
+	if live, waiting := roomCounts(room); live != 0 || waiting != 0 {
+		t.Errorf("%d runs, %d waiting after the woken ask ended: want none", live, waiting)
+	}
+}
+
+// roomCounts is how many Claude Code processes run and how many asks wait
+// for room, as the room holds them.
+func roomCounts(c *claudeRoomT) (live, waiting int) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.live, c.waiting
 }

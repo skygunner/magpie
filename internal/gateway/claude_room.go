@@ -34,12 +34,15 @@ type claudeRoomT struct {
 	// magpie has asked to end, not ended yet; waiting how many asks wait
 	// for room
 	live, leaving, waiting int
-	// freed is closed, and made anew, each time one ends, or a run comes
-	// to wait for its next turn (nudge), which may be let go for room
+	// freed wakes the asks waiting for room: made by the first of them to
+	// wait, closed by one that ends (release) or a run that comes to wait
+	// for its next turn (nudge), and gone with its waiters, so a release
+	// no one waits on closes nothing (a channel made in one synctest
+	// bubble can't be closed from another: filememo's written, #3632)
 	freed chan struct{}
 }
 
-var claudeRoom = &claudeRoomT{freed: make(chan struct{})}
+var claudeRoom = &claudeRoomT{}
 
 // claudeRoomWait is how long a Claude Code waits for room before its
 // request is answered 503.
@@ -219,6 +222,9 @@ func (c *claudeRoomT) take(ctx context.Context, what string) (func(left bool), e
 		if waiting {
 			c.mu.Lock()
 			c.waiting--
+			if c.waiting == 0 {
+				c.freed = nil // no ask waits on it any more: the next makes it
+			}
 			c.mu.Unlock()
 		}
 	}()
@@ -237,6 +243,9 @@ func (c *claudeRoomT) take(ctx context.Context, what string) (func(left bool), e
 			waiting = true
 			c.waiting++
 			log.Printf("claude: %s waits for room: %d Claude Code processes run, %d may (%s)", what, c.live, most, why)
+		}
+		if c.freed == nil { // gone with the asks waiting before: this one makes it
+			c.freed = make(chan struct{})
 		}
 		freed, live := c.freed, c.live
 		evict := c.live-c.leaving >= most && c.leaving < c.waiting
@@ -277,10 +286,7 @@ var roomLook = 5 * time.Second
 // for its next turn.
 func (c *claudeRoomT) nudge() {
 	c.mu.Lock()
-	if c.waiting > 0 {
-		close(c.freed)
-		c.freed = make(chan struct{})
-	}
+	c.wake()
 	c.mu.Unlock()
 }
 
@@ -291,9 +297,18 @@ func (c *claudeRoomT) release(left bool) {
 	if left {
 		c.leaving--
 	}
-	close(c.freed)
-	c.freed = make(chan struct{})
+	c.wake()
 	c.mu.Unlock()
+}
+
+// wake has the asks waiting for room look again, and only while one waits:
+// the channel is theirs, so a room freed with none waiting closes nothing
+// (#3690). c.mu is held.
+func (c *claudeRoomT) wake() {
+	if c.waiting > 0 && c.freed != nil {
+		close(c.freed)
+		c.freed = nil
+	}
 }
 
 // letGoForRoom lets go of one run for room, of any bridge: the one idle
