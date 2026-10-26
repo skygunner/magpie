@@ -1,0 +1,24 @@
+[
+  {
+    "path": "/home/vincenty/Projects/magpie-issues/rework-2207",
+    "result": {
+      "text": "ok",
+      "details": {
+        "status": "completed"
+      },
+      "images": [],
+      "hasError": false
+    }
+  },
+  {
+    "path": "/home/vincenty/Projects/magpie-issues/rework-3174",
+    "result": {
+      "text": "ok",
+      "details": {
+        "status": "completed"
+      },
+      "images": [],
+      "hasError": false
+    }
+  }
+]

@@ -1,0 +1,25 @@
+{
+  "issue": 3475,
+  "title": "Claude Desktop's Enable tool search is refused by Copilot (400 unsupported beta header tool-search-tool-2025-10-19)",
+  "verdict": "fixed",
+  "skipReason": null,
+  "branch": "fix/issue-3475",
+  "base": "01468003348ede896c5126e9fd81057e1e58765c",
+  "head": "3dfc880cfc843f9c2ca5e0ac8f8c65a8aa8647b5",
+  "testCommands": [
+    "GOTOOLCHAIN=go1.26.8 go test -tags nogui -run 'TestCopilotToolSearchBeta' -count=1 ./internal/gateway/  (RED at base, GREEN at head)",
+    "GOTOOLCHAIN=go1.26.8 go test -tags nogui -run 'TestCopilotToolSearchBeta|TestUserBetas|TestSignInBeta' -count=1 -v ./internal/gateway/",
+    "GOTOOLCHAIN=go1.26.8 go test -tags nogui -timeout 45m -count=1 ./internal/gateway/...  (one pre-existing red, see unverifiedBoundaries)",
+    "gofmt -l internal/gateway/betas.go internal/gateway/copilot_tool_search_test.go  (empty)",
+    "go vet ./... ; GOOS=linux GOARCH=amd64 go vet -tags nogui ./... ; GOOS=windows GOARCH=amd64 go vet ./...  (exit 0 each)",
+    "go build ./... ; GOOS=linux GOARCH=amd64 go build -tags nogui ./... ; GOOS=windows GOARCH=amd64 go build ./...  (exit 0 each)"
+  ],
+  "testsAdded": ["TestCopilotToolSearchBeta", "TestCopilotToolSearchBetaOtherProvidersUnchanged"],
+  "unverifiedBoundaries": [
+    "No real Copilot Business account and no real Claude Desktop run (no credentials); the fake Copilot API reproduces the reporter's 400 text and the accepted name.",
+    "GHE Copilot (*.ghe.com) not tried; same Account.Agent == copilot branch.",
+    "Pre-existing red at clean base 01468003, unrelated: TestClaudeClientCacheAbsentUnchanged (claude_client_cache_test.go:291 'ordinary prompt changed'), reproduced with betas.go stashed. Not fixed here, not hidden.",
+    "This change renames only the tool-search beta; refuseBetas still doesn't recognize Copilot's 'unsupported beta header(s)' wording, so other betas Copilot rejects are still re-asked each time (out of scope, reported by the issue author)."
+  ],
+  "filesChanged": ["internal/gateway/betas.go", "internal/gateway/copilot_tool_search_test.go", "docs/subsystems/gateway-routing.md"]
+}

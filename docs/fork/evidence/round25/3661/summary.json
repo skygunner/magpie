@@ -1,0 +1,139 @@
+{
+  "issue": 3661,
+  "title": "[Bug] ZCode Start Plan 模型过期后仍参与路由，导致订阅模型一并被暂停",
+  "verdict": "fixed-scoped-with-pre-existing-red",
+  "branch": "fix/r25-expired-model-not-account-fault",
+  "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+  "head": "e04a1b9948b672b168eae484e09ba9609acbcb53",
+  "commitCount": 1,
+  "testCommands": [
+    "go test ./internal/gateway -run '^TestZCodeTrialQuotaRestsTheModelAlone$' -count=1 -v",
+    "go test -race ./internal/gateway -run '^TestZCodeTrialQuotaRestsTheModelAlone$' -count=1 -v",
+    "go test ./internal/gateway -count=1 -timeout=15m",
+    "go test ./internal/gateway -run '^TestClaudeClientCacheAbsentUnchanged$' -count=1 -v",
+    "go test ./internal/gateway -run 'ZCode|ModelRefused|Quota|Rest' -count=1",
+    "go vet ./...",
+    "go build ./...",
+    "go build -tags nogui ./...",
+    "go build ./..."
+  ],
+  "testsAdded": [
+    "TestZCodeTrialQuotaRestsTheModelAlone: 7 subtests; 2 exact expired-trial responses, quota/authentication controls, mismatched-model/nontrial/status controls"
+  ],
+  "filesChanged": [
+    "docs/subsystems/gateway-routing.md",
+    "internal/gateway/routing.go",
+    "internal/gateway/zcode_trial.go",
+    "internal/gateway/zcode_trial_test.go",
+    "internal/plugin/testdata/fake/index.js"
+  ],
+  "results": {
+    "red": [
+      {
+        "label": "red",
+        "command": "go test ./internal/gateway -run '^TestZCodeTrialQuotaRestsTheModelAlone$' -count=1 -v",
+        "cwd": "/home/vincenty/Projects/magpie-issues/evidence/r25-3661/clean-base-rlsrt3vr",
+        "returncode": 1,
+        "log": "red.log"
+      }
+    ],
+    "green": [
+      {
+        "label": "targeted",
+        "command": "go test -race ./internal/gateway -run '^TestZCodeTrialQuotaRestsTheModelAlone$' -count=1 -v",
+        "cwd": "/home/vincenty/Projects/magpie-issues/r25-expired-model-not-account-fault",
+        "returncode": 0,
+        "log": "green.log"
+      },
+      {
+        "label": "gateway package",
+        "command": "go test ./internal/gateway -count=1 -timeout=15m",
+        "cwd": "/home/vincenty/Projects/magpie-issues/r25-expired-model-not-account-fault",
+        "returncode": 1,
+        "log": "green.log"
+      }
+    ],
+    "related": {
+      "label": "head related package",
+      "command": "go test ./internal/gateway -run 'ZCode|ModelRefused|Quota|Rest' -count=1",
+      "cwd": "/home/vincenty/Projects/magpie-issues/r25-expired-model-not-account-fault",
+      "returncode": 0,
+      "log": "green.log"
+    },
+    "verify": [
+      {
+        "label": "vet",
+        "command": "go vet ./...",
+        "cwd": "/home/vincenty/Projects/magpie-issues/r25-expired-model-not-account-fault",
+        "returncode": 0,
+        "log": "verify.log"
+      },
+      {
+        "label": "build",
+        "command": "go build ./...",
+        "cwd": "/home/vincenty/Projects/magpie-issues/r25-expired-model-not-account-fault",
+        "returncode": 0,
+        "log": "verify.log"
+      },
+      {
+        "label": "linux nogui",
+        "command": "go build -tags nogui ./...",
+        "cwd": "/home/vincenty/Projects/magpie-issues/r25-expired-model-not-account-fault",
+        "returncode": 0,
+        "log": "verify.log"
+      },
+      {
+        "label": "windows",
+        "command": "go build ./...",
+        "cwd": "/home/vincenty/Projects/magpie-issues/r25-expired-model-not-account-fault",
+        "returncode": 0,
+        "log": "verify.log"
+      }
+    ]
+  },
+  "preExistingRed": [
+    {
+      "test": "TestClaudeClientCacheAbsentUnchanged",
+      "failure": "claude_client_cache_test.go:291: ordinary prompt changed",
+      "headLog": "green.log",
+      "baseLog": "pre-existing-red.log",
+      "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+      "baseReturncode": 1,
+      "headPackageReturncode": 1
+    }
+  ],
+  "unverifiedBoundaries": [
+    "No real ZCode account exercised.",
+    "No change to stale saved-member pruning or plugin model discovery; the full listing/skip part of #3661 remains outside this fix.",
+    "No native macOS/Windows runtime exercise; Windows was cross-built.",
+    "Full repository Go tests not run; full gateway package has one clean-base-confirmed existing failure.",
+    "gopls unavailable; compiler, vet and executable tests used."
+  ],
+  "verification": {
+    "gofmtEmpty": true,
+    "vet": true,
+    "build": true,
+    "linuxNogui": true,
+    "windows": true,
+    "targetedRace": true,
+    "relatedTests": true,
+    "existingFailureBaseConfirmed": true,
+    "oneCommit": true,
+    "remoteMatchesHead": true,
+    "baseIsAncestor": true,
+    "worktreeClean": true,
+    "oneComment": true,
+    "commentAuthor": true,
+    "commentUtc": true,
+    "commentBodySha256": true
+  },
+  "language": {
+    "cjk": 563,
+    "latin": 320,
+    "share": 0.637599093997735
+  },
+  "commentId": 6411723766,
+  "commentUrl": "https://github.com/yetone/magpie/issues/3661#issuecomment-6411723766",
+  "commentReadbackEqual": true,
+  "skygunnerCommentCount": 1
+}

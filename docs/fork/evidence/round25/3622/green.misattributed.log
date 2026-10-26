@@ -1,0 +1,15 @@
+# head 0ca0e0320cbf83addbab9cdee560a106f8cf9616 (fix/r25-portable-vscode-dir)
+# cd /home/vincenty/Projects/magpie-issues/r25-portable-vscode-dir && GOTOOLCHAIN=go1.26.8 go test ./internal/agent -run TestVSCodePortableUserDir -count=1 -v
+=== RUN   TestVSCodePortableUserDir
+=== RUN   TestVSCodePortableUserDir/portable_only
+=== RUN   TestVSCodePortableUserDir/portable_beside_a_copied_plain_folder
+=== RUN   TestVSCodePortableUserDir/plain_only
+=== RUN   TestVSCodePortableUserDir/neither
+--- PASS: TestVSCodePortableUserDir (0.00s)
+    --- PASS: TestVSCodePortableUserDir/portable_only (0.00s)
+    --- PASS: TestVSCodePortableUserDir/portable_beside_a_copied_plain_folder (0.00s)
+    --- PASS: TestVSCodePortableUserDir/plain_only (0.00s)
+    --- PASS: TestVSCodePortableUserDir/neither (0.00s)
+PASS
+ok  	github.com/yetone/magpie/internal/agent	0.010s
+EXIT=0

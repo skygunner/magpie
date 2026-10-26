@@ -1,0 +1,31 @@
+{
+  "issue": 3329,
+  "title": "dsh: comment markers between patch-list entries are dropped on rewrite, breaking comment-delimited managed blocks (Vibe Island)",
+  "verdict": "fixed",
+  "skipReason": "",
+  "branch": "fix/dsh-comment-between-entries",
+  "base": "01468003348ede896c5126e9fd81057e1e58765c",
+  "head": "91a19f2568f5d7d504a3ca11c97ea027294b04ca",
+  "testCommands": [
+    "go test -tags nogui -count=1 -run TestDshCommentsBetweenEntriesSurviveRewrite ./internal/agent",
+    "go test -tags nogui -count=1 ./internal/agent",
+    "gofmt -l internal/agent/dsh.go internal/agent/dsh_comments_test.go",
+    "go vet ./...",
+    "GOOS=linux GOARCH=amd64 go vet -tags nogui ./...",
+    "GOOS=windows GOARCH=amd64 go vet ./...",
+    "go build ./...",
+    "GOOS=linux GOARCH=amd64 go build -tags nogui ./...",
+    "GOOS=windows GOARCH=amd64 go build ./..."
+  ],
+  "testsAdded": [
+    "internal/agent/dsh_comments_test.go TestDshCommentsBetweenEntriesSurviveRewrite"
+  ],
+  "unverifiedBoundaries": [
+    "No real DeepSeek Harness on the reporter's macOS; the round that drops the comment was run through dshRouteAgain on the reporter's literal file.",
+    "A comment indented inside an entry magpie rebuilds is still the entry's and is not preserved; the issue and this fix cover comments at the left edge between entries."
+  ],
+  "filesChanged": [
+    "internal/agent/dsh.go",
+    "internal/agent/dsh_comments_test.go"
+  ]
+}

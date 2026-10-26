@@ -1,0 +1,16 @@
+== go vet ./internal/agent/
+exit=0
+== go test ./internal/agent/ -count=1
+ok  	github.com/yetone/magpie/internal/agent	17.967s
+exit=0
+== go build ./...
+exit=0
+== GOOS=linux GOARCH=amd64 -tags nogui
+exit=0
+== GOOS=windows GOARCH=amd64
+exit=0
+== gofmt -l changed
+exit=0
+== go test ./internal/gui/ -count=1 (i18n.js is an asset)
+ok  	github.com/yetone/magpie/internal/gui	43.568s
+exit=0

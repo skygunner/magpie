@@ -1,0 +1,17 @@
+$ gofmt -l internal/gui/assets internal/gui/tests
+gofmt=true
+syntaxChecks=true
+$ GOTOOLCHAIN=go1.26.8 go vet ./...
+vet=true
+$ GOTOOLCHAIN=go1.26.8 go build ./...
+nativeBuild=true
+$ GOTOOLCHAIN=go1.26.8 GOOS=linux GOARCH=amd64 go build -tags nogui ./...
+linuxAmd64NoguiBuild=true
+$ GOTOOLCHAIN=go1.26.8 GOOS=windows GOARCH=amd64 go build ./...
+windowsAmd64Build=true
+$ git rev-list --count BASE..HEAD
+commitCount=1
+commitCountOne=true
+baseIsAncestor=true
+head=3e6f4077577d0af80890a542a3fb0d08f8249260
+remote=3e6f4077577d0af80890a542a3fb0d08f8249260

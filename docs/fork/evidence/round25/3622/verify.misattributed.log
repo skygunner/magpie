@@ -1,0 +1,35 @@
+=== gofmt -l internal/agent ===
+exit=0
+output:[]
+RESULT: PASS (no files need formatting)
+
+=== go vet ./... ===
+exit=0
+
+=== go build ./... ===
+exit=0
+
+=== GOOS=linux GOARCH=amd64 go build -tags nogui ./... ===
+exit=0
+
+=== GOOS=windows GOARCH=amd64 go build ./... ===
+exit=0
+
+=== go test ./internal/agent (full package, affected) ===
+ok  	github.com/yetone/magpie/internal/agent	96.768s
+exit=0
+
+=== git rev-list --count 19253f67bca2310c32739a6eaac88546b3574dbc..HEAD ===
+1
+
+=== git merge-base --is-ancestor 19253f67bca2310c32739a6eaac88546b3574dbc HEAD ===
+exit=0 (descends from upstream main)
+
+=== base package (no new test) on clean base 19253f67 ===
+ok  	github.com/yetone/magpie/internal/agent	86.354s
+
+=== push read-back ===
+local HEAD: 0ca0e0320cbf83addbab9cdee560a106f8cf9616
+ls-remote:
+0ca0e0320cbf83addbab9cdee560a106f8cf9616
+0ca0e0320cbf83addbab9cdee560a106f8cf9616	refs/heads/fix/r25-portable-vscode-dir

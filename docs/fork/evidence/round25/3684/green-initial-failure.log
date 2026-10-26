@@ -1,0 +1,101 @@
+HEAD fix: chatTidy downgrades phantom tool_calls finish when no calls delivered, stream and whole
+COMMAND: GOTOOLCHAIN=go1.26.8 go test -race -count=1 -run TestChatPhantom -v ./internal/gateway
+=== RUN   TestChatPhantomToolFinish
+=== RUN   TestChatPhantomToolFinish/#00
+=== RUN   TestChatPhantomToolFinish/#00/stream
+=== RUN   TestChatPhantomToolFinish/#00/whole
+=== RUN   TestChatPhantomToolFinish/,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]
+=== RUN   TestChatPhantomToolFinish/,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/stream
+=== RUN   TestChatPhantomToolFinish/,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/whole
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[]
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[]/stream
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[]/whole
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/stream
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/whole
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":null
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":null/stream
+    chattidy_phantom_finish_test.go:29: finish "tool_calls", want stop; text "Checking." calls map[]
+        data: {"id":"c1","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"Checking."},"finish_reason":null}]}
+        
+        data: {"id":"c1","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"tool_calls":null},"finish_reason":"tool_calls"}],"usage":{"prompt_tokens":3,"completion_tokens":2,"total_tokens":5}}
+        
+        data: [DONE]
+        
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":null/whole
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":null,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":null,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/stream
+    chattidy_phantom_finish_test.go:29: finish "tool_calls", want stop; text "Checking." calls map[]
+        data: {"choices":[{"delta":{"content":"Checking."},"finish_reason":null,"index":0}],"id":"c1","object":"chat.completion.chunk"}
+        
+        data: {"id":"c1","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"tool_calls":null},"finish_reason":"tool_calls"}],"usage":{"prompt_tokens":3,"completion_tokens":2,"total_tokens":5}}
+        
+        data: [DONE]
+        
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":null,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/whole
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[_]
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[_]/stream
+    chattidy_phantom_finish_test.go:29: finish "tool_calls", want stop; text "Checking." calls map[]
+        data: {"id":"c1","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"Checking."},"finish_reason":null}]}
+        
+        data: {"id":"c1","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"tool_calls":[ ]},"finish_reason":"tool_calls"}],"usage":{"prompt_tokens":3,"completion_tokens":2,"total_tokens":5}}
+        
+        data: [DONE]
+        
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[_]/whole
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[_],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[_],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/stream
+    chattidy_phantom_finish_test.go:29: finish "tool_calls", want stop; text "Checking." calls map[]
+        data: {"choices":[{"delta":{"content":"Checking."},"finish_reason":null,"index":0}],"id":"c1","object":"chat.completion.chunk"}
+        
+        data: {"id":"c1","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"tool_calls":[ ]},"finish_reason":"tool_calls"}],"usage":{"prompt_tokens":3,"completion_tokens":2,"total_tokens":5}}
+        
+        data: [DONE]
+        
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[_],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/whole
+--- FAIL: TestChatPhantomToolFinish (0.09s)
+    --- PASS: TestChatPhantomToolFinish/#00 (0.01s)
+        --- PASS: TestChatPhantomToolFinish/#00/stream (0.01s)
+        --- PASS: TestChatPhantomToolFinish/#00/whole (0.01s)
+    --- PASS: TestChatPhantomToolFinish/,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}] (0.01s)
+        --- PASS: TestChatPhantomToolFinish/,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/stream (0.01s)
+        --- PASS: TestChatPhantomToolFinish/,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/whole (0.01s)
+    --- PASS: TestChatPhantomToolFinish/,"tool_calls":[] (0.01s)
+        --- PASS: TestChatPhantomToolFinish/,"tool_calls":[]/stream (0.01s)
+        --- PASS: TestChatPhantomToolFinish/,"tool_calls":[]/whole (0.00s)
+    --- PASS: TestChatPhantomToolFinish/,"tool_calls":[],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}] (0.01s)
+        --- PASS: TestChatPhantomToolFinish/,"tool_calls":[],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/stream (0.01s)
+        --- PASS: TestChatPhantomToolFinish/,"tool_calls":[],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/whole (0.01s)
+    --- FAIL: TestChatPhantomToolFinish/,"tool_calls":null (0.01s)
+        --- FAIL: TestChatPhantomToolFinish/,"tool_calls":null/stream (0.01s)
+        --- PASS: TestChatPhantomToolFinish/,"tool_calls":null/whole (0.00s)
+    --- FAIL: TestChatPhantomToolFinish/,"tool_calls":null,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}] (0.01s)
+        --- FAIL: TestChatPhantomToolFinish/,"tool_calls":null,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/stream (0.01s)
+        --- PASS: TestChatPhantomToolFinish/,"tool_calls":null,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/whole (0.01s)
+    --- FAIL: TestChatPhantomToolFinish/,"tool_calls":[_] (0.01s)
+        --- FAIL: TestChatPhantomToolFinish/,"tool_calls":[_]/stream (0.01s)
+        --- PASS: TestChatPhantomToolFinish/,"tool_calls":[_]/whole (0.01s)
+    --- FAIL: TestChatPhantomToolFinish/,"tool_calls":[_],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}] (0.01s)
+        --- FAIL: TestChatPhantomToolFinish/,"tool_calls":[_],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/stream (0.00s)
+        --- PASS: TestChatPhantomToolFinish/,"tool_calls":[_],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/whole (0.00s)
+=== RUN   TestChatPhantomFinishKeepsRealCalls
+=== RUN   TestChatPhantomFinishKeepsRealCalls/native
+=== RUN   TestChatPhantomFinishKeepsRealCalls/native/stream
+=== RUN   TestChatPhantomFinishKeepsRealCalls/native/whole
+=== RUN   TestChatPhantomFinishKeepsRealCalls/text_parsed
+=== RUN   TestChatPhantomFinishKeepsRealCalls/text_parsed/stream
+=== RUN   TestChatPhantomFinishKeepsRealCalls/text_parsed/whole
+--- PASS: TestChatPhantomFinishKeepsRealCalls (0.02s)
+    --- PASS: TestChatPhantomFinishKeepsRealCalls/native (0.01s)
+        --- PASS: TestChatPhantomFinishKeepsRealCalls/native/stream (0.01s)
+        --- PASS: TestChatPhantomFinishKeepsRealCalls/native/whole (0.01s)
+    --- PASS: TestChatPhantomFinishKeepsRealCalls/text_parsed (0.01s)
+        --- PASS: TestChatPhantomFinishKeepsRealCalls/text_parsed/stream (0.01s)
+        --- PASS: TestChatPhantomFinishKeepsRealCalls/text_parsed/whole (0.01s)
+=== RUN   TestChatPhantomFinishPerChoice
+--- PASS: TestChatPhantomFinishPerChoice (0.00s)
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.159s
+FAIL
+
+EXIT_CODE=1

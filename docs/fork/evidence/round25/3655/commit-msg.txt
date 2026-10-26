@@ -1,0 +1,25 @@
+gateway: a write_stdin wait on a running process is not a tool loop (hibaliqya-yonma, #3655)
+
+Codex Desktop's write_stdin with empty chars, polling a session that has no
+output yet, produced eight exchanges whose results steadyResult makes
+identical (only Chunk ID and wall time move). stoppedToolLoop read them as
+the same call answered the same way and ended the turn with "magpie stopped
+this turn", while the process was still working and produced its result
+later.
+
+exchangeOf now marks a turn whose every call is such a wait: the name
+write_stdin, empty chars, a numeric session_id, and a result line saying
+"Process running with session ID <the same id>". A conversation ending in
+one is no loop (toolLoopOf). Non-empty chars, a result that names no
+running session or another one, and an unreadable session_id still count the
+turn as work, so repeated reads and a finished or mistyped handle stop as
+before.
+
+Verified: the issue's regression test TestPendingWriteStdinLoopGuard fails on
+19253f67 (stopped=true, want false for write_stdin) with only the test added,
+and passes here; gofmt -l internal/gateway empty, go vet ./..., go build ./...,
+GOOS=linux GOARCH=amd64 go build -tags nogui ./..., GOOS=windows
+GOARCH=amd64 go build ./... all ok. Full gateway package:
+go test -tags nogui ./internal/gateway -timeout 45m, 290.7s, with
+TestClaudeClientCacheAbsentUnchanged red identically on the clean base (not
+this change: Claude Code's cache-control args, tool_loop untouched by it).

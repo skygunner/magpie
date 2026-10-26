@@ -1,0 +1,2004 @@
+# Evidence repair at 2026-10-26T07:11:10.414869+00:00
+# issue 3645 branch fix/r25-routing-log-icons-wait
+# BASE 19253f67bca2310c32739a6eaac88546b3574dbc
+# HEAD 833c7cd61728607fdba75637e3271099847c2e70
+# Original logs kept as *.misattributed.log; HEAD regression GREEN is not a full-package claim.
+
+
+# archive-proof.json
+{
+  "base": {
+    "commit": "19253f67bca2310c32739a6eaac88546b3574dbc",
+    "archive_sha256": "5a4d820009d02c75150fc1be8c1974c4566142042e53dbf86d7165f5cd79eb3e",
+    "tracked_regular_file_count": 6038,
+    "differences": [
+      "internal/gui/tests/routing-log-icons-wait.test.cjs"
+    ],
+    "missing": [],
+    "added_test_sha256": "8f174a4efeb6f8a9a8494868205c4268da31f5c74a54d0ce65813f009668293e"
+  },
+  "head": {
+    "commit": "833c7cd61728607fdba75637e3271099847c2e70",
+    "archive_sha256": "659c239a8dc9c0cb4f9b02495be4916696c7598e3435ad1dd265caf09d28a1fd",
+    "tracked_regular_file_count": 6039,
+    "differences": [],
+    "missing": [],
+    "added_test_sha256": "8f174a4efeb6f8a9a8494868205c4268da31f5c74a54d0ce65813f009668293e"
+  }
+}
+
+# git-evidence.json
+[
+  {
+    "command": "GIT_MASTER=1 git -C /home/vincenty/Projects/magpie-issues/r25-routing-log-icons-wait status --short",
+    "returncode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": "GIT_MASTER=1 git -C /home/vincenty/Projects/magpie-issues/r25-routing-log-icons-wait rev-parse HEAD",
+    "returncode": 0,
+    "stdout": "833c7cd61728607fdba75637e3271099847c2e70\n",
+    "stderr": ""
+  },
+  {
+    "command": "GIT_MASTER=1 git -C /home/vincenty/Projects/magpie-issues/r25-routing-log-icons-wait rev-list --count 19253f67bca2310c32739a6eaac88546b3574dbc..833c7cd61728607fdba75637e3271099847c2e70",
+    "returncode": 0,
+    "stdout": "1\n",
+    "stderr": ""
+  },
+  {
+    "command": "GIT_MASTER=1 git -C /home/vincenty/Projects/magpie-issues/r25-routing-log-icons-wait merge-base --is-ancestor 19253f67bca2310c32739a6eaac88546b3574dbc 833c7cd61728607fdba75637e3271099847c2e70",
+    "returncode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": "GIT_MASTER=1 git -C /home/vincenty/Projects/magpie-issues/r25-routing-log-icons-wait ls-remote origin refs/heads/fix/r25-routing-log-icons-wait",
+    "returncode": 0,
+    "stdout": "833c7cd61728607fdba75637e3271099847c2e70\trefs/heads/fix/r25-routing-log-icons-wait\n",
+    "stderr": ""
+  },
+  {
+    "command": "GIT_MASTER=1 git -C /home/vincenty/Projects/magpie-issues/r25-routing-log-icons-wait diff --check 19253f67bca2310c32739a6eaac88546b3574dbc 833c7cd61728607fdba75637e3271099847c2e70",
+    "returncode": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "command": "GIT_MASTER=1 git -C /home/vincenty/Projects/magpie-issues/r25-routing-log-icons-wait status --short",
+    "returncode": 0,
+    "stdout": "",
+    "stderr": "",
+    "phase": "final"
+  },
+  {
+    "command": "GIT_MASTER=1 git -C /home/vincenty/Projects/magpie-issues/r25-routing-log-icons-wait rev-parse HEAD",
+    "returncode": 0,
+    "stdout": "833c7cd61728607fdba75637e3271099847c2e70\n",
+    "stderr": "",
+    "phase": "final"
+  },
+  {
+    "command": "GIT_MASTER=1 git -C /home/vincenty/Projects/magpie-issues/r25-routing-log-icons-wait ls-remote origin refs/heads/fix/r25-routing-log-icons-wait",
+    "returncode": 0,
+    "stdout": "833c7cd61728607fdba75637e3271099847c2e70\trefs/heads/fix/r25-routing-log-icons-wait\n",
+    "stderr": "",
+    "phase": "final"
+  }
+]
+
+# lsp-diagnostics.json
+{
+  "paths": [
+    "routing-log-icons.test.cjs: typescript-language-server NOT INSTALLED",
+    "routing-log-icons-wait.test.cjs: typescript-language-server NOT INSTALLED"
+  ],
+  "before_build": true,
+  "packages_installed": false
+}
+
+# COMMAND_METADATA {"issue": 3645, "label": "gofmt", "tree": "head", "commit": "833c7cd61728607fdba75637e3271099847c2e70", "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/head", "command": "gofmt -l internal/gui", "env": {"GOTOOLCHAIN": "go1.26.8", "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/home-5reo20s5", "GOPATH": "/home/vincenty/go", "GOMODCACHE": "/home/vincenty/go/pkg/mod", "GOCACHE": "/home/vincenty/.cache/go-build", "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules", "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"}, "extra_env": {}, "started_at": "2026-10-26T06:59:31.037829+00:00", "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/gofmt.log"}
+# BEGIN COMPLETE MERGED STDOUT/STDERR
+
+# END COMPLETE OUTPUT
+# CHECKED_RETURN_CODE 0
+
+# COMMAND_METADATA {"issue": 3645, "label": "node-check-routing-log-icons-wait.test.cjs", "tree": "head", "commit": "833c7cd61728607fdba75637e3271099847c2e70", "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/head", "command": "node --check internal/gui/tests/routing-log-icons-wait.test.cjs", "env": {"GOTOOLCHAIN": "go1.26.8", "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/home-lp58dj8g", "GOPATH": "/home/vincenty/go", "GOMODCACHE": "/home/vincenty/go/pkg/mod", "GOCACHE": "/home/vincenty/.cache/go-build", "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules", "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"}, "extra_env": {}, "started_at": "2026-10-26T06:59:31.070057+00:00", "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/node-check-routing-log-icons-wait.test.cjs.log"}
+# BEGIN COMPLETE MERGED STDOUT/STDERR
+
+# END COMPLETE OUTPUT
+# CHECKED_RETURN_CODE 0
+
+# COMMAND_METADATA {"issue": 3645, "label": "node-check-routing-log-icons.test.cjs", "tree": "head", "commit": "833c7cd61728607fdba75637e3271099847c2e70", "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/head", "command": "node --check internal/gui/tests/routing-log-icons.test.cjs", "env": {"GOTOOLCHAIN": "go1.26.8", "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/home-w_u9uq3g", "GOPATH": "/home/vincenty/go", "GOMODCACHE": "/home/vincenty/go/pkg/mod", "GOCACHE": "/home/vincenty/.cache/go-build", "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules", "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"}, "extra_env": {}, "started_at": "2026-10-26T06:59:31.102396+00:00", "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/node-check-routing-log-icons.test.cjs.log"}
+# BEGIN COMPLETE MERGED STDOUT/STDERR
+
+# END COMPLETE OUTPUT
+# CHECKED_RETURN_CODE 0
+
+# COMMAND_METADATA {"issue": 3645, "label": "vet-native", "tree": "head", "commit": "833c7cd61728607fdba75637e3271099847c2e70", "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/head", "command": "go vet ./...", "env": {"GOTOOLCHAIN": "go1.26.8", "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/home-1bw04w51", "GOPATH": "/home/vincenty/go", "GOMODCACHE": "/home/vincenty/go/pkg/mod", "GOCACHE": "/home/vincenty/.cache/go-build", "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules", "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"}, "extra_env": {}, "started_at": "2026-10-26T06:59:31.134672+00:00", "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/vet-native.log"}
+# BEGIN COMPLETE MERGED STDOUT/STDERR
+
+# END COMPLETE OUTPUT
+# CHECKED_RETURN_CODE 0
+
+# COMMAND_METADATA {"issue": 3645, "label": "vet-linux-nogui", "tree": "head", "commit": "833c7cd61728607fdba75637e3271099847c2e70", "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/head", "command": "go vet -tags nogui ./...", "env": {"GOTOOLCHAIN": "go1.26.8", "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/home-6_4nnukt", "GOPATH": "/home/vincenty/go", "GOMODCACHE": "/home/vincenty/go/pkg/mod", "GOCACHE": "/home/vincenty/.cache/go-build", "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules", "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"}, "extra_env": {"GOOS": "linux", "GOARCH": "amd64"}, "started_at": "2026-10-26T06:59:40.680893+00:00", "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/vet-linux-nogui.log"}
+# BEGIN COMPLETE MERGED STDOUT/STDERR
+
+# END COMPLETE OUTPUT
+# CHECKED_RETURN_CODE 0
+
+# COMMAND_METADATA {"issue": 3645, "label": "vet-windows", "tree": "head", "commit": "833c7cd61728607fdba75637e3271099847c2e70", "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/head", "command": "go vet ./...", "env": {"GOTOOLCHAIN": "go1.26.8", "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/home-4e6t_63_", "GOPATH": "/home/vincenty/go", "GOMODCACHE": "/home/vincenty/go/pkg/mod", "GOCACHE": "/home/vincenty/.cache/go-build", "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules", "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"}, "extra_env": {"GOOS": "windows", "GOARCH": "amd64"}, "started_at": "2026-10-26T06:59:49.023477+00:00", "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/vet-windows.log"}
+# BEGIN COMPLETE MERGED STDOUT/STDERR
+
+# END COMPLETE OUTPUT
+# CHECKED_RETURN_CODE 0
+
+# COMMAND_METADATA {"issue": 3645, "label": "build-native", "tree": "head", "commit": "833c7cd61728607fdba75637e3271099847c2e70", "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/head", "command": "go build -o /home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/build/magpie-native .", "env": {"GOTOOLCHAIN": "go1.26.8", "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/home-qgs7ruy2", "GOPATH": "/home/vincenty/go", "GOMODCACHE": "/home/vincenty/go/pkg/mod", "GOCACHE": "/home/vincenty/.cache/go-build", "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules", "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"}, "extra_env": {}, "started_at": "2026-10-26T06:59:57.617473+00:00", "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/build-native.log"}
+# BEGIN COMPLETE MERGED STDOUT/STDERR
+
+# END COMPLETE OUTPUT
+# CHECKED_RETURN_CODE 0
+
+# COMMAND_METADATA {"issue": 3645, "label": "build-linux-nogui", "tree": "head", "commit": "833c7cd61728607fdba75637e3271099847c2e70", "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/head", "command": "go build -tags nogui -o /home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/build/magpie-linux-nogui .", "env": {"GOTOOLCHAIN": "go1.26.8", "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/home-63hakgr2", "GOPATH": "/home/vincenty/go", "GOMODCACHE": "/home/vincenty/go/pkg/mod", "GOCACHE": "/home/vincenty/.cache/go-build", "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules", "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"}, "extra_env": {"GOOS": "linux", "GOARCH": "amd64"}, "started_at": "2026-10-26T06:59:59.185983+00:00", "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/build-linux-nogui.log"}
+# BEGIN COMPLETE MERGED STDOUT/STDERR
+
+# END COMPLETE OUTPUT
+# CHECKED_RETURN_CODE 0
+
+# COMMAND_METADATA {"issue": 3645, "label": "build-windows", "tree": "head", "commit": "833c7cd61728607fdba75637e3271099847c2e70", "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/head", "command": "go build -o /home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/build/magpie-windows.exe .", "env": {"GOTOOLCHAIN": "go1.26.8", "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/home-uq1_0ghy", "GOPATH": "/home/vincenty/go", "GOMODCACHE": "/home/vincenty/go/pkg/mod", "GOCACHE": "/home/vincenty/.cache/go-build", "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules", "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"}, "extra_env": {"GOOS": "windows", "GOARCH": "amd64"}, "started_at": "2026-10-26T07:00:00.102220+00:00", "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/build-windows.log"}
+# BEGIN COMPLETE MERGED STDOUT/STDERR
+
+# END COMPLETE OUTPUT
+# CHECKED_RETURN_CODE 0
+
+# COMMAND_METADATA {"issue": 3645, "label": "package-head", "tree": "head", "commit": "833c7cd61728607fdba75637e3271099847c2e70", "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/head", "command": "go test -tags nogui ./internal/gui -count=1 -v -timeout 15m", "env": {"GOTOOLCHAIN": "go1.26.8", "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/home-xe_xjzmo", "GOPATH": "/home/vincenty/go", "GOMODCACHE": "/home/vincenty/go/pkg/mod", "GOCACHE": "/home/vincenty/.cache/go-build", "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules", "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"}, "extra_env": {}, "started_at": "2026-10-26T07:00:01.069171+00:00", "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/package-head.log"}
+# BEGIN COMPLETE MERGED STDOUT/STDERR
+=== RUN   TestAccountArrangeRouteAndEditorSave
+--- PASS: TestAccountArrangeRouteAndEditorSave (0.02s)
+=== RUN   TestAgentConnectAPI
+--- PASS: TestAgentConnectAPI (0.41s)
+=== RUN   TestOmpProfileConnectURL
+--- PASS: TestOmpProfileConnectURL (0.24s)
+=== RUN   TestAgentConnectClaudePicker
+--- PASS: TestAgentConnectClaudePicker (0.13s)
+=== RUN   TestAgentDisconnectAPI
+--- PASS: TestAgentDisconnectAPI (0.17s)
+=== RUN   TestAgentModelOrderAPI
+--- PASS: TestAgentModelOrderAPI (0.01s)
+=== RUN   TestAgentOwnModelsHidden
+--- PASS: TestAgentOwnModelsHidden (0.00s)
+=== RUN   TestAgentModelsAPI
+--- PASS: TestAgentModelsAPI (0.00s)
+=== RUN   TestAgentModelLineAllHidden
+--- PASS: TestAgentModelLineAllHidden (0.01s)
+=== RUN   TestCursorLocalModelLine
+--- PASS: TestCursorLocalModelLine (0.00s)
+=== RUN   TestAgentModelsOnlyPicked
+--- PASS: TestAgentModelsOnlyPicked (0.01s)
+=== RUN   TestAgentModelsWSL
+--- PASS: TestAgentModelsWSL (0.01s)
+=== RUN   TestZCodeModelList
+--- PASS: TestZCodeModelList (0.11s)
+=== RUN   TestAgentConnectNoModels
+--- PASS: TestAgentConnectNoModels (0.00s)
+=== RUN   TestAgentConnectNoModelsMagpieAsProvider
+--- PASS: TestAgentConnectNoModelsMagpieAsProvider (0.00s)
+=== RUN   TestAgentConnectAllHidden
+--- PASS: TestAgentConnectAllHidden (0.00s)
+=== RUN   TestAllowIPsSetting
+--- PASS: TestAllowIPsSetting (0.01s)
+=== RUN   TestAllowIPsUnreadableSettingsNotSavedOver
+2026/10/26 17:00:04 allow list: could not read settings at /tmp/TestAllowIPsUnreadableSettingsNotSavedOver481359590/001/.config/magpie/settings.json: unexpected end of JSON input; the list read last stays in force
+--- PASS: TestAllowIPsUnreadableSettingsNotSavedOver (0.00s)
+=== RUN   TestAllowIPsFromTheAppWindow
+--- PASS: TestAllowIPsFromTheAppWindow (0.00s)
+=== RUN   TestSettingsSearchProviderOff
+--- PASS: TestSettingsSearchProviderOff (0.00s)
+=== RUN   TestSettingsPageSaveCarriesEveryPerModelTable
+--- PASS: TestSettingsPageSaveCarriesEveryPerModelTable (0.00s)
+=== RUN   TestSettingsPageSaveKeepsWhichModelsAnAgentIsShown
+--- PASS: TestSettingsPageSaveKeepsWhichModelsAnAgentIsShown (0.00s)
+=== RUN   TestSettingsRefusalRetries
+--- PASS: TestSettingsRefusalRetries (0.00s)
+=== RUN   TestSettingsImageTimeout
+--- PASS: TestSettingsImageTimeout (0.00s)
+=== RUN   TestSettingsClassifyTimeout
+--- PASS: TestSettingsClassifyTimeout (0.00s)
+=== RUN   TestSettingsColorblindMode
+--- PASS: TestSettingsColorblindMode (0.00s)
+=== RUN   TestSettingsRedactWordsAnyCaseKept
+--- PASS: TestSettingsRedactWordsAnyCaseKept (0.00s)
+=== RUN   TestArchivePreviewAndDownload
+--- PASS: TestArchivePreviewAndDownload (0.11s)
+=== RUN   TestArchiveTooLargeToPreview
+--- PASS: TestArchiveTooLargeToPreview (0.00s)
+=== RUN   TestArchiveOldPreview
+--- PASS: TestArchiveOldPreview (0.00s)
+=== RUN   TestArchiveSwitchKeepsOnThisComputer
+--- PASS: TestArchiveSwitchKeepsOnThisComputer (0.00s)
+=== RUN   TestAsideConnectAPIKeepsNativeSelections
+--- PASS: TestAsideConnectAPIKeepsNativeSelections (0.01s)
+=== RUN   TestRuntimeUnavailableJSONKeepsMessageAndAction
+--- PASS: TestRuntimeUnavailableJSONKeepsMessageAndAction (0.00s)
+=== RUN   TestAsideOfflineDisconnectAPIRequiresCurrentPreview
+--- PASS: TestAsideOfflineDisconnectAPIRequiresCurrentPreview (0.01s)
+=== RUN   TestPageFilesRevalidate
+--- PASS: TestPageFilesRevalidate (0.02s)
+=== RUN   TestPageNamesItsFilesByContent
+--- PASS: TestPageNamesItsFilesByContent (0.01s)
+=== RUN   TestAssetTypesHoldAgainstTheRegistry
+--- PASS: TestAssetTypesHoldAgainstTheRegistry (0.00s)
+=== RUN   TestBackupLibraryRoundTrip
+--- PASS: TestBackupLibraryRoundTrip (0.07s)
+=== RUN   TestDavsyncBusy
+--- PASS: TestDavsyncBusy (0.30s)
+=== RUN   TestBareModelIDsSetting
+--- PASS: TestBareModelIDsSetting (0.01s)
+=== RUN   TestBuiltinSwitch
+--- PASS: TestBuiltinSwitch (0.00s)
+=== RUN   TestBuiltinBrokenFile
+--- PASS: TestBuiltinBrokenFile (0.00s)
+=== RUN   TestBootSaysBuiltinsOff
+--- PASS: TestBootSaysBuiltinsOff (0.00s)
+=== RUN   TestBootSaysWhereItsGatewayListens
+--- PASS: TestBootSaysWhereItsGatewayListens (0.00s)
+=== RUN   TestBuiltinConfig
+--- PASS: TestBuiltinConfig (0.00s)
+=== RUN   TestBuiltinClientsLoaded
+--- PASS: TestBuiltinClientsLoaded (0.06s)
+=== RUN   TestBuiltinsTranslated
+--- PASS: TestBuiltinsTranslated (0.00s)
+=== RUN   TestFailSaysBunUnstartable
+--- PASS: TestFailSaysBunUnstartable (0.00s)
+=== RUN   TestBunSaidIsTranslated
+--- PASS: TestBunSaidIsTranslated (0.00s)
+=== RUN   TestContextKiroCacheNotAMiss
+=== RUN   TestContextKiroCacheNotAMiss/said_so
+=== RUN   TestContextKiroCacheNotAMiss/kept_before
+--- PASS: TestContextKiroCacheNotAMiss (0.00s)
+    --- PASS: TestContextKiroCacheNotAMiss/said_so (0.00s)
+    --- PASS: TestContextKiroCacheNotAMiss/kept_before (0.00s)
+=== RUN   TestRoutingKiroCacheKeptBefore
+--- PASS: TestRoutingKiroCacheKeptBefore (0.00s)
+=== RUN   TestCallerKeyModelsRoutes
+--- PASS: TestCallerKeyModelsRoutes (0.00s)
+=== RUN   TestCallerKeyAccountsRoutes
+--- PASS: TestCallerKeyAccountsRoutes (0.00s)
+=== RUN   TestCallerKeyManagementAndUsageRoutes
+--- PASS: TestCallerKeyManagementAndUsageRoutes (0.01s)
+=== RUN   TestReadOnlyLANMigrationDoesNotBlockSettingsOrKeys
+2026/10/26 17:00:04 magpie: could not migrate LAN key: open /tmp/TestReadOnlyLANMigrationDoesNotBlockSettingsOrKeys1769687641/001/.config/magpie/settings.json: permission denied
+--- PASS: TestReadOnlyLANMigrationDoesNotBlockSettingsOrKeys (0.01s)
+=== RUN   TestCheckinAccountSetting
+--- PASS: TestCheckinAccountSetting (0.01s)
+=== RUN   TestCLIBehindIsLstatOnlyAndDismissible
+    cli_behind_test.go:21: only the Mac keeps the command apart from the app
+--- SKIP: TestCLIBehindIsLstatOnlyAndDismissible (0.00s)
+=== RUN   TestCopyHeld
+--- PASS: TestCopyHeld (0.00s)
+=== RUN   TestCodexAgentsV1SettingNotice
+--- PASS: TestCodexAgentsV1SettingNotice (0.12s)
+=== RUN   TestCodexAppOutReopenedOnce
+--- PASS: TestCodexAppOutReopenedOnce (0.00s)
+=== RUN   TestCodexAutoReviewSetting
+--- PASS: TestCodexAutoReviewSetting (0.04s)
+=== RUN   TestCodexDaemonRestartRoute
+--- PASS: TestCodexDaemonRestartRoute (0.01s)
+=== RUN   TestCodexTitlesSetting
+--- PASS: TestCodexTitlesSetting (0.01s)
+=== RUN   TestCodexDescriptionsSetting
+--- PASS: TestCodexDescriptionsSetting (0.01s)
+=== RUN   TestCodexPredictionsSetting
+--- PASS: TestCodexPredictionsSetting (0.01s)
+=== RUN   TestContextOfALeanAgent
+--- PASS: TestContextOfALeanAgent (0.00s)
+=== RUN   TestContextSideCallsAreNoCompaction
+--- PASS: TestContextSideCallsAreNoCompaction (0.00s)
+=== RUN   TestContextToollessAgentKeepsItsTurns
+--- PASS: TestContextToollessAgentKeepsItsTurns (0.00s)
+=== RUN   TestContextOfAHeavyAgent
+--- PASS: TestContextOfAHeavyAgent (0.00s)
+=== RUN   TestContextCacheNotKnown
+--- PASS: TestContextCacheNotKnown (0.00s)
+=== RUN   TestContextSessionTitles
+--- PASS: TestContextSessionTitles (0.00s)
+=== RUN   TestContextDshSessionTitles
+--- PASS: TestContextDshSessionTitles (0.00s)
+=== RUN   TestContextTextAPI
+--- PASS: TestContextTextAPI (0.00s)
+=== RUN   TestCoreScriptBudget
+--- PASS: TestCoreScriptBudget (0.00s)
+=== RUN   TestCORSOriginsSetting
+--- PASS: TestCORSOriginsSetting (0.01s)
+=== RUN   TestDavsyncViewFollowsTheSetup
+--- PASS: TestDavsyncViewFollowsTheSetup (0.00s)
+=== RUN   TestDesktopSessionTitlesOnPages
+--- PASS: TestDesktopSessionTitlesOnPages (0.01s)
+=== RUN   TestDesktopSubagentModelNotice
+--- PASS: TestDesktopSubagentModelNotice (0.03s)
+=== RUN   TestDisabledModelsSetting
+--- PASS: TestDisabledModelsSetting (0.01s)
+=== RUN   TestDockStep
+--- PASS: TestDockStep (0.00s)
+=== RUN   TestDockFlapIsTheLogos
+--- PASS: TestDockFlapIsTheLogos (0.00s)
+=== RUN   TestFetchedCountIsTheEditorsModels
+--- PASS: TestFetchedCountIsTheEditorsModels (0.00s)
+=== RUN   TestFontDiscoveryCacheAndFailure
+--- PASS: TestFontDiscoveryCacheAndFailure (0.00s)
+=== RUN   TestFontSettingsAPIAndBoot
+--- PASS: TestFontSettingsAPIAndBoot (0.01s)
+=== RUN   TestFXInState
+--- PASS: TestFXInState (0.02s)
+=== RUN   TestFXStateDoesNotWait
+--- PASS: TestFXStateDoesNotWait (0.11s)
+=== RUN   TestGatewayHeldByAContainer
+--- PASS: TestGatewayHeldByAContainer (0.51s)
+=== RUN   TestGatewayConversationAPI
+--- PASS: TestGatewayConversationAPI (0.00s)
+=== RUN   TestGatewaySessionHistoryAndCalendar
+--- PASS: TestGatewaySessionHistoryAndCalendar (0.00s)
+=== RUN   TestGatewaySessionsNativeWinsBeforeLimits
+--- PASS: TestGatewaySessionsNativeWinsBeforeLimits (0.00s)
+=== RUN   TestGatewayGroupsSayWhatTheyTake
+--- PASS: TestGatewayGroupsSayWhatTheyTake (0.01s)
+=== RUN   TestGatewayListCopiesNoDays
+--- PASS: TestGatewayListCopiesNoDays (0.00s)
+=== RUN   TestGatewayFixQuitsOnlyAMagpie
+--- PASS: TestGatewayFixQuitsOnlyAMagpie (0.60s)
+=== RUN   TestTopSessionsMarkWhatOnlyTheGatewaySaw
+--- PASS: TestTopSessionsMarkWhatOnlyTheGatewaySaw (0.00s)
+=== RUN   TestGatewayMode
+--- PASS: TestGatewayMode (0.01s)
+=== RUN   TestGitHubTokenSetting
+--- PASS: TestGitHubTokenSetting (0.01s)
+=== RUN   TestParseFit
+--- PASS: TestParseFit (0.00s)
+=== RUN   TestGlideCurve
+--- PASS: TestGlideCurve (0.00s)
+=== RUN   TestParseTint
+--- PASS: TestParseTint (0.00s)
+=== RUN   TestGroupCopy
+--- PASS: TestGroupCopy (0.01s)
+=== RUN   TestFoundGroupMemberOfASwitchedOffProvider
+--- PASS: TestFoundGroupMemberOfASwitchedOffProvider (0.00s)
+=== RUN   TestGroupModelsCarryWhatTheyTake
+--- PASS: TestGroupModelsCarryWhatTheyTake (0.01s)
+=== RUN   TestGroupMemberThatIsAGroupCarriesWhatAgentsSee
+--- PASS: TestGroupMemberThatIsAGroupCarriesWhatAgentsSee (0.01s)
+=== RUN   TestGroupModelImagesOnTheWire
+--- PASS: TestGroupModelImagesOnTheWire (0.00s)
+=== RUN   TestGroupsNeverNullMembers
+--- PASS: TestGroupsNeverNullMembers (0.00s)
+=== RUN   TestGroupMemberOfASwitchedOffProvider
+--- PASS: TestGroupMemberOfASwitchedOffProvider (0.01s)
+=== RUN   TestGroupShareAndImport
+--- PASS: TestGroupShareAndImport (0.01s)
+=== RUN   TestGroupSaveFast
+--- PASS: TestGroupSaveFast (0.01s)
+=== RUN   TestGroupsSayAClassifierThatFailed
+--- PASS: TestGroupsSayAClassifierThatFailed (0.01s)
+=== RUN   TestServedRefSaysASubscription
+--- PASS: TestServedRefSaysASubscription (0.00s)
+=== RUN   TestGroupSaveRenames
+--- PASS: TestGroupSaveRenames (0.01s)
+=== RUN   TestGroupsFoundSwitch
+--- PASS: TestGroupsFoundSwitch (0.01s)
+=== RUN   TestGroupsDeleteSeveral
+--- PASS: TestGroupsDeleteSeveral (0.01s)
+=== RUN   TestGroupsPick
+--- PASS: TestGroupsPick (0.00s)
+=== RUN   TestRestartWaitsForWhatAHandoverCantCarry
+--- PASS: TestRestartWaitsForWhatAHandoverCantCarry (0.00s)
+=== RUN   TestHandsOverOnlyWhereItCan
+--- PASS: TestHandsOverOnlyWhereItCan (0.00s)
+=== RUN   TestHandoverSuccessor
+    handover_unix_test.go:35: the new magpie of TestRestartHandsTheGatewayOver
+--- SKIP: TestHandoverSuccessor (0.00s)
+=== RUN   TestRestartHandsTheGatewayOver
+=== RUN   TestHandoverSuccessor
+2026/10/26 17:00:06 update: took the gateway on 127.0.0.1:43187 over from pid 1871276
+2026/10/26 17:00:06 update: magpie dev (pid 1871492) serves the gateway now; this one finishes its requests and quits
+--- PASS: TestRestartHandsTheGatewayOver (3.14s)
+=== RUN   TestHandoverNotMadeRestartsAsBeforeOnceIdle
+=== RUN   TestHandoverNotMadeRestartsAsBeforeOnceIdle/never_says_hello
+2026/10/26 17:00:09 update: the gateway wasn't handed over, restarting as before once its requests have finished: context deadline exceeded
+=== RUN   TestHandoverNotMadeRestartsAsBeforeOnceIdle/doesn't_start
+2026/10/26 17:00:10 update: the gateway wasn't handed over, restarting as before once its requests have finished: the new version didn't start beside this one: no such file
+--- PASS: TestHandoverNotMadeRestartsAsBeforeOnceIdle (2.42s)
+    --- PASS: TestHandoverNotMadeRestartsAsBeforeOnceIdle/never_says_hello (1.21s)
+    --- PASS: TestHandoverNotMadeRestartsAsBeforeOnceIdle/doesn't_start (1.21s)
+=== RUN   TestImageGenCodexOneEntry
+--- PASS: TestImageGenCodexOneEntry (0.01s)
+=== RUN   TestLocalProviderDiscovery
+--- PASS: TestLocalProviderDiscovery (0.01s)
+=== RUN   TestOpenCodeWaitsForThePicker
+--- PASS: TestOpenCodeWaitsForThePicker (0.00s)
+=== RUN   TestImportIsReadOnce
+--- PASS: TestImportIsReadOnce (0.00s)
+=== RUN   TestImportIconRoute
+--- PASS: TestImportIconRoute (0.00s)
+=== RUN   TestImportLink
+--- PASS: TestImportLink (0.00s)
+=== RUN   TestProviderSaveInsecureTLS
+--- PASS: TestProviderSaveInsecureTLS (8.02s)
+=== RUN   TestOneMagpieAtATime
+--- PASS: TestOneMagpieAtATime (0.01s)
+=== RUN   TestDatesFollowGUILanguage
+--- PASS: TestDatesFollowGUILanguage (0.06s)
+=== RUN   TestKeysReplaceKeepsTheKeyAndLiftsItsRest
+--- PASS: TestKeysReplaceKeepsTheKeyAndLiftsItsRest (0.01s)
+=== RUN   TestEachKeyCopiesItsOwn
+--- PASS: TestEachKeyCopiesItsOwn (0.01s)
+=== RUN   TestKeysImportAndRest
+--- PASS: TestKeysImportAndRest (0.01s)
+=== RUN   TestProviderSaveSplitsKeysAndRemovesMany
+--- PASS: TestProviderSaveSplitsKeysAndRemovesMany (0.02s)
+=== RUN   TestLANSettingSharesCallerKeyStore
+--- PASS: TestLANSettingSharesCallerKeyStore (0.01s)
+=== RUN   TestSettingsMigratesOldLANCredentialToManagedKey
+--- PASS: TestSettingsMigratesOldLANCredentialToManagedKey (0.00s)
+=== RUN   TestGatewayConnectionAddressesFollowLANSharing
+--- PASS: TestGatewayConnectionAddressesFollowLANSharing (0.01s)
+=== RUN   TestLaneLimitRoutes
+--- PASS: TestLaneLimitRoutes (0.02s)
+=== RUN   TestRPMSave
+--- PASS: TestRPMSave (0.02s)
+=== RUN   TestLastKnownProviders
+--- PASS: TestLastKnownProviders (0.00s)
+=== RUN   TestLastKnownState
+--- PASS: TestLastKnownState (0.00s)
+=== RUN   TestInstructionChangeAnswersInstructions
+--- PASS: TestInstructionChangeAnswersInstructions (0.00s)
+=== RUN   TestMarketOfNamesTheFailedSource
+--- PASS: TestMarketOfNamesTheFailedSource (0.00s)
+=== RUN   TestLightStep
+--- PASS: TestLightStep (0.00s)
+=== RUN   TestProviderSaveLimitRestOff
+--- PASS: TestProviderSaveLimitRestOff (0.02s)
+=== RUN   TestProviderSaveLocalPresetAtItsURLs
+2026/10/26 17:00:20 ollama: Get "http://localhost:11434/api/tags": dial tcp [::1]:11434: connect: connection refused
+2026/10/26 17:00:20 ollama-2: Get "http://127.0.0.1:1/api/tags": dial tcp 127.0.0.1:1: connect: connection refused
+2026/10/26 17:00:20 omlx: oMLX: Not Found
+2026/10/26 17:00:20 omlx-2: Get "http://127.0.0.1:2/v1/models/status": dial tcp 127.0.0.1:2: connect: connection refused
+--- PASS: TestProviderSaveLocalPresetAtItsURLs (0.04s)
+=== RUN   TestLodyImportHandoff
+--- PASS: TestLodyImportHandoff (0.00s)
+=== RUN   TestLodyImportRunsLodyOnLinux
+--- PASS: TestLodyImportRunsLodyOnLinux (0.02s)
+=== RUN   TestImportStatusUnreadableIsUnknown
+--- PASS: TestImportStatusUnreadableIsUnknown (0.00s)
+=== RUN   TestAionUiImportRow
+--- PASS: TestAionUiImportRow (0.00s)
+=== RUN   TestLoginNeedsAllowing
+--- PASS: TestLoginNeedsAllowing (0.01s)
+=== RUN   TestProviderInfoListsKeysOnce
+    many_keys_test.go:44: keys listed 0 times for 10 keys, 0 for 1000
+--- PASS: TestProviderInfoListsKeysOnce (0.01s)
+=== RUN   TestMaskingRecordsAPI
+--- PASS: TestMaskingRecordsAPI (0.00s)
+=== RUN   TestMaskingPreviewKeepsKeyForm
+--- PASS: TestMaskingPreviewKeepsKeyForm (0.00s)
+=== RUN   TestProviderModelOutputSaid
+--- PASS: TestProviderModelOutputSaid (0.00s)
+=== RUN   TestProviderModelOutputWithinTheWindow
+--- PASS: TestProviderModelOutputWithinTheWindow (0.01s)
+=== RUN   TestModelEditorShowsTheSameAsPrice
+--- PASS: TestModelEditorShowsTheSameAsPrice (0.00s)
+=== RUN   TestProviderModelWindowSaid
+--- PASS: TestProviderModelWindowSaid (0.00s)
+=== RUN   TestModelSpecInProvidersState
+--- PASS: TestModelSpecInProvidersState (0.01s)
+=== RUN   TestGatewayServedByAnOlderMagpie
+--- PASS: TestGatewayServedByAnOlderMagpie (0.01s)
+=== RUN   TestBarIconTellsTheTray
+--- PASS: TestBarIconTellsTheTray (0.00s)
+=== RUN   TestOTelPreferencesAPI
+--- PASS: TestOTelPreferencesAPI (0.01s)
+=== RUN   TestStateListsPencil
+--- PASS: TestStateListsPencil (0.00s)
+=== RUN   TestPluginSubscriptionCarriesSingleIdentity
+--- PASS: TestPluginSubscriptionCarriesSingleIdentity (0.00s)
+=== RUN   TestPluginOptionSetting
+--- PASS: TestPluginOptionSetting (0.01s)
+=== RUN   TestPluginSignInPageOpensOnce
+--- PASS: TestPluginSignInPageOpensOnce (0.06s)
+=== RUN   TestPluginPageServedShutIn
+--- PASS: TestPluginPageServedShutIn (0.00s)
+=== RUN   TestPluginPageReadsWhatItDeclared
+--- PASS: TestPluginPageReadsWhatItDeclared (0.00s)
+=== RUN   TestPluginPageNoAPI
+--- PASS: TestPluginPageNoAPI (0.00s)
+=== RUN   TestPluginPageWebGuard
+--- PASS: TestPluginPageWebGuard (0.00s)
+=== RUN   TestPluginPageActions
+--- PASS: TestPluginPageActions (0.00s)
+=== RUN   TestPluginPageWindowPolicy
+=== RUN   TestPluginPageWindowPolicy/desktop
+=== RUN   TestPluginPageWindowPolicy/web
+=== RUN   TestPluginPageWindowPolicy/web_localhost
+--- PASS: TestPluginPageWindowPolicy (0.00s)
+    --- PASS: TestPluginPageWindowPolicy/desktop (0.00s)
+    --- PASS: TestPluginPageWindowPolicy/web (0.00s)
+    --- PASS: TestPluginPageWindowPolicy/web_localhost (0.00s)
+=== RUN   TestPluginPanelsServedShutIn
+--- PASS: TestPluginPanelsServedShutIn (0.00s)
+=== RUN   TestPluginPanelsReadWhatTheyDeclared
+--- PASS: TestPluginPanelsReadWhatTheyDeclared (0.00s)
+=== RUN   TestPluginPageReplacesFirstWins
+--- PASS: TestPluginPageReplacesFirstWins (0.00s)
+=== RUN   TestPluginsCheckRoute
+--- PASS: TestPluginsCheckRoute (0.00s)
+=== RUN   TestPluginsClashRows
+--- PASS: TestPluginsClashRows (0.16s)
+=== RUN   TestGatewayPluginOptionsAndKind
+--- PASS: TestGatewayPluginOptionsAndKind (0.00s)
+=== RUN   TestTaggedWhyKind
+--- PASS: TestTaggedWhyKind (0.00s)
+=== RUN   TestPluginsStateNamesWithoutAsking
+--- PASS: TestPluginsStateNamesWithoutAsking (0.00s)
+=== RUN   TestPluginsMirrorSwitch
+--- PASS: TestPluginsMirrorSwitch (0.00s)
+=== RUN   TestPluginOpsOutliveRequest
+--- PASS: TestPluginOpsOutliveRequest (0.00s)
+=== RUN   TestPluginsStateGivesThePluginsOwnIcon
+--- PASS: TestPluginsStateGivesThePluginsOwnIcon (0.00s)
+=== RUN   TestPluginMarketInParts
+--- PASS: TestPluginMarketInParts (0.00s)
+=== RUN   TestPluginsPickerWhereItCan
+--- PASS: TestPluginsPickerWhereItCan (0.00s)
+=== RUN   TestSetPortMovesTheGateway
+--- PASS: TestSetPortMovesTheGateway (0.03s)
+=== RUN   TestSetPortServesWhenTheOldOneWasTaken
+--- PASS: TestSetPortServesWhenTheOldOneWasTaken (0.02s)
+=== RUN   TestPriceRateOf
+--- PASS: TestPriceRateOf (0.00s)
+=== RUN   TestPrivacyModelOnlyOnOnceDownloaded
+--- PASS: TestPrivacyModelOnlyOnOnceDownloaded (0.01s)
+=== RUN   TestStateProfileDetails
+--- PASS: TestStateProfileDetails (0.00s)
+=== RUN   TestStateProfileInUse
+--- PASS: TestStateProfileInUse (0.02s)
+=== RUN   TestProviderSaveKeepsListScheduleAndRules
+--- PASS: TestProviderSaveKeepsListScheduleAndRules (0.01s)
+=== RUN   TestProviderBaseAPIKept
+--- PASS: TestProviderBaseAPIKept (0.03s)
+=== RUN   TestProviderExtraBodySaved
+--- PASS: TestProviderExtraBodySaved (0.02s)
+=== RUN   TestProviderSaveNativeCompaction
+--- PASS: TestProviderSaveNativeCompaction (0.02s)
+=== RUN   TestProviderSaveKeepsWhatTheEditorDoesntShow
+--- PASS: TestProviderSaveKeepsWhatTheEditorDoesntShow (0.02s)
+=== RUN   TestProviderSaveSelectNone
+--- PASS: TestProviderSaveSelectNone (0.05s)
+=== RUN   TestProviderListTellsTencentAccessKey
+--- PASS: TestProviderListTellsTencentAccessKey (0.01s)
+=== RUN   TestProviderSaveKeepsVolcengineSecret
+--- PASS: TestProviderSaveKeepsVolcengineSecret (0.05s)
+=== RUN   TestProviderSaveDecideEndpoint
+--- PASS: TestProviderSaveDecideEndpoint (1.62s)
+=== RUN   TestProviderModelsSayDesktopNumber
+--- PASS: TestProviderModelsSayDesktopNumber (0.00s)
+=== RUN   TestProviderDetectDraft
+--- PASS: TestProviderDetectDraft (0.01s)
+=== RUN   TestProviderDetect
+--- PASS: TestProviderDetect (0.01s)
+=== RUN   TestProviderInfoListsImageModels
+--- PASS: TestProviderInfoListsImageModels (0.00s)
+=== RUN   TestGroupFinderTakesTheOneMMark
+--- PASS: TestGroupFinderTakesTheOneMMark (0.00s)
+=== RUN   TestProviderInfoShowsAnAgentOnItsGroupsProviders
+--- PASS: TestProviderInfoShowsAnAgentOnItsGroupsProviders (0.00s)
+=== RUN   TestProviderListBeforeSave
+--- PASS: TestProviderListBeforeSave (0.00s)
+=== RUN   TestProviderSaveModelPrefs
+--- PASS: TestProviderSaveModelPrefs (0.01s)
+=== RUN   TestMoveOutlivesRequest
+--- PASS: TestMoveOutlivesRequest (0.01s)
+=== RUN   TestMoveTakesEditorPicks
+--- PASS: TestMoveTakesEditorPicks (0.01s)
+=== RUN   TestMoveBackRefused
+--- PASS: TestMoveBackRefused (0.00s)
+=== RUN   TestProviderSaveKeepsRetiredModelOutput
+--- PASS: TestProviderSaveKeepsRetiredModelOutput (0.03s)
+=== RUN   TestProviderSaveOutputs
+--- PASS: TestProviderSaveOutputs (0.02s)
+=== RUN   TestRemoteMagpieDecisionPicker
+--- PASS: TestRemoteMagpieDecisionPicker (0.00s)
+=== RUN   TestBailianTokenPlanDecisionPicker
+--- PASS: TestBailianTokenPlanDecisionPicker (0.00s)
+=== RUN   TestProviderOffMovesAgents
+--- PASS: TestProviderOffMovesAgents (0.02s)
+=== RUN   TestProviderSaveRouting
+--- PASS: TestProviderSaveRouting (0.03s)
+=== RUN   TestProviderSaveSink
+--- PASS: TestProviderSaveSink (0.03s)
+=== RUN   TestDecidePresetSaveKeepsRouting
+--- PASS: TestDecidePresetSaveKeepsRouting (0.02s)
+=== RUN   TestProviderListReadsSettingsOnce
+    providers_settings_once_test.go:68: settings.json parsed 0 times
+--- PASS: TestProviderListReadsSettingsOnce (0.02s)
+=== RUN   TestProviderSystemOne
+--- PASS: TestProviderSystemOne (2.15s)
+=== RUN   TestProviderTypedKey
+--- PASS: TestProviderTypedKey (0.01s)
+=== RUN   TestVertexProviderEditor
+--- PASS: TestVertexProviderEditor (0.03s)
+=== RUN   TestProxyCustomRemembered
+--- PASS: TestProxyCustomRemembered (0.01s)
+=== RUN   TestProxyCheckTellsTheProxyFromDirect
+--- PASS: TestProxyCheckTellsTheProxyFromDirect (0.00s)
+=== RUN   TestProxyCheckSaysTheProxyTookItUnderOneExit
+--- PASS: TestProxyCheckSaysTheProxyTookItUnderOneExit (0.00s)
+=== RUN   TestProxyCheckSaysAProxyPassedBy
+--- PASS: TestProxyCheckSaysAProxyPassedBy (0.00s)
+=== RUN   TestProxyCheckConnectedToByName
+--- PASS: TestProxyCheckConnectedToByName (0.00s)
+=== RUN   TestProxyCheckGoesAroundTheGlobalProxyForDirect
+--- PASS: TestProxyCheckGoesAroundTheGlobalProxyForDirect (0.00s)
+=== RUN   TestProxyCheckWithNoProxyAsksOnlyDirect
+--- PASS: TestProxyCheckWithNoProxyAsksOnlyDirect (0.00s)
+=== RUN   TestProxyCheckSaysAProxyDownWithoutItsPassword
+--- PASS: TestProxyCheckSaysAProxyDownWithoutItsPassword (0.00s)
+=== RUN   TestProxyCheckReadsNoAddressAsAFailure
+--- PASS: TestProxyCheckReadsNoAddressAsAFailure (0.00s)
+=== RUN   TestPublicURLInConsole
+--- PASS: TestPublicURLInConsole (0.01s)
+=== RUN   TestGatewayOnNetworkInConsole
+--- PASS: TestGatewayOnNetworkInConsole (0.01s)
+=== RUN   TestPublicURLOnlyWhereOffered
+--- PASS: TestPublicURLOnlyWhereOffered (0.02s)
+=== RUN   TestPurposeAssetMatchesUsage
+--- PASS: TestPurposeAssetMatchesUsage (0.00s)
+=== RUN   TestAlertText
+--- PASS: TestAlertText (0.00s)
+=== RUN   TestReminderText
+--- PASS: TestReminderText (0.00s)
+=== RUN   TestQuotaHistoryHoldsRequiresCompletedRange
+--- PASS: TestQuotaHistoryHoldsRequiresCompletedRange (0.00s)
+=== RUN   TestQuotaHistoryHoldsReadsLocalSnapshot
+--- PASS: TestQuotaHistoryHoldsReadsLocalSnapshot (0.00s)
+=== RUN   TestSaveKeepsQuotaResetAt
+--- PASS: TestSaveKeepsQuotaResetAt (0.01s)
+=== RUN   TestRecentCallBodiesOnDemand
+    recent_call_test.go:119: 40 calls: 12118 bytes of metadata instead of 20985998 bytes with bodies
+--- PASS: TestRecentCallBodiesOnDemand (0.94s)
+=== RUN   TestRedactKindsAreRedacts
+--- PASS: TestRedactKindsAreRedacts (0.00s)
+=== RUN   TestRedactRuleEdit
+--- PASS: TestRedactRuleEdit (0.01s)
+=== RUN   TestRoutingRequestOpensItsBodies
+--- PASS: TestRoutingRequestOpensItsBodies (0.00s)
+=== RUN   TestRoutingEffectiveCosts
+--- PASS: TestRoutingEffectiveCosts (0.00s)
+=== RUN   TestRouteLookupPricing
+--- PASS: TestRouteLookupPricing (0.00s)
+=== RUN   TestSaveSharesOneCatalogBuild
+--- PASS: TestSaveSharesOneCatalogBuild (0.01s)
+=== RUN   TestAgentWriteAnsweredAsWritten
+--- PASS: TestAgentWriteAnsweredAsWritten (0.18s)
+=== RUN   TestRegisterScheme
+=== RUN   TestRegisterScheme/flatpak_without_entry
+=== RUN   TestRegisterScheme/flatpak_with_entry
+=== RUN   TestRegisterScheme/native_without_entry
+=== RUN   TestRegisterScheme/native_with_entry
+--- PASS: TestRegisterScheme (0.00s)
+    --- PASS: TestRegisterScheme/flatpak_without_entry (0.00s)
+    --- PASS: TestRegisterScheme/flatpak_with_entry (0.00s)
+    --- PASS: TestRegisterScheme/native_without_entry (0.00s)
+    --- PASS: TestRegisterScheme/native_with_entry (0.00s)
+=== RUN   TestRegisterSchemeBindsAnOlderEntry
+--- PASS: TestRegisterSchemeBindsAnOlderEntry (0.00s)
+=== RUN   TestKeepWebData
+=== RUN   TestKeepWebData/webkit_data_under_the_executable's_name
+=== RUN   TestKeepWebData/magpie's_folder_there_already
+=== RUN   TestKeepWebData/a_folder_that_isn't_WebKit's
+--- PASS: TestKeepWebData (0.00s)
+    --- PASS: TestKeepWebData/webkit_data_under_the_executable's_name (0.00s)
+    --- PASS: TestKeepWebData/magpie's_folder_there_already (0.00s)
+    --- PASS: TestKeepWebData/a_folder_that_isn't_WebKit's (0.00s)
+=== RUN   TestSearchKeyShown
+--- PASS: TestSearchKeyShown (0.00s)
+=== RUN   TestSearchAPIBaseURLFromSettings
+--- PASS: TestSearchAPIBaseURLFromSettings (0.01s)
+=== RUN   TestSearchAPIOrderAndOffFromSettings
+--- PASS: TestSearchAPIOrderAndOffFromSettings (0.01s)
+=== RUN   TestSessionTitlesNameOtherAgents
+--- PASS: TestSessionTitlesNameOtherAgents (0.00s)
+=== RUN   TestCodeBuddySessionsListedUnderTheirName
+--- PASS: TestCodeBuddySessionsListedUnderTheirName (0.00s)
+=== RUN   TestCodexSessionAPIAddsOwnModelEffort
+--- PASS: TestCodexSessionAPIAddsOwnModelEffort (0.01s)
+=== RUN   TestCodexSubagentDetailsReachSessionAPIs
+--- PASS: TestCodexSubagentDetailsReachSessionAPIs (0.00s)
+=== RUN   TestCursorEditorChatsAreNotCalledCursorCLI
+--- PASS: TestCursorEditorChatsAreNotCalledCursorCLI (0.00s)
+=== RUN   TestSessionsDeleteGatewaySession
+--- PASS: TestSessionsDeleteGatewaySession (0.00s)
+=== RUN   TestGatewaySessionExportsMarkdown
+--- PASS: TestGatewaySessionExportsMarkdown (0.00s)
+=== RUN   TestSessionsListIsAsLongAsTheCount
+--- PASS: TestSessionsListIsAsLongAsTheCount (0.01s)
+=== RUN   TestManageCountsAGatewaySessionTheAgentKeepsOnce
+--- PASS: TestManageCountsAGatewaySessionTheAgentKeepsOnce (0.00s)
+=== RUN   TestSessionsManageCarriesUsage
+--- PASS: TestSessionsManageCarriesUsage (0.00s)
+=== RUN   TestSessionExportMarkdown
+--- PASS: TestSessionExportMarkdown (0.00s)
+=== RUN   TestEmptySessionOpens
+--- PASS: TestEmptySessionOpens (0.00s)
+=== RUN   TestSessionsPurgeRoute
+--- PASS: TestSessionsPurgeRoute (0.00s)
+=== RUN   TestSessionsRelocateClaudeRoute
+--- PASS: TestSessionsRelocateClaudeRoute (0.00s)
+=== RUN   TestSessionsSearchFindsGatewaySessionsByWhatWasSaid
+--- PASS: TestSessionsSearchFindsGatewaySessionsByWhatWasSaid (0.00s)
+=== RUN   TestSessionsSearchStopsWhenItsRequestEnds
+--- PASS: TestSessionsSearchStopsWhenItsRequestEnds (0.00s)
+=== RUN   TestStatsMemoKeepsAFewDays
+--- PASS: TestStatsMemoKeepsAFewDays (0.01s)
+=== RUN   TestStatsMemoKeepsTheRangeAskedAgain
+--- PASS: TestStatsMemoKeepsTheRangeAskedAgain (0.00s)
+=== RUN   TestSessionSubagentTranscript
+--- PASS: TestSessionSubagentTranscript (0.00s)
+=== RUN   TestWarmUpReturnsItsGarbage
+--- PASS: TestWarmUpReturnsItsGarbage (0.01s)
+=== RUN   TestWarmUpReadsCodexEffort
+--- PASS: TestWarmUpReadsCodexEffort (0.01s)
+=== RUN   TestSetAnswersWhileDevinAndProvidersHang
+    set_fast_unix_test.go:138: set claude-opus-5-5: 5.348864ms
+    set_fast_unix_test.go:138: set slow/slow-1: 50.760817ms
+    set_fast_unix_test.go:138: set claude-sonnet-5-5: 6.530462ms
+--- PASS: TestSetAnswersWhileDevinAndProvidersHang (0.11s)
+=== RUN   TestSettingsSaveKeepsCorruptFile
+=== RUN   TestSettingsSaveKeepsCorruptFile//api/settings
+=== RUN   TestSettingsSaveKeepsCorruptFile//api/settings/quota-left
+--- PASS: TestSettingsSaveKeepsCorruptFile (0.00s)
+    --- PASS: TestSettingsSaveKeepsCorruptFile//api/settings (0.00s)
+    --- PASS: TestSettingsSaveKeepsCorruptFile//api/settings/quota-left (0.00s)
+=== RUN   TestSettingsSaveKeepsModelChoices
+--- PASS: TestSettingsSaveKeepsModelChoices (0.00s)
+=== RUN   TestSettingsSaveKeepsWhatItDoesNotSend
+--- PASS: TestSettingsSaveKeepsWhatItDoesNotSend (0.00s)
+=== RUN   TestUpdateSkip
+--- PASS: TestUpdateSkip (0.01s)
+=== RUN   TestMainURL
+--- PASS: TestMainURL (0.00s)
+=== RUN   TestQuotaView
+--- PASS: TestQuotaView (0.00s)
+=== RUN   TestMCPSignInSaysTheBrowserDidntOpen
+--- PASS: TestMCPSignInSaysTheBrowserDidntOpen (0.00s)
+=== RUN   TestOpenSaysTheBrowserDidntOpen
+--- PASS: TestOpenSaysTheBrowserDidntOpen (0.00s)
+=== RUN   TestStepFunSignInPerProvider
+--- PASS: TestStepFunSignInPerProvider (0.02s)
+=== RUN   TestStateListsT3Code
+--- PASS: TestStateListsT3Code (0.01s)
+=== RUN   TestGatewayTakenOver
+--- PASS: TestGatewayTakenOver (0.25s)
+=== RUN   TestGatewayNotServedBesideASlowOne
+2026/10/26 17:00:27 gateway: http://127.0.0.1:36997 is taken but doesn't answer as magpie yet; this magpie serves the gateway once it is free
+--- PASS: TestGatewayNotServedBesideASlowOne (0.70s)
+=== RUN   TestTerminalOpenArgs
+=== RUN   TestTerminalOpenArgs/system_default
+=== RUN   TestTerminalOpenArgs/Terminal
+=== RUN   TestTerminalOpenArgs/explicit_system
+=== RUN   TestTerminalOpenArgs/chosen_app
+--- PASS: TestTerminalOpenArgs (0.00s)
+    --- PASS: TestTerminalOpenArgs/system_default (0.00s)
+    --- PASS: TestTerminalOpenArgs/Terminal (0.00s)
+    --- PASS: TestTerminalOpenArgs/explicit_system (0.00s)
+    --- PASS: TestTerminalOpenArgs/chosen_app (0.00s)
+=== RUN   TestTextSizeFrames
+--- PASS: TestTextSizeFrames (0.00s)
+=== RUN   TestTextSizeSetting
+--- PASS: TestTextSizeSetting (0.01s)
+=== RUN   TestAutomaticTitleGroupsAPI
+--- PASS: TestAutomaticTitleGroupsAPI (0.00s)
+=== RUN   TestConsoleShowsTheServingMagpiesRouting
+--- PASS: TestConsoleShowsTheServingMagpiesRouting (0.00s)
+=== RUN   TestConsoleKeepsTheNoticeFromAnOlderGateway
+--- PASS: TestConsoleKeepsTheNoticeFromAnOlderGateway (0.00s)
+=== RUN   TestRoutesNameFoundGroupsByTheirPublicID
+--- PASS: TestRoutesNameFoundGroupsByTheirPublicID (0.00s)
+=== RUN   TestMainView
+--- PASS: TestMainView (0.00s)
+=== RUN   TestRouteLookup
+--- PASS: TestRouteLookup (0.00s)
+=== RUN   TestTrayMenuOpeningIsNoClick
+--- PASS: TestTrayMenuOpeningIsNoClick (0.00s)
+=== RUN   TestTrayMenuOpenFrameIsWails
+--- PASS: TestTrayMenuOpenFrameIsWails (0.00s)
+=== RUN   TestTrayClickIn
+--- PASS: TestTrayClickIn (0.00s)
+=== RUN   TestTrayClickIsWails
+--- PASS: TestTrayClickIsWails (0.00s)
+=== RUN   TestTrayIdleTip
+--- PASS: TestTrayIdleTip (0.00s)
+=== RUN   TestTrayMenuLabels
+--- PASS: TestTrayMenuLabels (0.00s)
+=== RUN   TestSettingsLangRelabelsTray
+--- PASS: TestSettingsLangRelabelsTray (0.01s)
+=== RUN   TestSNITipIsSafeMarkup
+--- PASS: TestSNITipIsSafeMarkup (0.00s)
+=== RUN   TestTrayNamesTheAccountByItsAlias
+--- PASS: TestTrayNamesTheAccountByItsAlias (0.00s)
+=== RUN   TestTrayUsageCells
+--- PASS: TestTrayUsageCells (0.00s)
+=== RUN   TestTrayCellsCards
+--- PASS: TestTrayCellsCards (0.00s)
+=== RUN   TestSVGArcFlags
+--- PASS: TestSVGArcFlags (0.00s)
+=== RUN   TestTrayInUse
+--- PASS: TestTrayInUse (0.00s)
+=== RUN   TestTrayInUseFollowsWhoAnswered
+--- PASS: TestTrayInUseFollowsWhoAnswered (0.00s)
+=== RUN   TestTrayInUsePluginFollowsLastServed
+--- PASS: TestTrayInUsePluginFollowsLastServed (0.00s)
+=== RUN   TestServedMovedWakesTheMenuBar
+--- PASS: TestServedMovedWakesTheMenuBar (0.00s)
+=== RUN   TestTrayNoCost
+--- PASS: TestTrayNoCost (0.00s)
+=== RUN   TestTrayUsagePace
+--- PASS: TestTrayUsagePace (0.00s)
+=== RUN   TestTrayPlain
+--- PASS: TestTrayPlain (0.00s)
+=== RUN   TestTrayUsageText
+--- PASS: TestTrayUsageText (0.00s)
+=== RUN   TestTrayTotals
+--- PASS: TestTrayTotals (0.00s)
+=== RUN   TestTrayTotalsBesideCards
+--- PASS: TestTrayTotalsBesideCards (0.00s)
+=== RUN   TestTrayCount
+--- PASS: TestTrayCount (0.00s)
+=== RUN   TestTrayTotalIsTheLedgers
+--- PASS: TestTrayTotalIsTheLedgers (0.00s)
+=== RUN   TestTuneWindowsAreTheUsers
+--- PASS: TestTuneWindowsAreTheUsers (0.00s)
+=== RUN   TestTurnDoneText
+--- PASS: TestTurnDoneText (0.00s)
+=== RUN   TestUnlistedModelsSaid
+--- PASS: TestUnlistedModelsSaid (0.01s)
+=== RUN   TestProviderSaveKeepsUnredacted
+2026/10/26 17:00:27 ollama: Get "http://localhost:11434/api/tags": dial tcp [::1]:11434: connect: connection refused
+--- PASS: TestProviderSaveKeepsUnredacted (8.02s)
+=== RUN   TestUpdateDue
+--- PASS: TestUpdateDue (0.00s)
+=== RUN   TestUpdateAskedAt
+--- PASS: TestUpdateAskedAt (0.00s)
+=== RUN   TestAutoRestartWaitsForIdle
+--- PASS: TestAutoRestartWaitsForIdle (0.29s)
+=== RUN   TestAutoRestartNeedsAReadyUpdate
+--- PASS: TestAutoRestartNeedsAReadyUpdate (0.00s)
+=== RUN   TestAutoRestartCalledOff
+--- PASS: TestAutoRestartCalledOff (0.01s)
+=== RUN   TestUpdateThatWontStart
+2026/10/26 17:00:35 update: Windows didn't let the new version start (fork/exec /tmp/TestUpdateThatWontStart3534859117/001/magpie: errno 4551): Smart App Control or another application control policy blocks magpie's unsigned builds; download it from https://usemagpie.ai and run it yourself, or turn Smart App Control off, then check for updates again
+--- PASS: TestUpdateThatWontStart (0.00s)
+=== RUN   TestUpdateInContainerSaysPullTheImage
+--- PASS: TestUpdateInContainerSaysPullTheImage (0.00s)
+=== RUN   TestUpdateDownloadWaitsForAClick
+--- PASS: TestUpdateDownloadWaitsForAClick (0.02s)
+=== RUN   TestUpdateMirrorSetting
+2026/10/26 17:00:41 update: download gui.test.new through the mirror http://127.0.0.1:34151/: 404 Not Found
+--- PASS: TestUpdateMirrorSetting (6.01s)
+=== RUN   TestUpdateNotesRoute
+2026/10/26 17:00:41 release notes: Get "http://127.0.0.1:1/?after=0.1.604&lang=en&upto=0.1.607": dial tcp 127.0.0.1:1: connect: connection refused
+--- PASS: TestUpdateNotesRoute (0.00s)
+=== RUN   TestUpdateNotesAskTheFeedAgain
+--- PASS: TestUpdateNotesAskTheFeedAgain (0.20s)
+=== RUN   TestUpdateRecheckTakesNotesLate
+--- PASS: TestUpdateRecheckTakesNotesLate (0.40s)
+=== RUN   TestUpdateTakesTheMacTerminalBuild
+2026/10/26 17:00:42 update: the release lists no checksum for gui.test.new
+--- PASS: TestUpdateTakesTheMacTerminalBuild (0.00s)
+=== RUN   TestSettingsProxyRechecksAFailedUpdate
+--- PASS: TestSettingsProxyRechecksAFailedUpdate (0.02s)
+=== RUN   TestStaleLatestIsNotUpToDate
+--- PASS: TestStaleLatestIsNotUpToDate (0.01s)
+=== RUN   TestUpdateNotWritableSaysWhy
+--- PASS: TestUpdateNotWritableSaysWhy (0.00s)
+=== RUN   TestUpdateStagedGivesWayToNewer
+--- PASS: TestUpdateStagedGivesWayToNewer (0.20s)
+=== RUN   TestRestartToUpdateWaitsForTheGateway
+--- PASS: TestRestartToUpdateWaitsForTheGateway (0.05s)
+=== RUN   TestRestartWhenIdle
+--- PASS: TestRestartWhenIdle (0.23s)
+=== RUN   TestRestartWhenIdleIntoTheNewest
+--- PASS: TestRestartWhenIdleIntoTheNewest (0.24s)
+=== RUN   TestTrayRestartNow
+--- PASS: TestTrayRestartNow (0.00s)
+=== RUN   TestUpstreamRoute
+--- PASS: TestUpstreamRoute (0.02s)
+=== RUN   TestUsageArrangePanelHidden
+--- PASS: TestUsageArrangePanelHidden (0.02s)
+=== RUN   TestUsageArrangeAgentsHidden
+--- PASS: TestUsageArrangeAgentsHidden (0.02s)
+=== RUN   TestUsageArrangeCountClient
+--- PASS: TestUsageArrangeCountClient (0.01s)
+=== RUN   TestUsageRequestAPIsReturnCodexCompactionStates
+--- PASS: TestUsageRequestAPIsReturnCodexCompactionStates (0.00s)
+=== RUN   TestUsagePurposeRoutes
+--- PASS: TestUsagePurposeRoutes (0.00s)
+=== RUN   TestUsageScale
+    usage_scale_test.go:24: large synthetic fixture; opt in with MAGPIE_USAGE_SCALE=1
+--- SKIP: TestUsageScale (0.00s)
+=== RUN   TestUsageLedgerDayRoutes
+--- PASS: TestUsageLedgerDayRoutes (0.00s)
+=== RUN   TestUsageLedgerRoutes
+--- PASS: TestUsageLedgerRoutes (0.02s)
+=== RUN   TestUsageRequestContent
+--- PASS: TestUsageRequestContent (0.00s)
+=== RUN   TestLedgerSingleSnapshotAndLocalSession
+--- PASS: TestLedgerSingleSnapshotAndLocalSession (0.00s)
+=== RUN   TestLedgerNamesModelAtProvider
+--- PASS: TestLedgerNamesModelAtProvider (0.00s)
+=== RUN   TestCSVStamp
+--- PASS: TestCSVStamp (0.00s)
+=== RUN   TestUsageCSVAtMidnight
+--- PASS: TestUsageCSVAtMidnight (0.00s)
+=== RUN   TestUsageHeatmapRoute
+--- PASS: TestUsageHeatmapRoute (0.00s)
+=== RUN   TestUsageRoutesReadTheViewersZone
+--- PASS: TestUsageRoutesReadTheViewersZone (0.00s)
+=== RUN   TestVisionNotMarked
+--- PASS: TestVisionNotMarked (0.01s)
+=== RUN   TestUnderTightGC
+--- PASS: TestUnderTightGC (0.00s)
+=== RUN   TestUnderTightGCLimitsMemory
+--- PASS: TestUnderTightGCLimitsMemory (0.00s)
+=== RUN   TestWarmUpTightensOnlyTheUsageRead
+--- PASS: TestWarmUpTightensOnlyTheUsageRead (0.01s)
+=== RUN   TestWebCompresses
+--- PASS: TestWebCompresses (0.07s)
+=== RUN   TestVersionedFilesKept
+--- PASS: TestVersionedFilesKept (0.01s)
+=== RUN   TestNetworkLinksPublicURL
+--- PASS: TestNetworkLinksPublicURL (0.00s)
+=== RUN   TestWebOnePortServedHere
+2026/10/26 17:00:43 refused POST /v1/chat/completions from Origin: null: a sandboxed frame or a local page, with no gateway key
+2026/10/26 17:00:43 refused POST /v1/chat/completions from the web page https://evil.example: not one listed in Settings
+2026/10/26 17:00:43 refused GET /v1/models: a web page reached loopback under the name "rebind.attacker.example:3430"
+2026/10/26 17:00:43 refused POST /v1/chat/completions: a web page reached loopback under the name "rebind.attacker.example:3430"
+2026/10/26 17:00:43 refused GET /v1/models: a web page reached loopback under the name "rebind.attacker.example:3430"
+2026/10/26 17:00:43 refused GET /v1/models from 127.0.0.1:50001: no API key was sent: send a magpie gateway key as Authorization: Bearer <key> (or x-api-key)
+2026/10/26 17:00:43 refused GET /v1/models from 127.0.0.1:50001: no API key was sent: send a magpie gateway key as Authorization: Bearer <key> (or x-api-key)
+2026/10/26 17:00:43 refused GET /v1/models from 10.0.0.5:50001: no API key was sent: send a magpie gateway key as Authorization: Bearer <key> (or x-api-key)
+2026/10/26 17:00:43 refused GET /v1/models through a proxy or tunnel: magpie isn't shared
+--- PASS: TestWebOnePortServedHere (0.00s)
+=== RUN   TestWebOnePortServedElsewhere
+2026/10/26 17:00:43 refused POST /v1/chat/completions from Origin: null: a sandboxed frame or a local page, with no gateway key
+2026/10/26 17:00:43 refused POST /v1/chat/completions from the web page https://evil.example: not one listed in Settings
+2026/10/26 17:00:43 refused GET /v1/models: a web page reached loopback under the name "rebind.attacker.example:3430"
+2026/10/26 17:00:43 refused POST /v1/chat/completions: a web page reached loopback under the name "rebind.attacker.example:3430"
+2026/10/26 17:00:43 refused GET /v1/models: a web page reached loopback under the name "rebind.attacker.example:3430"
+2026/10/26 17:00:43 refused GET /v1/models from 127.0.0.1:45208: no API key was sent: send a magpie gateway key as Authorization: Bearer <key> (or x-api-key)
+2026/10/26 17:00:43 refused GET /v1/models from 127.0.0.1:45208: no API key was sent: send a magpie gateway key as Authorization: Bearer <key> (or x-api-key)
+2026/10/26 17:00:43 refused GET /v1/models from 127.0.0.1:45208: no API key was sent: send a magpie gateway key as Authorization: Bearer <key> (or x-api-key)
+2026/10/26 17:00:43 refused GET /v1/models through a proxy or tunnel: magpie isn't shared
+2026/10/26 17:00:43 refused GET /v1/models through a proxy or tunnel: magpie isn't shared
+--- PASS: TestWebOnePortServedElsewhere (0.00s)
+=== RUN   TestWebAssetsAreNoClientPath
+--- PASS: TestWebAssetsAreNoClientPath (0.00s)
+=== RUN   TestWebGuard
+--- PASS: TestWebGuard (0.00s)
+=== RUN   TestWebKey
+--- PASS: TestWebKey (0.00s)
+=== RUN   TestWebGuardBookmark
+2026/10/26 17:00:43 magpie web: turned away / from 192.0.2.1:1234: no cookie sent
+2026/10/26 17:00:43 magpie web: turned away / from 192.0.2.1:1234: its cookie holds another key
+--- PASS: TestWebGuardBookmark (0.00s)
+=== RUN   TestWebkitDefaults
+--- PASS: TestWebkitDefaults (0.00s)
+=== RUN   TestRenderNodeOpens
+--- PASS: TestRenderNodeOpens (0.00s)
+=== RUN   TestWebView2Missing
+--- PASS: TestWebView2Missing (0.00s)
+=== RUN   TestWebView2Notice
+--- PASS: TestWebView2Notice (0.00s)
+=== RUN   TestWhatsNewBackRanges
+2026/10/26 17:00:43 release notes: release notes: 503 Service Unavailable
+2026/10/26 17:00:43 release notes: release notes: 503 Service Unavailable
+--- PASS: TestWhatsNewBackRanges (0.00s)
+=== RUN   TestWhatsNewTellsFailureFromNone
+2026/10/26 17:00:43 release notes: release notes: 503 Service Unavailable
+--- PASS: TestWhatsNewTellsFailureFromNone (0.00s)
+=== RUN   TestAskedLang
+--- PASS: TestAskedLang (0.00s)
+=== RUN   TestWhatsNewInPageLang
+--- PASS: TestWhatsNewInPageLang (0.00s)
+=== RUN   TestUpdateNotesInPageLang
+--- PASS: TestUpdateNotesInPageLang (0.01s)
+=== RUN   TestWhatsNewAfterUpgrade
+2026/10/26 17:00:43 release notes: Get "http://127.0.0.1:42877?after=0.1.603&lang=en&upto=0.1.604": dial tcp 127.0.0.1:42877: connect: connection refused
+--- PASS: TestWhatsNewAfterUpgrade (0.00s)
+=== RUN   TestUpdateNotesWithoutInstall
+--- PASS: TestUpdateNotesWithoutInstall (0.00s)
+=== RUN   TestWhatsNewFromBefore
+--- PASS: TestWhatsNewFromBefore (0.00s)
+=== RUN   TestWhatsNewQuietAfterRestartToUpdate
+--- PASS: TestWhatsNewQuietAfterRestartToUpdate (0.00s)
+=== RUN   TestWhatsNewTodayRoute
+--- PASS: TestWhatsNewTodayRoute (0.00s)
+=== RUN   TestWhatsNewListsEveryReleaseUpToTheWaitingUpdate
+2026/10/26 17:00:43 release notes: Get "http://127.0.0.1:45183?after=0.1.1398&lang=en&upto=0.1.1409": dial tcp 127.0.0.1:45183: connect: connection refused
+--- PASS: TestWhatsNewListsEveryReleaseUpToTheWaitingUpdate (0.00s)
+=== RUN   TestOpenSize
+--- PASS: TestOpenSize (0.00s)
+=== RUN   TestFitRoom
+--- PASS: TestFitRoom (0.00s)
+=== RUN   TestSettle
+=== RUN   TestSettle/resized
+=== RUN   TestSettle/maximised_keeps_its_size
+=== RUN   TestSettle/restored
+=== RUN   TestSettle/maximised_again,_nothing_new
+=== RUN   TestSettle/a_point_short
+=== RUN   TestSettle/under_the_least
+=== RUN   TestSettle/fitted_to_a_smaller_screen
+=== RUN   TestSettle/fitted,_then_made_narrower
+=== RUN   TestSettle/as_large_as_the_screen,_nothing_larger_kept
+--- PASS: TestSettle (0.00s)
+    --- PASS: TestSettle/resized (0.00s)
+    --- PASS: TestSettle/maximised_keeps_its_size (0.00s)
+    --- PASS: TestSettle/restored (0.00s)
+    --- PASS: TestSettle/maximised_again,_nothing_new (0.00s)
+    --- PASS: TestSettle/a_point_short (0.00s)
+    --- PASS: TestSettle/under_the_least (0.00s)
+    --- PASS: TestSettle/fitted_to_a_smaller_screen (0.00s)
+    --- PASS: TestSettle/fitted,_then_made_narrower (0.00s)
+    --- PASS: TestSettle/as_large_as_the_screen,_nothing_larger_kept (0.00s)
+=== RUN   TestZenAddAnotherKeyEmptyAddsPublic
+--- PASS: TestZenAddAnotherKeyEmptyAddsPublic (1.41s)
+PASS
+ok  	github.com/yetone/magpie/internal/gui	41.745s
+
+# END COMPLETE OUTPUT
+# CHECKED_RETURN_CODE 0
+
+# COMMAND_METADATA {"issue": 3645, "label": "package-native", "tree": "head", "commit": "833c7cd61728607fdba75637e3271099847c2e70", "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/head", "command": "go test ./internal/gui -count=1 -v -timeout 15m", "env": {"GOTOOLCHAIN": "go1.26.8", "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/home-bytnhgwr", "GOPATH": "/home/vincenty/go", "GOMODCACHE": "/home/vincenty/go/pkg/mod", "GOCACHE": "/home/vincenty/.cache/go-build", "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules", "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"}, "extra_env": {}, "started_at": "2026-10-26T07:00:44.743533+00:00", "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/package-native.log"}
+# BEGIN COMPLETE MERGED STDOUT/STDERR
+=== RUN   TestAccountArrangeRouteAndEditorSave
+--- PASS: TestAccountArrangeRouteAndEditorSave (0.02s)
+=== RUN   TestAgentConnectAPI
+--- PASS: TestAgentConnectAPI (0.27s)
+=== RUN   TestOmpProfileConnectURL
+--- PASS: TestOmpProfileConnectURL (0.15s)
+=== RUN   TestAgentConnectClaudePicker
+--- PASS: TestAgentConnectClaudePicker (0.10s)
+=== RUN   TestAgentDisconnectAPI
+--- PASS: TestAgentDisconnectAPI (0.09s)
+=== RUN   TestAgentModelOrderAPI
+--- PASS: TestAgentModelOrderAPI (0.01s)
+=== RUN   TestAgentOwnModelsHidden
+--- PASS: TestAgentOwnModelsHidden (0.00s)
+=== RUN   TestAgentModelsAPI
+--- PASS: TestAgentModelsAPI (0.00s)
+=== RUN   TestAgentModelLineAllHidden
+--- PASS: TestAgentModelLineAllHidden (0.01s)
+=== RUN   TestCursorLocalModelLine
+--- PASS: TestCursorLocalModelLine (0.00s)
+=== RUN   TestAgentModelsOnlyPicked
+--- PASS: TestAgentModelsOnlyPicked (0.01s)
+=== RUN   TestAgentModelsWSL
+--- PASS: TestAgentModelsWSL (0.01s)
+=== RUN   TestZCodeModelList
+--- PASS: TestZCodeModelList (0.06s)
+=== RUN   TestAgentConnectNoModels
+--- PASS: TestAgentConnectNoModels (0.00s)
+=== RUN   TestAgentConnectNoModelsMagpieAsProvider
+--- PASS: TestAgentConnectNoModelsMagpieAsProvider (0.00s)
+=== RUN   TestAgentConnectAllHidden
+--- PASS: TestAgentConnectAllHidden (0.00s)
+=== RUN   TestAllowIPsSetting
+--- PASS: TestAllowIPsSetting (0.00s)
+=== RUN   TestAllowIPsUnreadableSettingsNotSavedOver
+2026/10/26 17:00:48 allow list: could not read settings at /tmp/TestAllowIPsUnreadableSettingsNotSavedOver3592579730/001/.config/magpie/settings.json: unexpected end of JSON input; the list read last stays in force
+--- PASS: TestAllowIPsUnreadableSettingsNotSavedOver (0.00s)
+=== RUN   TestAllowIPsFromTheAppWindow
+--- PASS: TestAllowIPsFromTheAppWindow (0.00s)
+=== RUN   TestSettingsSearchProviderOff
+--- PASS: TestSettingsSearchProviderOff (0.00s)
+=== RUN   TestSettingsPageSaveCarriesEveryPerModelTable
+--- PASS: TestSettingsPageSaveCarriesEveryPerModelTable (0.00s)
+=== RUN   TestSettingsPageSaveKeepsWhichModelsAnAgentIsShown
+--- PASS: TestSettingsPageSaveKeepsWhichModelsAnAgentIsShown (0.00s)
+=== RUN   TestSettingsRefusalRetries
+--- PASS: TestSettingsRefusalRetries (0.00s)
+=== RUN   TestSettingsImageTimeout
+--- PASS: TestSettingsImageTimeout (0.00s)
+=== RUN   TestSettingsClassifyTimeout
+--- PASS: TestSettingsClassifyTimeout (0.00s)
+=== RUN   TestSettingsColorblindMode
+--- PASS: TestSettingsColorblindMode (0.00s)
+=== RUN   TestSettingsRedactWordsAnyCaseKept
+--- PASS: TestSettingsRedactWordsAnyCaseKept (0.00s)
+=== RUN   TestArchivePreviewAndDownload
+--- PASS: TestArchivePreviewAndDownload (0.12s)
+=== RUN   TestArchiveTooLargeToPreview
+--- PASS: TestArchiveTooLargeToPreview (0.00s)
+=== RUN   TestArchiveOldPreview
+--- PASS: TestArchiveOldPreview (0.00s)
+=== RUN   TestArchiveSwitchKeepsOnThisComputer
+--- PASS: TestArchiveSwitchKeepsOnThisComputer (0.00s)
+=== RUN   TestAsideConnectAPIKeepsNativeSelections
+--- PASS: TestAsideConnectAPIKeepsNativeSelections (0.01s)
+=== RUN   TestRuntimeUnavailableJSONKeepsMessageAndAction
+--- PASS: TestRuntimeUnavailableJSONKeepsMessageAndAction (0.00s)
+=== RUN   TestAsideOfflineDisconnectAPIRequiresCurrentPreview
+--- PASS: TestAsideOfflineDisconnectAPIRequiresCurrentPreview (0.01s)
+=== RUN   TestPageFilesRevalidate
+--- PASS: TestPageFilesRevalidate (0.02s)
+=== RUN   TestPageNamesItsFilesByContent
+--- PASS: TestPageNamesItsFilesByContent (0.01s)
+=== RUN   TestAssetTypesHoldAgainstTheRegistry
+--- PASS: TestAssetTypesHoldAgainstTheRegistry (0.00s)
+=== RUN   TestBackupLibraryRoundTrip
+--- PASS: TestBackupLibraryRoundTrip (0.07s)
+=== RUN   TestDavsyncBusy
+--- PASS: TestDavsyncBusy (0.30s)
+=== RUN   TestBareModelIDsSetting
+--- PASS: TestBareModelIDsSetting (0.01s)
+=== RUN   TestBuiltinSwitch
+--- PASS: TestBuiltinSwitch (0.00s)
+=== RUN   TestBuiltinBrokenFile
+--- PASS: TestBuiltinBrokenFile (0.00s)
+=== RUN   TestBootSaysBuiltinsOff
+--- PASS: TestBootSaysBuiltinsOff (0.00s)
+=== RUN   TestBootSaysWhereItsGatewayListens
+--- PASS: TestBootSaysWhereItsGatewayListens (0.00s)
+=== RUN   TestBuiltinConfig
+--- PASS: TestBuiltinConfig (0.00s)
+=== RUN   TestBuiltinClientsLoaded
+--- PASS: TestBuiltinClientsLoaded (0.07s)
+=== RUN   TestBuiltinsTranslated
+--- PASS: TestBuiltinsTranslated (0.00s)
+=== RUN   TestFailSaysBunUnstartable
+--- PASS: TestFailSaysBunUnstartable (0.00s)
+=== RUN   TestBunSaidIsTranslated
+--- PASS: TestBunSaidIsTranslated (0.00s)
+=== RUN   TestContextKiroCacheNotAMiss
+=== RUN   TestContextKiroCacheNotAMiss/said_so
+=== RUN   TestContextKiroCacheNotAMiss/kept_before
+--- PASS: TestContextKiroCacheNotAMiss (0.00s)
+    --- PASS: TestContextKiroCacheNotAMiss/said_so (0.00s)
+    --- PASS: TestContextKiroCacheNotAMiss/kept_before (0.00s)
+=== RUN   TestRoutingKiroCacheKeptBefore
+--- PASS: TestRoutingKiroCacheKeptBefore (0.00s)
+=== RUN   TestCallerKeyModelsRoutes
+--- PASS: TestCallerKeyModelsRoutes (0.00s)
+=== RUN   TestCallerKeyAccountsRoutes
+--- PASS: TestCallerKeyAccountsRoutes (0.00s)
+=== RUN   TestCallerKeyManagementAndUsageRoutes
+--- PASS: TestCallerKeyManagementAndUsageRoutes (0.01s)
+=== RUN   TestReadOnlyLANMigrationDoesNotBlockSettingsOrKeys
+2026/10/26 17:00:49 magpie: could not migrate LAN key: open /tmp/TestReadOnlyLANMigrationDoesNotBlockSettingsOrKeys4218763838/001/.config/magpie/settings.json: permission denied
+--- PASS: TestReadOnlyLANMigrationDoesNotBlockSettingsOrKeys (0.01s)
+=== RUN   TestCheckinAccountSetting
+--- PASS: TestCheckinAccountSetting (0.01s)
+=== RUN   TestCLIBehindIsLstatOnlyAndDismissible
+    cli_behind_test.go:21: only the Mac keeps the command apart from the app
+--- SKIP: TestCLIBehindIsLstatOnlyAndDismissible (0.00s)
+=== RUN   TestCopyHeld
+--- PASS: TestCopyHeld (0.00s)
+=== RUN   TestCodexAgentsV1SettingNotice
+--- PASS: TestCodexAgentsV1SettingNotice (0.06s)
+=== RUN   TestCodexAppOutReopenedOnce
+--- PASS: TestCodexAppOutReopenedOnce (0.00s)
+=== RUN   TestCodexAutoReviewSetting
+--- PASS: TestCodexAutoReviewSetting (0.04s)
+=== RUN   TestCodexDaemonRestartRoute
+--- PASS: TestCodexDaemonRestartRoute (0.01s)
+=== RUN   TestCodexTitlesSetting
+--- PASS: TestCodexTitlesSetting (0.01s)
+=== RUN   TestCodexDescriptionsSetting
+--- PASS: TestCodexDescriptionsSetting (0.01s)
+=== RUN   TestCodexPredictionsSetting
+--- PASS: TestCodexPredictionsSetting (0.01s)
+=== RUN   TestContextOfALeanAgent
+--- PASS: TestContextOfALeanAgent (0.00s)
+=== RUN   TestContextSideCallsAreNoCompaction
+--- PASS: TestContextSideCallsAreNoCompaction (0.00s)
+=== RUN   TestContextToollessAgentKeepsItsTurns
+--- PASS: TestContextToollessAgentKeepsItsTurns (0.00s)
+=== RUN   TestContextOfAHeavyAgent
+--- PASS: TestContextOfAHeavyAgent (0.00s)
+=== RUN   TestContextCacheNotKnown
+--- PASS: TestContextCacheNotKnown (0.00s)
+=== RUN   TestContextSessionTitles
+--- PASS: TestContextSessionTitles (0.00s)
+=== RUN   TestContextDshSessionTitles
+--- PASS: TestContextDshSessionTitles (0.00s)
+=== RUN   TestContextTextAPI
+--- PASS: TestContextTextAPI (0.00s)
+=== RUN   TestCoreScriptBudget
+--- PASS: TestCoreScriptBudget (0.00s)
+=== RUN   TestCORSOriginsSetting
+--- PASS: TestCORSOriginsSetting (0.01s)
+=== RUN   TestDavsyncViewFollowsTheSetup
+--- PASS: TestDavsyncViewFollowsTheSetup (0.00s)
+=== RUN   TestDesktopSessionTitlesOnPages
+--- PASS: TestDesktopSessionTitlesOnPages (0.00s)
+=== RUN   TestDesktopSubagentModelNotice
+--- PASS: TestDesktopSubagentModelNotice (0.04s)
+=== RUN   TestDisabledModelsSetting
+--- PASS: TestDisabledModelsSetting (0.01s)
+=== RUN   TestDockStep
+--- PASS: TestDockStep (0.00s)
+=== RUN   TestDockFlapIsTheLogos
+--- PASS: TestDockFlapIsTheLogos (0.00s)
+=== RUN   TestFetchedCountIsTheEditorsModels
+--- PASS: TestFetchedCountIsTheEditorsModels (0.00s)
+=== RUN   TestFontDiscoveryCacheAndFailure
+--- PASS: TestFontDiscoveryCacheAndFailure (0.00s)
+=== RUN   TestFontSettingsAPIAndBoot
+--- PASS: TestFontSettingsAPIAndBoot (0.01s)
+=== RUN   TestFXInState
+--- PASS: TestFXInState (0.02s)
+=== RUN   TestFXStateDoesNotWait
+--- PASS: TestFXStateDoesNotWait (0.11s)
+=== RUN   TestGatewayHeldByAContainer
+--- PASS: TestGatewayHeldByAContainer (0.50s)
+=== RUN   TestGatewayConversationAPI
+--- PASS: TestGatewayConversationAPI (0.00s)
+=== RUN   TestGatewaySessionHistoryAndCalendar
+--- PASS: TestGatewaySessionHistoryAndCalendar (0.00s)
+=== RUN   TestGatewaySessionsNativeWinsBeforeLimits
+--- PASS: TestGatewaySessionsNativeWinsBeforeLimits (0.00s)
+=== RUN   TestGatewayGroupsSayWhatTheyTake
+--- PASS: TestGatewayGroupsSayWhatTheyTake (0.01s)
+=== RUN   TestGatewayListCopiesNoDays
+--- PASS: TestGatewayListCopiesNoDays (0.00s)
+=== RUN   TestGatewayFixQuitsOnlyAMagpie
+--- PASS: TestGatewayFixQuitsOnlyAMagpie (0.58s)
+=== RUN   TestTopSessionsMarkWhatOnlyTheGatewaySaw
+--- PASS: TestTopSessionsMarkWhatOnlyTheGatewaySaw (0.00s)
+=== RUN   TestGatewayMode
+--- PASS: TestGatewayMode (0.01s)
+=== RUN   TestGitHubTokenSetting
+--- PASS: TestGitHubTokenSetting (0.01s)
+=== RUN   TestParseFit
+--- PASS: TestParseFit (0.00s)
+=== RUN   TestGlideCurve
+--- PASS: TestGlideCurve (0.00s)
+=== RUN   TestParseTint
+--- PASS: TestParseTint (0.00s)
+=== RUN   TestGroupCopy
+--- PASS: TestGroupCopy (0.02s)
+=== RUN   TestFoundGroupMemberOfASwitchedOffProvider
+--- PASS: TestFoundGroupMemberOfASwitchedOffProvider (0.00s)
+=== RUN   TestGroupModelsCarryWhatTheyTake
+--- PASS: TestGroupModelsCarryWhatTheyTake (0.01s)
+=== RUN   TestGroupMemberThatIsAGroupCarriesWhatAgentsSee
+--- PASS: TestGroupMemberThatIsAGroupCarriesWhatAgentsSee (0.01s)
+=== RUN   TestGroupModelImagesOnTheWire
+--- PASS: TestGroupModelImagesOnTheWire (0.00s)
+=== RUN   TestGroupsNeverNullMembers
+--- PASS: TestGroupsNeverNullMembers (0.00s)
+=== RUN   TestGroupMemberOfASwitchedOffProvider
+--- PASS: TestGroupMemberOfASwitchedOffProvider (0.01s)
+=== RUN   TestGroupShareAndImport
+--- PASS: TestGroupShareAndImport (0.01s)
+=== RUN   TestGroupSaveFast
+--- PASS: TestGroupSaveFast (0.01s)
+=== RUN   TestGroupsSayAClassifierThatFailed
+--- PASS: TestGroupsSayAClassifierThatFailed (0.01s)
+=== RUN   TestServedRefSaysASubscription
+--- PASS: TestServedRefSaysASubscription (0.00s)
+=== RUN   TestGroupSaveRenames
+--- PASS: TestGroupSaveRenames (0.01s)
+=== RUN   TestGroupsFoundSwitch
+--- PASS: TestGroupsFoundSwitch (0.01s)
+=== RUN   TestGroupsDeleteSeveral
+--- PASS: TestGroupsDeleteSeveral (0.01s)
+=== RUN   TestGroupsPick
+--- PASS: TestGroupsPick (0.00s)
+=== RUN   TestRestartWaitsForWhatAHandoverCantCarry
+--- PASS: TestRestartWaitsForWhatAHandoverCantCarry (0.00s)
+=== RUN   TestHandsOverOnlyWhereItCan
+--- PASS: TestHandsOverOnlyWhereItCan (0.00s)
+=== RUN   TestHandoverSuccessor
+    handover_unix_test.go:35: the new magpie of TestRestartHandsTheGatewayOver
+--- SKIP: TestHandoverSuccessor (0.00s)
+=== RUN   TestRestartHandsTheGatewayOver
+=== RUN   TestHandoverSuccessor
+2026/10/26 17:00:51 update: took the gateway on 127.0.0.1:35493 over from pid 1874471
+2026/10/26 17:00:51 update: magpie dev (pid 1874631) serves the gateway now; this one finishes its requests and quits
+--- PASS: TestRestartHandsTheGatewayOver (3.19s)
+=== RUN   TestHandoverNotMadeRestartsAsBeforeOnceIdle
+=== RUN   TestHandoverNotMadeRestartsAsBeforeOnceIdle/never_says_hello
+2026/10/26 17:00:54 update: the gateway wasn't handed over, restarting as before once its requests have finished: context deadline exceeded
+=== RUN   TestHandoverNotMadeRestartsAsBeforeOnceIdle/doesn't_start
+2026/10/26 17:00:55 update: the gateway wasn't handed over, restarting as before once its requests have finished: the new version didn't start beside this one: no such file
+--- PASS: TestHandoverNotMadeRestartsAsBeforeOnceIdle (2.22s)
+    --- PASS: TestHandoverNotMadeRestartsAsBeforeOnceIdle/never_says_hello (1.21s)
+    --- PASS: TestHandoverNotMadeRestartsAsBeforeOnceIdle/doesn't_start (1.01s)
+=== RUN   TestImageGenCodexOneEntry
+--- PASS: TestImageGenCodexOneEntry (0.01s)
+=== RUN   TestLocalProviderDiscovery
+--- PASS: TestLocalProviderDiscovery (0.01s)
+=== RUN   TestOpenCodeWaitsForThePicker
+--- PASS: TestOpenCodeWaitsForThePicker (0.00s)
+=== RUN   TestImportIsReadOnce
+--- PASS: TestImportIsReadOnce (0.00s)
+=== RUN   TestImportIconRoute
+--- PASS: TestImportIconRoute (0.00s)
+=== RUN   TestImportLink
+--- PASS: TestImportLink (0.00s)
+=== RUN   TestProviderSaveInsecureTLS
+--- PASS: TestProviderSaveInsecureTLS (8.02s)
+=== RUN   TestOneMagpieAtATime
+--- PASS: TestOneMagpieAtATime (0.04s)
+=== RUN   TestDatesFollowGUILanguage
+--- PASS: TestDatesFollowGUILanguage (0.05s)
+=== RUN   TestKeysReplaceKeepsTheKeyAndLiftsItsRest
+--- PASS: TestKeysReplaceKeepsTheKeyAndLiftsItsRest (0.01s)
+=== RUN   TestEachKeyCopiesItsOwn
+--- PASS: TestEachKeyCopiesItsOwn (0.01s)
+=== RUN   TestKeysImportAndRest
+--- PASS: TestKeysImportAndRest (0.01s)
+=== RUN   TestProviderSaveSplitsKeysAndRemovesMany
+--- PASS: TestProviderSaveSplitsKeysAndRemovesMany (0.02s)
+=== RUN   TestLANSettingSharesCallerKeyStore
+--- PASS: TestLANSettingSharesCallerKeyStore (0.01s)
+=== RUN   TestSettingsMigratesOldLANCredentialToManagedKey
+--- PASS: TestSettingsMigratesOldLANCredentialToManagedKey (0.00s)
+=== RUN   TestGatewayConnectionAddressesFollowLANSharing
+--- PASS: TestGatewayConnectionAddressesFollowLANSharing (0.01s)
+=== RUN   TestLaneLimitRoutes
+--- PASS: TestLaneLimitRoutes (0.02s)
+=== RUN   TestRPMSave
+--- PASS: TestRPMSave (0.02s)
+=== RUN   TestLastKnownProviders
+--- PASS: TestLastKnownProviders (0.00s)
+=== RUN   TestLastKnownState
+--- PASS: TestLastKnownState (0.00s)
+=== RUN   TestInstructionChangeAnswersInstructions
+--- PASS: TestInstructionChangeAnswersInstructions (0.00s)
+=== RUN   TestMarketOfNamesTheFailedSource
+--- PASS: TestMarketOfNamesTheFailedSource (0.00s)
+=== RUN   TestLightStep
+--- PASS: TestLightStep (0.00s)
+=== RUN   TestProviderSaveLimitRestOff
+--- PASS: TestProviderSaveLimitRestOff (0.02s)
+=== RUN   TestLinuxWindowNamedAsItsEntry
+--- PASS: TestLinuxWindowNamedAsItsEntry (0.00s)
+=== RUN   TestProviderSaveLocalPresetAtItsURLs
+2026/10/26 17:01:04 ollama: Get "http://localhost:11434/api/tags": dial tcp [::1]:11434: connect: connection refused
+2026/10/26 17:01:04 ollama-2: Get "http://127.0.0.1:1/api/tags": dial tcp 127.0.0.1:1: connect: connection refused
+2026/10/26 17:01:04 omlx: oMLX: Not Found
+2026/10/26 17:01:04 omlx-2: Get "http://127.0.0.1:2/v1/models/status": dial tcp 127.0.0.1:2: connect: connection refused
+--- PASS: TestProviderSaveLocalPresetAtItsURLs (0.04s)
+=== RUN   TestLodyImportHandoff
+--- PASS: TestLodyImportHandoff (0.00s)
+=== RUN   TestLodyImportRunsLodyOnLinux
+--- PASS: TestLodyImportRunsLodyOnLinux (0.02s)
+=== RUN   TestImportStatusUnreadableIsUnknown
+--- PASS: TestImportStatusUnreadableIsUnknown (0.00s)
+=== RUN   TestAionUiImportRow
+--- PASS: TestAionUiImportRow (0.01s)
+=== RUN   TestLoginNeedsAllowing
+--- PASS: TestLoginNeedsAllowing (0.01s)
+=== RUN   TestMainWindowFollowsActiveSpace
+--- PASS: TestMainWindowFollowsActiveSpace (0.00s)
+=== RUN   TestCloseStepLeavesFullscreen
+--- PASS: TestCloseStepLeavesFullscreen (0.00s)
+=== RUN   TestFullscreenKeepsDock
+--- PASS: TestFullscreenKeepsDock (0.00s)
+=== RUN   TestProviderInfoListsKeysOnce
+    many_keys_test.go:44: keys listed 0 times for 10 keys, 0 for 1000
+--- PASS: TestProviderInfoListsKeysOnce (0.01s)
+=== RUN   TestMaskingRecordsAPI
+--- PASS: TestMaskingRecordsAPI (0.00s)
+=== RUN   TestMaskingPreviewKeepsKeyForm
+--- PASS: TestMaskingPreviewKeepsKeyForm (0.00s)
+=== RUN   TestProviderModelOutputSaid
+--- PASS: TestProviderModelOutputSaid (0.00s)
+=== RUN   TestProviderModelOutputWithinTheWindow
+--- PASS: TestProviderModelOutputWithinTheWindow (0.01s)
+=== RUN   TestModelEditorShowsTheSameAsPrice
+--- PASS: TestModelEditorShowsTheSameAsPrice (0.00s)
+=== RUN   TestProviderModelWindowSaid
+--- PASS: TestProviderModelWindowSaid (0.00s)
+=== RUN   TestModelSpecInProvidersState
+--- PASS: TestModelSpecInProvidersState (0.01s)
+=== RUN   TestGatewayServedByAnOlderMagpie
+--- PASS: TestGatewayServedByAnOlderMagpie (0.01s)
+=== RUN   TestBarIconTellsTheTray
+--- PASS: TestBarIconTellsTheTray (0.00s)
+=== RUN   TestOTelPreferencesAPI
+--- PASS: TestOTelPreferencesAPI (0.01s)
+=== RUN   TestPanelOptionsCaptionButtons
+--- PASS: TestPanelOptionsCaptionButtons (0.00s)
+=== RUN   TestPanelSolidOnLinux
+--- PASS: TestPanelSolidOnLinux (0.00s)
+=== RUN   TestPanelOnEverySpaceOnMac
+--- PASS: TestPanelOnEverySpaceOnMac (0.00s)
+=== RUN   TestStateListsPencil
+--- PASS: TestStateListsPencil (0.00s)
+=== RUN   TestPluginSubscriptionCarriesSingleIdentity
+--- PASS: TestPluginSubscriptionCarriesSingleIdentity (0.00s)
+=== RUN   TestPluginOptionSetting
+--- PASS: TestPluginOptionSetting (0.01s)
+=== RUN   TestPluginSignInPageOpensOnce
+--- PASS: TestPluginSignInPageOpensOnce (0.06s)
+=== RUN   TestPluginPageServedShutIn
+--- PASS: TestPluginPageServedShutIn (0.00s)
+=== RUN   TestPluginPageReadsWhatItDeclared
+--- PASS: TestPluginPageReadsWhatItDeclared (0.00s)
+=== RUN   TestPluginPageNoAPI
+--- PASS: TestPluginPageNoAPI (0.00s)
+=== RUN   TestPluginPageWebGuard
+--- PASS: TestPluginPageWebGuard (0.00s)
+=== RUN   TestPluginPageActions
+--- PASS: TestPluginPageActions (0.00s)
+=== RUN   TestPluginPageWindowPolicy
+=== RUN   TestPluginPageWindowPolicy/desktop
+=== RUN   TestPluginPageWindowPolicy/web
+=== RUN   TestPluginPageWindowPolicy/web_localhost
+--- PASS: TestPluginPageWindowPolicy (0.00s)
+    --- PASS: TestPluginPageWindowPolicy/desktop (0.00s)
+    --- PASS: TestPluginPageWindowPolicy/web (0.00s)
+    --- PASS: TestPluginPageWindowPolicy/web_localhost (0.00s)
+=== RUN   TestPluginPanelsServedShutIn
+--- PASS: TestPluginPanelsServedShutIn (0.00s)
+=== RUN   TestPluginPanelsReadWhatTheyDeclared
+--- PASS: TestPluginPanelsReadWhatTheyDeclared (0.00s)
+=== RUN   TestPluginPageReplacesFirstWins
+--- PASS: TestPluginPageReplacesFirstWins (0.00s)
+=== RUN   TestPluginsCheckRoute
+--- PASS: TestPluginsCheckRoute (0.00s)
+=== RUN   TestPluginsClashRows
+--- PASS: TestPluginsClashRows (0.16s)
+=== RUN   TestGatewayPluginOptionsAndKind
+--- PASS: TestGatewayPluginOptionsAndKind (0.00s)
+=== RUN   TestTaggedWhyKind
+--- PASS: TestTaggedWhyKind (0.00s)
+=== RUN   TestPluginsStateNamesWithoutAsking
+--- PASS: TestPluginsStateNamesWithoutAsking (0.00s)
+=== RUN   TestPluginsMirrorSwitch
+--- PASS: TestPluginsMirrorSwitch (0.00s)
+=== RUN   TestPluginOpsOutliveRequest
+--- PASS: TestPluginOpsOutliveRequest (0.00s)
+=== RUN   TestPluginsStateGivesThePluginsOwnIcon
+--- PASS: TestPluginsStateGivesThePluginsOwnIcon (0.00s)
+=== RUN   TestPluginMarketInParts
+--- PASS: TestPluginMarketInParts (0.00s)
+=== RUN   TestPluginsPickerWhereItCan
+--- PASS: TestPluginsPickerWhereItCan (0.00s)
+=== RUN   TestSetPortMovesTheGateway
+--- PASS: TestSetPortMovesTheGateway (0.03s)
+=== RUN   TestSetPortServesWhenTheOldOneWasTaken
+--- PASS: TestSetPortServesWhenTheOldOneWasTaken (0.02s)
+=== RUN   TestPriceRateOf
+--- PASS: TestPriceRateOf (0.00s)
+=== RUN   TestPrivacyModelOnlyOnOnceDownloaded
+--- PASS: TestPrivacyModelOnlyOnOnceDownloaded (0.01s)
+=== RUN   TestStateProfileDetails
+--- PASS: TestStateProfileDetails (0.00s)
+=== RUN   TestStateProfileInUse
+--- PASS: TestStateProfileInUse (0.02s)
+=== RUN   TestProviderSaveKeepsListScheduleAndRules
+--- PASS: TestProviderSaveKeepsListScheduleAndRules (0.01s)
+=== RUN   TestProviderBaseAPIKept
+--- PASS: TestProviderBaseAPIKept (0.03s)
+=== RUN   TestProviderExtraBodySaved
+--- PASS: TestProviderExtraBodySaved (0.02s)
+=== RUN   TestProviderSaveNativeCompaction
+--- PASS: TestProviderSaveNativeCompaction (0.02s)
+=== RUN   TestProviderSaveKeepsWhatTheEditorDoesntShow
+--- PASS: TestProviderSaveKeepsWhatTheEditorDoesntShow (0.02s)
+=== RUN   TestProviderSaveSelectNone
+--- PASS: TestProviderSaveSelectNone (0.05s)
+=== RUN   TestProviderListTellsTencentAccessKey
+--- PASS: TestProviderListTellsTencentAccessKey (0.01s)
+=== RUN   TestProviderSaveKeepsVolcengineSecret
+--- PASS: TestProviderSaveKeepsVolcengineSecret (0.05s)
+=== RUN   TestProviderSaveDecideEndpoint
+--- PASS: TestProviderSaveDecideEndpoint (1.60s)
+=== RUN   TestProviderModelsSayDesktopNumber
+--- PASS: TestProviderModelsSayDesktopNumber (0.01s)
+=== RUN   TestProviderDetectDraft
+--- PASS: TestProviderDetectDraft (0.01s)
+=== RUN   TestProviderDetect
+--- PASS: TestProviderDetect (0.01s)
+=== RUN   TestProviderInfoListsImageModels
+--- PASS: TestProviderInfoListsImageModels (0.00s)
+=== RUN   TestGroupFinderTakesTheOneMMark
+--- PASS: TestGroupFinderTakesTheOneMMark (0.00s)
+=== RUN   TestProviderInfoShowsAnAgentOnItsGroupsProviders
+--- PASS: TestProviderInfoShowsAnAgentOnItsGroupsProviders (0.00s)
+=== RUN   TestProviderListBeforeSave
+--- PASS: TestProviderListBeforeSave (0.00s)
+=== RUN   TestProviderSaveModelPrefs
+--- PASS: TestProviderSaveModelPrefs (0.01s)
+=== RUN   TestMoveOutlivesRequest
+--- PASS: TestMoveOutlivesRequest (0.01s)
+=== RUN   TestMoveTakesEditorPicks
+--- PASS: TestMoveTakesEditorPicks (0.01s)
+=== RUN   TestMoveBackRefused
+--- PASS: TestMoveBackRefused (0.00s)
+=== RUN   TestProviderSaveKeepsRetiredModelOutput
+--- PASS: TestProviderSaveKeepsRetiredModelOutput (0.03s)
+=== RUN   TestProviderSaveOutputs
+--- PASS: TestProviderSaveOutputs (0.02s)
+=== RUN   TestRemoteMagpieDecisionPicker
+--- PASS: TestRemoteMagpieDecisionPicker (0.00s)
+=== RUN   TestBailianTokenPlanDecisionPicker
+--- PASS: TestBailianTokenPlanDecisionPicker (0.00s)
+=== RUN   TestProviderOffMovesAgents
+--- PASS: TestProviderOffMovesAgents (0.02s)
+=== RUN   TestProviderSaveRouting
+--- PASS: TestProviderSaveRouting (0.03s)
+=== RUN   TestProviderSaveSink
+--- PASS: TestProviderSaveSink (0.02s)
+=== RUN   TestDecidePresetSaveKeepsRouting
+--- PASS: TestDecidePresetSaveKeepsRouting (0.02s)
+=== RUN   TestProviderListReadsSettingsOnce
+    providers_settings_once_test.go:68: settings.json parsed 0 times
+--- PASS: TestProviderListReadsSettingsOnce (0.02s)
+=== RUN   TestProviderSystemOne
+--- PASS: TestProviderSystemOne (1.10s)
+=== RUN   TestProviderTypedKey
+--- PASS: TestProviderTypedKey (0.01s)
+=== RUN   TestVertexProviderEditor
+--- PASS: TestVertexProviderEditor (0.03s)
+=== RUN   TestProxyCustomRemembered
+--- PASS: TestProxyCustomRemembered (0.01s)
+=== RUN   TestProxyCheckTellsTheProxyFromDirect
+--- PASS: TestProxyCheckTellsTheProxyFromDirect (0.00s)
+=== RUN   TestProxyCheckSaysTheProxyTookItUnderOneExit
+--- PASS: TestProxyCheckSaysTheProxyTookItUnderOneExit (0.00s)
+=== RUN   TestProxyCheckSaysAProxyPassedBy
+--- PASS: TestProxyCheckSaysAProxyPassedBy (0.00s)
+=== RUN   TestProxyCheckConnectedToByName
+--- PASS: TestProxyCheckConnectedToByName (0.00s)
+=== RUN   TestProxyCheckGoesAroundTheGlobalProxyForDirect
+--- PASS: TestProxyCheckGoesAroundTheGlobalProxyForDirect (0.00s)
+=== RUN   TestProxyCheckWithNoProxyAsksOnlyDirect
+--- PASS: TestProxyCheckWithNoProxyAsksOnlyDirect (0.00s)
+=== RUN   TestProxyCheckSaysAProxyDownWithoutItsPassword
+--- PASS: TestProxyCheckSaysAProxyDownWithoutItsPassword (0.00s)
+=== RUN   TestProxyCheckReadsNoAddressAsAFailure
+--- PASS: TestProxyCheckReadsNoAddressAsAFailure (0.00s)
+=== RUN   TestPublicURLInConsole
+--- PASS: TestPublicURLInConsole (0.01s)
+=== RUN   TestGatewayOnNetworkInConsole
+--- PASS: TestGatewayOnNetworkInConsole (0.01s)
+=== RUN   TestPublicURLOnlyWhereOffered
+--- PASS: TestPublicURLOnlyWhereOffered (0.02s)
+=== RUN   TestPurposeAssetMatchesUsage
+--- PASS: TestPurposeAssetMatchesUsage (0.00s)
+=== RUN   TestDismissedAlertOpensNothing
+--- PASS: TestDismissedAlertOpensNothing (0.00s)
+=== RUN   TestLinuxAlertSentUnderClickCategory
+--- PASS: TestLinuxAlertSentUnderClickCategory (0.00s)
+=== RUN   TestAlertText
+--- PASS: TestAlertText (0.00s)
+=== RUN   TestReminderText
+--- PASS: TestReminderText (0.00s)
+=== RUN   TestQuotaHistoryHoldsRequiresCompletedRange
+--- PASS: TestQuotaHistoryHoldsRequiresCompletedRange (0.00s)
+=== RUN   TestQuotaHistoryHoldsReadsLocalSnapshot
+--- PASS: TestQuotaHistoryHoldsReadsLocalSnapshot (0.00s)
+=== RUN   TestSaveKeepsQuotaResetAt
+--- PASS: TestSaveKeepsQuotaResetAt (0.01s)
+=== RUN   TestRecentCallBodiesOnDemand
+    recent_call_test.go:119: 40 calls: 12112 bytes of metadata instead of 20985992 bytes with bodies
+--- PASS: TestRecentCallBodiesOnDemand (0.94s)
+=== RUN   TestRedactKindsAreRedacts
+--- PASS: TestRedactKindsAreRedacts (0.00s)
+=== RUN   TestRedactRuleEdit
+--- PASS: TestRedactRuleEdit (0.01s)
+=== RUN   TestRoutingRequestOpensItsBodies
+--- PASS: TestRoutingRequestOpensItsBodies (0.00s)
+=== RUN   TestRoutingEffectiveCosts
+--- PASS: TestRoutingEffectiveCosts (0.00s)
+=== RUN   TestRouteLookupPricing
+--- PASS: TestRouteLookupPricing (0.00s)
+=== RUN   TestSaveSharesOneCatalogBuild
+--- PASS: TestSaveSharesOneCatalogBuild (0.01s)
+=== RUN   TestAgentWriteAnsweredAsWritten
+--- PASS: TestAgentWriteAnsweredAsWritten (0.12s)
+=== RUN   TestRegisterScheme
+=== RUN   TestRegisterScheme/flatpak_without_entry
+=== RUN   TestRegisterScheme/flatpak_with_entry
+=== RUN   TestRegisterScheme/native_without_entry
+=== RUN   TestRegisterScheme/native_with_entry
+--- PASS: TestRegisterScheme (0.00s)
+    --- PASS: TestRegisterScheme/flatpak_without_entry (0.00s)
+    --- PASS: TestRegisterScheme/flatpak_with_entry (0.00s)
+    --- PASS: TestRegisterScheme/native_without_entry (0.00s)
+    --- PASS: TestRegisterScheme/native_with_entry (0.00s)
+=== RUN   TestRegisterSchemeBindsAnOlderEntry
+--- PASS: TestRegisterSchemeBindsAnOlderEntry (0.00s)
+=== RUN   TestKeepWebData
+=== RUN   TestKeepWebData/webkit_data_under_the_executable's_name
+=== RUN   TestKeepWebData/magpie's_folder_there_already
+=== RUN   TestKeepWebData/a_folder_that_isn't_WebKit's
+--- PASS: TestKeepWebData (0.00s)
+    --- PASS: TestKeepWebData/webkit_data_under_the_executable's_name (0.00s)
+    --- PASS: TestKeepWebData/magpie's_folder_there_already (0.00s)
+    --- PASS: TestKeepWebData/a_folder_that_isn't_WebKit's (0.00s)
+=== RUN   TestSearchKeyShown
+--- PASS: TestSearchKeyShown (0.00s)
+=== RUN   TestSearchAPIBaseURLFromSettings
+--- PASS: TestSearchAPIBaseURLFromSettings (0.01s)
+=== RUN   TestSearchAPIOrderAndOffFromSettings
+--- PASS: TestSearchAPIOrderAndOffFromSettings (0.01s)
+=== RUN   TestSessionTitlesNameOtherAgents
+--- PASS: TestSessionTitlesNameOtherAgents (0.00s)
+=== RUN   TestCodeBuddySessionsListedUnderTheirName
+--- PASS: TestCodeBuddySessionsListedUnderTheirName (0.00s)
+=== RUN   TestCodexSessionAPIAddsOwnModelEffort
+--- PASS: TestCodexSessionAPIAddsOwnModelEffort (0.01s)
+=== RUN   TestCodexSubagentDetailsReachSessionAPIs
+--- PASS: TestCodexSubagentDetailsReachSessionAPIs (0.00s)
+=== RUN   TestCursorEditorChatsAreNotCalledCursorCLI
+--- PASS: TestCursorEditorChatsAreNotCalledCursorCLI (0.00s)
+=== RUN   TestSessionsDeleteGatewaySession
+--- PASS: TestSessionsDeleteGatewaySession (0.00s)
+=== RUN   TestGatewaySessionExportsMarkdown
+--- PASS: TestGatewaySessionExportsMarkdown (0.00s)
+=== RUN   TestSessionsListIsAsLongAsTheCount
+--- PASS: TestSessionsListIsAsLongAsTheCount (0.01s)
+=== RUN   TestManageCountsAGatewaySessionTheAgentKeepsOnce
+--- PASS: TestManageCountsAGatewaySessionTheAgentKeepsOnce (0.00s)
+=== RUN   TestSessionsManageCarriesUsage
+--- PASS: TestSessionsManageCarriesUsage (0.00s)
+=== RUN   TestSessionExportMarkdown
+--- PASS: TestSessionExportMarkdown (0.00s)
+=== RUN   TestEmptySessionOpens
+--- PASS: TestEmptySessionOpens (0.00s)
+=== RUN   TestSessionsPurgeRoute
+--- PASS: TestSessionsPurgeRoute (0.00s)
+=== RUN   TestSessionsRelocateClaudeRoute
+--- PASS: TestSessionsRelocateClaudeRoute (0.00s)
+=== RUN   TestSessionsSearchFindsGatewaySessionsByWhatWasSaid
+--- PASS: TestSessionsSearchFindsGatewaySessionsByWhatWasSaid (0.00s)
+=== RUN   TestSessionsSearchStopsWhenItsRequestEnds
+--- PASS: TestSessionsSearchStopsWhenItsRequestEnds (0.00s)
+=== RUN   TestStatsMemoKeepsAFewDays
+--- PASS: TestStatsMemoKeepsAFewDays (0.01s)
+=== RUN   TestStatsMemoKeepsTheRangeAskedAgain
+--- PASS: TestStatsMemoKeepsTheRangeAskedAgain (0.00s)
+=== RUN   TestSessionSubagentTranscript
+--- PASS: TestSessionSubagentTranscript (0.00s)
+=== RUN   TestWarmUpReturnsItsGarbage
+--- PASS: TestWarmUpReturnsItsGarbage (0.01s)
+=== RUN   TestWarmUpReadsCodexEffort
+--- PASS: TestWarmUpReadsCodexEffort (0.01s)
+=== RUN   TestSetAnswersWhileDevinAndProvidersHang
+    set_fast_unix_test.go:138: set claude-opus-5-5: 6.390847ms
+    set_fast_unix_test.go:138: set slow/slow-1: 36.009699ms
+    set_fast_unix_test.go:138: set claude-sonnet-5-5: 6.420916ms
+--- PASS: TestSetAnswersWhileDevinAndProvidersHang (0.08s)
+=== RUN   TestSettingsSaveKeepsCorruptFile
+=== RUN   TestSettingsSaveKeepsCorruptFile//api/settings
+=== RUN   TestSettingsSaveKeepsCorruptFile//api/settings/quota-left
+--- PASS: TestSettingsSaveKeepsCorruptFile (0.00s)
+    --- PASS: TestSettingsSaveKeepsCorruptFile//api/settings (0.00s)
+    --- PASS: TestSettingsSaveKeepsCorruptFile//api/settings/quota-left (0.00s)
+=== RUN   TestSettingsSaveKeepsModelChoices
+--- PASS: TestSettingsSaveKeepsModelChoices (0.00s)
+=== RUN   TestSettingsSaveKeepsWhatItDoesNotSend
+--- PASS: TestSettingsSaveKeepsWhatItDoesNotSend (0.00s)
+=== RUN   TestUpdateSkip
+--- PASS: TestUpdateSkip (0.01s)
+=== RUN   TestMainURL
+--- PASS: TestMainURL (0.00s)
+=== RUN   TestQuotaView
+--- PASS: TestQuotaView (0.00s)
+=== RUN   TestMCPSignInSaysTheBrowserDidntOpen
+--- PASS: TestMCPSignInSaysTheBrowserDidntOpen (0.00s)
+=== RUN   TestOpenSaysTheBrowserDidntOpen
+--- PASS: TestOpenSaysTheBrowserDidntOpen (0.00s)
+=== RUN   TestStepFunSignInPerProvider
+--- PASS: TestStepFunSignInPerProvider (0.02s)
+=== RUN   TestStateListsT3Code
+--- PASS: TestStateListsT3Code (0.00s)
+=== RUN   TestGatewayTakenOver
+--- PASS: TestGatewayTakenOver (0.25s)
+=== RUN   TestGatewayNotServedBesideASlowOne
+2026/10/26 17:01:10 gateway: http://127.0.0.1:40929 is taken but doesn't answer as magpie yet; this magpie serves the gateway once it is free
+--- PASS: TestGatewayNotServedBesideASlowOne (0.70s)
+=== RUN   TestTerminalOpenArgs
+=== RUN   TestTerminalOpenArgs/system_default
+=== RUN   TestTerminalOpenArgs/Terminal
+=== RUN   TestTerminalOpenArgs/explicit_system
+=== RUN   TestTerminalOpenArgs/chosen_app
+--- PASS: TestTerminalOpenArgs (0.00s)
+    --- PASS: TestTerminalOpenArgs/system_default (0.00s)
+    --- PASS: TestTerminalOpenArgs/Terminal (0.00s)
+    --- PASS: TestTerminalOpenArgs/explicit_system (0.00s)
+    --- PASS: TestTerminalOpenArgs/chosen_app (0.00s)
+=== RUN   TestTextSizeFrames
+--- PASS: TestTextSizeFrames (0.00s)
+=== RUN   TestTextSizeSetting
+--- PASS: TestTextSizeSetting (0.01s)
+=== RUN   TestAutomaticTitleGroupsAPI
+--- PASS: TestAutomaticTitleGroupsAPI (0.00s)
+=== RUN   TestConsoleShowsTheServingMagpiesRouting
+--- PASS: TestConsoleShowsTheServingMagpiesRouting (0.01s)
+=== RUN   TestConsoleKeepsTheNoticeFromAnOlderGateway
+--- PASS: TestConsoleKeepsTheNoticeFromAnOlderGateway (0.00s)
+=== RUN   TestRoutesNameFoundGroupsByTheirPublicID
+--- PASS: TestRoutesNameFoundGroupsByTheirPublicID (0.00s)
+=== RUN   TestMainView
+--- PASS: TestMainView (0.00s)
+=== RUN   TestRouteLookup
+--- PASS: TestRouteLookup (0.00s)
+=== RUN   TestTrayMenuOpeningIsNoClick
+--- PASS: TestTrayMenuOpeningIsNoClick (0.00s)
+=== RUN   TestTrayMenuOpenFrameIsWails
+--- PASS: TestTrayMenuOpenFrameIsWails (0.00s)
+=== RUN   TestTrayClickIn
+--- PASS: TestTrayClickIn (0.00s)
+=== RUN   TestTrayClickIsWails
+--- PASS: TestTrayClickIsWails (0.00s)
+=== RUN   TestTrayIconPerOS
+--- PASS: TestTrayIconPerOS (0.00s)
+=== RUN   TestPortalLight
+--- PASS: TestPortalLight (0.00s)
+=== RUN   TestTrayIconSize
+--- PASS: TestTrayIconSize (0.00s)
+=== RUN   TestTrayIdleTip
+--- PASS: TestTrayIdleTip (0.00s)
+=== RUN   TestTrayMenuLabels
+--- PASS: TestTrayMenuLabels (0.00s)
+=== RUN   TestSettingsLangRelabelsTray
+--- PASS: TestSettingsLangRelabelsTray (0.00s)
+=== RUN   TestSNITipIsSafeMarkup
+--- PASS: TestSNITipIsSafeMarkup (0.00s)
+=== RUN   TestTrayNamesTheAccountByItsAlias
+--- PASS: TestTrayNamesTheAccountByItsAlias (0.00s)
+=== RUN   TestTrayUsageCells
+--- PASS: TestTrayUsageCells (0.00s)
+=== RUN   TestTrayCellsCards
+--- PASS: TestTrayCellsCards (0.00s)
+=== RUN   TestSVGArcFlags
+--- PASS: TestSVGArcFlags (0.00s)
+=== RUN   TestTrayInUse
+--- PASS: TestTrayInUse (0.00s)
+=== RUN   TestTrayInUseFollowsWhoAnswered
+--- PASS: TestTrayInUseFollowsWhoAnswered (0.00s)
+=== RUN   TestTrayInUsePluginFollowsLastServed
+--- PASS: TestTrayInUsePluginFollowsLastServed (0.00s)
+=== RUN   TestServedMovedWakesTheMenuBar
+--- PASS: TestServedMovedWakesTheMenuBar (0.00s)
+=== RUN   TestTrayNoCost
+--- PASS: TestTrayNoCost (0.00s)
+=== RUN   TestTrayUsagePace
+--- PASS: TestTrayUsagePace (0.00s)
+=== RUN   TestTrayPlain
+--- PASS: TestTrayPlain (0.00s)
+=== RUN   TestTrayUsageText
+--- PASS: TestTrayUsageText (0.00s)
+=== RUN   TestTrayTotals
+--- PASS: TestTrayTotals (0.00s)
+=== RUN   TestTrayTotalsBesideCards
+--- PASS: TestTrayTotalsBesideCards (0.00s)
+=== RUN   TestTrayCount
+--- PASS: TestTrayCount (0.00s)
+=== RUN   TestTrayTotalIsTheLedgers
+--- PASS: TestTrayTotalIsTheLedgers (0.00s)
+=== RUN   TestTuneWindowsAreTheUsers
+--- PASS: TestTuneWindowsAreTheUsers (0.00s)
+=== RUN   TestTurnDoneText
+--- PASS: TestTurnDoneText (0.00s)
+=== RUN   TestUnlistedModelsSaid
+--- PASS: TestUnlistedModelsSaid (0.01s)
+=== RUN   TestProviderSaveKeepsUnredacted
+2026/10/26 17:01:10 ollama: Get "http://localhost:11434/api/tags": dial tcp [::1]:11434: connect: connection refused
+--- PASS: TestProviderSaveKeepsUnredacted (8.02s)
+=== RUN   TestUpdateDue
+--- PASS: TestUpdateDue (0.00s)
+=== RUN   TestUpdateAskedAt
+--- PASS: TestUpdateAskedAt (0.00s)
+=== RUN   TestAutoRestartWaitsForIdle
+--- PASS: TestAutoRestartWaitsForIdle (0.28s)
+=== RUN   TestAutoRestartNeedsAReadyUpdate
+--- PASS: TestAutoRestartNeedsAReadyUpdate (0.00s)
+=== RUN   TestAutoRestartCalledOff
+--- PASS: TestAutoRestartCalledOff (0.01s)
+=== RUN   TestUpdateThatWontStart
+2026/10/26 17:01:19 update: Windows didn't let the new version start (fork/exec /tmp/TestUpdateThatWontStart227369135/001/magpie: errno 4551): Smart App Control or another application control policy blocks magpie's unsigned builds; download it from https://usemagpie.ai and run it yourself, or turn Smart App Control off, then check for updates again
+--- PASS: TestUpdateThatWontStart (0.00s)
+=== RUN   TestUpdateInContainerSaysPullTheImage
+--- PASS: TestUpdateInContainerSaysPullTheImage (0.00s)
+=== RUN   TestUpdateDownloadWaitsForAClick
+--- PASS: TestUpdateDownloadWaitsForAClick (0.02s)
+=== RUN   TestUpdateMirrorSetting
+2026/10/26 17:01:25 update: download gui.test.new through the mirror http://127.0.0.1:36403/: 404 Not Found
+--- PASS: TestUpdateMirrorSetting (6.01s)
+=== RUN   TestUpdateNotesRoute
+2026/10/26 17:01:25 release notes: Get "http://127.0.0.1:1/?after=0.1.604&lang=en&upto=0.1.607": dial tcp 127.0.0.1:1: connect: connection refused
+--- PASS: TestUpdateNotesRoute (0.00s)
+=== RUN   TestUpdateNotesAskTheFeedAgain
+--- PASS: TestUpdateNotesAskTheFeedAgain (0.20s)
+=== RUN   TestUpdateRecheckTakesNotesLate
+--- PASS: TestUpdateRecheckTakesNotesLate (0.40s)
+=== RUN   TestUpdateTakesTheMacTerminalBuild
+2026/10/26 17:01:25 update: the release lists no checksum for gui.test.new
+--- PASS: TestUpdateTakesTheMacTerminalBuild (0.00s)
+=== RUN   TestSettingsProxyRechecksAFailedUpdate
+--- PASS: TestSettingsProxyRechecksAFailedUpdate (0.02s)
+=== RUN   TestStaleLatestIsNotUpToDate
+--- PASS: TestStaleLatestIsNotUpToDate (0.01s)
+=== RUN   TestUpdateNotWritableSaysWhy
+--- PASS: TestUpdateNotWritableSaysWhy (0.00s)
+=== RUN   TestUpdateStagedGivesWayToNewer
+--- PASS: TestUpdateStagedGivesWayToNewer (0.20s)
+=== RUN   TestRestartToUpdateWaitsForTheGateway
+--- PASS: TestRestartToUpdateWaitsForTheGateway (0.05s)
+=== RUN   TestRestartWhenIdle
+--- PASS: TestRestartWhenIdle (0.24s)
+=== RUN   TestRestartWhenIdleIntoTheNewest
+--- PASS: TestRestartWhenIdleIntoTheNewest (0.23s)
+=== RUN   TestTrayRestartNow
+--- PASS: TestTrayRestartNow (0.00s)
+=== RUN   TestUpstreamRoute
+--- PASS: TestUpstreamRoute (0.02s)
+=== RUN   TestUsageArrangePanelHidden
+--- PASS: TestUsageArrangePanelHidden (0.02s)
+=== RUN   TestUsageArrangeAgentsHidden
+--- PASS: TestUsageArrangeAgentsHidden (0.01s)
+=== RUN   TestUsageArrangeCountClient
+--- PASS: TestUsageArrangeCountClient (0.01s)
+=== RUN   TestUsageRequestAPIsReturnCodexCompactionStates
+--- PASS: TestUsageRequestAPIsReturnCodexCompactionStates (0.00s)
+=== RUN   TestUsagePurposeRoutes
+--- PASS: TestUsagePurposeRoutes (0.00s)
+=== RUN   TestUsageScale
+    usage_scale_test.go:24: large synthetic fixture; opt in with MAGPIE_USAGE_SCALE=1
+--- SKIP: TestUsageScale (0.00s)
+=== RUN   TestUsageLedgerDayRoutes
+--- PASS: TestUsageLedgerDayRoutes (0.00s)
+=== RUN   TestUsageLedgerRoutes
+--- PASS: TestUsageLedgerRoutes (0.01s)
+=== RUN   TestUsageRequestContent
+--- PASS: TestUsageRequestContent (0.00s)
+=== RUN   TestLedgerSingleSnapshotAndLocalSession
+--- PASS: TestLedgerSingleSnapshotAndLocalSession (0.00s)
+=== RUN   TestLedgerNamesModelAtProvider
+--- PASS: TestLedgerNamesModelAtProvider (0.00s)
+=== RUN   TestCSVStamp
+--- PASS: TestCSVStamp (0.00s)
+=== RUN   TestUsageCSVAtMidnight
+--- PASS: TestUsageCSVAtMidnight (0.00s)
+=== RUN   TestUsageHeatmapRoute
+--- PASS: TestUsageHeatmapRoute (0.00s)
+=== RUN   TestUsageRoutesReadTheViewersZone
+--- PASS: TestUsageRoutesReadTheViewersZone (0.00s)
+=== RUN   TestVisionNotMarked
+--- PASS: TestVisionNotMarked (0.01s)
+=== RUN   TestUnderTightGC
+--- PASS: TestUnderTightGC (0.00s)
+=== RUN   TestUnderTightGCLimitsMemory
+--- PASS: TestUnderTightGCLimitsMemory (0.00s)
+=== RUN   TestWarmUpTightensOnlyTheUsageRead
+--- PASS: TestWarmUpTightensOnlyTheUsageRead (0.00s)
+=== RUN   TestWebCompresses
+--- PASS: TestWebCompresses (0.07s)
+=== RUN   TestVersionedFilesKept
+--- PASS: TestVersionedFilesKept (0.01s)
+=== RUN   TestNetworkLinksPublicURL
+--- PASS: TestNetworkLinksPublicURL (0.00s)
+=== RUN   TestWebOnePortServedHere
+2026/10/26 17:01:26 refused POST /v1/chat/completions from Origin: null: a sandboxed frame or a local page, with no gateway key
+2026/10/26 17:01:26 refused POST /v1/chat/completions from the web page https://evil.example: not one listed in Settings
+2026/10/26 17:01:26 refused GET /v1/models: a web page reached loopback under the name "rebind.attacker.example:3430"
+2026/10/26 17:01:26 refused POST /v1/chat/completions: a web page reached loopback under the name "rebind.attacker.example:3430"
+2026/10/26 17:01:26 refused GET /v1/models: a web page reached loopback under the name "rebind.attacker.example:3430"
+2026/10/26 17:01:26 refused GET /v1/models from 127.0.0.1:50001: no API key was sent: send a magpie gateway key as Authorization: Bearer <key> (or x-api-key)
+2026/10/26 17:01:26 refused GET /v1/models from 127.0.0.1:50001: no API key was sent: send a magpie gateway key as Authorization: Bearer <key> (or x-api-key)
+2026/10/26 17:01:26 refused GET /v1/models from 10.0.0.5:50001: no API key was sent: send a magpie gateway key as Authorization: Bearer <key> (or x-api-key)
+2026/10/26 17:01:26 refused GET /v1/models through a proxy or tunnel: magpie isn't shared
+--- PASS: TestWebOnePortServedHere (0.00s)
+=== RUN   TestWebOnePortServedElsewhere
+2026/10/26 17:01:26 refused POST /v1/chat/completions from Origin: null: a sandboxed frame or a local page, with no gateway key
+2026/10/26 17:01:26 refused POST /v1/chat/completions from the web page https://evil.example: not one listed in Settings
+2026/10/26 17:01:26 refused GET /v1/models: a web page reached loopback under the name "rebind.attacker.example:3430"
+2026/10/26 17:01:26 refused POST /v1/chat/completions: a web page reached loopback under the name "rebind.attacker.example:3430"
+2026/10/26 17:01:26 refused GET /v1/models: a web page reached loopback under the name "rebind.attacker.example:3430"
+2026/10/26 17:01:26 refused GET /v1/models from 127.0.0.1:33546: no API key was sent: send a magpie gateway key as Authorization: Bearer <key> (or x-api-key)
+2026/10/26 17:01:26 refused GET /v1/models from 127.0.0.1:33546: no API key was sent: send a magpie gateway key as Authorization: Bearer <key> (or x-api-key)
+2026/10/26 17:01:26 refused GET /v1/models from 127.0.0.1:33546: no API key was sent: send a magpie gateway key as Authorization: Bearer <key> (or x-api-key)
+2026/10/26 17:01:26 refused GET /v1/models through a proxy or tunnel: magpie isn't shared
+2026/10/26 17:01:26 refused GET /v1/models through a proxy or tunnel: magpie isn't shared
+--- PASS: TestWebOnePortServedElsewhere (0.00s)
+=== RUN   TestWebAssetsAreNoClientPath
+--- PASS: TestWebAssetsAreNoClientPath (0.00s)
+=== RUN   TestWebGuard
+--- PASS: TestWebGuard (0.00s)
+=== RUN   TestWebKey
+--- PASS: TestWebKey (0.00s)
+=== RUN   TestWebGuardBookmark
+2026/10/26 17:01:26 magpie web: turned away / from 192.0.2.1:1234: no cookie sent
+2026/10/26 17:01:26 magpie web: turned away / from 192.0.2.1:1234: its cookie holds another key
+--- PASS: TestWebGuardBookmark (0.00s)
+=== RUN   TestWebkitDefaults
+--- PASS: TestWebkitDefaults (0.00s)
+=== RUN   TestRenderNodeOpens
+--- PASS: TestRenderNodeOpens (0.00s)
+=== RUN   TestWebView2ArgsMergeTheUsers
+=== RUN   TestWebView2ArgsMergeTheUsers/none_set
+=== RUN   TestWebView2ArgsMergeTheUsers/the_reporter's
+=== RUN   TestWebView2ArgsMergeTheUsers/twice,_with_magpie's_own_and_a_repeat
+=== RUN   TestWebView2ArgsMergeTheUsers/enable_and_others_kept
+=== RUN   TestWebView2ArgsMergeTheUsers/a_bare_switch
+--- PASS: TestWebView2ArgsMergeTheUsers (0.00s)
+    --- PASS: TestWebView2ArgsMergeTheUsers/none_set (0.00s)
+    --- PASS: TestWebView2ArgsMergeTheUsers/the_reporter's (0.00s)
+    --- PASS: TestWebView2ArgsMergeTheUsers/twice,_with_magpie's_own_and_a_repeat (0.00s)
+    --- PASS: TestWebView2ArgsMergeTheUsers/enable_and_others_kept (0.00s)
+    --- PASS: TestWebView2ArgsMergeTheUsers/a_bare_switch (0.00s)
+=== RUN   TestWebView2KeepsCodeIntegrityByDefault
+--- PASS: TestWebView2KeepsCodeIntegrityByDefault (0.00s)
+=== RUN   TestWebView2ArgsSurviveWailsInit
+    webview2_args_test.go:110: os="--disable-features=RendererCodeIntegrity" disabled=["RendererCodeIntegrity"]
+--- PASS: TestWebView2ArgsSurviveWailsInit (0.04s)
+=== RUN   TestWebView2Missing
+--- PASS: TestWebView2Missing (0.00s)
+=== RUN   TestWebView2Notice
+--- PASS: TestWebView2Notice (0.00s)
+=== RUN   TestWindowsOptionsWebViewData
+--- PASS: TestWindowsOptionsWebViewData (0.00s)
+=== RUN   TestWhatsNewBackRanges
+2026/10/26 17:01:26 release notes: release notes: 503 Service Unavailable
+2026/10/26 17:01:26 release notes: release notes: 503 Service Unavailable
+--- PASS: TestWhatsNewBackRanges (0.00s)
+=== RUN   TestWhatsNewTellsFailureFromNone
+2026/10/26 17:01:26 release notes: release notes: 503 Service Unavailable
+--- PASS: TestWhatsNewTellsFailureFromNone (0.00s)
+=== RUN   TestAskedLang
+--- PASS: TestAskedLang (0.00s)
+=== RUN   TestWhatsNewInPageLang
+--- PASS: TestWhatsNewInPageLang (0.00s)
+=== RUN   TestUpdateNotesInPageLang
+--- PASS: TestUpdateNotesInPageLang (0.01s)
+=== RUN   TestWhatsNewAfterUpgrade
+2026/10/26 17:01:26 release notes: Get "http://127.0.0.1:34921?after=0.1.603&lang=en&upto=0.1.604": dial tcp 127.0.0.1:34921: connect: connection refused
+--- PASS: TestWhatsNewAfterUpgrade (0.00s)
+=== RUN   TestUpdateNotesWithoutInstall
+--- PASS: TestUpdateNotesWithoutInstall (0.00s)
+=== RUN   TestWhatsNewFromBefore
+--- PASS: TestWhatsNewFromBefore (0.00s)
+=== RUN   TestWhatsNewQuietAfterRestartToUpdate
+--- PASS: TestWhatsNewQuietAfterRestartToUpdate (0.00s)
+=== RUN   TestWhatsNewTodayRoute
+--- PASS: TestWhatsNewTodayRoute (0.00s)
+=== RUN   TestWhatsNewListsEveryReleaseUpToTheWaitingUpdate
+2026/10/26 17:01:26 release notes: Get "http://127.0.0.1:41537?after=0.1.1398&lang=en&upto=0.1.1409": dial tcp 127.0.0.1:41537: connect: connection refused
+--- PASS: TestWhatsNewListsEveryReleaseUpToTheWaitingUpdate (0.00s)
+=== RUN   TestOpenSize
+--- PASS: TestOpenSize (0.00s)
+=== RUN   TestFitRoom
+--- PASS: TestFitRoom (0.00s)
+=== RUN   TestSettle
+=== RUN   TestSettle/resized
+=== RUN   TestSettle/maximised_keeps_its_size
+=== RUN   TestSettle/restored
+=== RUN   TestSettle/maximised_again,_nothing_new
+=== RUN   TestSettle/a_point_short
+=== RUN   TestSettle/under_the_least
+=== RUN   TestSettle/fitted_to_a_smaller_screen
+=== RUN   TestSettle/fitted,_then_made_narrower
+=== RUN   TestSettle/as_large_as_the_screen,_nothing_larger_kept
+--- PASS: TestSettle (0.00s)
+    --- PASS: TestSettle/resized (0.00s)
+    --- PASS: TestSettle/maximised_keeps_its_size (0.00s)
+    --- PASS: TestSettle/restored (0.00s)
+    --- PASS: TestSettle/maximised_again,_nothing_new (0.00s)
+    --- PASS: TestSettle/a_point_short (0.00s)
+    --- PASS: TestSettle/under_the_least (0.00s)
+    --- PASS: TestSettle/fitted_to_a_smaller_screen (0.00s)
+    --- PASS: TestSettle/fitted,_then_made_narrower (0.00s)
+    --- PASS: TestSettle/as_large_as_the_screen,_nothing_larger_kept (0.00s)
+=== RUN   TestZenAddAnotherKeyEmptyAddsPublic
+--- PASS: TestZenAddAnotherKeyEmptyAddsPublic (1.50s)
+PASS
+ok  	github.com/yetone/magpie/internal/gui	40.248s
+
+# END COMPLETE OUTPUT
+# CHECKED_RETURN_CODE 0

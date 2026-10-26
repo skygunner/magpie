@@ -1,0 +1,28 @@
+{
+ "issue": 3156,
+ "title": "[bug] 修改路由组的模型列表后，实时路由里的组成员仍是旧的，重启 magpie 才更新",
+ "verdict": "fixed",
+ "skipReason": null,
+ "branch": "fix/routing-group-members-live",
+ "base": "01468003348ede896c5126e9fd81057e1e58765c",
+ "head": "f816c358110a6637bc0fb816aa2b61a065b3fef3",
+ "testCommands": [
+  "NODE_PATH=<playwright-1.64> node --test internal/gui/tests/routing-group-members-live.test.cjs  (chromium en/zh, webkit en/zh)",
+  "the same file at the base with only the test added (RED)"
+ ],
+ "testsAdded": [
+  "routing-group-members-live.test.cjs: a trace route planned with a/m and b/m for group Hand, the group saved afterwards as a/m and c/luna, and the story must name A · MA · C · Luna (the group's list now, as the groups list names it) in English and Chinese on Chromium and WebKit."
+ ],
+ "unverifiedBoundaries": [
+  "Real magpie UI: the page and its API are fixtures (the same fixture style as the other routing GUI tests); no live gateway, no real save round-trip.",
+  "The browser was Playwright 1.64.1 from this machine's npx cache (the repo's default module path has no installed browsers for its version).",
+  "Pre-existing reds in the routing suite (routing-pause.test.cjs, routing-rule-models.test.cjs webkit hover) reproduce at the clean base as well; they are not this change."
+ ],
+ "filesChanged": [
+  "internal/gui/assets/plugins/routing/client.js",
+  "internal/gui/tests/routing-group-members-live.test.cjs"
+ ],
+ "preExistingRed": [
+  "routing-pause.test.cjs and routing-rule-models.test.cjs (webkit hover away from the viewport) fail on the clean base 01468003 too - the lane's baseline run and the lead's own base run both show them."
+ ]
+}

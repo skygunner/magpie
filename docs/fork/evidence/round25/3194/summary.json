@@ -1,0 +1,47 @@
+{
+  "issue": 3194,
+  "repo": "yetone/magpie",
+  "fork": "skygunner/magpie",
+  "branch": "fix/r25-mcp-invalid-target-retry",
+  "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+  "commit": "109e6f47a18cd0540e463089ac9d86656840dac5",
+  "commit_subject": "mcpauth: a token stage refused with invalid_target is retried once without the resource (#3194)",
+  "attribution": "Co-authored-by: sisyphus-dev-ai <sisyphus-dev-ai@users.noreply.github.com>",
+  "files": [
+    "docs/subsystems/library.md",
+    "internal/mcpauth/mcpauth.go",
+    "internal/mcpauth/mcpauthtest/fake.go",
+    "internal/mcpauth/renew_resource_test.go"
+  ],
+  "scope": "token stage only (code exchange and refresh); authorize-stage browser rejection explicitly out of scope",
+  "fix": "tokenRequest retries once without the RFC 8707 resource only on explicit tokenError invalid_target with resource present; Record.Resource preserved; no generic retry",
+  "baseline": {
+    "method": "git archive HEAD (base) + only test files and fake copied in, identical sha256 to head test files",
+    "red_exit": 1,
+    "red_log": "red.log"
+  },
+  "green": {
+    "exit": 0,
+    "log": "green.log"
+  },
+  "race": "go test -race ./internal/mcpauth/... ./internal/library ok; -race -run MCP|Mcp ./internal/gateway ok",
+  "nogui_mcp": "pre-fix archived tree fails as expected (same RED path); post-fix nogui run of the new tests passes",
+  "static_checks": "audit/static-checks.txt: gofmt, vet ./..., linux nogui vet, windows vet, and all three builds exit=0",
+  "known_gateway": "full -race ./internal/gateway on head and untouched base: same 3 failures and 600s package timeout (audit/gateway-baseline-race.log); no data race; unrelated to mcpauth change",
+  "comment": {
+    "id": 6416184531,
+    "url": "https://github.com/yetone/magpie/issues/3194#issuecomment-6416184531",
+    "author": "skygunner",
+    "created_at_utc": "2026-10-26T12:38:12Z",
+    "updated_at_utc": "2026-10-26T12:38:49Z",
+    "body_sha256": "fe965259278f2df76268a2f3926bd5afc555fc4feddb4c4528cd6e341522b880",
+    "exact_readback_equal": true,
+    "unique": true
+  },
+  "push": "git push origin fix/r25-mcp-invalid-target-retry; ls-remote 165 refs; branch at 109e6f47a18cd0540e463089ac9d86656840dac5",
+  "limitations": [
+    "real Semgrep server not exercised",
+    "authorize-stage rejection remains unfixed by scope",
+    "full gateway -race suite has pre-existing reds on clean base (documented)"
+  ]
+}

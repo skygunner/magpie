@@ -1,0 +1,17 @@
+2026/10/26 22:30:27 mcp-signins.json can't be read (900 bytes, every one zero); what it held at 2026-10-26 22:30:27 is used, from mcp-signins.json.bak
+--- FAIL: TestTokenStageGoesOnWithoutAnUnacceptedResource (0.01s)
+    --- FAIL: TestTokenStageGoesOnWithoutAnUnacceptedResource/exchange (0.00s)
+        renew_resource_test.go:33: sign-in failed: the token endpoint answered 400: invalid_target (<!doctype html><meta charset="utf-8"><title>Magpie</title><body style="font:15px -apple-system,system-ui,sans-serif;max-width:32em;margin:4em auto;padding:0 1em;color:#222">Magpie couldn&#39;t finish the sign-in: the token endpoint answered 400: invalid_target</body>)
+    --- FAIL: TestTokenStageGoesOnWithoutAnUnacceptedResource/refresh (0.00s)
+        renew_resource_test.go:40: renewal failed despite a usable retry without resource: the token endpoint answered 400: invalid_target
+--- FAIL: TestPersistentRefusalIsBounded (0.00s)
+    renew_resource_test.go:137: the token endpoint saw 1 requests, want the refused one and the one retry
+--- FAIL: TestRetryKeepsTheClientSecret (0.00s)
+    renew_resource_test.go:151: sign-in failed: the token endpoint answered 400: invalid_target (<!doctype html><meta charset="utf-8"><title>Magpie</title><body style="font:15px -apple-system,system-ui,sans-serif;max-width:32em;margin:4em auto;padding:0 1em;color:#222">Magpie couldn&#39;t finish the sign-in: the token endpoint answered 400: invalid_target</body>)
+--- FAIL: TestCanceledRetrySavesNothing (0.00s)
+    renew_resource_test.go:205: callback finished before the retry: <nil>
+FAIL
+FAIL	github.com/yetone/magpie/internal/mcpauth	0.121s
+?   	github.com/yetone/magpie/internal/mcpauth/mcpauthtest	[no test files]
+FAIL
+baseline-race exit=1

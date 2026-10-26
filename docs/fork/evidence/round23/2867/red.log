@@ -1,0 +1,6 @@
+--- FAIL: TestDriftDetailsAreTranslated (0.03s)
+    drift_notice_test.go:97: drift detail isn't a notice, so it stays English: "{agent}'s config was changed outside magpie: {field} is {now}, not {want} as magpie set it"
+    drift_notice_test.go:102: zh has no translation of "{agent}'s config was changed outside magpie: {field} is {now}, not {want} as magpie set it"
+FAIL
+FAIL	github.com/yetone/magpie/internal/agent	0.038s
+FAIL

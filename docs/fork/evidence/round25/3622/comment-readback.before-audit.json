@@ -1,0 +1,17 @@
+{
+  "issue": 3622,
+  "comment_id": 6410545136,
+  "url": "https://github.com/yetone/magpie/issues/3622#issuecomment-6410545136",
+  "author": "skygunner",
+  "created_at": "2026-10-26T07:24:13Z",
+  "updated_at": "2026-10-26T07:24:13Z",
+  "body_sha256_api_utf8": "906b4397eb35c3c15023a25c7f4191085610acd104a97d3152c4b511edf1abfe",
+  "body_sha256_local": "906b4397eb35c3c15023a25c7f4191085610acd104a97d3152c4b511edf1abfe",
+  "equal": true,
+  "api_body_len": 1975,
+  "local_body_len": 1975,
+  "note": "re-posted by lead with corrected RED description; previous duplicate comments deleted",
+  "deleted_duplicate_comment_ids": [
+    6408512564
+  ]
+}

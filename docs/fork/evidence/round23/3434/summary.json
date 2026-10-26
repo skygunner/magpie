@@ -1,0 +1,33 @@
+{
+  "issue": 3434,
+  "title": "bug(routing): Codex compaction can reclassify an unchanged native turn when transcript identity changes",
+  "verdict": "fixed",
+  "skipReason": "",
+  "branch": "fix/codex-compaction-turn-identity",
+  "base": "01468003348ede896c5126e9fd81057e1e58765c",
+  "head": "677160b76d2977e6b99dfcf61896922dfbc38fd1",
+  "testCommands": [
+    "RED: go test ./internal/gateway -run TestCodexCompactionKeepsTheTurnsRule -count=1 (fix stashed, test kept) -> FAIL, the compacted same-turn request classified again (classifier asked 2 times, Held:false)",
+    "GREEN: go test ./internal/gateway -run TestCodexCompactionKeepsTheTurnsRule -count=1 -> ok",
+    "go test ./internal/gateway -run 'TestRule|TestIntent|TestClassif|TestCodexCompaction|TestNested|TestPause|TestDecide' -count=1 -> 65 pass",
+    "go test ./internal/gateway -count=1 -timeout 45m -> FAIL TestClaudeClientCacheAbsentUnchanged only, red on the clean base too (environmental: the real claude binary's args)",
+    "gofmt -l on the changed files -> empty",
+    "go vet ./... / GOOS=linux GOARCH=amd64 go vet -tags nogui ./... / GOOS=windows GOARCH=amd64 go vet ./... -> exit 0",
+    "go build ./... / GOOS=linux GOARCH=amd64 go build -tags nogui ./... / GOOS=windows GOARCH=amd64 go build ./... -> exit 0"
+  ],
+  "testsAdded": [
+    "TestCodexCompactionKeepsTheTurnsRule (internal/gateway/rules_native_turn_test.go): Codex Responses requests through the real handler on a ruled group with an intent classifier — the turn's start classifies once; the same turn_id with a compacted transcript (summary for the first message, one parsed turn) holds with no second call; a new turn_id classifies again; a subagent's task inside the same turn_id classifies as its own"
+  ],
+  "unverifiedBoundaries": [
+    "A real Codex compaction: the test is Codex's protocol shape (client_metadata x-codex-turn-metadata turn_id) through the real handler, not a captured production request",
+    "No real classifier or model was asked; the classifier is the package's stubbed Chat vendor",
+    "Turn ids are Codex's; another agent that names a turn in client_metadata would be bound the same way, untested"
+  ],
+  "filesChanged": [
+    "docs/subsystems/gateway-routing.md",
+    "internal/gateway/classify_test.go",
+    "internal/gateway/gateway.go",
+    "internal/gateway/rules.go",
+    "internal/gateway/rules_native_turn_test.go"
+  ]
+}

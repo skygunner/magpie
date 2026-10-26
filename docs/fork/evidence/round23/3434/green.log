@@ -1,0 +1,4 @@
+=== RUN   TestCodexCompactionKeepsTheTurnsRule
+--- PASS: TestCodexCompactionKeepsTheTurnsRule (0.03s)
+PASS
+ok  	github.com/yetone/magpie/internal/gateway	0.047s

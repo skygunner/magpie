@@ -1,0 +1,51 @@
+# verify: go1.26.8, branch fix/r25-dev-backend-handover, base 19253f67
+
+$ gofmt -l internal/gui/
+(nothing)
+
+$ git diff --check
+(clean)
+
+$ go vet ./...
+exit 0
+
+$ GOOS=linux GOARCH=amd64 go vet -tags nogui ./...
+exit 0
+
+$ GOOS=windows GOARCH=amd64 go vet ./...
+exit 0
+
+$ go vet -tags dev ./internal/gui
+exit 0
+
+$ go build ./...
+exit 0
+
+$ GOOS=linux GOARCH=amd64 go build -tags nogui ./...
+exit 0
+
+$ GOOS=windows GOARCH=amd64 go build ./...
+exit 0
+
+$ go build -tags dev ./...
+exit 0
+
+$ go test -tags dev -count=1 -timeout 45m ./internal/gui
+2 pre-existing failures, identical on the clean base (see below); every other test ok
+
+### pre-existing, proven at clean base 19253f67 with the change stashed:
+gui (0 passed, 2 failed)
+  [FAIL] TestWebCompresses
+     web_compress_test.go:69: / unzipped isn't the file (39989 bytes of 40483): <nil>
+     web_compress_test.go:76: / gzipped keeps the ETag of other bytes: ""
+     web_compress_test.go:79: / asked again with its gzipped ETag: 200, want 304
+     web_compress_test.go:83: / to a client that takes no gzip: Content-Encoding "", 39989 bytes of 40483
+  [FAIL] TestVersionedFilesKept
+     web_compress_test.go:130: the page doesn't name /app.js?v=fb16f1a58900
+(base-exit=0 after stash; same output both sides)
+
+### the two pass without -tags dev (they are dev-tag-only reds, and CI never runs the dev tag):
+$ go test -count=1 -run "TestWebCompresses|TestVersionedFilesKept" ./internal/gui
+Go test: 2 passed
+
+### LSP diagnostics: gopls is not installed on this machine, so none were available; the compiler and vet above stand in.

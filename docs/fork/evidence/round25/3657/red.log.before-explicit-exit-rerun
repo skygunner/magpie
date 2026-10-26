@@ -1,0 +1,10 @@
+=== RUN   TestImportSharedSkillUnticksForItsReaders
+    shared_skills_test.go:156: the library's is a link into the shared folder
+    shared_skills_test.go:159: goose's entry in ~/.agents/skills isn't the library's link
+    shared_skills_test.go:164: codex hasn't it while ticked
+    shared_skills_test.go:167: said to have it always: [{Name:drawio-skill Description:Draw diagrams Source:/tmp/magpie-library-test-1882714532/TestImportSharedSkillUnticksForItsReaders738769689/001/.agents/skills/drawio-skill Kind:folder Origin: Repo: Icon: Agents:[codex] Missing:false Problems:map[] Check:<nil> Always:[codex gemini opencode deveco goose crush dsh] Behind:[] Edited:false Gone:}] <nil>
+    shared_skills_test.go:172: /tmp/magpie-library-test-1882714532/TestImportSharedSkillUnticksForItsReaders738769689/001/.agents/skills/drawio-skill is there unticked: <nil>
+--- FAIL: TestImportSharedSkillUnticksForItsReaders (0.02s)
+FAIL
+FAIL	github.com/yetone/magpie/internal/library	0.031s
+FAIL

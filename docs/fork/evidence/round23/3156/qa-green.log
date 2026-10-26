@@ -1,0 +1,12 @@
+✔ chromium en: the story names the group's models as the group is now (874.037955ms)
+✔ chromium zh: the story names the group's models as the group is now (1002.519978ms)
+✔ webkit en: the story names the group's models as the group is now (5367.835185ms)
+✔ webkit zh: the story names the group's models as the group is now (5478.607238ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12869.523498

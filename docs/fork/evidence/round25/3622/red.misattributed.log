@@ -1,0 +1,22 @@
+# clean base 19253f67bca2310c32739a6eaac88546b3574dbc, only internal/agent/vscode_portable_test.go added
+# cd /tmp/r25-3260-red-base && GOTOOLCHAIN=go1.26.8 go test ./internal/agent -run TestVSCodePortableUserDir -count=1 -v
+# git status --short: ?? internal/agent/vscode_portable_test.go
+?? internal/agent/vscode_portable_test.go
+=== RUN   TestVSCodePortableUserDir
+=== RUN   TestVSCodePortableUserDir/portable_only
+    vscode_portable_test.go:78: Dir = "/tmp/TestVSCodePortableUserDirportable_only3083915505/001/config/Code/User", want "/tmp/TestVSCodePortableUserDirportable_only3083915505/001/scoop/apps/vscode/current/data/user-data/User"
+    vscode_portable_test.go:81: Path = "/tmp/TestVSCodePortableUserDirportable_only3083915505/001/config/Code/User/settings.json", want settings.json in "/tmp/TestVSCodePortableUserDirportable_only3083915505/001/scoop/apps/vscode/current/data/user-data/User"
+=== RUN   TestVSCodePortableUserDir/portable_beside_a_copied_plain_folder
+    vscode_portable_test.go:78: Dir = "/tmp/TestVSCodePortableUserDirportable_beside_a_copied_plain_folder2992243939/001/config/Code/User", want "/tmp/TestVSCodePortableUserDirportable_beside_a_copied_plain_folder2992243939/001/scoop/apps/vscode/current/data/user-data/User"
+    vscode_portable_test.go:81: Path = "/tmp/TestVSCodePortableUserDirportable_beside_a_copied_plain_folder2992243939/001/config/Code/User/settings.json", want settings.json in "/tmp/TestVSCodePortableUserDirportable_beside_a_copied_plain_folder2992243939/001/scoop/apps/vscode/current/data/user-data/User"
+=== RUN   TestVSCodePortableUserDir/plain_only
+=== RUN   TestVSCodePortableUserDir/neither
+--- FAIL: TestVSCodePortableUserDir (0.00s)
+    --- FAIL: TestVSCodePortableUserDir/portable_only (0.00s)
+    --- FAIL: TestVSCodePortableUserDir/portable_beside_a_copied_plain_folder (0.00s)
+    --- PASS: TestVSCodePortableUserDir/plain_only (0.00s)
+    --- PASS: TestVSCodePortableUserDir/neither (0.00s)
+FAIL
+FAIL	github.com/yetone/magpie/internal/agent	0.009s
+FAIL
+EXIT=1

@@ -1,0 +1,11 @@
+=== RUN   TestModelCueIsAWord
+    modelfits_test.go:95: "tool_call " cued true, want false
+    modelfits_test.go:95: "callback " cued true, want false
+    modelfits_test.go:95: "telemetry " cued true, want false
+    modelfits_test.go:95: "hotel " cued true, want false
+    modelfits_test.go:95: "monkey " cued true, want false
+    modelfits_test.go:95: "keyboard " cued true, want false
+--- FAIL: TestModelCueIsAWord (0.00s)
+FAIL
+FAIL	github.com/yetone/magpie/internal/redact	0.005s
+FAIL

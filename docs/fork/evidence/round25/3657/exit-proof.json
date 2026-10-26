@@ -1,0 +1,39 @@
+{
+  "issue": 3657,
+  "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+  "head": "82d23059d13bf87fc1ef426bb785e4daf68aa77d",
+  "copied_tests": [
+    "internal/library/agent_skills_test.go",
+    "internal/library/shared_skills_test.go",
+    "internal/library/skill_from_test.go",
+    "internal/library/skillgit_test.go"
+  ],
+  "red": {
+    "returncode": 1,
+    "command": [
+      "go",
+      "test",
+      "./internal/library",
+      "-run",
+      "^TestImportSharedSkillUnticksForItsReaders$",
+      "-count=1",
+      "-v",
+      "-timeout=120s"
+    ]
+  },
+  "green": {
+    "returncode": 0,
+    "command": [
+      "go",
+      "test",
+      "-race",
+      "./internal/library",
+      "-run",
+      "^TestImportSharedSkillUnticksForItsReaders$",
+      "-count=1",
+      "-v",
+      "-timeout=120s"
+    ]
+  },
+  "expected_exits": true
+}

@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-26T10:31:29.358Z",
+  "branchesPublished": 14,
+  "branchesCountingAsProductionFixes": 12,
+  "excludedFromProductionCount": [
+    {
+      "n": 3645,
+      "reason": "test-only delivery: branch 833c7cd6 changes only internal/gui/tests/*.test.cjs, zero production files",
+      "branch": "fix/r25-routing-log-icons-wait",
+      "head": "833c7cd61728607fdba75637e3271099847c2e70"
+    },
+    {
+      "n": 3668,
+      "reason": "force-with-lease boundary violation: replaced an already-published commit on the fork branch",
+      "branch": "fix/r25-grok-plan-absent-label",
+      "head": "7ca156c6876282fb3218b42e98429a2c492ebd90"
+    }
+  ],
+  "excludedNotDelivered": [
+    {
+      "n": 3649,
+      "reason": "excluded-unverifiable: no deterministic same-input RED possible without a machine-scale descriptor count and a real deadline; nothing pushed, nothing commented; verdict.md + excluded-candidate/ preserved"
+    }
+  ],
+  "deliveredProductionBranches": [
+    3647,
+    3655,
+    3656,
+    3657,
+    3622,
+    3621,
+    3632,
+    3620,
+    3674,
+    3661,
+    3684,
+    3648
+  ],
+  "shortfall": 3,
+  "note": "14 branches are published; only 12 satisfy production-fix semantics. The objective requires 15. Full-suite and expanded screening are still running; the shortfall is reported, not hidden."
+}

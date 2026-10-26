@@ -1,0 +1,76 @@
+$ NODE_PATH=/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules node --test internal/gui/tests/routing-levels.test.cjs
+✖ chromium en: a group names the reasoning levels agents are offered (5215.218584ms)
+✖ chromium zh: a group names the reasoning levels agents are offered (5209.269349ms)
+✖ webkit en: a group names the reasoning levels agents are offered (5519.703815ms)
+✖ webkit zh: a group names the reasoning levels agents are offered (5640.188571ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 21735.755355
+
+✖ failing tests:
+
+test at internal/gui/tests/routing-levels.test.cjs:64:5
+✖ chromium en: a group names the reasoning levels agents are offered (5215.218584ms)
+  AssertionError [ERR_ASSERTION]: the reason is under the levels, not only in the pill
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/r25-3620/clean-base/internal/gui/tests/routing-levels.test.cjs:141:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/routing-levels.test.cjs:64:5
+✖ chromium zh: a group names the reasoning levels agents are offered (5209.269349ms)
+  AssertionError [ERR_ASSERTION]: the reason is under the levels, not only in the pill
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/r25-3620/clean-base/internal/gui/tests/routing-levels.test.cjs:141:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/routing-levels.test.cjs:64:5
+✖ webkit en: a group names the reasoning levels agents are offered (5519.703815ms)
+  AssertionError [ERR_ASSERTION]: the reason is under the levels, not only in the pill
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/r25-3620/clean-base/internal/gui/tests/routing-levels.test.cjs:141:7)
+      at runNextTicks (node:internal/process/task_queues:65:5)
+      at process.processImmediate (node:internal/timers:541:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/routing-levels.test.cjs:64:5
+✖ webkit zh: a group names the reasoning levels agents are offered (5640.188571ms)
+  AssertionError [ERR_ASSERTION]: the reason is under the levels, not only in the pill
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/r25-3620/clean-base/internal/gui/tests/routing-levels.test.cjs:141:7)
+      at runNextTicks (node:internal/process/task_queues:65:5)
+      at process.processImmediate (node:internal/timers:541:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+exit=1

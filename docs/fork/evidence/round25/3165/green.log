@@ -1,0 +1,13 @@
+UTC: 2026-10-26T11:48:25Z
+HEAD: 19253f67bca2310c32739a6eaac88546b3574dbc
+go version go1.27.1-X:nodwarf5 linux/amd64
+COMMAND: go test -p 4 -tags nogui ./internal/gateway -run \^TestChatToolTurnReasoningDetailsCarriedOnce\$ -count=1 -v -timeout=10m
+=== RUN   TestChatToolTurnReasoningDetailsCarriedOnce
+=== RUN   TestChatToolTurnReasoningDetailsCarriedOnce/injected
+=== RUN   TestChatToolTurnReasoningDetailsCarriedOnce/already_present
+--- PASS: TestChatToolTurnReasoningDetailsCarriedOnce (0.00s)
+    --- PASS: TestChatToolTurnReasoningDetailsCarriedOnce/injected (0.00s)
+    --- PASS: TestChatToolTurnReasoningDetailsCarriedOnce/already_present (0.00s)
+PASS
+ok  	github.com/yetone/magpie/internal/gateway	0.017s
+EXIT_CODE=0

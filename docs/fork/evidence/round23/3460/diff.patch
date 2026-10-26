@@ -1,0 +1,202 @@
+diff --git a/docs/subsystems/providers-accounts.md b/docs/subsystems/providers-accounts.md
+index 0f5ad5fa..02f42f4c 100644
+--- a/docs/subsystems/providers-accounts.md
++++ b/docs/subsystems/providers-accounts.md
+@@ -55,7 +55,7 @@ keys and accounts per request is in [Gateway routing and fallback](gateway-routi
+ | Last served | `served.json` records when each account, plan or key last answered, shown as `lastServedAt` (#570) on `/v1/magpie/quotas` and on the Usage page's own cards (`Quotas` → `cardsServed`, this computer's cards only, the caches left alone). The Usage page and the tray panel show the last-answered account in full, and a menu bar card that follows the account in use (`codex|*`) takes the one that answered within the last hour, else `InUseLogin`'s guess, else the one that answered last at all (a plugin's accounts, #1516) (`trayInUseCard`; okingkee on X: A spent, B answering, the menu bar stayed on A). `NoteServed` calls `OnServedMoved` when a provider's answers move to another account or key, and `SwitchLogin` after a switch, so the menu bar reads its cards again at once. | [`served.go`](../../internal/provider/served.go), [`trayusage.go`](../../internal/gui/trayusage.go) |
+ | Partners | Services that pay to be listed first in the add sheet, under a heading of their own ("Partners · magpie's sponsors"). The list is `site/partners.js`, served at `usemagpie.ai/api/partners`: a change reaches users with a deploy, not a release. `Partners` never waits: it returns what was fetched last and fetches again behind the call on a process's first ask, whatever the kept list's age, and hourly after (10 minutes after a failure), keeping the list in `partners.json` in the cache folder. The magpie serving the gateway fetches it when it starts and whenever it is due, asked for or not (`KeepPartnersFresh`), so an app left open on another page still learns of a partner added. The file also says when the last fetch started (`tried`) and, when it failed, why (`error`, logged once until a fetch gets the list again), so a list that stops changing tells a fetch that fails from one that never came back (`tried` after `at`, no error) and from none asked (#3362). Each entry is checked again on every read (`validPartners`): its own id, never a built-in preset's, a name, an endpoint, https only, at most 12; what only magpie's presets may set (a decision API, no key, a user endpoint) is cleared. Its logo is fetched through `FetchIcon` and kept as an uploaded icon, used as it is while its `iconUrl` stays the same; the prune after a save of `providers.json` (`pruneIcons`) leaves the logos of the partners listed now (`keptPartnerIcons`), as it leaves a plugin's. A partner is a preset to the rest of magpie (`Preset`, `FromPreset`, the editor), and one no longer listed still is to the providers added from it (`Seen`), without the sponsored mark. The window lists a partner in the languages it names (`langs`) only and shows its tagline in the page's language (`notes`, else `en`). `MAGPIE_PARTNERS` points it elsewhere, `off` lists none; tests list none unless they name a list. How often each listed partner was shown, opened (its row, its key page) and added is counted per UTC day (`CountPartner`, capped at 20 of each and 5 adds, kept in `partner-counts.json` in the cache folder) and sent with the next day's stats event as `magpie partner` events (`internal/stats`); nothing is counted with the stats or their usage part off. A listed partner the add sheet (or the TUI's, or `magpie providers presets`) hasn't shown yet is new (`NoticePartners` keeps those shown, as `noticed` in `partners.json`, whatever the stats); the window's add button carries a small dot for it, with its name in the title, until the sheet shows it. | [`partners.go`](../../internal/provider/partners.go), [`partner_events.go`](../../internal/provider/partner_events.go), [`site/partners.js`](../../site/partners.js) |
+ | Local servers | A preset of `KindLocal` (Ollama, LM Studio, oMLX, MLX-Serve) is at its server's default port on this machine. Another address — a port, or another computer — is given in the window's editor, in its Server address field, shown first above the key and never folded (a folded one read as an LM Studio whose base URL can't be changed, mengxiangziyou on X), or in the TUI (asked on adding, `w` after); on the command line with `address=` (`atAddress` in `providers_cli.go`: every URL moves, from the preset's when the provider was saved with none, and `address=` alone puts a local server back at its preset's), or the URLs themselves (`url=`, `anthropic=`, `responses=`). `AtAddress` replaces only each URL's scheme, host and port, each API keeping its path; `AddressOf` is the address an editor starts from. The window sends the URLs moved only when the address was changed, so a Save doesn't move URLs set apart (another app's import). A provider of the user's own (no preset) has `w` in the TUI too: each base URL it has is asked in turn, typed in as it is, Enter alone keeping one (`customURLsAsk`). | [`local_address.go`](../../internal/provider/local_address.go), [`providers_cli.go`](../../internal/cli/providers_cli.go) |
+-| Protocol detection | Works out which of Chat, Responses, Anthropic Messages and Gemini generateContent a base URL speaks when a provider is added. Each is asked at the URL as it takes it (`DetectBase`); Gemini's at the `…/v1beta` beside a typed `…/v1` or bare host, a Gemini model from the list picked for it, with the key in `x-goog-api-key` (#1346). Detection, endpoint tests and model tests share `probe`, which adds `anthropic-version` only for Anthropic Messages; OpenAI probes omit that default so a relay that refuses it can answer. User-supplied headers still apply through `Sign`. The editor asks with the form as it stands, before any Save (#1545): the URL, key and models typed (`picked`, else the saved picks, else the vendor list); a key not typed again is the saved provider's, or for an unsaved copy the copied one's (`copyOf`). The probe writes nothing and adds no provider, and the route stays behind `magpie web`'s key. | [`detect.go`](../../internal/provider/detect.go), [`test.go`](../../internal/provider/test.go) |
++| Protocol detection | Works out which of Chat, Responses, Anthropic Messages and Gemini generateContent a base URL speaks when a provider is added. Each is asked at the URL as it takes it (`DetectBase`); Gemini's at the `…/v1beta` beside a typed `…/v1` or bare host, a Gemini model from the list picked for it, with the key in `x-goog-api-key` (#1346). Detection, endpoint tests and model tests share `probe`, which adds `anthropic-version` only for Anthropic Messages; OpenAI probes omit that default so a relay that refuses it can answer. User-supplied headers still apply through `Sign`. A plugin's models spoken to with `@ai-sdk/google` are probed on Code Assist (`ModelTest`, `testOne`, `tinyBody`): the envelope goes to the plugin, whose fetch turns it into the publisher's `streamGenerateContent` (#3460). A Google sign-in's have no request of their own and are tested through the gateway's translator (`testsTranslated`). The editor asks with the form as it stands, before any Save (#1545): the URL, key and models typed (`picked`, else the saved picks, else the vendor list); a key not typed again is the saved provider's, or for an unsaved copy the copied one's (`copyOf`). The probe writes nothing and adds no provider, and the route stays behind `magpie web`'s key. | [`detect.go`](../../internal/provider/detect.go), [`test.go`](../../internal/provider/test.go) |
+ | A pasted curl command | A curl command from a vendor's docs pasted into a custom provider's Base URL or API key fills the editor in (@mark_li21 on X). `curlOf` reads it as a shell would (lines joined by `\`, cmd's `^` or PowerShell's backtick; `curl.exe`; quotes and escapes), and takes: the API its URL's endpoint names (`…/chat/completions` Chat, `…/messages` Anthropic Messages, `…/responses` Responses) with the base URL before it, spelled as that API wants it (`respellURL`: Anthropic at its root, `/v1` after a bare host); the key from `Authorization: Bearer`, `x-api-key` or `api-key`, unless it only stands for one (`$OPENAI_API_KEY`, `${X}`, `%X%`, `<token>`, `YOUR_API_KEY`), when the key's box is left empty and focused; and the `model` of its JSON body, added to a new provider's models (a saved one's picks are left alone, since adding to none would narrow what it serves). A preset's editor takes only the key. A note (`editorError`, kind `note`) says what was taken, a placeholder like `{WorkspaceId}` left in the URL, and a URL with no known endpoint. Text that isn't a curl command pastes as before, several keys included. Tested on the docs' own examples (`fixtures/curl`). | [`app.js`](../../internal/gui/assets/app.js) (`curlOf`, `fromCurl`), [`provider-curl-paste.test.cjs`](../../internal/gui/tests/provider-curl-paste.test.cjs) |
+ 
+ ## Remote magpie
+diff --git a/internal/provider/plugin_codeassist_probe_test.go b/internal/provider/plugin_codeassist_probe_test.go
+new file mode 100644
+index 00000000..7adcbbcd
+--- /dev/null
++++ b/internal/provider/plugin_codeassist_probe_test.go
+@@ -0,0 +1,145 @@
++package provider
++
++import (
++	"context"
++	"encoding/json"
++	"io"
++	"net/http"
++	"path/filepath"
++	"strings"
++	"sync"
++	"testing"
++	"time"
++
++	"github.com/yetone/magpie/internal/plugin"
++	"github.com/yetone/magpie/internal/testenv"
++)
++
++// codeAssistVendor is the publisher endpoint a @ai-sdk/google plugin's
++// fetch turns the Code Assist envelope into, as issue #3460's Vertex AI
++// plugin does: it keeps what it was sent, and streams a Gemini answer.
++func codeAssistVendor(t *testing.T) *[][]byte {
++	t.Helper()
++	var mu sync.Mutex
++	got := &[][]byte{}
++	testenv.FakeVendor(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		b, _ := io.ReadAll(r.Body)
++		mu.Lock()
++		*got = append(*got, append([]byte(r.URL.Path+"?"+r.URL.RawQuery+"\n"), b...))
++		mu.Unlock()
++		w.Header().Set("Content-Type", "text/event-stream")
++		io.WriteString(w, `data: {"candidates":[{"content":{"parts":[{"text":"hi"}]}}]}`+"\n\n")
++	}))
++	return got
++}
++
++// fakePluginSignedIn is the fake plugin installed and one account signed
++// in, as magpie lists it: its gcloud sign-in's provider is the one whose
++// models issue #3460 reports on, fake-gemini on @ai-sdk/google.
++func fakePluginSignedIn(t *testing.T, ctx context.Context) plugin.Provider {
++	t.Helper()
++	bun := testenv.Bun(t)
++	claudeHome(t)
++	t.Setenv("MAGPIE_BUN", bun)
++	t.Cleanup(plugin.Settle)
++	abs, _ := filepath.Abs("../plugin/testdata/fake/index.js")
++	if _, err := plugin.Add(ctx, abs); err != nil {
++		t.Fatal(err)
++	}
++	key, err := plugin.Import(ctx, "fakeco", map[string]any{"type": "oauth", "refresh": "r-ok", "access": "a", "expires": 9e15, "accountId": "ok@fake"})
++	if err != nil {
++		t.Fatal(err)
++	}
++	saveLogins(t, savedLogin{Agent: "plugin:fakeco", User: "ok@fake", Home: key, On: true})
++	if _, err := plugin.Providers(ctx); err != nil {
++		t.Fatal(err)
++	}
++	return mustPlugin(t)
++}
++
++// googleOnly is the plugin's provider holding only its @ai-sdk/google
++// models, so Code Assist is all it speaks — the reporter's Vertex AI
++// plugin, whose models are all Gemini's own.
++func googleOnly(t *testing.T, pp plugin.Provider) Provider {
++	t.Helper()
++	var ms []plugin.Model
++	for _, m := range pp.Models {
++		if m.NPM == "@ai-sdk/google" {
++			ms = append(ms, m)
++		}
++	}
++	if len(ms) == 0 {
++		t.Fatalf("the fake plugin lists no @ai-sdk/google model: %+v", pp.Models)
++	}
++	pp.Models = ms
++	ls := pluginLogins(pp)
++	if len(ls) == 0 {
++		t.Fatal("the fake plugin's account isn't signed in")
++	}
++	return pluginProviderServing(pp, ls[0], nil)
++}
++
++// #3460: a plugin whose models are spoken to with @ai-sdk/google speaks
++// Code Assist, and its fetch turns that envelope into the publisher's
++// streamGenerateContent, so its models can be tested there rather than
++// being turned away with "this provider can't be sent a test request".
++func TestPluginGoogleModelIsTestable(t *testing.T) {
++	got := codeAssistVendor(t)
++	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
++	defer cancel()
++	p := googleOnly(t, fakePluginSignedIn(t, ctx))
++
++	if why := p.ModelTest(); why != "" {
++		t.Errorf("the GUI's Test models is off: %q", why)
++	}
++	rs := p.TestModels(ctx, []string{"fake-gemini"})
++	if len(rs) != 1 || !rs[0].OK || rs[0].Protocol != CodeAssist {
++		t.Fatalf("fake-gemini tested: %+v", rs)
++	}
++	if len(*got) != 1 {
++		t.Fatalf("the vendor got %d requests, want 1", len(*got))
++	}
++	line, body, _ := strings.Cut(string((*got)[0]), "\n")
++	if !strings.HasPrefix(line, "/v1/models/fake-gemini:streamGenerateContent?alt=sse") {
++		t.Errorf("sent to %q, want the publisher's streamGenerateContent", line)
++	}
++	var req struct {
++		Contents []struct {
++			Parts []struct {
++				Text string `json:"text"`
++			} `json:"parts"`
++		} `json:"contents"`
++		GenerationConfig struct {
++			MaxOutputTokens int `json:"maxOutputTokens"`
++		} `json:"generationConfig"`
++	}
++	if err := json.Unmarshal([]byte(body), &req); err != nil || len(req.Contents) != 1 || req.Contents[0].Parts[0].Text != "hi" || req.GenerationConfig.MaxOutputTokens != 16 {
++		t.Errorf("sent body %s: want Gemini's generateContent request (%v)", body, err)
++	}
++}
++
++// #3460: the provider-level test (`magpie provider test <id>`) tries the
++// Code Assist endpoint too, as it loops what the provider speaks.
++func TestPluginTestProbesCodeAssist(t *testing.T) {
++	got := codeAssistVendor(t)
++	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
++	defer cancel()
++	p := googleOnly(t, fakePluginSignedIn(t, ctx))
++
++	for _, r := range p.Test(ctx) {
++		if r.Protocol != CodeAssist {
++			continue
++		}
++		if !r.OK || r.Model != "fake-gemini" {
++			t.Fatalf("Code Assist tested: %+v", r)
++		}
++		for _, sent := range *got {
++			line, _, _ := strings.Cut(string(sent), "\n")
++			if strings.HasPrefix(line, "/v1/models/fake-gemini:streamGenerateContent?alt=sse") {
++				return
++			}
++		}
++		t.Fatalf("no probe reached the publisher's streamGenerateContent: %q", *got)
++	}
++	t.Fatalf("%s served no Code Assist probe", p.ID)
++}
+diff --git a/internal/provider/test.go b/internal/provider/test.go
+index e4e704b8..c63d85c7 100644
+--- a/internal/provider/test.go
++++ b/internal/provider/test.go
+@@ -153,7 +153,11 @@ func (p Provider) ModelTest() string {
+ 		return ""
+ 	}
+ 	for _, pr := range p.Speaks() {
+-		if pr == Chat || pr == Responses || pr == Anthropic || pr == Gemini && p.Gemini != "" {
++		// a plugin's Code Assist is its fetch's own address (plugins.go):
++		// the envelope goes to the plugin, which sends the publisher's
++		// generateContent (#3460). A Google sign-in's has no request of its
++		// own (testsTranslated).
++		if pr == Chat || pr == Responses || pr == Anthropic || pr == Gemini && p.Gemini != "" || pr == CodeAssist && p.IsPlugin() {
+ 			return ""
+ 		}
+ 	}
+@@ -192,6 +196,11 @@ func tinyBody(q Provider, proto Protocol, model string) (url, body string) {
+ 		return q.mantleBase(q.Responses, model) + "/responses", fmt.Sprintf(`{"model":%q,"input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"hi"}]}],"max_output_tokens":16}`, model)
+ 	case Anthropic:
+ 		return q.Anthropic + "/v1/messages", fmt.Sprintf(`{"model":%q,"max_tokens":16,"messages":[{"role":"user","content":"hi"}]}`, model)
++	case CodeAssist:
++		// the envelope pluginFetch unwraps into the publisher's
++		// generateContent, as a Google sign-in's requests are built
++		return q.Base(CodeAssist) + "/v1internal:streamGenerateContent?alt=sse",
++			fmt.Sprintf(`{"model":%q,"request":{"contents":[{"role":"user","parts":[{"text":"hi"}]}],"generationConfig":{"maxOutputTokens":16}}}`, model)
+ 	case Gemini:
+ 		if q.IsVertex() {
+ 			return vertexTest(q, model)
+@@ -289,7 +298,7 @@ func (p Provider) testOne(ctx context.Context, model string) Result {
+ 	}
+ 	var protos []Protocol
+ 	for _, pr := range p.Speaks() {
+-		if pr == Chat || pr == Responses || pr == Anthropic || pr == Gemini {
++		if pr == Chat || pr == Responses || pr == Anthropic || pr == Gemini || pr == CodeAssist && p.IsPlugin() {
+ 			protos = append(protos, pr)
+ 		}
+ 	}

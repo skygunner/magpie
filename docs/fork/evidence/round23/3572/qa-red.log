@@ -1,0 +1,8 @@
+2026/10/26 07:16:45 antigravity u@example.com: loadCodeAssist at https://cloudcode-pa.googleapis.com: current tier standard-tier, paid tier -, project "p1"
+2026/10/26 07:16:45 antigravity u@example.com: fetchAvailableModels at https://daily-cloudcode-pa.googleapis.com (antigravity/hub/2.9.1 linux/amd64; project "p1", current tier "standard-tier", paid tier "", entitlement "standard-tier"): 1 models, 1 kept; left out 0 not for chat [], 0 completion-only []; disabled []; Claude []
+--- FAIL: TestAntigravityRetriesCorruptedSignature (0.00s)
+    antigravity_signature_test.go:103: the turn: 400 {"error":{"message":"Antigravity: Corrupted thought signature.","type":"invalid_request_error"},"type":"error"}
+2026/10/26 07:16:45 antigravity u@example.com: fetchAvailableModels at https://daily-cloudcode-pa.googleapis.com (antigravity/hub/2.9.1 linux/amd64; project "p1", current tier "standard-tier", paid tier "", entitlement "standard-tier"): 1 models, 1 kept; left out 0 not for chat [], 0 completion-only []; disabled []; Claude []
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.037s
+FAIL

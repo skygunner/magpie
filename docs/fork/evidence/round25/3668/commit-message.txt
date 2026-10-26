@@ -1,0 +1,26 @@
+gui: an account with no Grok plan says Grok, not an invented SuperGrok (#3668)
+
+The account chip's Grok branch fell back to the literal "SuperGrok" when
+no plan was reported, labelling every plan-less account with a tier it
+may not be on. The reporter did not capture either account's API
+response. A known plan is kept as told; when none is known the pill now
+says the provider's own name, Grok, which this function's contract
+already is (its vendor and plan): no tier is invented and no new
+translation is needed.
+
+Not changed: the community Grok plugin still brands itself
+"Grok (SuperGrok)" and does not return a plan, so the real plan title
+needs that repo; this change only fixes magpie's own fallback.
+
+Verified on this change against base 19253f67bca2310c32739a6eaac88546b3574dbc:
+- NEW internal/gui/tests/grok-plan.test.cjs fails on a clean base copy
+  with `actual: ['SuperGrok','SuperGrok'] expected: ['Grok','Grok']`
+  and passes at this head (Chromium + WebKit, 5 languages, through the
+  real Providers page), together with the updated plugin-plan and
+  i18n-keys suites (9 pass, 0 fail), and the whole ./internal/gui Go
+  package under -race -shuffle=on (ok 55.9s; the same run without the
+  change red-lines TestCoreScriptBudget's exact-at-budget core scripts,
+  this change does not add bytes to app.js).
+- node --check on the three changed files; gofmt -l clean; go vet ./...;
+  go build ./...; GOOS=linux GOARCH=amd64 go build -tags nogui ./...;
+  GOOS=windows GOARCH=amd64 go build ./... — all green.

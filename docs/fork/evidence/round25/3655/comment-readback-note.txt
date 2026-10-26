@@ -1,0 +1,1 @@
+First POST (gh api -f body=@file) sent the literal path as the body: comment 6408451613, deleted (204). Reposted via JSON payload: comment 6408456830, body verified byte-identical (sha256 equal) to comment.md. skygunner has exactly 1 comment on the issue.

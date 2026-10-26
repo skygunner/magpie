@@ -1,0 +1,42 @@
+{
+  "issue": 3165,
+  "repository": "yetone/magpie",
+  "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+  "branch": "fix/r25-3165-reasoning-clear-test",
+  "head": "94d62c6a72193bb1846c24cb30908a2273fdfedb",
+  "remote_head": "94d62c6a72193bb1846c24cb30908a2273fdfedb",
+  "remote_matches_local": true,
+  "kind": "rework-regression-test-only",
+  "change": "one new table-driven test covering both tool-turn cleanup branches (reasoning_details injected, and injected with an existing reasoning_content). No production behavior added.",
+  "red": {
+    "log": "red.log",
+    "evidence": "both new cases fail with residual reasoning_details once the tool-turn cleanup is removed; the six pre-existing tests stay green, matching the third-party ablation report"
+  },
+  "green": {
+    "log": "green.log",
+    "evidence": "the new regression passes with the delivered cleanup restored"
+  },
+  "verification": {
+    "log": "verify.log",
+    "targeted_race": "pass (new regression, Reasoning/Kimi related tests)",
+    "package_race": "FAIL: whole internal/gateway -race, 679.115s, six failures; five reproduced with baseline production code restored, one (client version test) passing in a narrowed rerun and unattributed"
+  },
+  "unverified": [
+    "no real vendor request",
+    "no Windows runtime",
+    "the Responses-side failure was not reproduced",
+    "whether a non-tool message carrying both fields is refused by any vendor remains unproven"
+  ],
+  "comment": {
+    "id": 6415383816,
+    "url": "https://github.com/yetone/magpie/issues/3165#issuecomment-6415383816",
+    "author": "skygunner",
+    "created_at": "2026-10-26T11:55:27Z",
+    "updated_at": "2026-10-26T12:03:51Z",
+    "language": "en"
+  },
+  "files": [
+    "internal/gateway/*_test.go (new regression only; see diff.patch)",
+    "docs/fork/evidence/round25/3165/comment.md"
+  ]
+}

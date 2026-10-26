@@ -1,0 +1,420 @@
+diff --git a/internal/gui/assets/app.js b/internal/gui/assets/app.js
+index 19ffda8f..f6c090be 100644
+--- a/internal/gui/assets/app.js
++++ b/internal/gui/assets/app.js
+@@ -13645,7 +13645,7 @@ function accountQuota(data, user, capFor = () => 0, settable = null) {
+     fill.style.width = quotaFill(w) + "%";
+     track.append(fill);
+     capMark(track, w, capFor(w));
+-    m.append(el("span", "aq-n", t(w.name)), ...(w.text ? [] : [track]), el("b", "", quotaText(w)));
++    m.append(el("span", "aq-n", t(w.name)), ...(quotaNoShare(w) ? [] : [track]), el("b", "", quotaText(w)));
+     if (w.resetsAt) {
+       const at = new Date(w.resetsAt);
+       m.title = resetText(at, at.toLocaleString(intlLang()));
+@@ -13682,7 +13682,7 @@ function poolLine(line, ws, q, capFor = () => 0, settable = null) {
+       capMark(track, w, capFor(w));
+       // each of a pool's windows is set apart: its own part of the meter
+       const part = el("span", "aq-win");
+-      part.append(el("span", "aq-k", w.window ? shortWindow(w.window) : ""), track, el("b", "", quotaText(w)));
++      part.append(el("span", "aq-k", w.window ? shortWindow(w.window) : ""), ...(quotaNoShare(w) ? [] : [track]), el("b", "", quotaText(w)));
+       m.append(settable ? settable(part, w) : part);
+     }
+     const w = p.ws[0];
+@@ -14038,14 +14038,20 @@ setInterval(refreshLanes, 2000);
+ // own count, where it gives one, stands before the percentage.
+ let quotaLeft = false;
+ function to100(v) { return Math.max(0, Math.min(100, v)); }
++// quotaNoShare: the plugin didn't say how much of the window is used. Its
++// text is all there is, and no percentage may be read from it: 0 is a
++// reading, absent is not (#3650)
++function quotaNoShare(w) { return !!w.text || w.used == null; }
+ function tipLines(...a) { return a.filter(Boolean).join("\n"); }
+ function quotaFill(w) {
++  if (w.used == null) return 0;
+   const used = Math.round(to100(w.used));
+   return quotaLeft ? 100 - used : used;
+ }
+ function quotaText(w) {
+   if (w.unlimited) return t("Unlimited");
+   if (w.text) return w.display;
++  if (w.used == null) return w.display || t("No allowance reported");
+   const used = to100(w.used);
+   const n = quotaLeft ? 100 - used : used;
+   const pct = t(quotaLeft ? "{n} left" : "{n} used", { n: (Number.isInteger(n) ? n : n.toFixed(1)) + "%" });
+@@ -14060,7 +14066,7 @@ function quotaText(w) {
+ // provider.WithWindowStarts). over says more is used than an even pace
+ // would have, whichever way the meter reads.
+ function quotaPace(w, now = Date.now()) {
+-  if (w.unlimited || w.historyMissing || !w.startsAt || !w.resetsAt) return null;
++  if (w.unlimited || quotaNoShare(w) || w.historyMissing || !w.startsAt || !w.resetsAt) return null;
+   const s = Date.parse(w.startsAt), e = Date.parse(w.resetsAt);
+   if (!(e > s) || now < s || now >= e) return null;
+   const d = to100(w.used) - (100 * (now - s)) / (e - s);
+@@ -17383,8 +17389,8 @@ function panelQuotaCard(q) {
+   const balance = q.balance && balanceRow(q, "What is left on the account besides its windows", false);
+   // a pool's 5-hour and weekly rings, every pool's (a third pool once left
+   // Claude's out: 01huadalang on Discord), else three
+-  const fam = familyWindows(q.windows.filter((w) => !w.unlimited && !w.text));
+-  const tx = q.windows.filter((w) => w.text).map((w) => t(w.name) + " " + w.display).join(" · ");
++  const fam = familyWindows(q.windows.filter((w) => !w.unlimited && !quotaNoShare(w)));
++  const tx = q.windows.filter((w) => quotaNoShare(w)).map((w) => t(w.name) + " " + w.display).join(" · ");
+   if (!fam.length && (tx || q.windows.some((w) => w.unlimited))) {
+     card.append(pqLine(tx || t("Unlimited"), q));
+     if (balance) card.append(balance);
+@@ -18377,7 +18383,7 @@ function quotaWindows(sub) {
+     if (w.historyMissing) track.style.visibility = "hidden";
+     track.append(fill);
+     quota.append(labels);
+-    if (!w.unlimited && !w.text) quota.append(track);
++    if (!w.unlimited && !quotaNoShare(w)) quota.append(track);
+     // when it starts again, on the clock and how long until then
+     let r = null;
+     if (w.resetsAt) {
+diff --git a/internal/gui/tests/usage-no-reading.test.cjs b/internal/gui/tests/usage-no-reading.test.cjs
+new file mode 100644
+index 00000000..3767f9cd
+--- /dev/null
++++ b/internal/gui/tests/usage-no-reading.test.cjs
+@@ -0,0 +1,64 @@
++// Run with Node's test runner and Playwright on the module path; see README.md.
++// A plugin's usage window that leaves out used says nothing of how much of
++// it is spent — a 0% it never reported. The card shows what the plugin did
++// say (its display text) and no percentage, and no meter is drawn from it,
++// rather than "100% left" (or NaN%) from 0 it was never told (#3650). A
++// window that does say used still shows its share. Chromium and WebKit;
++// no backend, the API is faked here.
++const assert = require("node:assert/strict");
++const fs = require("node:fs/promises");
++const path = require("node:path");
++const { test } = require("node:test");
++const { chromium, webkit } = require("playwright");
++
++const assets = path.resolve(process.env.MAGPIE_ASSETS || path.join(__dirname, "../assets"));
++
++const quotas = [
++  // the reporter's plugin: a count in its display, no used
++  { provider: "plugin:loomy", name: "Loomy", user: "spent@example.com", windows: [{ name: "Credits", display: "0 / 5000" }] },
++  { provider: "claude", name: "Claude", user: "fine@example.com", windows: [{ name: "5 hours", used: 40 }] },
++];
++
++function serve(lang) {
++  return async (route) => {
++    const url = new URL(route.request().url());
++    const json = (data) => route.fulfill({ json: data });
++    if (url.pathname === "/boot.js") return route.fulfill({ contentType: "text/javascript", body: `window.bootPrefs = {lang:"${lang}",theme:"light",web:true};` });
++    if (url.pathname === "/wails/runtime.js") return route.fulfill({ contentType: "text/javascript", body: "export const Window = {};" });
++    if (url.pathname === "/api/state") return json({ agents: [], profiles: [], settings: { lang, theme: "light" } });
++    if (url.pathname === "/api/providers") return json({ providers: [], presets: [], excluded: [], gateway: { running: true, window: true } });
++    if (url.pathname === "/api/usage/quotas") return json(quotas);
++    if (url.pathname === "/api/groups") return json({ groups: [], models: [] });
++    if (url.pathname === "/api/plugins") return json({ plugins: [] });
++    if (url.pathname.startsWith("/api/")) return json({});
++    const file = path.join(assets, url.pathname === "/" ? "index.html" : url.pathname);
++    const contentType = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png" }[path.extname(file)];
++    try { await route.fulfill({ body: await fs.readFile(file), contentType }); } catch { await route.fulfill({ status: 404, body: "" }); }
++  };
++}
++
++for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"])) {
++  test(`${engine}: a window that didn't say used shows its text, not a percentage`, async (t) => {
++    const browser = await (engine === "webkit" ? webkit.launch() : chromium.launch({ channel: "chromium" }));
++    t.after(() => browser.close());
++    const page = await browser.newPage({ viewport: { width: 900, height: 700 }, reducedMotion: "reduce" });
++    page.setDefaultTimeout(5000);
++    const errors = [];
++    page.on("pageerror", (e) => errors.push(e.message));
++    await page.route("**/*", serve("en"));
++    await page.goto("http://magpie.test/?view=usage");
++
++    const spent = page.locator(".subscription-card", { hasText: "Loomy" });
++    await spent.locator(".quota-n").waitFor();
++    const text = await spent.locator(".quota-n").innerText();
++    assert.match(text, /0 \/ 5000/, `the plugin's own count: ${text}`);
++    assert.doesNotMatch(text, /NaN|%|100% left/, `no share from a used it never sent: ${text}`);
++    assert.equal(await spent.locator(".quota-track").count(), 0, "no meter from a share it never sent");
++
++    // a window that does say used keeps its share
++    const fine = page.locator(".subscription-card", { hasText: "Claude" });
++    await fine.locator(".quota-n").waitFor();
++    assert.match(await fine.locator(".quota-n").innerText(), /40%/, "a window that said its share shows it");
++    assert.deepEqual(errors, []);
++  });
++}
+diff --git a/internal/plugin/host.js b/internal/plugin/host.js
+index 600d3580..d71a2ce9 100644
+--- a/internal/plugin/host.js
++++ b/internal/plugin/host.js
+@@ -2329,7 +2329,8 @@ async function load({ provider, account, proxy }) {
+ //       ms; none: it never runs out), window? ("fiveHour", "weekly") }]
+ //       (every reset still to be used) } (the rate-limit resets the
+ //       account may spend),
+-//     windows?: [{ name, used (percent, 0–100), resetsAt? (ISO or ms),
++//     windows?: [{ name, used (percent, 0–100; left out: the plugin didn't
++//       say, which is no share and not 0%), resetsAt? (ISO or ms),
+ //       resetSecs?, display?, amount? / limit? / unit? (the window's own
+ //       count, when it counts in amounts: amount of limit used, in unit,
+ //       "credits"), span? (seconds the window runs), model? (a
+@@ -2385,7 +2386,7 @@ async function usageOf(provider, account) {
+         : null,
+     windows: (Array.isArray(u.windows) ? u.windows : []).map((w) => ({
+       name: text(w?.name),
+-      used: Math.max(0, num(w?.used)), // past 100 when overspent
++      used: w?.used == null ? null : Math.max(0, num(w?.used)), // past 100 when overspent; null: not said
+       resetsAt: when(w?.resetsAt),
+       resetSecs: Math.max(0, Math.round(num(w?.resetSecs))),
+       display: text(w?.display),
+@@ -2435,7 +2436,8 @@ async function checkinOf(provider, account) {
+   const num = (v) => (typeof v === "number" && isFinite(v) ? Math.max(0, v) : 0)
+   const message = typeof r.message === "string" ? r.message : ""
+   if (!checkinOutcomes.includes(r.outcome)) {
+-    return { outcome: "failed", credit: 0, streak: 0, message: message || `the plugin answered no outcome (${JSON.stringify(r.outcome ?? null)})` }
++    const said = r.outcome === undefined || r.outcome === null ? "no outcome" : JSON.stringify(r.outcome)
++    return { outcome: "failed", credit: 0, streak: 0, message: message ? `the plugin answered ${said}: ${message}` : `the plugin answered ${said}` }
+   }
+   return { outcome: r.outcome, credit: num(r.credit), streak: Math.round(num(r.streak)), message }
+ }
+diff --git a/internal/plugin/providers.go b/internal/plugin/providers.go
+index 4aef959e..a48e3758 100644
+--- a/internal/plugin/providers.go
++++ b/internal/plugin/providers.go
+@@ -1072,7 +1072,7 @@ type UsageResets struct {
+ 
+ type UsageWindow struct {
+ 	Name      string   `json:"name"`
+-	Used      float64  `json:"used"`     // percent
++	Used      *float64 `json:"used"`     // percent; nil when the plugin didn't say
+ 	ResetsAt  string   `json:"resetsAt"` // RFC 3339
+ 	ResetSecs int64    `json:"resetSecs"`
+ 	Display   string   `json:"display"`
+diff --git a/internal/plugin/testdata/fake/index.js b/internal/plugin/testdata/fake/index.js
+index d90c7521..dab055e0 100644
+--- a/internal/plugin/testdata/fake/index.js
++++ b/internal/plugin/testdata/fake/index.js
+@@ -268,7 +268,7 @@ export const FakePlugin = async ({ client }) => ({
+               case "ck-throw":
+                 throw new Error("FakeCo's check-in is down")
+               case "ck-odd":
+-                return { outcome: "yes" }
++                return { outcome: "yes", message: "the daily credits were refreshed" }
+             }
+             return { outcome: "inactive" }
+           },
+diff --git a/internal/provider/allowance_pooled_test.go b/internal/provider/allowance_pooled_test.go
+index 72d74eac..0ecdc1c5 100644
+--- a/internal/provider/allowance_pooled_test.go
++++ b/internal/provider/allowance_pooled_test.go
+@@ -16,9 +16,9 @@ func TestAllowancePooled(t *testing.T) {
+ 	month := now.Add(20 * 24 * time.Hour)
+ 	pool := map[string]bool{"auto": true, "composer-2": true}
+ 	q := quotaOfPlugin(SubscriptionQuota{}, plugin.Usage{Windows: []plugin.UsageWindow{
+-		{Name: "Cursor Models", Used: 12, Models: []string{"auto", "composer-2"}},
+-		{Name: "Other Models", Used: 100, NotModels: []string{"auto", "composer-2"}},
+-		{Name: "Total", Used: 60, Aside: true},
++		{Name: "Cursor Models", Used: fptr(12), Models: []string{"auto", "composer-2"}},
++		{Name: "Other Models", Used: fptr(100), NotModels: []string{"auto", "composer-2"}},
++		{Name: "Total", Used: fptr(60), Aside: true},
+ 	}})
+ 	cursor := allowanceOf(q.Windows, now)
+ 	for _, m := range []string{"auto", "composer-2", "claude-4.6-sonnet", "gpt-5.5"} {
+@@ -59,9 +59,9 @@ func TestPluginPoolCountsBareIDOfSizes(t *testing.T) {
+ 	now := time.Now()
+ 	pool := []string{"auto", "grok-4.7@256k", "grok-4.7@500k", "composer-2.5", "default"}
+ 	q := quotaOfPlugin(SubscriptionQuota{}, plugin.Usage{Windows: []plugin.UsageWindow{
+-		{Name: "Cursor Models", Used: 16, Models: pool},
+-		{Name: "Other Models", Used: 100, NotModels: pool},
+-		{Name: "Total", Used: 60, Aside: true},
++		{Name: "Cursor Models", Used: fptr(16), Models: pool},
++		{Name: "Other Models", Used: fptr(100), NotModels: pool},
++		{Name: "Total", Used: fptr(60), Aside: true},
+ 	}})
+ 	a := allowanceOf(q.Windows, now)
+ 	for m, want := range map[string]float64{
+@@ -89,8 +89,8 @@ func TestPluginPoolCountsBareIDOfSizes(t *testing.T) {
+ 	// the other way: the pool lists a bare id (Cursor's autoBucketModels),
+ 	// and the model is asked for at a size
+ 	q = quotaOfPlugin(SubscriptionQuota{}, plugin.Usage{Windows: []plugin.UsageWindow{
+-		{Name: "Cursor Models", Used: 16, Models: []string{"auto", "grok-4.8"}},
+-		{Name: "Other Models", Used: 100, NotModels: []string{"auto", "grok-4.8"}},
++		{Name: "Cursor Models", Used: fptr(16), Models: []string{"auto", "grok-4.8"}},
++		{Name: "Other Models", Used: fptr(100), NotModels: []string{"auto", "grok-4.8"}},
+ 	}})
+ 	a = allowanceOf(q.Windows, now)
+ 	if used, _ := a.For("grok-4.8@1m", now); used != 16 {
+diff --git a/internal/provider/plugin_checkin_test.go b/internal/provider/plugin_checkin_test.go
+index 02b3f92d..388b4a54 100644
+--- a/internal/provider/plugin_checkin_test.go
++++ b/internal/provider/plugin_checkin_test.go
+@@ -113,13 +113,18 @@ func TestPluginCheckinRunsAsTheBuiltinsDo(t *testing.T) {
+ 	}
+ 	failed := 0
+ 	for k := range got {
+-		if strings.Contains(k, "check-in is down") || strings.Contains(k, "no outcome") {
++		if strings.Contains(k, "check-in is down") || strings.Contains(k, "the plugin answered") {
+ 			failed++
+ 		}
+ 	}
+ 	if failed != 2 {
+ 		t.Fatalf("the failures (ck-throw, ck-odd): %+v", rs)
+ 	}
++	// an outcome magpie doesn't know keeps the plugin's message, marked as
++	// the plugin's own word, so "failed" can't read as contradicting it (#3650)
++	if _, ok := got[CheckinFailed+`:the plugin answered "yes": the daily credits were refreshed`]; !ok {
++		t.Fatalf("ck-odd's message: %+v", rs)
++	}
+ 	if p := pressed(t, presses); len(p) != len(keys) {
+ 		t.Fatalf("pressed %q", p)
+ 	}
+diff --git a/internal/provider/plugin_usage.go b/internal/provider/plugin_usage.go
+index f1f3bcdf..8e47b025 100644
+--- a/internal/provider/plugin_usage.go
++++ b/internal/provider/plugin_usage.go
+@@ -155,13 +155,20 @@ func quotaOfPlugin(q SubscriptionQuota, u plugin.Usage) SubscriptionQuota {
+ 		sortResetCards(q.Resets.Each)
+ 	}
+ 	for _, x := range u.Windows {
+-		w := QuotaWindow{Name: x.Name, Used: x.Used, ResetSecs: x.ResetSecs, Display: x.Display,
++		w := QuotaWindow{Name: x.Name, ResetSecs: x.ResetSecs, Display: x.Display,
+ 			Amount: x.Amount, Limit: x.Limit, Unit: x.Unit,
+ 			Span: time.Duration(x.Span * float64(time.Second)), Model: strings.ToLower(x.Model), Aside: x.Aside}
++		if x.Used != nil {
++			w.Used = *x.Used
++		} else if !x.Aside {
++			// the plugin didn't say how much of it is used: its text is all
++			// there is, and routing has no share to count (#3650)
++			w.Text, w.Aside = true, true
++		}
+ 		// a row set aside with text and nothing counted is that text: a
+ 		// window that counts nothing yet says 0 with a count, or with no
+ 		// text, and one that stops the account is a reading at 0
+-		w.Text = x.Aside && x.Display != "" && x.Used == 0 && x.Amount == 0 && x.Limit == 0
++		w.Text = w.Text || x.Aside && x.Display != "" && (x.Used == nil || *x.Used == 0) && x.Amount == 0 && x.Limit == 0
+ 		if t, err := time.Parse(time.RFC3339, x.ResetsAt); err == nil {
+ 			w.ResetsAt = &t
+ 		}
+diff --git a/internal/provider/plugin_usage_absent_test.go b/internal/provider/plugin_usage_absent_test.go
+new file mode 100644
+index 00000000..84581dc7
+--- /dev/null
++++ b/internal/provider/plugin_usage_absent_test.go
+@@ -0,0 +1,36 @@
++package provider
++
++import (
++	"testing"
++	"time"
++
++	"github.com/yetone/magpie/internal/plugin"
++)
++
++// A plugin that leaves out used says nothing of how much of a window is
++// spent: a 0 is a reading, absent is not. The window goes as its text,
++// never "100% left" (QuotaWindow.Text), and has no share in the allowance
++// routing ranks on; an account whose windows all say nothing is unknown to
++// routing, not the account with the most left (#3650).
++func TestPluginWindowWithoutUsedIsNoReading(t *testing.T) {
++	now := time.Now()
++	q := quotaOfPlugin(SubscriptionQuota{Provider: "loomy-plugin", User: "u"}, plugin.Usage{Windows: []plugin.UsageWindow{
++		{Name: "Credits", Display: "0 / 5000"},
++		{Name: "Daily", Used: fptr(0), Display: "0 / 100", Limit: 100},
++	}})
++	if !q.Windows[0].Text || !q.Windows[0].Aside {
++		t.Errorf("not said: Text %v, Aside %v", q.Windows[0].Text, q.Windows[0].Aside)
++	}
++	if q.Windows[1].Text || q.Windows[1].Aside {
++		t.Errorf("a 0 that was said: Text %v, Aside %v", q.Windows[1].Text, q.Windows[1].Aside)
++	}
++	if a := allowanceOf(q.Windows, now); len(a) != 1 || a[0].Name != "Daily" || a[0].Used != 0 {
++		t.Errorf("the allowance routing ranks on: %+v", a)
++	}
++	only := quotaOfPlugin(SubscriptionQuota{Provider: "loomy-plugin", User: "v"}, plugin.Usage{Windows: []plugin.UsageWindow{
++		{Name: "Credits", Display: "0 / 5000"},
++	}})
++	if a := allowanceOf(only.Windows, now); len(a) != 0 {
++		t.Errorf("a window that said nothing is an allowance: %+v", a)
++	}
++}
+diff --git a/internal/provider/plugin_usage_test.go b/internal/provider/plugin_usage_test.go
+index 47d377ba..44e53871 100644
+--- a/internal/provider/plugin_usage_test.go
++++ b/internal/provider/plugin_usage_test.go
+@@ -14,6 +14,9 @@ import (
+ 	"github.com/yetone/magpie/internal/testenv"
+ )
+ 
++// fptr is a plugin's window share, for the tests' literals.
++func fptr(v float64) *float64 { return &v }
++
+ // A plugin's accounts show their allowance as the built-ins' do: beside
+ // each account, on the usage page, and to the gateway, a window counting
+ // only some models holding back those alone.
+diff --git a/internal/provider/plugin_usage_text_test.go b/internal/provider/plugin_usage_text_test.go
+index 91cd3d0f..a19cb5a8 100644
+--- a/internal/provider/plugin_usage_text_test.go
++++ b/internal/provider/plugin_usage_text_test.go
+@@ -18,9 +18,9 @@ import (
+ func TestPluginTextRowIsText(t *testing.T) {
+ 	q := quotaOfPlugin(SubscriptionQuota{Provider: "autoclaw-plugin", User: "u"}, plugin.Usage{Windows: []plugin.UsageWindow{
+ 		{Name: "积分余额", Display: "1,234 积分", Aside: true},
+-		{Name: "5 hours", Used: 40, Display: "40 / 100"},
++		{Name: "5 hours", Used: fptr(40), Display: "40 / 100"},
+ 		{Name: "Credits", Display: "0 / 50", Limit: 50, Aside: true},
+-		{Name: "On-demand", Display: "$0 / $20"},
++		{Name: "On-demand", Used: fptr(0), Display: "$0 / $20"},
+ 		{Name: "Bare", Aside: true},
+ 	}})
+ 	want := []bool{true, false, false, false, false}
+diff --git a/internal/provider/quotas_dedupe_test.go b/internal/provider/quotas_dedupe_test.go
+index d7255fb2..65692fbf 100644
+--- a/internal/provider/quotas_dedupe_test.go
++++ b/internal/provider/quotas_dedupe_test.go
+@@ -76,7 +76,7 @@ func TestGLMPlanMatchesZCodePlugin(t *testing.T) {
+ 	for _, id := range []string{"zcode", "zcode-plugin"} {
+ 		t.Run(id, func(t *testing.T) {
+ 			sub := quotaOfPlugin(SubscriptionQuota{Provider: id, User: "me@example.com"}, plugin.Usage{
+-				Windows: []plugin.UsageWindow{{Name: "Weekly", Span: 7 * 24 * 60 * 60, ResetsAt: reset.Format(time.RFC3339)}},
++				Windows: []plugin.UsageWindow{{Name: "Weekly", Used: fptr(0), Span: 7 * 24 * 60 * 60, ResetsAt: reset.Format(time.RFC3339)}},
+ 			})
+ 			for _, provider := range []string{"zhipu", "zai", "custom-glm"} {
+ 				plan := SubscriptionQuota{Provider: provider, glmPlan: true, User: "work key",
+diff --git a/internal/provider/routing.go b/internal/provider/routing.go
+index 3058c0d1..b4d76836 100644
+--- a/internal/provider/routing.go
++++ b/internal/provider/routing.go
+@@ -518,7 +518,14 @@ func Allowances(agent string) map[string]Allowance {
+ 				if q.Error != "" || len(q.Windows) == 0 {
+ 					continue
+ 				}
+-				all[user] = allowanceOf(q.Windows, time.Now()).restartedBy(resetRunsOut(agent, user, q.Windows, q.Resets))
++				a := allowanceOf(q.Windows, time.Now())
++				if len(a) == 0 {
++					// every window is its text or set aside: no share to rank the
++					// account on, as one never read (a plugin that doesn't say how
++					// much is used, #3650)
++					continue
++				}
++				all[user] = a.restartedBy(resetRunsOut(agent, user, q.Windows, q.Resets))
+ 			}
+ 			c.Lock()
+ 			now := time.Now()
+@@ -749,7 +756,7 @@ func allowanceOf(ws []QuotaWindow, now time.Time) Allowance {
+ 	}
+ 	var a Allowance
+ 	for _, w := range ws {
+-		if w.Aside {
++		if w.Aside || w.Text {
+ 			continue
+ 		}
+ 		l := Limit{Used: w.Used, Span: w.Span, Model: w.Model, Amount: w.Amount, Of: w.Limit, Unit: w.Unit, matches: w.matches, partial: w.partial, Name: w.Name, Credits: w.Credits}
+diff --git a/internal/provider/workbuddy_runs_out_test.go b/internal/provider/workbuddy_runs_out_test.go
+index 0766a9da..390d3c24 100644
+--- a/internal/provider/workbuddy_runs_out_test.go
++++ b/internal/provider/workbuddy_runs_out_test.go
+@@ -17,7 +17,7 @@ import (
+ func TestWorkBuddyCreditsRunOutForRouting(t *testing.T) {
+ 	now := time.Date(2026, 10, 11, 12, 0, 0, 0, time.UTC)
+ 	credits := func(runsOutAt string) plugin.Usage {
+-		return plugin.Usage{Plan: "Pro", Windows: []plugin.UsageWindow{{Name: "Credits", Used: 100 * 17.6 / 2250,
++		return plugin.Usage{Plan: "Pro", Windows: []plugin.UsageWindow{{Name: "Credits", Used: fptr(100 * 17.6 / 2250),
+ 			Display: "17.6 / 2250", Amount: 17.6, Limit: 2250, Unit: "credits", RunsOutAt: runsOutAt, RunsOut: 232.4}}}
+ 	}
+ 	q := quotaOfPlugin(SubscriptionQuota{}, credits("2026-10-12T16:39:27.000Z"))

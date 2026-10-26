@@ -1,0 +1,31 @@
+{
+  "issue": 3632,
+  "title": "filememo: Forget closes a channel another synctest bubble made, so internal/provider crashes on main since 091153bf",
+  "verdict": "fixed",
+  "branch": "fix/r25-filememo-forget-bubble",
+  "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+  "head": "3a0b44793653ee8f752f73a8efe215514b6d5822",
+  "testCommands": [
+    "GOTOOLCHAIN=go1.26.8 go test -run '^TestForgetsAcrossSynctestBubbles$' -v ./internal/filememo/",
+    "GOTOOLCHAIN=go1.26.8 go test -count=1 ./internal/filememo/",
+    "GOTOOLCHAIN=go1.26.8 go test -count=1 ./internal/provider/",
+    "GOTOOLCHAIN=go1.26.8 go vet ./...",
+    "GOTOOLCHAIN=go1.26.8 go build ./...",
+    "GOOS=linux GOARCH=amd64 GOTOOLCHAIN=go1.26.8 go build -tags nogui ./...",
+    "GOOS=windows GOARCH=amd64 GOTOOLCHAIN=go1.26.8 go build ./...",
+    "gofmt -l internal/filememo internal/provider"
+  ],
+  "testsAdded": [
+    "TestForgetsAcrossSynctestBubbles"
+  ],
+  "filesChanged": [
+    "internal/filememo/filememo.go",
+    "internal/filememo/forget_bubble_test.go"
+  ],
+  "preExistingRed": [],
+  "unverifiedBoundaries": [
+    "not run on macOS CI (local builds: linux/amd64 + windows/amd64 only)",
+    "based on BASE 19253f67 as instructed; upstream main has 7 newer commits whose new filememo wake() (de49433f, another-process writes) uses the same close(written)+make pattern and needs the same lazy treatment when this lands there",
+    "GUI end-to-end not exercised (change touches no UI path)"
+  ]
+}

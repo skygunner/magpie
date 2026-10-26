@@ -1,0 +1,32 @@
+{
+  "issue": 3430,
+  "title": "[Bug] 走 Messages API 的 Claude 回复，用量里的推理 token 恒为 0（aUsage 不读 output_tokens_details.thinking_tokens）",
+  "verdict": "fixed",
+  "skipReason": null,
+  "branch": "fix/anthropic-thinking-tokens",
+  "base": "01468003348ede896c5126e9fd81057e1e58765c",
+  "head": "fb6763d9f236f71dd7a76fb0c4a4275ac1c89193",
+  "pushedHead": "fb6763d9f236f71dd7a76fb0c4a4275ac1c89193",
+  "rootCause": "aUsage in internal/gateway/anthropic.go had no output_tokens_details, so aUsage.usage() never filled Usage.Reasoning: every Claude reply over the Messages API (Anthropic, Copilot, Bedrock, relays) was recorded with reasoning 0, on both the relayed path (sniff.go's usageSniffer) and the translated decoder (decodeAnthropic's message_delta). The reverse direction was missing too: Usage.anthropic() wrote no output_tokens_details, so a Chat/Responses upstream's reasoning reached a Claude client as none.",
+  "fix": "aUsage gains OutputTokensDetails{ThinkingTokens} read by usage(); Usage.anthropic() writes it back when Reasoning > 0 (output unchanged when 0).",
+  "testCommands": [
+    "RED/GREEN: go test ./internal/gateway/ -run TestMessagesReplyCountsItsThinkingTokens -count=1",
+    "go test ./internal/gateway/... ./internal/usage/... -count=1",
+    "gofmt -l internal/gateway/anthropic.go internal/gateway/anthropic_thinking_tokens_test.go",
+    "go vet ./...",
+    "GOOS=linux GOARCH=amd64 go vet -tags nogui ./...",
+    "GOOS=windows GOARCH=amd64 go vet ./...",
+    "go build ./...",
+    "GOOS=linux GOARCH=amd64 go build -tags nogui ./...",
+    "GOOS=windows GOARCH=amd64 go build ./..."
+  ],
+  "testsAdded": ["internal/gateway/anthropic_thinking_tokens_test.go TestMessagesReplyCountsItsThinkingTokens (relayed + translated)"],
+  "unverifiedBoundaries": [
+    "No real Copilot/Anthropic/Bedrock reply was tried: the relayed half uses Copilot's real message_delta bytes (text cut) from the issue, the translated half a local Chat SSE.",
+    "The reporter's own reference commit (mdwsk88/magpie gateway-anthropic-thinking-tokens 9feac29c6) was not read in full; this is an independent implementation of the same root cause on the current base. Credit mdwsk88 in the public comment.",
+    "Not run: /v1/chat/completions and /v1/responses client paths against an Anthropic upstream (the issue's reporter tested those too). Both decode aUsage through the same usage() that was fixed, and OpenAI-format usage already carried reasoning_tokens before, but that is reasoning, not a run.",
+    "DecodeOf's speed numbers for Messages replies change as a consequence (that is the issue's intent); no test pins an old DecodeOf value for such a reply."
+  ],
+  "filesChanged": ["internal/gateway/anthropic.go", "internal/gateway/anthropic_thinking_tokens_test.go"],
+  "evidence": ["red.log", "green.log", "diff.patch", "checks.log", "tests.log", "suite-summary.txt"]
+}

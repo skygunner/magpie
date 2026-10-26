@@ -1,0 +1,6 @@
+[object Promise]
+$ cd /home/vincenty/Projects/magpie-issues/r25-usage-dedup-session-file && GIT_MASTER=1 git push -u origin fix/r25-usage-dedup-session-file
+(exit 0, new branch)
+$ GIT_MASTER=1 git ls-remote origin refs/heads/fix/r25-usage-dedup-session-file
+18006848027b956553615e5dd462a2e6580cb92d	refs/heads/fix/r25-usage-dedup-session-file
+EXIT=0

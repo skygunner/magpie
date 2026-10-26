@@ -1,0 +1,28 @@
+{
+ "issue": 3541,
+ "title": "redact: user@host.local is counted as an email",
+ "verdict": "fixed",
+ "skipReason": null,
+ "branch": "fix/redact-local-host",
+ "base": "01468003348ede896c5126e9fd81057e1e58765c",
+ "head": "aa0e3ec7cbbc8df0620d133764f392f6bc07cbed",
+ "testCommands": [
+  "go test ./internal/redact -run TestLocalHostIsNoEmail -count=1",
+  "go test ./internal/redact -count=1",
+  "go vet ./... ; GOOS=linux GOARCH=amd64 go vet -tags nogui ./... ; GOOS=windows GOARCH=amd64 go vet ./...",
+  "go build ./... ; GOOS=linux GOARCH=amd64 go build -tags nogui ./... ; GOOS=windows GOARCH=amd64 go build ./...",
+  "gofmt -l internal/redact/"
+ ],
+ "testsAdded": [
+  "TestLocalHostIsNoEmail: ssh/curl/vnc to user@host.local, pi@nas.local:8080 and me@macbook.local go unmasked, while a name on a real domain in the same sentence is still masked"
+ ],
+ "unverifiedBoundaries": [
+  "No live gateway run: the rule is exercised through Mask with Personal on, the same entry the gateway's masker takes.",
+  "Only the .local suffix is added; other reserved mDNS/private suffixes (.lan, .home.arpa) are untouched because no report covers them."
+ ],
+ "filesChanged": [
+  "internal/redact/redact.go",
+  "internal/redact/local_test.go"
+ ],
+ "preExistingRed": []
+}

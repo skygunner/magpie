@@ -1,0 +1,103 @@
+commit 91a19f2568f5d7d504a3ca11c97ea027294b04ca
+Author: vincent <vincent@users.noreply.github.com>
+Date:   Mon Oct 26 07:03:23 2026 +1000
+
+    agent: a comment between dsh patch-list entries survives a rewrite (#3329)
+    
+    dshParse gave the lines before the first entry to head (#2667) and a flow
+    list's tail to its entry (#2674), but a comment line at the left edge between
+    two entries fell into the default branch: it was appended to the entry before
+    it. dshPutRoute and dshPutSearch rebuild an entry's lines whole — yaml.Node
+    carries no comments, and dshSearchLines is a template — so the next round
+    dropped the comment. Vibe Island's managed block lost its begin marker within
+    30 seconds while its closing marker, attached to the entry magpie does not
+    rebuild, stayed: the tool then refused to edit the file ("closing marker
+    without a begin marker").
+    
+    A comment or blank line at the left edge between entries is now kept as its
+    own entry between the two, so no rebuild of either can take it. An indented
+    line still belongs to the entry before it, so what a genuine patch entry is
+    does not change.
+    
+    Not the following entry instead: a marker does precede the block it guards,
+    but that entry may itself be one magpie writes again (agent-default-model,
+    llm-pi-ai, web-search-deepseek), and the comment would be lost in that turn
+    rather than this one. Kept between them, it survives whichever is rewritten.
+    
+    RED->GREEN: TestDshCommentsBetweenEntriesSurviveRewrite (internal/agent)
+    writes the reporter's file — magpie's route, Vibe Island's
+    ">>> vibe-island managed block >>>" comment, its - insert: entry and the
+    "<<< ... <<<" comment — then takes one keepDshWired round (dshRouteAgain) with
+    the catalog's route. At 01468003 it failed: "the managed block's comment
+    markers lost". With this change it passes, and the block is written back whole.
+    
+    Ran: go test -tags nogui ./internal/agent (ok), gofmt -l on the changed files
+    (empty), go vet ./..., GOOS=linux GOARCH=amd64 go vet -tags nogui ./...,
+    GOOS=windows GOARCH=amd64 go vet ./..., go build ./... and the linux nogui and
+    windows builds — all ok. Not tried: dsh itself reading the written profile on
+    macOS.
+
+diff --git a/internal/agent/dsh.go b/internal/agent/dsh.go
+index b81e5e63..0598acec 100644
+--- a/internal/agent/dsh.go
++++ b/internal/agent/dsh.go
+@@ -469,6 +469,13 @@ func dshParse(path, raw string) (head []string, items []dshItem, err error) {
+ 		case t != "" && !strings.HasPrefix(t, "#") && !strings.HasPrefix(l, " "):
+ 			return nil, nil, fmt.Errorf("%s is not a list of entries magpie can edit", path)
+ 		default:
++			// a comment or a blank line between entries is kept as its own, not
++			// as the previous entry's last lines: an entry magpie writes again
++			// replaces its lines whole, and the comment went with them (#3329)
++			if !strings.HasPrefix(l, " ") {
++				items = append(items, dshItem{lines: []string{l}})
++				continue
++			}
+ 			items[len(items)-1].lines = append(items[len(items)-1].lines, l)
+ 		}
+ 		it := &items[len(items)-1]
+diff --git a/internal/agent/dsh_comments_test.go b/internal/agent/dsh_comments_test.go
+new file mode 100644
+index 00000000..84469d7c
+--- /dev/null
++++ b/internal/agent/dsh_comments_test.go
+@@ -0,0 +1,40 @@
++package agent
++
++import (
++	"os"
++	"strings"
++	"testing"
++
++	"github.com/yetone/magpie/internal/gateway"
++)
++
++// #3329: a comment line between two patch-list entries is kept when magpie
++// writes the list again. Vibe Island's managed block is bounded by comment
++// markers around an entry of its own; magpie used to append each marker to
++// the entry before it, and writing that entry again took the marker with it,
++// leaving the closing one behind.
++func TestDshCommentsBetweenEntriesSurviveRewrite(t *testing.T) {
++	_, dir, web := dshRouteHome(t)
++	dshKeyFixture(dir)
++	// the reporter's managed block (Vibe Island 1.0.53), down to its path
++	managed := "# >>> vibe-island managed block >>> do not edit; remove the whole block to uninstall\n" +
++		"- insert:\n    - id: vibe-island\n      name: /Users/<user>/.vibe-island/dsh-plugin/index-w1r8.js\n" +
++		"# <<< vibe-island managed block <<<\n"
++	os.WriteFile(web, []byte("# Your patch layer for this dsh profile.\n"+
++		dshRouteFixture("deepseek/pro")+
++		managed+
++		"- id: agent-default-model\n  config:\n    provider: magpie\n    model: deepseek/flash\n"), 0o644)
++
++	// the catalog's route is not the one in the file: magpie writes its entry
++	// again, as the round does every 30 seconds
++	if _, err := dshRouteAgain(web, magpieModels("dsh"), gateway.URL()); err != nil {
++		t.Fatal(err)
++	}
++	b, err := os.ReadFile(web)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if s := string(b); !strings.Contains(s, managed) {
++		t.Fatalf("the managed block's comment markers lost:\n%s", s)
++	}
++}

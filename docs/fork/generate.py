@@ -38,14 +38,13 @@ REQUIRED_SET = {n: "product" for n in
      3392,3401,3440,3444,3447)}
 REQUIRED_SET.update({n: "tests" for n in (2207,3095,3100,3174,3229,3277,3280,3284,3311)})
 REQUIRED_SET.update({n: "upstream_fixed" for n in (2949,3143,3144,3151,3255,3345)})
-REQUIRED_SET.update({n: "product" for n in (1105, 3455, 3470, 3487, 3513, 3514, 3519)})
-REQUIRED_SET.update({n: "product" for n in (3117, 3043)})
-REQUIRED_SET.update({n: "product" for n in (3529, 3530, 3531)})
-REQUIRED_SET.update({n: "product" for n in (2866, 2777, 3303)})
-REQUIRED_SET.update({n: "product" for n in (2741, 3561, 3567)})
 REQUIRED_SET.update({n: "other" for n in (3131,3147)})
-REQUIRED_SET.update({n: "product" for n in (3597, 3601, 3598, 3619, 3629, 3595)})
 REQUIRED_SET.update({n: "tests" for n in (3628,)})
+REQUIRED_SET.update({n: "product" for n in (1105, 2674, 2741, 2759, 2777, 2866, 2867, 3043, 3117, 3156, 3169, 3234, 3246, 3248, 3260, 3303, 3329, 3430, 3434, 3455, 3460, 3470, 3475, 3487, 3513, 3514, 3519, 3528, 3529, 3530, 3531, 3541, 3553, 3561, 3566, 3567, 3572, 3585, 3595, 3597, 3598, 3601, 3614, 3619, 3624, 3629, 3630, 3650)})
+REQUIRED_SET.update({n: "product" for n in
+    (3620, 3621, 3622, 3632, 3647, 3648, 3655, 3656, 3657, 3661, 3668, 3674, 3684, 2998)})
+REQUIRED_SET[3645] = "tests"
+REQUIRED_SET[3194] = "product"
 PRS = {1072, 1073, 1258}
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 COMMENT_RE = re.compile(r"#issuecomment-([0-9]+)$")
@@ -290,15 +289,20 @@ def check(data, branches, prior):
                 errs.append(f"delivery {dname}: head is not a resolvable full SHA")
             if head not in {b["head"] for b in branches if b["kind"] != "symref"} and dname != "dev":
                 errs.append(f"delivery {dname}: head is neither a live remote nor local head")
-        prev = None
-        for c in commits:
+        pos = {c: i for i, c in enumerate(commits)}
+        for i, c in enumerate(commits):
             if not SHA_RE.match(str(c)) or git("cat-file", "-t", c) != "commit":
                 errs.append(f"delivery {dname}: chain commit {str(c)[:8]} is not a resolvable full SHA")
-                prev = None
                 continue
-            if prev and gitrc("merge-base", "--is-ancestor", prev, c) != 0:
-                errs.append(f"delivery {dname}: {prev[:8]} is not an ancestor of {c[:8]} — chain order is wrong")
-            prev = c
+            # the chain is a topological order. A linear branch satisfies it
+            # as the old prev-is-ancestor rule did; a merged delivery branch
+            # also carries the upstream side it merged, whose commits all
+            # precede the merge, so the rule is stated over parents: every
+            # parent that is itself in the chain must come before its child.
+            for p in git("rev-parse", f"{c}^@").splitlines():
+                if p in pos and pos[p] > i:
+                    errs.append(f"delivery {dname}: {p[:8]} is a parent of {c[:8]} "
+                                f"but comes after it — chain order is wrong")
         if commits and head and gitrc("merge-base", "--is-ancestor", commits[-1], head) != 0:
             errs.append(f"delivery {dname}: last chain commit {commits[-1][:8]} is not an ancestor of the head")
         # completeness: a delivery promising the current sequence must carry

@@ -1,0 +1,11 @@
+{
+  "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+  "replayed": "d5b46244abb5da4572fc759688281296caab3c8d",
+  "files": {
+    "docs/subsystems/gateway-routing.md": "cb40a8fa2489462616207ba82f763e4906e6db297bffcea86c13eef130c96ffe",
+    "internal/gateway/chat_tool_reasoning_test.go": "edf7847b3a819f4f2386130f6f80f5a9d68cd4c5de91b1527be8d0b830f765ea",
+    "internal/gateway/chattidy.go": "028a4bdbbf9426be8114541bb315f536efe290762ece9c22fdb3a91507b6b7b4",
+    "internal/gateway/gateway.go": "4a274acd166505a06e3f239d29f13695a0c5b8d1b62d9635cfb44ee9f29c18ca",
+    "internal/gateway/chat_tool_reasoning_details_test.go": "1894dab8fed5b2271f7e2bda5919117c8bc4b423433e278a94d6c16dfce3c803"
+  }
+}

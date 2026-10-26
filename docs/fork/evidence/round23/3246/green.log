@@ -1,0 +1,2 @@
+$ go test -tags nogui -count=1 -run TestZCodeSyncRestoresARewrite ./internal/agent
+ok  	github.com/yetone/magpie/internal/agent	0.026s

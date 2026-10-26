@@ -1,0 +1,2 @@
+FIXED head regression suite in sandbox HOME; full package baseline
+COMMAND: GOTOOLCHAIN=go1.26.8 go test -race -count=1 -timeout 45m ./internal/gateway

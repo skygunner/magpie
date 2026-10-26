@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-26T09:55:03.178Z",
+  "issues": [
+    {
+      "issue": 2207,
+      "feedback": 6392831928,
+      "decision": "Retain existing narrow fork patch; focused race count3 passed. Full WSL2 Go1.27.3 scenario not reproduced; no broad fixed claim.",
+      "proof": "rework-2207-proof.log",
+      "comment": 6348174686,
+      "action": "PATCH existing comment in original English, API readback exact"
+    },
+    {
+      "issue": 3174,
+      "feedback": [
+        6383764321,
+        6384114507
+      ],
+      "decision": "Existing cached-miss helper patch retained. Narrow target count10 passed; expanded Claude regex race run failed with isolate vs readClaudeCredential race. No production-cache broadening or full-package-green claim; race attribution unresolved.",
+      "proof": [
+        "rework-3174-proof.log",
+        "rework-3174-head-norace.log"
+      ],
+      "comment": 6349009775,
+      "action": "PATCH existing English comment, API readback exact"
+    },
+    {
+      "issue": 3440,
+      "feedback": [
+        6384956184,
+        6385648896
+      ],
+      "decision": "Keep withdrawal of default-window behavioral override. Existing skygunner correction 6383458761 visible; ggbdpq option-C copy patch 3b01d77ef04e1aa800f86419e030696998d0c772 already supplied. Do not duplicate claimed work or impose product-policy change.",
+      "action": "Reasoned decline documented; no new comment needed"
+    }
+  ]
+}

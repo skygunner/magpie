@@ -1,0 +1,1987 @@
+✖ chromium en 1100: a rule's ⋯ is there to remove it, and a rule with no condition says how (14389.539256ms)
+✖ chromium en 390: a rule's ⋯ is there to remove it, and a rule with no condition says how (15798.658836ms)
+✖ chromium zh 1100: a rule's ⋯ is there to remove it, and a rule with no condition says how (21375.157746ms)
+✖ chromium zh 390: a rule's ⋯ is there to remove it, and a rule with no condition says how (16250.268361ms)
+✖ chromium zh-TW 1100: a rule's ⋯ is there to remove it, and a rule with no condition says how (21403.830939ms)
+✖ chromium zh-TW 390: a rule's ⋯ is there to remove it, and a rule with no condition says how (15224.616636ms)
+✖ chromium ja 1100: a rule's ⋯ is there to remove it, and a rule with no condition says how (15415.003401ms)
+✖ chromium ja 390: a rule's ⋯ is there to remove it, and a rule with no condition says how (10149.245127ms)
+✖ chromium de 1100: a rule's ⋯ is there to remove it, and a rule with no condition says how (14728.090986ms)
+✖ chromium de 390: a rule's ⋯ is there to remove it, and a rule with no condition says how (15193.779977ms)
+✖ webkit en 1100: a rule's ⋯ is there to remove it, and a rule with no condition says how (14709.746667ms)
+✖ webkit en 390: a rule's ⋯ is there to remove it, and a rule with no condition says how (15327.467978ms)
+✖ webkit zh 1100: a rule's ⋯ is there to remove it, and a rule with no condition says how (14270.931067ms)
+✖ webkit zh 390: a rule's ⋯ is there to remove it, and a rule with no condition says how (10272.912801ms)
+✖ webkit zh-TW 1100: a rule's ⋯ is there to remove it, and a rule with no condition says how (21335.680048ms)
+✖ webkit zh-TW 390: a rule's ⋯ is there to remove it, and a rule with no condition says how (10549.21448ms)
+✖ webkit ja 1100: a rule's ⋯ is there to remove it, and a rule with no condition says how (14325.302652ms)
+✖ webkit ja 390: a rule's ⋯ is there to remove it, and a rule with no condition says how (15347.323342ms)
+✖ webkit de 1100: a rule's ⋯ is there to remove it, and a rule with no condition says how (14554.243159ms)
+✖ webkit de 390: a rule's ⋯ is there to remove it, and a rule with no condition says how (14865.706346ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 0
+ℹ fail 20
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 306550.289326
+
+✖ failing tests:
+
+test at internal/gui/tests/routing-rule-remove.test.cjs:122:7
+✖ chromium en 1100: a rule's ⋯ is there to remove it, and a rule with no condition says how (14389.539256ms)
+  locator.waitFor: Timeout 5000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('.row-menu') to be visible[22m
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-remove.test.cjs:154:41) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('.row-menu') to be visible" ]
+  }
+
+test at internal/gui/tests/routing-rule-remove.test.cjs:122:7
+✖ chromium en 390: a rule's ⋯ is there to remove it, and a rule with no condition says how (15798.658836ms)
+  locator.waitFor: Timeout 5000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('.row-menu') to be visible[22m
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-remove.test.cjs:154:41) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('.row-menu') to be visible" ]
+  }
+
+test at internal/gui/tests/routing-rule-remove.test.cjs:122:7
+✖ chromium zh 1100: a rule's ⋯ is there to remove it, and a rule with no condition says how (21375.157746ms)
+  page.waitForFunction: Timeout 5000ms exceeded.
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-remove.test.cjs:171:20) {
+    name: 'TimeoutError',
+    log: []
+  }
+
+test at internal/gui/tests/routing-rule-remove.test.cjs:122:7
+✖ chromium zh 390: a rule's ⋯ is there to remove it, and a rule with no condition says how (16250.268361ms)
+  locator.waitFor: Timeout 5000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('.row-menu') to be visible[22m
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-remove.test.cjs:154:41) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('.row-menu') to be visible" ]
+  }
+
+test at internal/gui/tests/routing-rule-remove.test.cjs:122:7
+✖ chromium zh-TW 1100: a rule's ⋯ is there to remove it, and a rule with no condition says how (21403.830939ms)
+  page.waitForFunction: Timeout 5000ms exceeded.
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-remove.test.cjs:171:20) {
+    name: 'TimeoutError',
+    log: []
+  }
+
+test at internal/gui/tests/routing-rule-remove.test.cjs:122:7
+✖ chromium zh-TW 390: a rule's ⋯ is there to remove it, and a rule with no condition says how (15224.616636ms)
+  locator.waitFor: Timeout 5000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('.row-menu') to be visible[22m
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-remove.test.cjs:154:41) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('.row-menu') to be visible" ]
+  }
+
+test at internal/gui/tests/routing-rule-remove.test.cjs:122:7
+✖ chromium ja 1100: a rule's ⋯ is there to remove it, and a rule with no condition says how (15415.003401ms)
+  locator.waitFor: Timeout 5000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('.row-menu') to be visible[22m
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-remove.test.cjs:154:41) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('.row-menu') to be visible" ]
+  }
+
+test at internal/gui/tests/routing-rule-remove.test.cjs:122:7
+✖ chromium ja 390: a rule's ⋯ is there to remove it, and a rule with no condition says how (10149.245127ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'ゲートウェイ 127.0.0.1:3999\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '\n' +
+  +   '    \n' +
+  +   '    magpie\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  ルーティング\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    利用\n' +
+  +   '    エージェント\n' +
+  +   '    セッション\n' +
+  +   '    ライブラリ\n' +
+  +   '    モデル\n' +
+  +   '    プロバイダ\n' +
+  +   '    ルーティング\n' +
+  +   '    ゲートウェイ\n' +
+  +   '    観測\n' +
+  +   '    使用量\n' +
+  +   '    マスク\n' +
+  +   '    拡張\n' +
+  +   '    プラグイン\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        \n' +
+  +   '        Update\n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '      \n' +
+  +   '    設定\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  エージェント\n' +
+  +   '  利用枠\n' +
+  +   '  使用量\n' +
+  +   '  ルーティング\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  はじめに2 件中 0 件完了1モデルの提供元を追加契約済みのサブスクリプション、プロバイダ、または API キープロバイダを追加2エージェントを接続Claude Code、Codex、Gemini CLI、OpenCode… をインストールすると、magpie がここに表示します。3ルーティングを設定（任意）ルーティンググループは各リクエストを適したモデルに送り、モデルが失敗したら次のモデルに回しますエージェントが見つかりませんClaude Code、Codex、Gemini CLI、OpenCode… をインストールすると、magpie がここに表示します。\n' +
+  +   '  \n' +
+  +   '    プロファイル\n' +
+  +   '    まだありません · 設定を保存すると、ワンクリックで戻せます\n' +
+  +   '    ＋ 現在の設定を保存\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '    Review and import…無視\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  オフのプロバイダ\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    ＋ プロバイダを追加\n' +
+  +   '  \n' +
+  +   '  最初のプロバイダを追加インポート…サブスクリプションサインインのみ、キー不要ClaudeChatGPTChatGPT APICursorGrokCopilotZCodeWorkBuddyWorkBuddy AICommand CodeQoderQoder CNDevinZedFactoryXiaomi MiMoKiroGemini CLIAntigravityプラグインにもっとありますカスタムプロバイダOpenAI または Anthropic 互換の任意の URL\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  ゲートウェイキーゲートウェイキーを追加\n' +
+  +   '  クライアントごとにゲートウェイキーを作成してください。使用量はキーごとに集計されます。\n' +
+  +   '  \n' +
+  +   '\n' +
+  +   'ゲートウェイキーは他のコンピュータや、Cloudflare Tunnel などこのコンピュータへのトンネル用です。「ローカルネットワークで共有」をオンにするとここで追加できます。このコンピュータのエージェントには不要です。 ネットワークと共有\n' +
+  +   '接続\n' +
+  +   '\n' +
+  +   'モデルすべての ID をコピー\n' +
+  +   '\n' +
+  +   '最近の呼び出し\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '    ルーティングライブ · ゲートウェイの判断どおり\n' +
+  +   '      ルーティンググループ\n' +
+  +   '      新しいグループ\n' +
+  +   '      アカウントを隠す\n' +
+  +   '    リクエストを待っていますmagpie 経由でルーティングされる任意のエージェントからリクエストを送ると、ここでリアルタイムに再生されます。ルーティングが誰を最初にしたかとその理由、各試行、それぞれの応答。あなたのエージェントmagpie127.0.0.1:3999まだリクエストがありませんエージェントが magpie に送るすべてのリクエストが、実際にルーティングされてここに表示されます。0リクエスト0再ルーティング0エージェントが受けたエラー\n' +
+  +   '    リクエストゲートウェイが保持する直近 0 件用途指標すべてリプレイライブリクエスト別セッション別magpie の起動以降リクエストはありませんエージェントが magpie 経由で送る各リクエストがここに表示されます：誰が応答したか、その理由、各試行。アカウントとキーこれらのリクエストの集計ルーティンググループエージェントが 1 つとして選ぶモデル群インポート新しいグループグループを自動で作成2 つ以上のプロバイダが提供するモデルは、それらのグループ（auto/…）になります。オフにすると、自分で作成または変更したグループだけを一覧・提供します。エージェントの一覧での名前エージェントの一覧でグループ名の後に「· routing group」を付けるかどうか。すべてのグループに共通の設定で、モデル名の後のプロバイダ名にも効きます（「設定」と同じものです）。オフ自分で付けた名前には付けないオンMain名前エージェントの一覧での名前エージェントの一覧では「Main · routing group」と表示されます · 「· routing group」を付けるかは上で全グループ共通に設定しますIDエージェントでは group/main として選びますモデル1opusA1Mグループの推論下へ削除2Deepseek-V4.1-FlashWorkBuddy AI1Mグループの推論上へ削除別のモデルを追加先頭のモデルがモデルの能力を決めます。順番モードでは上から順に試されます。パターンパターンを追加パターンに一致するモデルは、プロバイダが今後追加するものも含めてすべて、上のモデルの後にグループに入ります。* は provider/model の任意の文字列、re: で始めると正規表現です。モデル一覧メンバーのモデルもグループだけエージェントのモデル一覧とゲートウェイの /v1/models に、グループとその各モデルが並びます。ルーティングスマート順番交互使用量が最少週ペース無料優先重み付け手動順番：先頭のモデルが応答できなくなるまで使い、その後次へ。各モデルはそのプロバイダのルーティングに従って自身のアカウントやキーを使います。モデルの中のグループと、プロバイダーのルーティングがスマート以外のモデルは、独自のルーティングを保ちます。このグループはそれと他のメンバーの間で選ぶだけで、そのグループが最初に試すアカウントやキーで比較し、選ばれたらそのグループ全体を独自の順番で試します。レート制限時位置を維持最後尾へクォータが残っているのにレート制限されたものは、ベンダーの指示する時間だけ休止し、その後また順番内の位置に戻ります。応答開始が遅いとき待つ30 秒1 分2 分カスタム分どのメンバーも、応答を始めるまでどれだけかかっても待ちます。全メンバーが混雑オフ1 分2 分4 分すべてのメンバーが一時的なエラー（過負荷、利用不可、短時間のレート制限）で失敗し、応答がまだエージェントに何も届いていないときは、少し待ってから各メンバーに順に聞き直します。待ち時間は回ごとに長くなり、ベンダーが求める待ち時間より短くはなりません。さらに最大 1 分 まで続けます。ストリーミングのエージェントはその間待たせたままにします。コンテキスト最大のモデル最小のモデルカスタムエージェントには最大モデルの 1,000,000 トークンを伝えます。あるメンバーに長すぎる会話は収まるメンバーに回されます。維持自動セッションターン内オフ厳格会話は、ベンダーがキャッシュした内容に保持する価値がある間、応答したアカウントやキーにとどまります。ターン内では常に、ターンをまたぐ場合はキャッシュが新しい間です。ルール1画像あり→Deepseek-V4.1-Flash · WorkBuddy AIルールを追加推論レベルエージェント指定ターンごとに選択レベルメンバー共通指定noneminimallowmediumhighxhighmaxエージェントには、すべてのモデルにあるレベルを提示します。削除キャンセル保存ルーティンググループルーティンググループは「プラグイン › 内蔵」でオフになっています。magpie が見つけたグループ（複数のプロバイダが提供する同じモデル）はそのままルーティングされますが、自分のグループはここで作成・変更できません。ルーティンググループをオンにする複数のアカウントやキー各プロバイダが自身のアカウントやキーでルーティング\n' +
+  +   '\n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '      5 秒\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '      利用枠\n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      アカウントを隠す\n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    ゲートウェイ経由の呼び出しのみ。セッションログの呼び出しは「リクエスト」にあります。ローカルで拒否されたものは合計に含みません。\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    エージェント\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    モデル\n' +
+  +   '    \n' +
+  +   '    アカウント\n' +
+  +   '    \n' +
+  +   '    ゲートウェイキー\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      ×\n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      CSV をエクスポート\n' +
+  +   '    \n' +
+  +   '    ゲートウェイとセッションログの呼び出し。ローカルで拒否されたものは合計に含みません。\n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        \n' +
+  +   '          \n' +
+  +   '          \n' +
+  +   '          \n' +
+  +   '          分割\n' +
+  +   '        \n' +
+  +   '        \n' +
+  +   '          \n' +
+  +   '          \n' +
+  +   '          \n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        使用量ヒートマップ直近 53 週間の日ごとの使用量\n' +
+  +   '        \n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    リクエストアーカイブ\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '            \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      最近のセッション\n' +
+  +   '      \n' +
+  +   '      すべてのセッション\n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  \n' +
+  +   '    一般\n' +
+  +   '    利用枠\n' +
+  +   '    ネットワークと共有\n' +
+  +   '    モデル\n' +
+  +   '    プライバシー\n' +
+  +   '    オブザーバビリティ\n' +
+  +   '    同期とバックアップ\n' +
+  +   '    プラグイン\n' +
+  +   '    情報\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        外観Omarchy のメニューで選んだ Omarchy テーマに従います\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        色覚サポート\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        言語\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        ゲートウェイモード\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        文字サイズ\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        インターフェースのフォント\n' +
+  +   '        \n' +
+  +   '          \n' +
+  +   '          \n' +
+  +   '          Aa 0123 · 中文\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        コードのフォント\n' +
+  +   '        \n' +
+  +   '          \n' +
+  +   '          \n' +
+  +   '          Aa 0123 · 中文\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        トレイアイコンのクリックで\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        バーアイコンOmarchy のバーで、Omarchy 自身のアイコンの横に magpie のアイコンを表示します。右クリックでウィンドウを開きます\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        モデル名にプロバイダ\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        ログイン時に起動\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        Dock に表示\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        軽量モード閉じたウィンドウは 1 分後に約 100 MB を解放。ゲートウェイと処理は動き続け、ページだけ読み込み直します\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        スリープを防ぐmagpie がタスクを実行している間、このコンピューターをスリープさせません\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        WSL のエージェントを検出実行中の WSL ディストリビューションで、設定できるエージェント、そのセッション、Claude Code を探します。オフにすると WSL には一切問い合わせず、そこで見つかったエージェントも表示しません\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        セッション用ターミナルセッションを開くターミナル\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        メニューバーに利用枠を表示\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        メニューバーの更新間隔アイコン横の利用枠を再取得する間隔\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        メニューバーのロゴ各サブスクリプションの数値の前にロゴを表示します。オフにすると数値のみになり、サブスクリプションの間は細い線で区切られます\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        メニューバーの magpie アイコン利用枠の前に magpie のアイコンを表示します。オフにすると利用枠だけになり、クリックすると引き続きパネルが開きます\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        メニューバーのペース使用量ページと同じく、各枠の数値の横にペースを表示します。+12% は均等なペースより枠の 12% 多く、−8% はその分少なく使っていることを表します\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        メニューバーの金額magpie のリクエストの費用を、メニューバーとツールチップのトークン数の横に表示します。オフにするとトークン数だけになります\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        利用枠の表示使用量ページ、パネル、メニューバーで、各期間の使用済み量と残量のどちらを表示するか\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        利用枠の読み込み手動のみ：使用状況ページを開くか更新したとき、カードの更新、magpie quota または accounts で読み込みます。それまでルーティング、メニューバー、通知は前回の値を使います。利用枠を理由にベンダーに断られたアカウントは引き続き読み込みます。\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        通貨\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        数値の単位使用量ページとパネルで、大きなトークン数やリクエスト数をどの単位で短縮するか\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        利用枠アラート\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        残高不足アラート\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        リセット前リマインダー\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        Codex：リセットを自動使用ChatGPT アカウントは、週の枠を使い切り、ほかに応答できるアカウントがないとき、または未使用のリセットが期限切れになる前に、リセットを自動で 1 つ使います。オンにするまではオフで、アカウントごとに設定します。使用量ページの各アカウントのカードにも同じスイッチがあります。\n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        タスク完了通知\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      Codex\n' +
+  +   '      Claude Code\n' +
+  +   '      WorkBuddy\n' +
+  +   '      Trae CN\n' +
+  +   '      MiniMax Code\n' +
+  +   '      Qoder\n' +
+  +   '      プラグイン\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        リセット時にウォームアップ\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        毎日のウォームアップ\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        リセット時にウォームアップ\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        毎日のウォームアップ\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        毎日のチェックイン\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        毎日のチェックイン\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        毎日のチェックイン\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        毎日のチェックイン\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        プロキシ\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    GitHub\n' +
+  +   '    \n' +
+  +   '    ゲートウェイ\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        プロバイダなしのモデル IDゲートウェイのモデル一覧に、各モデルを自身の ID でも載せます（codex/gpt-5.6-sol の隣に gpt-5.6-sol）。ほかのプロキシから移ってきたアプリ向けです。複数のプロバイダが提供するモデルは「プロバイダ」の順に送られます\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    ローカルネットワーク\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    Web ページ\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    画像\n' +
+  +   '    \n' +
+  +   '    ウェブ検索\n' +
+  +   '    \n' +
+  +   '    応答\n' +
+  +   '    \n' +
+  +   '    無効にしたモデル\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    検出方法\n' +
+  +   '    \n' +
+  +   '    マスクするもの\n' +
+  +   '    \n' +
+  +   '    値が見つかったとき\n' +
+  +   '    \n' +
+  +   '    試す\n' +
+  +   '    \n' +
+  +   '    共有\n' +
+  +   '    \n' +
+  +   '    エージェントのサインイン\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  プロファイル\n' +
+  +   '  \n' +
+  +   '  Main を保存しました\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  \n' +
+  +   '    Codex のサブエージェントで任意のモデルGPT のリードが magpie の他のモデルでサブエージェントを起動します。新しいスレッドのみ。Codex 自身の multi_agent_v2 が優先されます\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    Codex サブエージェントのモデル\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    長い会話Codex と Claude Code は 272K（Claude 以外の [1m] モデルも）か入力したサイズで圧縮。ウィンドウ全体は遅く高価\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    Codex のバックグラウンド圧縮Codex 0.163 以降はターンの途中で要約し、入力したウィンドウの割合を超えると始まる（空欄で 65%）。設定ファイルで自分で設定した値はそのまま\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    Codex のスレッドタイトル\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    Codex のスレッド説明\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    Codex の入力予測\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    Codex 自動レビューのモデル\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    Codex メモリ整理のモデル'
+  - 'ルールを削除'
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-remove.test.cjs:156:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'ゲートウェイ 127.0.0.1:3999\n  \n  \n  \n\n\n    \n    magpie\n  \n  \n  ルーティング\n  \n  \n    \n  \n  \n    利用\n    エージェント\n    セッション\n    ライブラリ\n    モデル\n    プロバイダ\n    ルーティング\n    ゲートウェイ\n    観測\n    使用量\n    マスク\n    拡張\n    プラグイン\n  \n  \n  \n    \n      \n        \n        Update\n      \n      \n        \n      \n    \n    \n      \n    \n    \n    \n    \n  \n      \n    設定\n\n\n\n  エージェント\n  利用枠\n  使用量\n  ルーティング\n\n\n\n  はじめに2 件中 0 件完了1モデルの提供元を追加契約済みのサブスクリプション、プロバイダ、または API キープロバイダを追加2エージェントを接続Claude Code、Codex、Gemini CLI、OpenCode… をインストールすると、magpie がここに表示します。3ルーティングを設定（任意）ルーティンググループは各リクエストを適したモデルに送り、モデルが失敗したら次のモデルに回しますエージェントが見つかりませんClaude Code、Codex、Gemini CLI、OpenCode… をインストールすると、magpie がここに表示します。\n  \n    プロファイル\n    まだありません · 設定を保存すると、ワンクリックで戻せます\n    ＋ 現在の設定を保存\n  \n  \n  \n  \n  \n\n\n\n  \n  \n  \n    \n    Review and import…無視\n  \n  \n  \n  \n  オフのプロバイダ\n  \n  \n  \n    ＋ プロバイダを追加\n  \n  最初のプロバイダを追加インポート…サブスクリプションサインインのみ、キー不要ClaudeChatGPTChatGPT APICursorGrokCopilotZCodeWorkBuddyWorkBuddy AICommand CodeQoderQoder CNDevinZedFactoryXiaomi MiMoKiroGemini CLIAntigravityプラグインにもっとありますカスタムプロバイダOpenAI または Anthropic 互換の任意の URL\n\n\n\n\n\n  \n\n\n  ゲートウェイキーゲートウェイキーを追加\n  クライアントごとにゲートウェイキーを作成してください。使用量はキーごとに集計されます。\n  \n\nゲートウェイキーは他のコンピュータや、Cloudflare Tunnel などこのコンピュータへのトンネル用です。「ローカルネットワークで共有」をオンにするとここで追加できます。このコンピュータのエージェントには不要です。 ネットワークと共有\n接続\n\nモデルすべての ID をコピー\n\n最近の呼び出し\n\n\n    ルーティングライブ · ゲートウェイの判断どおり\n      ルーティンググループ\n      新しいグループ\n      アカウントを隠す\n    リクエストを待っていますmagpie 経由でルーティングされる任意のエージェントからリクエストを送ると、ここでリアルタイムに再生されます。ルーティングが誰を最初にしたかとその理由、各試行、それぞれの応答。あなたのエージェントmagpie127.0.0.1:3999まだリクエストがありませんエージェントが magpie に送るすべてのリクエストが、実際にルーティングされてここに表示されます。0リクエスト0再ルーティング0エージェントが受けたエラー\n    リクエストゲートウェイが保持する直近 0 件用途指標すべてリプレイライブリクエスト別セッション別magpie の起動以降リクエストはありませんエージェントが magpie 経由で送る各リクエストがここに表示されます：誰が応答したか、その理由、各試行。アカウントとキーこれらのリクエストの集計ルーティンググループエージェントが 1 つとして選ぶモデル群インポート新しいグループグループを自動で作成2 つ以上のプロバイダが提供するモデルは、それらのグループ（auto/…）になります。オフにすると、自分で作成または変更したグループだけを一覧・提供します。エージェントの一覧での名前エージェントの一覧でグループ名の後に「· routing group」を付けるかどうか。すべてのグループに共通の設定で、モデル名の後のプロバイダ名にも効きます（「設定」と同じものです）。オフ自分で付けた名前には付けないオンMain名前エージェントの一覧での名前エージェントの一覧では「Main · routing group」と表示されます · 「· routing group」を付けるかは上で全グループ共通に設定しますIDエージェントでは group/main として選びますモデル1opusA1Mグループの推論下へ削除2Deepseek-V4.1-FlashWorkBuddy AI1Mグループの推論上へ削除別のモデルを追加先頭のモデルがモデルの能力を決めます。順番モードでは上から順に試されます。パターンパターンを追加パターンに一致するモデルは、プロバイダが今後追加するものも含めてすべて、上のモデルの後にグループに入ります。* は provider/model の任意の文字列、re: で始めると正規表現です。モデル一覧メンバーのモデルもグループだけエージェントのモデル一覧とゲートウェイの /v1/models に、グループとその各モデルが並びます。ルーティングスマート順番交互使用量が最少週ペース無料優先重み付け手動順番：先頭のモデルが応答できなくなるまで使い、その後次へ。各モデルはそのプロバイダのルーティングに従って自身のアカウントやキーを使います。モデルの中のグループと、プロバイダーのルーティングがスマート以外のモデルは、独自のルーティングを保ちます。このグループはそれと他のメンバーの間で選ぶだけで、そのグループが最初に試すアカウントやキーで比較し、選ばれたらそのグループ全体を独自の順番で試します。レート制限時位置を維持最後尾へクォータが残っているのにレート制限されたものは、ベンダーの指示する時間だけ休止し、その後また順番内の位置に戻ります。応答開始が遅いとき待つ30 秒1 分2 分カスタム分どのメンバーも、応答を始めるまでどれだけかかっても待ちます。全メンバーが混雑オフ1 分2 分4 分すべてのメンバーが一時的なエラー（過負荷、利用不可、短時間のレート制限）で失敗し、応答がまだエージェントに何も届いていないときは、少し待ってから各メンバーに順に聞き直します。待ち時間は回ごとに長くなり、ベンダーが求める待ち時間より短くはなりません。さらに最大 1 分 まで続けます。ストリーミングのエージェントはその間待たせたままにします。コンテキスト最大のモデル最小のモデルカスタムエージェントには最大モデルの 1,000,000 トークンを伝えます。あるメンバーに長すぎる会話は収まるメンバーに回されます。維持自動セッションターン内オフ厳格会話は、ベンダーがキャッシュした内容に保持する価値がある間、応答したアカウントやキーにとどまります。ターン内では常に、ターンをまたぐ場合はキャッシュが新しい間です。ルール1画像あり→Deepseek-V4.1-Flash · WorkBuddy AIルールを追加推論レベルエージェント指定ターンごとに選択レベルメンバー共通指定noneminimallowmediumhighxhighmaxエージェントには、すべてのモデルにあるレベルを提示します。削除キャンセル保存ルーティンググループルーティンググループは「プラグイン › 内蔵」でオフになっています。magpie が見つけたグループ（複数のプロバイダが提供する同じモデル）はそのままルーティングされますが、自分のグループはここで作成・変更できません。ルーティンググループをオンにする複数のアカウントやキー各プロバイダが自身のアカウントやキーでルーティング\n\n  \n    \n    \n    \n    \n    \n    \n      \n      5 秒\n    \n    \n  \n  \n    \n      利用枠\n      \n      \n      アカウントを隠す\n      \n    \n    \n    ゲートウェイ経由の呼び出しのみ。セッションログの呼び出しは「リクエスト」にあります。ローカルで拒否されたものは合計に含みません。\n    \n    \n    エージェント\n    \n    \n    モデル\n    \n    アカウント\n    \n    ゲートウェイキー\n    \n    \n    \n  \n  \n    \n      \n      \n      \n      \n      \n      \n      \n      ×\n      \n      \n      CSV をエクスポート\n    \n    ゲートウェイとセッションログの呼び出し。ローカルで拒否されたものは合計に含みません。\n    \n      \n      \n        \n          \n          \n          \n          分割\n        \n        \n          \n          \n          \n        \n      \n    \n    \n      \n        使用量ヒートマップ直近 53 週間の日ごとの使用量\n        \n        \n      \n      \n      \n      \n    \n    リクエストアーカイブ\n    \n    \n            \n    \n    \n  \n  \n  \n    \n      \n      \n      \n    \n    \n    \n    \n      \n      \n      \n      \n      \n      \n      \n    \n    \n      最近のセッション\n      \n      すべてのセッション\n      \n    \n    \n    \n  \n\n  \n  \n  \n\n\n\n\n\n\n\n\n  \n    一般\n    利用枠\n    ネットワークと共有\n    モデル\n    プライバシー\n    オブザーバビリティ\n    同期とバックアップ\n    プラグイン\n    情報\n  \n  \n  \n    \n      \n        外観Omarchy のメニューで選んだ Omarchy テーマに従います\n        \n      \n      \n        色覚サポート\n        \n      \n      \n        言語\n        \n      \n      \n        ゲートウェイモード\n        \n      \n      \n        文字サイズ\n        \n      \n      \n        インターフェースのフォント\n        \n          \n          \n          Aa 0123 · 中文\n        \n      \n      \n        コードのフォント\n        \n          \n          \n          Aa 0123 · 中文\n        \n      \n      \n        トレイアイコンのクリックで\n        \n      \n      \n        バーアイコンOmarchy のバーで、Omarchy 自身のアイコンの横に magpie のアイコンを表示します。右クリックでウィンドウを開きます\n        \n      \n      \n        モデル名にプロバイダ\n        \n      \n      \n      \n      \n        ログイン時に起動\n        \n      \n      \n        Dock に表示\n        \n      \n      \n        軽量モード閉じたウィンドウは 1 分後に約 100 MB を解放。ゲートウェイと処理は動き続け、ページだけ読み込み直します\n        \n      \n      \n        スリープを防ぐmagpie がタスクを実行している間、このコンピューターをスリープさせません\n        \n      \n      \n        WSL のエージェントを検出実行中の WSL ディストリビューションで、設定できるエージェント、そのセッション、Claude Code を探します。オフにすると WSL には一切問い合わせず、そこで見つかったエージェントも表示しません\n        \n      \n      \n        セッション用ターミナルセッションを開くターミナル\n        \n      \n    \n  \n  \n    \n      \n        メニューバーに利用枠を表示\n        \n      \n      \n        メニューバーの更新間隔アイコン横の利用枠を再取得する間隔\n        \n      \n      \n        メニューバーのロゴ各サブスクリプションの数値の前にロゴを表示します。オフにすると数値のみになり、サブスクリプションの間は細い線で区切られます\n        \n      \n      \n        メニューバーの magpie アイコン利用枠の前に magpie のアイコンを表示します。オフにすると利用枠だけになり、クリックすると引き続きパネルが開きます\n        \n      \n      \n        メニューバーのペース使用量ページと同じく、各枠の数値の横にペースを表示します。+12% は均等なペースより枠の 12% 多く、−8% はその分少なく使っていることを表します\n        \n      \n      \n        メニューバーの金額magpie のリクエストの費用を、メニューバーとツールチップのトークン数の横に表示します。オフにするとトークン数だけになります\n        \n      \n      \n        利用枠の表示使用量ページ、パネル、メニューバーで、各期間の使用済み量と残量のどちらを表示するか\n        \n      \n      \n        利用枠の読み込み手動のみ：使用状況ページを開くか更新したとき、カードの更新、magpie quota または accounts で読み込みます。それまでルーティング、メニューバー、通知は前回の値を使います。利用枠を理由にベンダーに断られたアカウントは引き続き読み込みます。\n        \n      \n      \n        通貨\n        \n      \n      \n        数値の単位使用量ページとパネルで、大きなトークン数やリクエスト数をどの単位で短縮するか\n        \n      \n      \n        利用枠アラート\n        \n      \n      \n        残高不足アラート\n        \n      \n      \n        リセット前リマインダー\n        \n      \n      \n        Codex：リセットを自動使用ChatGPT アカウントは、週の枠を使い切り、ほかに応答できるアカウントがないとき、または未使用のリセットが期限切れになる前に、リセットを自動で 1 つ使います。オンにするまではオフで、アカウントごとに設定します。使用量ページの各アカウントのカードにも同じスイッチがあります。\n      \n      \n        タスク完了通知\n        \n      \n    \n    \n      Codex\n      Claude Code\n      WorkBuddy\n      Trae CN\n      MiniMax Code\n      Qoder\n      プラグイン\n    \n    \n    \n      \n        リセット時にウォームアップ\n        \n      \n      \n        毎日のウォームアップ\n        \n      \n    \n    \n      \n        リセット時にウォームアップ\n        \n      \n      \n        毎日のウォームアップ\n        \n      \n    \n    \n      \n        毎日のチェックイン\n        \n      \n    \n    \n      \n        毎日のチェックイン\n        \n      \n    \n    \n      \n        毎日のチェックイン\n        \n      \n    \n    \n      \n        毎日のチェックイン\n        \n      \n    \n    \n    \n  \n  \n    \n      \n        プロキシ\n        \n      \n    \n    GitHub\n    \n    ゲートウェイ\n    \n    \n      \n        プロバイダなしのモデル IDゲートウェイのモデル一覧に、各モデルを自身の ID でも載せます（codex/gpt-5.6-sol の隣に gpt-5.6-sol）。ほかのプロキシから移ってきたアプリ向けです。複数のプロバイダが提供するモデルは「プロバイダ」の順に送られます\n        \n      \n    \n    ローカルネットワーク\n    \n    \n    Web ページ\n    \n  \n  \n    画像\n    \n    ウェブ検索\n    \n    応答\n    \n    無効にしたモデル\n    \n  \n  \n    検出方法\n    \n    マスクするもの\n    \n    値が見つかったとき\n    \n    試す\n    \n    共有\n    \n    エージェントのサインイン\n    \n  \n  \n    \n  \n  \n    \n  \n  \n    \n  \n  \n    \n  \n\n\n\n  プロファイル\n  \n  Main を保存しました\n  \n  \n  \n\n\n\n\n\n  \n    \n    \n  \n  \n    \n    \n  \n  \n    \n    \n      \n      \n    \n    \n  \n\n\n\n\n  \n    Codex のサブエージェントで任意のモデルGPT のリードが magpie の他のモデルでサブエージェントを起動します。新しいスレッドのみ。Codex 自身の multi_agent_v2 が優先されます\n    \n  \n  \n    Codex サブエージェントのモデル\n    \n  \n  \n    長い会話Codex と Claude Code は 272K（Claude 以外の [1m] モデルも）か入力したサイズで圧縮。ウィンドウ全体は遅く高価\n    \n  \n  \n    Codex のバックグラウンド圧縮Codex 0.163 以降はターンの途中で要約し、入力したウィンドウの割合を超えると始まる（空欄で 65%）。設定ファイルで自分で設定した値はそのまま\n    \n  \n  \n    Codex のスレッドタイトル\n    \n  \n  \n    Codex のスレッド説明\n    \n  \n  \n    Codex の入力予測\n    \n  \n  \n    Codex 自動レビューのモデル\n    \n  \n  \n    Codex メモリ整理のモデル',
+    expected: 'ルールを削除',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/routing-rule-remove.test.cjs:122:7
+✖ chromium de 1100: a rule's ⋯ is there to remove it, and a rule with no condition says how (14728.090986ms)
+  locator.waitFor: Timeout 5000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('.row-menu') to be visible[22m
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-remove.test.cjs:154:41) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('.row-menu') to be visible" ]
+  }
+
+test at internal/gui/tests/routing-rule-remove.test.cjs:122:7
+✖ chromium de 390: a rule's ⋯ is there to remove it, and a rule with no condition says how (15193.779977ms)
+  locator.waitFor: Timeout 5000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('.row-menu') to be visible[22m
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-remove.test.cjs:154:41) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('.row-menu') to be visible" ]
+  }
+
+test at internal/gui/tests/routing-rule-remove.test.cjs:122:7
+✖ webkit en 1100: a rule's ⋯ is there to remove it, and a rule with no condition says how (14709.746667ms)
+  locator.waitFor: Timeout 5000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('.row-menu') to be visible[22m
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-remove.test.cjs:154:41) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('.row-menu') to be visible" ]
+  }
+
+test at internal/gui/tests/routing-rule-remove.test.cjs:122:7
+✖ webkit en 390: a rule's ⋯ is there to remove it, and a rule with no condition says how (15327.467978ms)
+  locator.waitFor: Timeout 5000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('.row-menu') to be visible[22m
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-remove.test.cjs:154:41) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('.row-menu') to be visible" ]
+  }
+
+test at internal/gui/tests/routing-rule-remove.test.cjs:122:7
+✖ webkit zh 1100: a rule's ⋯ is there to remove it, and a rule with no condition says how (14270.931067ms)
+  locator.waitFor: Timeout 5000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('.row-menu') to be visible[22m
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-remove.test.cjs:154:41) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('.row-menu') to be visible" ]
+  }
+
+test at internal/gui/tests/routing-rule-remove.test.cjs:122:7
+✖ webkit zh 390: a rule's ⋯ is there to remove it, and a rule with no condition says how (10272.912801ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '网关 127.0.0.1:3999\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '\n' +
+  +   '    \n' +
+  +   '    magpie\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  路由\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    使用\n' +
+  +   '    Agent\n' +
+  +   '    会话\n' +
+  +   '    资源库\n' +
+  +   '    模型\n' +
+  +   '    供应商\n' +
+  +   '    路由\n' +
+  +   '    网关\n' +
+  +   '    观测\n' +
+  +   '    用量\n' +
+  +   '    脱敏\n' +
+  +   '    扩展\n' +
+  +   '    插件\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        \n' +
+  +   '        Update\n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '      \n' +
+  +   '    设置\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  Agent\n' +
+  +   '  额度\n' +
+  +   '  用量\n' +
+  +   '  路由\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  快速上手已完成 0/21添加模型来源你已经付费的订阅、一个供应商，或一个 API 密钥添加供应商2接入一个 agent安装 Claude Code、Codex、Gemini CLI、OpenCode 等之后，会列在这里。3设置路由（可选）路由组把每个请求发给合适的模型，一个模型出错时交给下一个没有找到 Agent安装 Claude Code、Codex、Gemini CLI、OpenCode 等之后，会列在这里。\n' +
+  +   '  \n' +
+  +   '    方案\n' +
+  +   '    还没有 · 保存当前设置，之后一键切回\n' +
+  +   '    ＋ 保存当前\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '    Review and import…忽略\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  已关闭的供应商\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    ＋ 添加供应商\n' +
+  +   '  \n' +
+  +   '  添加第一个供应商导入…订阅登录即可，无需密钥ClaudeChatGPTChatGPT APICursorGrokCopilotZCodeWorkBuddyWorkBuddy 国际版Command CodeQoder 国际版Qoder CNDevinZedFactoryXiaomi MiMoKiroGemini CLIAntigravity插件中还有更多自定义供应商任意 OpenAI / Anthropic 兼容的 URL\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  网关密钥添加网关密钥\n' +
+  +   '  为每个客户端创建一个网关密钥，分别统计用量。\n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '网关密钥给其他电脑用，也给连到这台电脑的隧道（如 Cloudflare Tunnel）用：打开「局域网共享」后在这里添加。这台电脑上的 Agent 不需要密钥。 网络与共享\n' +
+  +   '接入\n' +
+  +   '\n' +
+  +   '模型复制全部 ID\n' +
+  +   '\n' +
+  +   '最近调用\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '    路由实时 · 网关正在做的决定\n' +
+  +   '      路由组\n' +
+  +   '      新建组\n' +
+  +   '      账号打码\n' +
+  +   '    等待请求经 magpie 的 Agent 发出请求后，这里实时播放：路由把谁排第一及原因、每次尝试和各自的回应。你的 Agentmagpie127.0.0.1:3999还没有请求Agent 发给 magpie 的每个请求都会在此显示，均为真实路由。0请求0改道0Agent 收到的错误\n' +
+  +   '    请求网关保留的最近 0 个用途指标全部重放实时按请求按会话magpie 启动以来还没有请求agent 经 magpie 发出的每个请求都列在这里：由谁应答、为何选它，以及每次尝试。账号与密钥统计自这些请求路由组Agent 当作一个模型来选导入新建组自动创建路由组两个及以上供应商都提供的模型会自动成组（auto/…）。关闭后只列出和提供你新建或改过的组。Agent 列表里的名称Agent 的模型列表里，路由组名后面是否带「· routing group」。这是所有路由组共用的一个设置，也决定模型名后面是否带供应商，和「设置」里的是同一个。关闭自定义名称不带供应商开启Main名称Agent 列表里的名称Agent 的模型列表里显示为「Main · routing group」 · 是否带「· routing group」在上方统一设置，对所有路由组生效IDAgent 里选 group/main模型1opusA1M跟随分组推理下移移除2Deepseek-V4.1-FlashWorkBuddy AI1M跟随分组推理上移移除再添加一个模型排第一的模型决定本组对外的能力；按顺序模式下从上往下尝试。模式添加模式模式匹配的模型均入组（含供应商日后新增的），排在上方模型之后：* 匹配 provider/model 中任意字符，re: 开头表示正则表达式。模型列表也列出成员模型只列出本组Agent 的模型列表和网关的 /v1/models 会列出本组，也列出组里的每个模型。路由智能按顺序轮流最少使用重置前用完免费优先按权重手动按顺序：先用第一个模型，无法响应再换下一个；各成员按其供应商的路由在自己的账号或 Key 间分配。成员中的路由组，以及服务商路由不是“智能”的模型，都保留自己的路由：本组只在它与其他成员间选择（按它会先用的账号或 Key 比较），选中后按其自身顺序整体尝试。被限流时保持原位排到最后仍有额度却被限流的账号按厂商要求休息，之后回到原位继续使用。迟迟不出字一直等30 秒1 分钟2 分钟自定义分钟每个成员都会一直等到它开始回答，不论多久。成员全都忙关闭1 分钟2 分钟4 分钟每个成员都因暂时性错误（过载、暂不可用、短暂限流）失败，而回复还一点都没到智能体时，过一会儿依次再问一遍每个成员，间隔一次比一次长，也不短于厂商要求的等待，最多再等 1 分钟。流式请求的智能体在此期间会一直被保持等待。上下文最大模型的最小模型的自定义告诉 agent 1,000,000 tokens（组里最大模型的）；某个成员放不下的对话会交给放得下的成员。会话保持自动整个会话一轮之内关闭严格厂商缓存仍有价值时，会话留在回答过它的账号或 Key 上：一轮之内始终保持，跨轮则在缓存新鲜时保持。规则1带图片→Deepseek-V4.1-Flash · WorkBuddy AI添加规则推理强度按 agent每轮判断推理档位成员共有自定noneminimallowmediumhighxhighmax对 Agent 提供所有模型都有的档位。移除取消保存路由组路由组在「插件 › 内置」中已关闭：magpie 自动找到的组（多个供应商提供的同一个模型）照常路由，但这里不能新建或修改你自己的组。打开路由组多账号 / 多 Key各供应商在自己的账号或 Key 间路由\n' +
+  +   '\n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '      5 秒\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '      额度\n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      账号打码\n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    仅统计网关调用；会话日志调用请查看「请求」。本地拒绝的请求不计入汇总。\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    Agent\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    模型\n' +
+  +   '    \n' +
+  +   '    账号\n' +
+  +   '    \n' +
+  +   '    网关密钥\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      ×\n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      导出 CSV\n' +
+  +   '    \n' +
+  +   '    统计网关调用与会话日志调用；本地拒绝的请求不计入汇总。\n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        \n' +
+  +   '          \n' +
+  +   '          \n' +
+  +   '          \n' +
+  +   '          拆分维度\n' +
+  +   '        \n' +
+  +   '        \n' +
+  +   '          \n' +
+  +   '          \n' +
+  +   '          \n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        用量热力图最近 53 周的每日用量\n' +
+  +   '        \n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    请求存档\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '            \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      最近的会话\n' +
+  +   '      \n' +
+  +   '      全部会话\n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  \n' +
+  +   '    常规\n' +
+  +   '    额度\n' +
+  +   '    网络与共享\n' +
+  +   '    模型\n' +
+  +   '    隐私\n' +
+  +   '    可观测性\n' +
+  +   '    同步与备份\n' +
+  +   '    插件\n' +
+  +   '    关于\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        外观跟随 Omarchy 主题，在 Omarchy 菜单里切换\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        色盲模式\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        语言\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        网关模式\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        文字大小\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        界面字体\n' +
+  +   '        \n' +
+  +   '          \n' +
+  +   '          \n' +
+  +   '          Aa 0123 · 中文\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        代码字体\n' +
+  +   '        \n' +
+  +   '          \n' +
+  +   '          \n' +
+  +   '          Aa 0123 · 中文\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        点击托盘图标\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        状态栏图标把 magpie 图标放进 Omarchy 状态栏，与系统图标并排；右键打开窗口\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        模型名带供应商\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        开机自启\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        显示程序坞\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        轻量模式窗口关闭一分钟后释放约 100 MB；网关和后台任务照常运行，只重新加载页面\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        防止休眠在 magpie 运行任务时，让电脑保持唤醒状态\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        检测 WSL 中的 Agent在运行中的 WSL 发行版里查找可接入的 Agent、它们的会话和 Claude Code；关闭后不再向 WSL 询问任何内容，之前在那里找到的 Agent 也不再显示\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        会话终端打开会话时使用的终端\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        菜单栏显示额度\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        菜单栏刷新频率图标旁的额度多久重新获取一次\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        菜单栏订阅图标每个订阅的数字前显示它的图标；关闭后只显示数字，订阅之间以细线分隔\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        菜单栏 magpie 图标额度前面的 magpie 图标；关闭后只显示额度，点击额度仍会打开面板\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        菜单栏配速在每个窗口的数字旁显示配速，和用量页一样：+12% 表示比匀速多用了窗口的 12%，−8% 表示少用了这么多\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        菜单栏金额magpie 请求的花费，显示在菜单栏和提示中的 token 数旁；关闭则只显示 token 数\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        额度显示每个周期显示已用额度或剩余额度，用量页、面板和菜单栏一致\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        额度刷新仅手动：打开或刷新用量页、卡片上的刷新，以及 magpie quota 或 accounts 才会读取；在那之前，路由、菜单栏和提醒都按上次读到的额度。被厂商以额度为由拒绝的账号仍会读取。\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        货币\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        数字单位用量页和面板上较大的 token 数、请求数用什么单位缩写\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        额度提醒\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        余额提醒\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        重置前提醒\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        Codex：自动使用重置卡ChatGPT 账号在周额度用完、且没有别的账号能接请求时，或者重置卡快到期还没用时，自动用掉一张。默认关闭，按账号单独打开；用量页每个账号的卡片上也有同一个开关。\n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        任务完成提醒\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      Codex\n' +
+  +   '      Claude Code\n' +
+  +   '      WorkBuddy\n' +
+  +   '      Trae CN\n' +
+  +   '      MiniMax Code\n' +
+  +   '      Qoder\n' +
+  +   '      插件\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        窗口重置时预热\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        每日定时预热\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        窗口重置时预热\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        每日定时预热\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        每日自动签到\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        每日自动签到\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        每日自动签到\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        每日自动签到\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        代理\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    GitHub\n' +
+  +   '    \n' +
+  +   '    网关\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        不带供应商的模型 ID网关的模型列表还会以模型自己的 ID 列出每个模型，如 codex/gpt-5.6-sol 旁的 gpt-5.6-sol，供从其他代理迁来的应用使用。多个供应商都提供的模型，按“供应商”中的顺序发往它们\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    局域网\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    网页\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    图像\n' +
+  +   '    \n' +
+  +   '    联网搜索\n' +
+  +   '    \n' +
+  +   '    回复\n' +
+  +   '    \n' +
+  +   '    已停用的模型\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    怎么找\n' +
+  +   '    \n' +
+  +   '    要遮什么\n' +
+  +   '    \n' +
+  +   '    发现敏感值时\n' +
+  +   '    \n' +
+  +   '    试一试\n' +
+  +   '    \n' +
+  +   '    分享\n' +
+  +   '    \n' +
+  +   '    智能体登录\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  方案\n' +
+  +   '  \n' +
+  +   '  已保存 Main\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  \n' +
+  +   '    Codex 子代理可用任意模型GPT 主代理可在 magpie 的其他模型上开子代理。仅对新会话生效；Codex 自身的 multi_agent_v2 优先\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    Codex 子代理模型\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    长对话Codex 和 Claude Code 在 272K（非 Claude 的 [1m] 模型也是）或这里填的大小时压缩；完整窗口每轮更慢更贵\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    Codex 后台压缩Codex 0.163 起在一轮进行中就在后台总结，超过这里填的窗口占比时开始（留空为 65%）；它配置里自己设的值不动\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    Codex 会话标题\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    Codex 会话描述\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    Codex 输入框预测\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    Codex 自动审批模型\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    Codex 记忆整理模型'
+  - '删除规则'
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-remove.test.cjs:156:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '网关 127.0.0.1:3999\n  \n  \n  \n\n\n    \n    magpie\n  \n  \n  路由\n  \n  \n    \n  \n  \n    使用\n    Agent\n    会话\n    资源库\n    模型\n    供应商\n    路由\n    网关\n    观测\n    用量\n    脱敏\n    扩展\n    插件\n  \n  \n  \n    \n      \n        \n        Update\n      \n      \n        \n      \n    \n    \n      \n    \n    \n    \n    \n  \n      \n    设置\n\n\n\n  Agent\n  额度\n  用量\n  路由\n\n\n\n  快速上手已完成 0/21添加模型来源你已经付费的订阅、一个供应商，或一个 API 密钥添加供应商2接入一个 agent安装 Claude Code、Codex、Gemini CLI、OpenCode 等之后，会列在这里。3设置路由（可选）路由组把每个请求发给合适的模型，一个模型出错时交给下一个没有找到 Agent安装 Claude Code、Codex、Gemini CLI、OpenCode 等之后，会列在这里。\n  \n    方案\n    还没有 · 保存当前设置，之后一键切回\n    ＋ 保存当前\n  \n  \n  \n  \n  \n\n\n\n  \n  \n  \n    \n    Review and import…忽略\n  \n  \n  \n  \n  已关闭的供应商\n  \n  \n  \n    ＋ 添加供应商\n  \n  添加第一个供应商导入…订阅登录即可，无需密钥ClaudeChatGPTChatGPT APICursorGrokCopilotZCodeWorkBuddyWorkBuddy 国际版Command CodeQoder 国际版Qoder CNDevinZedFactoryXiaomi MiMoKiroGemini CLIAntigravity插件中还有更多自定义供应商任意 OpenAI / Anthropic 兼容的 URL\n\n\n\n\n\n  \n\n\n  网关密钥添加网关密钥\n  为每个客户端创建一个网关密钥，分别统计用量。\n  \n\n网关密钥给其他电脑用，也给连到这台电脑的隧道（如 Cloudflare Tunnel）用：打开「局域网共享」后在这里添加。这台电脑上的 Agent 不需要密钥。 网络与共享\n接入\n\n模型复制全部 ID\n\n最近调用\n\n\n    路由实时 · 网关正在做的决定\n      路由组\n      新建组\n      账号打码\n    等待请求经 magpie 的 Agent 发出请求后，这里实时播放：路由把谁排第一及原因、每次尝试和各自的回应。你的 Agentmagpie127.0.0.1:3999还没有请求Agent 发给 magpie 的每个请求都会在此显示，均为真实路由。0请求0改道0Agent 收到的错误\n    请求网关保留的最近 0 个用途指标全部重放实时按请求按会话magpie 启动以来还没有请求agent 经 magpie 发出的每个请求都列在这里：由谁应答、为何选它，以及每次尝试。账号与密钥统计自这些请求路由组Agent 当作一个模型来选导入新建组自动创建路由组两个及以上供应商都提供的模型会自动成组（auto/…）。关闭后只列出和提供你新建或改过的组。Agent 列表里的名称Agent 的模型列表里，路由组名后面是否带「· routing group」。这是所有路由组共用的一个设置，也决定模型名后面是否带供应商，和「设置」里的是同一个。关闭自定义名称不带供应商开启Main名称Agent 列表里的名称Agent 的模型列表里显示为「Main · routing group」 · 是否带「· routing group」在上方统一设置，对所有路由组生效IDAgent 里选 group/main模型1opusA1M跟随分组推理下移移除2Deepseek-V4.1-FlashWorkBuddy AI1M跟随分组推理上移移除再添加一个模型排第一的模型决定本组对外的能力；按顺序模式下从上往下尝试。模式添加模式模式匹配的模型均入组（含供应商日后新增的），排在上方模型之后：* 匹配 provider/model 中任意字符，re: 开头表示正则表达式。模型列表也列出成员模型只列出本组Agent 的模型列表和网关的 /v1/models 会列出本组，也列出组里的每个模型。路由智能按顺序轮流最少使用重置前用完免费优先按权重手动按顺序：先用第一个模型，无法响应再换下一个；各成员按其供应商的路由在自己的账号或 Key 间分配。成员中的路由组，以及服务商路由不是“智能”的模型，都保留自己的路由：本组只在它与其他成员间选择（按它会先用的账号或 Key 比较），选中后按其自身顺序整体尝试。被限流时保持原位排到最后仍有额度却被限流的账号按厂商要求休息，之后回到原位继续使用。迟迟不出字一直等30 秒1 分钟2 分钟自定义分钟每个成员都会一直等到它开始回答，不论多久。成员全都忙关闭1 分钟2 分钟4 分钟每个成员都因暂时性错误（过载、暂不可用、短暂限流）失败，而回复还一点都没到智能体时，过一会儿依次再问一遍每个成员，间隔一次比一次长，也不短于厂商要求的等待，最多再等 1 分钟。流式请求的智能体在此期间会一直被保持等待。上下文最大模型的最小模型的自定义告诉 agent 1,000,000 tokens（组里最大模型的）；某个成员放不下的对话会交给放得下的成员。会话保持自动整个会话一轮之内关闭严格厂商缓存仍有价值时，会话留在回答过它的账号或 Key 上：一轮之内始终保持，跨轮则在缓存新鲜时保持。规则1带图片→Deepseek-V4.1-Flash · WorkBuddy AI添加规则推理强度按 agent每轮判断推理档位成员共有自定noneminimallowmediumhighxhighmax对 Agent 提供所有模型都有的档位。移除取消保存路由组路由组在「插件 › 内置」中已关闭：magpie 自动找到的组（多个供应商提供的同一个模型）照常路由，但这里不能新建或修改你自己的组。打开路由组多账号 / 多 Key各供应商在自己的账号或 Key 间路由\n\n  \n    \n    \n    \n    \n    \n    \n      \n      5 秒\n    \n    \n  \n  \n    \n      额度\n      \n      \n      账号打码\n      \n    \n    \n    仅统计网关调用；会话日志调用请查看「请求」。本地拒绝的请求不计入汇总。\n    \n    \n    Agent\n    \n    \n    模型\n    \n    账号\n    \n    网关密钥\n    \n    \n    \n  \n  \n    \n      \n      \n      \n      \n      \n      \n      \n      ×\n      \n      \n      导出 CSV\n    \n    统计网关调用与会话日志调用；本地拒绝的请求不计入汇总。\n    \n      \n      \n        \n          \n          \n          \n          拆分维度\n        \n        \n          \n          \n          \n        \n      \n    \n    \n      \n        用量热力图最近 53 周的每日用量\n        \n        \n      \n      \n      \n      \n    \n    请求存档\n    \n    \n            \n    \n    \n  \n  \n  \n    \n      \n      \n      \n    \n    \n    \n    \n      \n      \n      \n      \n      \n      \n      \n    \n    \n      最近的会话\n      \n      全部会话\n      \n    \n    \n    \n  \n\n  \n  \n  \n\n\n\n\n\n\n\n\n  \n    常规\n    额度\n    网络与共享\n    模型\n    隐私\n    可观测性\n    同步与备份\n    插件\n    关于\n  \n  \n  \n    \n      \n        外观跟随 Omarchy 主题，在 Omarchy 菜单里切换\n        \n      \n      \n        色盲模式\n        \n      \n      \n        语言\n        \n      \n      \n        网关模式\n        \n      \n      \n        文字大小\n        \n      \n      \n        界面字体\n        \n          \n          \n          Aa 0123 · 中文\n        \n      \n      \n        代码字体\n        \n          \n          \n          Aa 0123 · 中文\n        \n      \n      \n        点击托盘图标\n        \n      \n      \n        状态栏图标把 magpie 图标放进 Omarchy 状态栏，与系统图标并排；右键打开窗口\n        \n      \n      \n        模型名带供应商\n        \n      \n      \n      \n      \n        开机自启\n        \n      \n      \n        显示程序坞\n        \n      \n      \n        轻量模式窗口关闭一分钟后释放约 100 MB；网关和后台任务照常运行，只重新加载页面\n        \n      \n      \n        防止休眠在 magpie 运行任务时，让电脑保持唤醒状态\n        \n      \n      \n        检测 WSL 中的 Agent在运行中的 WSL 发行版里查找可接入的 Agent、它们的会话和 Claude Code；关闭后不再向 WSL 询问任何内容，之前在那里找到的 Agent 也不再显示\n        \n      \n      \n        会话终端打开会话时使用的终端\n        \n      \n    \n  \n  \n    \n      \n        菜单栏显示额度\n        \n      \n      \n        菜单栏刷新频率图标旁的额度多久重新获取一次\n        \n      \n      \n        菜单栏订阅图标每个订阅的数字前显示它的图标；关闭后只显示数字，订阅之间以细线分隔\n        \n      \n      \n        菜单栏 magpie 图标额度前面的 magpie 图标；关闭后只显示额度，点击额度仍会打开面板\n        \n      \n      \n        菜单栏配速在每个窗口的数字旁显示配速，和用量页一样：+12% 表示比匀速多用了窗口的 12%，−8% 表示少用了这么多\n        \n      \n      \n        菜单栏金额magpie 请求的花费，显示在菜单栏和提示中的 token 数旁；关闭则只显示 token 数\n        \n      \n      \n        额度显示每个周期显示已用额度或剩余额度，用量页、面板和菜单栏一致\n        \n      \n      \n        额度刷新仅手动：打开或刷新用量页、卡片上的刷新，以及 magpie quota 或 accounts 才会读取；在那之前，路由、菜单栏和提醒都按上次读到的额度。被厂商以额度为由拒绝的账号仍会读取。\n        \n      \n      \n        货币\n        \n      \n      \n        数字单位用量页和面板上较大的 token 数、请求数用什么单位缩写\n        \n      \n      \n        额度提醒\n        \n      \n      \n        余额提醒\n        \n      \n      \n        重置前提醒\n        \n      \n      \n        Codex：自动使用重置卡ChatGPT 账号在周额度用完、且没有别的账号能接请求时，或者重置卡快到期还没用时，自动用掉一张。默认关闭，按账号单独打开；用量页每个账号的卡片上也有同一个开关。\n      \n      \n        任务完成提醒\n        \n      \n    \n    \n      Codex\n      Claude Code\n      WorkBuddy\n      Trae CN\n      MiniMax Code\n      Qoder\n      插件\n    \n    \n    \n      \n        窗口重置时预热\n        \n      \n      \n        每日定时预热\n        \n      \n    \n    \n      \n        窗口重置时预热\n        \n      \n      \n        每日定时预热\n        \n      \n    \n    \n      \n        每日自动签到\n        \n      \n    \n    \n      \n        每日自动签到\n        \n      \n    \n    \n      \n        每日自动签到\n        \n      \n    \n    \n      \n        每日自动签到\n        \n      \n    \n    \n    \n  \n  \n    \n      \n        代理\n        \n      \n    \n    GitHub\n    \n    网关\n    \n    \n      \n        不带供应商的模型 ID网关的模型列表还会以模型自己的 ID 列出每个模型，如 codex/gpt-5.6-sol 旁的 gpt-5.6-sol，供从其他代理迁来的应用使用。多个供应商都提供的模型，按“供应商”中的顺序发往它们\n        \n      \n    \n    局域网\n    \n    \n    网页\n    \n  \n  \n    图像\n    \n    联网搜索\n    \n    回复\n    \n    已停用的模型\n    \n  \n  \n    怎么找\n    \n    要遮什么\n    \n    发现敏感值时\n    \n    试一试\n    \n    分享\n    \n    智能体登录\n    \n  \n  \n    \n  \n  \n    \n  \n  \n    \n  \n  \n    \n  \n\n\n\n  方案\n  \n  已保存 Main\n  \n  \n  \n\n\n\n\n\n  \n    \n    \n  \n  \n    \n    \n  \n  \n    \n    \n      \n      \n    \n    \n  \n\n\n\n\n  \n    Codex 子代理可用任意模型GPT 主代理可在 magpie 的其他模型上开子代理。仅对新会话生效；Codex 自身的 multi_agent_v2 优先\n    \n  \n  \n    Codex 子代理模型\n    \n  \n  \n    长对话Codex 和 Claude Code 在 272K（非 Claude 的 [1m] 模型也是）或这里填的大小时压缩；完整窗口每轮更慢更贵\n    \n  \n  \n    Codex 后台压缩Codex 0.163 起在一轮进行中就在后台总结，超过这里填的窗口占比时开始（留空为 65%）；它配置里自己设的值不动\n    \n  \n  \n    Codex 会话标题\n    \n  \n  \n    Codex 会话描述\n    \n  \n  \n    Codex 输入框预测\n    \n  \n  \n    Codex 自动审批模型\n    \n  \n  \n    Codex 记忆整理模型',
+    expected: '删除规则',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/routing-rule-remove.test.cjs:122:7
+✖ webkit zh-TW 1100: a rule's ⋯ is there to remove it, and a rule with no condition says how (21335.680048ms)
+  page.waitForFunction: Timeout 5000ms exceeded.
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-remove.test.cjs:171:20) {
+    name: 'TimeoutError',
+    log: []
+  }
+
+test at internal/gui/tests/routing-rule-remove.test.cjs:122:7
+✖ webkit zh-TW 390: a rule's ⋯ is there to remove it, and a rule with no condition says how (10549.21448ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '閘道 127.0.0.1:3999\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '\n' +
+  +   '    \n' +
+  +   '    magpie\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  路由\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    使用\n' +
+  +   '    Agent\n' +
+  +   '    會話\n' +
+  +   '    資源庫\n' +
+  +   '    模型\n' +
+  +   '    供應商\n' +
+  +   '    路由\n' +
+  +   '    閘道\n' +
+  +   '    觀測\n' +
+  +   '    用量\n' +
+  +   '    脫敏\n' +
+  +   '    擴充\n' +
+  +   '    外掛\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        \n' +
+  +   '        Update\n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '      \n' +
+  +   '    設定\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  Agent\n' +
+  +   '  額度\n' +
+  +   '  用量\n' +
+  +   '  路由\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  快速上手已完成 0/21新增模型來源你已經付費的訂閱、一個供應商，或一個 API 金鑰新增供應商2接入一個 agent安裝 Claude Code、Codex、Gemini CLI、OpenCode 等之後，會列在這裡。3設定路由（選用）路由組把每個請求送給合適的模型，一個模型出錯時交給下一個沒有找到 Agent安裝 Claude Code、Codex、Gemini CLI、OpenCode 等之後，會列在這裡。\n' +
+  +   '  \n' +
+  +   '    方案\n' +
+  +   '    還沒有 · 儲存目前設定，之後一鍵切回\n' +
+  +   '    ＋ 儲存目前\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '    Review and import…忽略\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  已關閉的供應商\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    ＋ 新增供應商\n' +
+  +   '  \n' +
+  +   '  新增第一個供應商匯入…訂閱登入即可，無需金鑰ClaudeChatGPTChatGPT APICursorGrokCopilotZCodeWorkBuddyWorkBuddy 國際版Command CodeQoder 國際版Qoder CNDevinZedFactoryXiaomi MiMoKiroGemini CLIAntigravity外掛中還有更多自定義供應商任意 OpenAI / Anthropic 相容的 URL\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  閘道金鑰新增閘道金鑰\n' +
+  +   '  為每個用戶端建立一個閘道金鑰，分別統計用量。\n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '閘道金鑰給其他電腦用，也給連到這臺電腦的通道（如 Cloudflare Tunnel）用：開啟「區域網共享」後在這裡新增。這臺電腦上的 Agent 不需要金鑰。 網路與共享\n' +
+  +   '接入\n' +
+  +   '\n' +
+  +   '模型複製全部 ID\n' +
+  +   '\n' +
+  +   '最近呼叫\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '    路由即時 · 閘道正在做的決定\n' +
+  +   '      路由組\n' +
+  +   '      新增組\n' +
+  +   '      帳號打碼\n' +
+  +   '    等待請求經 magpie 的 Agent 發出請求後，這裡即時播放：路由把誰排第一及原因、每次嘗試和各自的回應。你的 Agentmagpie127.0.0.1:3999還沒有請求Agent 發給 magpie 的每個請求都會在此顯示，均為真實路由。0請求0改道0Agent 收到的錯誤\n' +
+  +   '    請求閘道保留的最近 0 個用途指標全部重放即時按請求按會話magpie 啟動以來還沒有請求agent 經 magpie 發出的每個請求都列在這裡：由誰應答、為何選它，以及每次嘗試。帳號與金鑰統計自這些請求路由組Agent 當作一個模型來選匯入新增組自動建立路由組兩個及以上供應商都提供的模型會自動成組（auto/…）。關閉後只列出和提供你新增或改過的組。Agent 列表裡的名稱Agent 的模型列表裡，路由組名後面是否帶「· routing group」。這是所有路由組共用的一個設定，也決定模型名後面是否帶供應商，和「設定」裡的是同一個。關閉自定義名稱不帶供應商開啟Main名稱Agent 列表裡的名稱Agent 的模型列表裡顯示為「Main · routing group」 · 是否帶「· routing group」在上方統一設定，對所有路由組生效IDAgent 裡選 group/main模型1opusA1M跟隨分組推理下移移除2Deepseek-V4.1-FlashWorkBuddy AI1M跟隨分組推理上移移除再新增一個模型排第一的模型決定本組對外的能力；按順序模式下從上往下嘗試。模式新增模式模式匹配的模型均入組（含供應商日後新增的），排在上方模型之後：* 匹配 provider/model 中任意字元，re: 開頭表示正規表示式。模型清單也列出成員模型只列出本組Agent 的模型清單和閘道的 /v1/models 會列出本組，也列出組裡的每個模型。路由智慧按順序輪流最少使用重置前用完免費優先按權重手動按順序：先用第一個模型，無法回應再換下一個；各成員按其供應商的路由在自己的帳號或 Key 間分配。成員中的路由組，以及服務商路由不是「智慧」的模型，都保留自己的路由：本組只在它與其他成員間選擇（按它會先用的帳號或 Key 比較），選中後按其自身順序整體嘗試。被限流時保持原位排到最後仍有額度卻被限流的帳號按廠商要求休息，之後回到原位繼續使用。遲遲不出字一直等30 秒1 分鐘2 分鐘自定義分鐘每個成員都會一直等到它開始回答，不論多久。成員全都忙關閉1 分鐘2 分鐘4 分鐘每個成員都因暫時性錯誤（過載、暫不可用、短暫限流）失敗，而回覆還一點都沒到智慧體時，過一會兒依序再問一遍每個成員，間隔一次比一次長，也不短於廠商要求的等待，最多再等 1 分鐘。串流請求的智慧體在此期間會一直被保持等待。上下文最大模型的最小模型的自定義告訴 agent 1,000,000 tokens（組裡最大模型的）；某個成員放不下的對話會交給放得下的成員。會話保持自動整個會話一輪之內關閉嚴格廠商快取仍有價值時，會話留在回答過它的帳號或 Key 上：一輪之內始終保持，跨輪則在快取新鮮時保持。規則1帶圖片→Deepseek-V4.1-Flash · WorkBuddy AI新增規則推理強度按 agent每輪判斷推理檔位成員共有自定noneminimallowmediumhighxhighmax對 Agent 提供所有模型都有的檔位。移除取消儲存路由組路由組在「外掛 › 內建」中已關閉：magpie 自動找到的組（多個供應商提供的同一個模型）照常路由，但這裡不能新增或修改你自己的組。開啟路由組多帳號 / 多 Key各供應商在自己的帳號或 Key 間路由\n' +
+  +   '\n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '      5 秒\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '      額度\n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      帳號打碼\n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    僅統計閘道呼叫；會話日誌呼叫請檢視「請求」。本地拒絕的請求不計入彙總。\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    Agent\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    模型\n' +
+  +   '    \n' +
+  +   '    帳號\n' +
+  +   '    \n' +
+  +   '    閘道金鑰\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      ×\n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      匯出 CSV\n' +
+  +   '    \n' +
+  +   '    統計閘道呼叫與會話日誌呼叫；本地拒絕的請求不計入彙總。\n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        \n' +
+  +   '          \n' +
+  +   '          \n' +
+  +   '          \n' +
+  +   '          拆分維度\n' +
+  +   '        \n' +
+  +   '        \n' +
+  +   '          \n' +
+  +   '          \n' +
+  +   '          \n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        用量熱力圖最近 53 週的每日用量\n' +
+  +   '        \n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    請求存檔\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '            \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      最近的會話\n' +
+  +   '      \n' +
+  +   '      全部會話\n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  \n' +
+  +   '    常規\n' +
+  +   '    額度\n' +
+  +   '    網路與共享\n' +
+  +   '    模型\n' +
+  +   '    隱私\n' +
+  +   '    可觀測性\n' +
+  +   '    同步與備份\n' +
+  +   '    外掛\n' +
+  +   '    關於\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        外觀跟隨 Omarchy 主題，在 Omarchy 選單裡切換\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        色盲模式\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        語言\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        閘道模式\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        文字大小\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        介面字型\n' +
+  +   '        \n' +
+  +   '          \n' +
+  +   '          \n' +
+  +   '          Aa 0123 · 中文\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        程式碼字型\n' +
+  +   '        \n' +
+  +   '          \n' +
+  +   '          \n' +
+  +   '          Aa 0123 · 中文\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        點選托盤圖示\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        狀態列圖示把 magpie 圖示放進 Omarchy 狀態列，與系統圖示並排；右鍵開啟視窗\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        模型名帶供應商\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        開機自啟\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        顯示程式塢\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        輕量模式視窗關閉一分鐘後釋放約 100 MB；閘道與背景作業照常執行，只重新載入頁面\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        防止休眠在 magpie 執行任務時，讓電腦保持喚醒狀態\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        偵測 WSL 中的 Agent在執行中的 WSL 發行版裡尋找可接入的 Agent、它們的工作階段和 Claude Code；關閉後不再向 WSL 詢問任何內容，之前在那裡找到的 Agent 也不再顯示\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        會話終端機開啟會話時使用的終端機\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        選單列顯示額度\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        選單列重新整理頻率圖示旁的額度多久重新取得一次\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        選單列訂閱圖示每個訂閱的數字前顯示它的圖示；關閉後只顯示數字，訂閱之間以細線分隔\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        選單列 magpie 圖示額度前面的 magpie 圖示；關閉後只顯示額度，點選額度仍會打開面板\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        選單列配速在每個視窗的數字旁顯示配速，和用量頁一樣：+12% 表示比勻速多用了視窗的 12%，−8% 表示少用了這麼多\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        選單列金額magpie 請求的花費，顯示在選單列與提示中的 token 數旁；關閉則只顯示 token 數\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        額度顯示每個週期顯示已用額度或剩餘額度，用量頁、面板和選單列一致\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        額度重新整理僅手動：開啟或重新整理用量頁、卡片上的重新整理，以及 magpie quota 或 accounts 才會讀取；在那之前，路由、選單列和提醒都依上次讀到的額度。被廠商以額度為由拒絕的帳號仍會讀取。\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        貨幣\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        數字單位用量頁和麵板上較大的 token 數、請求數用什麼單位縮寫\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        額度提醒\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        餘額提醒\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        重置前提醒\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        Codex：自動使用重置卡ChatGPT 帳號在週額度用完、且沒有別的帳號能接請求時，或者重置卡快到期還沒用時，自動用掉一張。預設關閉，按帳號單獨開啟；用量頁每個帳號的卡片上也有同一個開關。\n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        任務完成提醒\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      Codex\n' +
+  +   '      Claude Code\n' +
+  +   '      WorkBuddy\n' +
+  +   '      Trae CN\n' +
+  +   '      MiniMax Code\n' +
+  +   '      Qoder\n' +
+  +   '      外掛\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        時段重置時預熱\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        每日定時預熱\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        時段重置時預熱\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '        每日定時預熱\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        每日自動簽到\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        每日自動簽到\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        每日自動簽到\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        每日自動簽到\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        代理\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    GitHub\n' +
+  +   '    \n' +
+  +   '    閘道\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '        不帶供應商的模型 ID閘道的模型列表還會以模型自己的 ID 列出每個模型，如 codex/gpt-5.6-sol 旁的 gpt-5.6-sol，供從其他代理遷來的應用使用。多個供應商都提供的模型，按「供應商」中的順序發往它們\n' +
+  +   '        \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    區域網\n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '    網頁\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    影像\n' +
+  +   '    \n' +
+  +   '    聯網搜尋\n' +
+  +   '    \n' +
+  +   '    回覆\n' +
+  +   '    \n' +
+  +   '    已停用的模型\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    怎麼找\n' +
+  +   '    \n' +
+  +   '    要遮什麼\n' +
+  +   '    \n' +
+  +   '    發現敏感值時\n' +
+  +   '    \n' +
+  +   '    試試看\n' +
+  +   '    \n' +
+  +   '    分享\n' +
+  +   '    \n' +
+  +   '    智慧體登入\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  方案\n' +
+  +   '  \n' +
+  +   '  已儲存 Main\n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '      \n' +
+  +   '      \n' +
+  +   '    \n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '\n' +
+  +   '  \n' +
+  +   '    Codex 子代理可用任意模型GPT 主代理可在 magpie 的其他模型上開子代理。僅對新會話生效；Codex 自身的 multi_agent_v2 優先\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    Codex 子代理模型\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    長對話Codex 和 Claude Code 在 272K（非 Claude 的 [1m] 模型也是）或這裡填的大小時壓縮；完整視窗每輪更慢更貴\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    Codex 背景壓縮Codex 0.163 起在一輪進行中就在背景總結，超過這裡填的視窗占比時開始（留空為 65%）；它設定裡自己設的值不動\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    Codex 會話標題\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    Codex 對話描述\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    Codex 輸入框預測\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    Codex 自動審批模型\n' +
+  +   '    \n' +
+  +   '  \n' +
+  +   '  \n' +
+  +   '    Codex 記憶整理模型'
+  - '刪除規則'
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-remove.test.cjs:156:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '閘道 127.0.0.1:3999\n  \n  \n  \n\n\n    \n    magpie\n  \n  \n  路由\n  \n  \n    \n  \n  \n    使用\n    Agent\n    會話\n    資源庫\n    模型\n    供應商\n    路由\n    閘道\n    觀測\n    用量\n    脫敏\n    擴充\n    外掛\n  \n  \n  \n    \n      \n        \n        Update\n      \n      \n        \n      \n    \n    \n      \n    \n    \n    \n    \n  \n      \n    設定\n\n\n\n  Agent\n  額度\n  用量\n  路由\n\n\n\n  快速上手已完成 0/21新增模型來源你已經付費的訂閱、一個供應商，或一個 API 金鑰新增供應商2接入一個 agent安裝 Claude Code、Codex、Gemini CLI、OpenCode 等之後，會列在這裡。3設定路由（選用）路由組把每個請求送給合適的模型，一個模型出錯時交給下一個沒有找到 Agent安裝 Claude Code、Codex、Gemini CLI、OpenCode 等之後，會列在這裡。\n  \n    方案\n    還沒有 · 儲存目前設定，之後一鍵切回\n    ＋ 儲存目前\n  \n  \n  \n  \n  \n\n\n\n  \n  \n  \n    \n    Review and import…忽略\n  \n  \n  \n  \n  已關閉的供應商\n  \n  \n  \n    ＋ 新增供應商\n  \n  新增第一個供應商匯入…訂閱登入即可，無需金鑰ClaudeChatGPTChatGPT APICursorGrokCopilotZCodeWorkBuddyWorkBuddy 國際版Command CodeQoder 國際版Qoder CNDevinZedFactoryXiaomi MiMoKiroGemini CLIAntigravity外掛中還有更多自定義供應商任意 OpenAI / Anthropic 相容的 URL\n\n\n\n\n\n  \n\n\n  閘道金鑰新增閘道金鑰\n  為每個用戶端建立一個閘道金鑰，分別統計用量。\n  \n\n閘道金鑰給其他電腦用，也給連到這臺電腦的通道（如 Cloudflare Tunnel）用：開啟「區域網共享」後在這裡新增。這臺電腦上的 Agent 不需要金鑰。 網路與共享\n接入\n\n模型複製全部 ID\n\n最近呼叫\n\n\n    路由即時 · 閘道正在做的決定\n      路由組\n      新增組\n      帳號打碼\n    等待請求經 magpie 的 Agent 發出請求後，這裡即時播放：路由把誰排第一及原因、每次嘗試和各自的回應。你的 Agentmagpie127.0.0.1:3999還沒有請求Agent 發給 magpie 的每個請求都會在此顯示，均為真實路由。0請求0改道0Agent 收到的錯誤\n    請求閘道保留的最近 0 個用途指標全部重放即時按請求按會話magpie 啟動以來還沒有請求agent 經 magpie 發出的每個請求都列在這裡：由誰應答、為何選它，以及每次嘗試。帳號與金鑰統計自這些請求路由組Agent 當作一個模型來選匯入新增組自動建立路由組兩個及以上供應商都提供的模型會自動成組（auto/…）。關閉後只列出和提供你新增或改過的組。Agent 列表裡的名稱Agent 的模型列表裡，路由組名後面是否帶「· routing group」。這是所有路由組共用的一個設定，也決定模型名後面是否帶供應商，和「設定」裡的是同一個。關閉自定義名稱不帶供應商開啟Main名稱Agent 列表裡的名稱Agent 的模型列表裡顯示為「Main · routing group」 · 是否帶「· routing group」在上方統一設定，對所有路由組生效IDAgent 裡選 group/main模型1opusA1M跟隨分組推理下移移除2Deepseek-V4.1-FlashWorkBuddy AI1M跟隨分組推理上移移除再新增一個模型排第一的模型決定本組對外的能力；按順序模式下從上往下嘗試。模式新增模式模式匹配的模型均入組（含供應商日後新增的），排在上方模型之後：* 匹配 provider/model 中任意字元，re: 開頭表示正規表示式。模型清單也列出成員模型只列出本組Agent 的模型清單和閘道的 /v1/models 會列出本組，也列出組裡的每個模型。路由智慧按順序輪流最少使用重置前用完免費優先按權重手動按順序：先用第一個模型，無法回應再換下一個；各成員按其供應商的路由在自己的帳號或 Key 間分配。成員中的路由組，以及服務商路由不是「智慧」的模型，都保留自己的路由：本組只在它與其他成員間選擇（按它會先用的帳號或 Key 比較），選中後按其自身順序整體嘗試。被限流時保持原位排到最後仍有額度卻被限流的帳號按廠商要求休息，之後回到原位繼續使用。遲遲不出字一直等30 秒1 分鐘2 分鐘自定義分鐘每個成員都會一直等到它開始回答，不論多久。成員全都忙關閉1 分鐘2 分鐘4 分鐘每個成員都因暫時性錯誤（過載、暫不可用、短暫限流）失敗，而回覆還一點都沒到智慧體時，過一會兒依序再問一遍每個成員，間隔一次比一次長，也不短於廠商要求的等待，最多再等 1 分鐘。串流請求的智慧體在此期間會一直被保持等待。上下文最大模型的最小模型的自定義告訴 agent 1,000,000 tokens（組裡最大模型的）；某個成員放不下的對話會交給放得下的成員。會話保持自動整個會話一輪之內關閉嚴格廠商快取仍有價值時，會話留在回答過它的帳號或 Key 上：一輪之內始終保持，跨輪則在快取新鮮時保持。規則1帶圖片→Deepseek-V4.1-Flash · WorkBuddy AI新增規則推理強度按 agent每輪判斷推理檔位成員共有自定noneminimallowmediumhighxhighmax對 Agent 提供所有模型都有的檔位。移除取消儲存路由組路由組在「外掛 › 內建」中已關閉：magpie 自動找到的組（多個供應商提供的同一個模型）照常路由，但這裡不能新增或修改你自己的組。開啟路由組多帳號 / 多 Key各供應商在自己的帳號或 Key 間路由\n\n  \n    \n    \n    \n    \n    \n    \n      \n      5 秒\n    \n    \n  \n  \n    \n      額度\n      \n      \n      帳號打碼\n      \n    \n    \n    僅統計閘道呼叫；會話日誌呼叫請檢視「請求」。本地拒絕的請求不計入彙總。\n    \n    \n    Agent\n    \n    \n    模型\n    \n    帳號\n    \n    閘道金鑰\n    \n    \n    \n  \n  \n    \n      \n      \n      \n      \n      \n      \n      \n      ×\n      \n      \n      匯出 CSV\n    \n    統計閘道呼叫與會話日誌呼叫；本地拒絕的請求不計入彙總。\n    \n      \n      \n        \n          \n          \n          \n          拆分維度\n        \n        \n          \n          \n          \n        \n      \n    \n    \n      \n        用量熱力圖最近 53 週的每日用量\n        \n        \n      \n      \n      \n      \n    \n    請求存檔\n    \n    \n            \n    \n    \n  \n  \n  \n    \n      \n      \n      \n    \n    \n    \n    \n      \n      \n      \n      \n      \n      \n      \n    \n    \n      最近的會話\n      \n      全部會話\n      \n    \n    \n    \n  \n\n  \n  \n  \n\n\n\n\n\n\n\n\n  \n    常規\n    額度\n    網路與共享\n    模型\n    隱私\n    可觀測性\n    同步與備份\n    外掛\n    關於\n  \n  \n  \n    \n      \n        外觀跟隨 Omarchy 主題，在 Omarchy 選單裡切換\n        \n      \n      \n        色盲模式\n        \n      \n      \n        語言\n        \n      \n      \n        閘道模式\n        \n      \n      \n        文字大小\n        \n      \n      \n        介面字型\n        \n          \n          \n          Aa 0123 · 中文\n        \n      \n      \n        程式碼字型\n        \n          \n          \n          Aa 0123 · 中文\n        \n      \n      \n        點選托盤圖示\n        \n      \n      \n        狀態列圖示把 magpie 圖示放進 Omarchy 狀態列，與系統圖示並排；右鍵開啟視窗\n        \n      \n      \n        模型名帶供應商\n        \n      \n      \n      \n      \n        開機自啟\n        \n      \n      \n        顯示程式塢\n        \n      \n      \n        輕量模式視窗關閉一分鐘後釋放約 100 MB；閘道與背景作業照常執行，只重新載入頁面\n        \n      \n      \n        防止休眠在 magpie 執行任務時，讓電腦保持喚醒狀態\n        \n      \n      \n        偵測 WSL 中的 Agent在執行中的 WSL 發行版裡尋找可接入的 Agent、它們的工作階段和 Claude Code；關閉後不再向 WSL 詢問任何內容，之前在那裡找到的 Agent 也不再顯示\n        \n      \n      \n        會話終端機開啟會話時使用的終端機\n        \n      \n    \n  \n  \n    \n      \n        選單列顯示額度\n        \n      \n      \n        選單列重新整理頻率圖示旁的額度多久重新取得一次\n        \n      \n      \n        選單列訂閱圖示每個訂閱的數字前顯示它的圖示；關閉後只顯示數字，訂閱之間以細線分隔\n        \n      \n      \n        選單列 magpie 圖示額度前面的 magpie 圖示；關閉後只顯示額度，點選額度仍會打開面板\n        \n      \n      \n        選單列配速在每個視窗的數字旁顯示配速，和用量頁一樣：+12% 表示比勻速多用了視窗的 12%，−8% 表示少用了這麼多\n        \n      \n      \n        選單列金額magpie 請求的花費，顯示在選單列與提示中的 token 數旁；關閉則只顯示 token 數\n        \n      \n      \n        額度顯示每個週期顯示已用額度或剩餘額度，用量頁、面板和選單列一致\n        \n      \n      \n        額度重新整理僅手動：開啟或重新整理用量頁、卡片上的重新整理，以及 magpie quota 或 accounts 才會讀取；在那之前，路由、選單列和提醒都依上次讀到的額度。被廠商以額度為由拒絕的帳號仍會讀取。\n        \n      \n      \n        貨幣\n        \n      \n      \n        數字單位用量頁和麵板上較大的 token 數、請求數用什麼單位縮寫\n        \n      \n      \n        額度提醒\n        \n      \n      \n        餘額提醒\n        \n      \n      \n        重置前提醒\n        \n      \n      \n        Codex：自動使用重置卡ChatGPT 帳號在週額度用完、且沒有別的帳號能接請求時，或者重置卡快到期還沒用時，自動用掉一張。預設關閉，按帳號單獨開啟；用量頁每個帳號的卡片上也有同一個開關。\n      \n      \n        任務完成提醒\n        \n      \n    \n    \n      Codex\n      Claude Code\n      WorkBuddy\n      Trae CN\n      MiniMax Code\n      Qoder\n      外掛\n    \n    \n    \n      \n        時段重置時預熱\n        \n      \n      \n        每日定時預熱\n        \n      \n    \n    \n      \n        時段重置時預熱\n        \n      \n      \n        每日定時預熱\n        \n      \n    \n    \n      \n        每日自動簽到\n        \n      \n    \n    \n      \n        每日自動簽到\n        \n      \n    \n    \n      \n        每日自動簽到\n        \n      \n    \n    \n      \n        每日自動簽到\n        \n      \n    \n    \n    \n  \n  \n    \n      \n        代理\n        \n      \n    \n    GitHub\n    \n    閘道\n    \n    \n      \n        不帶供應商的模型 ID閘道的模型列表還會以模型自己的 ID 列出每個模型，如 codex/gpt-5.6-sol 旁的 gpt-5.6-sol，供從其他代理遷來的應用使用。多個供應商都提供的模型，按「供應商」中的順序發往它們\n        \n      \n    \n    區域網\n    \n    \n    網頁\n    \n  \n  \n    影像\n    \n    聯網搜尋\n    \n    回覆\n    \n    已停用的模型\n    \n  \n  \n    怎麼找\n    \n    要遮什麼\n    \n    發現敏感值時\n    \n    試試看\n    \n    分享\n    \n    智慧體登入\n    \n  \n  \n    \n  \n  \n    \n  \n  \n    \n  \n  \n    \n  \n\n\n\n  方案\n  \n  已儲存 Main\n  \n  \n  \n\n\n\n\n\n  \n    \n    \n  \n  \n    \n    \n  \n  \n    \n    \n      \n      \n    \n    \n  \n\n\n\n\n  \n    Codex 子代理可用任意模型GPT 主代理可在 magpie 的其他模型上開子代理。僅對新會話生效；Codex 自身的 multi_agent_v2 優先\n    \n  \n  \n    Codex 子代理模型\n    \n  \n  \n    長對話Codex 和 Claude Code 在 272K（非 Claude 的 [1m] 模型也是）或這裡填的大小時壓縮；完整視窗每輪更慢更貴\n    \n  \n  \n    Codex 背景壓縮Codex 0.163 起在一輪進行中就在背景總結，超過這裡填的視窗占比時開始（留空為 65%）；它設定裡自己設的值不動\n    \n  \n  \n    Codex 會話標題\n    \n  \n  \n    Codex 對話描述\n    \n  \n  \n    Codex 輸入框預測\n    \n  \n  \n    Codex 自動審批模型\n    \n  \n  \n    Codex 記憶整理模型',
+    expected: '刪除規則',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/routing-rule-remove.test.cjs:122:7
+✖ webkit ja 1100: a rule's ⋯ is there to remove it, and a rule with no condition says how (14325.302652ms)
+  locator.waitFor: Timeout 5000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('.row-menu') to be visible[22m
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-remove.test.cjs:154:41) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('.row-menu') to be visible" ]
+  }
+
+test at internal/gui/tests/routing-rule-remove.test.cjs:122:7
+✖ webkit ja 390: a rule's ⋯ is there to remove it, and a rule with no condition says how (15347.323342ms)
+  locator.waitFor: Timeout 5000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('.row-menu') to be visible[22m
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-remove.test.cjs:154:41) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('.row-menu') to be visible" ]
+  }
+
+test at internal/gui/tests/routing-rule-remove.test.cjs:122:7
+✖ webkit de 1100: a rule's ⋯ is there to remove it, and a rule with no condition says how (14554.243159ms)
+  locator.waitFor: Timeout 5000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('.row-menu') to be visible[22m
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-remove.test.cjs:154:41) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('.row-menu') to be visible" ]
+  }
+
+test at internal/gui/tests/routing-rule-remove.test.cjs:122:7
+✖ webkit de 390: a rule's ⋯ is there to remove it, and a rule with no condition says how (14865.706346ms)
+  locator.waitFor: Timeout 5000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('.row-menu') to be visible[22m
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-remove.test.cjs:154:41) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('.row-menu') to be visible" ]
+  }

@@ -1,0 +1,14 @@
+{
+  "issue": 3657,
+  "comment_id": 6408073510,
+  "url": "https://github.com/yetone/magpie/issues/3657#issuecomment-6408073510",
+  "author": "skygunner",
+  "created_at": "2026-10-26T04:14:23Z",
+  "updated_at": "2026-10-26T04:17:59Z",
+  "body_sha256_api_utf8": "da42b70383c90b6aa5aa77a22854a2ba4c60d2308a08ff1eb9ec0159515cc530",
+  "body_sha256_local": "da42b70383c90b6aa5aa77a22854a2ba4c60d2308a08ff1eb9ec0159515cc530",
+  "equal": true,
+  "skygunner_comment_count": 1,
+  "fetched_at": "2026-10-26T09:41:15.298869Z",
+  "raw_api": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/audit-3657-comment.raw.json"
+}

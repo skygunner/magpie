@@ -1,0 +1,26 @@
+{
+  "issue": 3655,
+  "title": "[Bug] write_stdin 等待长任务被 tool-loop guard 误判，提前结束 Codex 当前轮次",
+  "verdict": "fixed",
+  "branch": "fix/r25-write-stdin-wait",
+  "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+  "head": "d9c57ab0550fd408c38d3d46996b9943b29117a7",
+  "testCommands": [
+    "GOTOOLCHAIN=go1.26.8 go test -tags nogui ./internal/gateway -run '^TestPendingWriteStdinLoopGuard$' -count=1 -v",
+    "GOTOOLCHAIN=go1.26.8 go test -tags nogui ./internal/gateway -timeout 45m"
+  ],
+  "testsAdded": [
+    "TestPendingWriteStdinLoopGuard"
+  ],
+  "filesChanged": [
+    "internal/gateway/tool_loop.go",
+    "internal/gateway/pending_write_stdin_test.go"
+  ],
+  "preExistingRed": [
+    "TestClaudeClientCacheAbsentUnchanged — 同样在干净 BASE 19253f67（含新增测试文件）上失败，重跑 -count=3 亦失败，与本改动无关（Claude Code cache-control 参数回归；tool_loop.go 未触及该路径）"
+  ],
+  "unverifiedBoundaries": [
+    "真实 Windows / Codex Desktop 端到端未运行（本机为 Linux，仅有跨平台编译验证）",
+    "session_id 为非数字句柄、以及 'Process running with session ID <id>' 以外的 pending 文案未覆盖（这些情况保守地仍按重复工作计数）"
+  ]
+}

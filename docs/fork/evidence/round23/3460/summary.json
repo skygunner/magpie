@@ -1,0 +1,33 @@
+{
+  "issue": 3460,
+  "title": "plugins: a provider whose models are spoken to with @ai-sdk/google can't be tested (Test models off, provider test refuses CodeAssist)",
+  "verdict": "fixed",
+  "skipReason": null,
+  "branch": "fix/plugin-codeassist-probe",
+  "base": "01468003348ede896c5126e9fd81057e1e58765c",
+  "head": "d99b2bd1241d59c507227166bb1bf3d9ac49ee3d",
+  "testCommands": [
+    "go test ./internal/provider/ -run 'TestPluginGoogleModelIsTestable|TestPluginTestProbesCodeAssist' -count=1 -v  (red.log, green.log)",
+    "go test ./internal/provider/ -run '^Test[A-T]' -count=1  (provider-A-T.log, ok)",
+    "go test ./internal/provider/ -run '^Test[V-Z]' -count=1  (provider-V-Z.log, ok)",
+    "go test ./internal/provider/ -run '^Test(UserSelfDefaultField|UsageReadKicksTheWarmUp|UndashInExactWins|UseCodexReset|Unflat|UsageClaudeViaWaitsForRunsThroughTheOld|UnreadLoginsFieldTypesKeptBeforeWrite|UnreadLoginsNotWrittenOver|UpstreamNameInFollowsTheNamesAsTheyAreNow|UpstreamNameAsGivesAModelTheNameItWasGiven|UpstreamNameAsInIgnoresANameOfOnlyWhitespace|UnrelatedPlanWithSameResetStays|UpsertLoginKeepsRevokedMarkForTheSameSignIn|UltraOnModelsThatOfferIt|UnreadStateKeptAside|UsageAliasSetAndReset|UsageAliasRefusesSelfAndLoops|UsageAliasHandWrittenLoop|UsageAliasUnreadSettings|UserHeadersInLowerCaseAreSentOnce|UsedUpLeavesOutARenewedWindow)$' -count=1  (provider-U.log, ok)",
+    "go test -tags nogui ./internal/gateway/ ./internal/gui/ -count=1  (gateway-gui-nogui.log; gui ok, gateway red only at TestClaudeClientCacheAbsentUnchanged, red on the clean base too: base-pre-existing-claude-cache.log)",
+    "gofmt -l internal/provider/test.go internal/provider/plugin_codeassist_probe_test.go  (nothing printed)",
+    "go vet ./... ; GOOS=linux GOARCH=amd64 go vet -tags nogui ./... ; GOOS=windows GOARCH=amd64 go vet ./... ; go build ./... ; GOOS=linux GOARCH=amd64 go build -tags nogui ./... ; GOOS=windows GOARCH=amd64 go build ./...  (all exit 0, checks.log)"
+  ],
+  "testsAdded": [
+    "internal/provider/plugin_codeassist_probe_test.go: TestPluginGoogleModelIsTestable",
+    "internal/provider/plugin_codeassist_probe_test.go: TestPluginTestProbesCodeAssist"
+  ],
+  "unverifiedBoundaries": [
+    "Not tried against a real @ai-sdk/google plugin and a real Vertex AI publisher base: the fake plugin (internal/plugin/testdata/fake, fake-gemini on @ai-sdk/google) and testenv.FakeVendor stand for them.",
+    "The community plugin's own fetch guard (a Vertex credential refused outside the configured Google endpoint) is exercised only through the fake plugin's fetch, not the real plugin's.",
+    "Pre-existing and untouched: internal/provider's TestUnreadLoginsWriteErrorsKeepCredentials crashes with 'fatal error: close of synctest channel from outside bubble' on the clean base too (unread-base.log); the package was therefore run in -run ranges around it rather than by weakening it.",
+    "Pre-existing and untouched: internal/gateway's TestClaudeClientCacheAbsentUnchanged is red on the clean base (base-pre-existing-claude-cache.log)."
+  ],
+  "filesChanged": [
+    "internal/provider/test.go",
+    "internal/provider/plugin_codeassist_probe_test.go",
+    "docs/subsystems/providers-accounts.md"
+  ]
+}

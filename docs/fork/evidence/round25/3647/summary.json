@@ -1,0 +1,44 @@
+{
+ "issue": 3647,
+ "title": "gateway: with TLS on, a handover still cuts a local connection whose first byte hasn't come yet",
+ "verdict": "fixed",
+ "branch": "fix/r25-tls-handover-local",
+ "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+ "head": "691aa25451562cc614c7fc90ec6d30a56f8ded2f",
+ "testCommands": [
+  "GOTOOLCHAIN=go1.26.8 go test ./internal/gateway/ -run TestHandedOffTLSGatewayAnswersAConnectionWaitingForItsFirstByte -count=20 -timeout 300s",
+  "GOTOOLCHAIN=go1.26.8 go test ./internal/gateway/ -race -run TestHandedOffTLSGatewayAnswersAConnectionWaitingForItsFirstByte -count=10 -timeout 600s",
+  "GOTOOLCHAIN=go1.26.8 go test ./internal/gateway/ -count=1 -timeout 45m",
+  "gofmt -l internal/gateway/",
+  "GOTOOLCHAIN=go1.26.8 go vet ./...",
+  "GOTOOLCHAIN=go1.26.8 go build ./...",
+  "GOOS=linux GOARCH=amd64 GOTOOLCHAIN=go1.26.8 go build -tags nogui ./...",
+  "GOOS=windows GOARCH=amd64 GOTOOLCHAIN=go1.26.8 go build ./...",
+  "go test -race -shuffle=on ./internal/gateway -run ^TestHandedOffTLSGatewayAnswersAConnectionWaitingForItsFirstByte$ -count=1"
+ ],
+ "testsAdded": [
+  "TestHandedOffTLSGatewayAnswersAConnectionWaitingForItsFirstByte"
+ ],
+ "filesChanged": [
+  "internal/gateway/tls.go",
+  "internal/gateway/gateway.go",
+  "internal/gateway/tls_handover_test.go"
+ ],
+ "preExistingRed": [
+  "TestClaudeClientCacheAbsentUnchanged - fails identically on a pure base copy of 19253f67 (claude_client_cache_test.go:291 ordinary prompt changed); unrelated to this change, not filed by this task",
+  "TestHandedOverGatewayFinishesItsStream: request 0 EOF at head AND clean base with race/shuffle seed 1793007267019698289; see deterministic-related-base.log and deterministic-verify.log"
+ ],
+ "unverifiedBoundaries": [
+  "no end-to-end handover with the real desktop app and a real certificate (test uses the same ListenAndServe/drain path with a self-signed certificate)",
+  "a local connection that never speaks now holds the handover drain for up to sniffWait (10s) - the cost of answering the ones that do",
+  "Windows: build only, not run on Windows"
+ ],
+ "note": "Production fix unchanged. Two normal followup commits; final regression synchronizes socket Read and listener Close through test-only wrappers and existing Inherit, no fixed sleep or polling.",
+ "commitCount": 3,
+ "deterministicEvidence": {
+  "red": "deterministic-red.log",
+  "green": "deterministic-green.log",
+  "relatedBaseline": "deterministic-related-base.log",
+  "verify": "deterministic-verify.log"
+ }
+}

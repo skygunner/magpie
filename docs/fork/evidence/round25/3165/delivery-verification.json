@@ -1,0 +1,65 @@
+{
+  "finalhead": "94d62c6a72193bb1846c24cb30908a2273fdfedb",
+  "prerequisite": "57a507167a15025674e266340290ccca357c40f8",
+  "branch": "fix/r25-3165-reasoning-clear-test",
+  "comment": {
+    "id": 6415383816,
+    "url": "https://github.com/yetone/magpie/issues/3165#issuecomment-6415383816",
+    "author": "skygunner",
+    "created_at": "2026-10-26T11:55:27Z",
+    "updated_at": "2026-10-26T12:03:51Z"
+  },
+  "remoteHead": "94d62c6a72193bb1846c24cb30908a2273fdfedb",
+  "bodyExact": true,
+  "readback": {
+    "id": 6415383816,
+    "url": "https://github.com/yetone/magpie/issues/3165#issuecomment-6415383816",
+    "author": "skygunner",
+    "created_at": "2026-10-26T11:55:27Z",
+    "updated_at": "2026-10-26T12:03:51Z",
+    "bodyExact": true,
+    "unique": true,
+    "remoteHead": "94d62c6a72193bb1846c24cb30908a2273fdfedb",
+    "headExact": true,
+    "readbackCount": 8
+  },
+  "verification": {
+    "red": "expected FAIL exit 1, both subtests and both assistant messages",
+    "green": "PASS exit 0",
+    "relatedRace": "PASS exit 0 (15.989s)",
+    "finalHeadRace": true,
+    "nativeVet": "PASS",
+    "linuxNoguiVet": "PASS",
+    "windowsVet": "PASS",
+    "nativeBuild": "PASS",
+    "noguiBuild": "PASS",
+    "windowsBuild": "PASS",
+    "gofmt": "empty, exit 0",
+    "lsp": "gopls unavailable",
+    "fullGatewayRace": {
+      "exit": 1,
+      "duration": "679.115s",
+      "failures": [
+        "TestCodexFittedImagesPastTheBudget",
+        "TestServeWSLListensBesideLoopback",
+        "TestCodexPoolSaysTheClientsVersion",
+        "TestMarshalRawIsEncodingJSON",
+        "TestClaudeClientCacheAbsentUnchanged",
+        "FuzzMarshalRaw/seed#7"
+      ],
+      "baselineReproduced": 5,
+      "unresolvedWholePackageOnly": "TestCodexPoolSaysTheClientsVersion",
+      "logs": [
+        "package-race.log",
+        "base-production-failures.log",
+        "final-production-failures.log"
+      ]
+    }
+  },
+  "limitations": [
+    "non-tool reasoning_content + reasoning_details vendor failure unproven",
+    "no real vendor account",
+    "no Windows runtime",
+    "no full repository suite claim"
+  ]
+}

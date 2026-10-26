@@ -1,0 +1,116 @@
+diff --git a/internal/codexcat/codexcat.go b/internal/codexcat/codexcat.go
+index c6ee8125..437b35b2 100644
+--- a/internal/codexcat/codexcat.go
++++ b/internal/codexcat/codexcat.go
+@@ -141,8 +141,13 @@ type model struct {
+ 	// the model's whole window when Context is the working one
+ 	// (settings.Working): Codex's model_context_window may raise it
+ 	// that far, as it does OpenAI's own models'
+-	MaxContext *int   `json:"max_context_window,omitempty"`
+-	Tiers      []tier `json:"service_tiers"`
++	MaxContext *int `json:"max_context_window,omitempty"`
++	// the percent of the window Codex uses: an entry without one is read
++	// as 95% of it, so 272000 came out 258400 (#3553). Codex's own entry
++	// keeps the percent Codex gave it (ownEntry); the window magpie writes
++	// is the window it means.
++	Percent int    `json:"effective_context_window_percent,omitempty"`
++	Tiers   []tier `json:"service_tiers"`
+ 	// Without the search, Codex puts every MCP tool's schema (a
+ 	// ChatGPT sign-in's apps' among them) in every request, 190K
+ 	// tokens before the first word (#258); with it, they are named in
+@@ -254,7 +259,7 @@ func entriesAt(ms []catalog.Model, after int, effort string) []any {
+ 			if m.Compact > 0 {
+ 				w = min(c, m.Compact)
+ 			}
+-			e.Context = &w
++			e.Context, e.Percent = &w, 100
+ 			if w < c {
+ 				e.MaxContext = &c
+ 			}
+diff --git a/internal/codexcat/context_percent_test.go b/internal/codexcat/context_percent_test.go
+new file mode 100644
+index 00000000..7a06926e
+--- /dev/null
++++ b/internal/codexcat/context_percent_test.go
+@@ -0,0 +1,81 @@
++package codexcat
++
++import (
++	"encoding/json"
++	"os"
++	"path/filepath"
++	"testing"
++
++	"github.com/yetone/magpie/internal/catalog"
++	"github.com/yetone/magpie/internal/settings"
++)
++
++// #3553: Codex reads an entry that says no effective_context_window_percent
++// as 95% of its window, so 272000 came out 258400. An entry magpie writes
++// for its own model says the whole window is the one to use; one of Codex's
++// own, which magpie only hands on with the window the user set, keeps the
++// percent Codex gave it.
++func TestCodexCatalogUsesTheWholeWindow(t *testing.T) {
++	home := t.TempDir()
++	t.Setenv("HOME", home)
++	t.Setenv("USERPROFILE", home)
++	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
++	os.MkdirAll(filepath.Join(home, ".codex"), 0o755)
++	os.WriteFile(filepath.Join(home, ".codex", "models_cache.json"), []byte(`{"models":[
++		{"slug":"gpt-5.5","display_name":"GPT-5.5","priority":3,"visibility":"list",
++		 "context_window":272000,"effective_context_window_percent":95}]}`), 0o644)
++	entries := func(ms []catalog.Model) map[string]map[string]any {
++		var got struct {
++			Models []map[string]any `json:"models"`
++		}
++		if err := json.Unmarshal(Catalog(ms), &got); err != nil {
++			t.Fatal(err)
++		}
++		out := map[string]map[string]any{}
++		for _, e := range got.Models {
++			s, _ := e["slug"].(string)
++			out[s] = e
++		}
++		return out
++	}
++	models := []catalog.Model{
++		{ID: "workbuddy/deepseek-v4.1-flash", Name: "flash", Context: 1000000},
++		{ID: "d/small", Name: "small", Context: 128000},
++		{ID: "d/no-window", Name: "no window"},
++		{ID: "codex/gpt-5.5", Name: "GPT-5.5 · Codex", Context: 600000},
++	}
++	got := entries(models)
++	if e := got["workbuddy/deepseek-v4.1-flash"]; e["effective_context_window_percent"] != float64(100) || e["context_window"] != float64(settings.WorkingWindow) {
++		t.Errorf("flash: percent %v, window %v; want 100 and %d", e["effective_context_window_percent"], e["context_window"], settings.WorkingWindow)
++	}
++	if e := got["d/small"]; e["effective_context_window_percent"] != float64(100) {
++		t.Errorf("small: percent %v, want 100", e["effective_context_window_percent"])
++	}
++	if e := got["d/no-window"]; e != nil {
++		if v, ok := e["effective_context_window_percent"]; ok {
++			t.Errorf("no window: percent %v, want none", v)
++		}
++	}
++	// Codex's own entry says 95 as Codex gave it, even with the window the
++	// user set (the window is magpie's, the rest of the entry is Codex's)
++	if e := got["codex/gpt-5.5"]; e["effective_context_window_percent"] != float64(95) || e["context_window"] != float64(600000) {
++		t.Errorf("own entry: percent %v, window %v; want the backend's 95 and 600000", e["effective_context_window_percent"], e["context_window"])
++	}
++	// the whole window (Full window on): 272000 is used, not 95% of it
++	if err := settings.Save(settings.Settings{FullContext: true}); err != nil {
++		t.Fatal(err)
++	}
++	ms := []catalog.Model{{ID: "workbuddy/deepseek-v4.1-flash", Name: "flash", Context: 272000}}
++	if e := entries(ms)["workbuddy/deepseek-v4.1-flash"]; e["context_window"] != float64(272000) || e["effective_context_window_percent"] != float64(100) {
++		t.Errorf("full window: percent %v, window %v; want 100 and 272000", e["effective_context_window_percent"], e["context_window"])
++	}
++	// a catalog written before this, without the field, is written again
++	// with it rather than kept as it was
++	var kept struct {
++		Models []map[string]any `json:"models"`
++	}
++	cur := []byte(`{"models":[{"slug":"workbuddy/deepseek-v4.1-flash","context_window":272000}]}`)
++	if err := json.Unmarshal(Keep(cur, Catalog(ms)), &kept); err != nil || len(kept.Models) != 1 || kept.Models[0]["effective_context_window_percent"] != float64(100) {
++		t.Errorf("kept catalog: %v %v", err, kept.Models)
++	}
++}

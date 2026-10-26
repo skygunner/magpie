@@ -1,0 +1,30 @@
+[
+  {
+    "label": "vet",
+    "command": "go vet ./...",
+    "cwd": "/home/vincenty/Projects/magpie-issues/r25-expired-model-not-account-fault",
+    "returncode": 0,
+    "log": "verify.log"
+  },
+  {
+    "label": "build",
+    "command": "go build ./...",
+    "cwd": "/home/vincenty/Projects/magpie-issues/r25-expired-model-not-account-fault",
+    "returncode": 0,
+    "log": "verify.log"
+  },
+  {
+    "label": "linux nogui",
+    "command": "go build -tags nogui ./...",
+    "cwd": "/home/vincenty/Projects/magpie-issues/r25-expired-model-not-account-fault",
+    "returncode": 0,
+    "log": "verify.log"
+  },
+  {
+    "label": "windows",
+    "command": "go build ./...",
+    "cwd": "/home/vincenty/Projects/magpie-issues/r25-expired-model-not-account-fault",
+    "returncode": 0,
+    "log": "verify.log"
+  }
+]

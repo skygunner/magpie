@@ -1,0 +1,289 @@
+$ env NODE_PATH=/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules BROWSER=chromium node --test internal/gui/tests/routing-flood.test.cjs internal/gui/tests/routing-intent-entry.test.cjs internal/gui/tests/routing-live-patch.test.cjs internal/gui/tests/routing-rule-drag.test.cjs internal/gui/tests/routing-rule-effort.test.cjs internal/gui/tests/routing-rules-line.test.cjs
+✔ chromium en: back in sight after the window hidden, the requests of meanwhile don't all fly at once (7639.715357ms)
+✔ chromium en: back in sight after the window covered, drawing no frames, the requests of meanwhile don't all fly at once (7463.090188ms)
+✔ chromium en: back in sight after another tab open, the requests of meanwhile don't all fly at once (7514.445283ms)
+✔ chromium zh: back in sight after the window hidden, the requests of meanwhile don't all fly at once (7527.23393ms)
+✔ chromium zh: back in sight after the window covered, drawing no frames, the requests of meanwhile don't all fly at once (7497.671416ms)
+✔ chromium zh: back in sight after another tab open, the requests of meanwhile don't all fly at once (7565.465248ms)
+✖ chromium en 1100: Add a rule makes a rule by intent (8368.461436ms)
+✔ chromium en 440: Add a rule makes a rule by intent (3496.784476ms)
+✖ chromium zh 1100: Add a rule makes a rule by intent (8199.351057ms)
+✔ chromium zh 440: Add a rule makes a rule by intent (3536.318519ms)
+▶ chromium: a live request patches the context window and the request list in place
+  ✔ 420x760, open (5608.687614ms)
+  ✖ 420x760, folded (3277.15159ms)
+  ✔ 1100x760, open (5397.064708ms)
+  ✖ 1100x760, folded (3253.747629ms)
+✖ chromium: a live request patches the context window and the request list in place (17694.276155ms)
+✔ chromium en: a group's rules are dragged into order (5449.198291ms)
+✔ chromium zh: a group's rules are dragged into order (5341.190491ms)
+✔ chromium zh-TW: a group's rules are dragged into order (5257.171321ms)
+✔ chromium ja: a group's rules are dragged into order (5289.95583ms)
+✔ chromium de: a group's rules are dragged into order (5282.97631ms)
+✖ chromium en: a rule sets the reasoning its model is asked for (2109.321763ms)
+✖ chromium en: a pause asks for no reasoning (6908.964352ms)
+✔ chromium zh: a rule sets the reasoning its model is asked for (9879.040484ms)
+✔ chromium zh: a pause asks for no reasoning (3584.166952ms)
+✖ chromium en: a rule's effort at a narrow width (1932.431684ms)
+✖ chromium zh: a rule's effort at a narrow width (1946.921837ms)
+✖ chromium zh-TW: a rule's effort at a narrow width (1959.645537ms)
+✖ chromium ja: a rule's effort at a narrow width (1929.430566ms)
+✖ chromium de: a rule's effort at a narrow width (1942.594996ms)
+✔ chromium en 1100: a rule reads as one line, its conditions added from a menu (12188.927267ms)
+✔ chromium en 390: a rule reads as one line, its conditions added from a menu (13333.222596ms)
+✔ chromium zh 1100: a rule reads as one line, its conditions added from a menu (12114.621448ms)
+✔ chromium zh 390: a rule reads as one line, its conditions added from a menu (13284.294566ms)
+✔ chromium zh-TW 1100: a rule reads as one line, its conditions added from a menu (12228.774119ms)
+✔ chromium zh-TW 390: a rule reads as one line, its conditions added from a menu (13377.047062ms)
+✔ chromium ja 1100: a rule reads as one line, its conditions added from a menu (12169.414955ms)
+✔ chromium ja 390: a rule reads as one line, its conditions added from a menu (13351.316492ms)
+✔ chromium de 1100: a rule reads as one line, its conditions added from a menu (12114.995246ms)
+✔ chromium de 390: a rule reads as one line, its conditions added from a menu (13754.095478ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 27
+ℹ fail 12
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 128072.425116
+
+✖ failing tests:
+
+test at internal/gui/tests/routing-intent-entry.test.cjs:80:7
+✖ chromium en 1100: Add a rule makes a rule by intent (8368.461436ms)
+  locator.waitFor: Timeout 5000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('.rt-gedit').locator('.rt-rule').first() to be visible[22m
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/r25-routing-levels-wait/internal/gui/tests/routing-intent-entry.test.cjs:145:46) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('.rt-gedit').locator('.rt-rule').first() to be visible" ]
+  }
+
+test at internal/gui/tests/routing-intent-entry.test.cjs:80:7
+✖ chromium zh 1100: Add a rule makes a rule by intent (8199.351057ms)
+  locator.waitFor: Timeout 5000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('.rt-gedit').locator('.rt-rule').first() to be visible[22m
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/r25-routing-levels-wait/internal/gui/tests/routing-intent-entry.test.cjs:145:46) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('.rt-gedit').locator('.rt-rule').first() to be visible" ]
+  }
+
+test at internal/gui/tests/routing-live-patch.test.cjs:166:15
+✖ 420x760, folded (3277.15159ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   '114K / 272K · 42% #103 3.31%,4.41%,0%,0%,15.44%,9.56%,9.19%',
+  +   '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%',
+  +   '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%',
+  +   '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%',
+  +   '130K / 272K · 48% #105 3.31%,4.41%,0%,0%,18.38%,11.03%,10.66%',
+  +   '130K / 272K · 48% #105 3.31%,4.41%,0%,0%,18.38%,11.03%,10.66%'
+  -   '114K / 272K · 42% #103 3.31%,4.41%,0%,15.44%,9.56%,9.19%',
+  -   '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%',
+  -   '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%',
+  -   '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%',
+  -   '130K / 272K · 48% #105 3.31%,4.41%,0%,18.38%,11.03%,10.66%',
+  -   '130K / 272K · 48% #105 3.31%,4.41%,0%,18.38%,11.03%,10.66%'
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/r25-routing-levels-wait/internal/gui/tests/routing-live-patch.test.cjs:208:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/r25-routing-levels-wait/internal/gui/tests/routing-live-patch.test.cjs:166:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ '114K / 272K · 42% #103 3.31%,4.41%,0%,0%,15.44%,9.56%,9.19%', '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%', '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%', '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%', '130K / 272K · 48% #105 3.31%,4.41%,0%,0%,18.38%,11.03%,10.66%', '130K / 272K · 48% #105 3.31%,4.41%,0%,0%,18.38%,11.03%,10.66%' ],
+    expected: [ '114K / 272K · 42% #103 3.31%,4.41%,0%,15.44%,9.56%,9.19%', '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%', '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%', '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%', '130K / 272K · 48% #105 3.31%,4.41%,0%,18.38%,11.03%,10.66%', '130K / 272K · 48% #105 3.31%,4.41%,0%,18.38%,11.03%,10.66%' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/routing-live-patch.test.cjs:166:15
+✖ 1100x760, folded (3253.747629ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   '114K / 272K · 42% #103 3.31%,4.41%,0%,0%,15.44%,9.56%,9.19%',
+  +   '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%',
+  +   '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%',
+  +   '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%',
+  +   '130K / 272K · 48% #105 3.31%,4.41%,0%,0%,18.38%,11.03%,10.66%',
+  +   '130K / 272K · 48% #105 3.31%,4.41%,0%,0%,18.38%,11.03%,10.66%'
+  -   '114K / 272K · 42% #103 3.31%,4.41%,0%,15.44%,9.56%,9.19%',
+  -   '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%',
+  -   '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%',
+  -   '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%',
+  -   '130K / 272K · 48% #105 3.31%,4.41%,0%,18.38%,11.03%,10.66%',
+  -   '130K / 272K · 48% #105 3.31%,4.41%,0%,18.38%,11.03%,10.66%'
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/r25-routing-levels-wait/internal/gui/tests/routing-live-patch.test.cjs:208:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/r25-routing-levels-wait/internal/gui/tests/routing-live-patch.test.cjs:166:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ '114K / 272K · 42% #103 3.31%,4.41%,0%,0%,15.44%,9.56%,9.19%', '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%', '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%', '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%', '130K / 272K · 48% #105 3.31%,4.41%,0%,0%,18.38%,11.03%,10.66%', '130K / 272K · 48% #105 3.31%,4.41%,0%,0%,18.38%,11.03%,10.66%' ],
+    expected: [ '114K / 272K · 42% #103 3.31%,4.41%,0%,15.44%,9.56%,9.19%', '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%', '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%', '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%', '130K / 272K · 48% #105 3.31%,4.41%,0%,18.38%,11.03%,10.66%', '130K / 272K · 48% #105 3.31%,4.41%,0%,18.38%,11.03%,10.66%' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/routing-rule-effort.test.cjs:106:5
+✖ chromium en: a rule sets the reasoning its model is asked for (2109.321763ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 6
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/r25-routing-levels-wait/internal/gui/tests/routing-rule-effort.test.cjs:120:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 6,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/routing-rule-effort.test.cjs:143:5
+✖ chromium en: a pause asks for no reasoning (6908.964352ms)
+  locator.click: Timeout 5000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('.row-menu .rm-item').filter({ hasText: 'Pause the model instead' })[22m
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/r25-routing-levels-wait/internal/gui/tests/routing-rule-effort.test.cjs:149:72) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('.row-menu .rm-item').filter({ hasText: 'Pause the model instead' })" ]
+  }
+
+test at internal/gui/tests/routing-rule-effort.test.cjs:160:5
+✖ chromium en: a rule's effort at a narrow width (1932.431684ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/r25-routing-levels-wait/internal/gui/tests/routing-rule-effort.test.cjs:167:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/routing-rule-effort.test.cjs:160:5
+✖ chromium zh: a rule's effort at a narrow width (1946.921837ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/r25-routing-levels-wait/internal/gui/tests/routing-rule-effort.test.cjs:167:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/routing-rule-effort.test.cjs:160:5
+✖ chromium zh-TW: a rule's effort at a narrow width (1959.645537ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/r25-routing-levels-wait/internal/gui/tests/routing-rule-effort.test.cjs:167:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/routing-rule-effort.test.cjs:160:5
+✖ chromium ja: a rule's effort at a narrow width (1929.430566ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/r25-routing-levels-wait/internal/gui/tests/routing-rule-effort.test.cjs:167:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/routing-rule-effort.test.cjs:160:5
+✖ chromium de: a rule's effort at a narrow width (1942.594996ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/r25-routing-levels-wait/internal/gui/tests/routing-rule-effort.test.cjs:167:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+exit=1
+$ env NODE_PATH=/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules BROWSER=webkit node --test internal/gui/tests/routing-keys-fold.test.cjs internal/gui/tests/routing-rules-line.test.cjs
+✔ webkit en: 53 keys for one model are one row on the stage, opened in place and remembered (1302.162338ms)
+✔ webkit en: a request that comes flies to the fold, which says which key; opened, the key's row lights (904.886827ms)
+✔ webkit en: Accounts and keys sums a provider's keys up in one row, opened to each (2970.578735ms)
+✔ webkit en: at 440px the fold and its keys fit (1041.785999ms)
+✔ webkit zh: 53 keys for one model are one row on the stage, opened in place and remembered (1189.991123ms)
+✔ webkit zh: a request that comes flies to the fold, which says which key; opened, the key's row lights (952.042451ms)
+✔ webkit zh: Accounts and keys sums a provider's keys up in one row, opened to each (3030.310568ms)
+✔ webkit zh: at 440px the fold and its keys fit (1069.452997ms)
+✔ webkit ja: 53 keys for one model are one row on the stage, opened in place and remembered (1246.410773ms)
+✔ webkit ja: a request that comes flies to the fold, which says which key; opened, the key's row lights (918.621615ms)
+✔ webkit ja: Accounts and keys sums a provider's keys up in one row, opened to each (3002.768968ms)
+✔ webkit ja: at 440px the fold and its keys fit (1062.297862ms)
+✔ webkit de: 53 keys for one model are one row on the stage, opened in place and remembered (1201.227395ms)
+✔ webkit de: a request that comes flies to the fold, which says which key; opened, the key's row lights (894.990551ms)
+✔ webkit de: Accounts and keys sums a provider's keys up in one row, opened to each (3154.838171ms)
+✔ webkit de: at 440px the fold and its keys fit (1046.207707ms)
+✔ webkit en 1100: a rule reads as one line, its conditions added from a menu (12781.426952ms)
+✔ webkit en 390: a rule reads as one line, its conditions added from a menu (14046.638299ms)
+✔ webkit zh 1100: a rule reads as one line, its conditions added from a menu (12297.627785ms)
+✔ webkit zh 390: a rule reads as one line, its conditions added from a menu (14015.229241ms)
+✔ webkit zh-TW 1100: a rule reads as one line, its conditions added from a menu (12422.290366ms)
+✔ webkit zh-TW 390: a rule reads as one line, its conditions added from a menu (14104.696151ms)
+✔ webkit ja 1100: a rule reads as one line, its conditions added from a menu (12612.312368ms)
+✔ webkit ja 390: a rule reads as one line, its conditions added from a menu (14132.985759ms)
+✔ webkit de 1100: a rule reads as one line, its conditions added from a menu (12505.024883ms)
+✔ webkit de 390: a rule reads as one line, its conditions added from a menu (14092.960886ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 133173.340057
+exit=0

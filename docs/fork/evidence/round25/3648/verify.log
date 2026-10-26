@@ -1,0 +1,24 @@
+# verify: go1.26.8, branch fix/r25-dev-backend-handover, base 19253f67, head f5fd1da3
+
+Barrier design with source citations: design-barrier.md (Shutdown marks inShutdown at net/http/server.go:3151 before closeListenersLocked :3154; Serve tracks the wrapped listener; Close called under s.mu, so the wrapper only signals and forwards).
+
+$ gofmt -l internal/gui/
+GOFMT-EXIT=0 (nothing)
+
+$ git diff --check
+DIFFCHECK-EXIT=0
+
+$ go vet -tags dev ./internal/gui
+VET-EXIT=0
+
+$ go build -tags dev ./...
+BUILDDEV-EXIT=0
+
+### Earlier full matrix (commit 90095766, still valid for the production change, unchanged since):
+go vet ./..., GOOS=linux GOARCH=amd64 go vet -tags nogui ./..., GOOS=windows GOARCH=amd64 go vet ./... — all exit 0
+go build ./..., GOOS=linux GOARCH=amd64 go build -tags nogui ./..., GOOS=windows GOARCH=amd64 go build ./... — all exit 0
+go test -tags dev -count=1 -timeout 45m ./internal/gui — two PRE-EXISTING dev-tag failures (TestWebCompresses, TestVersionedFilesKept), proven identical at the clean base with the change stashed; both pass without -tags dev
+
+### LSP diagnostics: gopls is not installed on this machine, so none were available; the compiler and vet stand in.
+
+### Test-only change f5fd1da3 re-verified narrowly: gofmt, diff --check, vet -tags dev, build -tags dev — all exit 0.

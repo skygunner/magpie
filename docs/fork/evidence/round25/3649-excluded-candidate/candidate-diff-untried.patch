@@ -1,0 +1,261 @@
+diff --git a/internal/gui/gateway_takeover.go b/internal/gui/gateway_takeover.go
+index a81ab90b..22cac10e 100644
+--- a/internal/gui/gateway_takeover.go
++++ b/internal/gui/gateway_takeover.go
+@@ -142,7 +142,14 @@ func quitMagpieOnPort(version string) gatewayFixJSON {
+ 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+ 	defer cancel()
+ 	pids, err := proc.ListeningOn(ctx, n)
+-	if err != nil {
++	// A walk the deadline cut short still names the pids it reached, and a
++	// magpie's own processes are read first, so on a machine where the walk
++	// of everything else does not fit the 30s the older magpie is among
++	// them (#3649). Every pid is checked to be a magpie's program before
++	// anything of it is ended, so a list that may not be whole is safe to
++	// act on; with none in it there is nothing to act on, and the walk is
++	// said to have failed as before.
++	if err != nil && !(errors.Is(err, context.DeadlineExceeded) && len(pids) > 0) {
+ 		out.Reason, out.Error = "error", err.Error()
+ 		return out
+ 	}
+@@ -185,13 +192,18 @@ func quitMagpieOnPort(version string) gatewayFixJSON {
+ 	if bad := end(proc.Terminate); bad != nil {
+ 		return *bad
+ 	}
+-	if letGo(ctx, n, pids, quitWait) {
++	// A list that may not be whole is what the deadline left, so the walk's
++	// 30s is spent by now: the wait for the port to be let go gets a
++	// deadline of its own, or it ends before it has waited at all
++	wait, stopWaiting := context.WithTimeout(context.Background(), quitWait+killWait)
++	defer stopWaiting()
++	if letGo(wait, n, pids, quitWait) {
+ 		return gatewayFixJSON{OK: true}
+ 	}
+ 	if bad := end(proc.Kill); bad != nil {
+ 		return *bad
+ 	}
+-	if letGo(ctx, n, pids, killWait) {
++	if letGo(wait, n, pids, killWait) {
+ 		return gatewayFixJSON{OK: true}
+ 	}
+ 	out.Reason = "stuck"
+diff --git a/internal/proc/listener_linux.go b/internal/proc/listener_linux.go
+index f7520410..d4bdcd58 100644
+--- a/internal/proc/listener_linux.go
++++ b/internal/proc/listener_linux.go
+@@ -1,22 +1,67 @@
+ package proc
+ 
+ import (
++	"bytes"
+ 	"context"
+ 	"fmt"
+ 	"os"
+ 	"path/filepath"
++	"runtime"
+ 	"strconv"
+ 	"strings"
++	"sync"
++
++	"golang.org/x/sys/unix"
+ )
+ 
++// procRoot is the /proc the walk reads, and MAGPIE_TEST_PROC names a tree
++// a test of its own keeps instead: one with the listening tables and the
++// descriptor links it wants, and no process of the machine's beside them.
++// Nothing else sets it, and it is read when the walk runs rather than at
++// start, since a test names its tree while it runs.
++var procRoot = "/proc"
++
++const procRootVar = "MAGPIE_TEST_PROC"
++
++// procDir is the /proc the walk reads: a test's tree when it named one,
++// the machine's own otherwise.
++func procDir() string {
++	if d := os.Getenv(procRootVar); d != "" {
++		return d
++	}
++	return procRoot
++}
++
+ // listeningOn reads /proc: the listening sockets on port from
+ // /proc/net/tcp and tcp6, then the processes holding them, among those
+ // whose descriptors this user may read.
++//
++// It walks in two passes over the same pids, and reports them in /proc's
++// order either way. The first pass takes only the processes a magpie runs
++// under — exe or comm naming magpie, dial or a magpie-* build — and does
++// not stop for the context: how long it takes is how many descriptors
++// magpie's own processes hold, and the process this walk exists for is one
++// of them (#3649: a machine with 19.68m open descriptors took 90s to walk,
++// the 30s the take-over gives the walk ran out, and the port's holder was
++// never named). The second pass takes every other process, one process on
++// each of as many cores as there are processes to walk, since one
++// process's descriptors are read without looking at another's, and it
++// stops for the context between processes and between batches of their
++// descriptors, so a process holding millions of them cannot outlast it.
++//
++// A process that holds the port is reported however many do: a program of
++// another name, a parent and the child that inherited its socket, and two
++// unrelated processes are all holders. When the context ends the second
++// pass, the pids it reached are returned with the context's own error, as
++// they were when every process was walked one at a time; the processes
++// not walked then may hold the port too, and a caller that must know
++// every holder reads that error as it always has.
+ func listeningOn(ctx context.Context, port int) ([]int, error) {
++	root := procDir()
+ 	inodes := map[string]bool{}
+ 	read := false
+-	for _, f := range []string{"/proc/net/tcp", "/proc/net/tcp6"} {
+-		b, err := os.ReadFile(f)
++	for _, f := range []string{"tcp", "tcp6"} {
++		b, err := os.ReadFile(filepath.Join(root, "net", f))
+ 		if err != nil {
+ 			continue
+ 		}
+@@ -31,32 +76,122 @@ func listeningOn(ctx context.Context, port int) ([]int, error) {
+ 	if len(inodes) == 0 {
+ 		return nil, nil
+ 	}
+-	dirs, err := os.ReadDir("/proc")
++	dirs, err := os.ReadDir(root)
+ 	if err != nil {
+ 		return nil, err
+ 	}
+-	var ps []int
++	pids := make([]int, 0, len(dirs))
+ 	for _, d := range dirs {
+-		pid, err := strconv.Atoi(d.Name())
+-		if err != nil {
+-			continue
++		if pid, err := strconv.Atoi(d.Name()); err == nil {
++			pids = append(pids, pid)
+ 		}
+-		if ctx.Err() != nil {
+-			return ps, ctx.Err()
++	}
++	held := make([]bool, len(pids))
++	rest := make([]int, 0, len(pids))
++	for i, pid := range pids {
++		if magpieRun(pid) {
++			held[i] = holds(context.WithoutCancel(ctx), root, pid, inodes)
++		} else {
++			rest = append(rest, i)
+ 		}
+-		fds, err := os.ReadDir(filepath.Join("/proc", d.Name(), "fd"))
+-		if err != nil {
+-			continue
++	}
++	walkRest(ctx, root, pids, rest, inodes, held)
++	out := make([]int, 0, len(pids))
++	for i := range pids {
++		if held[i] {
++			out = append(out, pids[i])
+ 		}
+-		for _, fd := range fds {
+-			l, err := os.Readlink(filepath.Join("/proc", d.Name(), "fd", fd.Name()))
+-			if err == nil && strings.HasPrefix(l, "socket:[") && inodes[strings.TrimSuffix(strings.TrimPrefix(l, "socket:["), "]")] {
+-				ps = append(ps, pid)
+-				break
++	}
++	if err := ctx.Err(); err != nil {
++		return out, err
++	}
++	return out, nil
++}
++
++// walkRest is the second pass: every pid no magpie of ours runs under, one
++// of them on a core at a time. The context ends the pass between
++// processes, and inside one between batches of its descriptors; the work
++// is drained either way, so no sender is left waiting for it.
++func walkRest(ctx context.Context, root string, pids, rest []int, inodes map[string]bool, held []bool) {
++	if len(rest) == 0 {
++		return
++	}
++	work := make(chan int)
++	var wg sync.WaitGroup
++	for range min(runtime.GOMAXPROCS(0), len(rest)) {
++		wg.Add(1)
++		go func() {
++			defer wg.Done()
++			for i := range work {
++				if ctx.Err() != nil {
++					continue
++				}
++				held[i] = holds(ctx, root, pids[i], inodes)
+ 			}
++		}()
++	}
++	for _, i := range rest {
++		work <- i
++	}
++	close(work)
++	wg.Wait()
++}
++
++// magpieRun says whether pid runs one of magpie's own programs, by exe as
++// the system names it, or by comm when this user may not read the link
++// (another user's process). It is the first pass's filter alone: a
++// magpie's program is read again, by Executable, before anything of it is
++// ended.
++func magpieRun(pid int) bool {
++	if p, err := executable(pid); err == nil {
++		return IsMagpie(p)
++	}
++	b, err := os.ReadFile(filepath.Join(procDir(), strconv.Itoa(pid), "comm"))
++	return err == nil && IsMagpie(strings.TrimSpace(string(b)))
++}
++
++var (
++	socketOpen  = []byte("socket:[")
++	socketClose = []byte("]")
++)
++
++// holds says whether pid holds one of inodes: every descriptor it has is
++// read, and the one naming one of the sockets is it. The directory is
++// listed a batch of names at a time and each name read through the
++// directory itself, so a process with millions of descriptors costs a
++// batch of names and one short read each, not the whole listing in memory
++// and a walk into /proc from its root for every descriptor. The context
++// ends the process between batches, never inside one.
++func holds(ctx context.Context, root string, pid int, inodes map[string]bool) bool {
++	d, err := os.Open(filepath.Join(root, strconv.Itoa(pid), "fd"))
++	if err != nil {
++		return false
++	}
++	defer d.Close()
++	fd := int(d.Fd())
++	link := make([]byte, unix.PathMax)
++	for {
++		if ctx.Err() != nil {
++			return false
++		}
++		fds, err := d.ReadDir(256)
++		for _, f := range fds {
++			n, err := unix.Readlinkat(fd, f.Name(), link)
++			if err != nil {
++				continue
++			}
++			b, ok := bytes.CutPrefix(link[:n], socketOpen)
++			if !ok {
++				continue
++			}
++			if b, ok := bytes.CutSuffix(b, socketClose); ok && inodes[string(b)] {
++				return true
++			}
++		}
++		if err != nil || len(fds) == 0 {
++			return false
+ 		}
+ 	}
+-	return ps, nil
+ }
+ 
+ // listenInodes are the inodes of the sockets listening (st 0A) on port in
+@@ -77,5 +212,5 @@ func listenInodes(table string, port int) map[string]bool {
+ }
+ 
+ func executable(pid int) (string, error) {
+-	return os.Readlink(filepath.Join("/proc", strconv.Itoa(pid), "exe"))
++	return os.Readlink(filepath.Join(procDir(), strconv.Itoa(pid), "exe"))
+ }

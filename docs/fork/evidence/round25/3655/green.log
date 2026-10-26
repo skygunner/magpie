@@ -1,0 +1,10 @@
+=== RUN   TestPendingWriteStdinLoopGuard
+=== RUN   TestPendingWriteStdinLoopGuard/pending_wait_must_continue
+=== RUN   TestPendingWriteStdinLoopGuard/repeated_read_must_still_stop
+--- PASS: TestPendingWriteStdinLoopGuard (0.00s)
+    --- PASS: TestPendingWriteStdinLoopGuard/pending_wait_must_continue (0.00s)
+    --- PASS: TestPendingWriteStdinLoopGuard/repeated_read_must_still_stop (0.00s)
+PASS
+ok  	github.com/yetone/magpie/internal/gateway	0.012s
+
+exit_code=0

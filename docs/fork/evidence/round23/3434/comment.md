@@ -1,0 +1,10 @@
+Reproduced from the code path you named: `ruleKey` held a group's turn decision by the conversation plus `firstWords(req)`, and a compaction replaces the transcript's first message with a summary - so the key changed, the turn's rule was not found, and the same native turn was classified again.
+
+Fixed on [fix/codex-compaction-turn-identity](https://github.com/skygunner/magpie/tree/fix/codex-compaction-turn-identity) (`677160b7`, one commit on `01468003`): the key now holds the task, and the task is the agent's own turn id when it names one - Codex's `client_metadata` `x-codex-turn-metadata.turn_id`, hashed into the key like the first words were - and the conversation's first words only when it names none. A helper's call (a title, a description, a subagent's own task) names no turn, so it still keys by its own first words and cannot inherit the turn's decision.
+
+RED -> GREEN, re-run independently here:
+- clean base `01468003` with only the new test: `after compaction: &{N:1 Use:b/big …}` - the compacted request of the same `turn_id` was classified again (the stub classifier asked twice, `Held: false`).
+- at the head: `TestCodexCompactionKeepsTheTurnsRule` passes - the turn's start classifies once, the same `turn_id` with a compacted transcript holds with no second call, a new `turn_id` classifies again, and a subagent's task inside the same turn classifies as its own.
+- `go test ./internal/gateway -run 'TestRule|TestIntent|TestClassif|TestCodexCompaction|TestNested|TestPause|TestDecide'`: 65 pass. Full `go test ./internal/gateway` passes except `TestClaudeClientCacheAbsentUnchanged`, red on the clean base too. `go vet` and `go build` for linux, windows and `-tags nogui` pass; `gofmt -l` is empty.
+
+Limits: no real Codex compaction - the request shape is Codex's protocol (`client_metadata` `x-codex-turn-metadata.turn_id`), driven through the real handler with the package's stubbed classifier, not a captured production payload. Another agent that names a turn in `client_metadata` would be bound the same way; none is tested. A turn whose id the client changes mid-flight is a new turn, by construction.

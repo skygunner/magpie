@@ -1,0 +1,7 @@
+根因：`betas()` 只朝一个方向适配 agent 的 beta 列表——Bedrock 的名字——其余名字按 agent 的要求原样转发。Claude Desktop 的网关模式以关闭 experimental betas 的方式运行 Claude Code，所以 **Enable tool search** 请求的是 `tool-search-tool-2025-10-19`（Bedrock/Vertex 对它的叫法）；Copilot 的 `/v1/messages` 和 `count_tokens` 用 `400 unsupported beta header(s)` 拒绝这个名字，于是每个 Desktop 会话的第一个请求都失败，Claude Code 随即把这个会话的工具搜索关掉、把所有工具 schema 内联后重发。
+
+修复在 [fix/issue-3475](https://github.com/skygunner/magpie/tree/fix/issue-3475)（`3dfc880c`，基于今天的 `main` `01468003`）：Copilot 账号在去重之前把这个名字改写为 Anthropic 自己的 `advanced-tool-use-2025-11-20`（`internal/gateway/betas.go` 的 `copilotBetas`），所以同时要求两个名字的请求只发一次；`/v1/messages`、`count_tokens` 和 body 里的 `anthropic_beta` 都经过 `betas()`。其他 provider 仍然收到 agent 要求的那个名字。
+
+- 红 → 绿：`TestCopilotToolSearchBeta` 把 gateway handler 打到一个假的 Copilot endpoint，按你抓包里的措辞拒绝 Bedrock 名字。在 `01468003` 上只加测试：`FAIL copilot_tool_search_test.go:77: Messages, betas "tool-search-tool-2025-10-19": 400 {"error":{"message":"Copilot: unsupported beta header(s): tool-search-tool-2025-10-19"}}`；在 head 上两个测试都过。`TestCopilotToolSearchBetaOtherProvidersUnchanged` 守住另一面：普通 relay 仍收到 agent 要求的那个名字。
+- `internal/gateway`（`-tags nogui`）在本机有一个红，`TestClaudeClientCacheAbsentUnchanged`，在干净的 `01468003` 上同样红（#3280）。`go vet`/`go build` 在 linux、windows、`-tags nogui linux` 上干净；`gofmt -l` 为空；`docs/subsystems/gateway-routing.md` 在同一 commit 里写明了这条规则。
+- 直说未尝试的：真实 Copilot 账号和 Claude Desktop 应用。证据是 gateway 对一个按你日志措辞拒绝的 fake 发出的请求字节。Responses 路由未动——你报告的路径是 Copilot 的 Messages API。

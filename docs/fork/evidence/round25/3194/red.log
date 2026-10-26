@@ -1,0 +1,25 @@
+=== RUN   TestTokenStageGoesOnWithoutAnUnacceptedResource
+=== RUN   TestTokenStageGoesOnWithoutAnUnacceptedResource/exchange
+    renew_resource_test.go:35: sign-in failed: the token endpoint answered 400: invalid_target (<!doctype html><meta charset="utf-8"><title>Magpie</title><body style="font:15px -apple-system,system-ui,sans-serif;max-width:32em;margin:4em auto;padding:0 1em;color:#222">Magpie couldn&#39;t finish the sign-in: the token endpoint answered 400: invalid_target</body>)
+=== RUN   TestTokenStageGoesOnWithoutAnUnacceptedResource/refresh
+    renew_resource_test.go:42: renewal failed despite a usable retry without resource: the token endpoint answered 400: invalid_target
+--- FAIL: TestTokenStageGoesOnWithoutAnUnacceptedResource (0.00s)
+    --- FAIL: TestTokenStageGoesOnWithoutAnUnacceptedResource/exchange (0.00s)
+    --- FAIL: TestTokenStageGoesOnWithoutAnUnacceptedResource/refresh (0.00s)
+=== RUN   TestInvalidGrantIsNotRetried
+--- PASS: TestInvalidGrantIsNotRetried (0.00s)
+=== RUN   TestNoResourceIsNotRetried
+--- PASS: TestNoResourceIsNotRetried (0.00s)
+=== RUN   TestPersistentRefusalIsBounded
+    renew_resource_test.go:139: the token endpoint saw 1 requests, want the refused one and the one retry
+--- FAIL: TestPersistentRefusalIsBounded (0.00s)
+=== RUN   TestRetryKeepsTheClientSecret
+    renew_resource_test.go:153: sign-in failed: the token endpoint answered 400: invalid_target (<!doctype html><meta charset="utf-8"><title>Magpie</title><body style="font:15px -apple-system,system-ui,sans-serif;max-width:32em;margin:4em auto;padding:0 1em;color:#222">Magpie couldn&#39;t finish the sign-in: the token endpoint answered 400: invalid_target</body>)
+--- FAIL: TestRetryKeepsTheClientSecret (0.00s)
+=== RUN   TestCanceledRetrySavesNothing
+    renew_resource_test.go:209: callback finished before the retry: <nil>
+--- FAIL: TestCanceledRetrySavesNothing (0.00s)
+FAIL
+FAIL	github.com/yetone/magpie/internal/mcpauth	0.015s
+FAIL
+exit=1

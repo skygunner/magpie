@@ -1,0 +1,14 @@
+=== RUN   TestForgetsAcrossSynctestBubbles
+fatal error: close of synctest channel from outside bubble
+
+goroutine 25 [running, synctest bubble 2]:
+github.com/yetone/magpie/internal/filememo.Forget()
+	/home/vincenty/Projects/magpie-issues/evidence/r25-3632/red-base/internal/filememo/filememo.go:91 +0x65
+github.com/yetone/magpie/internal/filememo.TestForgetsAcrossSynctestBubbles.func2(0x30c8dfc70908?)
+	/home/vincenty/Projects/magpie-issues/evidence/r25-3632/red-base/internal/filememo/forget_bubble_test.go:14 +0xf
+testing.tRunner(0x30c8dfc70908, 0x6706e0)
+	/home/vincenty/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.8.linux-amd64/src/testing/testing.go:2036 +0xea
+created by testing/synctest.testingSynctestTest in goroutine 24
+	/home/vincenty/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.8.linux-amd64/src/testing/testing.go:2150 +0x277
+FAIL	github.com/yetone/magpie/internal/filememo	0.004s
+FAIL

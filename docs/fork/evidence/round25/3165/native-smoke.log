@@ -1,0 +1,6 @@
+UTC: 2026-10-26T11:52:03Z
+HEAD: 57a507167a15025674e266340290ccca357c40f8
+go version go1.27.1-X:nodwarf5 linux/amd64
+COMMAND: /home/vincenty/Projects/magpie-issues/evidence/round25-recovery/3165-reasoning-clear-test/magpie-native --version
+magpie dev
+EXIT_CODE=0

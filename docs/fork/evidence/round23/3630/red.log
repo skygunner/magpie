@@ -1,0 +1,9 @@
+$ go test -tags nogui -count=1 -run TestRenameMovesGatewayKeyModels ./internal/agent
+--- FAIL: TestRenameMovesGatewayKeyModels (0.05s)
+    rename_keys_test.go:55: models [old/m1 old/* group/top other/m2], want [new/m1 new/* group/top other/m2]
+    rename_keys_test.go:58: accounts [old/8254c329a9], want [new/8254c329a9]
+    rename_keys_test.go:67: allows [old/m1 old/* group/top other/m2]: it no longer allows what it listed
+    rename_keys_test.go:73: accounts [old/8254c329a9]: it is no longer held to the account it listed
+FAIL
+FAIL	github.com/yetone/magpie/internal/agent	0.066s
+FAIL

@@ -1,0 +1,30 @@
+$ rm -rf /tmp/scratch-r25-3674 && mkdir -p /tmp/scratch-r25-3674 && cd /home/vincenty/Projects/magpie-issues/r25-usage-dedup-session-file && GIT_MASTER=1 git archive 19253f67bca2310c32739a6eaac88546b3574dbc | tar -x -C /tmp/scratch-r25-3674 && cp /home/vincenty/Projects/magpie-issues/r25-usage-dedup-session-file/internal/usage/dsh_match_test.go /home/vincenty/Projects/magpie-issues/r25-usage-dedup-session-file/internal/usage/codex_identity_test.go /tmp/scratch-r25-3674/internal/usage/ && cp /home/vincenty/Projects/magpie-issues/r25-usage-dedup-session-file/internal/sessions/calls_dsh_test.go /tmp/scratch-r25-3674/internal/sessions/ && cp /home/vincenty/Projects/magpie-issues/r25-usage-dedup-session-file/internal/sessions/testdata/dsh/sessions/work-dsh-3f2a/dsh-gw/session.v3.jsonl /tmp/scratch-r25-3674/internal/sessions/testdata/dsh/sessions/work-dsh-3f2a/dsh-gw/ && echo REDCOPY-OK
+REDCOPY-OK
+
+$ cd /tmp/scratch-r25-3674 && GOTOOLCHAIN=go1.26.8 go test ./internal/usage/ -run 'TestDshCallThroughMagpieCountedOnce' -count=1 2>&1; echo EXIT=$?
+Go test: 0 passed, 1 failed in 1 packages
+
+usage (0 passed, 1 failed)
+  [FAIL] TestDshCallThroughMagpieCountedOnce
+     dsh_match_test.go:26: the call the gateway served is counted again from dsh's session file
+     dsh_match_test.go:59: the request page paired 0 rows by response id, want 1
+[full output: rtk recall ccc038ddda7e9239]
+EXIT=1
+
+$ cd /tmp/scratch-r25-3674 && GOTOOLCHAIN=go1.26.8 go test ./internal/usage/ -run 'TestLogRecordKeepsAResponseIDAnyAgentNamed' -count=1 2>&1; echo EXIT=$?
+Go test: 0 passed, 1 failed in 1 packages
+
+usage (0 passed, 1 failed)
+  [FAIL] TestLogRecordKeepsAResponseIDAnyAgentNamed
+     codex_identity_test.go:407: dsh's response id was lost from its usage row: {Operation: RouteID:0 ...
+[full output: rtk recall 69eac28fb733a77f]
+EXIT=1
+
+$ cd /tmp/scratch-r25-3674 && GOTOOLCHAIN=go1.26.8 go test ./internal/sessions/ -run 'TestDshCalls$' -count=1 2>&1; echo EXIT=$?
+Go test: 0 passed, 1 failed in 1 packages
+
+sessions (0 passed, 1 failed)
+  [FAIL] TestDshCalls
+     calls_dsh_test.go:55: dsh-gw's own call: [{ResponseID: Time:2026-09-27 21:01:00 +1000 AEST Agent:...
+[full output: rtk recall 96b7f1eb4bb1a137]
+EXIT=1

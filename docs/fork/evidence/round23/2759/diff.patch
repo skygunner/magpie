@@ -1,0 +1,102 @@
+diff --git a/internal/gui/assets/app.css b/internal/gui/assets/app.css
+index facc964e..94bd355a 100644
+--- a/internal/gui/assets/app.css
++++ b/internal/gui/assets/app.css
+@@ -3774,8 +3774,8 @@ body.panel .modal { padding: 16px 12px; }
+ .editor.importapps { grid-template-columns: minmax(0, 1fr); }
+ .editor.importapps .appnote { font-size: 12px; color: var(--muted); line-height: 1.5; }
+ .editor.importapps .applist { display: flex; flex-direction: column; gap: 14px; max-height: min(56vh, 460px); overflow-y: auto; margin: 0 -4px; padding: 0 4px; }
+-.editor.importapps .apptabs { display: flex; gap: 4px; padding: 3px; border-radius: 10px; background: var(--pill); overflow-x: auto; scrollbar-width: none; }
+-.editor.importapps .apptab { flex: 1 1 0; min-width: max-content; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 6px 12px; border-radius: 7px; font-size: 12.5px; font-weight: 500; color: var(--muted); white-space: nowrap; }
++.editor.importapps .apptabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; padding: 3px; border-radius: 10px; background: var(--pill); }
++.editor.importapps .apptab { flex: 0 1 auto; min-width: max-content; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 6px 12px; border-radius: 7px; font-size: 12.5px; font-weight: 500; color: var(--muted); white-space: nowrap; }
+ .editor.importapps .apptab:hover { color: var(--fg); }
+ .editor.importapps .apptab.on { background: var(--card); color: var(--fg); box-shadow: 0 1px 2px rgba(0,0,0,.18); }
+ .editor.importapps .apptab.missing .applogo { filter: grayscale(1); opacity: .5; }
+diff --git a/internal/gui/tests/import-source-tabs.test.cjs b/internal/gui/tests/import-source-tabs.test.cjs
+new file mode 100644
+index 00000000..8ad7d7ab
+--- /dev/null
++++ b/internal/gui/tests/import-source-tabs.test.cjs
+@@ -0,0 +1,81 @@
++const assert = require("node:assert/strict");
++const fs = require("node:fs/promises");
++const path = require("node:path");
++const { test } = require("node:test");
++const { chromium, webkit } = require("playwright");
++const assets = process.env.ASSET_DIR || path.resolve(__dirname, "../assets");
++const engines = process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"];
++
++const sources = () => [
++  { id: "alma", name: "Alma", path: "/fixture/alma", found: false, items: [] },
++  { id: "cc-switch", name: "CC Switch", path: "/fixture/cc-switch", found: true, items: [
++    { ref: "relay", from: "config.json", fingerprint: "cc1", status: "new",
++      provider: { id: "relay", name: "Relay", chat: "https://relay.example/v1", key: "sk-…1234", models: ["fixture-model"] } },
++  ] },
++  { id: "claude-code", name: "Claude Code", path: "/fixture/claude", found: false, items: [] },
++  { id: "codex", name: "Codex", path: "/fixture/codex", found: true, items: [
++    { ref: "oa", from: "config.toml", fingerprint: "cx1", status: "new",
++      provider: { id: "oa", name: "OA", responses: "https://oa.example/v1", key: "sk-…1234" } },
++  ] },
++  { id: "opencode", name: "OpenCode", path: "/fixture/opencode", found: true, items: [
++    { ref: "go", from: "auth.json", fingerprint: "oc1", status: "new",
++      provider: { id: "go", name: "Go", chat: "https://go.example/v1", key: "sk-…1234" } },
++  ] },
++];
++
++for (const engine of engines) {
++  for (const lang of ["en", "zh"]) {
++    for (const width of [390, 900]) {
++      test(`${engine} ${lang} ${width}px: every import source tile fits its row`, async (t) => {
++        const browser = await (engine === "webkit" ? webkit.launch() : chromium.launch({ channel: "chromium" }));
++        const page = await browser.newPage({ viewport: { width, height: 900 }, reducedMotion: "reduce" });
++        page.setDefaultTimeout(7000);
++        const errors = [];
++        page.on("pageerror", (e) => errors.push(e.stack || e.message));
++        await page.route("**/*", async (route) => {
++          const req = route.request(), url = new URL(req.url());
++          const json = (data) => route.fulfill({ json: data });
++          if (url.pathname === "/boot.js") return route.fulfill({ contentType: "text/javascript", body: `window.bootPrefs={lang:"${lang}",theme:"light",web:true};` });
++          if (url.pathname === "/api/state") return json({ agents: [], profiles: [], settings: { lang, theme: "light" } });
++          if (url.pathname === "/api/providers") return json({ providers: [], presets: [], excluded: [], gateway: { running: true, window: true } });
++          if (url.pathname === "/api/groups") return json({ groups: [], pools: [] });
++          if (url.pathname === "/api/importapps/discovery") return json([]);
++          if (url.pathname === "/api/importapps") return json(sources());
++          if (url.pathname === "/api/gateway/trace") return new Promise(() => {});
++          if (url.pathname.startsWith("/api/")) return json({});
++          const file = path.join(assets, url.pathname === "/" ? "index.html" : url.pathname);
++          const contentType = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png" }[path.extname(file)];
++          try { await route.fulfill({ body: await fs.readFile(file), contentType }); } catch { await route.fulfill({ status: 404, body: "" }); }
++        });
++        t.after(async () => {
++          await browser.close();
++          assert.deepEqual(errors, []);
++        });
++        await page.goto("http://magpie.test/?view=providers");
++        await page.waitForFunction(() => typeof openImportApps === "function");
++        await page.evaluate(() => openImportApps());
++        const tabs = page.locator("#modal .importapps .apptab");
++        await tabs.first().waitFor();
++        assert.equal(await tabs.count(), 5);
++        const row = await page.evaluate(() => {
++          const sc = document.querySelector("#modal .importapps .apptabs");
++          const r = sc.getBoundingClientRect();
++          return {
++            width: r.width,
++            overflow: sc.scrollWidth - sc.clientWidth,
++            tiles: [...sc.querySelectorAll(".apptab")].map((b) => {
++              const q = b.getBoundingClientRect();
++              return { name: b.textContent, left: q.left - r.left, right: q.right - r.left, width: q.width };
++            }),
++          };
++        });
++        for (const tile of row.tiles) {
++          assert.ok(tile.width > 0, `${tile.name} has no width`);
++          assert.ok(tile.left >= -0.5 && tile.right <= row.width + 0.5,
++            `${tile.name} is cut off: ${tile.left.toFixed(1)}..${tile.right.toFixed(1)} of ${row.width.toFixed(1)}`);
++        }
++        assert.ok(row.overflow <= 1, `the row hides ${row.overflow}px of its tiles`);
++      });
++    }
++  }
++}

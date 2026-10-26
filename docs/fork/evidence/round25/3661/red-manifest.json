@@ -1,0 +1,8 @@
+{
+  "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+  "scratch": "/home/vincenty/Projects/magpie-issues/evidence/r25-3661/clean-base-rlsrt3vr",
+  "onlyCopiedFiles": [
+    "internal/gateway/zcode_trial_test.go",
+    "internal/plugin/testdata/fake/index.js"
+  ]
+}

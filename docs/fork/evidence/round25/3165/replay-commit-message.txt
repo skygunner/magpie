@@ -1,0 +1,25 @@
+gateway: carry DeepSeek reasoning under one field (#3165)
+
+Replay d5b46244abb5da4572fc759688281296caab3c8d onto the requested
+19253f67 base, which does not contain the previously delivered fix or its
+tests. No new production behavior is added beyond that original patch.
+The independent reasoning_details regression follows in its own test-only
+commit.
+
+The tool-turn cleanup and non-tool alias fold retain the original
+contributions from ggbdpq 130b761baf6d7c23114ef5444a517928abbb59fe and
+realfirst 84c2b3a. Existing six regressions pass. Removing the fold makes
+TestChatBothReasoningSpellingsRelayed fail with 400 duplicate field
+`reasoning`; removing tool cleanup leaves all six green, independently
+confirming the reported test gap.
+
+Verified on Go 1.27.1 linux/amd64 in sandbox HOME with pinned Go caches:
+go test -race -tags nogui ./internal/gateway -run 'Reasoning|Kimi'
+-shuffle=on -count=1 passes (15.989s, including the pending regression).
+gofmt is clean. Native, Linux nogui and Windows go vet ./... pass.
+Native, Linux nogui and Windows builds pass. Real DeepSeek/JD Cloud and
+the separate Responses failure are not verified. Non-tool
+reasoning_content plus reasoning_details vendor rejection is unproven.
+
+Co-authored-by: ggbdpq <ggbdpq@gmail.com>
+Co-authored-by: realfirst <174605+realfirst@users.noreply.github.com>

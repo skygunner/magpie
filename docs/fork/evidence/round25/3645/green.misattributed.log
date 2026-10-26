@@ -1,0 +1,23 @@
+✔ live logo fixture holds trace updates until the story is checked (6.293643ms)
+✔ chromium en: the story's lines lead with the provider's logo (514.401105ms)
+✔ chromium zh: the story's lines lead with the provider's logo (522.604552ms)
+✔ webkit en: the story's lines lead with the provider's logo (792.772578ms)
+✔ webkit zh: the story's lines lead with the provider's logo (892.511725ms)
+✔ chromium en: a live request's story keeps its logos as it goes on (443.655464ms)
+✔ chromium zh: a live request's story keeps its logos as it goes on (458.13772ms)
+✔ chromium zh-TW: a live request's story keeps its logos as it goes on (467.391825ms)
+✔ chromium ja: a live request's story keeps its logos as it goes on (484.062517ms)
+✔ chromium de: a live request's story keeps its logos as it goes on (425.97461ms)
+✔ webkit en: a live request's story keeps its logos as it goes on (761.691052ms)
+✔ webkit zh: a live request's story keeps its logos as it goes on (820.188529ms)
+✔ webkit zh-TW: a live request's story keeps its logos as it goes on (848.420233ms)
+✔ webkit ja: a live request's story keeps its logos as it goes on (777.145042ms)
+✔ webkit de: a live request's story keeps its logos as it goes on (767.367108ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22646.296715

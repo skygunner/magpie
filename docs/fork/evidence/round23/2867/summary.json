@@ -1,0 +1,34 @@
+{
+  "issue": 2867,
+  "title": "agent: drift details besides Codex's proxied one are shown in English in every language",
+  "verdict": "fixed",
+  "skipReason": "",
+  "branch": "fix/2867-drift-detail-i18n",
+  "base": "c0985122b3f62e460c73ea6d67c426beb4dc9db2",
+  "head": "a6df7cec93739ce4aa70d6f019da645497ca95b1",
+  "testCommands": [
+    "GOTOOLCHAIN=go1.26.8 go test ./internal/agent/ -run TestDriftDetailsAreTranslated -count=1",
+    "GOTOOLCHAIN=go1.26.8 go test ./internal/agent/ -count=1",
+    "GOTOOLCHAIN=go1.26.8 go test ./internal/gui/ -count=1",
+    "GOTOOLCHAIN=go1.26.8 go vet ./internal/agent/",
+    "GOTOOLCHAIN=go1.26.8 go build ./...",
+    "GOOS=linux GOARCH=amd64 GOTOOLCHAIN=go1.26.8 go build -tags nogui ./...",
+    "GOOS=windows GOARCH=amd64 GOTOOLCHAIN=go1.26.8 go build ./...",
+    "gofmt -l internal/agent/applied.go internal/agent/reach.go internal/agent/drift_notice_test.go"
+  ],
+  "testsAdded": [
+    "internal/agent/drift_notice_test.go: TestDriftDetailsAreTranslated pins the English sentence and the zh/ja renderings of all 13 drift details (replaced, replaced-by-default, three bypassed, five unreachable, three wiringOff) and holds each to being a registered notice"
+  ],
+  "unverifiedBoundaries": [
+    "The drift details an agent's own Check builds outside wiringOff (per-agent sentences in agents.go, codex.go, kimi.go, air.go, ...) and a native app's own Detail are still plain English; converting them needs one notice per sentence in each agent file and was not attempted here",
+    "Codex's proxied detail (codexProxiedDetail in internal/agent/codex_proxy.go) is still a plain string in this base, though issue #2867 assumes it is already a notice; it is unchanged by this branch",
+    "No real GUI was opened: tNotice's behaviour is covered indirectly (its NOTICES/translation tables are the ones the Go test reads)"
+  ],
+  "filesChanged": [
+    "internal/agent/applied.go",
+    "internal/agent/reach.go",
+    "internal/agent/drift_notice_test.go",
+    "internal/gui/assets/i18n.js"
+  ],
+  "preExistingRed": []
+}

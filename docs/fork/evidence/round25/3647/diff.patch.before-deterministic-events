@@ -1,0 +1,255 @@
+diff --git a/internal/gateway/gateway.go b/internal/gateway/gateway.go
+index 14b677c3..41689a36 100644
+--- a/internal/gateway/gateway.go
++++ b/internal/gateway/gateway.go
+@@ -616,6 +616,17 @@ func (s *Server) ListenAndServe(ctx context.Context) error {
+ 	defer stopFresh()
+ 	go pluginrt.KeepFresh(freshCtx, filememo.OthersEvery, settings.Path(), provider.Path(), plugin.ListPath(), plugin.ToolsPath(), access.Path())
+ 	srv := &http.Server{Handler: s.Front(), ReadHeaderTimeout: 30 * time.Second, IdleTimeout: 5 * time.Minute}
++	srv.ConnState = func(c net.Conn, st http.ConnState) {
++		if st != http.StateIdle && st != http.StateClosed && st != http.StateHijacked {
++			return
++		}
++		s.lnMu.Lock()
++		t, ok := s.ln.(*tlsListener)
++		s.lnMu.Unlock()
++		if ok {
++			t.connState(c)
++		}
++	}
+ 	// the magpie serving the gateway, and only it, keeps the saved accounts
+ 	// signed in, so two never refresh one sign-in at once
+ 	go provider.KeepLoginsAlive(ctx)
+@@ -672,6 +683,16 @@ func (s *Server) ListenAndServe(ctx context.Context) error {
+ 		<-ctx.Done()
+ 		c, cancel := context.WithTimeout(context.Background(), s.drainFor())
+ 		defer cancel()
++		if Handover || s.handedOff.Load() {
++			// a handover: the TLS listener stops taking connections and the
++			// ones it took are seen to before the server's end (#3647)
++			s.lnMu.Lock()
++			t, ok := s.ln.(*tlsListener)
++			s.lnMu.Unlock()
++			if ok {
++				t.handOff(c)
++			}
++		}
+ 		srv.Shutdown(c)
+ 		s.subscription.abortAll()
+ 		provider.FlushServed() // what answered last, kept for the next start and the CLI
+diff --git a/internal/gateway/tls.go b/internal/gateway/tls.go
+index d5c23eca..c2c8f853 100644
+--- a/internal/gateway/tls.go
++++ b/internal/gateway/tls.go
+@@ -2,6 +2,7 @@ package gateway
+ 
+ import (
+ 	"bytes"
++	"context"
+ 	"crypto/tls"
+ 	"crypto/x509"
+ 	"fmt"
+@@ -234,10 +235,20 @@ type tlsListener struct {
+ 	stopped chan struct{}
+ 	err     error // why accepting stopped, set before stopped closes
+ 	once    sync.Once
++
++	// a handover's end: accepting stops, and every connection taken is
++	// waited for until the server is done with it
++	mu         sync.Mutex
++	handingOff bool
++	accepting  bool              // the accept loop may still take a connection
++	sniffing   int               // connections taken, still waiting for their first byte
++	pending    map[net.Conn]bool // handed to the server, not yet done there
++	settled    chan struct{}     // closed once nothing is left to wait for
++	settleOnce sync.Once
+ }
+ 
+ func newTLSListener(ln net.Listener, cfg *tls.Config) *tlsListener {
+-	l := &tlsListener{Listener: ln, cfg: cfg, conns: make(chan net.Conn), done: make(chan struct{}), stopped: make(chan struct{})}
++	l := &tlsListener{Listener: ln, cfg: cfg, conns: make(chan net.Conn), done: make(chan struct{}), stopped: make(chan struct{}), accepting: true, pending: make(map[net.Conn]bool), settled: make(chan struct{})}
+ 	go l.accept()
+ 	return l
+ }
+@@ -257,6 +268,16 @@ func (l *tlsListener) accept() {
+ 				}
+ 			}
+ 			l.err = err
++			l.mu.Lock()
++			l.accepting = false // nothing more is taken from here on
++			handover := l.handingOff
++			l.check()
++			l.mu.Unlock()
++			if handover {
++				// handed over: Shutdown's Close ends Accept
++				<-l.done
++				return
++			}
+ 			close(l.stopped)
+ 			return
+ 		}
+@@ -265,11 +286,20 @@ func (l *tlsListener) accept() {
+ 			l.hand(tls.Server(c, l.cfg))
+ 			continue
+ 		}
++		l.mu.Lock()
++		l.sniffing++
++		l.mu.Unlock()
+ 		go l.sniff(c)
+ 	}
+ }
+ 
+ func (l *tlsListener) sniff(c net.Conn) {
++	defer func() {
++		l.mu.Lock()
++		l.sniffing--
++		l.check()
++		l.mu.Unlock()
++	}()
+ 	c.SetReadDeadline(time.Now().Add(sniffWait))
+ 	first := make([]byte, 1)
+ 	if _, err := io.ReadFull(c, first); err != nil {
+@@ -286,13 +316,42 @@ func (l *tlsListener) sniff(c net.Conn) {
+ }
+ 
+ func (l *tlsListener) hand(c net.Conn) {
++	l.mu.Lock()
++	l.pending[c] = true
++	l.mu.Unlock()
+ 	select {
+ 	case l.conns <- c:
+ 	case <-l.done:
++		l.mu.Lock()
++		delete(l.pending, c) // the server never had it
++		l.mu.Unlock()
+ 		c.Close()
+ 	}
+ }
+ 
++// connState notes the server being done with a connection handed to it:
++// its request was read and answered, the connection was hijacked, or it
++// was closed. The end of a handover waits for this before Shutdown, so a
++// request still to be read is read and answered rather than dropped by
++// the server's end.
++func (l *tlsListener) connState(c net.Conn) {
++	l.mu.Lock()
++	if l.pending[c] {
++		delete(l.pending, c)
++		l.check()
++	}
++	l.mu.Unlock()
++}
++
++// check closes settled once a handover's end has nothing left to wait
++// for: the accept loop is over, every taken connection was handed to the
++// server, and every one handed was seen to there. mu must be held.
++func (l *tlsListener) check() {
++	if l.handingOff && !l.accepting && l.sniffing == 0 && len(l.pending) == 0 {
++		l.settleOnce.Do(func() { close(l.settled) })
++	}
++}
++
+ func (l *tlsListener) Accept() (net.Conn, error) {
+ 	select {
+ 	case c := <-l.conns:
+@@ -304,6 +363,25 @@ func (l *tlsListener) Accept() (net.Conn, error) {
+ 	}
+ }
+ 
++// handOff is the listener's part of the end of a handover: it stops
++// taking connections and waits — within ctx — until every connection it
++// took has been handed to the server and seen to there (each within
++// sniffWait of its accept, the ones that say nothing cut as they were
++// before). Shutdown then begins with nothing unread on hand, so the
++// server answers what this computer had taken rather than dropping it at
++// its end (#3647).
++func (l *tlsListener) handOff(ctx context.Context) {
++	l.mu.Lock()
++	l.handingOff = true
++	l.Listener.Close()
++	l.check()
++	l.mu.Unlock()
++	select {
++	case <-l.settled:
++	case <-ctx.Done():
++	}
++}
++
+ func (l *tlsListener) Close() error {
+ 	l.once.Do(func() { close(l.done) })
+ 	return l.Listener.Close()
+diff --git a/internal/gateway/tls_handover_test.go b/internal/gateway/tls_handover_test.go
+new file mode 100644
+index 00000000..fac098ed
+--- /dev/null
++++ b/internal/gateway/tls_handover_test.go
+@@ -0,0 +1,69 @@
++package gateway
++
++import (
++	"bufio"
++	"io"
++	"net"
++	"net/http"
++	"strings"
++	"testing"
++	"time"
++)
++
++// A handover with TLS on still answers a connection from this computer
++// the TLS listener took, whose first byte hadn't come yet when it began:
++// it reaches the server while the handed-over gateway drains, instead of
++// being cut by the listener's end (#3647).
++func TestHandedOffTLSGatewayAnswersAConnectionWaitingForItsFirstByte(t *testing.T) {
++	fresh(t)
++	cert, key := tlsFiles(t)
++	writeCert(t, cert, key, "relay.example")
++	t.Setenv("MAGPIE_ADDR", "127.0.0.1:0")
++	old := New()
++	stopOld, oldDone := listening(t, old)
++	old.lnMu.Lock()
++	addr := old.ln.Addr().String()
++	old.lnMu.Unlock()
++
++	// given: a connection from this computer the TLS listener took, silent
++	silent, err := net.Dial("tcp", addr)
++	if err != nil {
++		t.Fatal(err)
++	}
++	defer silent.Close()
++	// Precondition, not the behavior under test: the accept loop has taken
++	// this connection and is waiting for its first byte. The timing this test
++	// is about is injected below, by sending the first byte only once the
++	// handover has begun. This wait is deliberately far longer than a loopback
++	// accept takes, so a loaded runner does not turn the precondition into a
++	// failure; the assertion is on what the connection is answered, not on it.
++	time.Sleep(500 * time.Millisecond)
++
++	// when: the gateway hands over, and only then the connection speaks
++	old.HandOff()
++	stopOld()
++	req, _ := http.NewRequest("GET", "http://"+addr+"/v1/models", nil)
++	if err := req.Write(silent); err != nil {
++		t.Fatalf("the connection was cut at the handover: %v", err)
++	}
++	silent.SetReadDeadline(time.Now().Add(5 * time.Second))
++
++	// then: the old gateway answers it before it quits
++	res, err := http.ReadResponse(bufio.NewReader(silent), req)
++	if err != nil {
++		t.Fatalf("no answer to a request sent once the handover began: %v", err)
++	}
++	b, _ := io.ReadAll(res.Body)
++	res.Body.Close()
++	if res.StatusCode != http.StatusOK || !strings.Contains(string(b), `"data"`) {
++		t.Fatalf("the silent connection's request: %d %s", res.StatusCode, b)
++	}
++	select {
++	case err := <-oldDone:
++		if err != nil {
++			t.Fatal(err)
++		}
++	case <-time.After(10 * time.Second):
++		t.Fatal("the old gateway never ended")
++	}
++}

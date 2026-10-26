@@ -1,0 +1,9 @@
+commitCount=1
+commitCountOne=true
+baseIsAncestor=true
+head=7ca156c6876282fb3218b42e98429a2c492ebd90
+remote=3e6f4077577d0af80890a542a3fb0d08f8249260
+headIs40Chars=true
+remoteEqualsHead=true
+diffCheck=true
+worktreeClean=true

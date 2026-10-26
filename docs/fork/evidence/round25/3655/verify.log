@@ -1,0 +1,17 @@
+== gofmt -l internal/gateway
+== go vet ./...
+vet: ok
+== go build ./...
+build: ok
+== GOOS=linux GOARCH=amd64 go build -tags nogui ./...
+linux nogui build: ok
+== GOOS=windows GOARCH=amd64 go build ./...
+windows build: ok
+== rev-list count BASE..HEAD
+1
+== merge-base --is-ancestor
+ancestor: ok
+== ls-remote origin read-back
+d9c57ab0550fd408c38d3d46996b9943b29117a7	refs/heads/fix/r25-write-stdin-wait
+
+verify_exit=0

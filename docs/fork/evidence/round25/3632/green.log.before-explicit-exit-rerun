@@ -1,0 +1,4 @@
+=== RUN   TestForgetsAcrossSynctestBubbles
+--- PASS: TestForgetsAcrossSynctestBubbles (0.00s)
+PASS
+ok  	github.com/yetone/magpie/internal/filememo	0.002s

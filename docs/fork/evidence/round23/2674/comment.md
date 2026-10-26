@@ -1,0 +1,10 @@
+As you described: `BlockList` computed the sequence's start line and the file's last non-comment line, then wrote the sequence back over everything between them, so block content that yaml accepts after a root flow sequence was simply dropped.
+
+Fixed on [fix/2674-blocklist-tail](https://github.com/skygunner/magpie/tree/fix/2674-blocklist-tail) (`92b3d82c`, one commit on `01468003`): `BlockList` now finds where the flow sequence itself ends (brackets counted, quoted scalars skipped, so a multi-line `[ … ]` still works) and refuses the file when any line between that end and the file's end holds something other than a comment or a blank line. Refusing means the caller leaves the file as its owner wrote it - `dshParse` and `dshRead` both take the `ok == false` path - so the entry is no longer deleted.
+
+RED -> GREEN, re-run independently here:
+- clean base `01468003` with only the test changes: `TestBlockList` fails at the first new case, `"[]\n- id: a\n" taken for a flow list: "[]\n"`.
+- at the head: the same test passes, with all four inputs from the issue (`[]`, `[ {id: x} ]`, `--- []`, `--- [ {id: x} ]`) each followed by `- id: a` now refused, while the existing one-line, folded/multi-line, nested, tagged, comment-after and CRLF cases still convert as before.
+- `go test ./internal/edit ./internal/agent ./internal/library` passes except `TestWriteAtomicReadOnlyHardLink`, which is red on the clean base too under this machine's umask (`evidence/2674/base-hardlink.log`, your #3640). `go vet` and `go build` for linux, windows and `-tags nogui` pass; `gofmt -l` is empty.
+
+Limits: no real dsh was run; the guarantee is at `BlockList`'s boundary, which is the only thing either caller uses. A refused file is left alone rather than repaired - if you would rather magpie keep the flow-sequence conversion and append the trailing block entries after it, that is a different contract and the one-line change is in the same place.

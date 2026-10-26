@@ -1,0 +1,8 @@
+COMMAND=['go', 'test', '-race', './internal/filememo', '-run', '^TestForgetsAcrossSynctestBubbles$', '-count=1', '-v', '-timeout=120s']
+CWD=/home/vincenty/Projects/magpie-issues/r25-filememo-forget-bubble
+=== RUN   TestForgetsAcrossSynctestBubbles
+--- PASS: TestForgetsAcrossSynctestBubbles (0.00s)
+PASS
+ok  	github.com/yetone/magpie/internal/filememo	1.007s
+
+EXIT=0

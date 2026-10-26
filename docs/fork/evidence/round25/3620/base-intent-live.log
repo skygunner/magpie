@@ -1,0 +1,108 @@
+✖ chromium en 1100: Add a rule makes a rule by intent (8229.960913ms)
+✔ chromium en 440: Add a rule makes a rule by intent (3489.727777ms)
+✖ chromium zh 1100: Add a rule makes a rule by intent (8190.973059ms)
+✔ chromium zh 440: Add a rule makes a rule by intent (3511.136395ms)
+▶ chromium: a live request patches the context window and the request list in place
+  ✔ 420x760, open (5482.439155ms)
+  ✖ 420x760, folded (3241.450993ms)
+  ✔ 1100x760, open (5393.991404ms)
+  ✖ 1100x760, folded (3258.388867ms)
+✖ chromium: a live request patches the context window and the request list in place (17523.127085ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 4
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 23575.999129
+
+✖ failing tests:
+
+test at internal/gui/tests/routing-intent-entry.test.cjs:80:7
+✖ chromium en 1100: Add a rule makes a rule by intent (8229.960913ms)
+  locator.waitFor: Timeout 5000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('.rt-gedit').locator('.rt-rule').first() to be visible[22m
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-intent-entry.test.cjs:145:46) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('.rt-gedit').locator('.rt-rule').first() to be visible" ]
+  }
+
+test at internal/gui/tests/routing-intent-entry.test.cjs:80:7
+✖ chromium zh 1100: Add a rule makes a rule by intent (8190.973059ms)
+  locator.waitFor: Timeout 5000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('.rt-gedit').locator('.rt-rule').first() to be visible[22m
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-intent-entry.test.cjs:145:46) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('.rt-gedit').locator('.rt-rule').first() to be visible" ]
+  }
+
+test at internal/gui/tests/routing-live-patch.test.cjs:166:15
+✖ 420x760, folded (3241.450993ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   '114K / 272K · 42% #103 3.31%,4.41%,0%,0%,15.44%,9.56%,9.19%',
+  +   '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%',
+  +   '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%',
+  +   '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%',
+  +   '130K / 272K · 48% #105 3.31%,4.41%,0%,0%,18.38%,11.03%,10.66%',
+  +   '130K / 272K · 48% #105 3.31%,4.41%,0%,0%,18.38%,11.03%,10.66%'
+  -   '114K / 272K · 42% #103 3.31%,4.41%,0%,15.44%,9.56%,9.19%',
+  -   '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%',
+  -   '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%',
+  -   '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%',
+  -   '130K / 272K · 48% #105 3.31%,4.41%,0%,18.38%,11.03%,10.66%',
+  -   '130K / 272K · 48% #105 3.31%,4.41%,0%,18.38%,11.03%,10.66%'
+    ]
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-live-patch.test.cjs:208:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-live-patch.test.cjs:166:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ '114K / 272K · 42% #103 3.31%,4.41%,0%,0%,15.44%,9.56%,9.19%', '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%', '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%', '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%', '130K / 272K · 48% #105 3.31%,4.41%,0%,0%,18.38%,11.03%,10.66%', '130K / 272K · 48% #105 3.31%,4.41%,0%,0%,18.38%,11.03%,10.66%' ],
+    expected: [ '114K / 272K · 42% #103 3.31%,4.41%,0%,15.44%,9.56%,9.19%', '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%', '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%', '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%', '130K / 272K · 48% #105 3.31%,4.41%,0%,18.38%,11.03%,10.66%', '130K / 272K · 48% #105 3.31%,4.41%,0%,18.38%,11.03%,10.66%' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/routing-live-patch.test.cjs:166:15
+✖ 1100x760, folded (3258.388867ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   '114K / 272K · 42% #103 3.31%,4.41%,0%,0%,15.44%,9.56%,9.19%',
+  +   '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%',
+  +   '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%',
+  +   '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%',
+  +   '130K / 272K · 48% #105 3.31%,4.41%,0%,0%,18.38%,11.03%,10.66%',
+  +   '130K / 272K · 48% #105 3.31%,4.41%,0%,0%,18.38%,11.03%,10.66%'
+  -   '114K / 272K · 42% #103 3.31%,4.41%,0%,15.44%,9.56%,9.19%',
+  -   '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%',
+  -   '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%',
+  -   '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%',
+  -   '130K / 272K · 48% #105 3.31%,4.41%,0%,18.38%,11.03%,10.66%',
+  -   '130K / 272K · 48% #105 3.31%,4.41%,0%,18.38%,11.03%,10.66%'
+    ]
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-live-patch.test.cjs:208:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-live-patch.test.cjs:166:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ '114K / 272K · 42% #103 3.31%,4.41%,0%,0%,15.44%,9.56%,9.19%', '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%', '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%', '122K / 272K · 45% #104 3.31%,4.41%,0%,0%,16.91%,10.29%,9.93%', '130K / 272K · 48% #105 3.31%,4.41%,0%,0%,18.38%,11.03%,10.66%', '130K / 272K · 48% #105 3.31%,4.41%,0%,0%,18.38%,11.03%,10.66%' ],
+    expected: [ '114K / 272K · 42% #103 3.31%,4.41%,0%,15.44%,9.56%,9.19%', '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%', '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%', '122K / 272K · 45% #104 3.31%,4.41%,0%,16.91%,10.29%,9.93%', '130K / 272K · 48% #105 3.31%,4.41%,0%,18.38%,11.03%,10.66%', '130K / 272K · 48% #105 3.31%,4.41%,0%,18.38%,11.03%,10.66%' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

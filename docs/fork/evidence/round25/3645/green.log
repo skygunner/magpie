@@ -1,0 +1,44 @@
+# COMMAND_METADATA {"issue": 3645, "label": "green", "tree": "head", "commit": "833c7cd61728607fdba75637e3271099847c2e70", "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/head", "command": "node --test internal/gui/tests/routing-log-icons-wait.test.cjs", "env": {"GOTOOLCHAIN": "go1.26.8", "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/home-3o9605ch", "GOPATH": "/home/vincenty/go", "GOMODCACHE": "/home/vincenty/go/pkg/mod", "GOCACHE": "/home/vincenty/.cache/go-build", "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules", "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"}, "extra_env": {}, "started_at": "2026-10-26T06:57:42.984806+00:00", "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/green.log"}
+# BEGIN COMPLETE MERGED STDOUT/STDERR
+✔ live logo fixture holds trace updates until the story is checked (6.423954ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 42.075264
+
+# END COMPLETE OUTPUT
+# CHECKED_RETURN_CODE 0
+
+# RELATED GUI CHECK (separate command)
+# COMMAND_METADATA {"issue": 3645, "label": "gui-related", "tree": "head", "commit": "833c7cd61728607fdba75637e3271099847c2e70", "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/head", "command": "node --test --test-concurrency=1 internal/gui/tests/routing-log-icons-wait.test.cjs internal/gui/tests/routing-log-icons.test.cjs", "env": {"GOTOOLCHAIN": "go1.26.8", "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/home-lkcpe9d4", "GOPATH": "/home/vincenty/go", "GOMODCACHE": "/home/vincenty/go/pkg/mod", "GOCACHE": "/home/vincenty/.cache/go-build", "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules", "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"}, "extra_env": {}, "started_at": "2026-10-26T06:57:43.099404+00:00", "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/gui-related.log"}
+# BEGIN COMPLETE MERGED STDOUT/STDERR
+✔ live logo fixture holds trace updates until the story is checked (4.260601ms)
+✔ chromium en: the story's lines lead with the provider's logo (563.259855ms)
+✔ chromium zh: the story's lines lead with the provider's logo (510.851307ms)
+✔ webkit en: the story's lines lead with the provider's logo (2482.78746ms)
+✔ webkit zh: the story's lines lead with the provider's logo (851.494454ms)
+✔ chromium en: a live request's story keeps its logos as it goes on (444.177302ms)
+✔ chromium zh: a live request's story keeps its logos as it goes on (468.400589ms)
+✔ chromium zh-TW: a live request's story keeps its logos as it goes on (472.802155ms)
+✔ chromium ja: a live request's story keeps its logos as it goes on (453.197834ms)
+✔ chromium de: a live request's story keeps its logos as it goes on (442.17306ms)
+✔ webkit en: a live request's story keeps its logos as it goes on (760.984662ms)
+✔ webkit zh: a live request's story keeps its logos as it goes on (813.694406ms)
+✔ webkit zh-TW: a live request's story keeps its logos as it goes on (807.075279ms)
+✔ webkit ja: a live request's story keeps its logos as it goes on (835.148862ms)
+✔ webkit de: a live request's story keeps its logos as it goes on (911.998473ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 24383.47378
+
+# END COMPLETE OUTPUT
+# CHECKED_RETURN_CODE 0

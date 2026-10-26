@@ -1,0 +1,5 @@
+--- FAIL: TestCodexCompactionKeepsTheTurnsRule (0.01s)
+    rules_native_turn_test.go:57: after compaction: &{N:1 Use:b/big More:[] When:[intent "writing or fixing tests"] Held:false Waits:false Grown:false Turn:1 Tokens:22 Images:false Effort: Folder: Unready:false Then:[] Instead: Classified:0x287d993c370 Pick: Wanted: Compact:false Small:[] Bare:false UseEffort: members:[]}, classifier asked 2 times
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.018s
+FAIL

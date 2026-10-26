@@ -1,0 +1,18 @@
+我来弄这个，修好了：[fix/r25-dev-backend-handover](https://github.com/skygunner/magpie/commits/fix/r25-dev-backend-handover)，一个 commit `90095766`，基于 `19253f67`，现在的 main 上也能直接打。
+
+```text
+git format-patch --stdout 19253f67..90095766 | sha256sum
+```
+
+和 gateway 那边（#3568）一个做法，devBackend 收到信号后不再当场 Shutdown：先放掉自己那份 listener（新的 backend 有自己的 socket，后面的连接都排给它），等 Serve 返回——到这时它接下的每个连接都已被 net/http 记下（StateNew）——再等每个接下的连接把第一个请求读完（最多 5s，和 Shutdown 对一个不发东西的连接的等待一样），然后才 Shutdown。MAGPIE_DEV_UI 那个同一次交接里的兄弟服务器也是同一个原因、同一个修法，一并改了。stopServing（gateway 的 drain）照旧，退出前也照旧等页面服务的 Shutdown。
+
+测试 `TestDevBackendHandoverAnswersAConnectionItTook`（`-tags dev`）跑真实的 devBackend 和真实的 SIGUSR2：用 Inherit 塞进去一个可控 listener，看到 accept 后才发信号，再过一个注入延迟（复现繁忙机器把请求压到交接之后的时序）才把连接放行、把请求写进去。旧行为下 net/http 在 Shutdown 开始后读到第一个请求会直接关掉不回，所以基线 `-count=20` 是 20/20 红，报的就是客户端那侧的 `unexpected EOF`；修复后 20/20 绿，另过 `-race -count=3` 和 `-shuffle=on -count=2`。
+
+跑过的（go1.26.8，Linux）：`gofmt -l` 无输出；`git diff --check` 干净；`go vet ./...`、`GOOS=linux GOARCH=amd64 go vet -tags nogui ./...`、`GOOS=windows GOARCH=amd64 go vet ./...`、`go vet -tags dev ./internal/gui` 全过；`go build ./...`、`GOOS=linux GOARCH=amd64 go build -tags nogui ./...`、`GOOS=windows GOARCH=amd64 go build ./...`、`go build -tags dev ./...` 全过；`go test -tags dev -count=1 -timeout 45m ./internal/gui` 里有两个**基线就有的红**（`TestWebCompresses`、`TestVersionedFilesKept`，把改动 stash 回基线后输出逐字相同，都是只在 `-tags dev` 下红的压缩/版本化资源测试，CI 不跑 dev 标签），其余全过。
+
+没试的：真机上的 `make dev` 重启（Linux、macOS 都没试，测试是在一个进程里交 socket，和 #3568 那次的形态一样）；Windows 不交接，只跑了 vet 和 build。
+
+另外这次只动了 dev 构建（`dev_on.go`），gateway 那边没碰：#3568 的修法要是落进 gateway 的公共代码，这两处可以合到同一个 helper 上。
+
+
+测试修订（2026-10-26 追加提交 083079e46e9a1db8a1862286c7522f26e6e8aa00）：回归原先用 `time.Sleep(100ms)` 等待“交接已开始”，这依赖时序运气而不是真实状态；现在改为事件门——信号被进程收到后、`stopServing` 取消测试替换的后端 context，确认 `backendCtx.Done()` 之后才放行被持有的连接并发送请求。生产实现未改。重跑：`gofmt -l internal/gui/` 无输出、`git diff --check` 干净、`go vet -tags dev ./internal/gui` 退出 0、`go test -tags dev ./internal/gui -run TestDevBackendHandoverAnswersAConnectionItTook -count=10` ok、`go test -tags dev -race ./internal/gui -run Handover -count=3` ok。期间一次误在仓库根目录执行 `go test`，输出 `no test files` 被识别为非真实运行，已改用包路径重跑取证；该假绿未进入本评论的成功声明。真实 `make dev` 重启仍未实测。

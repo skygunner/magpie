@@ -1,0 +1,302 @@
+diff --git a/docs/subsystems/gateway-sessions.md b/docs/subsystems/gateway-sessions.md
+index 329b9aa1..9c0e5059 100644
+--- a/docs/subsystems/gateway-sessions.md
++++ b/docs/subsystems/gateway-sessions.md
+@@ -699,3 +699,10 @@ row's model, usage, cost and kind.
+ Compaction is already included in Codex's total consumption, so this marker
+ does not add tokens or cost. This is Codex-only; Claude behavior and the POST
+ `/v1/magpie/usage/requests` ingest allowlist are unchanged.
++
++dsh's session file names the vendor's reply by `responseId` too, so a dsh
++call the gateway served is paired with its record by that id and counted
++once (#3674), where dsh sends the gateway no session header and the
++provider its file names is not always one of magpie's; a call through a
++provider magpie names is still skipped at the read. The pairing stays
++Codex-only in what it carries: no `session_role`, no compaction marker.
+diff --git a/internal/sessions/calls_dsh.go b/internal/sessions/calls_dsh.go
+index e93cf299..0cbcfe53 100644
+--- a/internal/sessions/calls_dsh.go
++++ b/internal/sessions/calls_dsh.go
+@@ -17,10 +17,10 @@ import (
+ // installed and nothing at all for a dsh pointed straight at a vendor.
+ //
+ // A call through magpie's gateway is logged by the gateway as well, and dsh
+-// sends it no session header, so the two records cannot be paired up
+-// afterwards: it is left out here as OpenCode's and ZCode's are
+-// (dshGatewayProvider), or it would be counted twice — once by the gateway
+-// with the provider and account that really answered, and once here as a
++// sends it no session header, so the two records are paired by the
++// reply's responseId when it names one (#3674), or the call is left out
++// here where the provider says magpie; else it would be counted twice —
++// once by the gateway with the account that answered, and once here as a
+ // nameless local session. The provider a session's record names is kept as
+ // history (Upstream), never as proof of the route.
+ 
+@@ -132,7 +132,10 @@ func dshCall(st *callFile, e dshEvent) (Call, bool) {
+ 	}
+ 	src := e.Data.Message.Source
+ 	// a call dsh sent through magpie's own gateway is the gateway's record
+-	// to keep, not this one's: see dshGatewayProvider
++	// to keep, not this one's: see dshGatewayProvider. The provider names
++	// are not always there to tell the two apart (a reply that names
++	// another provider); then the pairing by the reply's responseId keeps
++	// the call from counting twice (#3674)
+ 	if dshGatewayProvider(src) {
+ 		return Call{}, false
+ 	}
+@@ -147,12 +150,13 @@ func dshCall(st *callFile, e dshEvent) (Call, bool) {
+ 		answered = src.Model
+ 	}
+ 	c := Call{
+-		Agent:     "dsh",
+-		Time:      at,
+-		Session:   st.Session,
+-		Model:     answered,
+-		Requested: src.Model,
+-		Upstream:  dshUpstream(src),
++		Agent:      "dsh",
++		Time:       at,
++		Session:    st.Session,
++		Model:      answered,
++		Requested:  src.Model,
++		Upstream:   dshUpstream(src),
++		ResponseID: src.ReplayState.Response.ResponseID,
+ 		Tokens: Tokens{
+ 			Input:      u.Input,
+ 			Output:     u.Output,
+@@ -195,12 +199,11 @@ func dshUpstream(src dshSource) string {
+ // "magpie-anthropic", one route per protocol — agent.dshKinds — and "dial"
+ // from before). A call
+ // through it is logged by the gateway itself, and dsh sends the gateway no
+-// session header (unlike Codex and OpenCode), so the two records cannot be
+-// paired afterwards: the token counts differ call to call and there is no id
+-// to match on. Such a call is therefore left out here, as OpenCode's and
+-// ZCode's are (ocGatewayProvider), or it would be counted twice — once by the
+-// gateway, with the provider and account that really answered, and once
+-// here as a nameless local session.
++// session header (unlike Codex and OpenCode); the responseId a reply
++// names, which the gateway logs as response_id, pairs the two records now
++// (#3674), so only a call the reply named no id for would be counted
++// twice — once by the gateway, with the provider and account that really
++// answered, and once here as a nameless local session.
+ //
+ // It is the name alone: dsh's file records no baseURL, so a provider the user
+ // added under one of those names, pointing at a vendor of their own, is taken
+diff --git a/internal/sessions/calls_dsh_test.go b/internal/sessions/calls_dsh_test.go
+index 36f16cf8..5123dbad 100644
+--- a/internal/sessions/calls_dsh_test.go
++++ b/internal/sessions/calls_dsh_test.go
+@@ -50,7 +50,8 @@ func TestDshCalls(t *testing.T) {
+ 	// really answered, once here as a nameless local session. dsh-gw holds
+ 	// one such call and one of its own.
+ 	// dsh-gw's own call is kept; only its gateway one is left out
+-	if gw := by["dsh-gw"]; len(gw) != 1 || gw[0].Upstream != "jieyue" || gw[0].Tokens != (Tokens{30, 7, 0, 0, 0}) {
++	if gw := by["dsh-gw"]; len(gw) != 1 || gw[0].Upstream != "jieyue" || gw[0].Tokens != (Tokens{30, 7, 0, 0, 0}) ||
++		gw[0].ResponseID != "resp-local-jieyue" {
+ 		t.Fatalf("dsh-gw's own call: %+v", gw)
+ 	}
+ 	for _, c := range cs {
+diff --git a/internal/sessions/dsh.go b/internal/sessions/dsh.go
+index 41de7bc5..e9e9eba9 100644
+--- a/internal/sessions/dsh.go
++++ b/internal/sessions/dsh.go
+@@ -198,6 +198,10 @@ type dshResponse struct {
+ 	Model         string `json:"model"`
+ 	Provider      string `json:"provider"`
+ 	ResponseModel string `json:"responseModel"`
++	// ResponseID is the id the vendor's own reply named: it matches the
++	// gateway's response_id, and pairs a dsh call the gateway served with
++	// its record so it is not counted twice (#3674)
++	ResponseID string `json:"responseId"`
+ }
+ 
+ // dshReplay is a reply's replay state, where dsh keeps what the vendor's own
+diff --git a/internal/sessions/testdata/dsh/sessions/work-dsh-3f2a/dsh-gw/session.v3.jsonl b/internal/sessions/testdata/dsh/sessions/work-dsh-3f2a/dsh-gw/session.v3.jsonl
+index f702b727..71b1e972 100644
+--- a/internal/sessions/testdata/dsh/sessions/work-dsh-3f2a/dsh-gw/session.v3.jsonl
++++ b/internal/sessions/testdata/dsh/sessions/work-dsh-3f2a/dsh-gw/session.v3.jsonl
+@@ -1,4 +1,4 @@
+ {"type":"session","version":3,"id":"dsh-gw","cwd":"/work/dsh","createdAt":1790506800000}
+ {"type":"user/message","seq":0,"time":1790506801000,"data":{"content":"Check the build","source":{"kind":"user"}}}
+-{"type":"assistant/message","seq":1,"time":1790506805000,"data":{"message":{"role":"assistant","source":{"model":"group/auto-deepseek-v4-1-flash","provider":"magpie","replayState":{"response":{"provider":"magpie","model":"group/auto-deepseek-v4-1-flash","responseModel":"deepseek-v4.1-flash"}}}},"usage":{"inputTokens":700,"outputTokens":90,"cacheReadTokens":5000,"cacheWriteTokens":0,"reasoningTokens":4}}}
+-{"type":"assistant/message","seq":2,"time":1790506860000,"data":{"message":{"role":"assistant","source":{"model":"deepseek-v4-flash","provider":"jieyue","replayState":{"response":{"provider":"jieyue","model":"deepseek-v4-flash","responseModel":"deepseek-v4-flash"}}}},"usage":{"inputTokens":30,"outputTokens":7,"cacheReadTokens":0,"cacheWriteTokens":0,"reasoningTokens":0}}}
++{"type":"assistant/message","seq":1,"time":1790506805000,"data":{"message":{"role":"assistant","source":{"model":"group/auto-deepseek-v4-1-flash","provider":"magpie","replayState":{"response":{"provider":"magpie","model":"group/auto-deepseek-v4-1-flash","responseModel":"deepseek-v4.1-flash","responseId":"resp-gw-dsh"}}}},"usage":{"inputTokens":700,"outputTokens":90,"cacheReadTokens":5000,"cacheWriteTokens":0,"reasoningTokens":4}}}
++{"type":"assistant/message","seq":2,"time":1790506860000,"data":{"message":{"role":"assistant","source":{"model":"deepseek-v4-flash","provider":"jieyue","replayState":{"response":{"provider":"jieyue","model":"deepseek-v4-flash","responseModel":"deepseek-v4-flash","responseId":"resp-local-jieyue"}}}},"usage":{"inputTokens":30,"outputTokens":7,"cacheReadTokens":0,"cacheWriteTokens":0,"reasoningTokens":0}}}
+diff --git a/internal/usage/codex_identity.go b/internal/usage/codex_identity.go
+index d63cd96c..00e69b32 100644
+--- a/internal/usage/codex_identity.go
++++ b/internal/usage/codex_identity.go
+@@ -60,7 +60,13 @@ func codexResponseMatches(records []Record, calls []sessions.Call, duplicateCall
+ 			continue
+ 		}
+ 		record, call := recordRefs[0], callRefs[0]
+-		if records[record].Agent == "codex" && !records[record].IsRejected() && records[record].Source != SourceReported && calls[call].Agent == "codex" {
++		// the pairing is within one agent: a dsh call matches a dsh record,
++		// a codex call a codex record, and only those (the codex identity
++		// fields the pair carries are Codex's own) — but no longer codex
++		// alone (#3674: dsh's session file names the id too)
++		sameAgent := records[record].Agent == calls[call].Agent &&
++			(records[record].Agent == "codex" || records[record].Agent == "dsh")
++		if sameAgent && !records[record].IsRejected() && records[record].Source != SourceReported {
+ 			pairs[record] = call
+ 		}
+ 	}
+@@ -183,10 +189,11 @@ func cloneCodexChunks(chunks []*rowChunk) []*rowChunk {
+ // rowResponseID is rowText's slot of Record.ResponseID.
+ const rowResponseID = 25
+ 
+-// codexChunkResponsePairs are the Codex calls the gateway and a session file
+-// both name by one response id, gateway to local, and each local call's
+-// compaction. Only the ids the gateway names are kept of the locals': a map
+-// of every Codex call's id held each decoded chunk's strings.
++// codexChunkResponsePairs are the Codex and dsh calls the gateway and a
++// session file both name by one response id, gateway to local, and each
++// local call's compaction (#3674). Only the ids the gateway names are kept
++// of the locals': a map of every call's id held each decoded chunk's
++// strings.
+ func codexChunkResponsePairs(gateways, locals []*rowChunk, duplicateLocal map[rowRef]bool) (map[rowRef]rowRef, map[rowRef]*bool) {
+ 	type pick struct {
+ 		gateways, locals   int
+@@ -211,7 +218,7 @@ func codexChunkResponsePairs(gateways, locals []*rowChunk, duplicateLocal map[ro
+ 			}
+ 			p.gateways++
+ 			p.gateway = rowRef{chunk, i}
+-			p.gatewayOK = isCodexRow(row) && !row.IsRejected() && row.Source != SourceReported
++			p.gatewayOK = (isCodexRow(row) || row.Agent == "dsh") && !row.IsRejected() && row.Source != SourceReported
+ 		}
+ 	}
+ 	lent := lentRows() // picks are looked up by a local's id, not keyed
+@@ -230,7 +237,7 @@ func codexChunkResponsePairs(gateways, locals []*rowChunk, duplicateLocal map[ro
+ 			row := open.row(i)
+ 			p.locals++
+ 			p.local = ref
+-			p.localOK = isCodexRow(row) && row.Source == "log"
++			p.localOK = (isCodexRow(row) || row.Agent == "dsh") && row.Source == "log"
+ 			p.compaction = row.Compaction
+ 		}
+ 	}
+diff --git a/internal/usage/codex_identity_test.go b/internal/usage/codex_identity_test.go
+index 9c1e6302..debb9aba 100644
+--- a/internal/usage/codex_identity_test.go
++++ b/internal/usage/codex_identity_test.go
+@@ -388,17 +388,23 @@ func TestCodexQueryPageRefreshesIdentityAndSharesJSONFields(t *testing.T) {
+ 	}
+ }
+ 
+-func TestLogRecordResponseIDRemainsCodexOnly(t *testing.T) {
+-	row := Row{Record: logRecord(sessions.Call{Agent: "claude", ResponseID: "claude-response"})}
+-	if row.ResponseID != "" || row.SessionRole != "" {
+-		t.Fatalf("non-Codex call gained Codex identity data: %+v", row)
++func TestLogRecordKeepsAResponseIDAnyAgentNamed(t *testing.T) {
++	// a call the file names no id for gains none, and its row JSON says
++	// nothing about it
++	if row := logRecord(sessions.Call{Agent: "claude"}); row.ResponseID != "" {
++		t.Fatalf("a call without a response id gained one: %+v", row)
+ 	}
+-	encoded, err := json.Marshal(row)
++	encoded, err := json.Marshal(Row{Record: logRecord(sessions.Call{Agent: "claude"})})
+ 	if err != nil {
+ 		t.Fatal(err)
+ 	}
+ 	if containsJSONField(encoded, "response_id") || containsJSONField(encoded, "session_role") {
+-		t.Fatalf("non-Codex row JSON changed: %s", encoded)
++		t.Fatalf("id-less row JSON changed: %s", encoded)
++	}
++	// an id the file names is kept, whoever made the call: the pairing
++	// that keeps a gateway-served call from counting twice reads it (#3674)
++	if row := logRecord(sessions.Call{Agent: "dsh", ResponseID: "resp-dsh"}); row.ResponseID != "resp-dsh" {
++		t.Fatalf("dsh's response id was lost from its usage row: %+v", row)
+ 	}
+ 	identities := map[string]sessions.CodexIdentity{"thread": {ID: "thread", Role: "main", RootSession: "thread"}}
+ 	call := sessions.Call{Agent: "claude", ThreadID: "thread"}
+diff --git a/internal/usage/dsh_match_test.go b/internal/usage/dsh_match_test.go
+new file mode 100644
+index 00000000..2fe2438b
+--- /dev/null
++++ b/internal/usage/dsh_match_test.go
+@@ -0,0 +1,66 @@
++package usage
++
++import (
++	"testing"
++	"time"
++
++	"github.com/yetone/magpie/internal/sessions"
++)
++
++// #3674: a dsh call that went through magpie is counted once. dsh sends the
++// gateway no session header, but its session file names the vendor's reply
++// by responseId, which matches the gateway's response_id — the pairing
++// #678 gave Codex, now for dsh too. A dsh call magpie never saw keeps
++// counting on its own.
++func TestDshCallThroughMagpieCountedOnce(t *testing.T) {
++	began := time.Date(2026, 10, 25, 9, 0, 0, 0, time.UTC)
++	rec := Record{Time: began.Add(time.Second), Agent: "dsh", Provider: "workbuddy", Model: "deepseek-v4.1-flash",
++		Input: 700, CacheRead: 5000, Output: 90, Status: 200, ResponseID: "resp-gw-dsh"}
++	served := sessions.Call{Time: began, Agent: "dsh", Session: "dsh-gw", Model: "deepseek-v4.1-flash",
++		ResponseID: "resp-gw-dsh", Tokens: sessions.Tokens{Input: 700, CacheRead: 5000, Output: 90}}
++	direct := sessions.Call{Time: began.Add(10 * time.Minute), Agent: "dsh", Session: "dsh-out",
++		Model: "deepseek-v4-flash", Tokens: sessions.Tokens{Input: 30, Output: 7}}
++
++	m := gatewayMatches([]Record{rec}, []sessions.Call{served, direct})
++	if !m[0] {
++		t.Error("the call the gateway served is counted again from dsh's session file")
++	}
++	if m[1] {
++		t.Error("a call dsh made without magpie was taken for the gateway's")
++	}
++
++	// the guards #678 set stay: a rejected or client-reported record is
++	// not the pair's keeper, and a codex record is not paired with a dsh
++	// call (codex identity fields would be carried onto the wrong agent)
++	rejected := rec
++	rejected.Rejected = true
++	if gatewayMatches([]Record{rejected}, []sessions.Call{served})[0] {
++		t.Error("a rejected gateway record consumed dsh's own call")
++	}
++	reported := rec
++	reported.Source = SourceReported
++	if gatewayMatches([]Record{reported}, []sessions.Call{served})[0] {
++		t.Error("a client-reported record consumed dsh's own call")
++	}
++	codex := rec
++	codex.Agent = "codex"
++	if gatewayMatches([]Record{codex}, []sessions.Call{served})[0] {
++		t.Error("a codex record was paired with a dsh call")
++	}
++
++	// the Requests page pairs rows by the same id: the served call's row
++	// is matched and hidden, the direct one stays
++	gateway, local := &rowChunk{}, &rowChunk{}
++	gateway.add(Row{Record: rec}, "", 0, false)
++	local.add(Row{Record: logRecord(served), Source: "log"}, "", 0, false)
++	local.add(Row{Record: logRecord(direct), Source: "log"}, "", 1, false)
++	pairs, _ := codexChunkResponsePairs([]*rowChunk{gateway}, []*rowChunk{local}, nil)
++	if len(pairs) != 1 {
++		t.Fatalf("the request page paired %d rows by response id, want 1", len(pairs))
++	}
++	for g, l := range pairs {
++		if g.Index != 0 || l.Index != 0 {
++			t.Fatalf("paired the wrong rows: gateway %d with local %d", g.Index, l.Index)
++		}
++	}
++}
+diff --git a/internal/usage/ledger.go b/internal/usage/ledger.go
+index 916e4389..85a3b4b4 100644
+--- a/internal/usage/ledger.go
++++ b/internal/usage/ledger.go
+@@ -353,9 +353,13 @@ func logRecord(c sessions.Call) Record {
+ 		Input: c.Input, Output: c.Output, CacheRead: c.CacheRead, CacheWrite: c.CacheWrite, CacheWrite1h: c.CacheWrite1h, Reasoning: c.Reasoning, Effort: c.Effort,
+ 		Millis: c.Millis, TTFT: c.TTFT, Session: c.Session, RequestID: c.RequestID, Error: c.ErrorText, ErrType: c.Error, Subagent: sessions.SubagentOf(c.File), ParentAgent: sessions.SubagentParent(c.File)}
+ 	if c.Agent == "codex" {
+-		r.ResponseID = c.ResponseID
+ 		r.Compaction = codexCompactionOf(c)
+ 	}
++	// any call the agent's file names by the vendor's response id keeps
++	// it, so the gateway's record of the same call is paired with it and
++	// counted once (#3674); the session row keeps it too, for the same
++	// pairing on the Requests page
++	r.ResponseID = c.ResponseID
+ 	if c.Agent == "codex" || c.Agent == "opencode" {
+ 		r.Requested, r.Served = c.Model, ""
+ 	}

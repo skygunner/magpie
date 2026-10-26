@@ -1,0 +1,39 @@
+{
+  "issue": 3572,
+  "title": "gateway: switching from Vertex Gemini to Antigravity sends a rejected thought signature",
+  "verdict": "fixed",
+  "skipReason": null,
+  "branch": "fix/antigravity-signature",
+  "base": "01468003348ede896c5126e9fd81057e1e58765c",
+  "head": "043636a38ae731a74fe70511b9425c8b6275d70f",
+  "testCommands": [
+    "go test ./internal/gateway -run 'TestAntigravityRetriesCorruptedSignature|TestAntigravityDoesNotRetryOtherBadRequests|TestVertexRetriesOnlyForVertex' -count=1",
+    "go test ./internal/gateway -count=1 -timeout 1800s",
+    "go vet ./...",
+    "GOOS=linux GOARCH=amd64 go vet -tags nogui ./...",
+    "GOOS=windows GOARCH=amd64 go vet ./...",
+    "go build ./...",
+    "GOOS=linux GOARCH=amd64 go build -tags nogui ./...",
+    "GOOS=windows GOARCH=amd64 go build ./...",
+    "gofmt -l internal/gateway/vertex.go internal/gateway/gateway.go internal/gateway/antigravity_signature_test.go"
+  ],
+  "testsAdded": [
+    "TestAntigravityRetriesCorruptedSignature: an Antigravity (Code Assist) upstream refuses the first request with the reporter's literal 'Corrupted thought signature.' 400; the retry carries no Vertex signature, is waved through (skipSignature) and answers 200, while the first request still sent the signature",
+    "TestAntigravityDoesNotRetryOtherBadRequests: another 400 on the same path is the client's, one request only"
+  ],
+  "unverifiedBoundaries": [
+    "No real Google call: the Antigravity upstream is the test's own server answering the refusal, as the reporter's 400 did; the retry's acceptance by the real Code Assist service is not observed.",
+    "Signed text parts are cleared with the calls by withoutSignatures, but only the tool-call case is exercised end to end here; for an Anthropic client the Code Assist envelope drops thinking parts anyway, so a signed text part reaches the vendor only from a Gemini/Responses client.",
+    "The existing Vertex retry now also clears text-part signatures and matches 'corrupted'; TestVertexRetriesOnlyForVertex and the Vertex suite pass, and no real Vertex call was made.",
+    "go test ./internal/gateway has one pre-existing failure, TestClaudeClientCacheAbsentUnchanged, red on the clean base as well."
+  ],
+  "filesChanged": [
+    "internal/gateway/vertex.go",
+    "internal/gateway/gateway.go",
+    "internal/gateway/antigravity_signature_test.go"
+  ],
+  "preExistingRed": [
+    "internal/gateway TestClaudeClientCacheAbsentUnchanged (red on the clean base too)",
+    "internal/gateway TestHandedOverGatewayFinishesItsStream failed once inside the full-suite run (socket handover, Post EOF under load); re-run 3/3 on this branch and 3/3 on the clean base, so not caused by this change"
+  ]
+}

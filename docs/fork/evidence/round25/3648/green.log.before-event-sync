@@ -1,0 +1,13 @@
+# GREEN with the fix
+
+## go test -tags dev -count=1 — pass
+Go test: 1 passed
+
+## go test -tags dev -count=20 — 20/20 green
+ok  	github.com/yetone/magpie/internal/gui	2.264s
+
+## go test -tags dev -race -count=3 — pass
+Go test: 3 passed, no race
+
+## go test -tags dev -shuffle=on -count=2 (with TestDevShellRetriesCutRead) — pass
+Go test: 4 passed

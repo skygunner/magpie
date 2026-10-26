@@ -1,0 +1,10 @@
+=== RUN   TestSelfNamesThePathLink
+    self_test.go:34: self() = "/tmp/go-build2944313790/b001/autostart.test", want the link on PATH "/tmp/TestSelfNamesThePathLink1953118514/001/magpie"
+--- FAIL: TestSelfNamesThePathLink (0.00s)
+=== RUN   TestSelfRefusesAGoRunBuild
+    self_test.go:47: self() took "/tmp/go-build2944313790/b001/autostart.test", a build `go run` deletes when it ends
+--- FAIL: TestSelfRefusesAGoRunBuild (0.00s)
+FAIL
+FAIL	github.com/yetone/magpie/internal/autostart	0.002s
+FAIL
+exit_code=1

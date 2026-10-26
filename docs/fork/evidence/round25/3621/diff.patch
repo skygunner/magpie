@@ -1,0 +1,126 @@
+diff --git a/internal/autostart/autostart.go b/internal/autostart/autostart.go
+index 2ca573d9..90360ad5 100644
+--- a/internal/autostart/autostart.go
++++ b/internal/autostart/autostart.go
+@@ -9,6 +9,7 @@ package autostart
+ import (
+ 	"errors"
+ 	"os"
++	"os/exec"
+ 	"path/filepath"
+ 	"strings"
+ )
+@@ -83,5 +84,30 @@ func self() (string, error) {
+ 	if strings.Contains(exe, "/AppTranslocation/") {
+ 		return "", errors.New("move magpie to Applications first, then turn this on")
+ 	}
++	// the magpie on PATH names this same file when a package manager put
++	// it there: the link is what survives an update (Nix's profile,
++	// Homebrew's bin), the versioned file it points at is not (#3621)
++	if p, err := exec.LookPath("magpie"); err == nil {
++		if abs, err := filepath.Abs(p); err == nil {
++			if r, err := filepath.EvalSymlinks(abs); err == nil && sameFile(r, exe) {
++				return abs, nil
++			}
++		}
++	}
++	// a build `go run` deletes when it ends starts nothing from the next
++	// login on
++	if strings.Contains(exe, string(filepath.Separator)+"go-build") {
++		return "", errors.New("this magpie is a build `go run` deletes when it ends: install magpie, then turn Open at login on")
++	}
+ 	return exe, nil
+ }
++
++// sameFile: both names are of the one file on disk
++func sameFile(a, b string) bool {
++	x, err := os.Stat(a)
++	if err != nil {
++		return false
++	}
++	y, err := os.Stat(b)
++	return err == nil && os.SameFile(x, y)
++}
+diff --git a/internal/autostart/autostart_darwin_test.go b/internal/autostart/autostart_darwin_test.go
+index 495cba57..61c213c7 100644
+--- a/internal/autostart/autostart_darwin_test.go
++++ b/internal/autostart/autostart_darwin_test.go
+@@ -30,6 +30,7 @@ func TestLaunchAgentLetsTheRelaunchLive(t *testing.T) {
+ 	home := t.TempDir()
+ 	t.Setenv("HOME", home)
+ 	t.Setenv("USERPROFILE", home)
++	t.Setenv("APPIMAGE", "/opt/my apps/magpie.AppImage")
+ 	if err := Set(true); err != nil {
+ 		t.Fatal(err)
+ 	}
+@@ -173,6 +174,7 @@ func TestSetThenTruncatedRecordReadsAsOff(t *testing.T) {
+ 	home := t.TempDir()
+ 	t.Setenv("HOME", home)
+ 	t.Setenv("USERPROFILE", home)
++	t.Setenv("APPIMAGE", "/opt/my apps/magpie.AppImage")
+ 	if err := Set(true); err != nil {
+ 		t.Fatal(err)
+ 	}
+@@ -219,6 +221,7 @@ func TestEnabledFollowsTheSystemsSwitch(t *testing.T) {
+ 	home := t.TempDir()
+ 	t.Setenv("HOME", home)
+ 	t.Setenv("USERPROFILE", home)
++	t.Setenv("APPIMAGE", "/opt/my apps/magpie.AppImage")
+ 	prev := legacyStatus
+ 	t.Cleanup(func() { legacyStatus = prev })
+ 	var asked string
+diff --git a/internal/autostart/self_test.go b/internal/autostart/self_test.go
+new file mode 100644
+index 00000000..1234c616
+--- /dev/null
++++ b/internal/autostart/self_test.go
+@@ -0,0 +1,49 @@
++package autostart
++
++import (
++	"os"
++	"path/filepath"
++	"runtime"
++	"testing"
++)
++
++// The record names the magpie on PATH when that is this same file: a
++// package manager's link (Nix's profile, Homebrew's bin) still leads to
++// the version it updates to, while the versioned file it points at is
++// gone once the old version is collected (#3621).
++func TestSelfNamesThePathLink(t *testing.T) {
++	if runtime.GOOS == "windows" {
++		t.Skip("links")
++	}
++	t.Setenv("APPIMAGE", "")
++	bin := t.TempDir()
++	exe, err := os.Executable()
++	if err != nil {
++		t.Fatal(err)
++	}
++	link := filepath.Join(bin, "magpie")
++	if err := os.Symlink(exe, link); err != nil {
++		t.Fatal(err)
++	}
++	t.Setenv("PATH", bin)
++	got, err := self()
++	if err != nil {
++		t.Fatal(err)
++	}
++	if got != link {
++		t.Fatalf("self() = %q, want the link on PATH %q", got, link)
++	}
++}
++
++// A build `go run` deletes when it ends is no program to start at login:
++// the record naming it starts nothing from the next login on. This test
++// binary is itself such a build (`go test` puts it in a go-build temp
++// folder), so self() of this file is refused.
++func TestSelfRefusesAGoRunBuild(t *testing.T) {
++	t.Setenv("APPIMAGE", "")
++	// no magpie on PATH: what self() answers is about this file alone
++	t.Setenv("PATH", t.TempDir())
++	if got, err := self(); err == nil {
++		t.Fatalf("self() took %q, a build `go run` deletes when it ends", got)
++	}
++}

@@ -1,0 +1,16 @@
+✔ chromium en 390px: every import source tile fits its row (404.259663ms)
+✔ chromium en 900px: every import source tile fits its row (387.130871ms)
+✔ chromium zh 390px: every import source tile fits its row (409.435634ms)
+✔ chromium zh 900px: every import source tile fits its row (397.287404ms)
+✔ webkit en 390px: every import source tile fits its row (630.379148ms)
+✔ webkit en 900px: every import source tile fits its row (596.989418ms)
+✔ webkit zh 390px: every import source tile fits its row (639.646125ms)
+✔ webkit zh 900px: every import source tile fits its row (630.085049ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4246.497767

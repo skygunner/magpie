@@ -1,0 +1,37 @@
+# COMMAND_METADATA {"issue": 3645, "label": "red", "tree": "base", "commit": "19253f67bca2310c32739a6eaac88546b3574dbc", "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/base", "command": "node --test internal/gui/tests/routing-log-icons-wait.test.cjs", "env": {"GOTOOLCHAIN": "go1.26.8", "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/home-8s20x1oc", "GOPATH": "/home/vincenty/go", "GOMODCACHE": "/home/vincenty/go/pkg/mod", "GOCACHE": "/home/vincenty/.cache/go-build", "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules", "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"}, "extra_env": {}, "started_at": "2026-10-26T06:57:42.870374+00:00", "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/red.log"}
+# BEGIN COMPLETE MERGED STDOUT/STDERR
+✖ live logo fixture holds trace updates until the story is checked (6.807938ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 43.647708
+
+✖ failing tests:
+
+test at internal/gui/tests/routing-log-icons-wait.test.cjs:8:1
+✖ live logo fixture holds trace updates until the story is checked (6.807938ms)
+  AssertionError [ERR_ASSERTION]: trace advanced before the story was checked
+  + actual - expected
+  
+    [
+      1,
+  +   2
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3645/base/internal/gui/tests/routing-log-icons-wait.test.cjs:28:12)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 1, 2 ],
+    expected: [ 1 ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+# END COMPLETE OUTPUT
+# CHECKED_RETURN_CODE 1

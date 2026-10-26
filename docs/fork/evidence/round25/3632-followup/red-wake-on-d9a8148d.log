@@ -1,0 +1,13 @@
+fatal error: close of synctest channel from outside bubble
+
+goroutine 12 [running, synctest bubble 2]:
+github.com/yetone/magpie/internal/filememo.wake()
+	/tmp/redcheck-3632/internal/filememo/filememo.go:101 +0x45
+github.com/yetone/magpie/internal/filememo.TestWakeAcrossSynctestBubbles.func2(0x3b10bf7fe908?)
+	/tmp/redcheck-3632/internal/filememo/forget_bubble_test.go:22 +0xf
+testing.tRunner(0x3b10bf7fe908, 0x67c838)
+	/home/vincenty/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.8.linux-amd64/src/testing/testing.go:2036 +0xea
+created by testing/synctest.testingSynctestTest in goroutine 11
+	/home/vincenty/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.8.linux-amd64/src/testing/testing.go:2150 +0x277
+FAIL	github.com/yetone/magpie/internal/filememo	0.004s
+FAIL

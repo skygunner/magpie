@@ -1,0 +1,6 @@
+-test.shuffle 1793007173602863986
+=== RUN   TestHandedOffTLSGatewayAnswersAConnectionWaitingForItsFirstByte
+--- PASS: TestHandedOffTLSGatewayAnswersAConnectionWaitingForItsFirstByte (0.00s)
+PASS
+ok  	github.com/yetone/magpie/internal/gateway	1.038s
+EXIT=0

@@ -1,0 +1,393 @@
+{
+  "issue": 3656,
+  "verdict": "regression_verified_with_explicit_unresolved_checks",
+  "branch": "fix/r25-mask-alias-plan",
+  "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+  "head": "95c0511419c66fd8092599dbde4bc68bc438126b",
+  "remote_head": "95c0511419c66fd8092599dbde4bc68bc438126b",
+  "base_is_ancestor": true,
+  "commits_over_base": 1,
+  "worktree_clean_before_and_after": true,
+  "testsAdded": [
+    "internal/gui/tests/account-mask-alias-plan.test.cjs"
+  ],
+  "red": {
+    "exit": 1,
+    "tree": "git archive BASE plus only committed new test",
+    "raw": "red.log"
+  },
+  "green": {
+    "exit": 0,
+    "tree": "git archive exact HEAD",
+    "raw": "green.log"
+  },
+  "archive_proof": {
+    "base": {
+      "commit": "19253f67bca2310c32739a6eaac88546b3574dbc",
+      "archive_sha256": "5a4d820009d02c75150fc1be8c1974c4566142042e53dbf86d7165f5cd79eb3e",
+      "tracked_regular_file_count": 6038,
+      "differences": [
+        "internal/gui/tests/account-mask-alias-plan.test.cjs"
+      ],
+      "missing": [],
+      "added_test_sha256": "a6e0b5cbb856ac8083e393558a5c0c8b012605f5cac3f51e5cd21c49a95450dd"
+    },
+    "head": {
+      "commit": "95c0511419c66fd8092599dbde4bc68bc438126b",
+      "archive_sha256": "28304e8ec77970a570bb5429c541d98adec4c13ea465b7886f09b5658e70c6eb",
+      "tracked_regular_file_count": 6039,
+      "differences": [],
+      "missing": [],
+      "added_test_sha256": "a6e0b5cbb856ac8083e393558a5c0c8b012605f5cac3f51e5cd21c49a95450dd"
+    }
+  },
+  "checked_commands": [
+    {
+      "issue": 3656,
+      "label": "red",
+      "tree": "base",
+      "commit": "19253f67bca2310c32739a6eaac88546b3574dbc",
+      "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/base",
+      "command": "node --test internal/gui/tests/account-mask-alias-plan.test.cjs",
+      "env": {
+        "GOTOOLCHAIN": "go1.26.8",
+        "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/home-4qipr_lj",
+        "GOPATH": "/home/vincenty/go",
+        "GOMODCACHE": "/home/vincenty/go/pkg/mod",
+        "GOCACHE": "/home/vincenty/.cache/go-build",
+        "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules",
+        "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"
+      },
+      "extra_env": {},
+      "started_at": "2026-10-26T06:58:07.534835+00:00",
+      "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/red.log",
+      "returncode": 1,
+      "ended_at": "2026-10-26T06:58:21.848046+00:00"
+    },
+    {
+      "issue": 3656,
+      "label": "green",
+      "tree": "head",
+      "commit": "95c0511419c66fd8092599dbde4bc68bc438126b",
+      "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/head",
+      "command": "node --test internal/gui/tests/account-mask-alias-plan.test.cjs",
+      "env": {
+        "GOTOOLCHAIN": "go1.26.8",
+        "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/home-56iv_0t_",
+        "GOPATH": "/home/vincenty/go",
+        "GOMODCACHE": "/home/vincenty/go/pkg/mod",
+        "GOCACHE": "/home/vincenty/.cache/go-build",
+        "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules",
+        "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"
+      },
+      "extra_env": {},
+      "started_at": "2026-10-26T06:58:21.854720+00:00",
+      "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/green.log",
+      "returncode": 0,
+      "ended_at": "2026-10-26T06:58:35.800990+00:00"
+    },
+    {
+      "issue": 3656,
+      "label": "gui-related",
+      "tree": "head",
+      "commit": "95c0511419c66fd8092599dbde4bc68bc438126b",
+      "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/head",
+      "command": "node --test --test-concurrency=1 internal/gui/tests/window-mask.test.cjs internal/gui/tests/account-mask.test.cjs internal/gui/tests/account-mask-sessions.test.cjs internal/gui/tests/mask-emails.test.cjs internal/gui/tests/mask-actions.test.cjs internal/gui/tests/masking-records.test.cjs internal/gui/tests/provider-unmasked.test.cjs",
+      "env": {
+        "GOTOOLCHAIN": "go1.26.8",
+        "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/home-c9sl06i5",
+        "GOPATH": "/home/vincenty/go",
+        "GOMODCACHE": "/home/vincenty/go/pkg/mod",
+        "GOCACHE": "/home/vincenty/.cache/go-build",
+        "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules",
+        "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"
+      },
+      "extra_env": {},
+      "started_at": "2026-10-26T06:58:35.805762+00:00",
+      "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/gui-related.log",
+      "returncode": 0,
+      "ended_at": "2026-10-26T07:03:11.223994+00:00"
+    },
+    {
+      "issue": 3656,
+      "label": "gofmt",
+      "tree": "head",
+      "commit": "95c0511419c66fd8092599dbde4bc68bc438126b",
+      "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/head",
+      "command": "gofmt -l internal/gui",
+      "env": {
+        "GOTOOLCHAIN": "go1.26.8",
+        "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/home-lxchvfa1",
+        "GOPATH": "/home/vincenty/go",
+        "GOMODCACHE": "/home/vincenty/go/pkg/mod",
+        "GOCACHE": "/home/vincenty/.cache/go-build",
+        "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules",
+        "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"
+      },
+      "extra_env": {},
+      "started_at": "2026-10-26T07:01:28.210062+00:00",
+      "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/gofmt.log",
+      "returncode": 0,
+      "ended_at": "2026-10-26T07:01:28.273958+00:00"
+    },
+    {
+      "issue": 3656,
+      "label": "node-check-app",
+      "tree": "head",
+      "commit": "95c0511419c66fd8092599dbde4bc68bc438126b",
+      "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/head",
+      "command": "node --check internal/gui/assets/app.js",
+      "env": {
+        "GOTOOLCHAIN": "go1.26.8",
+        "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/home-ubuaxm_3",
+        "GOPATH": "/home/vincenty/go",
+        "GOMODCACHE": "/home/vincenty/go/pkg/mod",
+        "GOCACHE": "/home/vincenty/.cache/go-build",
+        "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules",
+        "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"
+      },
+      "extra_env": {},
+      "started_at": "2026-10-26T07:01:28.274632+00:00",
+      "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/node-check-app.log",
+      "returncode": 0,
+      "ended_at": "2026-10-26T07:01:28.338406+00:00"
+    },
+    {
+      "issue": 3656,
+      "label": "node-check-test",
+      "tree": "head",
+      "commit": "95c0511419c66fd8092599dbde4bc68bc438126b",
+      "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/head",
+      "command": "node --check internal/gui/tests/account-mask-alias-plan.test.cjs",
+      "env": {
+        "GOTOOLCHAIN": "go1.26.8",
+        "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/home-trvk_9fe",
+        "GOPATH": "/home/vincenty/go",
+        "GOMODCACHE": "/home/vincenty/go/pkg/mod",
+        "GOCACHE": "/home/vincenty/.cache/go-build",
+        "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules",
+        "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"
+      },
+      "extra_env": {},
+      "started_at": "2026-10-26T07:01:28.339230+00:00",
+      "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/node-check-test.log",
+      "returncode": 0,
+      "ended_at": "2026-10-26T07:01:28.371029+00:00"
+    },
+    {
+      "issue": 3656,
+      "label": "vet-native",
+      "tree": "head",
+      "commit": "95c0511419c66fd8092599dbde4bc68bc438126b",
+      "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/head",
+      "command": "go vet ./...",
+      "env": {
+        "GOTOOLCHAIN": "go1.26.8",
+        "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/home-_d3wo5tx",
+        "GOPATH": "/home/vincenty/go",
+        "GOMODCACHE": "/home/vincenty/go/pkg/mod",
+        "GOCACHE": "/home/vincenty/.cache/go-build",
+        "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules",
+        "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"
+      },
+      "extra_env": {},
+      "started_at": "2026-10-26T07:01:28.371621+00:00",
+      "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/vet-native.log",
+      "returncode": 0,
+      "ended_at": "2026-10-26T07:01:38.221109+00:00"
+    },
+    {
+      "issue": 3656,
+      "label": "vet-linux-nogui",
+      "tree": "head",
+      "commit": "95c0511419c66fd8092599dbde4bc68bc438126b",
+      "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/head",
+      "command": "go vet -tags nogui ./...",
+      "env": {
+        "GOTOOLCHAIN": "go1.26.8",
+        "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/home-hxeadgaj",
+        "GOPATH": "/home/vincenty/go",
+        "GOMODCACHE": "/home/vincenty/go/pkg/mod",
+        "GOCACHE": "/home/vincenty/.cache/go-build",
+        "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules",
+        "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"
+      },
+      "extra_env": {
+        "GOOS": "linux",
+        "GOARCH": "amd64"
+      },
+      "started_at": "2026-10-26T07:01:38.221884+00:00",
+      "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/vet-linux-nogui.log",
+      "returncode": 0,
+      "ended_at": "2026-10-26T07:01:46.763826+00:00"
+    },
+    {
+      "issue": 3656,
+      "label": "vet-windows",
+      "tree": "head",
+      "commit": "95c0511419c66fd8092599dbde4bc68bc438126b",
+      "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/head",
+      "command": "go vet ./...",
+      "env": {
+        "GOTOOLCHAIN": "go1.26.8",
+        "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/home-7m62to1t",
+        "GOPATH": "/home/vincenty/go",
+        "GOMODCACHE": "/home/vincenty/go/pkg/mod",
+        "GOCACHE": "/home/vincenty/.cache/go-build",
+        "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules",
+        "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"
+      },
+      "extra_env": {
+        "GOOS": "windows",
+        "GOARCH": "amd64"
+      },
+      "started_at": "2026-10-26T07:01:46.764714+00:00",
+      "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/vet-windows.log",
+      "returncode": 0,
+      "ended_at": "2026-10-26T07:01:55.909297+00:00"
+    },
+    {
+      "issue": 3656,
+      "label": "build-native",
+      "tree": "head",
+      "commit": "95c0511419c66fd8092599dbde4bc68bc438126b",
+      "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/head",
+      "command": "go build -o /home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/build/magpie-native .",
+      "env": {
+        "GOTOOLCHAIN": "go1.26.8",
+        "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/home-u1g6non4",
+        "GOPATH": "/home/vincenty/go",
+        "GOMODCACHE": "/home/vincenty/go/pkg/mod",
+        "GOCACHE": "/home/vincenty/.cache/go-build",
+        "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules",
+        "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"
+      },
+      "extra_env": {},
+      "started_at": "2026-10-26T07:01:55.909975+00:00",
+      "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/build-native.log",
+      "returncode": 0,
+      "ended_at": "2026-10-26T07:01:57.577527+00:00"
+    },
+    {
+      "issue": 3656,
+      "label": "build-linux-nogui",
+      "tree": "head",
+      "commit": "95c0511419c66fd8092599dbde4bc68bc438126b",
+      "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/head",
+      "command": "go build -tags nogui -o /home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/build/magpie-linux-nogui .",
+      "env": {
+        "GOTOOLCHAIN": "go1.26.8",
+        "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/home-nfns51ce",
+        "GOPATH": "/home/vincenty/go",
+        "GOMODCACHE": "/home/vincenty/go/pkg/mod",
+        "GOCACHE": "/home/vincenty/.cache/go-build",
+        "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules",
+        "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"
+      },
+      "extra_env": {
+        "GOOS": "linux",
+        "GOARCH": "amd64"
+      },
+      "started_at": "2026-10-26T07:01:57.578451+00:00",
+      "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/build-linux-nogui.log",
+      "returncode": 0,
+      "ended_at": "2026-10-26T07:01:58.547582+00:00"
+    },
+    {
+      "issue": 3656,
+      "label": "build-windows",
+      "tree": "head",
+      "commit": "95c0511419c66fd8092599dbde4bc68bc438126b",
+      "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/head",
+      "command": "go build -o /home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/build/magpie-windows.exe .",
+      "env": {
+        "GOTOOLCHAIN": "go1.26.8",
+        "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/home-zv0e8af9",
+        "GOPATH": "/home/vincenty/go",
+        "GOMODCACHE": "/home/vincenty/go/pkg/mod",
+        "GOCACHE": "/home/vincenty/.cache/go-build",
+        "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules",
+        "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"
+      },
+      "extra_env": {
+        "GOOS": "windows",
+        "GOARCH": "amd64"
+      },
+      "started_at": "2026-10-26T07:01:58.548541+00:00",
+      "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/build-windows.log",
+      "returncode": 0,
+      "ended_at": "2026-10-26T07:01:59.514203+00:00"
+    },
+    {
+      "issue": 3656,
+      "label": "package-head",
+      "tree": "head",
+      "commit": "95c0511419c66fd8092599dbde4bc68bc438126b",
+      "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/head",
+      "command": "go test -tags nogui ./internal/gui -count=1 -v -timeout 15m",
+      "env": {
+        "GOTOOLCHAIN": "go1.26.8",
+        "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/home-swlb90ep",
+        "GOPATH": "/home/vincenty/go",
+        "GOMODCACHE": "/home/vincenty/go/pkg/mod",
+        "GOCACHE": "/home/vincenty/.cache/go-build",
+        "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules",
+        "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"
+      },
+      "extra_env": {},
+      "started_at": "2026-10-26T07:01:59.514923+00:00",
+      "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/package-head.log",
+      "returncode": 0,
+      "ended_at": "2026-10-26T07:02:42.785731+00:00"
+    },
+    {
+      "issue": 3656,
+      "label": "package-native",
+      "tree": "head",
+      "commit": "95c0511419c66fd8092599dbde4bc68bc438126b",
+      "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/head",
+      "command": "go test ./internal/gui -count=1 -v -timeout 15m",
+      "env": {
+        "GOTOOLCHAIN": "go1.26.8",
+        "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/home-ci3_0snq",
+        "GOPATH": "/home/vincenty/go",
+        "GOMODCACHE": "/home/vincenty/go/pkg/mod",
+        "GOCACHE": "/home/vincenty/.cache/go-build",
+        "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules",
+        "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"
+      },
+      "extra_env": {},
+      "started_at": "2026-10-26T07:02:42.786583+00:00",
+      "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/package-native.log",
+      "returncode": 0,
+      "ended_at": "2026-10-26T07:03:27.171582+00:00"
+    }
+  ],
+  "comment": {
+    "issue": 3656,
+    "comment_id": 6408578981,
+    "url": "https://github.com/yetone/magpie/issues/3656#issuecomment-6408578981",
+    "author": "skygunner",
+    "created_at": "2026-10-26T04:57:37Z",
+    "updated_at": "2026-10-26T04:57:37Z",
+    "fetched_at": "2026-10-26T06:54:31.973590+00:00",
+    "body_sha256_api_utf8": "827d56bef36920cbbf8eaec4e1440304618fd7ffb0b5aef370388dcddd2bc9a3",
+    "body_sha256_local": "827d56bef36920cbbf8eaec4e1440304618fd7ffb0b5aef370388dcddd2bc9a3",
+    "equal": true,
+    "equal_ignoring_final_newline": true,
+    "local_comment_preserved": true
+  },
+  "preExistingFailures": [],
+  "unresolved_checks": [
+    "LSP coverage unavailable: missing gopls / typescript-language-server where reported; no installation authorized.",
+    "Full go test -tags nogui ./... and complete repository GUI suite not run in this repair; only related packages/tests.",
+    "Windows/macOS physical runtime and reporter live credentials/data not exercised.",
+    "Local/live comment historic Chromium 90/90 claim not independently verified as that exact run; this repair records default both-engine neighbor run 160/160 plus regression 20/20."
+  ],
+  "old_logs": {
+    "red.misattributed.log": "701f878beaad5c09d6f195a85b863106c84de476ae811cb43da69f3e16bae381",
+    "green.misattributed.log": "c2354dfab7e1c809f7151ec790ab601c479faf02bd74827b8fdc04a56562bde6",
+    "verify.misattributed.log": "9b338fa5b60967033b768ba01cd7bc91622b2b850d1468bf031eb62d1605d657"
+  },
+  "scope": "Evidence and authorized scratch writes only; no production edits, index writes, commit, push or issue write."
+}

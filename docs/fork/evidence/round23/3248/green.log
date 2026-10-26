@@ -1,0 +1,21 @@
+=== #3248 GREEN on the fix ===
+$ gofmt -l internal/gateway/    (nothing)
+$ go test ./internal/gateway/ -run 'TestCodeAssistRestart' -count=1
+ok  	github.com/yetone/magpie/internal/gateway	0.043s
+
+$ go test ./internal/gateway/ -count=1
+--- FAIL: TestClaudeClientCacheAbsentUnchanged (0.00s)
+FAIL	github.com/yetone/magpie/internal/gateway	302.087s
+EXIT=1
+
+TestClaudeClientCacheAbsentUnchanged is the package failure already red on the clean
+base for environmental reasons, named in the lane brief; it is untouched here and
+every other test in the package passes, the new ones among them.
+
+=== vet and builds on the pushed head (all exit 0) ===
+go vet ./...
+GOOS=linux GOARCH=amd64 go vet -tags nogui ./...
+GOOS=windows GOARCH=amd64 go vet ./...
+go build ./...
+GOOS=linux GOARCH=amd64 go build -tags nogui ./...
+GOOS=windows GOARCH=amd64 go build ./...

@@ -1,0 +1,7 @@
+=== RUN   TestHandedOffTLSGatewayAnswersAConnectionWaitingForItsFirstByte
+    tls_handover_test.go:112: no answer to a request sent once the handover began: read tcp 127.0.0.1:42692->127.0.0.1:40141: read: connection reset by peer
+--- FAIL: TestHandedOffTLSGatewayAnswersAConnectionWaitingForItsFirstByte (0.00s)
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.010s
+FAIL
+EXIT=1

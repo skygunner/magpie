@@ -1,0 +1,32 @@
+{
+  "issue": 3553,
+  "title": "Codex shows 258K instead of 272K for magpie models because catalog omits effective_context_window_percent",
+  "verdict": "fixed",
+  "skipReason": null,
+  "branch": "fix/codex-context-percent",
+  "base": "01468003348ede896c5126e9fd81057e1e58765c",
+  "head": "ce9531f6181409142cf4dd0e4dfb2ac3a6d1f5c3",
+  "pushedHead": "ce9531f6181409142cf4dd0e4dfb2ac3a6d1f5c3",
+  "rootCause": "Codex reads a catalog entry with no effective_context_window_percent as 95% of context_window; entriesAt in internal/codexcat wrote context_window and max_context_window but never the percent, on every generated entry (the model_catalog_json file, /v1/codex/models, Keep). Every catalog rendering goes through entriesAt, so the one place fixes all three.",
+  "testCommands": [
+    "RED/GREEN: go test ./internal/codexcat/ -run TestCodexCatalogUsesTheWholeWindow -count=1",
+    "go test ./internal/codexcat/ -count=1",
+    "go test ./internal/codexcat/... ./internal/agent/... ./internal/gateway/... -count=1",
+    "gofmt -l internal/codexcat/codexcat.go internal/codexcat/context_percent_test.go",
+    "go vet ./...",
+    "GOOS=linux GOARCH=amd64 go vet -tags nogui ./...",
+    "GOOS=windows GOARCH=amd64 go vet ./...",
+    "go build ./...",
+    "GOOS=linux GOARCH=amd64 go build -tags nogui ./...",
+    "GOOS=windows GOARCH=amd64 go build ./..."
+  ],
+  "testsAdded": ["internal/codexcat/context_percent_test.go TestCodexCatalogUsesTheWholeWindow"],
+  "unverifiedBoundaries": [
+    "No real Codex on this box: the 95%/100% reading comes from the issue and Codex's own entry in the test fixture, not from running `codex debug models` against the new catalog.",
+    "Codex's own entries, which magpie only hands on, still keep Codex's own percent (95 in the fixture) even where magpie raises their window with the user's setting; the existing TestCodexNativeModelsTakeSetWindows pins that, and the issue asked not to change entries that mirror an upstream catalog.",
+    "effective_context_window_percent is now a key magpie owns (it comes from the model struct, like every other key it writes), so a value hand-edited into magpie-models.json for an entry magpie writes is replaced by 100 on the next sync.",
+    "The reporters' optional fallback (mirroring the window into config.toml's model_context_window) was not implemented."
+  ],
+  "filesChanged": ["internal/codexcat/codexcat.go", "internal/codexcat/context_percent_test.go"],
+  "evidence": ["red.log", "green.log", "diff.patch", "checks.log", "base-preexisting-failure.log"]
+}

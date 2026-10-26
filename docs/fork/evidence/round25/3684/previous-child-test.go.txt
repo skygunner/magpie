@@ -1,0 +1,55 @@
+package gateway
+
+import (
+	"strings"
+	"testing"
+)
+
+// #3684: a turn that delivered no call must not tell the client to run one.
+func TestChatPhantomToolFinish(t *testing.T) {
+	call := `,` + `"tool_calls":[{"id":"call_up","type":"function","function":{"name":"exec_command","arguments":"{\"cmd\":\"ls -la\"}"}}]`
+	for _, c := range []struct {
+		name, message, want string
+		calls               int
+	}{
+		{"empty array", `"tool_calls":[]`, "stop", 0},
+		{"no array", "", "stop", 0},
+		{"null array", `"tool_calls":null`, "stop", 0},
+		{"spaced array", `"tool_calls":[ ]`, "stop", 0},
+		{"a real call", call[1:], "tool_calls", 1},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			// Given: the upstream narrates and ends tool_calls.
+			ask := `{"model":"a/m","messages":[{"role":"user","content":"go"}],` + execChatTool + `}`
+			var fields string
+			if c.message != "" {
+				fields = "," + c.message
+			}
+			up := `{"id":"c1","object":"chat.completion","model":"m","choices":[{"index":0,"message":{"role":"assistant","content":"Checking."` + fields + `},"finish_reason":"tool_calls"}]}`
+			// When: the reply is relayed, streamed and whole.
+			text, calls, finish, raw := relayedChat(t, strings.Replace(ask, `"model":`, `"stream":true,"model":`, 1), chunkOf("Checking."), chunkOf("Tool calls coming."), streamEnd(c.message))
+			// Then: only a turn that delivered a call keeps tool_calls.
+			if finish != c.want || len(calls) != c.calls || text != "Checking.Tool calls coming." {
+				t.Errorf("stream: finish %q, want %q; text %q calls %v\n%s", finish, c.want, text, calls, raw)
+			}
+			textw, wcalls, finish, raw := wholeChat(t, ask, "application/json", up)
+			if finish != c.want || len(wcalls) != c.calls || strOr(textw) != "Checking." {
+				t.Errorf("whole: finish %q, want %q; text %q calls %+v\n%s", finish, c.want, strOr(textw), wcalls, raw)
+			}
+			if c.calls == 1 && (calls["exec_command"] != `{"cmd":"ls -la"}` || wcalls[0].Function.Arguments != `{"cmd":"ls -la"}`) {
+				t.Errorf("the call changed: stream %v whole %+v", calls, wcalls)
+			}
+		})
+	}
+}
+
+// streamEnd is the last chunk of a streamed reply, carrying the message's
+// tool_calls field (or none) and the finish reason the upstream gave.
+func streamEnd(message string) string {
+	var delta string
+	if message != "" {
+		delta = strings.Replace(message, `"tool_calls":[`, `"tool_calls":[{"index":0,"id":"call_up","type":"function","function":{"name":"exec_command","arguments":"{\"cmd\":\"ls -la\"}"}`, 1)
+		delta = strings.Replace(delta, `[]`, `[{"index":0}]`, 1)
+	}
+	return strings.Replace(strings.Replace(stopChunk, `"stop"`, `"tool_calls"`, 1), `"delta":{}`, `"delta":{`+delta+`}`, 1)
+}

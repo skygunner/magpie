@@ -1,0 +1,14 @@
+BASE production code restored (chattidy.go at base; docs/test unchanged)
+COMMAND: GOTOOLCHAIN=go1.26.8 go test -race -count=1 -run TestClaudeClientCacheAbsentUnchanged -v ./internal/gateway
+=== RUN   TestClaudeClientCacheAbsentUnchanged
+2026/10/26 19:37:56 claude: Claude Code pid 2376445 started, a run on claude-sonnet-5
+2026/10/26 19:37:56 claude: Claude Code pid 2376445 (claude-sonnet-5) ended after 0s (signal: terminated), 77 MiB resident at most
+    claude_client_cache_test.go:291: ordinary prompt changed: args -p --output-format stream-json --input-format stream-json --include-partial-messages --verbose --model claude-sonnet-5 --tools  --strict-mcp-config --mcp-config {"mcpServers":{"magpie":{"args":["claude-mcp-helper","/tmp/TestClaudeClientCacheAbsentUnchanged4125089161/002/magpie-claude-1600817621/callback","/tmp/TestClaudeClientCacheAbsentUnchanged4125089161/002/magpie-claude-1600817621/tools.json"],"command":"/tmp/go-build3385541757/b001/gateway.test"}}} --setting-sources  --dangerously-skip-permissions
+        cache-disabled 0
+        told {"message":{"content":[{"cache_control":{"ttl":"1h","type":"ephemeral"},"text":"\u003cexternal_system_instructions\u003e\nshared\n\u003c/external_system_instructions\u003e\n\n","type":"text"},{"text":"Human: hello\n\n","type":"text"}],"role":"user"},"type":"user"}
+--- FAIL: TestClaudeClientCacheAbsentUnchanged (0.01s)
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.047s
+FAIL
+
+EXIT_CODE=1

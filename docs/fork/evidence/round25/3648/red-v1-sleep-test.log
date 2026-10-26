@@ -1,0 +1,11 @@
+# RED on clean base 19253f67 (test only)
+
+## go test -tags dev -count=1 -run TestDevBackendHandoverAnswersAConnectionItTook ./internal/gui
+gui (0 passed, 1 failed)
+  [FAIL] TestDevBackendHandoverAnswersAConnectionItTook
+     dev_handover_test.go:95: a request on a connection the backend took, read once its handover began: unexpected EOF
+
+## go test -tags dev -count=20 (same test) — 20/20 red
+      2 FAIL
+      1 FAIL	github.com/yetone/magpie/internal/gui	2.082s
+     20 --- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.10s)

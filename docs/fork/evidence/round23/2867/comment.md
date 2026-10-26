@@ -1,0 +1,9 @@
+The GUI hands `Drift.Detail` to `tNotice`, and `tNotice` only translates templates registered in `NOTICES`; every detail but the proxied one was a plain English string built in `applied.go`/`reach.go`/`wiringOff`, so zh, zh-TW, ja and de readers got English in the row's tooltip and the "how to fix" dialog.
+
+Fixed on [fix/2867-drift-detail-i18n](https://github.com/skygunner/magpie/tree/fix/2867-drift-detail-i18n) (`a6df7cec`, on `c0985122`): the 13 details those files build are now notices - replaced (two forms), bypassed (three), unreachable (five) and wiringOff (three) - registered in `NOTICES` with their zh, zh-TW, ja and de strings in `i18n.js`, and the call sites pass the notice with its arguments instead of a formatted sentence. `TestDriftDetailsAreTranslated` pins the English original and the zh/ja text for each, so a detail added without a translation fails.
+
+RED -> GREEN, re-run independently here:
+- clean base `c0985122` with only the new test: `drift detail isn't a notice, so it stays English: "{agent}'s config was changed outside magpie: …"` and `zh has no translation of …`.
+- at the head: `TestDriftDetailsAreTranslated` passes; `internal/agent` 1464 and `internal/gui` 440 pass; `go vet`, `go build` for linux/windows/`-tags nogui` and `gofmt -l` are clean, and `tNotice` was run against the real `i18n.js` in Bun for zh/ja/de.
+
+Limits: sentences an agent's own `Check()` builds without `wiringOff` are still English (each needs its own notice - a sweep of its own); Codex's proxied detail is untouched because on this base it is still a plain string, contrary to what the issue assumed.

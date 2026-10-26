@@ -1,0 +1,13 @@
+-test.shuffle 1793007267019698289
+2026/10/26 19:35:48 http: TLS handshake error from 127.0.0.1:46070: remote error: tls: bad certificate
+2026/10/26 19:35:48 TLS: /tmp/TestTLSServesRenewedCertificate4274302042/001/fullchain.pem and /tmp/TestTLSServesRenewedCertificate4274302042/001/privkey.pem changed but don't load (tls: failed to find any PEM data in key input): still serving the certificate read before
+--- FAIL: TestHandedOverGatewayFinishesItsStream (0.02s)
+    handover_test.go:142: request 0 during the handover: Post "http://127.0.0.1:43487/v1/chat/completions": EOF
+--- FAIL: TestHandedOffTLSGatewayAnswersAConnectionWaitingForItsFirstByte (0.00s)
+    tls_handover_test.go:112: no answer to a request sent once the handover began: read tcp 127.0.0.1:59920->127.0.0.1:38135: read: connection reset by peer
+2026/10/26 19:35:48 http: TLS handshake error from 127.0.0.1:46592: client sent an HTTP request to an HTTPS server
+2026/10/26 19:35:48 http: TLS handshake error from 127.0.0.1:45394: client sent an HTTP request to an HTTPS server
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.526s
+FAIL
+EXIT=1

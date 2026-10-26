@@ -1,0 +1,19 @@
+=== RUN   TestTokenStageGoesOnWithoutAnUnacceptedResource
+=== RUN   TestTokenStageGoesOnWithoutAnUnacceptedResource/exchange
+=== RUN   TestTokenStageGoesOnWithoutAnUnacceptedResource/refresh
+--- PASS: TestTokenStageGoesOnWithoutAnUnacceptedResource (0.00s)
+    --- PASS: TestTokenStageGoesOnWithoutAnUnacceptedResource/exchange (0.00s)
+    --- PASS: TestTokenStageGoesOnWithoutAnUnacceptedResource/refresh (0.00s)
+=== RUN   TestInvalidGrantIsNotRetried
+--- PASS: TestInvalidGrantIsNotRetried (0.00s)
+=== RUN   TestNoResourceIsNotRetried
+--- PASS: TestNoResourceIsNotRetried (0.00s)
+=== RUN   TestPersistentRefusalIsBounded
+--- PASS: TestPersistentRefusalIsBounded (0.00s)
+=== RUN   TestRetryKeepsTheClientSecret
+--- PASS: TestRetryKeepsTheClientSecret (0.00s)
+=== RUN   TestCanceledRetrySavesNothing
+--- PASS: TestCanceledRetrySavesNothing (0.00s)
+PASS
+ok  	github.com/yetone/magpie/internal/mcpauth	0.014s
+exit=0

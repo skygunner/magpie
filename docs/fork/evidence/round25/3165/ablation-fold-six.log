@@ -1,0 +1,21 @@
+UTC: 2026-10-26T11:46:55Z
+HEAD: 19253f67bca2310c32739a6eaac88546b3574dbc
+go version go1.27.1-X:nodwarf5 linux/amd64
+COMMAND: go test -p 4 -tags nogui ./internal/gateway -run \^\(TestChatToolTurnReasoningCarriedOnce\|TestChatBothReasoningSpellingsRelayed\|TestChatToolTurnWithoutReasoningRelayed\|TestChatToolTurnWithoutReasoningNotForMistral\|TestTranslatedToolTurnWithoutReasoning\|TestReasoningReplayed\)\$ -count=1 -v -timeout=10m
+=== RUN   TestChatToolTurnReasoningCarriedOnce
+--- PASS: TestChatToolTurnReasoningCarriedOnce (0.00s)
+=== RUN   TestChatToolTurnWithoutReasoningRelayed
+--- PASS: TestChatToolTurnWithoutReasoningRelayed (0.00s)
+=== RUN   TestChatToolTurnWithoutReasoningNotForMistral
+--- PASS: TestChatToolTurnWithoutReasoningNotForMistral (0.00s)
+=== RUN   TestTranslatedToolTurnWithoutReasoning
+--- PASS: TestTranslatedToolTurnWithoutReasoning (0.00s)
+=== RUN   TestChatBothReasoningSpellingsRelayed
+    chat_tool_reasoning_test.go:215: 400 after 1 calls: {"error":{"code":null,"message":"ds: deepseek: Failed to deserialize the JSON body into the target type: messages[1]: duplicate field `reasoning` at line 1 column 70565","param":null,"type":"invalid_request_error"}}
+--- FAIL: TestChatBothReasoningSpellingsRelayed (0.00s)
+=== RUN   TestReasoningReplayed
+--- PASS: TestReasoningReplayed (0.00s)
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.036s
+FAIL
+EXIT_CODE=1

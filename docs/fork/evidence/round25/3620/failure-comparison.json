@@ -1,0 +1,35 @@
+{
+  "headRecordedFailures": 51,
+  "baseMatched": 44,
+  "unmatched": [
+    {
+      "file": "internal/gui/tests/routing-flood.test.cjs",
+      "name": "chromium zh: back in sight after the window covered, drawing no frames, the requests of meanwhile don't all fly at once"
+    },
+    {
+      "file": "internal/gui/tests/routing-keys-fold.test.cjs",
+      "name": "webkit de: a request that comes flies to the fold, which says which key; opened, the key's row lights"
+    },
+    {
+      "file": "internal/gui/tests/routing-read-allowances.test.cjs",
+      "name": "de at 1100px"
+    },
+    {
+      "file": "internal/gui/tests/routing-rule-drag.test.cjs",
+      "name": "chromium zh: a group's rules are dragged into order"
+    },
+    {
+      "file": "internal/gui/tests/routing-rule-drag.test.cjs",
+      "name": "chromium zh-TW: a group's rules are dragged into order"
+    },
+    {
+      "file": "internal/gui/tests/routing-rule-drag.test.cjs",
+      "name": "chromium de: a group's rules are dragged into order"
+    },
+    {
+      "file": "internal/gui/tests/routing-rules-line.test.cjs",
+      "name": "webkit zh-TW 390: a rule reads as one line, its conditions added from a menu"
+    }
+  ],
+  "note": "54 total failures include failed parents; 51 failure blocks parsed. Matching names alone does not establish identical causes. Unmatched failures must not be described as proven pre-existing."
+}

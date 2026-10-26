@@ -1,0 +1,6 @@
+--- FAIL: TestLocalHostIsNoEmail (0.00s)
+    local_test.go:19: "ssh user@host.local" masked: "ssh {{EMAIL_ca4hwiph}}"
+    local_test.go:25: 2 masked: "reach {{EMAIL_ca4hwiph}} or mail {{EMAIL_6mcxp5ax}}"
+FAIL
+FAIL	github.com/yetone/magpie/internal/redact	0.004s
+FAIL

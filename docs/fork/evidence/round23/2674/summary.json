@@ -1,0 +1,30 @@
+{
+ "issue": 2674,
+ "title": "edit.BlockList drops block entries that follow a flow list in a dsh patch list",
+ "verdict": "fixed",
+ "skipReason": null,
+ "branch": "fix/2674-blocklist-tail",
+ "base": "01468003348ede896c5126e9fd81057e1e58765c",
+ "head": "92b3d82cf78b1b2ff93ffc07d83c999c2784a5f2",
+ "testCommands": [
+  "go test ./internal/edit -run TestBlockList -count=1",
+  "go test ./internal/edit ./internal/agent ./internal/library -count=1",
+  "go vet ./... ; GOOS=linux GOARCH=amd64 go vet -tags nogui ./... ; GOOS=windows GOARCH=amd64 go vet ./...",
+  "go build ./... ; GOOS=linux GOARCH=amd64 go build -tags nogui ./... ; GOOS=windows GOARCH=amd64 go build ./...",
+  "gofmt -l internal/edit/"
+ ],
+ "testsAdded": [
+  "TestBlockList's refusal list now holds the issue's four inputs: \"[]\\n- id: a\\n\", \"[ {id: x} ]\\n- id: a\\n\", \"--- []\\n- id: a\\n\" and \"--- [ {id: x} ]\\n- id: a\\n\" - each taken as a flow list before, so only the sequence survived."
+ ],
+ "unverifiedBoundaries": [
+  "No real dsh run: the contract is BlockList's, and both callers (dshParse, dshRead) leave a file that BlockList refuses as it was.",
+  "A file with block content after the flow list is refused rather than repaired, which is what the issue asked for; a multi-line flow sequence with a comment inside it is still accepted (the scanner stops at the matching bracket)."
+ ],
+ "filesChanged": [
+  "internal/edit/yaml.go",
+  "internal/edit/yaml_flow_test.go"
+ ],
+ "preExistingRed": [
+  "internal/edit TestWriteAtomicReadOnlyHardLink is red with this machine's umask 0027 and equally red on the clean base (evidence/2674/base-hardlink.log); it is #3640's report."
+ ]
+}

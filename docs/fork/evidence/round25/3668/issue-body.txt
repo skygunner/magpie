@@ -1,0 +1,23 @@
+## What we see
+
+In Magpie, the Grok provider card is titled `Grok (SuperGrok)`. Signed-in account badges also show `SuperGrok`.
+
+We use two official Grok subscriptions. One is SuperGrok. The other plan name starts with H. Public docs call that tier SuperGrok Heavy ([xAI license docs](https://docs.x.ai/grok/management)). We did not capture the account API response for this report, so we do not claim which account is Heavy, or that a Heavy plan was returned and then overwritten.
+
+Please name the provider Grok, and show the actual plan tier when it is known. Do not label every account SuperGrok.
+
+## What the current code does
+
+These are enough to explain the card title, and the badge when `plan` is absent. They are not a capture of what the two accounts returned.
+
+- The provider display name is the fixed string `Grok (SuperGrok)`, not the signed-in plan: [`internal/provider/plugin_usage.go` line 33](https://github.com/yetone/magpie/blob/main/internal/provider/plugin_usage.go#L33).
+- The account badge uses `a.plan || "SuperGrok"`: [`internal/gui/assets/app.js` line 6619](https://github.com/yetone/magpie/blob/main/internal/gui/assets/app.js#L6619). If `plan` is missing, the badge is SuperGrok.
+- The community Grok plugin's `usage()` parses credit windows and does not return a plan. A comment says billing does not describe a plan's rate limit: [`packages/grok/index.mjs` around line 840](https://github.com/magpie-community/plugins/blob/main/packages/grok/index.mjs#L840). The plugin also sets the provider name to `Grok (SuperGrok)`.
+
+## Request
+
+- Show the provider as Grok, with the plan tier beside it when known.
+- When `plan` is absent, do not fall back to SuperGrok. Say the plan is unknown.
+- If the Grok plugin can read the signed-in plan, return it so the badge does not have to guess.
+
+No account emails, quota figures, or session content are included.

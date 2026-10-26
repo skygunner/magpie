@@ -1,0 +1,83 @@
+2026/10/26 21:07:46 dev backend: http://127.0.0.1:46577
+2026/10/26 21:07:46 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:126: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:07:46 dev backend: http://127.0.0.1:45441
+2026/10/26 21:07:46 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:126: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:07:46 dev backend: http://127.0.0.1:45827
+2026/10/26 21:07:46 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:126: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:07:46 dev backend: http://127.0.0.1:33875
+2026/10/26 21:07:46 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:126: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:07:46 dev backend: http://127.0.0.1:41433
+2026/10/26 21:07:46 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:126: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:07:46 dev backend: http://127.0.0.1:34629
+2026/10/26 21:07:46 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:126: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:07:46 dev backend: http://127.0.0.1:36723
+2026/10/26 21:07:46 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:126: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:07:46 dev backend: http://127.0.0.1:43003
+2026/10/26 21:07:46 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:126: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:07:46 dev backend: http://127.0.0.1:36441
+2026/10/26 21:07:46 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:126: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:07:46 dev backend: http://127.0.0.1:38477
+2026/10/26 21:07:46 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:126: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:07:46 dev backend: http://127.0.0.1:38853
+2026/10/26 21:07:46 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:126: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:07:46 dev backend: http://127.0.0.1:46725
+2026/10/26 21:07:46 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:126: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:07:46 dev backend: http://127.0.0.1:38709
+2026/10/26 21:07:46 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:126: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:07:46 dev backend: http://127.0.0.1:40391
+2026/10/26 21:07:46 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:126: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:07:46 dev backend: http://127.0.0.1:36111
+2026/10/26 21:07:46 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:126: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:07:46 dev backend: http://127.0.0.1:45369
+2026/10/26 21:07:46 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:126: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:07:46 dev backend: http://127.0.0.1:36831
+2026/10/26 21:07:46 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:126: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:07:46 dev backend: http://127.0.0.1:33239
+2026/10/26 21:07:46 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:126: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:07:46 dev backend: http://127.0.0.1:37781
+2026/10/26 21:07:46 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:126: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:07:46 dev backend: http://127.0.0.1:35121
+2026/10/26 21:07:46 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:126: a request on a connection the backend took, read once its handover began: unexpected EOF
+FAIL
+FAIL	github.com/yetone/magpie/internal/gui	0.046s
+FAIL

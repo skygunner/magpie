@@ -1,0 +1,18 @@
+UTC: 2026-10-26T11:47:51Z
+HEAD: 19253f67bca2310c32739a6eaac88546b3574dbc
+go version go1.27.1-X:nodwarf5 linux/amd64
+COMMAND: go test -p 4 -tags nogui ./internal/gateway -run \^TestChatToolTurnReasoningDetailsCarriedOnce\$ -count=1 -v -timeout=10m
+=== RUN   TestChatToolTurnReasoningDetailsCarriedOnce
+=== RUN   TestChatToolTurnReasoningDetailsCarriedOnce/injected
+    chat_tool_reasoning_details_test.go:55: message 1 still carries reasoning_details beside reasoning_content: [{"type":"reasoning.text","text":"Let me read it.","signature":null,"format":"unknown","index":0}]
+    chat_tool_reasoning_details_test.go:55: message 3 still carries reasoning_details beside reasoning_content: [{"type":"reasoning.text","text":"Let me read it.","signature":null,"format":"unknown","index":0}]
+=== RUN   TestChatToolTurnReasoningDetailsCarriedOnce/already_present
+    chat_tool_reasoning_details_test.go:55: message 1 still carries reasoning_details beside reasoning_content: [{"type":"reasoning.text","text":"Let me read it.","signature":null,"format":"unknown","index":0}]
+    chat_tool_reasoning_details_test.go:55: message 3 still carries reasoning_details beside reasoning_content: [{"type":"reasoning.text","text":"Let me read it.","signature":null,"format":"unknown","index":0}]
+--- FAIL: TestChatToolTurnReasoningDetailsCarriedOnce (0.00s)
+    --- FAIL: TestChatToolTurnReasoningDetailsCarriedOnce/injected (0.00s)
+    --- FAIL: TestChatToolTurnReasoningDetailsCarriedOnce/already_present (0.00s)
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.020s
+FAIL
+EXIT_CODE=1

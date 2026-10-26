@@ -1,0 +1,6 @@
+$ GOTOOLCHAIN=go1.26.8 go test -tags nogui -run 'TestCopilotToolSearchBeta' -count=1 ./internal/gateway/   # clean base 01468003 + new test only
+--- FAIL: TestCopilotToolSearchBeta (0.01s)
+    copilot_tool_search_test.go:77: Messages, betas "tool-search-tool-2025-10-19": 400 {"error":{"message":"Copilot: Copilot: unsupported beta header(s): tool-search-tool-2025-10-19","type":"invalid_request_error"},"type":"error"}
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.022s
+FAIL

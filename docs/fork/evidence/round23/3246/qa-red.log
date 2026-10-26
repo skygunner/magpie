@@ -1,0 +1,5 @@
+--- FAIL: TestZCodeSyncRestoresARewrite (0.00s)
+    zcode_reconnect_test.go:40: after a rewrite: "", want magpie back
+FAIL
+FAIL	github.com/yetone/magpie/internal/agent	0.012s
+FAIL

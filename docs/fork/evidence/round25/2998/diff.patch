@@ -1,0 +1,194 @@
+diff --git a/docs/subsystems/agent-wiring.md b/docs/subsystems/agent-wiring.md
+index 5c3d4c6b..7e5cff8c 100644
+--- a/docs/subsystems/agent-wiring.md
++++ b/docs/subsystems/agent-wiring.md
+@@ -121,8 +121,20 @@ something else shows up as drift.
+ - Detection goes by an agent's folder, which an uninstall leaves behind, so an agent found by that alone is shown as gone (`CLIMissing`; #843, #2177, #2173): its CLI is on no PATH and in none of `proc.FindTool`'s folders nor where its own installer puts it (`~/.claude/local`, `~/.codex/packages/standalone`, `~/.opencode/bin`, Hermes' `hermes-agent` checkout), and nothing else that reads the folder is here (`cliHeld`): its desktop app (`HasApp`), an editor's extension (`~/.<editor>/extensions/<id>-*`: `anthropic.claude-code`, `openai.chatgpt`, `saoudrizwan.claude-dev`), Claude.app, OpenCode.app and Goose.app on a Mac, a JetBrains IDE's settings (its AI Assistant's agents and Cline's plugin) or Zed's `external_agents` (its Claude Code and Codex adapters). Where magpie can't tell (every shared folder, `cliShared`, on Windows, whose readers can be a Store app, a portable editor or a PATH only a shell profile sets, #1482, and there too one a desktop app of the agent's reads, `desktopApps`: DeepSeek Harness Desktop installs to any folder and puts its `dsh.cmd` in one the user picks, #2300, #2304; OpenCode and Goose off a Mac, Gemini, an agent detected its own way or by a command name other tools share, one with no install command but `cliOnly`'s Hermes), it is never gone. A gone row in the GUI shows "CLI not found" and none of its settings, nor Apply again; while connected it keeps its switch and Disconnect, and it folds under Not set up once not. Get started never offers it (`connectKind` is "no"). The TUI leaves it out and `magpie ls` says "CLI not found" (`TestCLIMissing*`, `agent-cli-missing.test.cjs`, `getting-started.test.cjs`).
+ - Tests never touch the real machine. `TestMain` uses `testenv`, which points HOME, USERPROFILE, the XDG folders and APPDATA into a temporary folder, clears `agentenv.Vars` and puts failing stand-ins for keychain tools and agent CLIs on PATH. Agent-specific side effects (Aside, the Zed keychain, Codex's usage check) are also stubbed in `TestMain`.
+ 
++MiniMax Code's config and sessions use [`appdir.MiniMaxDirIn`](../../internal/appdir/minimax.go)
++(#2998). `MINIMAX_DATA_DIR` remains the override. Otherwise the Windows CN
++app's `%APPDATA%/MiniMax/minimax-agent-cn-config.json` supplies
++`config.localRuntimeDataParentDir`, with `.minimax` appended. Missing,
++unreadable, malformed, blank or relative records retain `~/.minimax`.
++Only that reported settings location is read; other builds retain the default.
++Library skills follow the resolved agent directory too.
++
+ ## Verification
+ 
++```sh
++go test ./internal/agent -run '^TestMiniMaxDirDesktopRecord$'
++```
++
+ ```sh
+ go test -tags nogui ./internal/agent -run '^TestStepCode'
+ go test -tags nogui ./internal/agent -run '^TestMothX'
+diff --git a/internal/agent/minimax.go b/internal/agent/minimax.go
+index 6ab74036..a24f4c91 100644
+--- a/internal/agent/minimax.go
++++ b/internal/agent/minimax.go
+@@ -2,7 +2,7 @@ package agent
+ 
+ // MiniMax Code — MiniMax's mcode CLI and the desktop app, which run the same
+ // runtime (#362) — keeps its settings in config.yaml in its data folder,
+-// $MINIMAX_DATA_DIR or ~/.minimax. The model sessions start on is
++// resolved by appdir.MiniMaxDirIn. The model sessions start on is
+ // defaultModel, "<provider>/<model>" split at the first slash, where a
+ // provider the user added (Add 3rd-party provider…, mcode provider add) is
+ // "custom_provider:<key>", an entry of custom_provider. magpie adds itself
+@@ -73,12 +73,7 @@ func mcodeID(key string) string {
+ const mcodeUA = "minimax-code"
+ 
+ // MiniMaxDir is the folder MiniMax Code keeps its config.yaml in.
+-func MiniMaxDir(home string) string {
+-	if d := strings.TrimSpace(appdir.Getenv("MINIMAX_DATA_DIR")); d != "" {
+-		return d
+-	}
+-	return filepath.Join(home, ".minimax")
+-}
++func MiniMaxDir(home string) string { return appdir.MiniMaxDirIn(home) }
+ 
+ func miniMax(home string) *Agent { return miniMaxAt(here(home), MiniMaxDir(home)) }
+ 
+diff --git a/internal/agent/minimax_dir_test.go b/internal/agent/minimax_dir_test.go
+new file mode 100644
+index 00000000..4f6bdfb1
+--- /dev/null
++++ b/internal/agent/minimax_dir_test.go
+@@ -0,0 +1,72 @@
++package agent_test
++
++import (
++	"encoding/json"
++	"os"
++	"path/filepath"
++	"testing"
++
++	"github.com/yetone/magpie/internal/agent"
++	"github.com/yetone/magpie/internal/sessions"
++)
++
++// #2998: both public readers must follow the same desktop bootstrap record.
++func TestMiniMaxDirDesktopRecord(t *testing.T) {
++	home, appdata := t.TempDir(), t.TempDir()
++	moved := filepath.Join(t.TempDir(), "minimax data")
++	override := filepath.Join(t.TempDir(), "explicit data")
++	t.Setenv("HOME", home)
++	t.Setenv("USERPROFILE", home)
++	t.Setenv("APPDATA", appdata)
++	record := filepath.Join(appdata, "MiniMax", "minimax-agent-cn-config.json")
++	if err := os.MkdirAll(filepath.Dir(record), 0o755); err != nil {
++		t.Fatal(err)
++	}
++	movedJSON, err := json.Marshal(moved)
++	if err != nil {
++		t.Fatal(err)
++	}
++	valid := `{"config":{"localRuntimeDataParentDir":` + string(movedJSON) + `,"localRuntimePreviousDataParentDirs":["old parent"]}}`
++	spacedJSON, err := json.Marshal("  " + moved + " \t")
++	if err != nil {
++		t.Fatal(err)
++	}
++	for _, tc := range []struct{ name, record, env, appdata, want string }{
++		{"moved", valid, "", appdata, filepath.Join(moved, ".minimax")},
++		{"whitespace record", `{"config":{"localRuntimeDataParentDir":` + string(spacedJSON) + `}}`, "", appdata, filepath.Join(moved, ".minimax")},
++		{"explicit override", valid, override, appdata, override},
++		{"whitespace override", valid, "  " + override + " ", appdata, filepath.Join(moved, ".minimax")},
++		{"blank override", valid, " \t", appdata, filepath.Join(moved, ".minimax")},
++		{"relative override", valid, "relative", appdata, filepath.Join(moved, ".minimax")},
++		{"missing record", "", "", appdata, filepath.Join(home, ".minimax")},
++		{"malformed record", "{", "", appdata, filepath.Join(home, ".minimax")},
++		{"wrong type", `{"config":{"localRuntimeDataParentDir":42}}`, "", appdata, filepath.Join(home, ".minimax")},
++		{"missing field", `{"config":{}}`, "", appdata, filepath.Join(home, ".minimax")},
++		{"relative record", `{"config":{"localRuntimeDataParentDir":"relative"}}`, "", appdata, filepath.Join(home, ".minimax")},
++		{"blank record", `{"config":{"localRuntimeDataParentDir":" \t"}}`, "", appdata, filepath.Join(home, ".minimax")},
++		{"missing APPDATA", valid, "", "", filepath.Join(home, ".minimax")},
++		{"relative APPDATA", valid, "", "relative", filepath.Join(home, ".minimax")},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			// Given: the app's documented settings file and an optional override.
++			t.Setenv("APPDATA", tc.appdata)
++			t.Setenv("MINIMAX_DATA_DIR", tc.env)
++			if tc.record == "" {
++				if err := os.Remove(record); err != nil {
++					t.Fatal(err)
++				}
++			} else if err := os.WriteFile(record, []byte(tc.record), 0o600); err != nil {
++				t.Fatal(err)
++			}
++			// When: configuration and session discovery resolve the data directory.
++			gotAgent, gotSessions := agent.MiniMaxDir(home), sessions.MiniMaxDir()
++			// Then: both use the same selected directory, with no helper dependency.
++			if gotAgent != tc.want {
++				t.Errorf("agent.MiniMaxDir = %q, want %q", gotAgent, tc.want)
++			}
++			if gotSessions != tc.want {
++				t.Errorf("sessions.MiniMaxDir = %q, want %q", gotSessions, tc.want)
++			}
++		})
++	}
++}
+diff --git a/internal/appdir/minimax.go b/internal/appdir/minimax.go
+new file mode 100644
+index 00000000..0e9504e4
+--- /dev/null
++++ b/internal/appdir/minimax.go
+@@ -0,0 +1,37 @@
++package appdir
++
++import (
++	"encoding/json"
++	"os"
++	"path/filepath"
++	"strings"
++)
++
++// MiniMaxDirIn is MiniMax Code's data folder. The Windows CN desktop build
++// records its moved parent in %APPDATA%/MiniMax/minimax-agent-cn-config.json
++// (config.localRuntimeDataParentDir, #2998); other builds keep the default.
++// MINIMAX_DATA_DIR takes precedence, as it does for the CLI.
++func MiniMaxDirIn(home string) string {
++	if d := strings.TrimSpace(Getenv("MINIMAX_DATA_DIR")); d != "" {
++		return d
++	}
++	dir := filepath.Join(home, ".minimax")
++	appdata := Getenv("APPDATA")
++	if appdata == "" {
++		return dir
++	}
++	var s struct {
++		Config struct {
++			Parent string `json:"localRuntimeDataParentDir"`
++		} `json:"config"`
++	}
++	b, err := os.ReadFile(filepath.Join(appdata, "MiniMax", "minimax-agent-cn-config.json"))
++	if err != nil || json.Unmarshal(b, &s) != nil {
++		return dir
++	}
++	parent := strings.TrimSpace(s.Config.Parent)
++	if parent == "" || !rooted(parent) {
++		return dir
++	}
++	return filepath.Join(parent, ".minimax")
++}
+diff --git a/internal/sessions/calls_minimax.go b/internal/sessions/calls_minimax.go
+index b4838351..490b95a1 100644
+--- a/internal/sessions/calls_minimax.go
++++ b/internal/sessions/calls_minimax.go
+@@ -31,14 +31,10 @@ import (
+ // which internal/agent's minimax.go writes) is the gateway's to count: it
+ // logged the call itself, with the provider and account that answered.
+ 
+-// MiniMaxDir is MiniMax Code's data folder: MINIMAX_DATA_DIR, or ~/.minimax
+-// (as internal/agent's MiniMaxDir, which this package cannot import).
++// MiniMaxDir shares MiniMax Code's data folder resolver with internal/agent.
+ func MiniMaxDir() string {
+-	if d := strings.TrimSpace(appdir.Getenv("MINIMAX_DATA_DIR")); d != "" {
+-		return expandHome(d)
+-	}
+ 	home, _ := os.UserHomeDir()
+-	return filepath.Join(home, ".minimax")
++	return appdir.MiniMaxDirIn(home)
+ }
+ 
+ func minimaxSessions() string { return filepath.Join(MiniMaxDir(), "v2", "sessions") }

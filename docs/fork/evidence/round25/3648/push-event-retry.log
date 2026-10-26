@@ -1,0 +1,14 @@
+### staged
+ internal/gui/dev_handover_test.go | 31 ++++++++++++++++---------------
+ 1 file changed, 16 insertions(+), 15 deletions(-)
+COMMIT
+[fix/r25-dev-backend-handover 6d3f202f] test: retry the 3648 handover signal on the delivered signal, not a duration
+ 1 file changed, 16 insertions(+), 15 deletions(-)
+LOG1
+6d3f202f test: retry the 3648 handover signal on the delivered signal, not a duration
+f5fd1da3 dev tests: the handover's own close is the barrier for the taken connection
+PUSH
+To https://github.com/skygunner/magpie.git
+   f5fd1da3..6d3f202f  fix/r25-dev-backend-handover -> fix/r25-dev-backend-handover
+REMOTE
+6d3f202fa62935bc480db953efcfb15256641c08	refs/heads/fix/r25-dev-backend-handover

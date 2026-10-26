@@ -1,0 +1,25 @@
+Follow-up to the ablation in https://github.com/yetone/magpie/issues/3165#issuecomment-6357540177: independently reproduced it on `19253f67` plus the previously delivered fix. With only the tool-turn cleanup removed and the alias fold retained, all six existing regressions still pass. With only the fold removed, `TestChatBothReasoningSpellingsRelayed` fails with the reported `400 ... messages[1]: duplicate field reasoning`.
+
+Delivered one new table-driven regression: [94d62c6a72193bb1846c24cb30908a2273fdfedb](https://github.com/skygunner/magpie/commit/94d62c6a72193bb1846c24cb30908a2273fdfedb), on [fix/r25-3165-reasoning-clear-test](https://github.com/skygunner/magpie/tree/fix/r25-3165-reasoning-clear-test). This rework commit changes **one test file only**. The requested upstream base does not contain `d5b46244`, so its existing production fix, docs and original tests were first replayed separately as `57a507167a15025674e266340290ccca357c40f8`, retaining ggbdpq's and realfirst's credit. No additional production behavior was introduced.
+
+`TestChatToolTurnReasoningDetailsCarriedOnce` sends the existing pi-shaped structured `reasoning_details` through the actual Chat handler to a local `httptest` upstream. Its two rows distinguish injection from cleanup beside an already-present `reasoning_content`; the latter is deliberately different from the details text, so overwriting it fails too. Each checks both the tool-call message and the assistant reply after the tool result. It adds no duplicate assertions for the already-covered `reasoning` alias, and does not pretend the vendor has demonstrated rejection of `reasoning_details`.
+
+Red/green, with the alias fold active in both runs:
+
+```text
+cleanup removed:
+message 1 still carries reasoning_details beside reasoning_content
+message 3 still carries reasoning_details beside reasoning_content
+--- FAIL: TestChatToolTurnReasoningDetailsCarriedOnce/injected
+--- FAIL: TestChatToolTurnReasoningDetailsCarriedOnce/already_present
+EXIT_CODE=1
+
+cleanup restored:
+--- PASS: TestChatToolTurnReasoningDetailsCarriedOnce/injected
+--- PASS: TestChatToolTurnReasoningDetailsCarriedOnce/already_present
+EXIT_CODE=0
+```
+
+Validation on Go `1.27.1-X:nodwarf5`, Linux/amd64, sandbox HOME and pinned Go caches: the Reasoning/Kimi family under `-race -shuffle=on -count=1` passes (15.989s); the new regression was also run under `-race` at the exact final head above and passes (1.052s). `gofmt -l` is empty; native, Linux nogui and Windows `go vet ./...` pass; native, nogui and Windows builds pass; both native and nogui binaries execute `--version` successfully. Exact local logs are `red.log`, `green.log`, `verify.log` and `verify-finalhead.log` under `/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/3165-reasoning-clear-test/`.
+
+The non-tool `reasoning_content` + `reasoning_details` case remains outside this delivered tool-turn contract: neither helper rewrites it, and actual vendor rejection is still unproven. No real DeepSeek/JD Cloud account, Windows runtime or separately mentioned Responses failure was tested; no full-repository test-suite claim is made. `gopls` is absent, so LSP diagnostics were unavailable; the static evidence is the passing vet/compile checks above. This is a fork delivery, not an upstream merge or a new release.

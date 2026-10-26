@@ -1,0 +1,16 @@
+[
+  {
+    "label": "baseline existing failure",
+    "command": "go test ./internal/gateway -run '^TestClaudeClientCacheAbsentUnchanged$' -count=1 -v",
+    "cwd": "/home/vincenty/Projects/magpie-issues/evidence/r25-3661/clean-base-rlsrt3vr",
+    "returncode": 1,
+    "log": "pre-existing-red.log"
+  },
+  {
+    "label": "head related package",
+    "command": "go test ./internal/gateway -run 'ZCode|ModelRefused|Quota|Rest' -count=1",
+    "cwd": "/home/vincenty/Projects/magpie-issues/r25-expired-model-not-account-fault",
+    "returncode": 0,
+    "log": "green.log"
+  }
+]

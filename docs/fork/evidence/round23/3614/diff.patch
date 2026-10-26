@@ -1,0 +1,197 @@
+diff --git a/internal/gateway/codex_backend.go b/internal/gateway/codex_backend.go
+index b12f6128..20280093 100644
+--- a/internal/gateway/codex_backend.go
++++ b/internal/gateway/codex_backend.go
+@@ -950,7 +950,18 @@ func (s *Server) codexUpstreamOn(w http.ResponseWriter, r *http.Request, rest st
+ 		if m := noteMasked(r, "chat", maskedHits, string(body), tr.ID, "openai", model); m != nil {
+ 			s.trace.update(tr, func(t *Route) { t.Masked = m })
+ 		}
+-		promptRead := s.inspectPrompt(tr, provider.Responses, body, body)
++		// the window Codex holds the conversation to, not models.dev's for
++		// the id, which is OpenAI's API's (netube on Discord: 922K on
++		// Routing for a Codex Plus account's 272K): the live card carries it
++		// from the start (#3614), and the route's end records it again
++		codexWindow := func() int {
++			user := ""
++			if on != nil && on.Account != nil {
++				user = on.Account.User
++			}
++			return cmp.Or(provider.CodexWindow(user, model), catalog.ContextOf(model))
++		}
++		promptRead := s.inspectPrompt(tr, provider.Responses, body, body, codexWindow())
+ 		end = func(status int, msg string, tokens, out int) {
+ 			ms := time.Since(start).Milliseconds()
+ 			ttft, text := first.ms()
+@@ -959,16 +970,9 @@ func (s *Server) codexUpstreamOn(w http.ResponseWriter, r *http.Request, rest st
+ 				replyDigest = titleReplyDigest(titleReply.buf.Bytes(), nil)
+ 			}
+ 			prompt := promptRead() // outside the trace's lock, which reading it takes
+-			// the window Codex holds the conversation to, not models.dev's
+-			// for the id, which is OpenAI's API's (netube on Discord: 922K
+-			// on Routing for a Codex Plus account's 272K)
+ 			window := 0
+ 			if prompt != nil {
+-				user := ""
+-				if on != nil && on.Account != nil {
+-					user = on.Account.User
+-				}
+-				window = cmp.Or(provider.CodexWindow(user, model), catalog.ContextOf(model))
++				window = codexWindow()
+ 			}
+ 			s.trace.update(tr, func(t *Route) {
+ 				// the last try: the turn asked again for an overload has one each
+diff --git a/internal/gateway/gateway.go b/internal/gateway/gateway.go
+index 66acc281..8476d606 100644
+--- a/internal/gateway/gateway.go
++++ b/internal/gateway/gateway.go
+@@ -2387,7 +2387,14 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
+ 	if masked != nil {
+ 		textBody = masked
+ 	}
+-	promptRead := s.inspectPrompt(tr, from, body, textBody)
++	// the window the live card carries while the request runs (#3614): the
++	// first model routing asks, as the route's end records the one that
++	// answered
++	window := 0
++	if len(cands) > 0 {
++		window = windowOf(cands[0].p, cands[0].model)
++	}
++	promptRead := s.inspectPrompt(tr, from, body, textBody, window)
+ 	var lastTried provider.Provider // the last try's, for its model's context window and the usage's endpoint
+ 	var skipped []string
+ 	sent := ""       // the reasoning the last try's model was asked for
+diff --git a/internal/gateway/prompt.go b/internal/gateway/prompt.go
+index 57cc914e..998c7256 100644
+--- a/internal/gateway/prompt.go
++++ b/internal/gateway/prompt.go
+@@ -1214,10 +1214,12 @@ func windowFor(id, model string) int {
+ }
+ 
+ // inspectPrompt reads the request's prompt beside it, putting the estimate
+-// in the trace as soon as it is read; wait returns it, for the route's
+-// end to scale to what was counted. masked is the body as the vendor would
+-// get it with masking on, kept a while for the card's text (PromptText).
+-func (s *Server) inspectPrompt(tr *Route, from provider.Protocol, body, masked []byte) (wait func() *Prompt) {
++// in the trace as soon as it is read, with window: the context window of the
++// model routing asks, which the live card reads while the request is still
++// in flight (#3614); wait returns it, for the route's end to scale to what
++// was counted. masked is the body as the vendor would get it with masking
++// on, kept a while for the card's text (PromptText).
++func (s *Server) inspectPrompt(tr *Route, from provider.Protocol, body, masked []byte, window int) (wait func() *Prompt) {
+ 	ch := make(chan *Prompt, 1)
+ 	go func() {
+ 		p := promptOf(from, body)
+@@ -1225,7 +1227,7 @@ func (s *Server) inspectPrompt(tr *Route, from provider.Protocol, body, masked [
+ 			s.trace.keepBody(tr.ID, from, masked)
+ 			s.trace.update(tr, func(t *Route) {
+ 				if t.Prompt == nil {
+-					t.Prompt = p
++					t.Prompt = p.calibrated(0, window)
+ 				}
+ 			})
+ 		}
+diff --git a/internal/gateway/prompt_test.go b/internal/gateway/prompt_test.go
+index 36a90080..52ccf521 100644
+--- a/internal/gateway/prompt_test.go
++++ b/internal/gateway/prompt_test.go
+@@ -10,7 +10,9 @@ import (
+ 	"slices"
+ 	"strconv"
+ 	"strings"
++	"sync"
+ 	"testing"
++	"time"
+ 
+ 	"github.com/yetone/magpie/internal/provider"
+ )
+@@ -357,3 +359,90 @@ func TestRouteTellsItsPrompt(t *testing.T) {
+ 		t.Fatalf("conversation %q", rs[0].Conv)
+ 	}
+ }
++
++// A request still in flight carries the window of the model routing asks, as
++// the finished route does: the live card said the model's window wasn't
++// known while the same model's window was known everywhere else (#3614). A
++// model whose window nothing knows carries none, rather than one invented.
++func TestLiveRouteCarriesTheWindow(t *testing.T) {
++	for _, c := range []struct {
++		name   string
++		model  string
++		window int
++		known  bool
++		group  string
++	}{
++		{"known", "cw/m1", 200000, true, ""},
++		// the reporter's shape: a routing group, whose first member's window
++		// is what routing decided on
++		{"group", "group/flash", 200000, true, "Flash"},
++		{"unknown", "cw/unknown-window", 0, false, ""},
++	} {
++		t.Run(c.name, func(t *testing.T) {
++			fresh(t)
++			reached := make(chan struct{})
++			release := make(chan struct{})
++			var letGo sync.Once
++			releaseNow := func() { letGo.Do(func() { close(release) }) }
++			up := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++				io.Copy(io.Discard, r.Body)
++				close(reached)
++				<-release
++				w.Header().Set("Content-Type", "application/json")
++				io.WriteString(w, `{"id":"msg_1","type":"message","role":"assistant","model":"m1","content":[{"type":"text","text":"ok"}],
++					"stop_reason":"end_turn","usage":{"input_tokens":1200,"output_tokens":9}}`)
++			}))
++			t.Cleanup(up.Close)
++			t.Cleanup(releaseNow) // before up.Close: a failed wait must not hold the server
++			contexts := map[string]int{}
++			if c.known {
++				contexts["m1"] = c.window
++			}
++			if err := provider.Save(provider.Provider{ID: "cw", Name: "CW", Anthropic: up.URL, Key: "k",
++				Models: []string{"m1", "unknown-window"}, Contexts: contexts}); err != nil {
++				t.Fatal(err)
++			}
++			if c.group != "" {
++				if err := provider.SaveGroup(provider.Group{Name: c.group, Members: []string{"cw/m1"}, Routing: provider.Ordered}); err != nil {
++					t.Fatal(err)
++				}
++			}
++			b, _ := os.ReadFile("testdata/context/claude-code.json")
++			var q map[string]any
++			json.Unmarshal(b, &q)
++			q["model"], q["stream"] = c.model, false
++			body, _ := json.Marshal(q)
++			s := New()
++			done := make(chan struct{})
++			go func() {
++				defer close(done)
++				s.Handler().ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("POST", "/v1/messages", strings.NewReader(string(body))))
++			}()
++			<-reached
++			live := liveRoute(t, s)
++			if live.Prompt.Window != c.window {
++				t.Fatalf("in-flight route's window %d, want %d: %+v", live.Prompt.Window, c.window, live.Prompt)
++			}
++			releaseNow()
++			<-done
++		})
++	}
++}
++
++// liveRoute waits for the newest route to be in flight with its prompt read,
++// the trace waking on every change, and returns it as the page reads it.
++func liveRoute(t *testing.T, s *Server) *Route {
++	t.Helper()
++	after := int64(0)
++	for deadline := time.Now().Add(10 * time.Second); time.Now().Before(deadline); {
++		st := s.Trace(t.Context(), after, time.Second)
++		after = st.Seq
++		for i := range st.Routes {
++			if r := &st.Routes[i]; !r.Done && r.Prompt != nil {
++				return r
++			}
++		}
++	}
++	t.Fatal("no in-flight route with a prompt")
++	return nil
++}

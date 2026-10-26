@@ -1,0 +1,31 @@
+{
+  "issue": 3585,
+  "title": "redact: the local model's cues match inside words (tool_call cues a phone, telemetry too)",
+  "verdict": "fixed",
+  "skipReason": null,
+  "branch": "fix/redact-cue-words",
+  "base": "01468003348ede896c5126e9fd81057e1e58765c",
+  "head": "e60d14a891340ebd7e10201e81d6acf51c4e10ea",
+  "testCommands": [
+    "GOTOOLCHAIN=go1.26.8 go test ./internal/redact -run TestModelCueIsAWord -count=1 -v",
+    "GOTOOLCHAIN=go1.26.8 go test ./internal/redact -count=1",
+    "GOTOOLCHAIN=go1.26.8 go vet ./...",
+    "GOTOOLCHAIN=go1.26.8 go build ./...",
+    "GOTOOLCHAIN=go1.26.8 GOOS=linux GOARCH=amd64 go build -tags nogui ./...",
+    "GOTOOLCHAIN=go1.26.8 GOOS=windows GOARCH=amd64 go build ./...",
+    "GOTOOLCHAIN=go1.26.8 gofmt -l internal/redact"
+  ],
+  "testsAdded": [
+    "internal/redact/modelfits_test.go: TestModelCueIsAWord"
+  ],
+  "unverifiedBoundaries": [
+    "The real local model over agent requests: the table is the cue set the issue named, not a replay of its 3 MB corpus.",
+    "The 40-byte window is byte-based: a cue that begins before the window is not matched, as before.",
+    "A cue that follows an underscore is matched only as a whole cue of its own (api_key, apikey, account_number's account ends at a join); a snake_case name whose cue is its last segment only (OPENAI_API_KEY's key) no longer cues the model, its rule's KEY= context still masks it."
+  ],
+  "filesChanged": [
+    "internal/redact/model.go",
+    "internal/redact/modelfits_test.go"
+  ],
+  "preExistingRed": []
+}

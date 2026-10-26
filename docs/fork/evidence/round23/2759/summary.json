@@ -1,0 +1,31 @@
+{
+  "issue": 2759,
+  "title": "[bug] 在导入供应商时，导入来源目前有5个。在最右边的open code显示不全",
+  "verdict": "fixed",
+  "skipReason": "",
+  "branch": "fix/import-source-row",
+  "base": "c0985122b3f62e460c73ea6d67c426beb4dc9db2",
+  "head": "0483a01f649dc2263983f26662faa512a44489af",
+  "testCommands": [
+    "NODE_PATH=/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules node --test internal/gui/tests/import-source-tabs.test.cjs",
+    "NODE_PATH=/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules node --test internal/gui/tests/import-opencode.test.cjs internal/gui/tests/import-collision.test.cjs internal/gui/tests/provider-discovery.test.cjs",
+    "GOTOOLCHAIN=go1.26.8 go test -tags nogui ./internal/gui",
+    "GOTOOLCHAIN=go1.26.8 go vet ./internal/gui",
+    "GOTOOLCHAIN=go1.26.8 go build ./...",
+    "GOTOOLCHAIN=go1.26.8 GOOS=linux GOARCH=amd64 go build -tags nogui ./...",
+    "GOTOOLCHAIN=go1.26.8 GOOS=windows GOARCH=amd64 go build ./...",
+    "gofmt -l internal/gui"
+  ],
+  "testsAdded": [
+    "internal/gui/tests/import-source-tabs.test.cjs"
+  ],
+  "unverifiedBoundaries": [
+    "Tested at viewports 390px and 900px in Chromium and WebKit, English and Chinese; other locales reuse the same untranslated source names, and narrower viewports (<390px) were not measured.",
+    "On a 390px-wide sheet the tab row now takes three lines; the dialog scrolls (modal .dialog max-height:100%; overflow-y:auto) but vertical fit at short viewports was not asserted by the test."
+  ],
+  "filesChanged": [
+    "internal/gui/assets/app.css",
+    "internal/gui/tests/import-source-tabs.test.cjs"
+  ],
+  "preExistingRed": []
+}

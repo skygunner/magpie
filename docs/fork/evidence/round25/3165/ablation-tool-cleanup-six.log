@@ -1,0 +1,19 @@
+UTC: 2026-10-26T11:46:30Z
+HEAD: 19253f67bca2310c32739a6eaac88546b3574dbc
+go version go1.27.1-X:nodwarf5 linux/amd64
+COMMAND: go test -p 4 -tags nogui ./internal/gateway -run \^\(TestChatToolTurnReasoningCarriedOnce\|TestChatBothReasoningSpellingsRelayed\|TestChatToolTurnWithoutReasoningRelayed\|TestChatToolTurnWithoutReasoningNotForMistral\|TestTranslatedToolTurnWithoutReasoning\|TestReasoningReplayed\)\$ -count=1 -v -timeout=10m
+=== RUN   TestChatToolTurnReasoningCarriedOnce
+--- PASS: TestChatToolTurnReasoningCarriedOnce (0.00s)
+=== RUN   TestChatToolTurnWithoutReasoningRelayed
+--- PASS: TestChatToolTurnWithoutReasoningRelayed (0.00s)
+=== RUN   TestChatToolTurnWithoutReasoningNotForMistral
+--- PASS: TestChatToolTurnWithoutReasoningNotForMistral (0.00s)
+=== RUN   TestTranslatedToolTurnWithoutReasoning
+--- PASS: TestTranslatedToolTurnWithoutReasoning (0.00s)
+=== RUN   TestChatBothReasoningSpellingsRelayed
+--- PASS: TestChatBothReasoningSpellingsRelayed (0.00s)
+=== RUN   TestReasoningReplayed
+--- PASS: TestReasoningReplayed (0.00s)
+PASS
+ok  	github.com/yetone/magpie/internal/gateway	0.032s
+EXIT_CODE=0

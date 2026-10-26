@@ -1,0 +1,17 @@
+GOFMT=0
+VET=0
+2026/10/26 21:44:49 dev backend: http://127.0.0.1:38841
+2026/10/26 21:44:49 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:127: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:44:49 dev backend: http://127.0.0.1:34315
+2026/10/26 21:44:49 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:127: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:44:49 dev backend: http://127.0.0.1:32941
+2026/10/26 21:44:49 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:127: a request on a connection the backend took, read once its handover began: unexpected EOF
+FAIL
+FAIL	github.com/yetone/magpie/internal/gui	0.112s
+FAIL

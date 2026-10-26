@@ -1,0 +1,8 @@
+# green.log - at head (branch fix/r25-tls-handover-local, base 19253f67)
+$ GOTOOLCHAIN=go1.26.8 go test ./internal/gateway/ -run TestHandedOffTLSGatewayAnswersAConnectionWaitingForItsFirstByte -count=20 -timeout 300s
+ok  	github.com/yetone/magpie/internal/gateway	10.177s
+EXIT=0
+
+$ GOTOOLCHAIN=go1.26.8 go test ./internal/gateway/ -race -run TestHandedOffTLSGatewayAnswersAConnectionWaitingForItsFirstByte -count=10 -timeout 600s
+ok  	github.com/yetone/magpie/internal/gateway	6.185s
+RACE_EXIT=0

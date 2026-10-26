@@ -1,0 +1,35 @@
+{
+  "issue": 3630,
+  "title": "修改供应商 ID 后，网关密钥里选好的模型没有跟着更新",
+  "verdict": "fixed",
+  "skipReason": "",
+  "branch": "fix/provider-rename-gateway-keys",
+  "base": "01468003348ede896c5126e9fd81057e1e58765c",
+  "head": "63e1ff5cd8a3f2b623222482b02745ec269c36cc",
+  "testCommands": [
+    "go test -tags nogui -count=1 -run TestRenameMovesGatewayKeyModels ./internal/agent",
+    "go test -tags nogui -count=1 ./internal/access",
+    "go test -tags nogui -count=1 ./internal/cli",
+    "go test -tags nogui -count=1 ./internal/agent",
+    "gofmt -l internal/access/rename.go internal/agent/rename.go internal/agent/rename_keys_test.go",
+    "go vet ./...",
+    "GOOS=linux GOARCH=amd64 go vet -tags nogui ./...",
+    "GOOS=windows GOARCH=amd64 go vet ./...",
+    "go build ./...",
+    "GOOS=linux GOARCH=amd64 go build -tags nogui ./...",
+    "GOOS=windows GOARCH=amd64 go build ./..."
+  ],
+  "testsAdded": [
+    "internal/agent/rename_keys_test.go TestRenameMovesGatewayKeyModels"
+  ],
+  "unverifiedBoundaries": [
+    "No browser click-through of the editor's key-model picker; the store and the production rename path Agent.RenameProvider (used by both the GUI and the CLI) are covered.",
+    "internal/provider is red at the base commit too on TestUnreadLoginsWriteErrorsKeepCredentials (fatal error: close of synctest channel from outside bubble), an environment red unrelated to this change; verified at 01468003 in a separate worktree."
+  ],
+  "filesChanged": [
+    "docs/subsystems/providers-accounts.md",
+    "internal/access/rename.go",
+    "internal/agent/rename.go",
+    "internal/agent/rename_keys_test.go"
+  ]
+}

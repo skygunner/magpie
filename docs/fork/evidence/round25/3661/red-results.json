@@ -1,0 +1,9 @@
+[
+  {
+    "label": "red",
+    "command": "go test ./internal/gateway -run '^TestZCodeTrialQuotaRestsTheModelAlone$' -count=1 -v",
+    "cwd": "/home/vincenty/Projects/magpie-issues/evidence/r25-3661/clean-base-rlsrt3vr",
+    "returncode": 1,
+    "log": "red.log"
+  }
+]

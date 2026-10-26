@@ -1,0 +1,9 @@
+### gofmt
+GOFMT=0
+### vet dev
+VET=0
+### build dev
+BUILD=0
+### test dev
+ok  	github.com/yetone/magpie/internal/gui	0.070s
+TEST=0

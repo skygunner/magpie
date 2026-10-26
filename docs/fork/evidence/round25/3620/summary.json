@@ -1,0 +1,72 @@
+{
+  "issue": 3620,
+  "title": "gui tests: routing-levels 'webkit zh: a group names the reasoning levels' times out at its 5s wait for the no-level message under load",
+  "verdict": "partial-verification",
+  "branch": "fix/r25-routing-levels-wait",
+  "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+  "head": "f74765fd4901221b022c275f6bb6dfac76e4a50b",
+  "commitCount": 1,
+  "testCommands": [
+    "GOTOOLCHAIN=go1.26.8 go test -count=1 -tags nogui ./internal/gui",
+    "NODE_PATH=/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules node --test internal/gui/tests/routing-levels.test.cjs",
+    "113 routing* and i18n-keys files (original command list retained in routing-files.txt)"
+  ],
+  "testsAdded": [
+    "Existing a group names the reasoning levels agents are offered: new persistent refusal assertion, Chromium/WebKit x en/zh"
+  ],
+  "filesChanged": [
+    "internal/gui/assets/plugins/routing/client.js",
+    "internal/gui/assets/plugins/routing/routing.css",
+    "internal/gui/tests/routing-levels.test.cjs",
+    "internal/gui/tests/README.md"
+  ],
+  "results": {
+    "red": {
+      "tests": 4,
+      "pass": 0,
+      "fail": 4,
+      "exit": 1
+    },
+    "green": {
+      "tests": 4,
+      "pass": 4,
+      "fail": 0,
+      "exit": 0
+    },
+    "goGuiPackage": "pass",
+    "routingSuite": {
+      "tests": 1422,
+      "pass": 1368,
+      "fail": 54,
+      "exit": 1
+    }
+  },
+  "preExistingRed": {
+    "logs": [
+      "base-rule-remove.log",
+      "base-flaky.log",
+      "base-rule-effort.log",
+      "base-intent-live.log"
+    ],
+    "comparison": "failure-comparison.json",
+    "note": "Only matched failures have baseline evidence; matching names is not proof of identical causes."
+  },
+  "unverifiedBoundaries": [
+    "Original intermittent timeout not directly reproduced",
+    "Seven wider-suite failure blocks unmatched on baseline; see failure-comparison.json",
+    "Full repository Go tests and all GUI files not run",
+    "Native Windows and WebKitGTK not exercised",
+    "Earlier commit body overstates timing and baseline evidence; preserved pushed SHA per lead request. This summary and issue reply supersede those claims.",
+    "Earlier scratch writes outside authorized directories occurred; current evidence scratch is within own evidence directory.",
+    "Earlier broad GUI logs lack embedded raw command headers/exit codes; retained as historical output. Fresh red/green and Go verify logs contain actual command output and exit codes."
+  ],
+  "language": {
+    "cjk": 0,
+    "latin": 725,
+    "share": 0
+  },
+  "commentId": 6410020815,
+  "commentUrl": "https://github.com/yetone/magpie/issues/3620#issuecomment-6410020815",
+  "commentReadbackEqual": true,
+  "skygunnerCommentCount": 1
+}

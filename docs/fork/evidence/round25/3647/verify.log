@@ -1,0 +1,60 @@
+# verify.log - branch fix/r25-tls-handover-local, head 23bd4df0bcb5b092d26a74e76047b9f67b8a8a5b (2 commits over base), base 19253f67bca2310c32739a6eaac88546b3574dbc
+
+== gofmt -l internal/gateway/ (changed dir; empty = clean) ==
+(no output)
+
+== GOTOOLCHAIN=go1.26.8 go vet ./internal/gateway/ ==
+exit 0
+
+== affected package tests, repeated and under -race ==
+GOTOOLCHAIN=go1.26.8 go test ./internal/gateway/ -run TestHandedOffTLSGatewayAnswersAConnectionWaitingForItsFirstByte -count=20 -timeout 300s
+ok  	github.com/yetone/magpie/internal/gateway	10.177s  (EXIT=0)
+GOTOOLCHAIN=go1.26.8 go test ./internal/gateway/ -race -run TestHandedOffTLSGatewayAnswersAConnectionWaitingForItsFirstByte -count=10 -timeout 600s
+ok  	github.com/yetone/magpie/internal/gateway	6.185s  (EXIT=0)
+
+== full gateway package suite (from the first delivery run, unchanged production code) ==
+FAIL with only TestClaudeClientCacheAbsentUnchanged failing, shown red on a clean base copy too (pre-existing).
+
+== RED (lead re-ran) ==
+clean base 19253f67 archive + only tls_handover_test.go:
+    tls_handover_test.go:54: no answer to a request sent once the handover began: read tcp ...: connection reset by peer
+--- FAIL: TestHandedOffTLSGatewayAnswersAConnectionWaitingForItsFirstByte
+exit 1 (behavioral failure, not a compile error)
+
+== push read-back (2nd push after test hardening) ==
+b48f3a41..23bd4df0  fix/r25-tls-handover-local -> fix/r25-tls-handover-local
+local head:
+23bd4df0bcb5b092d26a74e76047b9f67b8a8a5b
+
+== git rev-list --count BASE..HEAD ==
+2
+== git merge-base --is-ancestor BASE HEAD ==
+true
+
+FINAL EVENT-SYNCHRONIZED TEST REVISION
+COMMAND: gofmt -l internal/gateway
+EXIT=0
+COMMAND: go vet ./...
+EXIT=0
+COMMAND: go build ./...
+EXIT=0
+COMMAND: env GOOS=linux GOARCH=amd64 go build -tags nogui ./...
+EXIT=0
+COMMAND: env GOOS=windows GOARCH=amd64 go build ./...
+EXIT=0
+COMMAND: go test -race -shuffle=on ./internal/gateway -run TLS|HandedOver|HandedOff -count=1 -timeout=180s
+bash: line 1: HandedOff: command not found
+bash: line 1: HandedOver: command not found
+EXIT=127
+CORRECTED COMMAND: related TLS and handover tests
+-test.shuffle 1793007267019698289
+2026/10/26 19:34:27 http: TLS handshake error from 127.0.0.1:42102: remote error: tls: bad certificate
+2026/10/26 19:34:27 TLS: /tmp/TestTLSServesRenewedCertificate930132689/001/fullchain.pem and /tmp/TestTLSServesRenewedCertificate930132689/001/privkey.pem changed but don't load (tls: failed to find any PEM data in key input): still serving the certificate read before
+--- FAIL: TestHandedOverGatewayFinishesItsStream (0.02s)
+    handover_test.go:142: request 0 during the handover: Post "http://127.0.0.1:40593/v1/chat/completions": EOF
+2026/10/26 19:34:27 http: TLS handshake error from 127.0.0.1:45658: client sent an HTTP request to an HTTPS server
+2026/10/26 19:34:27 http: TLS handshake error from 127.0.0.1:58652: client sent an HTTP request to an HTTPS server
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.525s
+FAIL
+CORRECTED_EXIT=1

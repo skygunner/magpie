@@ -1,0 +1,21 @@
+# verify.log - branch fix/r25-mask-alias-plan, head 95c05114, base 19253f67 (changes only internal/gui/assets/app.js + a .cjs test)
+
+== gofmt -l internal/gui/ (empty = clean) ==
+exit=0
+
+== GOTOOLCHAIN=go1.26.8 go vet ./... ==
+vet exit=0
+
+== GOTOOLCHAIN=go1.26.8 go build ./... ==
+build exit=0
+
+== GOOS=linux GOARCH=amd64 go build -tags nogui ./... ==
+nogui exit=0
+
+== GOOS=windows GOARCH=amd64 go build ./... ==
+windows exit=0
+
+== lead-reproduced RED/GREEN (node --test) ==
+RED exit=1 (ERR_ASSERTION actual [cencrrhllct, tldhsr] expected [Work laptop, Google])
+GREEN exit=0 (1 test file pass, fail 0)
+neighbor run (account-mask + account-mask-alias-plan): pass 24 fail 0

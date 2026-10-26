@@ -1,0 +1,9 @@
+# COMMAND_METADATA {"issue": 3622, "label": "green", "tree": "head", "commit": "984d389514b9e688bcc1556c9c485bf301e8114a", "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3622/head", "command": "go test ./internal/plugin -run '^TestDistPruneKeepsWhatTheLockNames$' -count=1 -v", "env": {"GOTOOLCHAIN": "go1.26.8", "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3622/home-1bflrkdg", "GOPATH": "/home/vincenty/go", "GOMODCACHE": "/home/vincenty/go/pkg/mod", "GOCACHE": "/home/vincenty/.cache/go-build", "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules", "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"}, "extra_env": {}, "started_at": "2026-10-26T06:57:41.700987+00:00", "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3622/green.log"}
+# BEGIN COMPLETE MERGED STDOUT/STDERR
+=== RUN   TestDistPruneKeepsWhatTheLockNames
+--- PASS: TestDistPruneKeepsWhatTheLockNames (0.02s)
+PASS
+ok  	github.com/yetone/magpie/internal/plugin	0.024s
+
+# END COMPLETE OUTPUT
+# CHECKED_RETURN_CODE 0

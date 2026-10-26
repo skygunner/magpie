@@ -1,0 +1,146 @@
+diff --git a/internal/gui/assets/app.js b/internal/gui/assets/app.js
+index 19ffda8f..4018ecb8 100644
+--- a/internal/gui/assets/app.js
++++ b/internal/gui/assets/app.js
+@@ -17368,7 +17368,7 @@ function panelQuotaCard(q) {
+   if (q.balanceCard) card.dataset.balCard = q.balanceCard;
+   // by the name the user gave the account, or the key plan it stands
+   // in for (#1515), before the account itself
+-  card.append(el("span", "pq-user", q.alias || q.user || q.name));
++  card.append(el("span", "pq-user" + (q.alias ? " quota-alias" : ""), q.alias || q.user || q.name));
+   card.title = [q.name, q.alias, q.user, q.seat && q.seat !== q.alias && "≡ " + q.seat, q.plan, q.until ? planTerm(q) : "", q.balance && t("Balance") + " " + q.balance].filter(Boolean).join(" · ");
+   if (q.error) {
+     card.classList.add("err");
+@@ -24694,7 +24694,7 @@ function noteAccounts(x, depth = 0) {
+     if (!Object.hasOwn(x, k)) continue;
+     const v = x[k];
+     if (typeof v === "string") {
+-      if (k === "user" || k === "account" || k === "alias" || (k === "who" && x.kind === "account")) noteAccount(v);
++      if (k === "user" || k === "account" || (k === "who" && x.kind === "account")) noteAccount(v);
+     } else if (k === "who" && x.kind === "account" && Array.isArray(v)) for (const w of v) noteAccount(w);
+     else if (v && typeof v === "object") noteAccounts(v, depth + 1);
+   }
+@@ -24719,13 +24719,10 @@ window.noteAccounts = noteAccounts;
+     for (const p of providers?.providers || []) {
+       for (const n of [p.id, p.name, p.account?.agentName, p.account?.agent]) if (n) not.add(String(n).toLowerCase());
+       if (p.account) { all.add((p.account.user || "").trim()); for (const l of p.account.logins || []) all.add((l.user || "").trim()); }
+-      // the names the user gave accounts (#1515), as the accounts are
+-      for (const n of Object.values(p.accountNames || {})) all.add(String(n).trim());
+     }
+     for (const q of quotas || []) {
+       for (const n of [q.provider, q.name, q.plan]) if (n) not.add(String(n).toLowerCase());
+       all.add((q.user || "").trim());
+-      if (q.alias && q.alias !== q.seat) all.add(q.alias.trim());
+     }
+     for (const a of state?.agents || []) for (const n of [a.id, a.name]) if (n) not.add(String(n).toLowerCase());
+     return [...all].filter((n) => n.length >= 2 && !IS_EMAIL.test(n) && !not.has(n.toLowerCase())).sort((a, b) => b.length - a.length);
+@@ -24764,6 +24761,8 @@ window.noteAccounts = noteAccounts;
+   // it is no account, so only an address is hidden there (#1973: the
+   // project lingting-react-ui with the account lingting)
+   const NAMELESS = "#sessionsPane, #contextPane";
++  // Display labels aren't identities (#3656).
++  const LABELS = ".quota-alias, .acct-who .rename, .plan, .subscription-head b, .model-value";
+   // chosen is the Hide accounts choice made on this computer; until one is,
+   // the accounts are hidden while Privacy masks personal data, which is
+   // where one who wants them kept out of sight turns it on (inaction on
+@@ -24784,8 +24783,9 @@ window.noteAccounts = noteAccounts;
+       const all = finder(), reOf = (e) => e?.closest(NAMELESS) ? EMAIL : all;
+       const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), found = [];
+       for (let n; (n = walk.nextNode());) {
+-        if (n.data.length < 2 || SKIP.has(n.parentElement?.tagName) || n.parentElement?.closest(".pii")) continue;
+-        const re = reOf(n.parentElement);
++        const parent = n.parentElement, e = parent?.closest(LABELS);
++        if (!parent || SKIP.has(parent.tagName) || parent.closest(".pii")) continue;
++        const re = e ? EMAIL : reOf(parent);
+         re.lastIndex = 0;
+         if (re.test(n.data)) found.push(n);
+       }
+@@ -24806,7 +24806,7 @@ window.noteAccounts = noteAccounts;
+         if (bits.length > 1) { const run = el("span", "pii-run"); run.append(...bits); n.replaceWith(run); }
+         else n.replaceWith(...bits);
+       }
+-      for (const e of [root, ...root.querySelectorAll("[title]")]) {
++      for (const e of [root, ...root.querySelectorAll("[title]:not(" + LABELS + ")")]) {
+         // one masked already reads as an account too, its stars and all
+         if (!e.dataset || "piiTitle" in e.dataset || !e.title) continue;
+         let out = "", last = 0;
+diff --git a/internal/gui/tests/account-mask-alias-plan.test.cjs b/internal/gui/tests/account-mask-alias-plan.test.cjs
+new file mode 100644
+index 00000000..b54616f8
+--- /dev/null
++++ b/internal/gui/tests/account-mask-alias-plan.test.cjs
+@@ -0,0 +1,74 @@
++// #3656: aliases and plan labels stay readable while raw identities are hidden.
++const assert = require("node:assert/strict");
++const fs = require("node:fs/promises");
++const path = require("node:path");
++const { test } = require("node:test");
++const { chromium, webkit } = require("playwright");
++
++const assets = path.resolve(__dirname, "../assets");
++const quotas = [
++  { provider: "antigravity", name: "Antigravity", plan: "Google AI Pro", user: "Google", alias: "Work laptop", windows: [{ name: "Credits", used: 20 }] },
++  { provider: "antigravity", name: "Antigravity", plan: "Google AI Pro", user: "raw@example.com", alias: "Google", windows: [{ name: "Credits", used: 30 }] },
++];
++function serve(lang) {
++  return async (route) => {
++    const url = new URL(route.request().url());
++    const json = (data) => route.fulfill({ json: data });
++    if (url.pathname === "/boot.js") return route.fulfill({ contentType: "text/javascript", body: `window.bootPrefs = {lang:${JSON.stringify(lang)},theme:"light",web:true};` });
++    if (url.pathname === "/wails/runtime.js") return route.fulfill({ contentType: "text/javascript", body: "export const Window = {};" });
++    if (url.pathname === "/api/state") return json({ agents: [], profiles: [], settings: { lang, theme: "light" } });
++    if (url.pathname === "/api/providers") return json({ providers: [], presets: [], excluded: [], gateway: { running: true, window: true } });
++    if (url.pathname === "/api/usage/quotas") return json(quotas);
++    if (url.pathname === "/api/groups") return json({ groups: [], models: [] });
++    if (url.pathname.startsWith("/api/")) return json({});
++    const file = path.join(assets, url.pathname === "/" ? "index.html" : url.pathname);
++    const contentType = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png" }[path.extname(file)];
++    await route.fulfill({ body: await fs.readFile(file), contentType });
++  };
++}
++for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"])) {
++  for (const lang of ["en", "zh", "zh-TW", "ja", "de"]) {
++    for (const width of [1100, 420]) {
++      test(`${engine} ${lang} ${width}: masking keeps aliases and plans readable`, async (t) => {
++        // Given account aliases and an identity that also names a plan's brand.
++        const browser = await (engine === "webkit" ? webkit.launch() : chromium.launch({ channel: "chromium" }));
++        t.after(() => browser.close());
++        const page = await browser.newPage({ viewport: { width, height: 800 }, reducedMotion: "reduce" });
++        page.setDefaultTimeout(5000);
++        await page.route("**/*", serve(lang));
++        await page.goto("http://magpie.test/?view=usage");
++        await page.locator(".subscription-account .quota-alias").first().waitFor();
++        const original = await page.locator(".subscription-account").allTextContents();
++        await page.evaluate(() => {
++          noteAccounts({ alias: "Alias only" });
++          const sample = el("div");
++          sample.id = "providerSample";
++          sample.append(accountNameButton({ accountNames: { google: "Google" } }, "Google"), planSpan({ plan: "Google AI Pro" }), el("span", "model-value", "Google Gemini"), el("span", "", "Alias only"));
++          document.querySelector("#view-providers").append(sample);
++        });
++        // When the real Hide accounts control is enabled.
++        await page.locator("#usageMask").click();
++        // Then only the original account identities are hidden.
++        const got = await page.locator(".subscription-account").evaluateAll((rows) => rows.map((r) => ({
++          alias: r.querySelector(".quota-alias").textContent,
++          aliasMasked: !!r.querySelector(".quota-alias .pii"),
++          user: r.querySelector(".quota-of .pii")?.dataset.raw,
++          plan: r.querySelector(".plan").textContent,
++          title: r.querySelector(".quota-of").title,
++        })));
++        assert.deepEqual(got.map((r) => r.alias), ["Work laptop", "Google"]);
++        assert.deepEqual(got.map((r) => r.aliasMasked), [false, false]);
++        assert.deepEqual(got.map((r) => r.user), ["Google", "raw@example.com"]);
++        assert.deepEqual(got.map((r) => r.plan), ["Google AI Pro", "Google AI Pro"]);
++        assert.ok(got.every((r) => !/Google|raw@example/.test(r.title)));
++        assert.equal(await page.locator("#providerSample .rename").textContent(), "Google");
++        assert.equal(await page.locator("#providerSample .acct-user .pii").getAttribute("data-raw"), "Google");
++        assert.equal(await page.locator("#providerSample .plan").textContent(), "Google AI Pro");
++        assert.equal(await page.locator("#providerSample .model-value").textContent(), "Google Gemini");
++        assert.ok((await page.locator("#providerSample").textContent()).includes("Alias only"));
++        await page.locator("#usageMask").click();
++        assert.deepEqual(await page.locator(".subscription-account").allTextContents(), original);
++      });
++    }
++  }
++}

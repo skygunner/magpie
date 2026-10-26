@@ -1,0 +1,38 @@
+COMMAND: cd /home/vincenty/Projects/magpie-issues/r25-minimax-moved-data && GOPATH=/home/vincenty/go GOMODCACHE=/home/vincenty/go/pkg/mod GOCACHE=/home/vincenty/.cache/go-build HOME=/home/vincenty/Projects/magpie-issues/evidence/r25-2998/sandbox-VU9R60 GOPROXY=off GOTOOLCHAIN=local go test -count=1 -v -run '^TestMiniMaxDirDesktopRecord$' ./internal/agent
+CWD: /home/vincenty/Projects/magpie-issues/r25-minimax-moved-data
+BASE: 19253f67bca2310c32739a6eaac88546b3574dbc
+
+=== RUN   TestMiniMaxDirDesktopRecord
+=== RUN   TestMiniMaxDirDesktopRecord/moved
+=== RUN   TestMiniMaxDirDesktopRecord/whitespace_record
+=== RUN   TestMiniMaxDirDesktopRecord/explicit_override
+=== RUN   TestMiniMaxDirDesktopRecord/whitespace_override
+=== RUN   TestMiniMaxDirDesktopRecord/blank_override
+=== RUN   TestMiniMaxDirDesktopRecord/relative_override
+=== RUN   TestMiniMaxDirDesktopRecord/missing_record
+=== RUN   TestMiniMaxDirDesktopRecord/malformed_record
+=== RUN   TestMiniMaxDirDesktopRecord/wrong_type
+=== RUN   TestMiniMaxDirDesktopRecord/missing_field
+=== RUN   TestMiniMaxDirDesktopRecord/relative_record
+=== RUN   TestMiniMaxDirDesktopRecord/blank_record
+=== RUN   TestMiniMaxDirDesktopRecord/missing_APPDATA
+=== RUN   TestMiniMaxDirDesktopRecord/relative_APPDATA
+--- PASS: TestMiniMaxDirDesktopRecord (0.00s)
+    --- PASS: TestMiniMaxDirDesktopRecord/moved (0.00s)
+    --- PASS: TestMiniMaxDirDesktopRecord/whitespace_record (0.00s)
+    --- PASS: TestMiniMaxDirDesktopRecord/explicit_override (0.00s)
+    --- PASS: TestMiniMaxDirDesktopRecord/whitespace_override (0.00s)
+    --- PASS: TestMiniMaxDirDesktopRecord/blank_override (0.00s)
+    --- PASS: TestMiniMaxDirDesktopRecord/relative_override (0.00s)
+    --- PASS: TestMiniMaxDirDesktopRecord/missing_record (0.00s)
+    --- PASS: TestMiniMaxDirDesktopRecord/malformed_record (0.00s)
+    --- PASS: TestMiniMaxDirDesktopRecord/wrong_type (0.00s)
+    --- PASS: TestMiniMaxDirDesktopRecord/missing_field (0.00s)
+    --- PASS: TestMiniMaxDirDesktopRecord/relative_record (0.00s)
+    --- PASS: TestMiniMaxDirDesktopRecord/blank_record (0.00s)
+    --- PASS: TestMiniMaxDirDesktopRecord/missing_APPDATA (0.00s)
+    --- PASS: TestMiniMaxDirDesktopRecord/relative_APPDATA (0.00s)
+PASS
+ok  	github.com/yetone/magpie/internal/agent	0.010s
+
+EXIT_CODE=0

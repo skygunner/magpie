@@ -1,0 +1,37 @@
+{
+  "issue": 3621,
+  "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+  "head": "0aac5452b2310d9a658b6787fdf6d57238de0102",
+  "copied_tests": [
+    "internal/autostart/autostart_darwin_test.go",
+    "internal/autostart/self_test.go"
+  ],
+  "red": {
+    "returncode": 1,
+    "command": [
+      "go",
+      "test",
+      "./internal/autostart",
+      "-run",
+      "^TestSelf(NamesThePathLink|RefusesAGoRunBuild)$",
+      "-count=1",
+      "-v",
+      "-timeout=120s"
+    ]
+  },
+  "green": {
+    "returncode": 0,
+    "command": [
+      "go",
+      "test",
+      "-race",
+      "./internal/autostart",
+      "-run",
+      "^TestSelf(NamesThePathLink|RefusesAGoRunBuild)$",
+      "-count=1",
+      "-v",
+      "-timeout=120s"
+    ]
+  },
+  "expected_exits": true
+}

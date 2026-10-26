@@ -1,0 +1,5 @@
+UTC: 2026-10-26T11:48:57Z
+HEAD: 19253f67bca2310c32739a6eaac88546b3574dbc
+go version go1.27.1-X:nodwarf5 linux/amd64
+COMMAND: env GOOS=linux go vet -p 4 -tags nogui ./...
+EXIT_CODE=0

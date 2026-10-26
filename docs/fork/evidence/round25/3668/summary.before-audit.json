@@ -1,0 +1,79 @@
+{
+  "issue": 3668,
+  "repository": "yetone/magpie",
+  "branch": "fix/r25-grok-plan-absent-label",
+  "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+  "head": "7ca156c6876282fb3218b42e98429a2c492ebd90",
+  "commitCount": 1,
+  "status": "DELIVERED_PARTIAL_SCOPE",
+  "worktree": "/home/vincenty/Projects/magpie-issues/r25-grok-plan-absent-label",
+  "evidenceDir": "/home/vincenty/Projects/magpie-issues/evidence/r25-3668",
+  "rootCause": "accountPlan's Grok branch returned the literal 'SuperGrok' when no plan was reported, inventing a tier for every plan-less account, plugin-backed ones included.",
+  "changes": [
+    "internal/gui/assets/app.js: the absent Grok plan now names the provider (Grok), no invented tier; known plans kept as told",
+    "internal/gui/tests/plugin-plan.test.cjs: its Grok fallback expectations updated to the corrected behavior",
+    "internal/gui/tests/grok-plan.test.cjs: new regression through the real Providers page"
+  ],
+  "newTest": "Grok account pills preserve known plans and leave absent plans unnamed",
+  "packageResults": {
+    "guiBrowserRegression": {
+      "passed": 9,
+      "failed": 0,
+      "note": "grok-plan + plugin-plan + i18n-keys, Chromium and WebKit, en/zh/zh-TW/ja/de"
+    },
+    "goGuiPackage": {
+      "passed": true,
+      "seconds": 55.9,
+      "command": "go test -tags nogui -race -shuffle=on -count=1 ./internal/gui (sandbox HOME, pinned Go caches)"
+    }
+  },
+  "preExistingRed": [],
+  "red": {
+    "file": "red.log",
+    "assertion": "absent Grok plan names the provider, no invented tier",
+    "actual": [
+      "SuperGrok",
+      "SuperGrok"
+    ],
+    "expected": [
+      "Grok",
+      "Grok"
+    ],
+    "surface": "clean git-archive copy of base with only the test file added",
+    "note": "an earlier variant (t(\"Unknown\")) was also proven red (red-initial.log) but was replaced because it grew app.js past TestCoreScriptBudget's exact budget; go-gui.log records that red"
+  },
+  "verification": {
+    "gofmt": true,
+    "syntaxChecks": true,
+    "vet": true,
+    "nativeBuild": true,
+    "linuxAmd64NoguiBuild": true,
+    "windowsAmd64Build": true,
+    "commitCountOne": true,
+    "baseIsAncestor": true,
+    "remoteEqualsHead": true,
+    "headIs40Chars": true,
+    "diffCheck": true,
+    "worktreeClean": true,
+    "lsp": "CJS TypeScript LSP unavailable; node --check used instead"
+  },
+  "language": {
+    "cjk": 0,
+    "latin": 1416,
+    "cjkShare": 0,
+    "commentLanguage": "en"
+  },
+  "comment": {
+    "id": 6411424119,
+    "author": "skygunner",
+    "createdAt": "2026-10-26T08:20:06Z",
+    "bodyEqualsLocalCommentMd": true,
+    "skygunnerCommentCount": 1
+  },
+  "boundary": {
+    "communityGrokPluginTouched": false,
+    "note": "The complete label fix (real plan titles, plugin's own Grok (SuperGrok) branding) requires magpie-community/plugins packages/grok; untouched here and not claimed fixed.",
+    "liveGrokAccountTested": false
+  },
+  "historyNote": "An initial commit 3e6f4077577d0af80890a542a3fb0d08f8249260 (t(\"Unknown\") variant) was pushed before the supplemental GUI-package run caught the 1-byte core script budget overflow; it was replaced with 7ca156c6876282fb3218b42e98429a2c492ebd90 via one force-with-lease push pinned to the exact prior remote head. Both stayed single-commit against the pinned base."
+}

@@ -1,0 +1,23 @@
+=== #3248 RED on base 01468003348ede896c5126e9fd81057e1e58765c ===
+env: GOTOOLCHAIN=go1.26.8; HOME/GOPATH/GOMODCACHE/GOCACHE under /home/vincenty/Projects/magpie-issues/tmp-lane7; umask 022
+worktree: /home/vincenty/Projects/magpie-issues/3248-codeassist-restart (fix/3248-codeassist-restart)
+product code: base (the new test kept, internal/gateway/codeassist.go restored from base)
+surface: POST /v1/chat/completions, model antigravity/argon, to an Antigravity (Code Assist) account whose SSE stream restarts its answer
+
+$ go test ./internal/gateway/ -run 'TestCodeAssistRestart' -count=1
+--- FAIL: TestCodeAssistRestartIsNotSpliced (0.02s)
+    --- FAIL: TestCodeAssistRestartIsNotSpliced/content_after_the_finish (0.01s)
+        codeassist_restart_test.go:49: one answer has both generations' text: "Provider is kota-local.Provider is kota-local, and the model is argon."
+    --- FAIL: TestCodeAssistRestartIsNotSpliced/another_responseId (0.01s)
+        codeassist_restart_test.go:49: one answer has both generations' text: "Provider is Provider is kota-local, and the model is argon."
+    --- FAIL: TestCodeAssistRestartIsNotSpliced/a_count_gone_back (0.01s)
+        codeassist_restart_test.go:49: one answer has both generations' text: "Provider is Provider is kota-local, and the model is argon."
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.043s
+FAIL
+
+The issue's reason, in the client's own bytes: each generation's text parts went out
+as deltas of one completion, so the abandoned prefix and the whole answer after it
+are glued into a single answer with no sign of the restart. TestCodeAssistRestart-
+BeforeAnythingSaid passed on base too (a guard: a restart nothing reached the client
+for is not an error).

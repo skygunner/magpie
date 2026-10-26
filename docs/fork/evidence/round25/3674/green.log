@@ -1,0 +1,20 @@
+$ cd /home/vincenty/Projects/magpie-issues/r25-usage-dedup-session-file && GOTOOLCHAIN=go1.26.8 go test ./internal/usage/ -run 'TestDshCallThroughMagpieCountedOnce' -count=1 -v 2>&1 | tail -4; echo EXIT=${PIPESTATUS[0]}
+=== RUN   TestDshCallThroughMagpieCountedOnce
+--- PASS: TestDshCallThroughMagpieCountedOnce (0.00s)
+PASS
+ok  	github.com/yetone/magpie/internal/usage	0.006s
+EXIT=0
+
+$ cd /home/vincenty/Projects/magpie-issues/r25-usage-dedup-session-file && GOTOOLCHAIN=go1.26.8 go test ./internal/usage/ -run 'TestLogRecordKeepsAResponseIDAnyAgentNamed' -count=1 -v 2>&1 | tail -4; echo EXIT=${PIPESTATUS[0]}
+=== RUN   TestLogRecordKeepsAResponseIDAnyAgentNamed
+--- PASS: TestLogRecordKeepsAResponseIDAnyAgentNamed (0.00s)
+PASS
+ok  	github.com/yetone/magpie/internal/usage	0.006s
+EXIT=0
+
+$ cd /home/vincenty/Projects/magpie-issues/r25-usage-dedup-session-file && GOTOOLCHAIN=go1.26.8 go test ./internal/sessions/ -run 'TestDshCalls$' -count=1 -v 2>&1 | tail -4; echo EXIT=${PIPESTATUS[0]}
+=== RUN   TestDshCalls
+--- PASS: TestDshCalls (0.01s)
+PASS
+ok  	github.com/yetone/magpie/internal/sessions	0.011s
+EXIT=0

@@ -1,0 +1,19 @@
+✔ Grok account pills preserve known plans and leave absent plans unnamed (3856.727825ms)
+✔ no language has a key twice (47.92489ms)
+✔ a plugin's words are said in every language (13.913369ms)
+✔ a plugin's words are its own (13627.736638ms)
+✔ every word the window says has a key (17.823982ms)
+✔ chromium en: a plugin's plan is named as its built-in's (363.876694ms)
+✔ chromium zh: a plugin's plan is named as its built-in's (359.620059ms)
+✔ webkit en: a plugin's plan is named as its built-in's (558.47166ms)
+✔ webkit zh: a plugin's plan is named as its built-in's (591.862758ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 19778.152911
+
+exitCode=0

@@ -1,0 +1,14 @@
+{
+  "loc": {
+    "internal/gui/assets/app.js": 19745,
+    "internal/gui/tests/grok-plan.test.cjs": 58,
+    "internal/gui/tests/plugin-plan.test.cjs": 71
+  },
+  "responsibility": "account plan labels",
+  "boundary": "No new inputs or parsing; preserve known plans",
+  "newAbstractions": 0,
+  "newDependencies": 0,
+  "productionLinesChanged": 1,
+  "lsp": "CJS TypeScript LSP unavailable; node --check passed",
+  "sizeException": "Existing app.js kept in place; focused one-line fix, no unrelated refactor"
+}

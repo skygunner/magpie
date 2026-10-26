@@ -1,0 +1,154 @@
+COMMAND: GOTOOLCHAIN=go1.26.8 go test -race -shuffle=on -count=1 -run "TestChatPhantom|TestChatCallsEndToolCalls|TestTextWritten|TestChatTidy" -v ./internal/gateway
+-test.shuffle 1793006584756411831
+=== RUN   TestChatPhantomToolFinish
+=== RUN   TestChatPhantomToolFinish/#00
+=== RUN   TestChatPhantomToolFinish/#00/stream
+=== RUN   TestChatPhantomToolFinish/#00/whole
+=== RUN   TestChatPhantomToolFinish/,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]
+=== RUN   TestChatPhantomToolFinish/,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/stream
+=== RUN   TestChatPhantomToolFinish/,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/whole
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[]
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[]/stream
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[]/whole
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/stream
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/whole
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":null
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":null/stream
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":null/whole
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":null,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":null,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/stream
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":null,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/whole
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[_]
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[_]/stream
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[_]/whole
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[_],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[_],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/stream
+=== RUN   TestChatPhantomToolFinish/,"tool_calls":[_],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/whole
+--- PASS: TestChatPhantomToolFinish (0.08s)
+    --- PASS: TestChatPhantomToolFinish/#00 (0.01s)
+        --- PASS: TestChatPhantomToolFinish/#00/stream (0.01s)
+        --- PASS: TestChatPhantomToolFinish/#00/whole (0.00s)
+    --- PASS: TestChatPhantomToolFinish/,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}] (0.01s)
+        --- PASS: TestChatPhantomToolFinish/,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/stream (0.01s)
+        --- PASS: TestChatPhantomToolFinish/,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/whole (0.00s)
+    --- PASS: TestChatPhantomToolFinish/,"tool_calls":[] (0.01s)
+        --- PASS: TestChatPhantomToolFinish/,"tool_calls":[]/stream (0.01s)
+        --- PASS: TestChatPhantomToolFinish/,"tool_calls":[]/whole (0.00s)
+    --- PASS: TestChatPhantomToolFinish/,"tool_calls":[],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}] (0.01s)
+        --- PASS: TestChatPhantomToolFinish/,"tool_calls":[],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/stream (0.01s)
+        --- PASS: TestChatPhantomToolFinish/,"tool_calls":[],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/whole (0.00s)
+    --- PASS: TestChatPhantomToolFinish/,"tool_calls":null (0.01s)
+        --- PASS: TestChatPhantomToolFinish/,"tool_calls":null/stream (0.00s)
+        --- PASS: TestChatPhantomToolFinish/,"tool_calls":null/whole (0.00s)
+    --- PASS: TestChatPhantomToolFinish/,"tool_calls":null,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}] (0.01s)
+        --- PASS: TestChatPhantomToolFinish/,"tool_calls":null,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/stream (0.01s)
+        --- PASS: TestChatPhantomToolFinish/,"tool_calls":null,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/whole (0.01s)
+    --- PASS: TestChatPhantomToolFinish/,"tool_calls":[_] (0.01s)
+        --- PASS: TestChatPhantomToolFinish/,"tool_calls":[_]/stream (0.00s)
+        --- PASS: TestChatPhantomToolFinish/,"tool_calls":[_]/whole (0.00s)
+    --- PASS: TestChatPhantomToolFinish/,"tool_calls":[_],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}] (0.01s)
+        --- PASS: TestChatPhantomToolFinish/,"tool_calls":[_],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/stream (0.01s)
+        --- PASS: TestChatPhantomToolFinish/,"tool_calls":[_],"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}}]/whole (0.01s)
+=== RUN   TestTextWrittenDSMLMarkAsParsed
+--- PASS: TestTextWrittenDSMLMarkAsParsed (0.07s)
+=== RUN   TestChatTidySplitLines
+--- PASS: TestChatTidySplitLines (0.00s)
+=== RUN   TestChatTidyKeepsToolCalls
+--- PASS: TestChatTidyKeepsToolCalls (0.00s)
+=== RUN   TestChatTidyFinishReason
+--- PASS: TestChatTidyFinishReason (0.00s)
+=== RUN   TestTextWrittenTagsOnly
+--- PASS: TestTextWrittenTagsOnly (0.02s)
+=== RUN   TestTextWrittenParamCallRelayed
+--- PASS: TestTextWrittenParamCallRelayed (0.02s)
+=== RUN   TestTextWrittenDSMLAnyPipes
+--- PASS: TestTextWrittenDSMLAnyPipes (0.87s)
+=== RUN   TestChatTidyToolCallNames
+--- PASS: TestChatTidyToolCallNames (0.00s)
+=== RUN   TestTextWrittenCallWithJunkRelayed
+--- PASS: TestTextWrittenCallWithJunkRelayed (0.01s)
+=== RUN   TestTextWrittenCallBesideNative
+--- PASS: TestTextWrittenCallBesideNative (0.01s)
+=== RUN   TestChatPhantomFinishPerChoice
+--- PASS: TestChatPhantomFinishPerChoice (0.00s)
+=== RUN   TestTextWrittenCallRelayed
+--- PASS: TestTextWrittenCallRelayed (0.01s)
+=== RUN   TestChatPhantomFinishKeepsRealCalls
+=== RUN   TestChatPhantomFinishKeepsRealCalls/native
+=== RUN   TestChatPhantomFinishKeepsRealCalls/native/stream
+=== RUN   TestChatPhantomFinishKeepsRealCalls/native/whole
+=== RUN   TestChatPhantomFinishKeepsRealCalls/text_parsed
+=== RUN   TestChatPhantomFinishKeepsRealCalls/text_parsed/stream
+=== RUN   TestChatPhantomFinishKeepsRealCalls/text_parsed/whole
+--- PASS: TestChatPhantomFinishKeepsRealCalls (0.02s)
+    --- PASS: TestChatPhantomFinishKeepsRealCalls/native (0.01s)
+        --- PASS: TestChatPhantomFinishKeepsRealCalls/native/stream (0.01s)
+        --- PASS: TestChatPhantomFinishKeepsRealCalls/native/whole (0.00s)
+    --- PASS: TestChatPhantomFinishKeepsRealCalls/text_parsed (0.01s)
+        --- PASS: TestChatPhantomFinishKeepsRealCalls/text_parsed/stream (0.01s)
+        --- PASS: TestChatPhantomFinishKeepsRealCalls/text_parsed/whole (0.00s)
+=== RUN   TestTextWrittenCallWhole
+=== RUN   TestTextWrittenCallWhole/the_issue's_DSML
+=== RUN   TestTextWrittenCallWhole/DSML_after_text
+=== RUN   TestTextWrittenCallWhole/escaped_brackets
+=== RUN   TestTextWrittenCallWhole/text/plain
+=== RUN   TestTextWrittenCallWhole/Hermes
+=== RUN   TestTextWrittenCallWhole/Hermes_with_junk
+=== RUN   TestTextWrittenCallWhole/param
+=== RUN   TestTextWrittenCallWhole/GLM
+=== RUN   TestTextWrittenCallWhole/wrapped_invoke
+=== RUN   TestTextWrittenCallWhole/two_calls
+=== RUN   TestTextWrittenCallWhole/no_tools_offered
+=== RUN   TestTextWrittenCallWhole/a_tool_not_offered
+=== RUN   TestTextWrittenCallWhole/cut_short
+=== RUN   TestTextWrittenCallWhole/lookalike
+=== RUN   TestTextWrittenCallWhole/empty
+=== RUN   TestTextWrittenCallWhole/plain
+=== RUN   TestTextWrittenCallWhole/tags_only
+=== RUN   TestTextWrittenCallWhole/beside_a_native_call
+=== RUN   TestTextWrittenCallWhole/truncated_body
+=== RUN   TestTextWrittenCallWhole/empty_body
+--- PASS: TestTextWrittenCallWhole (0.13s)
+    --- PASS: TestTextWrittenCallWhole/the_issue's_DSML (0.01s)
+    --- PASS: TestTextWrittenCallWhole/DSML_after_text (0.01s)
+    --- PASS: TestTextWrittenCallWhole/escaped_brackets (0.00s)
+    --- PASS: TestTextWrittenCallWhole/text/plain (0.01s)
+    --- PASS: TestTextWrittenCallWhole/Hermes (0.01s)
+    --- PASS: TestTextWrittenCallWhole/Hermes_with_junk (0.01s)
+    --- PASS: TestTextWrittenCallWhole/param (0.01s)
+    --- PASS: TestTextWrittenCallWhole/GLM (0.01s)
+    --- PASS: TestTextWrittenCallWhole/wrapped_invoke (0.01s)
+    --- PASS: TestTextWrittenCallWhole/two_calls (0.01s)
+    --- PASS: TestTextWrittenCallWhole/no_tools_offered (0.01s)
+    --- PASS: TestTextWrittenCallWhole/a_tool_not_offered (0.01s)
+    --- PASS: TestTextWrittenCallWhole/cut_short (0.01s)
+    --- PASS: TestTextWrittenCallWhole/lookalike (0.01s)
+    --- PASS: TestTextWrittenCallWhole/empty (0.01s)
+    --- PASS: TestTextWrittenCallWhole/plain (0.01s)
+    --- PASS: TestTextWrittenCallWhole/tags_only (0.01s)
+    --- PASS: TestTextWrittenCallWhole/beside_a_native_call (0.01s)
+    --- PASS: TestTextWrittenCallWhole/truncated_body (0.00s)
+    --- PASS: TestTextWrittenCallWhole/empty_body (0.02s)
+=== RUN   TestTextWrittenDSMLCallTranslated
+--- PASS: TestTextWrittenDSMLCallTranslated (0.01s)
+=== RUN   TestTextWrittenCallCutEarlyNotCalled
+--- PASS: TestTextWrittenCallCutEarlyNotCalled (0.01s)
+=== RUN   TestTextWrittenCallLeftAsText
+--- PASS: TestTextWrittenCallLeftAsText (0.04s)
+=== RUN   TestTextWrittenCallWholeTranslated
+--- PASS: TestTextWrittenCallWholeTranslated (0.03s)
+=== RUN   TestTextWrittenCallTailDropped
+--- PASS: TestTextWrittenCallTailDropped (0.04s)
+=== RUN   TestChatCallsEndToolCalls
+--- PASS: TestChatCallsEndToolCalls (0.05s)
+=== RUN   TestTextWrittenDSMLDoublePipe
+--- PASS: TestTextWrittenDSMLDoublePipe (0.03s)
+=== RUN   TestChatTidyGivesCallsAnIndex
+--- PASS: TestChatTidyGivesCallsAnIndex (0.00s)
+=== RUN   TestTextWrittenDSMLDoublePipeEveryCut
+--- PASS: TestTextWrittenDSMLDoublePipeEveryCut (0.79s)
+PASS
+ok  	github.com/yetone/magpie/internal/gateway	3.397s
+
+EXIT_CODE=0

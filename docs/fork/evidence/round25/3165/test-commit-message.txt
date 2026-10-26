@@ -1,0 +1,36 @@
+gateway tests: tool-turn reasoning details are carried once (#3165)
+
+Add one table-driven wire regression for the unique contribution of the
+already-delivered tool-turn cleanup: remove reasoning_details after
+moving its text into reasoning_content, and remove it beside an existing
+canonical value without overwriting that value. Each row checks the tool
+call and the assistant reply after its result through the real Chat
+handler and local httptest upstream. The structured pi shape comes from
+the existing inbound-reasoning fixtures. No vendor rejection semantics
+are invented for reasoning_details.
+
+Independent ablation on requested base 19253f67 plus the original fix:
+all six existing regressions pass with the tool-turn cleanup removed and
+foldReasoningAliases kept. Removing only the fold instead fails the
+existing non-tool regression with 400 duplicate field `reasoning`.
+The new test fails in both injected/already_present rows when only the
+cleanup is removed: messages 1 and 3 still carry reasoning_details beside
+reasoning_content. Restoring cleanup passes both. Exact logs: red.log,
+green.log, verify.log under magpie-issues/evidence/round25-recovery/
+3165-reasoning-clear-test. No sleep, skip, external network or new helper.
+
+Verified in sandbox HOME with pinned caches on Go 1.27.1 linux/amd64:
+- go test -p 4 -race -tags nogui ./internal/gateway -run 'Reasoning|Kimi'
+  -shuffle=on -count=1 -timeout=20m: PASS, 15.989s.
+- gofmt -l changed Go files: empty.
+- go vet -p 4 ./..., GOOS=linux go vet -p 4 -tags nogui ./...,
+  GOOS=windows go vet -p 4 ./...: PASS.
+- Native, nogui and Windows builds: PASS; native/nogui --version: PASS.
+LSP unavailable (gopls missing); no dependency installed.
+
+This rework commit changes tests only. Its prerequisite separately replays
+d5b46244 because the requested upstream base does not include that fix.
+Non-tool reasoning_content plus reasoning_details vendor failure remains
+unproven and is not newly specified. No real DeepSeek/JD Cloud, Windows
+runtime or separate Responses failure was verified; no full ./... suite
+claim is made.

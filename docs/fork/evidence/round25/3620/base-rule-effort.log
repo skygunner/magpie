@@ -1,0 +1,132 @@
+✖ chromium en: a rule sets the reasoning its model is asked for (1961.142031ms)
+✖ chromium en: a pause asks for no reasoning (6931.423003ms)
+✔ chromium zh: a rule sets the reasoning its model is asked for (9867.270225ms)
+✔ chromium zh: a pause asks for no reasoning (3663.747547ms)
+✖ chromium en: a rule's effort at a narrow width (1914.915157ms)
+✖ chromium zh: a rule's effort at a narrow width (1990.396602ms)
+✖ chromium zh-TW: a rule's effort at a narrow width (1960.330975ms)
+✖ chromium ja: a rule's effort at a narrow width (1939.076381ms)
+✖ chromium de: a rule's effort at a narrow width (1910.367353ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 2
+ℹ fail 7
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 32283.591627
+
+✖ failing tests:
+
+test at internal/gui/tests/routing-rule-effort.test.cjs:106:5
+✖ chromium en: a rule sets the reasoning its model is asked for (1961.142031ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 6
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-effort.test.cjs:120:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 6,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/routing-rule-effort.test.cjs:143:5
+✖ chromium en: a pause asks for no reasoning (6931.423003ms)
+  locator.click: Timeout 5000ms exceeded.
+  Call log:
+  [2m  - waiting for locator('.row-menu .rm-item').filter({ hasText: 'Pause the model instead' })[22m
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-effort.test.cjs:149:72) {
+    name: 'TimeoutError',
+    log: [ "  - waiting for locator('.row-menu .rm-item').filter({ hasText: 'Pause the model instead' })" ]
+  }
+
+test at internal/gui/tests/routing-rule-effort.test.cjs:160:5
+✖ chromium en: a rule's effort at a narrow width (1914.915157ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-effort.test.cjs:167:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/routing-rule-effort.test.cjs:160:5
+✖ chromium zh: a rule's effort at a narrow width (1990.396602ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-effort.test.cjs:167:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/routing-rule-effort.test.cjs:160:5
+✖ chromium zh-TW: a rule's effort at a narrow width (1960.330975ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-effort.test.cjs:167:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/routing-rule-effort.test.cjs:160:5
+✖ chromium ja: a rule's effort at a narrow width (1939.076381ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-effort.test.cjs:167:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/routing-rule-effort.test.cjs:160:5
+✖ chromium de: a rule's effort at a narrow width (1910.367353ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (/tmp/r25-3620-base/internal/gui/tests/routing-rule-effort.test.cjs:167:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

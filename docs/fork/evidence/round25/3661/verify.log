@@ -1,0 +1,68 @@
+
+$ GOTOOLCHAIN=go1.26.8 go vet ./...
+cwd=/home/vincenty/Projects/magpie-issues/r25-expired-model-not-account-fault
+
+returncode=0
+
+$ GOTOOLCHAIN=go1.26.8 go build ./...
+cwd=/home/vincenty/Projects/magpie-issues/r25-expired-model-not-account-fault
+
+returncode=0
+
+$ GOTOOLCHAIN=go1.26.8 go build -tags nogui ./...
+cwd=/home/vincenty/Projects/magpie-issues/r25-expired-model-not-account-fault
+
+returncode=0
+
+$ GOTOOLCHAIN=go1.26.8 go build ./...
+cwd=/home/vincenty/Projects/magpie-issues/r25-expired-model-not-account-fault
+
+returncode=0
+
+$ GIT_MASTER=1 git rev-parse HEAD
+e04a1b9948b672b168eae484e09ba9609acbcb53
+returncode=0
+
+$ GIT_MASTER=1 git rev-list --count 19253f67bca2310c32739a6eaac88546b3574dbc..HEAD
+1
+returncode=0
+
+$ GIT_MASTER=1 git ls-remote origin refs/heads/fix/r25-expired-model-not-account-fault
+e04a1b9948b672b168eae484e09ba9609acbcb53	refs/heads/fix/r25-expired-model-not-account-fault
+returncode=0
+
+$ GIT_MASTER=1 git merge-base --is-ancestor 19253f67bca2310c32739a6eaac88546b3574dbc HEAD
+returncode=0
+
+$ GIT_MASTER=1 git status --short
+returncode=0
+
+$ GIT_MASTER=1 git diff --check 19253f67bca2310c32739a6eaac88546b3574dbc HEAD
+returncode=0
+
+$ GOTOOLCHAIN=go1.26.8 gofmt -l internal/gateway internal/plugin
+returncode=0
+empty=true
+linux nogui build env: GOOS=linux GOARCH=amd64
+windows build env: GOOS=windows GOARCH=amd64
+rev-list count == 1: true
+ls-remote == local head: true
+merge-base is-ancestor: true
+worktree clean: true
+
+affected package tests: go test ./internal/gateway -run 'ZCode|ModelRefused|Quota|Rest' -count=1
+returncode=0
+
+$ GIT_MASTER=1 git diff --name-only 19253f67bca2310c32739a6eaac88546b3574dbc HEAD
+docs/subsystems/gateway-routing.md
+internal/gateway/routing.go
+internal/gateway/zcode_trial.go
+internal/gateway/zcode_trial_test.go
+internal/plugin/testdata/fake/index.js
+returncode=0
+
+comment id: 6411723766
+exactly one skygunner comment: true
+author skygunner: true
+created_at UTC Z: true
+comment body sha256 equal: true

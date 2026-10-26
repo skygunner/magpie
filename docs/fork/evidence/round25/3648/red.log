@@ -1,0 +1,14 @@
+# RED — clean base 19253f67 via git archive + ONLY the test file copied in (cmp-verified same bytes as HEAD)
+
+## go test -tags dev -count=1 -run TestDevBackendHandoverAnswersAConnectionItTook ./internal/gui (at /tmp/r25-3648-base)
+gui (0 passed, 1 failed)
+  [FAIL] TestDevBackendHandoverAnswersAConnectionItTook
+     dev_handover_test.go:126: a request on a connection the backend took, read once its handover began: unexpected EOF
+base-exit=0 (report wrapper); the go test exit itself: 1
+
+## -count=20 (red20-raw.txt)
+RED20-EXIT=1; 20/20 --- FAIL, all: unexpected EOF
+    dev_handover_test.go:126: a request on a connection the backend took, read once its handover began: unexpected EOF
+FAIL
+FAIL	github.com/yetone/magpie/internal/gui	0.046s
+FAIL

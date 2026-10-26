@@ -1,0 +1,4 @@
+=== RUN   TestImportSharedSkillUnticksForItsReaders
+--- PASS: TestImportSharedSkillUnticksForItsReaders (0.02s)
+PASS
+ok  	github.com/yetone/magpie/internal/library	0.032s

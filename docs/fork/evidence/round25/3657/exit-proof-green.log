@@ -1,0 +1,8 @@
+COMMAND=['go', 'test', '-race', './internal/library', '-run', '^TestImportSharedSkillUnticksForItsReaders$', '-count=1', '-v', '-timeout=120s']
+CWD=/home/vincenty/Projects/magpie-issues/r25-library-uncheckbox
+=== RUN   TestImportSharedSkillUnticksForItsReaders
+--- PASS: TestImportSharedSkillUnticksForItsReaders (0.08s)
+PASS
+ok  	github.com/yetone/magpie/internal/library	1.121s
+
+EXIT=0

@@ -1,0 +1,49 @@
+# related GUI tests
+✔ webkit: empty discovery leaves manual setup usable (555.072689ms)
+✔ webkit: fail discovery leaves manual setup usable (546.534222ms)
+✔ webkit: only collision entries leave the hint hidden and remain in manual import (765.715915ms)
+✔ webkit: only off entries leave the hint hidden and remain in manual import (704.202075ms)
+ℹ tests 66
+ℹ suites 0
+ℹ pass 66
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 20031.325865
+
+# go test ./internal/gui
+ok  	github.com/yetone/magpie/internal/gui	43.782s
+
+# gofmt
+(end gofmt)
+# go vet
+# go build
+
+# GOOS=linux GOARCH=amd64 -tags nogui build
+exit=0
+
+# GOOS=windows GOARCH=amd64 build
+exit=0
+
+# git diff
+diff --git a/internal/gui/assets/app.css b/internal/gui/assets/app.css
+index facc964e..94bd355a 100644
+--- a/internal/gui/assets/app.css
++++ b/internal/gui/assets/app.css
+@@ -3774,8 +3774,8 @@ body.panel .modal { padding: 16px 12px; }
+ .editor.importapps { grid-template-columns: minmax(0, 1fr); }
+ .editor.importapps .appnote { font-size: 12px; color: var(--muted); line-height: 1.5; }
+ .editor.importapps .applist { display: flex; flex-direction: column; gap: 14px; max-height: min(56vh, 460px); overflow-y: auto; margin: 0 -4px; padding: 0 4px; }
+-.editor.importapps .apptabs { display: flex; gap: 4px; padding: 3px; border-radius: 10px; background: var(--pill); overflow-x: auto; scrollbar-width: none; }
+-.editor.importapps .apptab { flex: 1 1 0; min-width: max-content; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 6px 12px; border-radius: 7px; font-size: 12.5px; font-weight: 500; color: var(--muted); white-space: nowrap; }
++.editor.importapps .apptabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; padding: 3px; border-radius: 10px; background: var(--pill); }
++.editor.importapps .apptab { flex: 0 1 auto; min-width: max-content; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 6px 12px; border-radius: 7px; font-size: 12.5px; font-weight: 500; color: var(--muted); white-space: nowrap; }
+ .editor.importapps .apptab:hover { color: var(--fg); }
+ .editor.importapps .apptab.on { background: var(--card); color: var(--fg); box-shadow: 0 1px 2px rgba(0,0,0,.18); }
+ .editor.importapps .apptab.missing .applogo { filter: grayscale(1); opacity: .5; }
+
+# cross builds, with real exit codes
+linux/nogui exit=0
+windows exit=0
+tail: option used in invalid context -- 3

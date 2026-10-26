@@ -1,0 +1,139 @@
+diff --git a/internal/agent/vscode.go b/internal/agent/vscode.go
+index ab82f69d..0169eab9 100644
+--- a/internal/agent/vscode.go
++++ b/internal/agent/vscode.go
+@@ -140,7 +140,39 @@ func vscodeUserDir(k vscodeKind, home, cfg string) string {
+ 			cfg = filepath.Join(home, "AppData", "Roaming")
+ 		}
+ 	}
+-	return filepath.Join(cfg, k.folder, "User")
++	dir := filepath.Join(cfg, k.folder, "User")
++	if p := vscodePortableUserDir(k); p != "" {
++		return p
++	}
++	return dir
++}
++
++// vscodePortableUserDir is the User folder of the k that runs from a folder
++// with a data folder in it, which turns VS Code's portable mode on and moves
++// its user data to data/user-data: Scoop's vscode is installed that way (its
++// manifest adds bin to PATH and persists data), so code.cmd is in
++// apps/vscode/current/bin and the real folder is
++// apps/vscode/current/data/user-data/User (#3260). The program on PATH wins
++// over the default folder even when that one exists: Scoop's install copies
++// %APPDATA%\Code into data\user-data, and it is the program on PATH that
++// reads its settings. A data folder made by its first run is what tells it
++// apart, so an install that never ran is left to the default folder.
++func vscodePortableUserDir(k vscodeKind) string {
++	bin, err := proc.Look(k.bin)
++	if err != nil || !vscodeCodeBinary(bin) {
++		return ""
++	}
++	if resolved, err := filepath.EvalSymlinks(bin); err == nil {
++		bin = resolved
++	}
++	// the app folder: the bin folder's parent, or the bin file's own
++	app := filepath.Dir(bin)
++	for _, d := range []string{app, filepath.Dir(app)} {
++		if isDir(filepath.Join(d, "data", "user-data")) {
++			return filepath.Join(d, "data", "user-data", "User")
++		}
++	}
++	return ""
+ }
+ 
+ func vscodeAt(dir string) *Agent { return vscodeKindAt(vscodeStable, dir) }
+diff --git a/internal/agent/vscode_portable_test.go b/internal/agent/vscode_portable_test.go
+new file mode 100644
+index 00000000..97fc1642
+--- /dev/null
++++ b/internal/agent/vscode_portable_test.go
+@@ -0,0 +1,88 @@
++package agent
++
++import (
++	"os"
++	"path/filepath"
++	"runtime"
++	"testing"
++
++	"github.com/yetone/magpie/internal/proc"
++)
++
++// A VS Code installed portable (Scoop's vscode: bin on PATH, data persisted
++// beside it) keeps its User folder in data/user-data, and that is the folder
++// magpie must write: the %APPDATA%\Code\User it computed before does not
++// exist, or is the one Scoop copied and the running editor never reads
++// (#3260).
++func TestVSCodePortableUserDir(t *testing.T) {
++	for _, tt := range []struct {
++		name            string
++		portable, plain bool
++		want            string
++	}{
++		{name: "portable only", portable: true, want: "portable"},
++		{name: "portable beside a copied plain folder", portable: true, plain: true, want: "portable"},
++		{name: "plain only", plain: true, want: "plain"},
++		{name: "neither", want: "plain"},
++	} {
++		t.Run(tt.name, func(t *testing.T) {
++			root := t.TempDir()
++			app := filepath.Join(root, "scoop", "apps", "vscode", "current")
++			binDir := filepath.Join(app, "bin")
++			if err := os.MkdirAll(binDir, 0o755); err != nil {
++				t.Fatal(err)
++			}
++			name := "code"
++			if runtime.GOOS == "windows" {
++				name += ".cmd"
++				t.Setenv("PATHEXT", ".CMD")
++			}
++			bin := filepath.Join(binDir, name)
++			writeFile(t, bin, "not a runnable editor\n")
++			if err := os.Chmod(bin, 0o755); err != nil {
++				t.Fatal(err)
++			}
++			t.Setenv("PATH", binDir)
++			proc.Forget()
++
++			home := t.TempDir()
++			cfg := filepath.Join(root, "config")
++			plain := filepath.Join(cfg, "Code", "User")
++			switch runtime.GOOS {
++			case "darwin":
++				plain = filepath.Join(home, "Library", "Application Support", "Code", "User")
++			case "windows":
++				appdata := filepath.Join(root, "appdata")
++				t.Setenv("APPDATA", appdata)
++				plain = filepath.Join(appdata, "Code", "User")
++			}
++			portable := filepath.Join(app, "data", "user-data", "User")
++			for _, d := range []struct {
++				on   bool
++				path string
++			}{{tt.portable, portable}, {tt.plain, plain}} {
++				if !d.on {
++					continue
++				}
++				if err := os.MkdirAll(d.path, 0o755); err != nil {
++					t.Fatal(err)
++				}
++			}
++
++			a := vscode(home, cfg)
++			want := plain
++			if tt.want == "portable" {
++				want = portable
++			}
++			if a.Dir != want {
++				t.Errorf("Dir = %q, want %q", a.Dir, want)
++			}
++			if a.Path != filepath.Join(want, "settings.json") {
++				t.Errorf("Path = %q, want settings.json in %q", a.Path, want)
++			}
++			if tt.portable && !a.Detected() {
++				t.Errorf("Detected() = false, want true for a portable VS Code")
++			}
++		})
++	}
++}

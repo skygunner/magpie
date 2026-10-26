@@ -1,0 +1,7 @@
+=== RUN   TestPluginGoogleModelIsTestable
+testenv: a test asked models.dev:443, refused: tests stay off the network
+--- PASS: TestPluginGoogleModelIsTestable (0.11s)
+=== RUN   TestPluginTestProbesCodeAssist
+--- PASS: TestPluginTestProbesCodeAssist (0.13s)
+PASS
+ok  	github.com/yetone/magpie/internal/provider	0.254s

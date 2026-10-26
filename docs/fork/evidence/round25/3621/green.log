@@ -1,0 +1,10 @@
+COMMAND=['go', 'test', '-race', './internal/autostart', '-run', '^TestSelf(NamesThePathLink|RefusesAGoRunBuild)$', '-count=1', '-v', '-timeout=120s']
+CWD=/home/vincenty/Projects/magpie-issues/r25-autostart-exec-stable
+=== RUN   TestSelfNamesThePathLink
+--- PASS: TestSelfNamesThePathLink (0.00s)
+=== RUN   TestSelfRefusesAGoRunBuild
+--- PASS: TestSelfRefusesAGoRunBuild (0.00s)
+PASS
+ok  	github.com/yetone/magpie/internal/autostart	1.007s
+
+EXIT=0

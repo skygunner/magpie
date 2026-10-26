@@ -1,0 +1,275 @@
+diff --git a/internal/gui/dev_handover_test.go b/internal/gui/dev_handover_test.go
+new file mode 100644
+index 00000000..30b8f9db
+--- /dev/null
++++ b/internal/gui/dev_handover_test.go
+@@ -0,0 +1,144 @@
++//go:build dev && !windows
++
++package gui
++
++import (
++	"bufio"
++	"context"
++	"fmt"
++	"io"
++	"net"
++	"net/http"
++	"os"
++	"sync"
++	"sync/atomic"
++	"syscall"
++	"testing"
++	"time"
++
++	"github.com/yetone/magpie/internal/gateway"
++)
++
++// A make dev handover must answer a connection the old backend took, whose
++// first request it reads only after the handover began: net/http's Shutdown
++// closes such a connection without an answer, and the page sees the
++// connection end with nothing (#3648). The test drives the real devBackend
++// with the real signal. Every step is gated on an event rather than a
++// duration: the backend is seen to take the connection (held.took), the
++// signal is seen by the process and stopServing cancels the test's backend
++// context, and only then is the held connection handed on with its request
++// unread — as a busy machine would hold one — so the old code cuts it.
++func TestDevBackendHandoverAnswersAConnectionItTook(t *testing.T) {
++	if handoverSignal == nil {
++		t.Fatal("no handover signal on this platform")
++	}
++	// devBackend's handover calls stopServing, which cancels the process's
++	// backend context for good: the test runs against its own, and puts the
++	// real one back after.
++	oldCtx, oldEnd := backendCtx, endBackend
++	backendCtx, endBackend = context.WithCancel(context.Background())
++	t.Cleanup(func() {
++		endBackend()
++		backendCtx, endBackend = oldCtx, oldEnd
++	})
++	wasHandover := gatewayHandoverForTest()
++	t.Cleanup(wasHandover)
++
++	tcp, err := net.Listen("tcp", "127.0.0.1:0")
++	if err != nil {
++		t.Fatal(err)
++	}
++	t.Cleanup(func() { tcp.Close() })
++	held := &heldListener{Listener: tcp, took: make(chan struct{}), let: make(chan struct{})}
++	letGo := sync.OnceFunc(func() { close(held.let) })
++	t.Cleanup(letGo)
++	t.Setenv("MAGPIE_DEV_BACKEND", tcp.Addr().String())
++	// The backend's listener comes from Inherit, so the test sees the very
++	// accept devBackend's server makes.
++	gateway.Inherit(held, func() {})
++
++	done := make(chan error, 1)
++	go func() {
++		done <- devBackend(func(Windows) http.Handler {
++			return http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
++				io.WriteString(rw, "page-served")
++			})
++		})
++	}()
++
++	held.hold.Store(true)
++	c, err := net.Dial("tcp", tcp.Addr().String())
++	if err != nil {
++		t.Fatal(err)
++	}
++	defer c.Close()
++	select {
++	case <-held.took:
++	case <-time.After(10 * time.Second):
++		t.Fatal("the backend never took the connection")
++	}
++
++	if err := syscall.Kill(os.Getpid(), handoverSignal.(syscall.Signal)); err != nil {
++		t.Fatal(err)
++	}
++	// The end has begun: the signal was seen, the backend's context was
++	// cancelled by stopServing, and only then is the connection handed on
++	// with its request unread. The order is on events (the signal handler
++	// has run, and stopServing has cancelled the context the test replaced),
++	// not on a duration, so a loaded runner cannot turn the precondition
++	// into a red for the wrong reason.
++	select {
++	case <-backendCtx.Done():
++	case <-time.After(10 * time.Second):
++		t.Fatal("the handover never began")
++	}
++	letGo()
++	if _, err := fmt.Fprintf(c, "GET /api/state HTTP/1.1\r\nHost: dev\r\n\r\n"); err != nil {
++		t.Fatal(err)
++	}
++	c.SetReadDeadline(time.Now().Add(10 * time.Second))
++	resp, err := http.ReadResponse(bufio.NewReader(c), nil)
++	if err != nil {
++		t.Fatalf("a request on a connection the backend took, read once its handover began: %v", err)
++	}
++	body, _ := io.ReadAll(resp.Body)
++	resp.Body.Close()
++	if resp.StatusCode != 200 || string(body) != "page-served" {
++		t.Fatalf("a request on a connection the backend took, read once its handover began: %d %q", resp.StatusCode, body)
++	}
++
++	select {
++	case err := <-done:
++		if err != nil {
++			t.Fatalf("the handover ended with: %v", err)
++		}
++	case <-time.After(10 * time.Second):
++		t.Fatal("the handover never ended once its connection was answered")
++	}
++}
++
++// heldListener holds the next connection it takes, once told to, until let
++// go: as a busy machine can hold the goroutine that took one, before
++// net/http notes it.
++type heldListener struct {
++	net.Listener
++	hold atomic.Bool
++	took chan struct{} // closed once it holds one
++	let  chan struct{} // closed to hand it on
++}
++
++func (l *heldListener) Accept() (net.Conn, error) {
++	c, err := l.Listener.Accept()
++	if err == nil && l.hold.Swap(false) {
++		close(l.took)
++		<-l.let
++	}
++	return c, err
++}
++
++// gatewayHandoverForTest puts gateway.Handover back after the test; the
++// dev backend sets it for its own listener.
++func gatewayHandoverForTest() func() {
++	was := gateway.Handover
++	return func() { gateway.Handover = was }
++}
+diff --git a/internal/gui/dev_on.go b/internal/gui/dev_on.go
+index d130880a..84834cd6 100644
+--- a/internal/gui/dev_on.go
++++ b/internal/gui/dev_on.go
+@@ -19,6 +19,7 @@ import (
+ 	"runtime"
+ 	"strconv"
+ 	"strings"
++	"sync"
+ 	"time"
+ 
+ 	"github.com/yetone/magpie/internal/gateway"
+@@ -129,12 +130,71 @@ func devListen(h http.Handler) {
+ 		return
+ 	}
+ 	log.Println("dev ui:", "http://"+addr+"/?theme=dark")
+-	devUI = &http.Server{Handler: h}
+-	go devUI.Serve(ln)
++	devUI = newDevServe(ln, h)
++	go func() { devUI.done <- devUI.srv.Serve(ln) }()
+ }
+ 
+ // devUI is the page served on MAGPIE_DEV_UI, nil when it isn't.
+-var devUI *http.Server
++var devUI *devServe
++
++// unreadWait is how long a dev handover waits for a connection taken to
++// send its first request: as for net/http's Shutdown, one that sends
++// nothing for 5s is idle.
++const unreadWait = 5 * time.Second
++
++// devServe is one of the page servers a dev handover drains: the backend's
++// own server, and the one on MAGPIE_DEV_UI. Its finish lets the listener
++// go, waits for Serve to return — by then every connection the server took
++// is noted (StateNew) — and for each of them to have had its first request
++// read, before Shutdown: Shutdown closes a connection whose first request
++// it reads after it began without an answer (go1.26.8 net/http/server.go,
++// #3648). The gateway's handover waits the same way (#3568).
++type devServe struct {
++	srv  *http.Server
++	ln   net.Listener
++	done chan error // Serve's end, once finish has let the listener go
++
++	mu     sync.Mutex
++	unread map[net.Conn]bool
++}
++
++func newDevServe(ln net.Listener, h http.Handler) *devServe {
++	p := &devServe{ln: ln, done: make(chan error, 1)}
++	p.srv = &http.Server{Handler: h, ConnState: p.note}
++	return p
++}
++
++// note is the server's ConnState: a connection is unread from StateNew to
++// its next state, whichever it is.
++func (p *devServe) note(c net.Conn, state http.ConnState) {
++	p.mu.Lock()
++	defer p.mu.Unlock()
++	if state == http.StateNew {
++		if p.unread == nil {
++			p.unread = map[net.Conn]bool{}
++		}
++		p.unread[c] = true
++		return
++	}
++	delete(p.unread, c)
++}
++
++// finish stops the server taking connections and shuts it down once every
++// connection it took has had its first request read, unreadWait at most or
++// when ctx ends.
++func (p *devServe) finish(ctx context.Context) {
++	p.ln.Close()
++	<-p.done
++	for deadline := time.Now().Add(unreadWait); ; time.Sleep(10 * time.Millisecond) {
++		p.mu.Lock()
++		unread := len(p.unread)
++		p.mu.Unlock()
++		if unread == 0 || time.Now().After(deadline) || ctx.Err() != nil {
++			break
++		}
++	}
++	p.srv.Shutdown(ctx)
++}
+ 
+ // devRole is this process's half of `make dev`: "backend", "shell", or ""
+ // for the whole app in one process.
+@@ -156,24 +216,29 @@ func devBackend(handler func(Windows) http.Handler) error {
+ 		return err
+ 	}
+ 	log.Println("dev backend:", "http://"+addr)
+-	srv := &http.Server{Handler: h}
++	page := newDevServe(ln, h)
+ 	if handoverSignal == nil {
+-		return srv.Serve(ln)
++		return page.srv.Serve(ln)
+ 	}
+-	go srv.Serve(ln)
+ 	sig := make(chan os.Signal, 1)
+ 	signal.Notify(sig, handoverSignal)
++	go func() { page.done <- page.srv.Serve(ln) }()
+ 	<-sig
+ 	log.Println("dev backend: handed over · finishing what's in flight")
+ 	// the page's long polls end within 20s; what the gateway streams, when it ends
+ 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+ 	defer cancel()
+-	go srv.Shutdown(ctx)
+-	if devUI != nil {
+-		go devUI.Shutdown(ctx)
+-	}
++	var pages sync.WaitGroup
++	pages.Add(1)
++	go func() {
++		defer pages.Done()
++		page.finish(ctx)
++		if devUI != nil {
++			devUI.finish(ctx)
++		}
++	}()
+ 	stopServing()
+-	srv.Shutdown(ctx)
++	pages.Wait()
+ 	return nil
+ }
+ 

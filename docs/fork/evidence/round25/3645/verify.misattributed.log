@@ -1,0 +1,20 @@
+# verify.log - branch fix/r25-routing-log-icons-wait, head 833c7cd6, base 19253f67 (commit changes only internal/gui/tests/*.cjs)
+
+== gofmt -l internal/gui/ (empty = clean) ==
+(end)
+
+== GOTOOLCHAIN=go1.26.8 go vet ./... ==
+vet exit=0
+
+== GOTOOLCHAIN=go1.26.8 go build ./... ==
+build exit=0
+
+== GOOS=linux GOARCH=amd64 go build -tags nogui ./... ==
+nogui exit=0
+
+== GOOS=windows GOARCH=amd64 go build ./... ==
+windows exit=0
+
+== lead-reproduced RED/GREEN (node --test, scratch base fixture) ==
+RED exit=1 (AssertionError ERR_ASSERTION actual [1,2] expected [1])
+GREEN exit=0 (pass 15, fail 0)

@@ -1,0 +1,28 @@
+✔ chromium en 1100: masking keeps aliases and plans readable (1507.150863ms)
+✔ chromium en 420: masking keeps aliases and plans readable (1542.574992ms)
+✔ chromium zh 1100: masking keeps aliases and plans readable (1631.677625ms)
+✔ chromium zh 420: masking keeps aliases and plans readable (1759.668713ms)
+✔ chromium zh-TW 1100: masking keeps aliases and plans readable (1504.065564ms)
+✔ chromium zh-TW 420: masking keeps aliases and plans readable (1719.906297ms)
+✔ chromium ja 1100: masking keeps aliases and plans readable (1659.198905ms)
+✔ chromium ja 420: masking keeps aliases and plans readable (1537.954763ms)
+✔ chromium de 1100: masking keeps aliases and plans readable (1257.719032ms)
+✔ chromium de 420: masking keeps aliases and plans readable (1223.577705ms)
+✔ webkit en 1100: masking keeps aliases and plans readable (1673.684407ms)
+✔ webkit en 420: masking keeps aliases and plans readable (1414.632821ms)
+✔ webkit zh 1100: masking keeps aliases and plans readable (1780.352071ms)
+✔ webkit zh 420: masking keeps aliases and plans readable (1592.46404ms)
+✔ webkit zh-TW 1100: masking keeps aliases and plans readable (1612.853108ms)
+✔ webkit zh-TW 420: masking keeps aliases and plans readable (1812.034618ms)
+✔ webkit ja 1100: masking keeps aliases and plans readable (1900.368624ms)
+✔ webkit ja 420: masking keeps aliases and plans readable (1692.802196ms)
+✔ webkit de 1100: masking keeps aliases and plans readable (2009.63028ms)
+✔ webkit de 420: masking keeps aliases and plans readable (1620.916184ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 34061.210918

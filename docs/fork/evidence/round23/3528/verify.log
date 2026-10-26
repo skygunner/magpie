@@ -1,0 +1,19 @@
+== go vet ./internal/gateway/
+exit=0
+== go build ./...
+exit=0
+== GOOS=linux GOARCH=amd64 -tags nogui
+exit=0
+== GOOS=windows GOARCH=amd64
+exit=0
+== gofmt -l changed
+exit=0
+== go test ./internal/gateway/ -count=1 (full output: gateway-package.log)
+--- FAIL: TestClaudeClientCacheAbsentUnchanged (0.00s)
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	261.775s
+FAIL
+== the same test at the clean base (red-base, c0985122): base-pre-existing-claude-cache.log
+--- FAIL: TestClaudeClientCacheAbsentUnchanged (0.00s)
+    claude_client_cache_test.go:291: ordinary prompt changed: args -p --output-format stream-json --input-format stream-json --include-partial-messages --verbose --model claude-sonnet-5 --tools  --strict-mcp-config --mcp-config {"mcpServers":{"magpie":{"args":["claude-mcp-helper","/tmp/TestClaudeClientCacheAbsentUnchanged3678964411/002/magpie-claude-535585639/callback","/tmp/TestClaudeClientCacheAbsentUnchanged3678964411/002/magpie-claude-535585639/tools.json"],"command":"/tmp/go-build2589755107/b001/gateway.test"}}} --setting-sources  --dangerously-skip-permissions
+FAIL

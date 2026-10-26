@@ -1,0 +1,4 @@
+COMMAND: go test -tags dev -race -shuffle=on -count=3 -run TestDevBackendHandoverAnswersAConnectionItTook -timeout 120s ./internal/gui
+ok  	github.com/yetone/magpie/internal/gui	1.181s
+
+EXIT_CODE=0

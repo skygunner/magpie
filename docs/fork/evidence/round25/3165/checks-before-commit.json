@@ -1,0 +1,86 @@
+{
+  "baseline-six": {
+    "exit": "0",
+    "fail": [],
+    "pass": [
+      "ok  \tgithub.com/yetone/magpie/internal/gateway\t0.030s"
+    ]
+  },
+  "ablation-tool-cleanup-six": {
+    "exit": "0",
+    "fail": [],
+    "pass": [
+      "ok  \tgithub.com/yetone/magpie/internal/gateway\t0.032s"
+    ]
+  },
+  "ablation-fold-six": {
+    "exit": "1",
+    "fail": [
+      "    chat_tool_reasoning_test.go:215: 400 after 1 calls: {\"error\":{\"code\":null,\"message\":\"ds: deepseek: Failed to deserialize the JSON body into the target type: messages[1]: duplicate field `reasoning` at line 1 column 70565\",\"param\":null,\"type\":\"invalid_request_error\"}}",
+      "--- FAIL: TestChatBothReasoningSpellingsRelayed (0.00s)"
+    ],
+    "pass": []
+  },
+  "red": {
+    "exit": "1",
+    "fail": [
+      "    chat_tool_reasoning_details_test.go:55: message 1 still carries reasoning_details beside reasoning_content: [{\"type\":\"reasoning.text\",\"text\":\"Let me read it.\",\"signature\":null,\"format\":\"unknown\",\"index\":0}]",
+      "    chat_tool_reasoning_details_test.go:55: message 3 still carries reasoning_details beside reasoning_content: [{\"type\":\"reasoning.text\",\"text\":\"Let me read it.\",\"signature\":null,\"format\":\"unknown\",\"index\":0}]",
+      "    chat_tool_reasoning_details_test.go:55: message 1 still carries reasoning_details beside reasoning_content: [{\"type\":\"reasoning.text\",\"text\":\"Let me read it.\",\"signature\":null,\"format\":\"unknown\",\"index\":0}]",
+      "    chat_tool_reasoning_details_test.go:55: message 3 still carries reasoning_details beside reasoning_content: [{\"type\":\"reasoning.text\",\"text\":\"Let me read it.\",\"signature\":null,\"format\":\"unknown\",\"index\":0}]",
+      "--- FAIL: TestChatToolTurnReasoningDetailsCarriedOnce (0.00s)",
+      "    --- FAIL: TestChatToolTurnReasoningDetailsCarriedOnce/injected (0.00s)",
+      "    --- FAIL: TestChatToolTurnReasoningDetailsCarriedOnce/already_present (0.00s)"
+    ],
+    "pass": []
+  },
+  "green": {
+    "exit": "0",
+    "fail": [],
+    "pass": [
+      "ok  \tgithub.com/yetone/magpie/internal/gateway\t0.017s"
+    ]
+  },
+  "verify": {
+    "exit": "0",
+    "fail": [],
+    "pass": [
+      "ok  \tgithub.com/yetone/magpie/internal/gateway\t15.989s"
+    ]
+  },
+  "gofmt": {
+    "exit": "0",
+    "fail": [],
+    "pass": []
+  },
+  "vet-native": {
+    "exit": "0",
+    "fail": [],
+    "pass": []
+  },
+  "vet-linux": {
+    "exit": "0",
+    "fail": [],
+    "pass": []
+  },
+  "vet-windows": {
+    "exit": "0",
+    "fail": [],
+    "pass": []
+  },
+  "build-native": {
+    "exit": "0",
+    "fail": [],
+    "pass": []
+  },
+  "build-nogui": {
+    "exit": "0",
+    "fail": [],
+    "pass": []
+  },
+  "build-windows": {
+    "exit": "0",
+    "fail": [],
+    "pass": []
+  }
+}

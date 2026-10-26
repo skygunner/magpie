@@ -1,0 +1,6 @@
+=== RUN   TestCodexCatalogUsesTheWholeWindow
+--- PASS: TestCodexCatalogUsesTheWholeWindow (0.00s)
+PASS
+ok  	github.com/yetone/magpie/internal/codexcat	0.009s
+
+ok  	github.com/yetone/magpie/internal/codexcat	0.047s

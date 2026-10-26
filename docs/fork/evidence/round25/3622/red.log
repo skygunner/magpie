@@ -1,0 +1,11 @@
+# COMMAND_METADATA {"issue": 3622, "label": "red", "tree": "base", "commit": "19253f67bca2310c32739a6eaac88546b3574dbc", "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3622/base", "command": "go test ./internal/plugin -run '^TestDistPruneKeepsWhatTheLockNames$' -count=1 -v", "env": {"GOTOOLCHAIN": "go1.26.8", "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3622/home-ijpskw02", "GOPATH": "/home/vincenty/go", "GOMODCACHE": "/home/vincenty/go/pkg/mod", "GOCACHE": "/home/vincenty/.cache/go-build", "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules", "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"}, "extra_env": {}, "started_at": "2026-10-26T06:57:40.531438+00:00", "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3622/red.log"}
+# BEGIN COMPLETE MERGED STDOUT/STDERR
+=== RUN   TestDistPruneKeepsWhatTheLockNames
+    dist_prune_test.go:53: pruneDist took out the tarball bun.lock still names: stat /tmp/TestDistPruneKeepsWhatTheLockNames3488887233/001/config/magpie/plugins/dist/magpie-community-opencode-zed-auth-0.1.3.tgz: no such file or directory
+--- FAIL: TestDistPruneKeepsWhatTheLockNames (0.02s)
+FAIL
+FAIL	github.com/yetone/magpie/internal/plugin	0.024s
+FAIL
+
+# END COMPLETE OUTPUT
+# CHECKED_RETURN_CODE 1

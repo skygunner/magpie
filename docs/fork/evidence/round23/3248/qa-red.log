@@ -1,0 +1,15 @@
+2026/10/26 07:24:34 antigravity u@example.com: loadCodeAssist at https://cloudcode-pa.googleapis.com: current tier standard-tier, paid tier -, project "p1"
+2026/10/26 07:24:34 antigravity u@example.com: fetchAvailableModels at https://daily-cloudcode-pa.googleapis.com (antigravity/hub/2.9.1 linux/amd64; project "p1", current tier "standard-tier", paid tier "", entitlement "standard-tier"): 1 models, 1 kept; left out 0 not for chat [], 0 completion-only []; disabled []; Claude []
+2026/10/26 07:24:34 antigravity u@example.com: fetchAvailableModels at https://daily-cloudcode-pa.googleapis.com (antigravity/hub/2.9.1 linux/amd64; project "p1", current tier "standard-tier", paid tier "", entitlement "standard-tier"): 1 models, 1 kept; left out 0 not for chat [], 0 completion-only []; disabled []; Claude []
+2026/10/26 07:24:34 antigravity u@example.com: fetchAvailableModels at https://daily-cloudcode-pa.googleapis.com (antigravity/hub/2.9.1 linux/amd64; project "p1", current tier "standard-tier", paid tier "", entitlement "standard-tier"): 1 models, 1 kept; left out 0 not for chat [], 0 completion-only []; disabled []; Claude []
+--- FAIL: TestCodeAssistRestartIsNotSpliced (0.01s)
+    --- FAIL: TestCodeAssistRestartIsNotSpliced/content_after_the_finish (0.00s)
+        codeassist_restart_test.go:49: one answer has both generations' text: "Provider is kota-local.Provider is kota-local, and the model is argon."
+    --- FAIL: TestCodeAssistRestartIsNotSpliced/another_responseId (0.00s)
+        codeassist_restart_test.go:49: one answer has both generations' text: "Provider is Provider is kota-local, and the model is argon."
+    --- FAIL: TestCodeAssistRestartIsNotSpliced/a_count_gone_back (0.00s)
+        codeassist_restart_test.go:49: one answer has both generations' text: "Provider is Provider is kota-local, and the model is argon."
+2026/10/26 07:24:34 antigravity u@example.com: fetchAvailableModels at https://daily-cloudcode-pa.googleapis.com (antigravity/hub/2.9.1 linux/amd64; project "p1", current tier "standard-tier", paid tier "", entitlement "standard-tier"): 1 models, 1 kept; left out 0 not for chat [], 0 completion-only []; disabled []; Claude []
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.030s
+FAIL

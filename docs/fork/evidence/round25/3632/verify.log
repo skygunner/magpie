@@ -1,0 +1,57 @@
+$ gofmt -l internal/filememo internal/provider
+exit=0
+
+---
+$ go vet ./...
+exit=0
+
+---
+$ GOOS=linux GOARCH=amd64 go build -tags nogui ./...
+exit=0
+
+---
+$ GOOS=windows GOARCH=amd64 go build ./...
+exit=0
+
+---
+$ go build ./...
+exit=0
+
+---
+$ GOTOOLCHAIN=go1.26.8 go test -count=1 -run '^TestForgetsAcrossSynctestBubbles$' -v ./internal/filememo/
+exit=0
+=== RUN   TestForgetsAcrossSynctestBubbles
+--- PASS: TestForgetsAcrossSynctestBubbles (0.00s)
+PASS
+ok  	github.com/yetone/magpie/internal/filememo	0.002s
+---
+$ GOTOOLCHAIN=go1.26.8 go test -count=1 ./internal/filememo/   (see green-full-filememo.log)
+exit=0
+---
+$ GOTOOLCHAIN=go1.26.8 go test -count=1 ./internal/provider/   (see green-full-provider.log)
+exit=0
+ok  github.com/yetone/magpie/internal/provider 43.033s
+---
+$ GIT_MASTER=1 git rev-list --count 19253f67bca2310c32739a6eaac88546b3574dbc..HEAD
+1
+---
+$ GIT_MASTER=1 git merge-base --is-ancestor 19253f67bca2310c32739a6eaac88546b3574dbc HEAD && echo ancestor-ok
+exit=0
+ancestor-ok
+---
+$ GIT_MASTER=1 git push -u origin fix/r25-filememo-forget-bubble
+exit=0
+branch 'fix/r25-filememo-forget-bubble' set up to track 'origin/fix/r25-filememo-forget-bubble'.
+remote: 
+remote: Create a pull request for 'fix/r25-filememo-forget-bubble' on GitHub by visiting:        
+remote:      https://github.com/skygunner/magpie/pull/new/fix/r25-filememo-forget-bubble        
+remote: 
+To https://github.com/skygunner/magpie.git
+ * [new branch]        fix/r25-filememo-forget-bubble -> fix/r25-filememo-forget-bubble
+---
+$ GIT_MASTER=1 git ls-remote origin refs/heads/fix/r25-filememo-forget-bubble
+$ GIT_MASTER=1 git ls-remote origin refs/heads/fix/r25-filememo-forget-bubble
+3a0b44793653ee8f752f73a8efe215514b6d5822	refs/heads/fix/r25-filememo-forget-bubble
+local head: 3a0b44793653ee8f752f73a8efe215514b6d5822
+match: True
+---

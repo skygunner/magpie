@@ -1,0 +1,33 @@
+{
+  "issue": 3246,
+  "title": "[Bug] ZCode 接入 magpie 后用一段时间会自动退出接入状态，需要手动重新接入",
+  "verdict": "fixed",
+  "skipReason": "",
+  "branch": "fix/zcode-reconnect-after-rewrite",
+  "base": "01468003348ede896c5126e9fd81057e1e58765c",
+  "head": "c4495b30c80801ca794bc9abcffe456d75339661",
+  "testCommands": [
+    "go test -tags nogui -count=1 -run TestZCodeSyncRestoresARewrite ./internal/agent",
+    "go test -tags nogui -count=1 ./internal/agent",
+    "gofmt -l internal/agent/zcode.go internal/agent/zcode_reconnect_test.go",
+    "go vet ./...",
+    "GOOS=linux GOARCH=amd64 go vet -tags nogui ./...",
+    "GOOS=windows GOARCH=amd64 go vet ./...",
+    "go build ./...",
+    "GOOS=linux GOARCH=amd64 go build -tags nogui ./...",
+    "GOOS=windows GOARCH=amd64 go build ./..."
+  ],
+  "testsAdded": [
+    "internal/agent/zcode_reconnect_test.go TestZCodeSyncRestoresARewrite"
+  ],
+  "unverifiedBoundaries": [
+    "ZCode 3.16.2 itself was not installed or run; the file rewrite that triggers the loss is simulated from the reporter's evidence (both files losing magpie's provider while the gateway stayed up).",
+    "The restore happens on the syncs magpie already runs (start-up, catalog changes), so a rewrite while magpie runs is repaired at the next such sync, not instantly.",
+    "Disconnect through magpie and a provider removed in ZCode's own settings page keep their existing behavior; a removal from an old ZCode that keeps providers in config.json alone is still respected."
+  ],
+  "filesChanged": [
+    "docs/subsystems/agent-wiring.md",
+    "internal/agent/zcode.go",
+    "internal/agent/zcode_reconnect_test.go"
+  ]
+}

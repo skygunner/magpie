@@ -1,0 +1,7 @@
+The root cause is exactly the line you pointed at: the catalog entries `internal/codexcat` generates for magpie's own models omit `effective_context_window_percent`, so Codex applies its default 95% and a `context_window: 272000` entry shows up in Codex as 258400.
+
+Fixed on [fix/codex-context-percent](https://github.com/skygunner/magpie/tree/fix/codex-context-percent) (`ce9531f6`, based on `main` `01468003`): the entries magpie generates — the ones whose window magpie writes — now carry `effective_context_window_percent: 100`; Codex's own entries (`ownEntry`) keep the percentage Codex gives them, so upstream semantics are untouched.
+
+- RED → GREEN: `TestCodexCatalogUsesTheWholeWindow` uses your `workbuddy/deepseek-v4.1-flash` (`context_window: 272000`, `max_context_window: 1000000`) as the fixture. On a clean base with only the test added: `effective_context_window_percent` missing from the entry (`percent <nil>, window 272000`); after the change it reads 100 and Codex's effective window is 272000, not 258400. A second case holds Codex's own 95% unchanged.
+- `internal/codexcat` passes whole; `go vet`/`go build` (linux, windows, `nogui linux`) clean, `gofmt -l` empty.
+- Said plainly: no real Codex client (desktop/CLI) was run; the verification sits at the catalog-generation layer. If your Codex build applies a different default to magpie-generated entries, reply with the version and I'll align.

@@ -1,0 +1,10 @@
+✔ chromium: a window that didn't say used shows its text, not a percentage (387.780227ms)
+✔ webkit: a window that didn't say used shows its text, not a percentage (519.777402ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1052.503338

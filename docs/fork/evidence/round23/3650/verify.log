@@ -1,0 +1,35 @@
+$ go test ./internal/provider -count=1 -skip TestUnreadLoginsWriteErrorsKeepCredentials
+ok  	github.com/yetone/magpie/internal/provider	43.054s
+exit=0
+
+$ go test ./internal/plugin -count=1 -skip TestPluginSOCKSProxy
+ok  	github.com/yetone/magpie/internal/plugin	32.202s
+exit=0
+
+$ NODE_PATH=/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules node --test internal/gui/tests/usage-no-reading.test.cjs
+✔ chromium: a window that didn't say used shows its text, not a percentage (367.654054ms)
+✔ webkit: a window that didn't say used shows its text, not a percentage (539.888614ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1058.719083
+exit=0
+
+$ go vet ./...
+exit=0
+
+$ go build ./...
+exit=0
+
+$ GOOS=linux GOARCH=amd64 go build -tags nogui ./...
+exit=0
+
+$ GOOS=windows GOARCH=amd64 go build ./...
+exit=0
+
+$ gofmt -l internal/plugin internal/provider
+exit=0

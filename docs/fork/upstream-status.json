@@ -16,8 +16,8 @@
    "evidence": "docs/fork/evidence/upstream-sync-2026-10-24/comments.json",
    "note": "Only the specified existing comments were updated. This does not change upstream-adoption or product-verification status."
   },
-  "checked_at": "2026-10-25T18:30:30Z",
-  "last_checked_upstream_sha": "dd1e8822d916f8aeb085db4db93fc3d79e2263ed",
+  "checked_at": "2026-10-27T04:30:00Z",
+  "last_checked_upstream_sha": "d9a8148d7c1e56af756bceee74aadd4faa4aee60",
   "review_refs": {
    "batch": "95537ceb898a4f947f056af8f832663cc015c83c",
    "union": "cbc6c3b3ddd690d9f845ec2b6438cb3812cd5b12",
@@ -47,20 +47,56 @@
    "batch_chain_note": "batch is a forward-append chain: the v2 base fa22bc64 carries 15 commits (34dcacff…95537ceb), rebased onto b437e4ad, then bbd6e228 and 4e136a4b this round; see deliveries.r3-batch"
   },
   "totals": {
-   "entries": 102,
-   "issues": 99,
+   "entries": 140,
+   "issues": 137,
    "prs": 3,
-   "product": 84,
-   "tests_ci": 10,
+   "product": 121,
+   "tests_ci": 11,
    "upstream_existing": 6,
    "other": 2,
-   "code_entries": 94,
-   "units": 91
+   "code_entries": 132,
+   "units": 129
   },
   "counts_note": "Generated from the JSON by docs/fork/generate.py; not hand-written. 64 code-linked entries are not 64 independent fixes: units are grouped by first primary fix commit (60 groups).",
   "fork": "skygunner/magpie",
   "upstream": "yetone/magpie",
-  "snapshot_at": "2026-10-24 (round-4 ledger update; source_ref dev, pushed as the round-4 closeout)"
+  "snapshot_at": "2026-10-24 (round-4 ledger update; source_ref dev, pushed as the round-4 closeout)",
+  "round25": {
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "recorded_at": "2026-10-26T11:29:29.093Z",
+   "published": 15,
+   "potentially_compliant_production": 13,
+   "requested": 15,
+   "status": "CLOSED_SHORTFALL_1: 14 of 15 production units delivered (3194 recorded post-round); lanes proc-listening-bound, antigravity-live-catalog, opencode-session-count investigated and not delivered",
+   "notes": [
+    "3645 test-only excluded",
+    "3668 force-push violation excluded; permanent historical failure",
+    "2998/3194 in progress; third additional production issue unproved",
+    "All historical records retained unchanged; initial five protected files backed before ledger update",
+    "2998 production delivered; 3648 head updated with event-driven barrier followup",
+    "2026-10-27 sweep closeout: 3194 delivered and recorded (unit + prior row); 3632 follow-up merged upstream/main with wake() lazy close (head 47eb5102); 3622 apply --3way clean on d9a8148d; adoption statuses recorded for 3043/3567/3650, independent_alternative for 3339/3444/3165"
+   ]
+  },
+  "sweep_2026_10_27": {
+   "scope": "all 139 ledger issues/PRs re-checked against upstream state and comments",
+   "upstream_sha": "d9a8148d7c1e56af756bceee74aadd4faa4aee60",
+   "closed": [
+    3151,
+    3173,
+    3276,
+    3339,
+    3447,
+    3567
+   ],
+   "new_activity_after_our_last_touch": 41,
+   "no_change": 94,
+   "actions": [
+    "3632 branch follow-up + comment edit (6408812631)",
+    "3365 probe reply (6423389640)",
+    "3622 apply-check recorded, no comment (JoeyWu patch duplicates semantics)"
+   ],
+   "evidence": "docs/fork/sprints/2026-10-25/followup-sweep-2026-10-27.md"
+  }
  },
  "units": [
   {
@@ -788,7 +824,9 @@
     "head": "1952329fbfbd390406c58598c56e7b1fbc8e39ec"
    },
    "upstream": {
-    "status": "unconfirmed"
+    "status": "independent_alternative",
+    "commit": "a7ed2f61d965dac1667cefedef75171fd30f4404",
+    "note": "Edward4226 verified 2026-10-24 that current main already carries the antigravity disabled-ids filter (a7ed2f61d); issue closed the same day, reporter thanked; no fork action needed"
    },
    "archive": {
     "candidate": false
@@ -1340,7 +1378,8 @@
     "head": ""
    },
    "upstream": {
-    "status": "unconfirmed"
+    "status": "unconfirmed",
+    "note": "reporter 1024MrL verified end-to-end on Windows 11 with a real Codex + muse-spark session (2026-10-23); ggbdpq closed the field half; no fork action"
    },
    "archive": {
     "candidate": false
@@ -1412,7 +1451,8 @@
    "base": "see delivery: historical; base recorded in the unit branch map",
    "comments": {
     "3165": [
-     "https://github.com/yetone/magpie/issues/3165#issuecomment-6351032820"
+     "https://github.com/yetone/magpie/issues/3165#issuecomment-6351032820",
+     "https://github.com/yetone/magpie/issues/3165#issuecomment-6415383816"
     ]
    },
    "sources": {
@@ -1424,12 +1464,14 @@
     ]
    },
    "verify": {
-    "state": "unverified_this_round",
-    "evidence": "Delivered with red-green recorded in the commit body; not independently re-run this round. See prior/72-thread-evidence.json for the delivered-time evidence chain.",
-    "head": ""
+    "state": "rework-regression-verified-with-package-race-limit",
+    "evidence": "Rework: one test-only commit 94d62c6a on fix/r25-3165-reasoning-clear-test (prerequisite replay commit 57a50716 carries the original production fix). The new TestChatToolTurnReasoningDetailsCarriedOnce is RED with cleanup removed and GREEN with it restored; related race passes. The whole gateway race had six failures: five reproduced after baseline production code restore; TestCodexPoolSaysTheClientsVersion remains unattributed. Evidence archived at docs/fork/evidence/round25/3165/.",
+    "head": "94d62c6a72193bb1846c24cb30908a2273fdfedb"
    },
    "upstream": {
-    "status": "unconfirmed"
+    "status": "independent_alternative",
+    "commit": "1bb8143b374ecbc17fcedc43bcbe3619e74df218",
+    "note": "reported face landed independently (1bb8143b, own report lineage, no trailer from this thread); two defensive faces (a tool turn carrying its own reasoning_content beside an echoed reasoning; both spellings on a non-tool message) remain uncovered upstream and are covered by the fork replay 57a50716; ggbdpq verdict 2026-10-26: nothing further requested"
    },
    "archive": {
     "candidate": false
@@ -1938,7 +1980,8 @@
      "https://github.com/yetone/magpie/issues/3276#issuecomment-6356521288",
      "https://github.com/yetone/magpie/releases/tag/v0.1.1325"
     ],
-    "first_confirmed_at": "2026-10-23"
+    "first_confirmed_at": "2026-10-23",
+    "note": " | sweep 2026-10-27: #3276 closed 2026-10-23 with reporter confirmation; #3251 layer 2 (Ark AccessKey plan windows into routing allowance) has Edward4226's 2026-10-25 conservative candidate awaiting maintainer decision."
    },
    "archive": {
     "candidate": true,
@@ -2643,7 +2686,7 @@
    ],
    "category": "product",
    "title": "redact: a placeholder URL's password and version and repository values are not secrets to learn (#3365, Ethereal49)",
-   "coverage": "R1 (a0b2faa8): field-aware exceptions via fieldNameWords; R1-followup (bbd6e228): strongCredential reads the whole name the assignment rules read — compact apikey/APIKey and suffixed api_key_v2/password_primary no longer take the exceptions. R2 (fde6695f): placeholder passwords learn when met as real credentials; reindexKnown rebuilds only learned values. Remaining: none known on the reported shapes.",
+   "coverage": "R1 (a0b2faa8): field-aware exceptions via fieldNameWords; R1-followup (bbd6e228): strongCredential reads the whole name the assignment rules read — compact apikey/APIKey and suffixed api_key_v2/password_primary no longer take the exceptions. R2 (fde6695f): placeholder passwords learn when met as real credentials; reindexKnown rebuilds only learned values. Remaining: none known on the reported shapes. | 2026-10-27: wh5938316's verifier sample answered with probe evidence on upstream main 19253f67 — a bare unlearned 'verifier' never rule-matches (MaskJSON 0 hits, with/without signature); replacement happens only via known propagation after the same request carries 'verifier' as a credential value (URL password slot, assignment RHS); decisive earlier-occurrence check requested from the reporter.",
    "commits": [
     "4b6d93d9abe29038f9e8662890bf8190fc3a9f23"
    ],
@@ -2658,7 +2701,8 @@
    "base": "see delivery: r3-batch",
    "comments": {
     "3365": [
-     "https://github.com/yetone/magpie/issues/3365#issuecomment-6364536473"
+     "https://github.com/yetone/magpie/issues/3365#issuecomment-6364536473",
+     "https://github.com/yetone/magpie/issues/3365#issuecomment-6423389640"
     ]
    },
    "sources": {
@@ -2836,7 +2880,8 @@
     "head": "bf84dd4f86d236771ef3e8a3751a8b91f4a9c1a8"
    },
    "upstream": {
-    "status": "unconfirmed"
+    "status": "unconfirmed",
+    "note": "reporter kongkongklng verified 2026-10-25 the claude-calls-x.ai fix works on the branch build and asked yetone to land it; merge question is the maintainer's, no fork action"
    },
    "archive": {
     "candidate": false
@@ -2879,7 +2924,9 @@
     "head": "fd4bcb54e53462e0e9bfa894846c3909875c5444"
    },
    "upstream": {
-    "status": "unconfirmed"
+    "status": "independent_alternative",
+    "commit": "3e9efe1d51a5538017ccae071c9e24d86ef4282b",
+    "note": "ggbdpq 2026-10-25: upstream 3e9efe1d (a Codex turn falls back to HTTP on ws 1009/message-too-big) supersedes this unit's b834f286 face; qiuyu21's zstd measurement and machenbin315-design's pre-send split patch are documented in the thread; issue open for residual faces"
    },
    "archive": {
     "candidate": false
@@ -3392,7 +3439,10 @@
     "head": "11d176bd74827d854c91680e7fc7f34d5fe9a08a"
    },
    "upstream": {
-    "status": "unconfirmed"
+    "status": "adopted",
+    "commit": "27ca0bef535dc280652e81bc2a6311dffcd21161",
+    "release": "v0.1.1585",
+    "note": "yetone merged 2026-10-26 with skygunner's author attribution kept and shupivot's measurement credited; issue open at sweep time"
    },
    "archive": {
     "candidate": false
@@ -3818,7 +3868,9 @@
     "head": "64bd29fa416b352424dafb5cc2f338f27aa21254"
    },
    "upstream": {
-    "status": "unconfirmed"
+    "status": "adopted",
+    "commit": "cec54c1d01f64cc0dd846d8561ab6dd92877b300",
+    "note": "yetone: fixed with this fork's change, credited as co-author (serveInBackground starts serve through proc.Command); issue closed 2026-10-25"
    },
    "archive": {
     "candidate": false
@@ -4103,6 +4155,1352 @@
    "archive": {
     "candidate": false
    }
+  },
+  {
+   "id": "u-issue-3475-issue-3475-3dfc880c",
+   "issues": [
+    3475
+   ],
+   "category": "product",
+   "title": "gateway: a Copilot account is asked tool search as advanced-tool-use, the name its Messages API takes (#3475)",
+   "coverage": "Delivered scope per commit body and issue thread.",
+   "commits": [
+    "3dfc880cfc843f9c2ca5e0ac8f8c65a8aa8647b5"
+   ],
+   "commit_details": [
+    {
+     "sha": "3dfc880cfc843f9c2ca5e0ac8f8c65a8aa8647b5",
+     "title": "gateway: a Copilot account is asked tool search as advanced-tool-use, the name its Messages API takes (#3475)",
+     "url": "https://github.com/skygunner/magpie/commit/3dfc880cfc843f9c2ca5e0ac8f8c65a8aa8647b5"
+    }
+   ],
+   "branch": "fix/issue-3475",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "comments": {
+    "3475": [
+     "https://github.com/yetone/magpie/issues/3475#issuecomment-6403009365"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3475/.",
+    "head": "3dfc880cfc843f9c2ca5e0ac8f8c65a8aa8647b5"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-issue-3430-anthropic-thinking-tokens-fb6763d9",
+   "issues": [
+    3430
+   ],
+   "category": "product",
+   "title": "gateway: a Messages reply's thinking tokens are counted (#3430)",
+   "coverage": "Delivered scope per commit body and issue thread.",
+   "commits": [
+    "fb6763d9f236f71dd7a76fb0c4a4275ac1c89193"
+   ],
+   "commit_details": [
+    {
+     "sha": "fb6763d9f236f71dd7a76fb0c4a4275ac1c89193",
+     "title": "gateway: a Messages reply's thinking tokens are counted (#3430)",
+     "url": "https://github.com/skygunner/magpie/commit/fb6763d9f236f71dd7a76fb0c4a4275ac1c89193"
+    }
+   ],
+   "branch": "fix/anthropic-thinking-tokens",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "comments": {
+    "3430": [
+     "https://github.com/yetone/magpie/issues/3430#issuecomment-6403129004"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3430/.",
+    "head": "fb6763d9f236f71dd7a76fb0c4a4275ac1c89193"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-issue-3553-codex-context-percent-ce9531f6",
+   "issues": [
+    3553
+   ],
+   "category": "product",
+   "title": "codex: the window magpie declares is the one Codex uses (#3553)",
+   "coverage": "Delivered scope per commit body and issue thread.",
+   "commits": [
+    "ce9531f6181409142cf4dd0e4dfb2ac3a6d1f5c3"
+   ],
+   "commit_details": [
+    {
+     "sha": "ce9531f6181409142cf4dd0e4dfb2ac3a6d1f5c3",
+     "title": "codex: the window magpie declares is the one Codex uses (#3553)",
+     "url": "https://github.com/skygunner/magpie/commit/ce9531f6181409142cf4dd0e4dfb2ac3a6d1f5c3"
+    }
+   ],
+   "branch": "fix/codex-context-percent",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "comments": {
+    "3553": [
+     "https://github.com/yetone/magpie/issues/3553#issuecomment-6403129264"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3553/.",
+    "head": "ce9531f6181409142cf4dd0e4dfb2ac3a6d1f5c3"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-issue-3566-issue-3566-bafd1361",
+   "issues": [
+    3566
+   ],
+   "category": "product",
+   "title": "gateway: a union of objects inside a typed $ref target is given object for Kimi (#3566)",
+   "coverage": "Delivered scope per commit body and issue thread.",
+   "commits": [
+    "bafd13618b4dee3e879801d6f02aca48135b863e"
+   ],
+   "commit_details": [
+    {
+     "sha": "bafd13618b4dee3e879801d6f02aca48135b863e",
+     "title": "gateway: a union of objects inside a typed $ref target is given object for Kimi (#3566)",
+     "url": "https://github.com/skygunner/magpie/commit/bafd13618b4dee3e879801d6f02aca48135b863e"
+    }
+   ],
+   "branch": "fix/issue-3566",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "comments": {
+    "3566": [
+     "https://github.com/yetone/magpie/issues/3566#issuecomment-6403129516"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3566/.",
+    "head": "bafd13618b4dee3e879801d6f02aca48135b863e"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-issue-3460-plugin-codeassist-probe-d99b2bd1",
+   "issues": [
+    3460
+   ],
+   "category": "product",
+   "title": "provider: a plugin's Gemini models are tested on Code Assist (#3460)",
+   "coverage": "Delivered scope per commit body and issue thread.",
+   "commits": [
+    "d99b2bd1241d59c507227166bb1bf3d9ac49ee3d"
+   ],
+   "commit_details": [
+    {
+     "sha": "d99b2bd1241d59c507227166bb1bf3d9ac49ee3d",
+     "title": "provider: a plugin's Gemini models are tested on Code Assist (#3460)",
+     "url": "https://github.com/skygunner/magpie/commit/d99b2bd1241d59c507227166bb1bf3d9ac49ee3d"
+    }
+   ],
+   "branch": "fix/plugin-codeassist-probe",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "comments": {
+    "3460": [
+     "https://github.com/yetone/magpie/issues/3460#issuecomment-6403185254"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3460/.",
+    "head": "d99b2bd1241d59c507227166bb1bf3d9ac49ee3d"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-issue-3630-provider-rename-gateway-keys-63e1ff5c",
+   "issues": [
+    3630
+   ],
+   "category": "product",
+   "title": "provider: a gateway key's chosen models and accounts follow a provider renamed (#3630)",
+   "coverage": "Delivered scope per commit body and issue thread.",
+   "commits": [
+    "63e1ff5cd8a3f2b623222482b02745ec269c36cc"
+   ],
+   "commit_details": [
+    {
+     "sha": "63e1ff5cd8a3f2b623222482b02745ec269c36cc",
+     "title": "provider: a gateway key's chosen models and accounts follow a provider renamed (#3630)",
+     "url": "https://github.com/skygunner/magpie/commit/63e1ff5cd8a3f2b623222482b02745ec269c36cc"
+    }
+   ],
+   "branch": "fix/provider-rename-gateway-keys",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "comments": {
+    "3630": [
+     "https://github.com/yetone/magpie/issues/3630#issuecomment-6403245263"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3630/.",
+    "head": "63e1ff5cd8a3f2b623222482b02745ec269c36cc"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-issue-3329-dsh-comment-between-entries-91a19f25",
+   "issues": [
+    3329
+   ],
+   "category": "product",
+   "title": "agent: a comment between dsh patch-list entries survives a rewrite (#3329)",
+   "coverage": "Delivered scope per commit body and issue thread.",
+   "commits": [
+    "91a19f2568f5d7d504a3ca11c97ea027294b04ca"
+   ],
+   "commit_details": [
+    {
+     "sha": "91a19f2568f5d7d504a3ca11c97ea027294b04ca",
+     "title": "agent: a comment between dsh patch-list entries survives a rewrite (#3329)",
+     "url": "https://github.com/skygunner/magpie/commit/91a19f2568f5d7d504a3ca11c97ea027294b04ca"
+    }
+   ],
+   "branch": "fix/dsh-comment-between-entries",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "comments": {
+    "3329": [
+     "https://github.com/yetone/magpie/issues/3329#issuecomment-6403289779"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3329/.",
+    "head": "91a19f2568f5d7d504a3ca11c97ea027294b04ca"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-issue-3614-trace-live-window-a814f6e3",
+   "issues": [
+    3614
+   ],
+   "category": "product",
+   "title": "routing: a request in flight carries its model's window (#3614)",
+   "coverage": "Delivered scope per commit body and issue thread.",
+   "commits": [
+    "a814f6e3910c7cbdebae1ecf65c020b8cdafaba5"
+   ],
+   "commit_details": [
+    {
+     "sha": "a814f6e3910c7cbdebae1ecf65c020b8cdafaba5",
+     "title": "routing: a request in flight carries its model's window (#3614)",
+     "url": "https://github.com/skygunner/magpie/commit/a814f6e3910c7cbdebae1ecf65c020b8cdafaba5"
+    }
+   ],
+   "branch": "fix/trace-live-window",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "comments": {
+    "3614": [
+     "https://github.com/yetone/magpie/issues/3614#issuecomment-6403290176"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3614/.",
+    "head": "a814f6e3910c7cbdebae1ecf65c020b8cdafaba5"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-issue-3572-antigravity-signature-043636a3",
+   "issues": [
+    3572
+   ],
+   "category": "product",
+   "title": "gateway: Antigravity's \"Corrupted thought signature\" is retried without the history's signatures (#3572)",
+   "coverage": "Delivered scope per commit body and issue thread.",
+   "commits": [
+    "043636a38ae731a74fe70511b9425c8b6275d70f"
+   ],
+   "commit_details": [
+    {
+     "sha": "043636a38ae731a74fe70511b9425c8b6275d70f",
+     "title": "gateway: Antigravity's \"Corrupted thought signature\" is retried without the history's signatures (#3572)",
+     "url": "https://github.com/skygunner/magpie/commit/043636a38ae731a74fe70511b9425c8b6275d70f"
+    }
+   ],
+   "branch": "fix/antigravity-signature",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "comments": {
+    "3572": [
+     "https://github.com/yetone/magpie/issues/3572#issuecomment-6403372256"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3572/.",
+    "head": "043636a38ae731a74fe70511b9425c8b6275d70f"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-issue-3541-redact-local-host-aa0e3ec7",
+   "issues": [
+    3541
+   ],
+   "category": "product",
+   "title": "redact: a mDNS host (user@host.local) is no email (#3541)",
+   "coverage": "Delivered scope per commit body and issue thread.",
+   "commits": [
+    "aa0e3ec7cbbc8df0620d133764f392f6bc07cbed"
+   ],
+   "commit_details": [
+    {
+     "sha": "aa0e3ec7cbbc8df0620d133764f392f6bc07cbed",
+     "title": "redact: a mDNS host (user@host.local) is no email (#3541)",
+     "url": "https://github.com/skygunner/magpie/commit/aa0e3ec7cbbc8df0620d133764f392f6bc07cbed"
+    }
+   ],
+   "branch": "fix/redact-local-host",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "comments": {
+    "3541": [
+     "https://github.com/yetone/magpie/issues/3541#issuecomment-6403455103"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3541/.",
+    "head": "aa0e3ec7cbbc8df0620d133764f392f6bc07cbed"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-issue-3246-zcode-reconnect-after-rewrite-c4495b30",
+   "issues": [
+    3246
+   ],
+   "category": "product",
+   "title": "zcode: a ZCode whose files were rewritten is put back by a sync (#3246)",
+   "coverage": "Delivered scope per commit body and issue thread.",
+   "commits": [
+    "c4495b30c80801ca794bc9abcffe456d75339661"
+   ],
+   "commit_details": [
+    {
+     "sha": "c4495b30c80801ca794bc9abcffe456d75339661",
+     "title": "zcode: a ZCode whose files were rewritten is put back by a sync (#3246)",
+     "url": "https://github.com/skygunner/magpie/commit/c4495b30c80801ca794bc9abcffe456d75339661"
+    }
+   ],
+   "branch": "fix/zcode-reconnect-after-rewrite",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "comments": {
+    "3246": [
+     "https://github.com/yetone/magpie/issues/3246#issuecomment-6403466440"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3246/.",
+    "head": "c4495b30c80801ca794bc9abcffe456d75339661"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-issue-3248-3248-codeassist-restart-db55f831",
+   "issues": [
+    3248
+   ],
+   "category": "product",
+   "title": "codeassist: a reply Antigravity restarts inside one stream ends with an error, never two answers spliced (#3248)",
+   "coverage": "Delivered scope per commit body and issue thread.",
+   "commits": [
+    "db55f831b2a848f01741249fe2af71bcbfccc96e"
+   ],
+   "commit_details": [
+    {
+     "sha": "db55f831b2a848f01741249fe2af71bcbfccc96e",
+     "title": "codeassist: a reply Antigravity restarts inside one stream ends with an error, never two answers spliced (#3248)",
+     "url": "https://github.com/skygunner/magpie/commit/db55f831b2a848f01741249fe2af71bcbfccc96e"
+    }
+   ],
+   "branch": "fix/3248-codeassist-restart",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "comments": {
+    "3248": [
+     "https://github.com/yetone/magpie/issues/3248#issuecomment-6403504636"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3248/.",
+    "head": "db55f831b2a848f01741249fe2af71bcbfccc96e"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-issue-2674-2674-blocklist-tail-92b3d82c",
+   "issues": [
+    2674
+   ],
+   "category": "product",
+   "title": "edit: a flow list with entries after it is not rewritten, so nothing is deleted (#2674)",
+   "coverage": "Delivered scope per commit body and issue thread.",
+   "commits": [
+    "92b3d82cf78b1b2ff93ffc07d83c999c2784a5f2"
+   ],
+   "commit_details": [
+    {
+     "sha": "92b3d82cf78b1b2ff93ffc07d83c999c2784a5f2",
+     "title": "edit: a flow list with entries after it is not rewritten, so nothing is deleted (#2674)",
+     "url": "https://github.com/skygunner/magpie/commit/92b3d82cf78b1b2ff93ffc07d83c999c2784a5f2"
+    }
+   ],
+   "branch": "fix/2674-blocklist-tail",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "comments": {
+    "2674": [
+     "https://github.com/yetone/magpie/issues/2674#issuecomment-6403620529"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/2674/.",
+    "head": "92b3d82cf78b1b2ff93ffc07d83c999c2784a5f2"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-issue-3169-uncounted-prompt-estimate-763d4687",
+   "issues": [
+    3169
+   ],
+   "category": "product",
+   "title": "gateway: an uncounted prompt reads beside its conversation's counted prompts (#3169)",
+   "coverage": "Delivered scope per commit body and issue thread.",
+   "commits": [
+    "763d468769269084af3a8f63ae0ff3527627f69c"
+   ],
+   "commit_details": [
+    {
+     "sha": "763d468769269084af3a8f63ae0ff3527627f69c",
+     "title": "gateway: an uncounted prompt reads beside its conversation's counted prompts (#3169)",
+     "url": "https://github.com/skygunner/magpie/commit/763d468769269084af3a8f63ae0ff3527627f69c"
+    }
+   ],
+   "branch": "fix/uncounted-prompt-estimate",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "comments": {
+    "3169": [
+     "https://github.com/yetone/magpie/issues/3169#issuecomment-6403679182"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3169/.",
+    "head": "763d468769269084af3a8f63ae0ff3527627f69c"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-issue-3434-codex-compaction-turn-identity-677160b7",
+   "issues": [
+    3434
+   ],
+   "category": "product",
+   "title": "gateway: a Codex turn compacted mid-flight keeps the rule it began with (#3434)",
+   "coverage": "Delivered scope per commit body and issue thread.",
+   "commits": [
+    "677160b76d2977e6b99dfcf61896922dfbc38fd1"
+   ],
+   "commit_details": [
+    {
+     "sha": "677160b76d2977e6b99dfcf61896922dfbc38fd1",
+     "title": "gateway: a Codex turn compacted mid-flight keeps the rule it began with (#3434)",
+     "url": "https://github.com/skygunner/magpie/commit/677160b76d2977e6b99dfcf61896922dfbc38fd1"
+    }
+   ],
+   "branch": "fix/codex-compaction-turn-identity",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "comments": {
+    "3434": [
+     "https://github.com/yetone/magpie/issues/3434#issuecomment-6403682869"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3434/.",
+    "head": "677160b76d2977e6b99dfcf61896922dfbc38fd1"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-issue-3156-routing-group-members-live-f816c358",
+   "issues": [
+    3156
+   ],
+   "category": "product",
+   "title": "routing: a live route names the group's models as the group has them now (#3156)",
+   "coverage": "Delivered scope per commit body and issue thread.",
+   "commits": [
+    "f816c358110a6637bc0fb816aa2b61a065b3fef3"
+   ],
+   "commit_details": [
+    {
+     "sha": "f816c358110a6637bc0fb816aa2b61a065b3fef3",
+     "title": "routing: a live route names the group's models as the group has them now (#3156)",
+     "url": "https://github.com/skygunner/magpie/commit/f816c358110a6637bc0fb816aa2b61a065b3fef3"
+    }
+   ],
+   "branch": "fix/routing-group-members-live",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "comments": {
+    "3156": [
+     "https://github.com/yetone/magpie/issues/3156#issuecomment-6403710605"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3156/.",
+    "head": "f816c358110a6637bc0fb816aa2b61a065b3fef3"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-issue-3585-redact-cue-words-e60d14a8",
+   "issues": [
+    3585
+   ],
+   "category": "product",
+   "title": "redact: a cue is a word of its own before the model's value (#3585)",
+   "coverage": "Delivered scope per commit body and issue thread.",
+   "commits": [
+    "e60d14a891340ebd7e10201e81d6acf51c4e10ea"
+   ],
+   "commit_details": [
+    {
+     "sha": "e60d14a891340ebd7e10201e81d6acf51c4e10ea",
+     "title": "redact: a cue is a word of its own before the model's value (#3585)",
+     "url": "https://github.com/skygunner/magpie/commit/e60d14a891340ebd7e10201e81d6acf51c4e10ea"
+    }
+   ],
+   "branch": "fix/redact-cue-words",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "comments": {
+    "3585": [
+     "https://github.com/yetone/magpie/issues/3585#issuecomment-6403818575"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3585/.",
+    "head": "e60d14a891340ebd7e10201e81d6acf51c4e10ea"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-issue-3650-usage-absent-used-6791aa99",
+   "issues": [
+    3650
+   ],
+   "category": "product",
+   "title": "provider: a window whose used was never sent is no allowance, proved from the base (#3650)",
+   "coverage": "Delivered scope per commit body and issue thread.",
+   "commits": [
+    "6791aa99ba38be542b0d29de48a23d8bb2007705"
+   ],
+   "commit_details": [
+    {
+     "sha": "6791aa99ba38be542b0d29de48a23d8bb2007705",
+     "title": "provider: a window whose used was never sent is no allowance, proved from the base (#3650)",
+     "url": "https://github.com/skygunner/magpie/commit/6791aa99ba38be542b0d29de48a23d8bb2007705"
+    }
+   ],
+   "branch": "fix/usage-absent-used",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "comments": {
+    "3650": [
+     "https://github.com/yetone/magpie/issues/3650#issuecomment-6403822501"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3650/.",
+    "head": "6791aa99ba38be542b0d29de48a23d8bb2007705"
+   },
+   "upstream": {
+    "status": "adopted",
+    "commit": "9733ed1b4aaf1eadc9e3e5d4a108dcbd1429d7f0",
+    "release": "v0.1.1608",
+    "note": "yetone: ported from the fork's fix/usage-absent-used branch with credit; 2026-10-26"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-issue-2759-import-source-row-0483a01f",
+   "issues": [
+    2759
+   ],
+   "category": "product",
+   "title": "gui: import source tiles wrap instead of hiding past the row's edge (#2759)",
+   "coverage": "Delivered scope per commit body and issue thread.",
+   "commits": [
+    "0483a01f649dc2263983f26662faa512a44489af"
+   ],
+   "commit_details": [
+    {
+     "sha": "0483a01f649dc2263983f26662faa512a44489af",
+     "title": "gui: import source tiles wrap instead of hiding past the row's edge (#2759)",
+     "url": "https://github.com/skygunner/magpie/commit/0483a01f649dc2263983f26662faa512a44489af"
+    }
+   ],
+   "branch": "fix/import-source-row",
+   "base": "c0985122b3f62e460c73ea6d67c426beb4dc9db2",
+   "comments": {
+    "2759": [
+     "https://github.com/yetone/magpie/issues/2759#issuecomment-6403875879"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Independent re-run on a clean checkout: the new test fails at c0985122 and passes at the pushed head; logs in docs/fork/evidence/round23/2759/.",
+    "head": "0483a01f649dc2263983f26662faa512a44489af"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-issue-2867-2867-drift-detail-i18n-a6df7cec",
+   "issues": [
+    2867
+   ],
+   "category": "product",
+   "title": "agent: drift details go out as notices, so they read in the reader's language (#2867)",
+   "coverage": "Delivered scope per commit body and issue thread.",
+   "commits": [
+    "a6df7cec93739ce4aa70d6f019da645497ca95b1"
+   ],
+   "commit_details": [
+    {
+     "sha": "a6df7cec93739ce4aa70d6f019da645497ca95b1",
+     "title": "agent: drift details go out as notices, so they read in the reader's language (#2867)",
+     "url": "https://github.com/skygunner/magpie/commit/a6df7cec93739ce4aa70d6f019da645497ca95b1"
+    }
+   ],
+   "branch": "fix/2867-drift-detail-i18n",
+   "base": "c0985122b3f62e460c73ea6d67c426beb4dc9db2",
+   "comments": {
+    "2867": [
+     "https://github.com/yetone/magpie/issues/2867#issuecomment-6403924259"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Independent re-run on a clean checkout: the new test fails at c0985122 and passes at the pushed head; logs in docs/fork/evidence/round23/2867/.",
+    "head": "a6df7cec93739ce4aa70d6f019da645497ca95b1"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-issue-3528-3528-search-usage-rows-f6064d5d",
+   "issues": [
+    3528
+   ],
+   "category": "product",
+   "title": "usage: a plan's search service or a search API is in Usage's requests (#3528)",
+   "coverage": "Delivered scope per commit body and issue thread.",
+   "commits": [
+    "f6064d5d6b1785760972ca2f6fe7f63e7776d747"
+   ],
+   "commit_details": [
+    {
+     "sha": "f6064d5d6b1785760972ca2f6fe7f63e7776d747",
+     "title": "usage: a plan's search service or a search API is in Usage's requests (#3528)",
+     "url": "https://github.com/skygunner/magpie/commit/f6064d5d6b1785760972ca2f6fe7f63e7776d747"
+    }
+   ],
+   "branch": "fix/3528-search-usage-rows",
+   "base": "c0985122b3f62e460c73ea6d67c426beb4dc9db2",
+   "comments": {
+    "3528": [
+     "https://github.com/yetone/magpie/issues/3528#issuecomment-6403927302"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Independent re-run on a clean checkout: the new test fails at c0985122 and passes at the pushed head; logs in docs/fork/evidence/round23/3528/.",
+    "head": "f6064d5d6b1785760972ca2f6fe7f63e7776d747"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-issue-3624-usage-view-routing-scroll-c931166a",
+   "issues": [
+    3624
+   ],
+   "category": "product",
+   "title": "Usage, routing: a request picked from Usage is brought into view (#3624)",
+   "coverage": "Delivered scope per the earlier commit body and issue thread.",
+   "commits": [
+    "c931166aadb24c635d4897857da2a0766572e9b3"
+   ],
+   "commit_details": [
+    {
+     "sha": "c931166aadb24c635d4897857da2a0766572e9b3",
+     "title": "usage, routing: a request picked from Usage is brought into view (#3624)",
+     "url": "https://github.com/skygunner/magpie/commit/c931166aadb24c635d4897857da2a0766572e9b3"
+    }
+   ],
+   "branch": "fix/nvidia-parameters-routing",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "comments": {
+    "3624": [
+     "https://github.com/yetone/magpie/issues/3624#issuecomment-6400631669"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Earlier round's delivery: commit c931166a on fix/nvidia-parameters-routing; reply comment 6400631669 read back through the GitHub API.",
+    "head": "c931166aadb24c635d4897857da2a0766572e9b3"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-round25-3647-691aa254",
+   "issues": [
+    3647
+   ],
+   "category": "product",
+   "title": "test: wait for the TLS listener to have taken the connection and stopped accepting via events, not durations",
+   "coverage": "Delivered scoped production change; exact base-to-head patch and tests are archived. Runtime and platform limits are retained in the archived summary.json.",
+   "commits": [
+    "b48f3a41287f61196574910cbcca6ead0627e112",
+    "23bd4df0bcb5b092d26a74e76047b9f67b8a8a5b",
+    "691aa25451562cc614c7fc90ec6d30a56f8ded2f"
+   ],
+   "commit_details": [],
+   "branch": "fix/r25-tls-handover-local",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "comments": {
+    "3647": [
+     "https://github.com/yetone/magpie/issues/3647#issuecomment-6408145744"
+    ]
+   },
+   "verify": {
+    "state": "scoped_evidence_with_limitations",
+    "head": "691aa25451562cc614c7fc90ec6d30a56f8ded2f",
+    "evidence": "docs/fork/evidence/round25/3647/: same-test base RED and scoped head GREEN logs, actual verify.log; mechanical remote/comment re-read in round25-recovery/ledger-rows-verified.json. No claim of a fully green repository suite or native Windows runtime."
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   },
+   "round": 25
+  },
+  {
+   "id": "u-round25-3645-833c7cd6",
+   "issues": [
+    3645
+   ],
+   "category": "tests",
+   "title": "gui tests: gate routing log trace updates on story checks (#3645)",
+   "coverage": "Test-only delivery, pushed as branch fix/r25-routing-log-icons-wait (833c7cd6, zero production files; internal/gui/tests routing-log icons wait fix) with comment 6408257043; excluded from the round's production-fix count. No production claim.",
+   "commits": [
+    "833c7cd61728607fdba75637e3271099847c2e70"
+   ],
+   "commit_details": [],
+   "branch": "fix/r25-routing-log-icons-wait",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "comments": {
+    "3645": [
+     "https://github.com/yetone/magpie/issues/3645#issuecomment-6408257043"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "head": "833c7cd61728607fdba75637e3271099847c2e70",
+    "evidence": "docs/fork/evidence/round25/3645/; test-only, no production files"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   },
+   "round": 25
+  },
+  {
+   "id": "u-round25-3655-d9c57ab0",
+   "issues": [
+    3655
+   ],
+   "category": "product",
+   "title": "gateway: a write_stdin wait on a running process is not a tool loop (hibaliqya-yonma, #3655)",
+   "coverage": "Delivered scoped production change; exact base-to-head patch and tests are archived. Runtime and platform limits are retained in the archived summary.json.",
+   "commits": [
+    "d9c57ab0550fd408c38d3d46996b9943b29117a7"
+   ],
+   "commit_details": [],
+   "branch": "fix/r25-write-stdin-wait",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "comments": {
+    "3655": [
+     "https://github.com/yetone/magpie/issues/3655#issuecomment-6408456830"
+    ]
+   },
+   "verify": {
+    "state": "scoped_evidence_with_limitations",
+    "head": "d9c57ab0550fd408c38d3d46996b9943b29117a7",
+    "evidence": "docs/fork/evidence/round25/3655/: same-test base RED and scoped head GREEN logs, actual verify.log; mechanical remote/comment re-read in round25-recovery/ledger-rows-verified.json. No claim of a fully green repository suite or native Windows runtime."
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   },
+   "round": 25
+  },
+  {
+   "id": "u-round25-3656-95c05114",
+   "issues": [
+    3656
+   ],
+   "category": "product",
+   "title": "gui: account masking keeps aliases, plan and model names readable",
+   "coverage": "Account masking walks the text as the GUI renders it (TreeWalker over rendered nodes): a custom alias the user set and same-named plan text are no longer masked, while a real account id or default plan label still is; GUI regression internal/gui/tests/account-mask-alias-plan.test.cjs red on base, green on head; verdict regression_verified_with_explicit_unresolved_checks per archived summary.",
+   "commits": [
+    "95c0511419c66fd8092599dbde4bc68bc438126b"
+   ],
+   "commit_details": [],
+   "branch": "fix/r25-mask-alias-plan",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "comments": {
+    "3656": [
+     "https://github.com/yetone/magpie/issues/3656#issuecomment-6408578981"
+    ]
+   },
+   "verify": {
+    "state": "scoped_evidence_with_limitations",
+    "head": "95c0511419c66fd8092599dbde4bc68bc438126b",
+    "evidence": "docs/fork/evidence/round25/3656/: archived red.log/green.log on git-archive trees, summary.json"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   },
+   "round": 25
+  },
+  {
+   "id": "u-round25-3657-82d23059",
+   "issues": [
+    3657
+   ],
+   "category": "product",
+   "title": "library: a skill of the user's kept in ~/.agents/skills moves in when brought in, so the agents' ticks decide who has it (#3657)",
+   "coverage": "Delivered scoped production change; exact base-to-head patch and tests are archived. Runtime and platform limits are retained in the archived summary.json.",
+   "commits": [
+    "82d23059d13bf87fc1ef426bb785e4daf68aa77d"
+   ],
+   "commit_details": [],
+   "branch": "fix/r25-library-uncheckbox",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "comments": {
+    "3657": [
+     "https://github.com/yetone/magpie/issues/3657#issuecomment-6408073510"
+    ]
+   },
+   "verify": {
+    "state": "scoped_evidence_with_limitations",
+    "head": "82d23059d13bf87fc1ef426bb785e4daf68aa77d",
+    "evidence": "docs/fork/evidence/round25/3657/: same-test base RED and scoped head GREEN logs, actual verify.log; mechanical remote/comment re-read in round25-recovery/ledger-rows-verified.json. No claim of a fully green repository suite or native Windows runtime."
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   },
+   "round": 25
+  },
+  {
+   "id": "u-round25-3622-984d3895",
+   "issues": [
+    3622
+   ],
+   "category": "product",
+   "title": "plugin: a dist tarball bun.lock still names stays when pruneDist runs",
+   "coverage": "pruneDist keeps a dist tarball bun.lock still names (workspaces and packages sections both scanned) until the lock stops naming it, so a later bun add resolves; dist sha512 checks unchanged. Regression TestDistPruneKeepsWhatTheLockNames with real bun 1.4.4 against an httptest fake registry reproduces the reported lock/package.json drift state (base RED at the first assertion, head GREEN with the unrelated package's bun add restored). Patch applies --3way clean onto upstream/main d9a8148d (checked 2026-10-27); JoeyWu-tech's 63f4c0d5+f5bc278f independently carries the same pruneDist semantics plus offline lock repair; no further comment posted to avoid duplication.",
+   "commits": [
+    "984d389514b9e688bcc1556c9c485bf301e8114a"
+   ],
+   "commit_details": [],
+   "branch": "fix/r25-plugin-lock-drift",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "comments": {
+    "3622": [
+     "https://github.com/yetone/magpie/issues/3622#issuecomment-6410545136"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "head": "984d389514b9e688bcc1556c9c485bf301e8114a",
+    "evidence": "docs/fork/evidence/round25/3622/ red-green with real bun 1.4.4; 2026-10-27 apply --3way --check clean on d9a8148d"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   },
+   "round": 25
+  },
+  {
+   "id": "u-round25-3621-0aac5452",
+   "issues": [
+    3621
+   ],
+   "category": "product",
+   "title": "autostart: Open at login names the magpie on PATH, not the versioned file it points at (#3621)",
+   "coverage": "Delivered scoped production change; exact base-to-head patch and tests are archived. Runtime and platform limits are retained in the archived summary.json.",
+   "commits": [
+    "0aac5452b2310d9a658b6787fdf6d57238de0102"
+   ],
+   "commit_details": [],
+   "branch": "fix/r25-autostart-exec-stable",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "comments": {
+    "3621": [
+     "https://github.com/yetone/magpie/issues/3621#issuecomment-6408564893"
+    ]
+   },
+   "verify": {
+    "state": "scoped_evidence_with_limitations",
+    "head": "0aac5452b2310d9a658b6787fdf6d57238de0102",
+    "evidence": "docs/fork/evidence/round25/3621/: same-test base RED and scoped head GREEN logs, actual verify.log; mechanical remote/comment re-read in round25-recovery/ledger-rows-verified.json. No claim of a fully green repository suite or native Windows runtime."
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   },
+   "round": 25
+  },
+  {
+   "id": "u-round25-3632-3a0b4479",
+   "issues": [
+    3632
+   ],
+   "category": "product",
+   "title": "filememo: a write wakes what waits on Written, made only while one waits (#3632)",
+   "coverage": "Delivered scoped production change; exact base-to-head patch and tests are archived. Runtime and platform limits are retained in the archived summary.json. | 2026-10-27 follow-up: merged upstream/main d9a8148d so de49433f's wake() joins the branch, and wake now closes lazily like Forget does (TestWakeAcrossSynctestBubbles red on d9a8148d with fatal at wake() filememo.go:101, green on head 47eb5102; net diff vs main is filememo only); comment 6408812631 edited with the follow-up crediting JoeyWu-tech's 0576b589 which independently covers both close sites. Known main-side flake documented: full internal/provider run can fail TestOpenCodeSessionOnEveryCall when the per-ms openCodeNewID counter passes 15 (observed on clean main too); passes alone and in family runs.",
+   "commits": [
+    "3a0b44793653ee8f752f73a8efe215514b6d5822",
+    "7182c1a702b294db07576175992a42e8a9d87171",
+    "47eb5102a58e7d931ab57bffa350124fadcbdc6e"
+   ],
+   "commit_details": [],
+   "branch": "fix/r25-filememo-forget-bubble",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "comments": {
+    "3632": [
+     "https://github.com/yetone/magpie/issues/3632#issuecomment-6408812631"
+    ]
+   },
+   "verify": {
+    "state": "pass",
+    "head": "47eb5102a58e7d931ab57bffa350124fadcbdc6e",
+    "evidence": "docs/fork/evidence/round25/3632-followup/: red-wake-on-d9a8148d.log, green-filememo.log, provider-full-flake.log, baseline-main-skip-bubble-flake.log, baseline-main-full-fatal.log, net-diff-vs-main.patch, comment-followup-readback.md"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   },
+   "round": 25
+  },
+  {
+   "id": "u-round25-3620-f74765fd",
+   "issues": [
+    3620
+   ],
+   "category": "product",
+   "title": "gui: a group's levels say why Save refused them while the editor is open (#3620)",
+   "coverage": "Delivered scoped production change; exact base-to-head patch and tests are archived. Related routing suite still fails (54 failures; 7 unmatched baseline blocks); original intermittent timeout not reproduced.",
+   "commits": [
+    "f74765fd4901221b022c275f6bb6dfac76e4a50b"
+   ],
+   "commit_details": [],
+   "branch": "fix/r25-routing-levels-wait",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "comments": {
+    "3620": [
+     "https://github.com/yetone/magpie/issues/3620#issuecomment-6410020815"
+    ]
+   },
+   "verify": {
+    "state": "partial_verification",
+    "head": "f74765fd4901221b022c275f6bb6dfac76e4a50b",
+    "evidence": "docs/fork/evidence/round25/3620/: same-test base RED and scoped head GREEN logs, actual verify.log; mechanical remote/comment re-read in round25-recovery/ledger-rows-verified.json. Related routing suite still fails (54 failures; 7 unmatched baseline blocks); original intermittent timeout not reproduced."
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   },
+   "round": 25
+  },
+  {
+   "id": "u-round25-3674-18006848",
+   "issues": [
+    3674
+   ],
+   "category": "product",
+   "title": "sessions, usage: a dsh call the gateway served is counted once (#3674)",
+   "coverage": "Delivered scoped production change; exact base-to-head patch and tests are archived. Exact response-id pairing only; optional heuristic pairing not implemented.",
+   "commits": [
+    "18006848027b956553615e5dd462a2e6580cb92d"
+   ],
+   "commit_details": [],
+   "branch": "fix/r25-usage-dedup-session-file",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "comments": {
+    "3674": [
+     "https://github.com/yetone/magpie/issues/3674#issuecomment-6410685355"
+    ]
+   },
+   "verify": {
+    "state": "scoped_evidence_with_limitations",
+    "head": "18006848027b956553615e5dd462a2e6580cb92d",
+    "evidence": "docs/fork/evidence/round25/3674/: same-test base RED and scoped head GREEN logs, actual verify.log; mechanical remote/comment re-read in round25-recovery/ledger-rows-verified.json. Exact response-id pairing only; optional heuristic pairing not implemented."
+   },
+   "upstream": {
+    "status": "partial"
+   },
+   "archive": {
+    "candidate": false
+   },
+   "round": 25
+  },
+  {
+   "id": "u-round25-3661-e04a1b99",
+   "issues": [
+    3661
+   ],
+   "category": "product",
+   "title": "gateway: a missing ZCode trial quota rests only its model (#3661)",
+   "coverage": "Delivered scoped production change; exact base-to-head patch and tests are archived. Only expired trial quota model-rest scope fixed; model listing/pruning remains not implemented. Full gateway suite has reproduced baseline failure.",
+   "commits": [
+    "e04a1b9948b672b168eae484e09ba9609acbcb53"
+   ],
+   "commit_details": [],
+   "branch": "fix/r25-expired-model-not-account-fault",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "comments": {
+    "3661": [
+     "https://github.com/yetone/magpie/issues/3661#issuecomment-6411723766"
+    ]
+   },
+   "verify": {
+    "state": "scoped_evidence_with_limitations",
+    "head": "e04a1b9948b672b168eae484e09ba9609acbcb53",
+    "evidence": "docs/fork/evidence/round25/3661/: same-test base RED and scoped head GREEN logs, actual verify.log; mechanical remote/comment re-read in round25-recovery/ledger-rows-verified.json. Only expired trial quota model-rest scope fixed; model listing/pruning remains not implemented. Full gateway suite has reproduced baseline failure."
+   },
+   "upstream": {
+    "status": "partial"
+   },
+   "archive": {
+    "candidate": false
+   },
+   "round": 25
+  },
+  {
+   "id": "u-round25-3668-7ca156c6",
+   "issues": [
+    3668
+   ],
+   "category": "product",
+   "title": "gui: an account with no Grok plan says Grok, not an invented SuperGrok (#3668)",
+   "coverage": "Delivered scoped production change; exact base-to-head patch and tests are archived. Permanent boundary failure: published commit replaced by force-with-lease. Plugin branding not fixed. Excluded from compliant production count. Remaining scope is documented in summary.json.",
+   "commits": [
+    "7ca156c6876282fb3218b42e98429a2c492ebd90"
+   ],
+   "commit_details": [],
+   "branch": "fix/r25-grok-plan-absent-label",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "comments": {
+    "3668": [
+     "https://github.com/yetone/magpie/issues/3668#issuecomment-6411424119"
+    ]
+   },
+   "verify": {
+    "state": "boundary_failed",
+    "head": "7ca156c6876282fb3218b42e98429a2c492ebd90",
+    "evidence": "docs/fork/evidence/round25/3668/: same-test base RED and scoped head GREEN logs, actual verify.log; mechanical remote/comment re-read in round25-recovery/ledger-rows-verified.json. Permanent boundary failure: published commit replaced by force-with-lease. Plugin branding not fixed. Excluded from compliant production count."
+   },
+   "upstream": {
+    "status": "partial"
+   },
+   "archive": {
+    "candidate": false
+   },
+   "round": 25
+  },
+  {
+   "id": "u-round25-3684-91625dca",
+   "issues": [
+    3684
+   ],
+   "category": "product",
+   "title": "gateway: a phantom tool_calls finish becomes stop when no call came (#3684)",
+   "coverage": "Only the phantom finish flag is fixed: a choice that delivered no actual calls has an upstream tool_calls finish normalized to stop, in streaming and whole replies, for missing/null/empty-array shapes. Real native and text-parsed calls keep tool_calls. Automatic retry of billed-but-empty Chat completions is explicitly NOT implemented (#3327's retry policy stays blocked); the issue remains open for that part. 6 of the 11 reported stall shapes are covered; the rest are the billed-empty cases. Phantom tool_calls finish normalization only; billed-but-empty response retry not implemented. Full gateway baseline failure remains.",
+   "commits": [
+    "91625dca0bb33ee696be639e659bdf4c8f1b6abd"
+   ],
+   "commit_details": [],
+   "branch": "fix/r25-empty-tool-calls-finish",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "comments": {
+    "3684": [
+     "https://github.com/yetone/magpie/issues/3684#issuecomment-6413055706"
+    ]
+   },
+   "verify": {
+    "state": "scoped_evidence_with_limitations",
+    "head": "91625dca0bb33ee696be639e659bdf4c8f1b6abd",
+    "evidence": "docs/fork/evidence/round25/3684/: same-test base RED and scoped head GREEN logs, actual verify.log; mechanical remote/comment re-read in round25-recovery/ledger-rows-verified.json. Phantom tool_calls finish normalization only; billed-but-empty response retry not implemented. Full gateway baseline failure remains."
+   },
+   "upstream": {
+    "status": "partial"
+   },
+   "archive": {
+    "candidate": false
+   },
+   "round": 25
+  },
+  {
+   "id": "u-round25-3648-f5fd1da3",
+   "issues": [
+    3648
+   ],
+   "category": "product",
+   "title": "dev tests: the handover's own close is the barrier for the taken connection",
+   "coverage": "Delivered scoped production change; exact base-to-head patch and tests are archived. Listener-close barrier proved base/head RED/GREEN. Time-based signal retry remains contrary to no-delay test discipline; followup requested, not yet delivered.",
+   "commits": [
+    "900957661c9c561fe060b32019eed4ad7834c298",
+    "083079e46e9a1db8a1862286c7522f26e6e8aa00",
+    "f5fd1da3ff6ac4e894b2de81e9bb2aa5fa7363ad",
+    "6d3f202fa62935bc480db953efcfb15256641c08"
+   ],
+   "commit_details": [],
+   "branch": "fix/r25-dev-backend-handover",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "comments": {
+    "3648": [
+     "https://github.com/yetone/magpie/issues/3648#issuecomment-6413258899"
+    ]
+   },
+   "verify": {
+    "state": "partial_verification",
+    "head": "6d3f202fa62935bc480db953efcfb15256641c08",
+    "evidence": "docs/fork/evidence/round25/3648/: same-test base RED and scoped head GREEN logs, actual verify.log; mechanical remote/comment re-read in round25-recovery/ledger-rows-verified.json. Listener-close barrier proved base/head RED/GREEN. Time-based signal retry remains contrary to no-delay test discipline; followup requested, not yet delivered."
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   },
+   "round": 25
+  },
+  {
+   "id": "u-round25-2998-4cad21e1",
+   "issues": [
+    2998
+   ],
+   "category": "product",
+   "title": "agent: MiniMax Code moved data folder is not followed, so the desktop model list never changes (#2998)",
+   "coverage": "Shared appdir resolver reads the CN build settings record config.localRuntimeDataParentDir and uses <parent>/.minimax for both agent.MiniMaxDir and sessions.MiniMaxDir; MINIMAX_DATA_DIR remains the override; missing, malformed, relative or whitespace records keep the fixed path. A real Windows desktop and its model picker were not exercised; previous data parents were not followed.",
+   "commits": [
+    "4cad21e120deced2560e904f8b9ba845a471e3c9"
+   ],
+   "commit_details": [],
+   "branch": "fix/r25-minimax-moved-data",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "comments": {
+    "2998": [
+     "https://github.com/yetone/magpie/issues/2998#issuecomment-6415246814"
+    ]
+   },
+   "verify": {
+    "state": "scoped_evidence_with_limitations",
+    "head": "4cad21e120deced2560e904f8b9ba845a471e3c9",
+    "evidence": "docs/fork/evidence/round25/2998/: behavioral RED on clean base with only the new test, scoped GREEN at head, realistic magpie ls check, full-suite baseline-reproduced failures recorded. No real Windows desktop runtime."
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   },
+   "round": 25
+  },
+  {
+   "id": "u-mcpauth-a-token-stage-refused-with-inval-109e6f47",
+   "issues": [
+    3194
+   ],
+   "category": "product",
+   "title": "mcpauth: a token stage refused with invalid_target is retried once without the resource (#3194)",
+   "coverage": "tokenRequest posts once and, only on an explicit tokenError invalid_target while the form carried an RFC 8707 resource, retries once without that parameter; the saved record keeps the advertised resource; no other token error retried, no loop. The authorize-stage browser rejection (error=invalid_target before any token) is deliberately out of scope and remains open; verified against a fake authorization server reproducing Semgrep's behavior, no real Semgrep server exercised.",
+   "commits": [
+    "109e6f47a18cd0540e463089ac9d86656840dac5"
+   ],
+   "commit_details": [
+    {
+     "sha": "109e6f47a18cd0540e463089ac9d86656840dac5",
+     "title": "mcpauth: a token stage refused with invalid_target is retried once without the resource (#3194)",
+     "url": "https://github.com/skygunner/magpie/commit/109e6f47a18cd0540e463089ac9d86656840dac5"
+    }
+   ],
+   "branch": "fix/r25-mcp-invalid-target-retry",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "comments": {
+    "3194": [
+     "https://github.com/yetone/magpie/issues/3194#issuecomment-6416184531"
+    ]
+   },
+   "sources": {
+    "credited": "sisyphus-dev-ai",
+    "coauthors": [
+     "Co-authored-by: sisyphus-dev-ai <sisyphus-dev-ai@users.noreply.github.com>"
+    ]
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "verify": {
+    "state": "pass",
+    "head": "109e6f47a18cd0540e463089ac9d86656840dac5",
+    "evidence": "docs/fork/evidence/round25/3194/: git-archive base RED (real invalid_target at exchange and renewal) / head GREEN; -race mcpauth+library ok, MCP-targeted gateway ok; full -race gateway has three failures and a 10m timeout present on the untouched base too; gofmt/vet/builds (linux nogui, windows) clean; comment readback body_exact_equal=true"
+   },
+   "archive": {},
+   "round": 25
   }
  ],
  "pointed_elsewhere": [
@@ -6149,6 +7547,483 @@
    "replaced_by": "",
    "note": "round-22 addendum",
    "category": "product"
+  },
+  {
+   "branch": "fix/issue-3475",
+   "head": "3dfc880cfc843f9c2ca5e0ac8f8c65a8aa8647b5",
+   "kind": "product",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "fix_ids": [
+    "u-issue-3475-issue-3475-3dfc880c"
+   ],
+   "replaced_by": "",
+   "note": "round-23",
+   "category": "product"
+  },
+  {
+   "branch": "fix/anthropic-thinking-tokens",
+   "head": "fb6763d9f236f71dd7a76fb0c4a4275ac1c89193",
+   "kind": "product",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "fix_ids": [
+    "u-issue-3430-anthropic-thinking-tokens-fb6763d9"
+   ],
+   "replaced_by": "",
+   "note": "round-23",
+   "category": "product"
+  },
+  {
+   "branch": "fix/codex-context-percent",
+   "head": "ce9531f6181409142cf4dd0e4dfb2ac3a6d1f5c3",
+   "kind": "product",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "fix_ids": [
+    "u-issue-3553-codex-context-percent-ce9531f6"
+   ],
+   "replaced_by": "",
+   "note": "round-23",
+   "category": "product"
+  },
+  {
+   "branch": "fix/issue-3566",
+   "head": "bafd13618b4dee3e879801d6f02aca48135b863e",
+   "kind": "product",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "fix_ids": [
+    "u-issue-3566-issue-3566-bafd1361"
+   ],
+   "replaced_by": "",
+   "note": "round-23",
+   "category": "product"
+  },
+  {
+   "branch": "fix/plugin-codeassist-probe",
+   "head": "d99b2bd1241d59c507227166bb1bf3d9ac49ee3d",
+   "kind": "product",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "fix_ids": [
+    "u-issue-3460-plugin-codeassist-probe-d99b2bd1"
+   ],
+   "replaced_by": "",
+   "note": "round-23",
+   "category": "product"
+  },
+  {
+   "branch": "fix/provider-rename-gateway-keys",
+   "head": "63e1ff5cd8a3f2b623222482b02745ec269c36cc",
+   "kind": "product",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "fix_ids": [
+    "u-issue-3630-provider-rename-gateway-keys-63e1ff5c"
+   ],
+   "replaced_by": "",
+   "note": "round-23",
+   "category": "product"
+  },
+  {
+   "branch": "fix/dsh-comment-between-entries",
+   "head": "91a19f2568f5d7d504a3ca11c97ea027294b04ca",
+   "kind": "product",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "fix_ids": [
+    "u-issue-3329-dsh-comment-between-entries-91a19f25"
+   ],
+   "replaced_by": "",
+   "note": "round-23",
+   "category": "product"
+  },
+  {
+   "branch": "fix/trace-live-window",
+   "head": "a814f6e3910c7cbdebae1ecf65c020b8cdafaba5",
+   "kind": "product",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "fix_ids": [
+    "u-issue-3614-trace-live-window-a814f6e3"
+   ],
+   "replaced_by": "",
+   "note": "round-23",
+   "category": "product"
+  },
+  {
+   "branch": "fix/antigravity-signature",
+   "head": "043636a38ae731a74fe70511b9425c8b6275d70f",
+   "kind": "product",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "fix_ids": [
+    "u-issue-3572-antigravity-signature-043636a3"
+   ],
+   "replaced_by": "",
+   "note": "round-23",
+   "category": "product"
+  },
+  {
+   "branch": "fix/redact-local-host",
+   "head": "aa0e3ec7cbbc8df0620d133764f392f6bc07cbed",
+   "kind": "product",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "fix_ids": [
+    "u-issue-3541-redact-local-host-aa0e3ec7"
+   ],
+   "replaced_by": "",
+   "note": "round-23",
+   "category": "product"
+  },
+  {
+   "branch": "fix/zcode-reconnect-after-rewrite",
+   "head": "c4495b30c80801ca794bc9abcffe456d75339661",
+   "kind": "product",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "fix_ids": [
+    "u-issue-3246-zcode-reconnect-after-rewrite-c4495b30"
+   ],
+   "replaced_by": "",
+   "note": "round-23",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3248-codeassist-restart",
+   "head": "db55f831b2a848f01741249fe2af71bcbfccc96e",
+   "kind": "product",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "fix_ids": [
+    "u-issue-3248-3248-codeassist-restart-db55f831"
+   ],
+   "replaced_by": "",
+   "note": "round-23",
+   "category": "product"
+  },
+  {
+   "branch": "fix/2674-blocklist-tail",
+   "head": "92b3d82cf78b1b2ff93ffc07d83c999c2784a5f2",
+   "kind": "product",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "fix_ids": [
+    "u-issue-2674-2674-blocklist-tail-92b3d82c"
+   ],
+   "replaced_by": "",
+   "note": "round-23",
+   "category": "product"
+  },
+  {
+   "branch": "fix/uncounted-prompt-estimate",
+   "head": "763d468769269084af3a8f63ae0ff3527627f69c",
+   "kind": "product",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "fix_ids": [
+    "u-issue-3169-uncounted-prompt-estimate-763d4687"
+   ],
+   "replaced_by": "",
+   "note": "round-23",
+   "category": "product"
+  },
+  {
+   "branch": "fix/codex-compaction-turn-identity",
+   "head": "677160b76d2977e6b99dfcf61896922dfbc38fd1",
+   "kind": "product",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "fix_ids": [
+    "u-issue-3434-codex-compaction-turn-identity-677160b7"
+   ],
+   "replaced_by": "",
+   "note": "round-23",
+   "category": "product"
+  },
+  {
+   "branch": "fix/routing-group-members-live",
+   "head": "f816c358110a6637bc0fb816aa2b61a065b3fef3",
+   "kind": "product",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "fix_ids": [
+    "u-issue-3156-routing-group-members-live-f816c358"
+   ],
+   "replaced_by": "",
+   "note": "round-23",
+   "category": "product"
+  },
+  {
+   "branch": "fix/redact-cue-words",
+   "head": "e60d14a891340ebd7e10201e81d6acf51c4e10ea",
+   "kind": "product",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "fix_ids": [
+    "u-issue-3585-redact-cue-words-e60d14a8"
+   ],
+   "replaced_by": "",
+   "note": "round-23",
+   "category": "product"
+  },
+  {
+   "branch": "fix/usage-absent-used",
+   "head": "6791aa99ba38be542b0d29de48a23d8bb2007705",
+   "kind": "product",
+   "base": "01468003348ede896c5126e9fd81057e1e58765c",
+   "fix_ids": [
+    "u-issue-3650-usage-absent-used-6791aa99"
+   ],
+   "replaced_by": "",
+   "note": "round-23",
+   "category": "product"
+  },
+  {
+   "branch": "fix/import-source-row",
+   "head": "0483a01f649dc2263983f26662faa512a44489af",
+   "kind": "product",
+   "base": "c0985122b3f62e460c73ea6d67c426beb4dc9db2",
+   "fix_ids": [
+    "u-issue-2759-import-source-row-0483a01f"
+   ],
+   "replaced_by": "",
+   "note": "round-23",
+   "category": "product"
+  },
+  {
+   "branch": "fix/2867-drift-detail-i18n",
+   "head": "a6df7cec93739ce4aa70d6f019da645497ca95b1",
+   "kind": "product",
+   "base": "c0985122b3f62e460c73ea6d67c426beb4dc9db2",
+   "fix_ids": [
+    "u-issue-2867-2867-drift-detail-i18n-a6df7cec"
+   ],
+   "replaced_by": "",
+   "note": "round-23",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3528-search-usage-rows",
+   "head": "f6064d5d6b1785760972ca2f6fe7f63e7776d747",
+   "kind": "product",
+   "base": "c0985122b3f62e460c73ea6d67c426beb4dc9db2",
+   "fix_ids": [
+    "u-issue-3528-3528-search-usage-rows-f6064d5d"
+   ],
+   "replaced_by": "",
+   "note": "round-23",
+   "category": "product"
+  },
+  {
+   "branch": "fix/r25-tls-handover-local",
+   "head": "691aa25451562cc614c7fc90ec6d30a56f8ded2f",
+   "kind": "fix",
+   "where": "remote",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "fix_ids": [
+    "u-round25-3647-691aa254"
+   ],
+   "category": "product",
+   "note": "round25; scoped_evidence_with_limitations",
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "branch": "fix/r25-routing-log-icons-wait",
+   "head": "833c7cd61728607fdba75637e3271099847c2e70",
+   "kind": "fix",
+   "where": "remote",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "fix_ids": [
+    "u-round25-3645-833c7cd6"
+   ],
+   "category": "tests",
+   "note": "round25; test_only",
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "branch": "fix/r25-write-stdin-wait",
+   "head": "d9c57ab0550fd408c38d3d46996b9943b29117a7",
+   "kind": "fix",
+   "where": "remote",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "fix_ids": [
+    "u-round25-3655-d9c57ab0"
+   ],
+   "category": "product",
+   "note": "round25; scoped_evidence_with_limitations",
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "branch": "fix/r25-mask-alias-plan",
+   "head": "95c0511419c66fd8092599dbde4bc68bc438126b",
+   "kind": "fix",
+   "where": "remote",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "fix_ids": [
+    "u-round25-3656-95c05114"
+   ],
+   "category": "product",
+   "note": "round25; scoped_evidence_with_limitations",
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "branch": "fix/r25-library-uncheckbox",
+   "head": "82d23059d13bf87fc1ef426bb785e4daf68aa77d",
+   "kind": "fix",
+   "where": "remote",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "fix_ids": [
+    "u-round25-3657-82d23059"
+   ],
+   "category": "product",
+   "note": "round25; scoped_evidence_with_limitations",
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "branch": "fix/r25-plugin-lock-drift",
+   "head": "984d389514b9e688bcc1556c9c485bf301e8114a",
+   "kind": "fix",
+   "where": "remote",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "fix_ids": [
+    "u-round25-3622-984d3895"
+   ],
+   "category": "product",
+   "note": "round25; scoped_evidence_with_limitations",
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "branch": "fix/r25-autostart-exec-stable",
+   "head": "0aac5452b2310d9a658b6787fdf6d57238de0102",
+   "kind": "fix",
+   "where": "remote",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "fix_ids": [
+    "u-round25-3621-0aac5452"
+   ],
+   "category": "product",
+   "note": "round25; scoped_evidence_with_limitations",
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "branch": "fix/r25-filememo-forget-bubble",
+   "head": "3a0b44793653ee8f752f73a8efe215514b6d5822",
+   "kind": "fix",
+   "where": "remote",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "fix_ids": [
+    "u-round25-3632-3a0b4479"
+   ],
+   "category": "product",
+   "note": "round25; scoped_evidence_with_limitations",
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "branch": "fix/r25-routing-levels-wait",
+   "head": "f74765fd4901221b022c275f6bb6dfac76e4a50b",
+   "kind": "fix",
+   "where": "remote",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "fix_ids": [
+    "u-round25-3620-f74765fd"
+   ],
+   "category": "product",
+   "note": "round25; partial_verification",
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "branch": "fix/r25-usage-dedup-session-file",
+   "head": "18006848027b956553615e5dd462a2e6580cb92d",
+   "kind": "fix",
+   "where": "remote",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "fix_ids": [
+    "u-round25-3674-18006848"
+   ],
+   "category": "product",
+   "note": "round25; scoped_evidence_with_limitations",
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "branch": "fix/r25-expired-model-not-account-fault",
+   "head": "e04a1b9948b672b168eae484e09ba9609acbcb53",
+   "kind": "fix",
+   "where": "remote",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "fix_ids": [
+    "u-round25-3661-e04a1b99"
+   ],
+   "category": "product",
+   "note": "round25; scoped_evidence_with_limitations",
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "branch": "fix/r25-grok-plan-absent-label",
+   "head": "7ca156c6876282fb3218b42e98429a2c492ebd90",
+   "kind": "fix",
+   "where": "remote",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "fix_ids": [
+    "u-round25-3668-7ca156c6"
+   ],
+   "category": "product",
+   "note": "round25; boundary_failed",
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "branch": "fix/r25-empty-tool-calls-finish",
+   "head": "91625dca0bb33ee696be639e659bdf4c8f1b6abd",
+   "kind": "fix",
+   "where": "remote",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "fix_ids": [
+    "u-round25-3684-91625dca"
+   ],
+   "category": "product",
+   "note": "round25; scoped_evidence_with_limitations",
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "branch": "fix/r25-dev-backend-handover",
+   "head": "6d3f202fa62935bc480db953efcfb15256641c08",
+   "kind": "fix",
+   "where": "remote",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "fix_ids": [
+    "u-round25-3648-f5fd1da3"
+   ],
+   "category": "product",
+   "note": "round25; partial_verification",
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "branch": "fix/r25-minimax-moved-data",
+   "head": "4cad21e120deced2560e904f8b9ba845a471e3c9",
+   "kind": "fix",
+   "where": "remote",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "fix_ids": [
+    "u-round25-2998-4cad21e1"
+   ],
+   "category": "product",
+   "note": "round25; scoped_evidence_with_limitations",
+   "archive": {
+    "candidate": false
+   }
   }
  ],
  "archive_policy": {
@@ -6978,6 +8853,363 @@
    "body_sha256": "bc1ad55e70c3cb8c9699543b11cc3ce62f125b3cf703a499c7023ddac5787789",
    "evidence": "docs/fork/evidence/round22/comment-readback.json",
    "body_updated_at": "2026-10-25T18:20:46Z"
+  },
+  {
+   "issue": 3475,
+   "fix_id": "u-issue-3475-issue-3475-3dfc880c",
+   "comment_id": 6403009365,
+   "url": "https://github.com/yetone/magpie/issues/3475#issuecomment-6403009365",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T20:43:49Z",
+   "verified_at": "2026-10-25T20:43:49Z",
+   "delivery": "fix/issue-3475",
+   "delivery_head": "3dfc880cfc843f9c2ca5e0ac8f8c65a8aa8647b5",
+   "body_sha256": "a5ed2a12867e9c0faf9ce08db2fa3e569de38b6c27c47d7b922dbdfb94ff3cfc",
+   "evidence": "docs/fork/evidence/round23/3475/comment-readback.json",
+   "body_updated_at": "2026-10-25T20:43:49Z"
+  },
+  {
+   "issue": 3430,
+   "fix_id": "u-issue-3430-anthropic-thinking-tokens-fb6763d9",
+   "comment_id": 6403129004,
+   "url": "https://github.com/yetone/magpie/issues/3430#issuecomment-6403129004",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "zh",
+   "status": "published_verified",
+   "published_at": "2026-10-25T20:53:47Z",
+   "verified_at": "2026-10-25T20:53:47Z",
+   "delivery": "fix/anthropic-thinking-tokens",
+   "delivery_head": "fb6763d9f236f71dd7a76fb0c4a4275ac1c89193",
+   "body_sha256": "5ec1f81a63b2cec5023eb12b1ec59a018af6ba558cfd44a9b32238dbf66d5177",
+   "evidence": "docs/fork/evidence/round23/3430/comment-readback.json",
+   "body_updated_at": "2026-10-25T20:53:47Z"
+  },
+  {
+   "issue": 3553,
+   "fix_id": "u-issue-3553-codex-context-percent-ce9531f6",
+   "comment_id": 6403129264,
+   "url": "https://github.com/yetone/magpie/issues/3553#issuecomment-6403129264",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "zh",
+   "status": "published_verified",
+   "published_at": "2026-10-25T20:53:49Z",
+   "verified_at": "2026-10-25T20:53:49Z",
+   "delivery": "fix/codex-context-percent",
+   "delivery_head": "ce9531f6181409142cf4dd0e4dfb2ac3a6d1f5c3",
+   "body_sha256": "3c87c306ff1754c79f8d72042bb04ff2241de26de535f276d6a2444b7b2e33a0",
+   "evidence": "docs/fork/evidence/round23/3553/comment-readback.json",
+   "body_updated_at": "2026-10-25T20:53:49Z"
+  },
+  {
+   "issue": 3566,
+   "fix_id": "u-issue-3566-issue-3566-bafd1361",
+   "comment_id": 6403129516,
+   "url": "https://github.com/yetone/magpie/issues/3566#issuecomment-6403129516",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "zh",
+   "status": "published_verified",
+   "published_at": "2026-10-25T20:53:50Z",
+   "verified_at": "2026-10-25T20:53:50Z",
+   "delivery": "fix/issue-3566",
+   "delivery_head": "bafd13618b4dee3e879801d6f02aca48135b863e",
+   "body_sha256": "dddea1ab2903ea79b1b441b5855a245f750e70ca1a803842b20e5c18c051de49",
+   "evidence": "docs/fork/evidence/round23/3566/comment-readback.json",
+   "body_updated_at": "2026-10-25T20:53:50Z"
+  },
+  {
+   "issue": 3460,
+   "fix_id": "u-issue-3460-plugin-codeassist-probe-d99b2bd1",
+   "comment_id": 6403185254,
+   "url": "https://github.com/yetone/magpie/issues/3460#issuecomment-6403185254",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T20:58:48Z",
+   "verified_at": "2026-10-25T20:58:48Z",
+   "delivery": "fix/plugin-codeassist-probe",
+   "delivery_head": "d99b2bd1241d59c507227166bb1bf3d9ac49ee3d",
+   "body_sha256": "a13173ca4768ce161ffdf8292f852d970a1eda034a72e2cad69d62f447de3c59",
+   "evidence": "docs/fork/evidence/round23/3460/comment-readback.json",
+   "body_updated_at": "2026-10-25T20:58:48Z"
+  },
+  {
+   "issue": 3630,
+   "fix_id": "u-issue-3630-provider-rename-gateway-keys-63e1ff5c",
+   "comment_id": 6403245263,
+   "url": "https://github.com/yetone/magpie/issues/3630#issuecomment-6403245263",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "zh",
+   "status": "published_verified",
+   "published_at": "2026-10-25T21:03:48Z",
+   "verified_at": "2026-10-25T21:03:48Z",
+   "delivery": "fix/provider-rename-gateway-keys",
+   "delivery_head": "63e1ff5cd8a3f2b623222482b02745ec269c36cc",
+   "body_sha256": "f76ecfc808a33f031f46ae4c5192236287a8942d685d0a85d1634d2cb6104ee2",
+   "evidence": "docs/fork/evidence/round23/3630/comment-readback.json",
+   "body_updated_at": "2026-10-25T21:03:48Z"
+  },
+  {
+   "issue": 3329,
+   "fix_id": "u-issue-3329-dsh-comment-between-entries-91a19f25",
+   "comment_id": 6403289779,
+   "url": "https://github.com/yetone/magpie/issues/3329#issuecomment-6403289779",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T21:07:17Z",
+   "verified_at": "2026-10-25T21:07:17Z",
+   "delivery": "fix/dsh-comment-between-entries",
+   "delivery_head": "91a19f2568f5d7d504a3ca11c97ea027294b04ca",
+   "body_sha256": "d66f5c07993ed1cc79d85595c129102fa749301f393ec507426ee4b070a992bb",
+   "evidence": "docs/fork/evidence/round23/3329/comment-readback.json",
+   "body_updated_at": "2026-10-25T21:07:17Z"
+  },
+  {
+   "issue": 3614,
+   "fix_id": "u-issue-3614-trace-live-window-a814f6e3",
+   "comment_id": 6403290176,
+   "url": "https://github.com/yetone/magpie/issues/3614#issuecomment-6403290176",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T21:07:19Z",
+   "verified_at": "2026-10-25T21:07:19Z",
+   "delivery": "fix/trace-live-window",
+   "delivery_head": "a814f6e3910c7cbdebae1ecf65c020b8cdafaba5",
+   "body_sha256": "63795f7c736c9b9d86fe8a5a09c12bf80d2f4acb82a963ceee94bdc8481ef1d0",
+   "evidence": "docs/fork/evidence/round23/3614/comment-readback.json",
+   "body_updated_at": "2026-10-25T21:07:19Z"
+  },
+  {
+   "issue": 3572,
+   "fix_id": "u-issue-3572-antigravity-signature-043636a3",
+   "comment_id": 6403372256,
+   "url": "https://github.com/yetone/magpie/issues/3572#issuecomment-6403372256",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T21:14:04Z",
+   "verified_at": "2026-10-25T21:14:04Z",
+   "delivery": "fix/antigravity-signature",
+   "delivery_head": "043636a38ae731a74fe70511b9425c8b6275d70f",
+   "body_sha256": "35cee9c65af940f37f787b853f45ee3497a11d82a8714b4f42b37d7f3048c8a6",
+   "evidence": "docs/fork/evidence/round23/3572/comment-readback.json",
+   "body_updated_at": "2026-10-25T21:14:04Z"
+  },
+  {
+   "issue": 3541,
+   "fix_id": "u-issue-3541-redact-local-host-aa0e3ec7",
+   "comment_id": 6403455103,
+   "url": "https://github.com/yetone/magpie/issues/3541#issuecomment-6403455103",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T21:20:50Z",
+   "verified_at": "2026-10-25T21:20:50Z",
+   "delivery": "fix/redact-local-host",
+   "delivery_head": "aa0e3ec7cbbc8df0620d133764f392f6bc07cbed",
+   "body_sha256": "04ea61d4f02e78cfdbeb888186a4571f5a8535baca41fd95df192e3e6a346635",
+   "evidence": "docs/fork/evidence/round23/3541/comment-readback.json",
+   "body_updated_at": "2026-10-25T21:20:50Z"
+  },
+  {
+   "issue": 3246,
+   "fix_id": "u-issue-3246-zcode-reconnect-after-rewrite-c4495b30",
+   "comment_id": 6403466440,
+   "url": "https://github.com/yetone/magpie/issues/3246#issuecomment-6403466440",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "zh",
+   "status": "published_verified",
+   "published_at": "2026-10-25T21:21:45Z",
+   "verified_at": "2026-10-25T21:21:45Z",
+   "delivery": "fix/zcode-reconnect-after-rewrite",
+   "delivery_head": "c4495b30c80801ca794bc9abcffe456d75339661",
+   "body_sha256": "6e8a7142d5e088b5a2f1ea1aa1437dad6fe7b1bbfc5cbc6c35c66afc570e68a9",
+   "evidence": "docs/fork/evidence/round23/3246/comment-readback.json",
+   "body_updated_at": "2026-10-25T21:21:45Z"
+  },
+  {
+   "issue": 3248,
+   "fix_id": "u-issue-3248-3248-codeassist-restart-db55f831",
+   "comment_id": 6403504636,
+   "url": "https://github.com/yetone/magpie/issues/3248#issuecomment-6403504636",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T21:25:00Z",
+   "verified_at": "2026-10-25T21:25:00Z",
+   "delivery": "fix/3248-codeassist-restart",
+   "delivery_head": "db55f831b2a848f01741249fe2af71bcbfccc96e",
+   "body_sha256": "955203c3fbda8e92434fb61092ab8cd43ae237fd2b1a701f6b9879810bda688c",
+   "evidence": "docs/fork/evidence/round23/3248/comment-readback.json",
+   "body_updated_at": "2026-10-25T21:25:00Z"
+  },
+  {
+   "issue": 2674,
+   "fix_id": "u-issue-2674-2674-blocklist-tail-92b3d82c",
+   "comment_id": 6403620529,
+   "url": "https://github.com/yetone/magpie/issues/2674#issuecomment-6403620529",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T21:34:53Z",
+   "verified_at": "2026-10-25T21:34:53Z",
+   "delivery": "fix/2674-blocklist-tail",
+   "delivery_head": "92b3d82cf78b1b2ff93ffc07d83c999c2784a5f2",
+   "body_sha256": "17efd30eee7fd7c89ee705b004ad50ab0d307f13050ee676607cd97c2429b8ba",
+   "evidence": "docs/fork/evidence/round23/2674/comment-readback.json",
+   "body_updated_at": "2026-10-25T21:34:53Z"
+  },
+  {
+   "issue": 3169,
+   "fix_id": "u-issue-3169-uncounted-prompt-estimate-763d4687",
+   "comment_id": 6403679182,
+   "url": "https://github.com/yetone/magpie/issues/3169#issuecomment-6403679182",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T21:39:48Z",
+   "verified_at": "2026-10-25T21:39:48Z",
+   "delivery": "fix/uncounted-prompt-estimate",
+   "delivery_head": "763d468769269084af3a8f63ae0ff3527627f69c",
+   "body_sha256": "5ad23efe61e5b80e2b0b29433b8754fc552d66602a783f171e780f97d692bae0",
+   "evidence": "docs/fork/evidence/round23/3169/comment-readback.json",
+   "body_updated_at": "2026-10-25T21:39:48Z"
+  },
+  {
+   "issue": 3434,
+   "fix_id": "u-issue-3434-codex-compaction-turn-identity-677160b7",
+   "comment_id": 6403682869,
+   "url": "https://github.com/yetone/magpie/issues/3434#issuecomment-6403682869",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T21:40:08Z",
+   "verified_at": "2026-10-25T21:40:08Z",
+   "delivery": "fix/codex-compaction-turn-identity",
+   "delivery_head": "677160b76d2977e6b99dfcf61896922dfbc38fd1",
+   "body_sha256": "f238d8519fb7260eaff97b2a6115d196931cecf3ee9df4560327dc74ae341067",
+   "evidence": "docs/fork/evidence/round23/3434/comment-readback.json",
+   "body_updated_at": "2026-10-25T21:40:08Z"
+  },
+  {
+   "issue": 3156,
+   "fix_id": "u-issue-3156-routing-group-members-live-f816c358",
+   "comment_id": 6403710605,
+   "url": "https://github.com/yetone/magpie/issues/3156#issuecomment-6403710605",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "zh",
+   "status": "published_verified",
+   "published_at": "2026-10-25T21:42:31Z",
+   "verified_at": "2026-10-25T21:42:31Z",
+   "delivery": "fix/routing-group-members-live",
+   "delivery_head": "f816c358110a6637bc0fb816aa2b61a065b3fef3",
+   "body_sha256": "d86a03ec672a63467cf00fcbb2f72400f8f9929371aab8c0ed6e76c3512f847e",
+   "evidence": "docs/fork/evidence/round23/3156/comment-readback.json",
+   "body_updated_at": "2026-10-25T21:42:31Z"
+  },
+  {
+   "issue": 3585,
+   "fix_id": "u-issue-3585-redact-cue-words-e60d14a8",
+   "comment_id": 6403818575,
+   "url": "https://github.com/yetone/magpie/issues/3585#issuecomment-6403818575",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T21:51:25Z",
+   "verified_at": "2026-10-25T21:51:25Z",
+   "delivery": "fix/redact-cue-words",
+   "delivery_head": "e60d14a891340ebd7e10201e81d6acf51c4e10ea",
+   "body_sha256": "0e4690b667741ddde40526a3b4016eee149ddc138dea2264ad83a4b385541c59",
+   "evidence": "docs/fork/evidence/round23/3585/comment-readback.json",
+   "body_updated_at": "2026-10-25T21:51:25Z"
+  },
+  {
+   "issue": 3650,
+   "fix_id": "u-issue-3650-usage-absent-used-6791aa99",
+   "comment_id": 6403822501,
+   "url": "https://github.com/yetone/magpie/issues/3650#issuecomment-6403822501",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T21:51:44Z",
+   "verified_at": "2026-10-25T21:51:44Z",
+   "delivery": "fix/usage-absent-used",
+   "delivery_head": "6791aa99ba38be542b0d29de48a23d8bb2007705",
+   "body_sha256": "7a7b5ea2119a6708227196270df184cd9f6e17cf6bf72166d13f4504936866b1",
+   "evidence": "docs/fork/evidence/round23/3650/comment-readback.json",
+   "body_updated_at": "2026-10-25T21:51:44Z"
+  },
+  {
+   "issue": 2759,
+   "fix_id": "u-issue-2759-import-source-row-0483a01f",
+   "comment_id": 6403875879,
+   "url": "https://github.com/yetone/magpie/issues/2759#issuecomment-6403875879",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "zh",
+   "status": "published_verified",
+   "published_at": "2026-10-25T21:56:12Z",
+   "verified_at": "2026-10-25T21:56:12Z",
+   "delivery": "fix/import-source-row",
+   "delivery_head": "0483a01f649dc2263983f26662faa512a44489af",
+   "body_sha256": "89331a3ce00aab5d3918a1dc7fb55fa17d4570f548ef219f98a18b731ea4bef3",
+   "evidence": "docs/fork/evidence/round23/2759/comment-readback.json",
+   "body_updated_at": "2026-10-25T21:56:12Z"
+  },
+  {
+   "issue": 2867,
+   "fix_id": "u-issue-2867-2867-drift-detail-i18n-a6df7cec",
+   "comment_id": 6403924259,
+   "url": "https://github.com/yetone/magpie/issues/2867#issuecomment-6403924259",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T22:00:15Z",
+   "verified_at": "2026-10-25T22:00:15Z",
+   "delivery": "fix/2867-drift-detail-i18n",
+   "delivery_head": "a6df7cec93739ce4aa70d6f019da645497ca95b1",
+   "body_sha256": "c883f1f381851e0d2c91252fde0375ab904abb6bc860bfb49258b6ae4d6518ef",
+   "evidence": "docs/fork/evidence/round23/2867/comment-readback.json",
+   "body_updated_at": "2026-10-25T22:00:15Z"
+  },
+  {
+   "issue": 3528,
+   "fix_id": "u-issue-3528-3528-search-usage-rows-f6064d5d",
+   "comment_id": 6403927302,
+   "url": "https://github.com/yetone/magpie/issues/3528#issuecomment-6403927302",
+   "role": "delivery",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-10-25T22:00:29Z",
+   "verified_at": "2026-10-25T22:00:29Z",
+   "delivery": "fix/3528-search-usage-rows",
+   "delivery_head": "f6064d5d6b1785760972ca2f6fe7f63e7776d747",
+   "body_sha256": "f6f948a4d8e6e837f126bdb2ecbf39035c0b5f12eb0a6360ec301bf26e8190e1",
+   "evidence": "docs/fork/evidence/round23/3528/comment-readback.json",
+   "body_updated_at": "2026-10-25T22:00:29Z"
   }
  ],
  "deliveries": {
@@ -7289,6 +9521,241 @@
    "commits": [
     "80cea91a8d58df163c98f3ec27f9749486a3fc17"
    ]
+  },
+  "fix/r25-tls-handover-local": {
+   "branch": "fix/r25-tls-handover-local",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "head": "691aa25451562cc614c7fc90ec6d30a56f8ded2f",
+   "commits": [
+    "b48f3a41287f61196574910cbcca6ead0627e112",
+    "23bd4df0bcb5b092d26a74e76047b9f67b8a8a5b",
+    "691aa25451562cc614c7fc90ec6d30a56f8ded2f"
+   ]
+  },
+  "fix/r25-routing-log-icons-wait": {
+   "branch": "fix/r25-routing-log-icons-wait",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "head": "833c7cd61728607fdba75637e3271099847c2e70",
+   "commits": [
+    "833c7cd61728607fdba75637e3271099847c2e70"
+   ]
+  },
+  "fix/r25-write-stdin-wait": {
+   "branch": "fix/r25-write-stdin-wait",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "head": "d9c57ab0550fd408c38d3d46996b9943b29117a7",
+   "commits": [
+    "d9c57ab0550fd408c38d3d46996b9943b29117a7"
+   ]
+  },
+  "fix/r25-mask-alias-plan": {
+   "branch": "fix/r25-mask-alias-plan",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "head": "95c0511419c66fd8092599dbde4bc68bc438126b",
+   "commits": [
+    "95c0511419c66fd8092599dbde4bc68bc438126b"
+   ]
+  },
+  "fix/r25-library-uncheckbox": {
+   "branch": "fix/r25-library-uncheckbox",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "head": "82d23059d13bf87fc1ef426bb785e4daf68aa77d",
+   "commits": [
+    "82d23059d13bf87fc1ef426bb785e4daf68aa77d"
+   ]
+  },
+  "fix/r25-plugin-lock-drift": {
+   "branch": "fix/r25-plugin-lock-drift",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "head": "984d389514b9e688bcc1556c9c485bf301e8114a",
+   "commits": [
+    "984d389514b9e688bcc1556c9c485bf301e8114a"
+   ]
+  },
+  "fix/r25-autostart-exec-stable": {
+   "branch": "fix/r25-autostart-exec-stable",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "head": "0aac5452b2310d9a658b6787fdf6d57238de0102",
+   "commits": [
+    "0aac5452b2310d9a658b6787fdf6d57238de0102"
+   ]
+  },
+  "fix/r25-filememo-forget-bubble": {
+   "branch": "fix/r25-filememo-forget-bubble",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "head": "47eb5102a58e7d931ab57bffa350124fadcbdc6e",
+   "commits": [
+    "3a0b44793653ee8f752f73a8efe215514b6d5822",
+    "05ea29ac84c96d4112e64e42ae1bff39ae53b49e",
+    "466cafa0cf681de30ce4cc68616db55f5de10cd9",
+    "c2c88e85e9ecb762a6aaa9000c820f3631f4e1eb",
+    "13f9c7fca11b8ccb2aa7fb1b397e26d4f7b3bc3a",
+    "de49433ff816506ab9be0697fee5beb960b6d546",
+    "250adf5ec5341b544d7939c5372e0f9d4286bc1a",
+    "c158b0439c3303de036a9dba79ede4620e5e54b0",
+    "098ac9696d07eeb44c225907980995750a8546d0",
+    "e5dd86965b56a8a176790e2c1ade09f9ef554208",
+    "2620dc319f18d06fabe33e838dbc539b9ff8e978",
+    "a9242eb68bc9e0e8a1aabb580ebc30eb58861ea6",
+    "dce7fe6096514bd900086107447e80d616220373",
+    "a1e91e50021197d8b2ad4c841abca2a4376291e9",
+    "fed0055da86f775f3a9934ea47f76396473f52e9",
+    "c87a0179ba0decef3ffa3d101789225ac2b6f2ac",
+    "5b01938776b9f83656ef5de8e645c1b40766f0d3",
+    "ef0a03e137db0284dc9c4b3449fb303cc8352d63",
+    "cabef3a4ce8e14904044d154aa2627f376c8bfa5",
+    "68294c2dbb7d71ed48a7cedc6b3ab133f6c8cf0a",
+    "49f15d12447193c760be0da0adc9e1bb3341a333",
+    "25341b4ca522576c6cc13ef8aaa7c80096328002",
+    "a1174674da9d1435443e95ffac7d0300ce8b59d6",
+    "7c2f27ccdf6d93af2f2154014ee9d51fb28b505d",
+    "4e5b2ad81cd5f3df4435aaefd6a23ccbcb9055ee",
+    "56900e4845dfe6f682822a3193ddf2679e34b2f8",
+    "7a60e78c545c3117e42504ab1bd3eb71cb60817c",
+    "11c3fbb197f17403183bdae424327aa0de7f0558",
+    "720e491d2b136be26d6d90a5dc9880f61fb3d629",
+    "d08803031525679fdcd74071481b19dedee409a5",
+    "106ace6e77e22a629a21f9749665d236864937b9",
+    "c54dd7dab2b471afc72815e5189f5f92b676c2d3",
+    "82edec9cad45e4b2f14c805681ee633d540957d9",
+    "c28d3e8b007c98d4d7d1ed63a14baa6d0239b542",
+    "2921471de1da9998aa49e0c2cbce9af34c7e0982",
+    "a7072926d64584117de036587ce565fbf166fd20",
+    "27ca0bef535dc280652e81bc2a6311dffcd21161",
+    "634cbf587b91c18a2eeeae40b1d8656ad5dcf1f1",
+    "88ac42843dbc1c6d4a028a6fd8c7aecb7a781985",
+    "083a8a2d4750d117ada40abb4916a5130023badf",
+    "e0b39f7784c36456bd46daabc4167e7feb4dd391",
+    "6e969033465cb88cda87b2ff7cf07a387a082f83",
+    "689cf4142371e3f4bd11e989ae2a8287afd8fb11",
+    "a5ce158e548027963407fe4755a16e560e7f1b9a",
+    "a6c808b68810336e28712db5f99c6e2fc3de4bb2",
+    "44a626bed3c434a61786e939613be25c9573e538",
+    "630fd1d6914458e9deb7529545ba0c78dda6b275",
+    "0f6615ffc515c60db1dfce6a9b69da55bb5fea8d",
+    "05eeb4e1b977a65e36ceffe06794015271fbae66",
+    "d3191a51c89dd6ff2aecb8a3384f7e07cc081b90",
+    "7d075df9dd09ea45e15e80a84ccac0111097fe86",
+    "cebd0d4c35296faaba2142e6850a551d09ac18c4",
+    "ea1f9492bc346005a0bb6f5bc45b71a558da11ec",
+    "9120acaffc2c0031b86ac0dc5a93b2c6a6251ae6",
+    "5a94eec3aead887bdecdbf3794f814763068d805",
+    "983371c3a229db494ccef05757b8268b0a9942c3",
+    "77f860105ca2b0ea4a967f45bbba3072c1ef589c",
+    "1bb8143b374ecbc17fcedc43bcbe3619e74df218",
+    "6e6aba51c8d4d1860b53e18648830f13563296a9",
+    "9a888323a2a1159ee77b56fa1893582f285c9f1c",
+    "afc99490f28759db4ca6befc2754c929eee02a42",
+    "8f4469954e72c01fa8bfeba8d8dcbc03ce15a871",
+    "4a33cf0a986e419b93d1bb10f161291faba4e134",
+    "4e3078ee47d1c968f7c17f3d63d5de307f3c85c6",
+    "b3729b8d56fc21541a58e2133a5652c256b4ebdd",
+    "9298d2a7c381315f93611e7dbe7da4ef95d67f13",
+    "de54b4ff99d1145a57ad5ef602953b91b9a34c2d",
+    "43001be863f7212e4410601402fff82c5547ebcf",
+    "9733ed1b4aaf1eadc9e3e5d4a108dcbd1429d7f0",
+    "51202cd43190a63d7bf3fcf3617b417ad2eca275",
+    "29f1a5a717c49d96b1b37318cf0dcbe60842c0ad",
+    "e52a5e50ba831b807dc3a13216d8c0a71db98c61",
+    "81a73c1c01c0a2c69e5d7fa11ccb9a345189c031",
+    "9809a8ac9a489152f521112136f9de5695da4b57",
+    "ed5cc959a70e1015a4e6da2c2bd584df3d11c3c5",
+    "2bde657591aa6100d134fa8bf9d6f54886243ad8",
+    "e9c1066c4bdc3498cb7d4f1c620314c2eac9895f",
+    "834935149af2b2ec0f864e3eb2c7cdb62e0e6177",
+    "13cca810995839dd899ffc30beaae869467e066f",
+    "5b4dec58e47d1eb961f5a3f4417c441f77662c7d",
+    "80857a66c97bb45564ff9ede8ac71d07ad580a9a",
+    "479de89001828c06de32d9b65abdf562f3bdc0ad",
+    "d157700a0a5c5e233a5d78394869806d6f478dbc",
+    "865df247278b44b98b07717bf23ae37cc4fc3e01",
+    "7395b7b77e911275ee54f549b9362b9b31328cf2",
+    "ca9b5048e348b002b4719b6a7a6e090614641b56",
+    "a6d7e02c771749b70eff43f7e88453ca49d95c6a",
+    "b9ab172318e7fcec972383a89340b4fb8c22af25",
+    "7279bdc28b5299ba21ebbea663c9d1cf8030c1c3",
+    "c84f859dd028bd69f3b11ae976ce87681dd0207a",
+    "dd5b0ab31150bed21654934e19a776550322e919",
+    "16f6e568f4a5f2130e64883667fa46562ff44119",
+    "8f023b51195e74538a069d0e2a07e181fed82f7e",
+    "68ee4117af81b24627d27c3bfde708b33820c85d",
+    "b5d17b26e0b3450950583b4cfd21300f0ef7bd02",
+    "6335625a6016f0875d0ab03f8193d9e3ea4cc7b0",
+    "78a0dbdd298e59b3e4a182d62fc69f0e823fbaef",
+    "d9a8148d7c1e56af756bceee74aadd4faa4aee60",
+    "7182c1a702b294db07576175992a42e8a9d87171",
+    "47eb5102a58e7d931ab57bffa350124fadcbdc6e"
+   ],
+   "followup_2026_10_27": "merged upstream/main d9a8148d (de49433f wake) with lazy close in wake too; normal push 3a0b4479..47eb5102",
+   "commits_note": "topological base..head; 7182c1a7 merges upstream/main d9a8148d (de49433f wake among it); 47eb5102 adds the lazy wake + TestWakeAcrossSynctestBubbles"
+  },
+  "fix/r25-routing-levels-wait": {
+   "branch": "fix/r25-routing-levels-wait",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "head": "f74765fd4901221b022c275f6bb6dfac76e4a50b",
+   "commits": [
+    "f74765fd4901221b022c275f6bb6dfac76e4a50b"
+   ]
+  },
+  "fix/r25-usage-dedup-session-file": {
+   "branch": "fix/r25-usage-dedup-session-file",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "head": "18006848027b956553615e5dd462a2e6580cb92d",
+   "commits": [
+    "18006848027b956553615e5dd462a2e6580cb92d"
+   ]
+  },
+  "fix/r25-expired-model-not-account-fault": {
+   "branch": "fix/r25-expired-model-not-account-fault",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "head": "e04a1b9948b672b168eae484e09ba9609acbcb53",
+   "commits": [
+    "e04a1b9948b672b168eae484e09ba9609acbcb53"
+   ]
+  },
+  "fix/r25-grok-plan-absent-label": {
+   "branch": "fix/r25-grok-plan-absent-label",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "head": "7ca156c6876282fb3218b42e98429a2c492ebd90",
+   "commits": [
+    "7ca156c6876282fb3218b42e98429a2c492ebd90"
+   ]
+  },
+  "fix/r25-empty-tool-calls-finish": {
+   "branch": "fix/r25-empty-tool-calls-finish",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "head": "91625dca0bb33ee696be639e659bdf4c8f1b6abd",
+   "commits": [
+    "91625dca0bb33ee696be639e659bdf4c8f1b6abd"
+   ]
+  },
+  "fix/r25-dev-backend-handover": {
+   "branch": "fix/r25-dev-backend-handover",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "head": "6d3f202fa62935bc480db953efcfb15256641c08",
+   "commits": [
+    "900957661c9c561fe060b32019eed4ad7834c298",
+    "083079e46e9a1db8a1862286c7522f26e6e8aa00",
+    "f5fd1da3ff6ac4e894b2de81e9bb2aa5fa7363ad",
+    "6d3f202fa62935bc480db953efcfb15256641c08"
+   ]
+  },
+  "fix/r25-minimax-moved-data": {
+   "branch": "fix/r25-minimax-moved-data",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "head": "4cad21e120deced2560e904f8b9ba845a471e3c9",
+   "commits": [
+    "4cad21e120deced2560e904f8b9ba845a471e3c9"
+   ]
+  },
+  "fix/r25-mcp-invalid-target-retry": {
+   "branch": "fix/r25-mcp-invalid-target-retry",
+   "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+   "head": "109e6f47a18cd0540e463089ac9d86656840dac5",
+   "commits": [
+    "109e6f47a18cd0540e463089ac9d86656840dac5"
+   ],
+   "note": "delivered 2026-10-26T12:38Z, comment 6416184531 readback equal"
   }
  }
 }

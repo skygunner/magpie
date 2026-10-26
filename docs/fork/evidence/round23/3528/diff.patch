@@ -1,0 +1,279 @@
+diff --git a/internal/gateway/search.go b/internal/gateway/search.go
+index 8eeae545..82347f33 100644
+--- a/internal/gateway/search.go
++++ b/internal/gateway/search.go
+@@ -20,6 +20,7 @@ import (
+ 	"github.com/yetone/magpie/internal/netproxy"
+ 	"github.com/yetone/magpie/internal/provider"
+ 	"github.com/yetone/magpie/internal/settings"
++	"github.com/yetone/magpie/internal/usage"
+ )
+ 
+ // A client may offer its model the web search of the vendor it was made
+@@ -1040,6 +1041,17 @@ func searchBody(p provider.Provider, model, query, effort string) map[string]any
+ // SearchAgent is the User-Agent of the searches magpie makes for a model.
+ const SearchAgent = "magpie-search/1"
+ 
++// logSearchCall is the Usage › Requests row of a search magpie sent a
++// search service or a search API itself (kimiSearch, wbSearch,
++// askSearchAPI): those write no row of their own (#3528). It is a call
++// with Kind web_search and no tokens, no model having been asked; Usage's
++// totals count it as they count any call, with no counting of their own
++// changed for it.
++func logSearchCall(providerID, host string, start time.Time, status int, why string) {
++	usage.Append(usage.Record{Time: start, Agent: usage.AgentOf(SearchAgent), Kind: "web_search",
++		Provider: providerID, Host: host, Status: status, Millis: time.Since(start).Milliseconds(), Error: why})
++}
++
+ // round asks the model once and gives its reply's events, or the status
+ // and message of a failure.
+ type round func(ctx context.Context, req *Request) (<-chan Event, int, string)
+diff --git a/internal/gateway/search_api.go b/internal/gateway/search_api.go
+index 1425681c..ecf2cf22 100644
+--- a/internal/gateway/search_api.go
++++ b/internal/gateway/search_api.go
+@@ -201,9 +201,16 @@ func pagesSaid(pages []foundPage) (string, []Hit) {
+ }
+ 
+ // askSearchAPI asks one search API for the query.
+-func (s *Server) askSearchAPI(ctx context.Context, a provider.SearchAPI, query string) ([]foundPage, error) {
++func (s *Server) askSearchAPI(ctx context.Context, a provider.SearchAPI, query string) (pages []foundPage, err error) {
++	start, status := time.Now(), 0
++	defer func() {
++		why := ""
++		if err != nil {
++			why = err.Error()
++		}
++		logSearchCall(a.Name(), a.Base(), start, status, why)
++	}()
+ 	var r *http.Request
+-	var err error
+ 	post := func(path string, body any) {
+ 		b, _ := json.Marshal(body)
+ 		if r, err = http.NewRequestWithContext(ctx, http.MethodPost, a.Base()+path, bytes.NewReader(b)); err == nil {
+@@ -286,6 +293,7 @@ func (s *Server) askSearchAPI(ctx context.Context, a provider.SearchAPI, query s
+ 		return nil, err
+ 	}
+ 	defer res.Body.Close()
++	status = res.StatusCode
+ 	b, _ := io.ReadAll(io.LimitReader(res.Body, 4<<20))
+ 	if res.StatusCode >= 300 && res.StatusCode < 400 && res.Header.Get("Location") != "" {
+ 		return nil, fmt.Errorf("%s: it sends the search on to %s, which isn't given its key; set that address instead", res.Status, res.Header.Get("Location"))
+@@ -310,7 +318,7 @@ func (s *Server) askSearchAPI(ctx context.Context, a provider.SearchAPI, query s
+ 		}
+ 		return nil, errors.New(msg)
+ 	}
+-	pages, err := readSearchAPI(a.Vendor, b)
++	pages, err = readSearchAPI(a.Vendor, b)
+ 	if err != nil {
+ 		return nil, fmt.Errorf("unexpected reply: %w", err)
+ 	}
+diff --git a/internal/gateway/search_kimi.go b/internal/gateway/search_kimi.go
+index 0c68f6c2..74bd6099 100644
+--- a/internal/gateway/search_kimi.go
++++ b/internal/gateway/search_kimi.go
+@@ -8,6 +8,7 @@ import (
+ 	"fmt"
+ 	"io"
+ 	"net/http"
++	"time"
+ 
+ 	"github.com/yetone/magpie/internal/provider"
+ 	"github.com/yetone/magpie/internal/settings"
+@@ -98,7 +99,15 @@ func (s *Server) searchBy(ctx context.Context, p provider.Provider, model, query
+ }
+ 
+ // kimiSearch asks a Kimi Code plan's search service.
+-func (s *Server) kimiSearch(ctx context.Context, p provider.Provider, query string) (string, []Hit, error) {
++func (s *Server) kimiSearch(ctx context.Context, p provider.Provider, query string) (said string, hits []Hit, err error) {
++	start, status := time.Now(), 0
++	defer func() {
++		why := ""
++		if err != nil {
++			why = err.Error()
++		}
++		logSearchCall(p.ID, p.Where(), start, status, why)
++	}()
+ 	// the service gives itself 30 s, as kimi-cli asks
+ 	// through the plan's own proxy, if it has one (#237, #1522)
+ 	ctx, cancel := context.WithTimeout(s.metered(p.Via(ctx), p, ""), searchTimeout/2)
+@@ -127,6 +136,7 @@ func (s *Server) kimiSearch(ctx context.Context, p provider.Provider, query stri
+ 		return "", nil, fmt.Errorf("%s: %w", p.Name, err)
+ 	}
+ 	defer res.Body.Close()
++	status = res.StatusCode
+ 	b, _ := io.ReadAll(io.LimitReader(res.Body, 4<<20))
+ 	if res.StatusCode >= 300 {
+ 		return "", nil, errors.New(p.Name + ": " + provider.APIError(b, res.Status))
+@@ -164,6 +174,6 @@ func (s *Server) kimiSearch(ctx context.Context, p provider.Provider, query stri
+ 	if len(pages) == 0 {
+ 		return "", nil, fmt.Errorf("%s %w", p.Name, errFoundNothing)
+ 	}
+-	said, hits := pagesSaid(pages)
++	said, hits = pagesSaid(pages)
+ 	return said, hits, nil
+ }
+diff --git a/internal/gateway/search_usage_test.go b/internal/gateway/search_usage_test.go
+new file mode 100644
+index 00000000..be77af94
+--- /dev/null
++++ b/internal/gateway/search_usage_test.go
+@@ -0,0 +1,84 @@
++package gateway
++
++import (
++	"context"
++	"fmt"
++	"net/http/httptest"
++	"testing"
++	"time"
++
++	"github.com/yetone/magpie/internal/provider"
++	"github.com/yetone/magpie/internal/usage"
++)
++
++// A search magpie sends a plan's search service or a search API itself
++// spends that plan's or key's allowance, and left no row in Usage ›
++// Requests (#3528). Each is a call with Kind web_search, under its
++// provider (a search API by its name), with no tokens: no model was asked,
++// and the tokens Usage's totals add up don't move.
++func TestSearchesWriteARequestRow(t *testing.T) {
++	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
++	t.Setenv("XDG_CACHE_HOME", t.TempDir())
++	setHome(t, t.TempDir())
++
++	rows := func() []usage.Record { return usage.Load(time.Time{}) }
++	tokens := func() string {
++		var in, out, cacheRead, cacheWrite, reasoning int
++		for _, r := range rows() {
++			in, out, cacheRead, cacheWrite, reasoning = in+r.Input, out+r.Output, cacheRead+r.CacheRead, cacheWrite+r.CacheWrite, reasoning+r.Reasoning
++		}
++		return fmt.Sprint(in, out, cacheRead, cacheWrite, reasoning)
++	}
++
++	kimi := newKimiPlan(t)
++	kp := provider.Provider{ID: "kimi", Name: "Kimi Code", Preset: "kimi-code-cn", Key: "sk-kimi",
++		Chat: kimi.URL + "/coding/v1", Models: []string{"kimi-for-coding"}}
++	wbSite := httptest.NewServer(&wbSearchSite{})
++	t.Cleanup(wbSite.Close)
++	wb := provider.Provider{ID: "workbuddy", Name: "WorkBuddy", Chat: wbSite.URL + "/v1",
++		Account: &provider.Account{Agent: "workbuddy", User: "a@x.com"}}
++	apis := newSearchAPIs(t)
++	if err := provider.SetSearchAPI(apis.api("tavily", "tvly-k")); err != nil {
++		t.Fatal(err)
++	}
++
++	for _, c := range []struct {
++		name     string
++		search   func() error
++		provider string
++	}{
++		{"Kimi Code's search service", func() error {
++			_, _, err := New().kimiSearch(context.Background(), kp, "latest go")
++			return err
++		}, "kimi"},
++		{"WorkBuddy's search service", func() error {
++			_, _, err := New().wbSearch(context.Background(), wb, "Go 1.26 release notes")
++			return err
++		}, "workbuddy"},
++		{"a search API", func() error {
++			_, _, err := New().apiSearch(context.Background(), "latest go")
++			return err
++		}, "Tavily"},
++	} {
++		t.Run(c.name, func(t *testing.T) {
++			before, tokensBefore := len(rows()), tokens()
++			if err := c.search(); err != nil {
++				t.Fatalf("search: %v", err)
++			}
++			after := rows()
++			if len(after) != before+1 {
++				t.Fatalf("%d rows written, want 1", len(after)-before)
++			}
++			row := after[len(after)-1]
++			if row.Kind != "web_search" || row.Provider != c.provider || row.Status != 200 {
++				t.Fatalf("row %+v, want a web_search of %s with 200", row, c.provider)
++			}
++			if row.Input != 0 || row.Output != 0 || row.CacheRead != 0 || row.CacheWrite != 0 || row.Reasoning != 0 {
++				t.Fatalf("row %+v, want no tokens", row)
++			}
++			if got := tokens(); got != tokensBefore {
++				t.Fatalf("tokens %s → %s", tokensBefore, got)
++			}
++		})
++	}
++}
+diff --git a/internal/gateway/search_workbuddy.go b/internal/gateway/search_workbuddy.go
+index 8c5542c9..b5ab3c8f 100644
+--- a/internal/gateway/search_workbuddy.go
++++ b/internal/gateway/search_workbuddy.go
+@@ -12,6 +12,7 @@ import (
+ 	"io"
+ 	"net/http"
+ 	"strings"
++	"time"
+ 
+ 	"github.com/yetone/magpie/internal/provider"
+ )
+@@ -47,7 +48,15 @@ const (
+ func wbSearches(p provider.Provider) bool { return drawsWorkBuddy(p) }
+ 
+ // wbSearch asks p's WorkBuddy site to search the web.
+-func (s *Server) wbSearch(ctx context.Context, p provider.Provider, query string) (string, []Hit, error) {
++func (s *Server) wbSearch(ctx context.Context, p provider.Provider, query string) (said string, hits []Hit, err error) {
++	start, status := time.Now(), 0
++	defer func() {
++		why := ""
++		if err != nil {
++			why = err.Error()
++		}
++		logSearchCall(p.ID, p.Where(), start, status, why)
++	}()
+ 	origin := p.Origin(ctx)
+ 	if origin == "" {
+ 		return "", nil, fmt.Errorf("%s: no site to search with", p.Name)
+@@ -83,6 +92,7 @@ func (s *Server) wbSearch(ctx context.Context, p provider.Provider, query string
+ 		return "", nil, fmt.Errorf("%s: %w", p.Name, err)
+ 	}
+ 	defer res.Body.Close()
++	status = res.StatusCode
+ 	b, _ := io.ReadAll(io.LimitReader(res.Body, 4<<20))
+ 	if res.StatusCode >= 300 {
+ 		return "", nil, errors.New(p.Name + "'s search: " + provider.APIError(b, res.Status))
+@@ -120,7 +130,7 @@ func (s *Server) wbSearch(ctx context.Context, p provider.Provider, query string
+ 	if len(pages) == 0 {
+ 		return "", nil, fmt.Errorf("%s found nothing", p.Name)
+ 	}
+-	said, hits := pagesSaid(pages)
++	said, hits = pagesSaid(pages)
+ 	return said, hits, nil
+ }
+ 
+diff --git a/internal/gateway/usage_cache_zero_split_test.go b/internal/gateway/usage_cache_zero_split_test.go
+index 3d24d775..9c11c888 100644
+--- a/internal/gateway/usage_cache_zero_split_test.go
++++ b/internal/gateway/usage_cache_zero_split_test.go
+@@ -26,11 +26,19 @@ func cacheSplitRoundStart(fields string) string {
+ 
+ func wantCacheLedger(t *testing.T, hour int) {
+ 	t.Helper()
+-	records := usage.Load(time.Time{})
+-	if len(records) != 1 {
+-		t.Fatalf("ledger records = %d, want 1", len(records))
++	var turns []usage.Record
++	for _, r := range usage.Load(time.Time{}) {
++		// a search the turn made writes a row of its own, as a model's
++		// search always has (#3528); the turn's is the one with tokens
++		if r.Kind == "web_search" {
++			continue
++		}
++		turns = append(turns, r)
++	}
++	if len(turns) != 1 {
++		t.Fatalf("ledger records = %d, want 1", len(turns))
+ 	}
+-	if u := records[0]; u.CacheWrite != 50 || u.CacheWrite1h != hour {
++	if u := turns[0]; u.CacheWrite != 50 || u.CacheWrite1h != hour {
+ 		t.Errorf("ledger writes: %d/hour%d, want 50/hour%d", u.CacheWrite, u.CacheWrite1h, hour)
+ 	}
+ }

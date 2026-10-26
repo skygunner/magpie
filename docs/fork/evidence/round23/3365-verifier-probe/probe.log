@@ -1,0 +1,34 @@
+=== RUN   TestVerifierMaskingSources
+=== RUN   TestVerifierMaskingSources/#00
+    verifier_test.go:61: seed="" signed=false text="verifier nodes" masked=0 hits=[] output={"messages":[{"role":"assistant","content":[{"type":"thinking","thinking":"verifier nodes"}]}]}
+    verifier_test.go:61: seed="" signed=false text="verifier-node tagged droplets" masked=0 hits=[] output={"messages":[{"role":"assistant","content":[{"type":"thinking","thinking":"verifier-node tagged droplets"}]}]}
+    verifier_test.go:61: seed="" signed=true text="verifier nodes" masked=0 hits=[] output={"messages":[{"role":"assistant","content":[{"type":"thinking","thinking":"verifier nodes","signature":"synthetic"}]}]}
+    verifier_test.go:61: seed="" signed=true text="verifier-node tagged droplets" masked=0 hits=[] output={"messages":[{"role":"assistant","content":[{"type":"thinking","thinking":"verifier-node tagged droplets","signature":"synthetic"}]}]}
+=== RUN   TestVerifierMaskingSources/preview
+    verifier_test.go:61: seed="preview" signed=false text="verifier nodes" masked=0 hits=[] output={"messages":[{"role":"assistant","content":[{"type":"thinking","thinking":"verifier nodes"}]}]}
+    verifier_test.go:61: seed="preview" signed=false text="verifier-node tagged droplets" masked=0 hits=[] output={"messages":[{"role":"assistant","content":[{"type":"thinking","thinking":"verifier-node tagged droplets"}]}]}
+    verifier_test.go:61: seed="preview" signed=true text="verifier nodes" masked=0 hits=[] output={"messages":[{"role":"assistant","content":[{"type":"thinking","thinking":"verifier nodes","signature":"synthetic"}]}]}
+    verifier_test.go:61: seed="preview" signed=true text="verifier-node tagged droplets" masked=0 hits=[] output={"messages":[{"role":"assistant","content":[{"type":"thinking","thinking":"verifier-node tagged droplets","signature":"synthetic"}]}]}
+=== RUN   TestVerifierMaskingSources/scrub
+    verifier_test.go:61: seed="scrub" signed=false text="verifier nodes" masked=0 hits=[] output={"messages":[{"role":"assistant","content":[{"type":"thinking","thinking":"verifier nodes"}]}]}
+    verifier_test.go:61: seed="scrub" signed=false text="verifier-node tagged droplets" masked=0 hits=[] output={"messages":[{"role":"assistant","content":[{"type":"thinking","thinking":"verifier-node tagged droplets"}]}]}
+    verifier_test.go:61: seed="scrub" signed=true text="verifier nodes" masked=0 hits=[] output={"messages":[{"role":"assistant","content":[{"type":"thinking","thinking":"verifier nodes","signature":"synthetic"}]}]}
+    verifier_test.go:61: seed="scrub" signed=true text="verifier-node tagged droplets" masked=0 hits=[] output={"messages":[{"role":"assistant","content":[{"type":"thinking","thinking":"verifier-node tagged droplets","signature":"synthetic"}]}]}
+=== RUN   TestVerifierMaskingSources/url
+    verifier_test.go:61: seed="url" signed=false text="verifier nodes" masked=1 hits=[{Kind:PASSWORD By:known Placeholder:{{PASSWORD_yqsf2pb7}} Action: Head:v Len:8}] output={"messages":[{"role":"assistant","content":[{"type":"thinking","thinking":"{{PASSWORD_yqsf2pb7}} nodes"}]}]}
+    verifier_test.go:61: seed="url" signed=false text="verifier-node tagged droplets" masked=1 hits=[{Kind:PASSWORD By:known Placeholder:{{PASSWORD_yqsf2pb7}} Action: Head:v Len:8}] output={"messages":[{"role":"assistant","content":[{"type":"thinking","thinking":"{{PASSWORD_yqsf2pb7}}-node tagged droplets"}]}]}
+    verifier_test.go:61: seed="url" signed=true text="verifier nodes" masked=1 hits=[{Kind:PASSWORD By:known Placeholder:{{PASSWORD_yqsf2pb7}} Action: Head:v Len:8}] output={"messages":[{"role":"assistant","content":[{"type":"thinking","thinking":"{{PASSWORD_yqsf2pb7}} nodes","signature":"synthetic"}]}]}
+    verifier_test.go:61: seed="url" signed=true text="verifier-node tagged droplets" masked=1 hits=[{Kind:PASSWORD By:known Placeholder:{{PASSWORD_yqsf2pb7}} Action: Head:v Len:8}] output={"messages":[{"role":"assistant","content":[{"type":"thinking","thinking":"{{PASSWORD_yqsf2pb7}}-node tagged droplets","signature":"synthetic"}]}]}
+=== RUN   TestVerifierMaskingSources/cjk
+    verifier_test.go:61: seed="cjk" signed=false text="verifier nodes" masked=1 hits=[{Kind:PASSWORD By:known Placeholder:{{PASSWORD_yqsf2pb7}} Action: Head:v Len:8}] output={"messages":[{"role":"assistant","content":[{"type":"thinking","thinking":"{{PASSWORD_yqsf2pb7}} nodes"}]}]}
+    verifier_test.go:61: seed="cjk" signed=false text="verifier-node tagged droplets" masked=1 hits=[{Kind:PASSWORD By:known Placeholder:{{PASSWORD_yqsf2pb7}} Action: Head:v Len:8}] output={"messages":[{"role":"assistant","content":[{"type":"thinking","thinking":"{{PASSWORD_yqsf2pb7}}-node tagged droplets"}]}]}
+    verifier_test.go:61: seed="cjk" signed=true text="verifier nodes" masked=1 hits=[{Kind:PASSWORD By:known Placeholder:{{PASSWORD_yqsf2pb7}} Action: Head:v Len:8}] output={"messages":[{"role":"assistant","content":[{"type":"thinking","thinking":"{{PASSWORD_yqsf2pb7}} nodes","signature":"synthetic"}]}]}
+    verifier_test.go:61: seed="cjk" signed=true text="verifier-node tagged droplets" masked=1 hits=[{Kind:PASSWORD By:known Placeholder:{{PASSWORD_yqsf2pb7}} Action: Head:v Len:8}] output={"messages":[{"role":"assistant","content":[{"type":"thinking","thinking":"{{PASSWORD_yqsf2pb7}}-node tagged droplets","signature":"synthetic"}]}]}
+--- PASS: TestVerifierMaskingSources (0.00s)
+    --- PASS: TestVerifierMaskingSources/#00 (0.00s)
+    --- PASS: TestVerifierMaskingSources/preview (0.00s)
+    --- PASS: TestVerifierMaskingSources/scrub (0.00s)
+    --- PASS: TestVerifierMaskingSources/url (0.00s)
+    --- PASS: TestVerifierMaskingSources/cjk (0.00s)
+PASS
+ok  	github.com/yetone/magpie/internal/redact	0.004s

@@ -1,0 +1,38 @@
+{
+  "issue": 3614,
+  "title": "[Bug] Routing: live request's Context window card says \"the model's window isn't known\" while the model's window is known",
+  "verdict": "fixed",
+  "skipReason": null,
+  "branch": "fix/trace-live-window",
+  "base": "01468003348ede896c5126e9fd81057e1e58765c",
+  "head": "a814f6e3910c7cbdebae1ecf65c020b8cdafaba5",
+  "testCommands": [
+    "go test ./internal/gateway -run TestLiveRouteCarriesTheWindow -count=1",
+    "go test ./internal/gateway -run 'TestLiveRouteCarriesTheWindow|TestRouteTellsItsPrompt' -count=1",
+    "go test ./internal/gateway -count=1 -timeout 1800s",
+    "go vet ./...",
+    "GOOS=linux GOARCH=amd64 go vet -tags nogui ./...",
+    "GOOS=windows GOARCH=amd64 go vet ./...",
+    "go build ./...",
+    "GOOS=linux GOARCH=amd64 go build -tags nogui ./...",
+    "GOOS=windows GOARCH=amd64 go build ./...",
+    "gofmt -l internal/gateway/prompt.go internal/gateway/gateway.go internal/gateway/codex_backend.go internal/gateway/prompt_test.go"
+  ],
+  "testsAdded": [
+    "TestLiveRouteCarriesTheWindow: while a request's upstream is held open, the trace's route carries the window routing decided (a plain provider's model, and a routing group's first member), and a model whose window nothing knows carries none"
+  ],
+  "unverifiedBoundaries": [
+    "The GUI's own rendering was not exercised: no Playwright module is installed on this machine (browsers are in ~/.cache/ms-playwright, the module is not resolvable), so internal/gui/tests/*.test.cjs could not run. The assets were not changed - prompt.window was already part of the trace JSON the page reads; only when it is filled changed.",
+    "go test ./internal/gateway has one pre-existing failure, TestClaudeClientCacheAbsentUnchanged, red on the clean base as well (evidence/3614/base-red-claude-cache.log; the branch has no base-red cause: the clean gateway tree fails it too).",
+    "A fallback to another group member changes the window at the route's end (the answering model's), as before; the in-flight card shows the first member's until then."
+  ],
+  "filesChanged": [
+    "internal/gateway/prompt.go",
+    "internal/gateway/gateway.go",
+    "internal/gateway/codex_backend.go",
+    "internal/gateway/prompt_test.go"
+  ],
+  "preExistingRed": [
+    "internal/gateway TestClaudeClientCacheAbsentUnchanged (also red on the clean base)"
+  ]
+}

@@ -1,0 +1,10 @@
+--- FAIL: TestSearchesWriteARequestRow (0.00s)
+    --- FAIL: TestSearchesWriteARequestRow/Kimi_Code's_search_service (0.00s)
+        search_usage_test.go:70: 0 rows written, want 1
+    --- FAIL: TestSearchesWriteARequestRow/WorkBuddy's_search_service (0.00s)
+        search_usage_test.go:70: 0 rows written, want 1
+    --- FAIL: TestSearchesWriteARequestRow/a_search_API (0.00s)
+        search_usage_test.go:70: 0 rows written, want 1
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.019s
+FAIL

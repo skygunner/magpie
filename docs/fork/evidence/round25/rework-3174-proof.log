@@ -1,0 +1,200 @@
+2026/10/26 19:46:06 claude: Claude Code sessions started from now on go through b@example.com's proxy http://10.0.0.9:8080
+2026/10/26 19:46:06 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:46:06 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:46:06 claude: Claude Code sessions started from now on go through b@example.com's proxy http://10.0.0.9:8080
+2026/10/26 19:46:06 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:46:06 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:06 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:06 claude: writing the account's proxy to settings.json: /tmp/TestClaudeAccountProxyLeavesABrokenSettings2819245336/001/.claude/settings.json can't be read; its proxy left as it is
+2026/10/26 19:46:06 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:06 claude: b@example.com's proxy socks5h://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:06 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:06 claude: Claude Code sessions started from now on go through max@x.com's proxy http://127.0.0.1:17902
+2026/10/26 19:46:07 claude: a@example.com has used 98% or more of its allowance; signed it in to b@example.com
+2026/10/26 19:46:16 claude: Claude Code sessions started from now on go through b@example.com's proxy http://10.0.0.9:8080
+2026/10/26 19:46:16 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:46:16 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:46:16 claude: Claude Code sessions started from now on go through b@example.com's proxy http://10.0.0.9:8080
+2026/10/26 19:46:16 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:46:16 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:16 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:16 claude: writing the account's proxy to settings.json: /tmp/TestClaudeAccountProxyLeavesABrokenSettings2487207251/001/.claude/settings.json can't be read; its proxy left as it is
+2026/10/26 19:46:16 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:16 claude: b@example.com's proxy socks5h://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:16 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:16 claude: Claude Code sessions started from now on go through max@x.com's proxy http://127.0.0.1:17902
+2026/10/26 19:46:17 claude: a@example.com has used 98% or more of its allowance; signed it in to b@example.com
+2026/10/26 19:46:26 claude: Claude Code sessions started from now on go through b@example.com's proxy http://10.0.0.9:8080
+2026/10/26 19:46:26 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:46:26 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:46:26 claude: Claude Code sessions started from now on go through b@example.com's proxy http://10.0.0.9:8080
+2026/10/26 19:46:26 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:46:26 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:26 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:26 claude: writing the account's proxy to settings.json: /tmp/TestClaudeAccountProxyLeavesABrokenSettings3389714235/001/.claude/settings.json can't be read; its proxy left as it is
+2026/10/26 19:46:26 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:26 claude: b@example.com's proxy socks5h://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:26 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:26 claude: Claude Code sessions started from now on go through max@x.com's proxy http://127.0.0.1:17902
+2026/10/26 19:46:27 claude: a@example.com has used 98% or more of its allowance; signed it in to b@example.com
+2026/10/26 19:46:36 claude: Claude Code sessions started from now on go through b@example.com's proxy http://10.0.0.9:8080
+2026/10/26 19:46:36 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:46:36 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:46:36 claude: Claude Code sessions started from now on go through b@example.com's proxy http://10.0.0.9:8080
+2026/10/26 19:46:36 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:46:36 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:36 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:36 claude: writing the account's proxy to settings.json: /tmp/TestClaudeAccountProxyLeavesABrokenSettings1798440684/001/.claude/settings.json can't be read; its proxy left as it is
+2026/10/26 19:46:36 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:36 claude: b@example.com's proxy socks5h://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:36 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:36 claude: Claude Code sessions started from now on go through max@x.com's proxy http://127.0.0.1:17902
+2026/10/26 19:46:36 claude: a@example.com has used 98% or more of its allowance; signed it in to b@example.com
+2026/10/26 19:46:46 claude: Claude Code sessions started from now on go through b@example.com's proxy http://10.0.0.9:8080
+2026/10/26 19:46:46 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:46:46 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:46:46 claude: Claude Code sessions started from now on go through b@example.com's proxy http://10.0.0.9:8080
+2026/10/26 19:46:46 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:46:46 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:46 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:46 claude: writing the account's proxy to settings.json: /tmp/TestClaudeAccountProxyLeavesABrokenSettings2723464479/001/.claude/settings.json can't be read; its proxy left as it is
+2026/10/26 19:46:46 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:46 claude: b@example.com's proxy socks5h://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:46 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:46 claude: Claude Code sessions started from now on go through max@x.com's proxy http://127.0.0.1:17902
+2026/10/26 19:46:46 claude: a@example.com has used 98% or more of its allowance; signed it in to b@example.com
+==================
+WARNING: DATA RACE
+Write at 0x000003b8d1ad by goroutine 4480:
+  github.com/yetone/magpie/internal/provider.isolate()
+      /home/vincenty/Projects/magpie-issues/rework-3174/internal/provider/account_test.go:75 +0xb4
+  github.com/yetone/magpie/internal/provider.claudeHome()
+      /home/vincenty/Projects/magpie-issues/rework-3174/internal/provider/account_test.go:287 +0x49
+  github.com/yetone/magpie/internal/provider.TestClaudeAccountServesModelsListedSinceItsFetch()
+      /home/vincenty/Projects/magpie-issues/rework-3174/internal/provider/claude_models_test.go:45 +0x46
+  testing.tRunner()
+      /home/vincenty/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.8.linux-amd64/src/testing/testing.go:2036 +0x21c
+  testing.(*T).Run.gowrap1()
+      /home/vincenty/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.8.linux-amd64/src/testing/testing.go:2101 +0x38
+
+Previous read at 0x000003b8d1ad by goroutine 4479:
+  github.com/yetone/magpie/internal/provider.readClaudeCredential()
+      /home/vincenty/Projects/magpie-issues/rework-3174/internal/provider/account.go:445 +0xc4
+  github.com/yetone/magpie/internal/provider.claudeCredential()
+      /home/vincenty/Projects/magpie-issues/rework-3174/internal/provider/account.go:596 +0x224
+  github.com/yetone/magpie/internal/provider.liveLogin()
+      /home/vincenty/Projects/magpie-issues/rework-3174/internal/provider/logins.go:694 +0x538
+  github.com/yetone/magpie/internal/provider.Logins()
+      /home/vincenty/Projects/magpie-issues/rework-3174/internal/provider/logins.go:903 +0x756
+  github.com/yetone/magpie/internal/provider.builtinLogins()
+      /home/vincenty/Projects/magpie-issues/rework-3174/internal/provider/login_usage.go:263 +0x144
+  github.com/yetone/magpie/internal/provider.usageLogins()
+      /home/vincenty/Projects/magpie-issues/rework-3174/internal/provider/login_usage.go:255 +0x129
+  github.com/yetone/magpie/internal/provider.loginUsageAt()
+      /home/vincenty/Projects/magpie-issues/rework-3174/internal/provider/login_usage.go:88 +0xe9
+  github.com/yetone/magpie/internal/provider.Allowances.func1()
+      /home/vincenty/Projects/magpie-issues/rework-3174/internal/provider/routing.go:500 +0xf9
+
+Goroutine 4480 (running) created at:
+  testing.(*T).Run()
+      /home/vincenty/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.8.linux-amd64/src/testing/testing.go:2101 +0xb12
+  testing.runTests.func1()
+      /home/vincenty/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.8.linux-amd64/src/testing/testing.go:2585 +0x84
+  testing.tRunner()
+      /home/vincenty/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.8.linux-amd64/src/testing/testing.go:2036 +0x21c
+  testing.runTests()
+      /home/vincenty/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.8.linux-amd64/src/testing/testing.go:2583 +0x9e9
+  testing.(*M).Run()
+      /home/vincenty/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.8.linux-amd64/src/testing/testing.go:2443 +0xf4b
+  github.com/yetone/magpie/internal/testenv.RunIn()
+      /home/vincenty/Projects/magpie-issues/rework-3174/internal/testenv/testenv.go:102 +0x3b0
+  github.com/yetone/magpie/internal/provider.TestMain()
+      /home/vincenty/Projects/magpie-issues/rework-3174/internal/provider/kiro_main_test.go:20 +0x2d
+  main.main()
+      _testmain.go:2604 +0x171
+
+Goroutine 4479 (running) created at:
+  github.com/yetone/magpie/internal/provider.Allowances()
+      /home/vincenty/Projects/magpie-issues/rework-3174/internal/provider/routing.go:495 +0x3cb
+  github.com/yetone/magpie/internal/provider.loginRoom()
+      /home/vincenty/Projects/magpie-issues/rework-3174/internal/provider/logins.go:1037 +0x34
+  github.com/yetone/magpie/internal/provider.InUseLogin()
+      /home/vincenty/Projects/magpie-issues/rework-3174/internal/provider/logins.go:953 +0x33
+  github.com/yetone/magpie/internal/provider.TestClaudeAllSignedOutStaysListed()
+      /home/vincenty/Projects/magpie-issues/rework-3174/internal/provider/claude_logout_test.go:242 +0x2144
+  testing.tRunner()
+      /home/vincenty/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.8.linux-amd64/src/testing/testing.go:2036 +0x21c
+  testing.(*T).Run.gowrap1()
+      /home/vincenty/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.8.linux-amd64/src/testing/testing.go:2101 +0x38
+==================
+--- FAIL: TestClaudeAccountServesModelsListedSinceItsFetch (0.00s)
+    testing.go:1712: race detected during execution of test
+2026/10/26 19:46:55 claude: Claude Code sessions started from now on go through b@example.com's proxy http://10.0.0.9:8080
+2026/10/26 19:46:55 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:46:55 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:46:55 claude: Claude Code sessions started from now on go through b@example.com's proxy http://10.0.0.9:8080
+2026/10/26 19:46:55 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:46:55 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:55 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:55 claude: writing the account's proxy to settings.json: /tmp/TestClaudeAccountProxyLeavesABrokenSettings2036983173/001/.claude/settings.json can't be read; its proxy left as it is
+2026/10/26 19:46:55 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:55 claude: b@example.com's proxy socks5h://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:55 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:46:56 claude: Claude Code sessions started from now on go through max@x.com's proxy http://127.0.0.1:17902
+2026/10/26 19:46:56 claude: a@example.com has used 98% or more of its allowance; signed it in to b@example.com
+2026/10/26 19:47:05 claude: Claude Code sessions started from now on go through b@example.com's proxy http://10.0.0.9:8080
+2026/10/26 19:47:05 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:47:05 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:47:05 claude: Claude Code sessions started from now on go through b@example.com's proxy http://10.0.0.9:8080
+2026/10/26 19:47:05 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:47:05 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:47:05 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:47:05 claude: writing the account's proxy to settings.json: /tmp/TestClaudeAccountProxyLeavesABrokenSettings615922769/001/.claude/settings.json can't be read; its proxy left as it is
+2026/10/26 19:47:05 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:47:05 claude: b@example.com's proxy socks5h://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:47:05 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:47:05 claude: Claude Code sessions started from now on go through max@x.com's proxy http://127.0.0.1:17902
+2026/10/26 19:47:06 claude: a@example.com has used 98% or more of its allowance; signed it in to b@example.com
+2026/10/26 19:47:15 claude: Claude Code sessions started from now on go through b@example.com's proxy http://10.0.0.9:8080
+2026/10/26 19:47:15 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:47:15 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:47:15 claude: Claude Code sessions started from now on go through b@example.com's proxy http://10.0.0.9:8080
+2026/10/26 19:47:15 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:47:15 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:47:15 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:47:15 claude: writing the account's proxy to settings.json: /tmp/TestClaudeAccountProxyLeavesABrokenSettings3580526680/001/.claude/settings.json can't be read; its proxy left as it is
+2026/10/26 19:47:15 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:47:15 claude: b@example.com's proxy socks5h://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:47:15 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:47:15 claude: Claude Code sessions started from now on go through max@x.com's proxy http://127.0.0.1:17902
+2026/10/26 19:47:16 claude: a@example.com has used 98% or more of its allowance; signed it in to b@example.com
+2026/10/26 19:47:25 claude: Claude Code sessions started from now on go through b@example.com's proxy http://10.0.0.9:8080
+2026/10/26 19:47:25 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:47:25 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:47:25 claude: Claude Code sessions started from now on go through b@example.com's proxy http://10.0.0.9:8080
+2026/10/26 19:47:25 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:47:25 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:47:25 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:47:25 claude: writing the account's proxy to settings.json: /tmp/TestClaudeAccountProxyLeavesABrokenSettings2258213887/001/.claude/settings.json can't be read; its proxy left as it is
+2026/10/26 19:47:25 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:47:25 claude: b@example.com's proxy socks5h://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:47:25 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:47:25 claude: Claude Code sessions started from now on go through max@x.com's proxy http://127.0.0.1:17902
+2026/10/26 19:47:25 claude: a@example.com has used 98% or more of its allowance; signed it in to b@example.com
+2026/10/26 19:47:35 claude: Claude Code sessions started from now on go through b@example.com's proxy http://10.0.0.9:8080
+2026/10/26 19:47:35 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:47:35 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:47:35 claude: Claude Code sessions started from now on go through b@example.com's proxy http://10.0.0.9:8080
+2026/10/26 19:47:35 claude: settings.json's env has a proxy of the user's own; magpie leaves it, and writes no account's proxy
+2026/10/26 19:47:35 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:47:35 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:47:35 claude: writing the account's proxy to settings.json: /tmp/TestClaudeAccountProxyLeavesABrokenSettings3605604932/001/.claude/settings.json can't be read; its proxy left as it is
+2026/10/26 19:47:35 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:47:35 claude: b@example.com's proxy socks5h://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:47:35 claude: b@example.com's proxy socks5://127.0.0.1:1080 is SOCKS, which Claude Code can't use; its sessions go the way they did
+2026/10/26 19:47:35 claude: Claude Code sessions started from now on go through max@x.com's proxy http://127.0.0.1:17902
+2026/10/26 19:47:35 claude: a@example.com has used 98% or more of its allowance; signed it in to b@example.com
+FAIL
+FAIL	github.com/yetone/magpie/internal/provider	98.345s
+FAIL
+EXIT=1

@@ -1,0 +1,16 @@
+[
+  {
+    "label": "targeted",
+    "command": "go test -race ./internal/gateway -run '^TestZCodeTrialQuotaRestsTheModelAlone$' -count=1 -v",
+    "cwd": "/home/vincenty/Projects/magpie-issues/r25-expired-model-not-account-fault",
+    "returncode": 0,
+    "log": "green.log"
+  },
+  {
+    "label": "gateway package",
+    "command": "go test ./internal/gateway -count=1 -timeout=15m",
+    "cwd": "/home/vincenty/Projects/magpie-issues/r25-expired-model-not-account-fault",
+    "returncode": 1,
+    "log": "green.log"
+  }
+]

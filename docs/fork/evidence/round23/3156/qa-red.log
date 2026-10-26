@@ -1,0 +1,72 @@
+✖ chromium en: the story names the group's models as the group is now (410.915348ms)
+✖ chromium zh: the story names the group's models as the group is now (421.976465ms)
+✖ webkit en: the story names the group's models as the group is now (700.299814ms)
+✖ webkit zh: the story names the group's models as the group is now (795.536359ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 0
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2479.422556
+
+✖ failing tests:
+
+test at internal/gui/tests/routing-group-members-live.test.cjs:75:5
+✖ chromium en: the story names the group's models as the group is now (410.915348ms)
+  AssertionError [ERR_ASSERTION]: the group's models now
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/routing-group-members-live/internal/gui/tests/routing-group-members-live.test.cjs:90:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'Claude Code asked for the routing group Hand: a/m, b/m',
+    expected: /A · MA · C · Luna$/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/routing-group-members-live.test.cjs:75:5
+✖ chromium zh: the story names the group's models as the group is now (421.976465ms)
+  AssertionError [ERR_ASSERTION]: the group's models now
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/routing-group-members-live/internal/gui/tests/routing-group-members-live.test.cjs:90:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'Claude Code 请求了路由组 Hand：a/m, b/m',
+    expected: /A · MA · C · Luna$/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/routing-group-members-live.test.cjs:75:5
+✖ webkit en: the story names the group's models as the group is now (700.299814ms)
+  AssertionError [ERR_ASSERTION]: the group's models now
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/routing-group-members-live/internal/gui/tests/routing-group-members-live.test.cjs:90:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'Claude Code asked for the routing group Hand: a/m, b/m',
+    expected: /A · MA · C · Luna$/,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/routing-group-members-live.test.cjs:75:5
+✖ webkit zh: the story names the group's models as the group is now (795.536359ms)
+  AssertionError [ERR_ASSERTION]: the group's models now
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/routing-group-members-live/internal/gui/tests/routing-group-members-live.test.cjs:90:14)
+      at runNextTicks (node:internal/process/task_queues:65:5)
+      at process.processImmediate (node:internal/timers:541:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 'Claude Code 请求了路由组 Hand：a/m, b/m',
+    expected: /A · MA · C · Luna$/,
+    operator: 'match',
+    diff: 'simple'
+  }

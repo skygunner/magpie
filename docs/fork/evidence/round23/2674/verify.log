@@ -1,0 +1,5 @@
+--- FAIL: TestWriteAtomicReadOnlyHardLink (0.00s)
+    hardlink_test.go:132: mode -r--r-----
+FAIL
+FAIL	github.com/yetone/magpie/internal/edit	0.075s
+FAIL

@@ -1,0 +1,29 @@
+{
+  "issue": 3674,
+  "title": "Usage → Requests: a non-Codex agent's calls are counted twice (gateway + its own session file)",
+  "verdict": "fixed",
+  "branch": "fix/r25-usage-dedup-session-file",
+  "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+  "head": "18006848027b956553615e5dd462a2e6580cb92d",
+  "testsAdded": [
+    "internal/usage/dsh_match_test.go:TestDshCallThroughMagpieCountedOnce",
+    "internal/usage/codex_identity_test.go:TestLogRecordKeepsAResponseIDAnyAgentNamed (rewritten contract)",
+    "internal/sessions/calls_dsh_test.go:TestDshCalls (responseId fixture assertion)"
+  ],
+  "filesChanged": [
+    "docs/subsystems/gateway-sessions.md",
+    "internal/sessions/calls_dsh.go",
+    "internal/sessions/calls_dsh_test.go",
+    "internal/sessions/dsh.go",
+    "internal/sessions/testdata/dsh/sessions/work-dsh-3f2a/dsh-gw/session.v3.jsonl",
+    "internal/usage/codex_identity.go",
+    "internal/usage/codex_identity_test.go",
+    "internal/usage/ledger.go",
+    "internal/usage/dsh_match_test.go"
+  ],
+  "preExistingRed": [],
+  "unverifiedBoundaries": [
+    "no live dsh + workbuddy account run; fixtures are synthetic",
+    "optional tokens/model/±2s fallback pairing not implemented (issue point 3)"
+  ]
+}

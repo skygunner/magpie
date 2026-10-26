@@ -1,0 +1,5 @@
+--- FAIL: TestUncountedPromptReadsBesideItsCountedNeighbour (0.00s)
+    prompt_test.go:421: the cancelled request reads 3410 tokens against 2103 counted beside it; want 1752 to 2453
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.015s
+FAIL

@@ -1,0 +1,236 @@
+From 3dfc880cfc843f9c2ca5e0ac8f8c65a8aa8647b5 Mon Sep 17 00:00:00 2001
+From: skygunner <skygunner@users.noreply.github.com>
+Date: Mon, 26 Oct 2026 06:40:22 +1000
+Subject: [PATCH] gateway: a Copilot account is asked tool search as
+ advanced-tool-use, the name its Messages API takes (#3475)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Claude Desktop's gateway mode runs Claude Code with experimental betas
+off, so its "Enable tool search" asks tool search as Bedrock's and
+Vertex's tool-search-tool-2025-10-19. Copilot's /v1/messages and
+count_tokens turn that name away — 400 "unsupported beta header(s):
+tool-search-tool-2025-10-19" — so every Desktop session's first request
+failed and Claude Code turned tool search off for it, sending every tool
+schema inline. Copilot serves the same deferred tools as Anthropic's own
+advanced-tool-use-2025-11-20.
+
+Root cause: betas() fitted betas one way only — Bedrock's names — and
+forwarded everything else as the agent asked it. A Copilot account
+(p.Account.Agent == "copilot") is now renamed through copilotBetas before
+the dedupe, so both names asked together go once, and every other
+provider is asked the name the agent asked. /v1/messages, count_tokens
+and a body's anthropic_beta all go through betas().
+
+RED -> GREEN: TestCopilotToolSearchBeta drives the gateway handler to a
+fake Copilot API that refuses the Bedrock name as the reporter's log
+does. At 01468003 (test kept, betas.go as before):
+  FAIL copilot_tool_search_test.go:77: Messages, betas
+  "tool-search-tool-2025-10-19": 400 {"error":{"message":"Copilot:
+  unsupported beta header(s): tool-search-tool-2025-10-19", ...}}
+With the change: both tests pass, and TestUserBetas* and
+TestSignInBetaStaysWithMagpie still pass.
+
+Run at this head (GOTOOLCHAIN=go1.26.8, temp HOME, pinned Go caches):
+  go test -tags nogui ./internal/gateway/... -count=1   (one red, below)
+  go vet ./...                                         exit 0
+  GOOS=linux GOARCH=amd64 go vet -tags nogui ./...     exit 0
+  GOOS=windows GOARCH=amd64 go vet ./...               exit 0
+  go build ./...                                       exit 0
+  GOOS=linux GOARCH=amd64 go build -tags nogui ./...   exit 0
+  GOOS=windows GOARCH=amd64 go build ./...             exit 0
+  gofmt -l on the changed files                        empty
+
+Pre-existing red at 01468003, not from this change and not hidden:
+TestClaudeClientCacheAbsentUnchanged (claude_client_cache_test.go:291,
+"ordinary prompt changed"). It fails the same way with this branch's
+betas.go stashed, so it is red on the clean base too.
+
+Not tried: a real Copilot Business account and a real Claude Desktop
+(no credentials here); GHE Copilot (same Agent == "copilot" branch).
+---
+ docs/subsystems/gateway-routing.md           |   1 +
+ internal/gateway/betas.go                    |  15 +++
+ internal/gateway/copilot_tool_search_test.go | 124 +++++++++++++++++++
+ 3 files changed, 140 insertions(+)
+ create mode 100644 internal/gateway/copilot_tool_search_test.go
+
+diff --git a/docs/subsystems/gateway-routing.md b/docs/subsystems/gateway-routing.md
+index c72f5ad0..11bb0d71 100644
+--- a/docs/subsystems/gateway-routing.md
++++ b/docs/subsystems/gateway-routing.md
+@@ -184,6 +184,7 @@ recorded as a prediction failure (`noPrediction`).
+ - Kimi's Chat API (`isKimi`: the Kimi platform's and a Kimi Code membership's hosts or presets) turns `reasoning_details` in a message away in any shape: an entry with a stream's `index` ("the reasoning_details at position 1 entry 0 must not contain streaming index") and any other entry ("… has an invalid type"), checked against api.kimi.com/coding on 2026-10-12. pi keeps another vendor's thinking there (MiMo's, through Command Code, with `index: 0`), so a conversation routed on to Kimi was refused on every turn (#1765). `passthrough` sends it to Kimi as `reasoning_content` (`reasoningDetailsAsContent`), which Kimi takes; a message with `reasoning_content` of its own keeps that. Another upstream that refuses a thinking field "at position N", as Kimi words it (a relay in front of it), is asked once more the same way and marked (`refusedInMessages`, `withoutMessageReasoning`).
+ - A Responses request's top-level `access_programs`, the Cyber program Codex asks the model under (`{"cyber":"standard"}` on a subagent it inherits, OpenAI's Daybreak programs, magpie-releases#18), goes only where Codex itself would send it: codex-rs sends it with a ChatGPT sign-in, or an API key on its provider named `openai`, and to no other provider (`cyber_access_program.rs`, `for_auth`, `for_provider`). In `forwardOnce`, relayed or built (from Chat too), it goes as it came to a ChatGPT (Codex) account, a host ending in `openai.com`, another magpie (`IsRemoteMagpie`, whose own upstream decides) and a relay set `codexAsSent` when Codex sent the request; every other Responses upstream is sent the request without it (`keepsAccessPrograms`, `withoutTopMember`, the rest byte for byte). OpenCode Go answered it, for DeepSeek and GLM, with 503 "Upstream request failed: Endpoint is unavailable." and 200 without it or with null; its Haiku took it (#3172, three reporters' real A/B runs). It is taken out before the user's extraBody is merged, so an `access_programs` written there still goes. Chat and Messages builds never carry it; a Chat request relayed as it came keeps whatever its client wrote. `TestAccessProgramsGoToOpenAIAlone`, `TestWithoutTopMember`, `TestCodexAccessProgramsReachBackend`.
+ - Claude Code's deferred tools (ToolSearch, MCP tools that come and go) put blocks of their own in a message: a `tool_addition` (`tool` a `tool_reference` naming the tool, or a `tool_definition`), a `tool_removal`, and a `tool_reference`. Kimi's Anthropic endpoint refuses any of them with a whole-request 400 "Invalid request Error" that names nothing, so once a session had loaded a tool every turn failed (#2042); DeepSeek's takes a `tool_addition` naming a tool but refuses one defining it, a `tool_removal` and a message's `tool_reference` with 422 "unknown variant `tool_removal`" (both checked against the real endpoints on 2026-10-14). OpenCode Go also rejects DeepSeek inline definitions with a generic 422 "Upstream request failed: Endpoint is unavailable." (checked on 2026-10-15). Kimi and DeepSeek models on OpenCode are never sent these blocks (`forwardOnce`); a provider that refuses one in those words is asked again at once without them and not sent them again while magpie runs (`refuseShapes`, `shapeDeferred`; the retry loop reads a 422 as well as a 400). `withoutDeferredTools` drops the blocks and a message they leave empty; definitions present only in a `tool_addition.tool.definition` join the request's `tools` once by name (an existing top-level definition wins), and a `tool_reference` inside a `tool_result` (ToolSearch's answer, which both take) stays. Any other provider is sent them as Claude Code wrote them ([`anthropic_shapes.go`](../../internal/gateway/anthropic_shapes.go), `TestKimiIsSentNoDeferredToolBlocks`, `TestDeferredToolBlocksRefusedOnceLeftOut`, `TestOpenCodeDeepSeekInlineTools`, `TestDeferredInlineDefinitionPreserved`).
++- Claude Desktop's gateway mode runs Claude Code with experimental betas off, so its "Enable tool search" asks tool search as Bedrock's and Vertex's `tool-search-tool-2025-10-19`, which Copilot's Messages API turns away (400 "unsupported beta header(s)") on the first request of every session; Copilot serves the same deferred tools as Anthropic's own `advanced-tool-use-2025-11-20`. A Copilot account is asked that name on `/v1/messages` and `count_tokens` alike, once when the agent asked both (`copilotBetas` in [`betas.go`](../../internal/gateway/betas.go), `TestCopilotToolSearchBeta`); another provider is asked the name the agent asked.
+ - ToolSearch's answer is a `tool_result` whose content is `tool_reference` blocks alone. OpenDesign's Anthropic endpoint can't read one: 422 "Failed to deserialize the JSON body into the target type: messages[4]: missing field `content`" (#2124, the reporter's direct request without magpie fails the same way; the same result with a text block beside the references is taken). A provider that refuses in those words while the request holds such a result is asked again at once with a text block first in each, "Tool <name> is loaded and can be called now." (`toolLoadedText`, the words a translated route already gives a model in `stringOrText`), the references and the `tool_use`/`tool_result` pairing kept, and is sent it that way while magpie runs (`refuseShapes`, `shapeRefsOnly`, `withRefsSaid`). This is in `forward`, so `/v1/messages`, `count_tokens` and a group's member all get it; a request translated to another API already carries the references as that text. Any other provider is sent the bare references (`TestRefsOnlyToolResultRefusedGetsText`, `TestRefsSaidLeavesOtherResults`).
+ - A tool Claude Code's ToolSearch loads, translated to a Responses API, used to join the top-level `tools` on the next request, which changed the prompt from its first bytes and missed the cache on every load (#2660). A deferred tool (`defer_loading`, `Tool.Deferred`) that a `tool_result`'s `tool_reference` names (`toolRefs`, `Part.Loads`) now goes, where `Request.LoadedInPlace` is set, in an `{"type":"additional_tools","role":"developer","tools":[…]}` item right after the run of tool outputs that loaded it, once, and not in `tools` (`buildResponses`): tools loaded by parallel results or one result naming several share one item, a tool named again isn't repeated, and the tool output's text is as before. OpenAI's tool search guide documents the item and that its tools load at the end of the context so the cache is kept. A compacted or edited history whose loading result is gone puts the tool back in `tools`, a new prefix, as is expected. `LoadedInPlace` is set (`loadsInPlace`, in `forwardTranslated`) for OpenAI's own API with a key (`api.openai.com`, `*.api.openai.com`) and for a provider set `additionalTools` (`magpie provider set <id> additional-tools=on`); nothing else, since xAI answers the item 422 (#350), the ChatGPT backend has been seen to take it only for Codex's Responses Lite, and no relay or plugin's vendor has been tried. An upstream that refuses a request holding the item with a 400 or 422 naming `additional_tools` is asked again with every tool in `tools`, logged ("turned away additional_tools … loaded tools go in tools from now on") and not sent the item again while magpie runs. Not handled: a tool a `tool_addition` block loads (an MCP server's late tool, the advisor) stays in `tools`. `TestLoadedToolsKeepThePrefix`, `TestLoadedToolsInOneItem`, `TestLoadedToolsWhereNotTaken`, `TestLoadsInPlaceScope`, `TestLoadedToolsThroughTheGateway`.
+ - A Responses upstream that wants a turn's reasoning back (`replaysReasoning` in [`responses.go`](../../internal/gateway/responses.go): a model with `deepseek` in its name, on any host but OpenAI's, xAI's, Copilot's and Azure's) gets every reasoning item with a `reasoning_text` and every tool call after one, relayed (`withReasoningText` in `passthrough`) or translated (`buildResponses`). DeepSeek's `/v1/responses` turns the whole request away ("The `reasoning_text` in the thinking mode must be passed back to the API") over a reasoning item without text, one with an empty text, and a `function_call` whose step (since the last user message or tool output) has no reasoning item. Codex sends all three in a routing group that falls to DeepSeek after ChatGPT: the backend's sealed items (`encrypted_content` only), magpie's summary-only items, and another member's calls with none (#1104, #1592). DeepSeek reads a step (a run of reasoning, assistant messages and calls) as one assistant message whose thinking is the item it starts with: in the current turn, a step with a call or after a tool output must lead with a reasoning item, so [message, reasoning, call] and [output, message] are refused while [reasoning, message, call] and [output, reasoning, message] are taken (checked against api.deepseek.com on 2026-10-12). Codex sends a step that said something before its call with no reasoning for another model's turn, which magpie used to send [message, reasoning " ", call] and DeepSeek refused intermittently, only while the turn lasted (#1822, through OpenCode Go). An item's own text is kept; one without gets its summary, else a space (`noReasoning`); each such step leads with its reasoning (`reasonFirst`): its own first reasoning item moved ahead, else one holding a space. A sealed item keeps its id and `encrypted_content`; a body already in that shape goes byte for byte.
+diff --git a/internal/gateway/betas.go b/internal/gateway/betas.go
+index 3c72fecf..24072e13 100644
+--- a/internal/gateway/betas.go
++++ b/internal/gateway/betas.go
+@@ -27,6 +27,16 @@ var bedrockBetas = map[string]string{
+ 	"advanced-tool-use-2025-11-20": "tool-search-tool-2025-10-19",
+ }
+ 
++// copilotBetas are betas of Bedrock's and Vertex's that Copilot's Messages
++// API names in another way: Claude Desktop's gateway mode runs Claude Code
++// with experimental betas off, so its tool search is asked as
++// tool-search-tool-2025-10-19, which Copilot turns away (400 unsupported
++// beta header(s)); it serves the same deferred tools as Anthropic's own
++// advanced-tool-use-2025-11-20 (#3475).
++var copilotBetas = map[string]string{
++	"tool-search-tool-2025-10-19": "advanced-tool-use-2025-11-20",
++}
++
+ // bedrockRefuses are betas Bedrock has turned away (#176), left out from
+ // the first request rather than learned from a refusal.
+ var bedrockRefuses = []string{
+@@ -72,6 +82,11 @@ func (s *Server) betas(p provider.Provider, asked []string) []string {
+ 					continue
+ 				}
+ 			}
++			if p.Account != nil && p.Account.Agent == "copilot" {
++				if to, ok := copilotBetas[b]; ok {
++					b = to
++				}
++			}
+ 			if !s.fits(p.ID, betaKey(b), provider.Anthropic) || slices.Contains(out, b) {
+ 				continue
+ 			}
+diff --git a/internal/gateway/copilot_tool_search_test.go b/internal/gateway/copilot_tool_search_test.go
+new file mode 100644
+index 00000000..4163bb13
+--- /dev/null
++++ b/internal/gateway/copilot_tool_search_test.go
+@@ -0,0 +1,124 @@
++package gateway
++
++import (
++	"io"
++	"net/http"
++	"net/http/httptest"
++	"slices"
++	"strings"
++	"sync"
++	"testing"
++
++	"github.com/yetone/magpie/internal/provider"
++)
++
++// #3475 (mdwsk88): Claude Desktop's gateway mode runs Claude Code with
++// experimental betas off, so its "Enable tool search" asks tool search as
++// Bedrock's and Vertex's tool-search-tool-2025-10-19. Copilot's Messages
++// API turns that name away — 400 unsupported beta header(s) — on every
++// session's first request, and Claude Code turns the setting off for the
++// session; Copilot serves the same deferred tools under Anthropic's own
++// name. A Copilot account is asked advanced-tool-use-2025-11-20 instead,
++// and another provider still gets the name the agent asked.
++func TestCopilotToolSearchBeta(t *testing.T) {
++	var mu sync.Mutex
++	var seen []string // "<path> <anthropic-beta>" of each request
++	copilotFake(t, "gho_desktop3475", func(w http.ResponseWriter, r *http.Request) {
++		switch r.URL.Path {
++		case "/models":
++			io.WriteString(w, `{"data":[{"id":"claude-opus-5.5","name":"Claude Opus 5.5","model_picker_enabled":true,"policy":{"state":"enabled"},"supported_endpoints":["/messages"],"capabilities":{"type":"chat"}}]}`)
++		case "/v1/messages", "/v1/messages/count_tokens":
++			betas := strings.Join(r.Header.Values("Anthropic-Beta"), ",")
++			mu.Lock()
++			seen = append(seen, r.URL.Path+" "+betas)
++			mu.Unlock()
++			for _, b := range strings.Split(betas, ",") {
++				if strings.TrimSpace(b) == "tool-search-tool-2025-10-19" {
++					w.Header().Set("Content-Type", "application/json")
++					w.WriteHeader(400)
++					io.WriteString(w, `{"error":{"message":"Copilot: unsupported beta header(s): tool-search-tool-2025-10-19","type":"invalid_request_error"}}`)
++					return
++				}
++			}
++			w.Header().Set("Content-Type", "application/json")
++			if strings.HasSuffix(r.URL.Path, "count_tokens") {
++				io.WriteString(w, `{"input_tokens":77}`)
++				return
++			}
++			io.WriteString(w, `{"id":"m1","type":"message","role":"assistant","model":"claude-opus-5.5","content":[{"type":"text","text":"pong"}],"stop_reason":"end_turn","usage":{"input_tokens":77,"output_tokens":1}}`)
++		default:
++			w.WriteHeader(404)
++		}
++	})
++	s := New()
++	ask := func(model, path, betas string) (int, string) {
++		t.Helper()
++		rec := httptest.NewRecorder()
++		req := httptest.NewRequest("POST", path, strings.NewReader(`{"model":"`+model+`","max_tokens":20,"messages":[{"role":"user","content":"ping"}]}`))
++		req.Header.Set("anthropic-beta", betas)
++		s.Handler().ServeHTTP(rec, req)
++		return rec.Code, rec.Body.String()
++	}
++	// what Desktop asks, and both names in either order: one name goes, the
++	// one Copilot takes
++	for _, c := range []struct {
++		asked string
++		want  string
++	}{
++		{"tool-search-tool-2025-10-19", "advanced-tool-use-2025-11-20"},
++		{"tool-search-tool-2025-10-19,advanced-tool-use-2025-11-20", "advanced-tool-use-2025-11-20"},
++		{"advanced-tool-use-2025-11-20,tool-search-tool-2025-10-19", "advanced-tool-use-2025-11-20"},
++	} {
++		mu.Lock()
++		seen = nil
++		mu.Unlock()
++		code, body := ask("copilot/claude-opus-5.5", "/v1/messages", c.asked)
++		if code != 200 {
++			t.Fatalf("Messages, betas %q: %d %s", c.asked, code, body)
++		}
++		mu.Lock()
++		got := slices.Clone(seen)
++		mu.Unlock()
++		if want := []string{"/v1/messages " + c.want}; !slices.Equal(got, want) {
++			t.Errorf("betas %q: Copilot was asked %q, want %q", c.asked, got, want)
++		}
++	}
++	// count_tokens asks Copilot too, and refused the same name
++	mu.Lock()
++	seen = nil
++	mu.Unlock()
++	code, body := ask("copilot/claude-opus-5.5", "/v1/messages/count_tokens", "tool-search-tool-2025-10-19")
++	if code != 200 || !strings.Contains(body, `"input_tokens":77`) {
++		t.Fatalf("count_tokens: %d %s", code, body)
++	}
++	mu.Lock()
++	got := slices.Clone(seen)
++	mu.Unlock()
++	if want := []string{"/v1/messages/count_tokens advanced-tool-use-2025-11-20"}; !slices.Equal(got, want) {
++		t.Errorf("count_tokens: Copilot was asked %q, want %q", got, want)
++	}
++}
++
++// The name is Copilot's alone: any other provider is asked as the agent
++// asked it.
++func TestCopilotToolSearchBetaOtherProvidersUnchanged(t *testing.T) {
++	fresh(t)
++	up := &betaRelay{}
++	srv := httptest.NewServer(up)
++	t.Cleanup(srv.Close)
++	if err := provider.Save(provider.Provider{ID: "relay", Name: "Relay", Key: "k", Anthropic: srv.URL,
++		Models: []string{"claude-opus-5-5"}}); err != nil {
++		t.Fatal(err)
++	}
++	rec := httptest.NewRecorder()
++	req := httptest.NewRequest("POST", "/v1/messages", strings.NewReader(
++		`{"model":"relay/claude-opus-5-5","max_tokens":20,"messages":[{"role":"user","content":"ping"}]}`))
++	req.Header.Set("anthropic-beta", "tool-search-tool-2025-10-19")
++	New().Handler().ServeHTTP(rec, req)
++	if rec.Code != 200 {
++		t.Fatalf("status %d: %s", rec.Code, rec.Body)
++	}
++	if got := up.last(); !slices.Equal(got, []string{"tool-search-tool-2025-10-19"}) {
++		t.Fatalf("relay was asked %q, want the name the agent asked", got)
++	}
++}
+-- 
+2.56.0
+

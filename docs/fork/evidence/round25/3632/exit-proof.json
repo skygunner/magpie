@@ -1,0 +1,36 @@
+{
+  "issue": 3632,
+  "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+  "head": "3a0b44793653ee8f752f73a8efe215514b6d5822",
+  "copied_tests": [
+    "internal/filememo/forget_bubble_test.go"
+  ],
+  "red": {
+    "returncode": 1,
+    "command": [
+      "go",
+      "test",
+      "./internal/filememo",
+      "-run",
+      "^TestForgetsAcrossSynctestBubbles$",
+      "-count=1",
+      "-v",
+      "-timeout=120s"
+    ]
+  },
+  "green": {
+    "returncode": 0,
+    "command": [
+      "go",
+      "test",
+      "-race",
+      "./internal/filememo",
+      "-run",
+      "^TestForgetsAcrossSynctestBubbles$",
+      "-count=1",
+      "-v",
+      "-timeout=120s"
+    ]
+  },
+  "expected_exits": true
+}

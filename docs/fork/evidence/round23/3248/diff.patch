@@ -1,0 +1,199 @@
+diff --git a/docs/subsystems/gateway-routing.md b/docs/subsystems/gateway-routing.md
+index c72f5ad0..68a78805 100644
+--- a/docs/subsystems/gateway-routing.md
++++ b/docs/subsystems/gateway-routing.md
+@@ -134,6 +134,7 @@ recorded as a prediction failure (`noPrediction`).
+ - A 2xx that can't be an API's answer is the 502 it stands for (`notAnAPIReply`, #1012): a web page (`text/html`, or a body that begins as one: a sign-in page, Cloudflare's challenge), a body with nothing in it, or one sent as JSON that doesn't begin as JSON. Every upstream request goes through it (`forwardOnce`, and the built-in clients' own: the ChatGPT backend's `/responses`), so it fails over, rests and is logged as a 502 does, its reason naming the page's title. Only the first bytes are peeked, which a stream waits for anyway, and a compressed body is left as it came.
+ - A 2xx from Zhipu or Z.ai holding the platform's refusal envelope (`{"code":1000,"msg":…,"success":false}`, which their Responses API at `/api/v1` answers a refused key) is the refusal it stands for (`provider.ZhipuEnveloped` in `forwardOnce`): 401 for a key refused, 429 for a limit or no balance, as Zhipu's error codes give, so it fails over and rests as those do and the agent is told why. `TestZhipuResponsesRefusalIsRefusal`.
+ - A streamed request is never left silent while its vendor says nothing. `holdWriter.watch` runs beside each try: past `keepHeldAfter` (15s) it sends a held try's agent the stream's 200 and SSE comments (`keepAlive`), none of the try, so another candidate may still answer in the same stream; once the reply passes, it puts a comment between two of its lines after `keepaliveEvery` of quiet. It stops after `keepaliveLongest` (5 minutes) with nothing from the vendor. A try waiting for its key's or account's slot or for room in its minute (`lanes.take`, `rpms.wait`) is kept alive the same way (`keepQueued`), for as long as it waits; once the 200 is out, the try is held, and its failure or its queue turning it away reaches the agent as the stream's error (`failTo`), not a status (coeo91 on Discord). A wait shorter than `keepHeldAfter` sends nothing, so its 429 keeps its `Retry-After`. A proxy in front such as Cloudflare (125s) otherwise ends the request (#947). Gemini streams get no comments (#934). A vendor that then ignores `stream:true` and answers 200 with its reply whole has it sent as the agent's stream (`wholeAsStream`: Chat, Responses, Anthropic), not as the stream's error, while a reply under a type that says neither JSON nor a stream is held as a stream when its first bytes are one (`sseStart`), read event by event like one that says so, so an error among its frames still goes to the next candidate (#1418: it went through at once); a 200 that is no reply of the protocol's fails as a translated reply that didn't stream does (502, "… did not stream"), for the next candidate to answer, and the last one's reaches the agent as the stream's error. A held stream that has sent nothing but the frames before a reply (`response.created`, `response.in_progress`, `codex.rate_limits`, pings, an empty part begun, and any event `streamEvent` doesn't know to carry text, reasoning, a call or a reply's end (`replyEvent`), or an item not known that isn't a call or a tool's (`streamPart.said`): `eventLead`; Aliceonly on #1418: an unknown event was taken for content and let a frames-only 200 through, and its `server_is_overloaded` reached Codex with five candidates left) stays held as long as its agent is kept alive, up to `holdLead` (4 minutes, under the 300s Codex waits for an event; `keptQuiet`), so a `server_is_overloaded` that comes after it is a failure the next candidate answers (#1418: let through at 15s, the ChatGPT backend's failure 36s in ended Codex's turn with sub2api, next in the group, never asked). A stream whose agent can't be kept alive (Gemini's) is let through after `holdLongest` (15s), as before. Codex counts only events toward that 300s, not comments, so the bound is the request's, not each try's: once Codex on Responses has heard no event for `agentQuietMost` (4 minutes) since the request began or its last event (`keptAlive.tooQuiet`), the try in hand is let through (`scan`, `keepQuiet`), and no group replan or same-one retry is taken whose pause would end past it (fadenoob on Discord: held tries and replan pauses added up past 300s and Codex reconnected on "idle timeout waiting for SSE"). A translated reply whose upstream stream stops before it said its reply had — an Anthropic one with no stop_reason and no message_stop, a Responses one with no `response.completed`, the same two a relayed one is told by (`sniff.whole`; a Chat stream may end without `[DONE]` and be whole), a Gemini or Code Assist one whose last chunk has no candidate's `finishReason` (`geminiEnds`, #1643: `usageMetadata` is no end, Vertex AI sends it on every chunk; a chunk with no candidate at all is the empty reply's to answer, #667), and a relayed Gemini one told the same way (#1644; it ends in Gemini's own `{"error":{"code":502,…,"status":"UNAVAILABLE"}}` data line from `streamFailure`, `TestGeminiRelayEndedShort`; whatever a relayed stream gets appended, that error or a filled-in `finish_reason`, begins after a blank line, two newlines when the upstream's last write stopped inside a line, so it is an event of its own rather than more of the half-written one, #2446, `TestPassthroughStreamCutMidLine`, `TestGeminiCompatFinishAfterPartialLine`), and a Chat one from Gemini's OpenAI-compatible API (`geminiCompat`) with no `finish_reason`, relayed or translated (`saysItsEnd`; Linka on Discord: the upstream hung up between a whole function call and its `finish_reason`, and Pi threw the call away as "Stream ended without finish_reason"; that API counts the usage only once the generation is done, so when the last chunk carried it only the `finish_reason` was lost and it is filled in, `tool_calls` after a call and `stop` otherwise, as a relayed chunk before `[DONE]` or a translated reply's end, and the reply counts as whole (`chatTail`); only one with no usage at its end is a cut, `TestGeminiCompatRelayEndedShort`, `TestGeminiCompatTranslatedEndedShort`) — ends the turn with "the reply ended before it was complete" (`errEndedShort`, `TestResponsesUpstreamEndedShort`, `TestGeminiUpstreamEndedShort`), asked again in place where the upstream goes on from a prefill (`continuation.go`). A client that asked for no stream is told the same 502 of such a cut (`translate`, `TestNonStreamEndedShort`, `TestGeminiNonStreamEndedShort`), rather than handed what came as its whole reply. A translated reply from an Anthropic or Responses upstream that ended but said nothing (no text, call, search or image) and counted no token at all is no reply either, whatever its end says (`repliesCounted`, #2086: an Anthropic-compatible proxy's 200 ended a Codex turn as `response.completed` with no output, no usage and no served model, and Codex didn't ask again). It is the empty reply's to answer (#667): asked again in place, then failed with "an empty reply", streamed or not, for every client (`TestUncountedEmptyReplyFails`, `TestUncountedEmptyReplyFailsEveryClient`). Claude's own empty `end_turn` counts its prompt and stays a whole reply (`TestWellFormedStreamsStillComplete`). A reply passed through in its own protocol isn't read this way.
++- A reply Code Assist restarts inside one SSE response is not two answers spliced into one: a generation that begins again — another `responseId`, a `candidatesTokenCount` gone back, or content after the `finishReason` that ended the one before — ends the reply with an error when any of the abandoned one reached the client, so the agent asks again rather than keeping the abandoned prefix and the whole answer after it, and is dropped whole when none did ([`codeassist.go`](../../internal/gateway/codeassist.go), #3248).
+ - A vendor's error keeps its `code` and `param` on its way to an OpenAI-shaped client (`writeVendorError`), where `writeError` used to set both to null: a status error relayed or translated, and a request refused inside a Responses stream. A Responses stream's `error` event or failed response whose error is of type `invalid_request_error` is the request at fault (`requestRefused`, read by its type, not its words): its `Event` carries status 400 and the vendor's error (`Event.Said`), so a client answered whole gets the vendor's 400 with its code and param (the whole-translated path wrote 502 `api_error`), a reply cut by it isn't resumed (`continuation.again`), and a translated stream's error says the vendor's type, code and param (`saidError`), so `holdWriter` reads it as the 400 it is. Before, the hold read magpie's `api_error` as a 502: the same request was sent three times, then to the other accounts, and every one rested (magpie-releases#18: the ChatGPT backend answers `access_programs` naming a program the workspace hasn't got with a 200 stream whose error is `access_program_not_enabled`). Asked once, nobody rests ([`codex_access_programs_test.go`](../../internal/gateway/codex_access_programs_test.go)).
+ - An error that reaches the agent in a stream already begun can't carry its status, so `streamError` says it in the words (`saysPassing`, #2372, zminds): for a status that may pass (408, 429, 5xx) whose text names none of the words a text-judging agent retries on (Pi decides by its `errorMessage` alone), it appends `(<status>: you can retry your request)`; a request's own fault (400, 401, 404 …) and a text that already says so are left as they were. `TestStreamErrorSaysItPasses` holds Pi's own lists; `TestGroupLastFailureInStreamSaysItPasses` runs a group whose last member fails after the keepalive. A 413 byte cap in that stream says `request_too_large` in the error text, and Chat and Anthropic name that type, so Pi compacts; Gemini keeps its own status shape (`TestStreamedByteCapSaysRequestTooLargeToPi`, `TestStreamErrorByteCapInEveryShape`).
+ - Claude's, GPT's and Gemini's reasoning is held (`refusesAfterThinking`, up to `holdThinking`, 4 minutes) so that a refusal after it goes to the next candidate unseen (#248). It is held only while one could: on the last candidate a refusal isn't asked again, so their reasoning streams as it comes there, and a refusal after it reaches the agent as the vendor's own. Held there, a lone relay's Claude or GPT showed Claude Code its thinking all at once with the text, and Codex none until then (iTianbao on X). Gemini's streams there too: a reply that only reasoned is asked again in place by `streamTranslated`, the reasoning the agent has kept and the next try's after it (#667), so holding it only kept Codex on a Gemini model with nothing at all, not even `response.created`, for the whole of its thinking (LuckymanJC on Discord; `TestThinkingStreamsWithNoOneElse`'s gemini cases). Any other model's reasoning is never held.
+diff --git a/internal/gateway/codeassist.go b/internal/gateway/codeassist.go
+index 711b507f..a6daa461 100644
+--- a/internal/gateway/codeassist.go
++++ b/internal/gateway/codeassist.go
+@@ -840,6 +840,39 @@ type codeAssistDecoder struct {
+ 	// held is text that may be the start of a call the model wrote out as
+ 	// text (see textCall), kept back until it is one or isn't
+ 	held string
++	// gen is the generation being read: the responseId it began with, the
++	// candidatesTokenCount it has reached, and whether any of it reached
++	// the client. done: it restarted after saying something, so the reply
++	// was ended there and the rest of the stream is the abandoned
++	// generation's, dropped.
++	gen    string
++	tokens int
++	said   bool
++	done   bool
++}
++
++// restarted says c begins another generation than the one being read: it
++// names another responseId, its candidatesTokenCount has gone back, or it
++// brings content after the finishReason that ended the one before. Code
++// Assist restarted a reply inside one SSE response (#3248), and each
++// generation's text parts arrived as deltas of the same answer, two to four
++// partial answers glued end to end with nothing saying the reply began
++// again.
++func (d *codeAssistDecoder) restarted(c geminiChunk) bool {
++	if id := c.ResponseID; id != "" && d.gen != "" && id != d.gen {
++		return true
++	}
++	if u := c.UsageMetadata; u != nil && u.Candidates > 0 && u.Candidates < d.tokens {
++		return true
++	}
++	if d.stopped {
++		for _, cand := range c.Candidates {
++			if len(cand.Content.Parts) > 0 {
++				return true
++			}
++		}
++	}
++	return false
+ }
+ 
+ func (d *codeAssistDecoder) decode(data string, emit func(Event)) error {
+@@ -865,6 +898,29 @@ func (d *codeAssistDecoder) decode(data string, emit func(Event)) error {
+ 	if ch.Response != nil {
+ 		c = *ch.Response
+ 	}
++	if d.done {
++		return nil
++	}
++	if d.restarted(c) {
++		if d.said {
++			// Two answers do not make one: the client is told the reply
++			// began again, so the agent asks again rather than keeping
++			// the abandoned prefix and the whole answer after it
++			d.done = true
++			emit(Event{Kind: KError, Status: http.StatusServiceUnavailable,
++				Text: "Antigravity restarted its answer in the middle of the reply, so this one is incomplete: ask again"})
++			return nil
++		}
++		// Nothing of it reached the client: the abandoned prefix goes and
++		// the generation that restarted is read as the answer
++		d.gen, d.tokens, d.stopped, d.tools, d.held, d.usage = "", 0, false, false, "", nil
++	}
++	if id := c.ResponseID; id != "" && d.gen == "" {
++		d.gen = id
++	}
++	if u := c.UsageMetadata; u != nil {
++		d.tokens = max(d.tokens, u.Candidates)
++	}
+ 	if c.UsageMetadata != nil {
+ 		u := c.UsageMetadata
+ 		d.usage = &Usage{Input: max(u.Prompt-u.Cached, 0), CacheRead: u.Cached,
+@@ -886,6 +942,7 @@ func (d *codeAssistDecoder) decode(data string, emit func(Event)) error {
+ 			switch {
+ 			case p.FunctionCall != nil:
+ 				d.flush(emit)
++				d.said = true
+ 				id := p.FunctionCall.ID
+ 				if id == "" {
+ 					id = "call_" + newID()
+@@ -902,6 +959,7 @@ func (d *codeAssistDecoder) decode(data string, emit func(Event)) error {
+ 			case p.Thought:
+ 				d.flush(emit)
+ 				if p.Text != "" {
++					d.said = true
+ 					emit(Event{Kind: KThink, Text: p.Text})
+ 				}
+ 				if p.Signature != "" {
+@@ -912,8 +970,10 @@ func (d *codeAssistDecoder) decode(data string, emit func(Event)) error {
+ 				// thought images, drafts on the way, stay with the
+ 				// reasoning above (#620)
+ 				d.flush(emit)
++				d.said = true
+ 				emit(Event{Kind: KImage, Name: p.InlineData.MimeType, Text: p.InlineData.Data})
+ 			case p.Text != "" || p.Signature != "":
++				d.said = d.said || p.Text != ""
+ 				d.text(p.Text, emit)
+ 				if p.Signature != "" {
+ 					// Gemini's signature on its text, after it (#1445)
+diff --git a/internal/gateway/codeassist_restart_test.go b/internal/gateway/codeassist_restart_test.go
+new file mode 100644
+index 00000000..cc990200
+--- /dev/null
++++ b/internal/gateway/codeassist_restart_test.go
+@@ -0,0 +1,80 @@
++package gateway
++
++import (
++	"io"
++	"net/http"
++	"strings"
++	"testing"
++)
++
++// codeAssistRestart is Antigravity restarting its answer inside one SSE
++// response, as it did for #3248: the reply says some of it, ends, and a
++// fresh generation of the same answer begins in the stream after it. Each
++// generation's text arrived as deltas of the one completion, so the agent
++// was given two to four partial answers glued end to end.
++func TestCodeAssistRestartIsNotSpliced(t *testing.T) {
++	for _, c := range []struct {
++		name   string
++		want   string
++		chunks []string
++	}{
++		{"content after the finish", "Provider is kota-local.", []string{
++			`data: {"response":{"responseId":"r1","candidates":[{"content":{"parts":[{"text":"Provider is "}]}}],"usageMetadata":{"promptTokenCount":2049,"candidatesTokenCount":3}}}`,
++			`data: {"response":{"candidates":[{"content":{"parts":[{"text":"kota-local."}]},"finishReason":"STOP"}],"usageMetadata":{"promptTokenCount":2049,"candidatesTokenCount":8}}}`,
++			`data: {"response":{"candidates":[{"content":{"parts":[{"text":"Provider is "}]}}],"usageMetadata":{"promptTokenCount":2049,"candidatesTokenCount":3}}}`,
++			`data: {"response":{"candidates":[{"content":{"parts":[{"text":"kota-local, and the model is argon."}]},"finishReason":"STOP"}],"usageMetadata":{"promptTokenCount":2049,"candidatesTokenCount":14}}}`,
++		}},
++		{"another responseId", "Provider is ", []string{
++			`data: {"response":{"responseId":"r1","candidates":[{"content":{"parts":[{"text":"Provider is "}]}}],"usageMetadata":{"promptTokenCount":2049,"candidatesTokenCount":3}}}`,
++			`data: {"response":{"responseId":"r2","candidates":[{"content":{"parts":[{"text":"Provider is "}]}}],"usageMetadata":{"promptTokenCount":2049,"candidatesTokenCount":3}}}`,
++			`data: {"response":{"responseId":"r2","candidates":[{"content":{"parts":[{"text":"kota-local, and the model is argon."}]},"finishReason":"STOP"}],"usageMetadata":{"promptTokenCount":2049,"candidatesTokenCount":14}}}`,
++		}},
++		{"a count gone back", "Provider is ", []string{
++			`data: {"response":{"responseId":"r1","candidates":[{"content":{"parts":[{"text":"Provider is "}]}}],"usageMetadata":{"promptTokenCount":2049,"candidatesTokenCount":3}}}`,
++			`data: {"response":{"responseId":"r1","candidates":[{"content":{"parts":[{"text":"Provider is "}]}}],"usageMetadata":{"promptTokenCount":2049,"candidatesTokenCount":2}}}`,
++			`data: {"response":{"responseId":"r1","candidates":[{"content":{"parts":[{"text":"kota-local, and the model is argon."}]},"finishReason":"STOP"}],"usageMetadata":{"promptTokenCount":2049,"candidatesTokenCount":14}}}`,
++		}},
++	} {
++		t.Run(c.name, func(t *testing.T) {
++			s, _ := antigravityGroupFor(t, []string{"u@example.com"}, "argon", func(w http.ResponseWriter, r *http.Request) {
++				w.Header().Set("Content-Type", "text/event-stream")
++				io.WriteString(w, sse(c.chunks...))
++			})
++			code, out := postTo(t, s, "/v1/chat/completions",
++				`{"model":"antigravity/argon","stream":true,"messages":[{"role":"user","content":"which provider serves you?"}]}`)
++			if code != 200 {
++				t.Fatalf("the turn: %d %s", code, out)
++			}
++			if text := chatTextOf(out); text != c.want {
++				t.Fatalf("one answer has both generations' text: %q", text)
++			}
++			if !strings.Contains(out, `"error"`) {
++				t.Fatalf("the restart was not told, and the reply looks whole: %s", out)
++			}
++		})
++	}
++}
++
++// A generation that restarted before any of it reached the client says
++// nothing the agent can see: the abandoned prefix goes and the generation
++// that restarted is the answer, with no error told for it.
++func TestCodeAssistRestartBeforeAnythingSaid(t *testing.T) {
++	s, _ := antigravityGroupFor(t, []string{"u@example.com"}, "argon", func(w http.ResponseWriter, r *http.Request) {
++		w.Header().Set("Content-Type", "text/event-stream")
++		io.WriteString(w, sse(
++			`data: {"response":{"responseId":"r1","candidates":[{"content":{"parts":[{"text":""}]},"finishReason":"STOP"}],"usageMetadata":{"promptTokenCount":2049,"candidatesTokenCount":0}}}`,
++			`data: {"response":{"responseId":"r2","candidates":[{"content":{"parts":[{"text":"Provider is "}]}}],"usageMetadata":{"promptTokenCount":2049,"candidatesTokenCount":2}}}`,
++			`data: {"response":{"responseId":"r2","candidates":[{"content":{"parts":[{"text":"kota-local."}]},"finishReason":"STOP"}],"usageMetadata":{"promptTokenCount":2049,"candidatesTokenCount":8}}}`))
++	})
++	code, out := postTo(t, s, "/v1/chat/completions",
++		`{"model":"antigravity/argon","stream":true,"messages":[{"role":"user","content":"which provider serves you?"}]}`)
++	if code != 200 {
++		t.Fatalf("the turn: %d %s", code, out)
++	}
++	if text := chatTextOf(out); text != "Provider is kota-local." {
++		t.Fatalf("the answer: %q", text)
++	}
++	if strings.Contains(out, `"error"`) {
++		t.Fatalf("a restart nothing reached the client for was told as an error: %s", out)
++	}
++}

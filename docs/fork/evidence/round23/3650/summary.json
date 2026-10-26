@@ -1,0 +1,52 @@
+{
+ "issue": 3650,
+ "title": "A usage window with no `used` reads as 0% — which also puts a spent account first in the routing order",
+ "verdict": "fixed",
+ "skipReason": null,
+ "branch": "fix/usage-absent-used",
+ "base": "01468003348ede896c5126e9fd81057e1e58765c",
+ "head": "6791aa99ba38be542b0d29de48a23d8bb2007705",
+ "testCommands": [
+  "GOTOOLCHAIN=go1.26.8 go test ./internal/provider -run TestPluginWindowWithoutUsedIsNoReading -count=1 -v",
+  "GOTOOLCHAIN=go1.26.8 go test ./internal/provider -count=1 -skip TestUnreadLoginsWriteErrorsKeepCredentials",
+  "GOTOOLCHAIN=go1.26.8 go test ./internal/plugin -count=1 -skip TestPluginSOCKSProxy",
+  "NODE_PATH=/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules node --test internal/gui/tests/usage-no-reading.test.cjs",
+  "GOTOOLCHAIN=go1.26.8 go vet ./...",
+  "GOTOOLCHAIN=go1.26.8 go build ./...",
+  "GOTOOLCHAIN=go1.26.8 GOOS=linux GOARCH=amd64 go build -tags nogui ./...",
+  "GOTOOLCHAIN=go1.26.8 GOOS=windows GOARCH=amd64 go build ./...",
+  "GOTOOLCHAIN=go1.26.8 gofmt -l internal/plugin internal/provider"
+ ],
+ "testsAdded": [
+  "internal/provider/plugin_usage_absent_test.go: TestPluginWindowWithoutUsedIsNoReading",
+  "internal/gui/tests/usage-no-reading.test.cjs: a window that didn't say used shows its text, not a percentage",
+  "internal/provider/plugin_usage_absent_test.go: TestAWindowWithoutUsedIsNoAllowance (compiles on the base too: only the latter window is in the allowance)"
+ ],
+ "unverifiedBoundaries": [
+  "The routing outcome is asserted through quotaOfPlugin/allowanceOf (a window without used is no Limit, an account whose windows all say nothing has no Allowance), not through a live gateway request over the vendor's HTTP.",
+  "The meter fix is browser-tested on fixture JSON; no real plugin on this host reports a window without used.",
+  "The check-in prefix is tested through the plugin host's fake provider (an outcome \"yes\" with a message); no real vendor's unrecognised outcome was seen.",
+  "Playwright is not vendored in this repo; the JS test was run with the machine's playwright 1.64.1 (NODE_PATH), Chromium and WebKit.",
+  "The Go internal/gui package tests were not run; the app.js change is covered by the browser test, go vet and the three builds."
+ ],
+ "filesChanged": [
+  "internal/gui/assets/app.js",
+  "internal/gui/tests/usage-no-reading.test.cjs",
+  "internal/plugin/host.js",
+  "internal/plugin/providers.go",
+  "internal/plugin/testdata/fake/index.js",
+  "internal/provider/allowance_pooled_test.go",
+  "internal/provider/plugin_checkin_test.go",
+  "internal/provider/plugin_usage.go",
+  "internal/provider/plugin_usage_absent_test.go",
+  "internal/provider/plugin_usage_test.go",
+  "internal/provider/plugin_usage_text_test.go",
+  "internal/provider/quotas_dedupe_test.go",
+  "internal/provider/routing.go",
+  "internal/provider/workbuddy_runs_out_test.go"
+ ],
+ "preExistingRed": [
+  "internal/provider TestUnreadLoginsWriteErrorsKeepCredentials: fatal error: close of synctest channel from outside bubble (filememo.Forget, logins.go) — same on clean 01468003.",
+  "internal/plugin TestPluginSOCKSProxy: proxyconnect 502 / connection refused for its SOCKS proxy on this host — same on clean 01468003."
+ ]
+}

@@ -1,0 +1,8 @@
+=== RUN   TestPromptCalibrated
+--- PASS: TestPromptCalibrated (0.00s)
+=== RUN   TestUncountedPromptReadsBesideItsCountedNeighbour
+--- PASS: TestUncountedPromptReadsBesideItsCountedNeighbour (0.02s)
+=== RUN   TestRouteTellsItsPrompt
+--- PASS: TestRouteTellsItsPrompt (0.01s)
+PASS
+ok  	github.com/yetone/magpie/internal/gateway	0.078s

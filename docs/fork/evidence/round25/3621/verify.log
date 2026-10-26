@@ -1,0 +1,34 @@
+== gofmt -l internal/autostart/ (must be empty) ==
+gofmt_exit=0
+== go vet ./... ==
+vet_exit=0
+== go build ./... ==
+build_exit=0
+== GOOS=linux GOARCH=amd64 go build -tags nogui ./... ==
+build_nogui_linux_exit=0
+== GOOS=windows GOARCH=amd64 go build ./... ==
+build_windows_exit=0
+== GOOS=darwin GOARCH=amd64 go build ./... (compile-only sanity for the darwin test edits) ==
+build_darwin_autostart_exit=0
+== GOOS=darwin GOARCH=amd64 go vet ./internal/autostart/ ==
+vet_darwin_autostart_exit=0
+== green: new tests at head ==
+green_exit=0
+=== RUN   TestSelfNamesThePathLink
+--- PASS: TestSelfNamesThePathLink (0.00s)
+=== RUN   TestSelfRefusesAGoRunBuild
+--- PASS: TestSelfRefusesAGoRunBuild (0.00s)
+PASS
+ok  	github.com/yetone/magpie/internal/autostart	0.002s
+== affected package, full run ==
+ok  	github.com/yetone/magpie/internal/autostart	0.002s
+package_exit=0
+== rev-list count BASE..HEAD (must be 1) ==
+1
+== merge-base --is-ancestor BASE HEAD ==
+ancestor_exit=0
+== head ==
+0aac5452b2310d9a658b6787fdf6d57238de0102
+== push_exit=0 ==
+== ls-remote read-back ==
+0aac5452b2310d9a658b6787fdf6d57238de0102	refs/heads/fix/r25-autostart-exec-stable

@@ -1,0 +1,30 @@
+{
+  "issue": 3566,
+  "title": "gateway/Kimi: typed $ref target containing an untyped object oneOf still causes schema rejection",
+  "verdict": "fixed",
+  "skipReason": null,
+  "branch": "fix/issue-3566",
+  "base": "01468003348ede896c5126e9fd81057e1e58765c",
+  "head": "bafd13618b4dee3e879801d6f02aca48135b863e",
+  "testCommands": [
+    "GOTOOLCHAIN=go1.26.8 go test -tags nogui -run 'TestKimiTypedRefObjectUnion' -count=1 ./internal/gateway/  (RED at base, GREEN at head)",
+    "GOTOOLCHAIN=go1.26.8 go test -tags nogui -run 'TestKimiTypedRefObjectUnion|TestKimiToolRefTypes|TestKimiToolEnumTypes' -count=1 -v ./internal/gateway/",
+    "GOTOOLCHAIN=go1.26.8 go test -tags nogui -timeout 45m -count=1 ./internal/gateway/...",
+    "gofmt -l internal/gateway/kimi_schema.go internal/gateway/kimi_typed_ref_union_test.go  (empty)",
+    "go vet ./... ; GOOS=linux GOARCH=amd64 go vet -tags nogui ./... ; GOOS=windows GOARCH=amd64 go vet ./...",
+    "go build ./... ; GOOS=linux GOARCH=amd64 go build -tags nogui ./... ; GOOS=windows GOARCH=amd64 go build ./..."
+  ],
+  "testsAdded": [
+    "TestKimiTypedRefObjectUnion",
+    "TestKimiTypedRefObjectUnionLeavesItsInput"
+  ],
+  "unverifiedBoundaries": [
+    "The reporter's real REA toolset (198 tools, 55 hits) was not available; the fixture is their exact minimal function-parameters JSON at the schema-conversion level, plus neighbouring negative shapes.",
+    "No live Kimi Code endpoint was called (no key; the brief forbids real providers).",
+    "internal/gateway suite at this head: one red, TestClaudeClientCacheAbsentUnchanged (claude_client_cache_test.go:291), the same pre-existing red reproduced at clean base 01468003 in the 3475 worktree with the fix stashed; not caused by this change and not fixed here."
+  ],
+  "filesChanged": [
+    "internal/gateway/kimi_schema.go",
+    "internal/gateway/kimi_typed_ref_union_test.go"
+  ]
+}

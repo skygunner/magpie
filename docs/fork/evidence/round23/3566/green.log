@@ -1,0 +1,11 @@
+$ GOTOOLCHAIN=go1.26.8 go test -tags nogui -run 'TestKimiTypedRefObjectUnion|TestKimiToolRefTypes|TestKimiToolEnumTypes' -count=1 -v ./internal/gateway/
+=== RUN   TestKimiToolEnumTypes
+--- PASS: TestKimiToolEnumTypes (0.01s)
+=== RUN   TestKimiToolRefTypes
+--- PASS: TestKimiToolRefTypes (0.01s)
+=== RUN   TestKimiTypedRefObjectUnion
+--- PASS: TestKimiTypedRefObjectUnion (0.01s)
+=== RUN   TestKimiTypedRefObjectUnionLeavesItsInput
+--- PASS: TestKimiTypedRefObjectUnionLeavesItsInput (0.00s)
+PASS
+ok  	github.com/yetone/magpie/internal/gateway	0.059s

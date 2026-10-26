@@ -1,0 +1,7 @@
+根因：`provider.Rename` 已经把路由组及其规则/分类器/fast/off/权重、catalog 文件、StepFun 登录、模型偏好和可见列表带到新 id，但**网关密钥自己的模型白名单和账号选择**存在 `caller-keys.json`（`internal/access`）里，没有任何代码改写它。于是改名后密钥仍然写着 `old/m1`，编辑器把它列进「当前未提供」，而这把密钥按旧 id 发请求时会被自己的白名单拒绝——provider 本身其实是好的。
+
+修复在 [fix/provider-rename-gateway-keys](https://github.com/skygunner/magpie/tree/fix/provider-rename-gateway-keys)（`63e1ff5c`，基于今天的 `main` `01468003`）：编辑器 id 字段和 `magpie provider set <id> id=<new>` 都走 `Agent.RenameProvider`，它现在调用 `access.RenameProvider` 把这些列表一起搬过去——`old/m1` → `new/m1`、通配 `old/*` → `new/*`，按账号记的条目同样处理；写着别的 provider 或路由组的条目原样不动，任何列表都不会凭空多出条目。
+
+- 红 → 绿：`TestRenameMovesGatewayKeyModels` 按你的步骤搭环境（provider `old`、一把密钥允许它的两个模型 + 另一个 provider 的一个模型、一个路由组、一个账号），再改名成 `new`。干净 base 上只放测试：`models [old/m1 old/* group/top other/m2], want [new/m1 new/* group/top other/m2]`、`accounts [old/8254c329a9], want [new/8254c329a9]`，并且断言密钥「不再允许它列过的东西」；改动后通过。
+- `go test -tags nogui ./internal/access ./internal/cli ./internal/agent` 通过；`gofmt -l` 为空；`go vet`/`go build`（linux、windows、`nogui linux`）通过。`internal/provider` 在本机 base 上就有一项环境红（`TestUnreadLoginsWriteErrorsKeepCredentials`，synctest 跨 bubble 崩溃），与本次改动无关，没有掩盖。
+- 如实说明：没有在浏览器里点一遍编辑器的模型选择器；覆盖的是存储层和 GUI/CLI 共用的改名路径 `Agent.RenameProvider`。

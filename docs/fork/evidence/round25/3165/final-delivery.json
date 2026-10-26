@@ -1,0 +1,13 @@
+{
+  "finalhead": "94d62c6a72193bb1846c24cb30908a2273fdfedb",
+  "prerequisite": "57a507167a15025674e266340290ccca357c40f8",
+  "branch": "fix/r25-3165-reasoning-clear-test",
+  "comment": {
+    "id": 6415383816,
+    "url": "https://github.com/yetone/magpie/issues/3165#issuecomment-6415383816",
+    "author": "skygunner",
+    "created_at": "2026-10-26T11:55:27Z"
+  },
+  "remoteHead": "94d62c6a72193bb1846c24cb30908a2273fdfedb",
+  "bodyExact": true
+}

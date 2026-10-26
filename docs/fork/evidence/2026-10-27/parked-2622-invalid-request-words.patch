@@ -1,0 +1,28 @@
+diff --git a/internal/gateway/fallback.go b/internal/gateway/fallback.go
+index e127f394..5706d85e 100644
+--- a/internal/gateway/fallback.go
++++ b/internal/gateway/fallback.go
+@@ -1146,6 +1146,14 @@ func promptRefused(status int, body []byte) bool {
+ // for the model isn't one.
+ var shapeWords = regexp.MustCompile(`(?i)failed to deserialize|unknown (item |content |input )?(type|variant|field|parameter)|unknown_parameter|unrecognized (request argument|field|parameter)|extra (inputs|fields) are not permitted|additional properties are not allowed|schema exceeds the maximum (nesting )?depth|schema[^"]{0,60}\bnesting depth\b`)
+ 
++// invalidRequestWords are how a vendor says the request itself is malformed
++// enough that this member can't handle it: Sensetime's 400 "inference
++// request is invalid" and NVIDIA NIM's 400 "Invalid request". A member on
++// another API or vendor may take it, so the next member is asked; this one
++// rests, because the failure is counted and the cooldown grows with
++// repeated failures.
++var invalidRequestWords = regexp.MustCompile(`(?i)invalid request|request is invalid`)
++
+ // unsaidWords are Command Code's Provider API turning a request away with
+ // nothing but a trace id: {"message":"invalid request error trace_id:
+ // <hex>","type":"invalid_request_error"}, a 400 (a 422 before), no code,
+@@ -1285,7 +1293,7 @@ func retryable(status int, body []byte) bool {
+ 		// in front of zcode.z.ai): another provider goes another way
+ 		return true
+ 	case status == 400, status == 422:
+-		return quotaWords.Match(body) || unservedWords.Match(body) || refusedWords.Match(body) || shapeWords.Match(body) || unsaidWords.Match(body) || regionWords.Match(body) || wrongEndpoint(status, body)
++		return quotaWords.Match(body) || unservedWords.Match(body) || refusedWords.Match(body) || shapeWords.Match(body) || unsaidWords.Match(body) || regionWords.Match(body) || wrongEndpoint(status, body) || invalidRequestWords.Match(body)
+ 	}
+ 	return false
+ }

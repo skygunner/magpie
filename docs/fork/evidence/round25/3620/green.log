@@ -1,0 +1,14 @@
+$ NODE_PATH=/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules node --test internal/gui/tests/routing-levels.test.cjs
+✔ chromium en: a group names the reasoning levels agents are offered (5363.4024ms)
+✔ chromium zh: a group names the reasoning levels agents are offered (5347.870412ms)
+✔ webkit en: a group names the reasoning levels agents are offered (5666.203483ms)
+✔ webkit zh: a group names the reasoning levels agents are offered (5771.407641ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 22293.938446
+exit=0

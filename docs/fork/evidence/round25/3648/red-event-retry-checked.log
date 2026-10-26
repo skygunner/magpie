@@ -1,0 +1,21 @@
+BASE=19253f67bca2310c32739a6eaac88546b3574dbc
+ONLY_ADDED_TEST=internal/gui/dev_handover_test.go
+TEST_SHA256=ed6ac1c26af4003eabd63d3578cda707e7849ed6a5e52a88aa2040e8da802a5b
+COMMAND: go test -tags dev -count=3 -run TestDevBackendHandoverAnswersAConnectionItTook -timeout 120s ./internal/gui
+2026/10/26 21:52:07 dev backend: http://127.0.0.1:38131
+2026/10/26 21:52:07 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:127: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:52:07 dev backend: http://127.0.0.1:36973
+2026/10/26 21:52:07 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:127: a request on a connection the backend took, read once its handover began: unexpected EOF
+2026/10/26 21:52:07 dev backend: http://127.0.0.1:46679
+2026/10/26 21:52:07 dev backend: handed over · finishing what's in flight
+--- FAIL: TestDevBackendHandoverAnswersAConnectionItTook (0.00s)
+    dev_handover_test.go:127: a request on a connection the backend took, read once its handover began: unexpected EOF
+FAIL
+FAIL	github.com/yetone/magpie/internal/gui	0.041s
+FAIL
+
+EXIT_CODE=1

@@ -1,0 +1,7 @@
+$ GOTOOLCHAIN=go1.26.8 go test -tags nogui -run 'TestCopilotToolSearchBeta' -count=1 -v ./internal/gateway/
+=== RUN   TestCopilotToolSearchBeta
+--- PASS: TestCopilotToolSearchBeta (0.01s)
+=== RUN   TestCopilotToolSearchBetaOtherProvidersUnchanged
+--- PASS: TestCopilotToolSearchBetaOtherProvidersUnchanged (0.00s)
+PASS
+ok  	github.com/yetone/magpie/internal/gateway	0.026s

@@ -1,0 +1,18 @@
+$ go test ./internal/redact -count=1
+ok  	github.com/yetone/magpie/internal/redact	0.894s
+exit=0
+
+$ go vet ./...
+exit=0
+
+$ go build ./...
+exit=0
+
+$ GOOS=linux GOARCH=amd64 go build -tags nogui ./...
+exit=0
+
+$ GOOS=windows GOARCH=amd64 go build ./...
+exit=0
+
+$ gofmt -l internal/redact
+exit=0

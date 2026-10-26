@@ -1,0 +1,13 @@
+Confirmed in the decoder, as you put it: `codeAssistDecoder` read `responseId` only on the first chunk and then passed every generation's text parts through as deltas of the same answer, so a restart inside one SSE response could only arrive spliced.
+
+Fixed on [fix/3248-codeassist-restart](https://github.com/skygunner/magpie/tree/fix/3248-codeassist-restart) (`db55f831`, one commit on `01468003`). The decoder now remembers the generation it is reading - its `responseId`, the highest `candidatesTokenCount` it reached, whether a `finishReason` has ended it, and whether anything of it was already emitted - and treats a chunk as a new generation when the `responseId` changed, the token count went back, or content arrives after the `finishReason`:
+
+- if the aborted generation had already reached the client, the reply is ended there with a `503` whose text says Antigravity restarted mid-answer and the request should be asked again; the rest of the stream is dropped. Splicing two answers into one was the alternative, and that is what #2243 was refused for: the protocol has no way to say "a second answer starts here", so a client would keep the abandoned prefix.
+- if nothing of it had been emitted, the abandoned prefix is discarded and the generation that restarted is read as the answer - the same choice the empty-reply path already makes.
+
+RED -> GREEN, re-run independently here:
+- clean base + only the new test file: `TestCodeAssistRestartIsNotSpliced` fails on all three shapes with both generations' text, e.g. `one answer has both generations' text: "Provider is Provider is kota-local, and the model is argon."`
+- at the head: the same test passes (new `responseId`, token count gone back, content after `finishReason`), including the case where nothing had reached the client yet.
+- full `go test ./internal/gateway` passes except `TestClaudeClientCacheAbsentUnchanged`, which is red on the clean base too; `go vet` and `go build` for linux, windows and `-tags nogui` pass; `gofmt -l` is empty.
+
+Limits: the chunk shapes are reconstructed from your ledger, not a captured upstream body (you did not have one either), and no real `gemini-4-argon` call was made. Whether a given client automatically retries after an in-stream 503 was not measured - the change only guarantees such a reply can no longer look like one coherent answer. If you would rather keep the last complete generation and end `finish_reason: stop` on it, that is a one-line difference in the same place, but it would silently drop the prefix the agent already saw, so the error was chosen.

@@ -1,0 +1,11 @@
+=== RUN   TestPluginGoogleModelIsTestable
+testenv: a test asked models.dev:443, refused: tests stay off the network
+    plugin_codeassist_probe_test.go:93: the GUI's Test models is off: "own-api"
+    plugin_codeassist_probe_test.go:97: fake-gemini tested: [{Account: Protocol: OK:false Status:0 Millis:0 Model:fake-gemini Error:this provider can't be sent a test request}]
+--- FAIL: TestPluginGoogleModelIsTestable (0.08s)
+=== RUN   TestPluginTestProbesCodeAssist
+    plugin_codeassist_probe_test.go:136: no probe reached the publisher's streamGenerateContent: ["/v1?\n"]
+--- FAIL: TestPluginTestProbesCodeAssist (0.07s)
+FAIL
+FAIL	github.com/yetone/magpie/internal/provider	0.160s
+FAIL

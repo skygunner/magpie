@@ -1,0 +1,34 @@
+{
+  "issue": 3621,
+  "title": "Linux 自启：没有包自带的条目时，magpie 写进去的 Exec 是带版本号的真实路径，升级回收后失效",
+  "verdict": "fixed",
+  "branch": "fix/r25-autostart-exec-stable",
+  "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+  "head": "0aac5452b2310d9a658b6787fdf6d57238de0102",
+  "testCommands": [
+    "GOTOOLCHAIN=go1.26.8 go test ./internal/autostart/ -run TestSelf -v -count=1",
+    "GOTOOLCHAIN=go1.26.8 go test ./internal/autostart/ -count=1",
+    "GOTOOLCHAIN=go1.26.8 gofmt -l internal/autostart/",
+    "GOTOOLCHAIN=go1.26.8 go vet ./...",
+    "GOTOOLCHAIN=go1.26.8 go build ./...",
+    "GOTOOLCHAIN=go1.26.8 GOOS=linux GOARCH=amd64 go build -tags nogui ./...",
+    "GOTOOLCHAIN=go1.26.8 GOOS=windows GOARCH=amd64 go build ./...",
+    "GOTOOLCHAIN=go1.26.8 GOOS=darwin GOARCH=amd64 go build ./internal/autostart/",
+    "GOTOOLCHAIN=go1.26.8 GOOS=darwin GOARCH=amd64 go vet ./internal/autostart/"
+  ],
+  "testsAdded": [
+    "TestSelfNamesThePathLink",
+    "TestSelfRefusesAGoRunBuild"
+  ],
+  "filesChanged": [
+    "internal/autostart/autostart.go",
+    "internal/autostart/self_test.go",
+    "internal/autostart/autostart_darwin_test.go"
+  ],
+  "preExistingRed": [],
+  "unverifiedBoundaries": [
+    "没有在真实的 Nix 或 Homebrew 环境验证升级回收后 Exec 链接仍指向新版本",
+    "darwin 侧只做了 GOOS=darwin go build/vet 编译级验证，三个补了 APPIMAGE 的 darwin 测试没有在 macOS 上运行",
+    "已写坏的旧记录不会被自动修复（Linux refresh() 仍为空），需要关一次再开"
+  ]
+}

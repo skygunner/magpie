@@ -1,0 +1,4 @@
+=== RUN   TestModelCueIsAWord
+--- PASS: TestModelCueIsAWord (0.00s)
+PASS
+ok  	github.com/yetone/magpie/internal/redact	0.004s

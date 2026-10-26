@@ -1,0 +1,33 @@
+{
+  "issue": 3169,
+  "title": "Routing context card: an uncounted prompt reads 1.5–1.6x its neighbours, with no anchor to the last counted value",
+  "verdict": "fixed",
+  "skipReason": "",
+  "branch": "fix/uncounted-prompt-estimate",
+  "base": "01468003348ede896c5126e9fd81057e1e58765c",
+  "head": "763d468769269084af3a8f63ae0ff3527627f69c",
+  "testCommands": [
+    "RED: go test ./internal/gateway -run TestUncountedPromptReadsBesideItsCountedNeighbour -count=1 (fix stashed, test kept) -> FAIL, 3410 against 2103 counted",
+    "GREEN: go test ./internal/gateway -run 'TestUncountedPromptReadsBesideItsCountedNeighbour|TestRouteTellsItsPrompt|TestPromptCalibrated' -count=1 -> ok",
+    "go test ./internal/gateway -count=1 -timeout 45m -> FAIL TestClaudeClientCacheAbsentUnchanged only, red on the clean base too (environmental: the real claude binary's args)",
+    "gofmt -l internal/gateway -> empty",
+    "go vet ./... / GOOS=linux GOARCH=amd64 go vet -tags nogui ./... / GOOS=windows GOARCH=amd64 go vet ./... -> exit 0",
+    "go build ./... / GOOS=linux GOARCH=amd64 go build -tags nogui ./... / GOOS=windows GOARCH=amd64 go build ./... -> exit 0"
+  ],
+  "testsAdded": [
+    "TestUncountedPromptReadsBesideItsCountedNeighbour (internal/gateway/prompt_test.go): the reporter's two-request shape through the real handler — one vendor-counted request, one cancelled (499) in the same conversation; the uncounted estimate must read within 1/6 of the counted value, every part scaled alike, system and tools within 1/8 of their counted selves"
+  ],
+  "unverifiedBoundaries": [
+    "The Routing page in a browser: no page code changed; the card draws the tokens this scales and its Estimated label is untouched",
+    "A real 499 with a real vendor's tokenizer: the vendor count is a fake upstream's, 5/8 of the estimator's reading, which is the reporter's 1.62x",
+    "A conversation whose counted neighbour has left the trace's 60 routes keeps the plain estimate"
+  ],
+  "filesChanged": [
+    "docs/subsystems/gateway-routing.md",
+    "internal/gateway/codex_backend.go",
+    "internal/gateway/gateway.go",
+    "internal/gateway/prompt.go",
+    "internal/gateway/prompt_test.go",
+    "internal/gateway/trace.go"
+  ]
+}

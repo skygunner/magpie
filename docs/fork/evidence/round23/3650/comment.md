@@ -1,0 +1,16 @@
+Both halves come from the same coercion: `host.js`'s `usageOf` did `used: Math.max(0, num(w?.used))`, so absent became 0; Go's `UsageWindow.Used float64` could not carry absence either; that 0 became a `QuotaWindow` with a used of 0, which the meter read as "100% left" (and as `NaN%` where the page had no used at all) and which `allowanceOf` put at the front of the smart-routing order - an account that is spent ranking as the one with the most left.
+
+Fixed on [fix/usage-absent-used](https://github.com/skygunner/magpie/tree/fix/usage-absent-used) (`6791aa99`, on `01468003`):
+- `host.js` passes an absent `used` through as `null`; `plugin.UsageWindow.Used` is a `*float64`, so absent and 0 are different values end to end.
+- `quotaOfPlugin` marks such a window `Text` (its `display` only) and `Aside` (no share in the allowance), and `allowanceOf` skips both - a window that said nothing no longer ranks as "fine". An account whose windows all say nothing has no `Allowance`, so routing leaves it unknown instead of preferring it.
+- `app.js` gained `quotaNoShare`: no `used` (or a text-only window) draws its display text or "No allowance reported", never a meter, never `NaN`, and takes no part in the pace.
+- the check-in's unrecognised outcome keeps the plugin's message but names the plugin's own word first: `the plugin answered "yes": 每日赠送积分已刷新`, instead of "check-in failed · credits refreshed".
+
+RED -> GREEN, re-run independently here:
+- clean base with only the tests: the browser test fails on Chromium and WebKit with `0 / 5000 · NaN% used` and a meter drawn; the Go regression `TestAWindowWithoutUsedIsNoAllowance` fails with both windows in the allowance, `Credits` (never said `used`) beside `Daily` (said 0).
+- at the head: the browser test passes 2/2, the Go tests pass, and a window that said `used: 0` is still an allowance while one that said nothing is not.
+- `go test ./internal/provider` and `./internal/plugin` pass with two known failures skipped: `TestUnreadLoginsWriteErrorsKeepCredentials` (fatal `close of synctest channel from outside bubble`) and `TestPluginSOCKSProxy`, both red on the clean base too. `go vet` and `go build` for linux, windows and `-tags nogui` pass; `gofmt -l` is empty.
+
+Why two commits on the branch: the first test builds `Used: fptr(0)`, which the base's `float64` field cannot express, so the second commit adds a regression whose own code avoids `fptr` - a plugin reply decoded as the host sends it. That is the one shown failing above, and it reproduces the failure when added to the clean base on its own; the branch's test file as a whole does not compile there, since it shares a file with the `fptr` test.
+
+Limits: the routing outcome is asserted at `quotaOfPlugin`/`allowanceOf`, not through a live request to a real vendor; no real plugin on this machine reports a window without `used`; the check-in prefix is tested through the host's fake provider. Playwright is not vendored in this checkout - the browser test ran on this machine's 1.64.1 (Chromium and WebKit) via `NODE_PATH`. Nothing in `internal/gui`'s Go package tests was run.

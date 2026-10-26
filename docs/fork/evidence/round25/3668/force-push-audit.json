@@ -1,0 +1,15 @@
+{
+  "issue": 3668,
+  "boundary": {
+    "rule": "Round-25 objective: no force-push on any delivered branch",
+    "violation": true,
+    "finding": "The lane's own summary.json historyNote records: an initial commit 3e6f4077577d0af80890a542a3fb0d08f8249260 (t(\"Unknown\") variant) was pushed to origin, then replaced on the remote branch by 7ca156c6876282fb3218b42e98429a2c492ebd90 via one force-with-lease push pinned to the exact prior remote head. force-with-lease is still a force-push: it moved a public ref that had already been published, so this boundary failed. No claim about effects on other users is supported by this audit.",
+    "currentRemoteHead": "7ca156c6876282fb3218b42e98429a2c492ebd90",
+    "localHead": "7ca156c6876282fb3218b42e98429a2c492ebd90",
+    "remoteEqualsLocal": true,
+    "commitCountAgainstBase": 1,
+    "outcome": "Delivery content stands (remote == local, single commit, correct RED/GREEN and language, lone skygunner comment 6411424119 whose body sha matches local comment.md); the force-push boundary was violated once and is recorded here for the final report instead of being hidden.",
+    "unverifiableNow": "The impact on any consumers of the earlier published commit was not investigated. Current remote equality does not undo or excuse the prohibited force-push."
+  },
+  "verdict": "CONTENT-DELIVERED, BOUNDARY-VIOLATION-RECORDED"
+}

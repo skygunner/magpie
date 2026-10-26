@@ -1,0 +1,13 @@
+=== gofmt -l internal/gui/
+EXIT=0
+=== git diff --check
+EXIT=0
+=== go vet -tags dev ./internal/gui
+EXIT=0
+=== go test -tags dev ./internal/gui -run TestDevBackendHandoverAnswersAConnectionItTook -count=10 -v -timeout 300s
+ok  	github.com/yetone/magpie/internal/gui	0.155s
+EXIT=0
+=== go test -tags dev -race ./internal/gui -run Handover -count=3 -timeout 300s
+ok  	github.com/yetone/magpie/internal/gui	8.430s
+EXIT=0
+DONE

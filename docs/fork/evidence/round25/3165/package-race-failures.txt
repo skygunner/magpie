@@ -1,0 +1,84 @@
+--- FAIL: TestCodexFittedImagesPastTheBudget (0.33s)
+    codex_images_test.go:362: turn 2 made 19 of 30 images, with 10 kept
+    codex_images_test.go:362: turn 3 made 19 of 30 images, with 10 kept
+2026/10/26 21:50:51 claude: Claude Code pid 2703740 started, a run on claude-sonnet-5
+2026/10/26 21:50:51 claude: Claude Code pid 2703740 (claude-sonnet-5) ended after 0s (signal: terminated), 2229 MiB resident at most
+2026/10/26 21:50:51 refused GET /v1/models from 198.51.100.1: not on the allow list
+2026/10/26 21:50:51 refused POST /v1/chat/completions from 192.168.1.9:5000: no API key was sent: send a magpie gateway key as Authorization: Bearer <key> (or x-api-key)
+2026/10/26 21:50:51 refused POST /v1/chat/completions from 192.168.1.9:5000: the API key sent is not an enabled magpie gateway key: it is disabled, removed or mistyped
+2026/10/26 21:50:51 refused POST /v1/chat/completions from 192.168.1.9:5000: the API key sent is not an enabled magpie gateway key: it is disabled, removed or mistyped
+2026/10/26 21:50:51 refused POST /v1/chat/completions from 192.168.1.9:5000: no API key was sent: send a magpie gateway key as Authorization: Bearer <key> (or x-api-key)
+2026/10/26 21:50:51 refused POST /v1/chat/completions from 192.168.1.9:5000: the API key sent is not an enabled magpie gateway key: it is disabled, removed or mistyped
+2026/10/26 21:50:51 refused POST /v1/chat/completions from 192.168.1.9:5000: the API key sent is not an enabled magpie gateway key: it is disabled, removed or mistyped
+
+--- FAIL: TestServeWSLListensBesideLoopback (10.03s)
+    wsl_test.go:165: WSL network gone: http://[::1]:45537/ answers = true
+2026/10/26 21:51:16 antigravity b@example.com: loadCodeAssist at https://cloudcode-pa.googleapis.com: current tier standard-tier, paid tier -, project "p1"
+2026/10/26 21:51:16 antigravity a@example.com: loadCodeAssist at https://cloudcode-pa.googleapis.com: current tier standard-tier, paid tier -, project "p1"
+2026/10/26 21:51:16 antigravity b@example.com: fetchAvailableModels at https://daily-cloudcode-pa.googleapis.com (antigravity/hub/2.9.1 linux/amd64; project "p1", current tier "standard-tier", paid tier "", entitlement "standard-tier"): 1 models, 1 kept; left out 0 not for chat [], 0 completion-only []; disabled []; Claude []
+2026/10/26 21:51:16 antigravity a@example.com: fetchAvailableModels at https://daily-cloudcode-pa.googleapis.com (antigravity/hub/2.9.1 linux/amd64; project "p1", current tier "standard-tier", paid tier "", entitlement "standard-tier"): 2 models, 2 kept; left out 0 not for chat [], 0 completion-only []; disabled []; Claude []
+2026/10/26 21:51:16 antigravity b@example.com: fetchAvailableModels at https://daily-cloudcode-pa.googleapis.com (antigravity/hub/2.9.1 linux/amd64; project "p1", current tier "standard-tier", paid tier "", entitlement "standard-tier"): 1 models, 1 kept; left out 0 not for chat [], 0 completion-only []; disabled []; Claude []
+2026/10/26 21:51:16 antigravity a@example.com: fetchAvailableModels at https://daily-cloudcode-pa.googleapis.com (antigravity/hub/2.9.1 linux/amd64; project "p1", current tier "standard-tier", paid tier "", entitlement "standard-tier"): 2 models, 2 kept; left out 0 not for chat [], 0 completion-only []; disabled []; Claude []
+2026/10/26 21:51:16 codex reset used for me@example.com, its week used up: 2 windows started again
+2026/10/26 21:51:16 antigravity u@example.com: fetchAvailableModels at https://daily-cloudcode-pa.googleapis.com (antigravity/hub/2.9.1 linux/amd64; project "p1", current tier "standard-tier", paid tier "", entitlement "standard-tier"): 1 models, 1 kept; left out 0 not for chat [], 0 completion-only []; disabled []; Claude []
+2026/10/26 21:51:16 antigravity u@example.com: fetchAvailableModels at https://daily-cloudcode-pa.googleapis.com (antigravity/hub/2.9.1 linux/amd64; project "p1", current tier "standard-tier", paid tier "", entitlement "standard-tier"): 1 models, 1 kept; left out 0 not for chat [], 0 completion-only []; disabled []; Claude []
+2026/10/26 21:51:20 antigravity u1@example.com: fetchAvailableModels at https://daily-cloudcode-pa.googleapis.com (antigravity/hub/2.9.1 linux/amd64; project "p1", current tier "standard-tier", paid tier "", entitlement "standard-tier"): 1 models, 1 kept; left out 0 not for chat [], 0 completion-only []; disabled []; Claude []
+
+--- FAIL: TestCodexPoolSaysTheClientsVersion (0.01s)
+    codex_accounts_test.go:741: request 0: User-Agent "codex_cli_rs/0.163.0 (Linux 7.3.0; x86_64) xterm-256color", version "0.163.0"
+2026/10/26 21:55:21 claude: Claude Code pid 2723024 started, a run on claude-sonnet-5
+2026/10/26 21:55:21 claude: Claude Code pid 2723024 (claude-sonnet-5) ended after 0s (signal: terminated), 2630 MiB resident at most
+2026/10/26 21:55:21 claude: Claude Code pid 2723025 started, a run on claude-sonnet-5
+2026/10/26 21:55:21 claude: Claude Code pid 2723025 (claude-sonnet-5) ended after 0s (signal: terminated), 2630 MiB resident at most
+2026/10/26 21:55:21 refused POST /mcp/neon from the web page https://evil.example: not one listed in Settings
+2026/10/26 21:55:23 request archive: 2026-10-26/115523-28774f02c17fe3ce not uploaded: HTTP 403 AccessDenied
+2026/10/26 21:55:23 antigravity b@example.com: fetchAvailableModels at https://daily-cloudcode-pa.googleapis.com (antigravity/hub/2.9.1 linux/amd64; project "p1", current tier "standard-tier", paid tier "", entitlement "standard-tier"): 1 models, 1 kept; left out 0 not for chat [], 0 completion-only []; disabled []; Claude []
+2026/10/26 21:55:23 antigravity a@example.com: fetchAvailableModels at https://daily-cloudcode-pa.googleapis.com (antigravity/hub/2.9.1 linux/amd64; project "p1", current tier "standard-tier", paid tier "", entitlement "standard-tier"): 2 models, 2 kept; left out 0 not for chat [], 0 completion-only []; disabled []; Claude []
+2026/10/26 21:55:26 antigravity u@example.com: loadCodeAssist at https://cloudcode-pa.googleapis.com: current tier standard-tier, paid tier -, project "p1"
+2026/10/26 21:55:26 antigravity u@example.com: fetchAvailableModels at https://daily-cloudcode-pa.googleapis.com (antigravity/hub/2.9.1 linux/amd64; project "p1", current tier "standard-tier", paid tier "", entitlement "standard-tier"): 1 models, 1 kept; left out 0 not for chat [], 0 completion-only []; disabled []; Claude []
+
+--- FAIL: TestMarshalRawIsEncodingJSON (0.00s)
+    fastjson_marshal_test.go:64: escape false:
+         marshalRaw   "[\"line\u2028sep\u2029\"]"
+         encoding/json "[\"line\\u2028sep\\u2029\"]"
+2026/10/26 21:59:11 claude: Claude Code pid 2744814 started, a run on claude-sonnet-5
+2026/10/26 21:59:11 claude: Claude Code pid 2744814 (claude-sonnet-5) holds 4 MiB after its turn; 5953 MiB may be kept (an eighth of 47630 MiB (MemTotal), 1024 MiB at least)
+2026/10/26 21:59:11 claude: Claude Code pid 2744814 (claude-sonnet-5) holds 4 MiB after its turn; 8930 MiB may be kept (an eighth of 47630 MiB (MemTotal), 1024 MiB at least)
+2026/10/26 21:59:11 Claude Code run on claude-sonnet-5 stopped: the client went away 111ms into the reply
+2026/10/26 21:59:11 claude: the turn the client gave up on was taken back; its run waits for the conversation's next turn
+2026/10/26 21:59:11 Claude Code on claude-sonnet-5: tool results no run waiting
+2026/10/26 21:59:11 claude: a turn taken back goes on in its run, told again from its user message (3 messages)
+2026/10/26 21:59:11 claude: Claude Code pid 2744814 (claude-sonnet-5) holds 4 MiB after its turn; 5953 MiB may be kept (an eighth of 47630 MiB (MemTotal), 1024 MiB at least)
+
+--- FAIL: TestClaudeClientCacheAbsentUnchanged (0.01s)
+    claude_client_cache_test.go:291: ordinary prompt changed: args -p --output-format stream-json --input-format stream-json --include-partial-messages --verbose --model claude-sonnet-5 --tools  --strict-mcp-config --mcp-config {"mcpServers":{"magpie":{"args":["claude-mcp-helper","/tmp/TestClaudeClientCacheAbsentUnchanged4150451825/002/magpie-claude-2858272918/callback","/tmp/TestClaudeClientCacheAbsentUnchanged4150451825/002/magpie-claude-2858272918/tools.json"],"command":"/tmp/go-build2659987797/b001/gateway.test"}}} --setting-sources  --dangerously-skip-permissions
+        cache-disabled 0
+        told {"message":{"content":[{"cache_control":{"ttl":"1h","type":"ephemeral"},"text":"\u003cexternal_system_instructions\u003e\nshared\n\u003c/external_system_instructions\u003e\n\n","type":"text"},{"text":"Human: hello\n\n","type":"text"}],"role":"user"},"type":"user"}
+2026/10/26 22:00:01 refused GET /v1/magpie/usage from 192.168.1.9:5000: no API key was sent: send a magpie gateway key as Authorization: Bearer <key> (or x-api-key)
+2026/10/26 22:00:02 claude: a Claude Code run on claude-sonnet-5 waits for room: 2 Claude Code processes run, 2 may (claudeRunsMost in settings)
+2026/10/26 22:00:02 claude: a Claude Code run on claude-sonnet-5 waits for room: 2 Claude Code processes run, 2 may (claudeRunsMost in settings)
+2026/10/26 22:00:02 claude: a Claude Code run on claude-sonnet-5 waits for room: 2 Claude Code processes run, 2 may (claudeRunsMost in settings)
+2026/10/26 22:00:02 claude: Claude Code pid 2747494 started, a run on claude-sonnet-5
+2026/10/26 22:00:02 claude: a Claude Code run on claude-sonnet-5 waits for room: 2 Claude Code processes run, 2 may (claudeRunsMost in settings)
+2026/10/26 22:00:02 claude: Claude Code pid 2747498 started, a run on claude-sonnet-5
+2026/10/26 22:00:02 claude: Claude Code pid 2747494 (claude-sonnet-5) holds 4 MiB after its turn; 5953 MiB may be kept (an eighth of 47630 MiB (MemTotal), 1024 MiB at least)
+
+--- FAIL: FuzzMarshalRaw (0.00s)
+    --- FAIL: FuzzMarshalRaw/seed#7 (0.00s)
+        fastjson_marshal_test.go:125: escape false:
+             marshalRaw   "[\"line\u2028sep\u2029\",null]"
+             encoding/json "[\"line\\u2028sep\\u2029\",null]"
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	679.115s
+FAIL
+EXIT_CODE=1
+
+
+    --- FAIL: FuzzMarshalRaw/seed#7 (0.00s)
+        fastjson_marshal_test.go:125: escape false:
+             marshalRaw   "[\"line\u2028sep\u2029\",null]"
+             encoding/json "[\"line\\u2028sep\\u2029\",null]"
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	679.115s
+FAIL
+EXIT_CODE=1

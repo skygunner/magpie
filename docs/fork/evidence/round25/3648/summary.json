@@ -1,0 +1,47 @@
+{
+  "issue": 3648,
+  "repo": "yetone/magpie",
+  "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+  "head": "6d3f202fa62935bc480db953efcfb15256641c08",
+  "commits": [
+    "900957661c9c561fe060b32019eed4ad7834c298 fix (dev_on.go + test)",
+    "083079e46e9a1db8a1862286c7522f26e6e8aa00 test: gate on backendCtx.Done (superseded)",
+    "f5fd1da3ff6ac4e894b2de81e9bb2aa5fa7363ad test: held listener Close is the barrier",
+    "6d3f202fa62935bc480db953efcfb15256641c08 test: retry the handover signal on the delivered signal, not a duration"
+  ],
+  "branch": "fix/r25-dev-backend-handover",
+  "pushed_to": "origin (skygunner/magpie)",
+  "remote_head_matches_local": true,
+  "base_is_ancestor": true,
+  "test": "TestDevBackendHandoverAnswersAConnectionItTook (-tags dev), SAME test bytes at base and head (git archive 19253f67 + test file only, cmp-verified)",
+  "red": "3/3 red at the clean base (red-event-retry.log): dev_handover_test.go:127 'a request on a connection the backend took, read once its handover began: unexpected EOF'; go test exit 1",
+  "green": "green at head 6d3f202f (verify-event-retry.log): gofmt 0, vet -tags dev 0, build -tags dev 0, go test -tags dev -run TestDevBackendHandoverAnswersAConnectionItTook ok exit 0",
+  "barrier": "heldListener.Close event: base Shutdown marks inShutdown (go1.26.8 net/http/server.go:3151) before closeListenersLocked (:3154) and closes the wrapped listener; head finish closes the listener before Shutdown. Close signals without blocking (Shutdown calls it under s.mu). The retry waits on the test's own signal channel (the signal is sent, then re-sent when the delivery is observed) with a single 10s deadline that fails the test when the handover never begins; no duration-based retry remains.",
+  "liveness_assumption": "the test assumes the production code makes forward progress: the signal handler eventually runs the handover that closes the listener. A hang in the underlying code surfaces as the deadline failure, not as a silently passing test.",
+  "prior_revision_corrections": [
+    "083079e4's test gated release on backendCtx.Done, which does not order the shutdown mark (stopServing runs beside go srv.Shutdown)",
+    "f5fd1da3's test retried the signal on a 2s timeout, contrary to the no-fixed-wait rule; superseded by 6d3f202f",
+    "old red evidence from the sleep-based test bytes is kept as *-v1*"
+  ],
+  "changed_files_base_to_head": [
+    "internal/gui/dev_on.go",
+    "internal/gui/dev_handover_test.go"
+  ],
+  "production_change_unchanged_since": "90095766",
+  "verification_note": "design-barrier.md has the source-cited design; verify.log and the *-event-retry.log files carry the raw command/exit record; gopls unavailable (compiler+vet stand in)",
+  "pre_existing_failures": {
+    "tests": ["TestWebCompresses", "TestVersionedFilesKept"],
+    "mode": "-tags dev only",
+    "proven": "identical output at clean base with change stashed; both pass without -tags dev"
+  },
+  "not_tried": [
+    "real make dev restart on Linux/macOS (handover exercised within one process)",
+    "Windows runtime (no handover; vet+build only)"
+  ],
+  "comment": {
+    "id": 6413258899,
+    "author": "skygunner",
+    "url": "https://github.com/yetone/magpie/issues/3648#issuecomment-6413258899"
+  },
+  "issue_language": "chinese (CJK ratio >= 0.15)"
+}

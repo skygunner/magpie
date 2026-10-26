@@ -1,0 +1,50 @@
+-test.shuffle 1793001742637651565
+2026/10/26 18:02:25 release notes: Get "http://127.0.0.1:1/?after=0.1.604&lang=en&upto=0.1.607": dial tcp 127.0.0.1:1: connect: connection refused
+2026/10/26 18:02:25 refused POST /v1/chat/completions from Origin: null: a sandboxed frame or a local page, with no gateway key
+2026/10/26 18:02:25 refused POST /v1/chat/completions from the web page https://evil.example: not one listed in Settings
+2026/10/26 18:02:25 refused GET /v1/models: a web page reached loopback under the name "rebind.attacker.example:3430"
+2026/10/26 18:02:25 refused POST /v1/chat/completions: a web page reached loopback under the name "rebind.attacker.example:3430"
+2026/10/26 18:02:25 refused GET /v1/models: a web page reached loopback under the name "rebind.attacker.example:3430"
+2026/10/26 18:02:25 refused GET /v1/models from 127.0.0.1:52638: no API key was sent: send a magpie gateway key as Authorization: Bearer <key> (or x-api-key)
+2026/10/26 18:02:25 refused GET /v1/models from 127.0.0.1:52638: no API key was sent: send a magpie gateway key as Authorization: Bearer <key> (or x-api-key)
+2026/10/26 18:02:25 refused GET /v1/models from 127.0.0.1:52638: no API key was sent: send a magpie gateway key as Authorization: Bearer <key> (or x-api-key)
+2026/10/26 18:02:25 refused GET /v1/models through a proxy or tunnel: magpie isn't shared
+2026/10/26 18:02:25 refused GET /v1/models through a proxy or tunnel: magpie isn't shared
+=== RUN   TestHandoverSuccessor
+2026/10/26 18:02:25 update: took the gateway on 127.0.0.1:36007 over from pid 2140275
+2026/10/26 18:02:25 update: magpie dev (pid 2140375) serves the gateway now; this one finishes its requests and quits
+2026/10/26 18:02:31 update: Windows didn't let the new version start (fork/exec /tmp/TestUpdateThatWontStart2217471076/001/magpie: errno 4551): Smart App Control or another application control policy blocks magpie's unsigned builds; download it from https://usemagpie.ai and run it yourself, or turn Smart App Control off, then check for updates again
+2026/10/26 18:02:37 update: download gui.test.new through the mirror http://127.0.0.1:42013/: 404 Not Found
+2026/10/26 18:02:37 allow list: could not read settings at /tmp/TestAllowIPsUnreadableSettingsNotSavedOver738483575/001/.config/magpie/settings.json: unexpected end of JSON input; the list read last stays in force
+2026/10/26 18:02:42 release notes: release notes: 503 Service Unavailable
+2026/10/26 18:02:43 release notes: release notes: 503 Service Unavailable
+2026/10/26 18:02:43 release notes: release notes: 503 Service Unavailable
+2026/10/26 18:02:43 magpie web: turned away / from 192.0.2.1:1234: no cookie sent
+2026/10/26 18:02:43 magpie web: turned away / from 192.0.2.1:1234: its cookie holds another key
+2026/10/26 18:02:45 release notes: Get "http://127.0.0.1:33983?after=0.1.603&lang=en&upto=0.1.604": dial tcp 127.0.0.1:33983: connect: connection refused
+2026/10/26 18:02:45 release notes: Get "http://127.0.0.1:35251?after=0.1.1398&lang=en&upto=0.1.1409": dial tcp 127.0.0.1:35251: connect: connection refused
+2026/10/26 18:02:46 gateway: http://127.0.0.1:35753 is taken but doesn't answer as magpie yet; this magpie serves the gateway once it is free
+2026/10/26 18:02:56 update: the gateway wasn't handed over, restarting as before once its requests have finished: context deadline exceeded
+2026/10/26 18:02:57 update: the gateway wasn't handed over, restarting as before once its requests have finished: the new version didn't start beside this one: no such file
+2026/10/26 18:02:58 magpie: could not migrate LAN key: open /tmp/TestReadOnlyLANMigrationDoesNotBlockSettingsOrKeys2960486113/001/.config/magpie/settings.json: permission denied
+2026/10/26 18:02:59 ollama: Get "http://localhost:11434/api/tags": dial tcp [::1]:11434: connect: connection refused
+2026/10/26 18:02:59 ollama-2: Get "http://127.0.0.1:1/api/tags": dial tcp 127.0.0.1:1: connect: connection refused
+2026/10/26 18:02:59 omlx: oMLX: Not Found
+2026/10/26 18:02:59 omlx-2: Get "http://127.0.0.1:2/v1/models/status": dial tcp 127.0.0.1:2: connect: connection refused
+--- FAIL: TestCoreScriptBudget (0.00s)
+    core_budget_test.go:50: the core's scripts are 1542419 bytes, over their budget of 1542418: put the page's code in its plugin, or raise the budget and say why
+2026/10/26 18:03:00 update: the release lists no checksum for gui.test.new
+2026/10/26 18:03:01 refused POST /v1/chat/completions from Origin: null: a sandboxed frame or a local page, with no gateway key
+2026/10/26 18:03:01 refused POST /v1/chat/completions from the web page https://evil.example: not one listed in Settings
+2026/10/26 18:03:01 refused GET /v1/models: a web page reached loopback under the name "rebind.attacker.example:3430"
+2026/10/26 18:03:01 refused POST /v1/chat/completions: a web page reached loopback under the name "rebind.attacker.example:3430"
+2026/10/26 18:03:01 refused GET /v1/models: a web page reached loopback under the name "rebind.attacker.example:3430"
+2026/10/26 18:03:01 refused GET /v1/models from 127.0.0.1:50001: no API key was sent: send a magpie gateway key as Authorization: Bearer <key> (or x-api-key)
+2026/10/26 18:03:01 refused GET /v1/models from 127.0.0.1:50001: no API key was sent: send a magpie gateway key as Authorization: Bearer <key> (or x-api-key)
+2026/10/26 18:03:01 refused GET /v1/models from 10.0.0.5:50001: no API key was sent: send a magpie gateway key as Authorization: Bearer <key> (or x-api-key)
+2026/10/26 18:03:01 refused GET /v1/models through a proxy or tunnel: magpie isn't shared
+FAIL
+FAIL	github.com/yetone/magpie/internal/gui	54.695s
+FAIL
+
+exitCode=1

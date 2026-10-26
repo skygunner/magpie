@@ -1,0 +1,207 @@
+diff --git a/internal/library/agent_skills_test.go b/internal/library/agent_skills_test.go
+index 38797009..40a039bb 100644
+--- a/internal/library/agent_skills_test.go
++++ b/internal/library/agent_skills_test.go
+@@ -155,8 +155,13 @@ func TestImportSharedSkillForKimi(t *testing.T) {
+ 	shared := filepath.Join(h, ".agents/skills/orca")
+ 	skill(t, shared, "orca", "Orca")
+ 	ok(t)(ImportSkill("orca"))
+-	if fi, err := os.Lstat(shared); err != nil || !fi.IsDir() {
+-		t.Errorf("the shared folder's skill: %v", err)
++	// #3657: the folder is moved into the library, and Kimi Code, whose
++	// folder the shared one is, has the library's linked back in it
++	if linked(skillDir("orca")) {
++		t.Error("the library's orca is a link into the shared folder")
++	}
++	if !ours(shared, "orca") {
++		t.Error("kimi's orca isn't the library's")
+ 	}
+ 	v, _ := Read(nil)
+ 	if len(v.Skills) != 1 || !slices.Equal(v.Skills[0].Agents, []string{"kimi"}) || len(v.Skills[0].Problems) != 0 {
+diff --git a/internal/library/shared_skills_test.go b/internal/library/shared_skills_test.go
+index 610b142d..0a18daca 100644
+--- a/internal/library/shared_skills_test.go
++++ b/internal/library/shared_skills_test.go
+@@ -77,12 +77,17 @@ func TestSharedAgentsSkills(t *testing.T) {
+ 	ok(t)(ImportSkill("orchestration"))
+ 	ok(t)(ImportSkill("grilling"))
+ 	ok(t)(ImportSkill("orca-cli"))
+-	// the shared folder is as it was
++	// #3657: a folder of the user's kept in the shared one is moved into
++	// the library, so the agents' ticks decide which of them have it; a
++	// link there stays where it points
+ 	for _, n := range []string{"orchestration", "orca-cli"} {
+-		if fi, err := os.Lstat(filepath.Join(shared, n)); err != nil || !fi.IsDir() {
+-			t.Errorf("%s left the shared folder: %v", n, err)
++		if _, err := os.Lstat(filepath.Join(shared, n)); !os.IsNotExist(err) {
++			t.Errorf("%s is still in the shared folder: %v", n, err)
+ 		}
+-		if _, err := os.Stat(filepath.Join(shared, n, "scripts/run.sh")); err != nil {
++		if linked(skillDir(n)) {
++			t.Errorf("the library's %s is a link into the shared folder", n)
++		}
++		if _, err := os.Stat(filepath.Join(skillDir(n), "scripts/run.sh")); err != nil {
+ 			t.Errorf("%s's files: %v", n, err)
+ 		}
+ 	}
+@@ -92,11 +97,13 @@ func TestSharedAgentsSkills(t *testing.T) {
+ 	if _, err := os.Stat(filepath.Join(ext, "SKILL.md")); err != nil {
+ 		t.Error("the folder the shared link pointed to went")
+ 	}
+-	// the library links to them
+-	for n, want := range map[string]string{"orchestration": filepath.Join(shared, "orchestration"), "grilling": ext, "orca-cli": filepath.Join(shared, "orca-cli")} {
+-		if !linked(skillDir(n)) || realDir(skillDir(n)) != realDir(want) {
+-			t.Errorf("the library's %s isn't a link to %s", n, want)
+-		}
++	// the library keeps the moved-in folders itself and links to where
++	// the shared folder's link pointed (#3657)
++	if linked(skillDir("orchestration")) || linked(skillDir("orca-cli")) {
++		t.Error("a moved-in skill is the library's own folder")
++	}
++	if !linked(skillDir("grilling")) || realDir(skillDir("grilling")) != realDir(ext) {
++		t.Errorf("the library's grilling isn't a link to %s", ext)
+ 	}
+ 	// the agents that had it have the library's; Codex and Gemini CLI read
+ 	// ~/.agents/skills, where all three are kept, so a link in their own
+@@ -105,9 +112,9 @@ func TestSharedAgentsSkills(t *testing.T) {
+ 	if !ours(filepath.Join(h, ".pi/agent/skills/orchestration"), "orchestration") {
+ 		t.Error("pi's orchestration isn't the library's")
+ 	}
+-	for _, d := range []string{".codex/skills/orchestration", ".gemini/skills/grilling", ".codex/skills/orca-cli"} {
+-		if _, err := os.Lstat(filepath.Join(h, d)); !os.IsNotExist(err) {
+-			t.Errorf("%s is there, besides the shared folder's: %v", d, err)
++	for _, d := range []string{".codex/skills/orchestration", ".codex/skills/orca-cli"} {
++		if !ours(filepath.Join(h, d), filepath.Base(d)) {
++			t.Errorf("%s: not the library's link", d)
+ 		}
+ 	}
+ 	if m, _ := filepath.Glob(filepath.Join(BackupDir(), "*", "codex", "skills", "orca-cli", "SKILL.md")); len(m) != 1 {
+@@ -115,16 +122,15 @@ func TestSharedAgentsSkills(t *testing.T) {
+ 	}
+ 	v, _ := Read(nil)
+ 	for _, s := range v.Skills {
+-		if s.Kind != "folder" {
+-			t.Errorf("%s: %+v", s.Name, s)
+-		}
+-		// every agent reading the shared folder has it, ticked or not
+-		for _, id := range []string{"codex", "gemini"} {
+-			if !slices.Contains(s.Always, id) {
+-				t.Errorf("%s: %s isn't said to have it always: %v", s.Name, id, s.Always)
++		// a link into the shared folder is still had by every agent reading
++		// it, ticked or not; one moved in is not (#3657)
++		if s.Name == "grilling" {
++			for _, id := range []string{"codex", "gemini"} {
++				if !slices.Contains(s.Always, id) {
++					t.Errorf("grilling: %s isn't said to have it always: %v", id, s.Always)
++				}
+ 			}
+-		}
+-		if slices.Contains(s.Always, "pi") || slices.Contains(s.Always, "claude") {
++		} else if len(s.Always) != 0 {
+ 			t.Errorf("%s: always %v", s.Name, s.Always)
+ 		}
+ 	}
+@@ -133,6 +139,41 @@ func TestSharedAgentsSkills(t *testing.T) {
+ 	}
+ }
+ 
++// #3657: a skill of the user's kept in ~/.agents/skills and brought in is
++// moved into the library, so the ticks decide which agents have it: an
++// agent reading the shared folder gets the library's while ticked and
++// loses it once unticked, where a copy left there was read by all of them
++// whatever was ticked.
++func TestImportSharedSkillUnticksForItsReaders(t *testing.T) {
++	h := sandbox(t)
++	shared := filepath.Join(h, ".agents/skills/drawio-skill")
++	skill(t, shared, "drawio-skill", "Draw diagrams")
++	ok(t)(ImportSkill("drawio-skill"))
++	// the folder is the library's own now, and Goose, whose folder the
++	// shared one is, has the library's linked there: #3657, not a copy of
++	// the user's the ticks can never take away
++	if linked(skillDir("drawio-skill")) {
++		t.Error("the library's is a link into the shared folder")
++	}
++	if !ours(shared, "drawio-skill") {
++		t.Error("goose's entry in ~/.agents/skills isn't the library's link")
++	}
++	cx := filepath.Join(h, ".codex/skills/drawio-skill")
++	ok(t)(SkillAgents("drawio-skill", []string{"codex"}))
++	if !ours(cx, "drawio-skill") {
++		t.Error("codex hasn't it while ticked")
++	}
++	if v, err := Read(nil); err != nil || len(v.Skills) != 1 || slices.Contains(v.Skills[0].Always, "codex") || slices.Contains(v.Skills[0].Always, "goose") {
++		t.Errorf("said to have it always: %+v %v", v.Skills, err)
++	}
++	ok(t)(SkillAgents("drawio-skill", []string{}))
++	for _, p := range []string{cx, shared} {
++		if _, err := os.Lstat(p); !os.IsNotExist(err) {
++			t.Errorf("%s is there unticked: %v", p, err)
++		}
++	}
++}
++
+ func TestRealDir(t *testing.T) {
+ 	d := t.TempDir()
+ 	skill(t, filepath.Join(d, "a/real"), "real", "")
+diff --git a/internal/library/skill_from_test.go b/internal/library/skill_from_test.go
+index 44c8f676..287919ab 100644
+--- a/internal/library/skill_from_test.go
++++ b/internal/library/skill_from_test.go
+@@ -420,6 +420,8 @@ func TestPastedRepoBindsSameCopy(t *testing.T) {
+ 	write(t, filepath.Join(h, ".claude/skills/extra/SKILL.md"), repo["skills/extra/SKILL.md"])
+ 	write(t, filepath.Join(h, ".claude/skills/extra/mine.md"), "my own notes\n")
+ 	write(t, filepath.Join(h, ".agents/skills/shared/SKILL.md"), repo["skills/shared/SKILL.md"])
++	// the skills CLI's own lock: it keeps and updates what it put in ~/.agents
++	write(t, filepath.Join(h, ".agents/.skill-lock.json"), `{"version":3,"skills":{"shared":{"source":"someone/upstream","sourceType":"github"}}}`)
+ 	dirLink(filepath.Join(h, ".agents/skills/shared"), filepath.Join(h, ".claude/skills/shared"))
+ 	ok(t)(ImportSkills([]string{"same", "extra", "shared"}))
+ 
+diff --git a/internal/library/skillgit_test.go b/internal/library/skillgit_test.go
+index 57e75e9a..3036a7db 100644
+--- a/internal/library/skillgit_test.go
++++ b/internal/library/skillgit_test.go
+@@ -276,9 +276,9 @@ func TestGitErrorsSaid(t *testing.T) {
+ 		"remote: HTTP Basic: Access denied\nfatal: Authentication failed for 'https://git.corp.example/team/skills.git/'\n": "git couldn't sign in",
+ 		"git@git.corp.example: Permission denied (publickey).\nfatal: Could not read from remote repository.\n":             "git couldn't sign in",
+ 		"Host key verification failed.\nfatal: Could not read from remote repository.\n":                                    "host key",
+-		"fatal: couldn't find remote ref dev\n":                                                                             "has no branch or tag dev",
+-		"fatal: unable to access 'https://git.corp.example/team/skills.git/': Could not resolve host: git.corp.example\n":   "couldn't reach git.corp.example",
+-		"xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun\n":                "git isn't installed",
++		"fatal: couldn't find remote ref dev\n": "has no branch or tag dev",
++		"fatal: unable to access 'https://git.corp.example/team/skills.git/': Could not resolve host: git.corp.example\n": "couldn't reach git.corp.example",
++		"xcrun: error: invalid active developer path (/Library/Developer/CommandLineTools), missing xcrun\n":              "git isn't installed",
+ 	} {
+ 		if err := gitError(src, msg); !strings.Contains(err.Error(), want) {
+ 			t.Errorf("%q said as %q", msg, err)
+diff --git a/internal/library/skills.go b/internal/library/skills.go
+index e98b277d..6117ce5b 100644
+--- a/internal/library/skills.go
++++ b/internal/library/skills.go
+@@ -1969,9 +1969,15 @@ func importSkill(l *Library, found []FoundSkill, name string) error {
+ 	// .git behind, and the skills CLI's lock names it where it was
+ 	from := (&tracer{}).folder(f.real)
+ 	src := &Source{Kind: "folder", Dir: f.real}
+-	// one in the shared ~/.agents/skills (or a link into it) stays
+-	// there, linked to: the shared folder is the user's, never emptied
+-	shared := f.Shared != "" || within(f.real, realDir(sharedSkillsDir()))
++	// a link into the shared ~/.agents/skills, and a folder there that
++	// the skills CLI put and updates (its lock names it), stay as they
++	// are, linked to. A folder of the user's kept there is moved in like
++	// any other (#3657): left there and linked to from the library, every
++	// agent reading the shared folder had it whatever was ticked
++	cliSkill := false
++	if within(f.real, realDir(sharedSkillsDir())) {
++		_, cliSkill = (&tracer{}).lock()[name]
++	}
+ 	switch {
+ 	case f.Library != "":
+ 		// in the library's folder already (#595): listed where it is, a
+@@ -1979,7 +1985,7 @@ func importSkill(l *Library, found []FoundSkill, name string) error {
+ 		if !linked(f.Library) {
+ 			src = nil
+ 		}
+-	case f.Link != "" || shared:
++	case f.Link != "" || cliSkill:
+ 		// linked through the way the agent's own link goes, not to where
+ 		// it ends today: an app that keeps its skills in a versioned
+ 		// folder points its own link at the new one when it updates

@@ -1,0 +1,35 @@
+{
+ "issue": 3647,
+ "title": "gateway: with TLS on, a handover still cuts a local connection whose first byte hasn't come yet",
+ "verdict": "fixed",
+ "branch": "fix/r25-tls-handover-local",
+ "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+ "head": "23bd4df0bcb5b092d26a74e76047b9f67b8a8a5b",
+ "testCommands": [
+  "GOTOOLCHAIN=go1.26.8 go test ./internal/gateway/ -run TestHandedOffTLSGatewayAnswersAConnectionWaitingForItsFirstByte -count=20 -timeout 300s",
+  "GOTOOLCHAIN=go1.26.8 go test ./internal/gateway/ -race -run TestHandedOffTLSGatewayAnswersAConnectionWaitingForItsFirstByte -count=10 -timeout 600s",
+  "GOTOOLCHAIN=go1.26.8 go test ./internal/gateway/ -count=1 -timeout 45m",
+  "gofmt -l internal/gateway/",
+  "GOTOOLCHAIN=go1.26.8 go vet ./...",
+  "GOTOOLCHAIN=go1.26.8 go build ./...",
+  "GOOS=linux GOARCH=amd64 GOTOOLCHAIN=go1.26.8 go build -tags nogui ./...",
+  "GOOS=windows GOARCH=amd64 GOTOOLCHAIN=go1.26.8 go build ./..."
+ ],
+ "testsAdded": [
+  "TestHandedOffTLSGatewayAnswersAConnectionWaitingForItsFirstByte"
+ ],
+ "filesChanged": [
+  "internal/gateway/tls.go",
+  "internal/gateway/gateway.go",
+  "internal/gateway/tls_handover_test.go"
+ ],
+ "preExistingRed": [
+  "TestClaudeClientCacheAbsentUnchanged - fails identically on a pure base copy of 19253f67 (claude_client_cache_test.go:291 ordinary prompt changed); unrelated to this change, not filed by this task"
+ ],
+ "unverifiedBoundaries": [
+  "no end-to-end handover with the real desktop app and a real certificate (test uses the same ListenAndServe/drain path with a self-signed certificate)",
+  "a local connection that never speaks now holds the handover drain for up to sniffWait (10s) - the cost of answering the ones that do",
+  "Windows: build only, not run on Windows"
+ ],
+ "note": "second push: test precondition hardened from a fixed 50ms sleep to a documented 500ms precondition wait; production code unchanged"
+}

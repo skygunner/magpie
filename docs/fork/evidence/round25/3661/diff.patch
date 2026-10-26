@@ -1,0 +1,196 @@
+diff --git a/docs/subsystems/gateway-routing.md b/docs/subsystems/gateway-routing.md
+index df73608f..5acaa89a 100644
+--- a/docs/subsystems/gateway-routing.md
++++ b/docs/subsystems/gateway-routing.md
+@@ -123,6 +123,8 @@ recorded as a prediction failure (`noPrediction`).
+ 
+ ## Constraints and failure behavior
+ 
++- A ZCode plugin's HTTP 400 `ZCode has no active limited quota for <model>` for the requested `-Trial` model rests that model alone (`zcodeTrialLimited` in [`zcode_trial.go`](../../internal/gateway/zcode_trial.go), called by `restAfterMarked`). It does not rest the account's shared key, so its GLM Coding Plan models remain available. Other quota and authentication failures keep their account-level rest. `TestZCodeTrialQuotaRestsTheModelAlone` exercises plugin dispatch, fallback, the next request, and account-fault controls. This classification does not remove saved group members or change model discovery.
++
+ - A fallback happens only while none of the reply has been sent. An agent never gets half a reply from one upstream and the rest from another.
+ - A refusal that comes as an error (#2400, Jichao). An error whose own `message` is, whole, `The request was rejected because it was considered high risk` is a refusal with no code beside it (`highRiskRefusal` in `policyRefusal`): in an HTTP error body or a stream's error event, never in an answer's text, which may quote it. The vendor that sends it isn't known; it says the request was turned away, so it goes to the next candidate under `RefusalRetries` like any refusal and rests nobody. A refusal error event before any content ends the try at once (`eventRefusalError`, `stop` as for any error), so an upstream that keeps the stream open doesn't hold the next candidate back; a refusal's stop or finish marker is still read to the end for the usage and terminator after it. After content, every write is read for a late refusal (`refusalAfter`), so one whose `event: error` name and data come in separate writes is still noted, and nothing is replayed. `TestHighRisk*`, `TestRefusalErrorDoesNotWaitForEOF` in [`refusal_error_test.go`](../../internal/gateway/refusal_error_test.go).
+ - A request is one usage record, counted once by how it ended (小一 on Discord: Codex on credits showed "5,482 · 1,094 failed" while rows said "2 tries/3 tries" and had been answered). The final record carries `tries` when the route took more than one (`rec.Tries`, from the trace's `Tries`). A try a vendor refused or turned away (`hw.refused`, `hw.turnedAway`) still writes its own record, for what it billed and why it failed, marked `handed_on`; `usage.Totals.count` skips such a record for calls and failures. A request failed only when the agent got an error (`LostRequest`); one answered after a failed try is counted beside it as answered on a retry (`Totals.Retried`, `RetriedRequest`, the `retried` filter). Logs written before `handed_on` are read the same way: the log index marks a failed, non-rejected record followed by another of the same route id as handed on (`routeRows` in [`log_index.go`](../../internal/usage/log_index.go)). Counts by account or route (`vias`, window holds) still count every try. A turn relayed on Codex's own ChatGPT sign-in is recorded as that codex account (`codexServed` in [`codex_backend.go`](../../internal/gateway/codex_backend.go)), so the account card's window counts it; the Routing view still names the seat OpenAI, an API-key call stays `openai` with no account, as does one whose `chatgpt-account-id` isn't the account Codex's auth.json here is signed in to (a Codex in WSL or under another `CODEX_HOME`), and a row already written without an account is left as it is. Those relay rows are still not a lead's answerer (`loggedAnswers`, #1367); a row an account answered, its host `host as email`, still is.
+diff --git a/internal/gateway/routing.go b/internal/gateway/routing.go
+index c90c89a0..e95d6699 100644
+--- a/internal/gateway/routing.go
++++ b/internal/gateway/routing.go
+@@ -1127,6 +1127,10 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
+ 	if why == failQuota && clineModelLimited(c, body) {
+ 		id = c.restID()
+ 	}
++	// A missing ZCode trial entitlement leaves the subscription usable (#3661).
++	if why == failQuota && status == http.StatusBadRequest && zcodeTrialLimited(c, body) {
++		id = c.restID()
++	}
+ 	// out of credit, or of a quota, on a model that costs credits where
+ 	// the subscription serves other models free is that model's: the free
+ 	// ones draw on no credits, and the account still serves them (Creat.wu
+diff --git a/internal/gateway/zcode_trial.go b/internal/gateway/zcode_trial.go
+new file mode 100644
+index 00000000..98da572f
+--- /dev/null
++++ b/internal/gateway/zcode_trial.go
+@@ -0,0 +1,12 @@
++package gateway
++
++import "strings"
++
++func zcodeTrialLimited(c candidate, body []byte) bool {
++	if c.p.PluginProvider() != "zcode" || !strings.HasSuffix(strings.ToLower(c.model), "-trial") {
++		return false
++	}
++	// Match the plugin's own message, including its translated provider prefix.
++	said := strings.TrimPrefix(vendorMessage(body), c.p.Name+": ")
++	return said == "ZCode has no active limited quota for "+c.model
++}
+diff --git a/internal/gateway/zcode_trial_test.go b/internal/gateway/zcode_trial_test.go
+new file mode 100644
+index 00000000..dc403c78
+--- /dev/null
++++ b/internal/gateway/zcode_trial_test.go
+@@ -0,0 +1,115 @@
++package gateway
++
++import (
++	"io"
++	"net/http"
++	"strings"
++	"sync"
++	"testing"
++
++	"github.com/yetone/magpie/internal/provider"
++)
++
++func TestZCodeTrialQuotaRestsTheModelAlone(t *testing.T) {
++	for _, tc := range []struct {
++		name, model, body string
++		status            int
++		accountRest       bool
++	}{
++		{"expired flash trial", "GLM-5.3-Flash-Trial", `{"type":"error","error":{"type":"invalid_request_error","message":"ZCode has no active limited quota for GLM-5.3-Flash-Trial"}}`, 400, false},
++		{"expired trial", "GLM-5.3-Trial", `{"type":"error","error":{"type":"invalid_request_error","message":"ZCode has no active limited quota for GLM-5.3-Trial"}}`, 400, false},
++		{"account quota", "GLM-5.3", `{"error":{"type":"rate_limit_error","message":"quota exhausted"}}`, 429, true},
++		{"account authentication", "GLM-5.3", `{"error":{"message":"invalid api key"}}`, 401, true},
++		{"another model named", "GLM-5.3-Flash-Trial", `{"error":{"message":"ZCode has no active limited quota for GLM-5.3-Trial"}}`, 400, true},
++		{"nontrial model", "GLM-5.3", `{"error":{"message":"ZCode has no active limited quota for GLM-5.3"}}`, 400, true},
++		{"quota status", "GLM-5.3-Flash-Trial", `{"error":{"message":"ZCode has no active limited quota for GLM-5.3-Flash-Trial"}}`, 429, true},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			// Given: the real plugin dispatch path, with no free-model pool to mask an account rest.
++			t.Setenv("FAKE_ZCODE", "1")
++			t.Setenv("FAKE_ZCODE_TRIAL", "1")
++			t.Setenv("FAKE_NO_FREE", "1")
++			var mu sync.Mutex
++			var asked []string
++			good := &adaptiveVendor{}
++			movedFake(t, "zcode", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++				body, err := io.ReadAll(r.Body)
++				if err != nil {
++					t.Error(err)
++					w.WriteHeader(500)
++					return
++				}
++				model := modelOf(body)
++				mu.Lock()
++				asked = append(asked, model)
++				mu.Unlock()
++				if model == tc.model {
++					w.Header().Set("Content-Type", "application/json")
++					w.WriteHeader(tc.status)
++					io.WriteString(w, tc.body)
++					return
++				}
++				r.Body = io.NopCloser(strings.NewReader(string(body)))
++				good.ServeHTTP(w, r)
++			}))
++			p, err := provider.Find("zcode")
++			if err != nil {
++				t.Fatal(err)
++			}
++			c := candidate{p: *p, rest: "zcode", model: tc.model}
++			old := allowances
++			allowances = func(string) map[string]provider.Allowance {
++				return map[string]provider.Allowance{p.Account.User: {{Used: 10}}}
++			}
++			t.Cleanup(func() { allowances = old })
++			b := &scripted{replies: []reply{{200, "", chatOK}}}
++			scriptedOn(t, "b", provider.Chat, b)
++			next := "zcode/GLM-5.3"
++			if tc.accountRest {
++				next = "b/m"
++			}
++			if err := provider.SaveGroup(provider.Group{Name: "G", Members: []string{"zcode/" + tc.model, next}, Routing: provider.Ordered}); err != nil {
++				t.Fatal(err)
++			}
++			s := New()
++
++			// When: a refusal is followed by another member, then the group is asked again.
++			for i := range 2 {
++				code, body := postAs(t, s, "", `{"model":"group/g","messages":[{"role":"user","content":"hi"}]}`)
++				if code != 200 || !(strings.Contains(body, "ok") || strings.Contains(body, "hello")) {
++					t.Fatalf("request %d: %d %s", i, code, body)
++				}
++				if i == 0 {
++					tries := s.trace.routes[len(s.trace.routes)-1].Tries
++					if len(tries) != 2 || tries[0].Status != tc.status || tries[0].Rest == nil {
++						t.Fatalf("tries: %+v", tries)
++					}
++					want := c.restID()
++					if tc.accountRest {
++						want = c.restKey()
++					}
++					if tries[0].Rest.Key != want {
++						t.Fatalf("refusal rested %q, want %q", tries[0].Rest.Key, want)
++					}
++				}
++			}
++
++			// Then: the trial rests alone; real account faults keep the entire account out.
++			if _, ok := restOf(c.restKey()); ok != tc.accountRest {
++				t.Fatalf("account resting = %v, want %v", ok, tc.accountRest)
++			}
++			if _, ok := restOf(c.restID()); ok == tc.accountRest {
++				t.Fatalf("model resting = %v, account fault = %v", ok, tc.accountRest)
++			}
++			mu.Lock()
++			defer mu.Unlock()
++			if tc.accountRest {
++				if len(asked) != 1 || b.n != 2 {
++					t.Fatalf("account fault: ZCode %v, fallback %d", asked, b.n)
++				}
++			} else if len(asked) != 3 || asked[0] != tc.model || asked[1] != "GLM-5.3" || asked[2] != "GLM-5.3" {
++				t.Fatalf("trial refusal affected subscription: %v", asked)
++			}
++		})
++	}
++}
+diff --git a/internal/plugin/testdata/fake/index.js b/internal/plugin/testdata/fake/index.js
+index d90c7521..a1d01f8c 100644
+--- a/internal/plugin/testdata/fake/index.js
++++ b/internal/plugin/testdata/fake/index.js
+@@ -109,6 +109,12 @@ export const FakePlugin = async ({ client }) => ({
+       const budget = { low: 4096, high: 16000, max: 31999 }
+       const variants = Object.fromEntries(["low", "high", "max"].map((e) => [e, { thinking: { type: "enabled", budgetTokens: budget[e] } }]))
+       cfg.provider[ID].models["GLM-5.3"] = { name: "GLM-5.3", provider: { npm: "@ai-sdk/anthropic" }, reasoning: true, variants, limit: { context: 1000000, output: 128000 } }
++      // $FAKE_ZCODE_TRIAL: the Start Plan trial models beside the
++      // subscription's, as a ZCode account that once had them lists them
++      if (process.env.FAKE_ZCODE_TRIAL) {
++        cfg.provider[ID].models["GLM-5.3-Flash-Trial"] = { name: "GLM 5.3 Flash Trial", provider: { npm: "@ai-sdk/anthropic" }, reasoning: true, limit: { context: 1000000, output: 128000 } }
++        cfg.provider[ID].models["GLM-5.3-Trial"] = { name: "GLM 5.3 Trial", provider: { npm: "@ai-sdk/anthropic" }, reasoning: true, limit: { context: 1000000, output: 128000 } }
++      }
+     }
+     // $FAKE_SEARCHES: the provider's upstream searches by itself (#2027),
+     // as a plugin in front of Claude's API says
+@@ -291,8 +297,9 @@ export const FakePlugin = async ({ client }) => ({
+       if (auth?.type === "oauth" && auth.refresh?.startsWith("rot-")) {
+         await client.auth.set({ path: { id: ID }, body: { ...auth, refresh: auth.refresh + "+" } })
+       }
+-      // fake-1 costs the plan nothing, as a WorkBuddy model of x0.00 credits
+-      p.models["fake-1"].free = true
++      // fake-1 costs the plan nothing, as a WorkBuddy model of x0.00
++      // credits ($FAKE_NO_FREE: a list with no free model, as ZCode's is)
++      if (!process.env.FAKE_NO_FREE) p.models["fake-1"].free = true
+       // fake-claude's credits are a number, discounted; fake-gemini's as
+       // WorkBuddy's picker writes them
+       if (p.models["fake-claude"]) Object.assign(p.models["fake-claude"], { rate: 0.5, rateWas: 1 })

@@ -1,0 +1,30 @@
+$ git show 01468003:internal/agent/dsh.go  # the base parse, with the new test
+$ go test -tags nogui -count=1 -run TestDshCommentsBetweenEntriesSurviveRewrite ./internal/agent
+--- FAIL: TestDshCommentsBetweenEntriesSurviveRewrite (0.01s)
+    dsh_comments_test.go:38: the managed block's comment markers lost:
+        # Your patch layer for this dsh profile.
+        - id: llm-pi-ai
+          name: "@deepseek-ai/dsh-llm-pi-ai"
+          config:
+            providers:
+              magpie:
+                displayName: Magpie
+                apiKeyEnv: MAGPIE_GATEWAY_KEY
+                api: openai-completions
+                baseURL: http://127.0.0.1:3425/v1
+                models:
+                  - id: deepseek/pro
+                    name: pro · DeepSeek
+                  - id: deepseek/flash
+                    name: flash · DeepSeek
+        - insert:
+            - id: vibe-island
+              name: /Users/<user>/.vibe-island/dsh-plugin/index-w1r8.js
+        # <<< vibe-island managed block <<<
+        - id: agent-default-model
+          config:
+            provider: magpie
+            model: deepseek/flash
+FAIL
+FAIL	github.com/yetone/magpie/internal/agent	0.023s
+FAIL

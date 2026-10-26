@@ -1,0 +1,89 @@
+UTC: 2026-10-26T12:02:40Z
+HEAD: 94d62c6a72193bb1846c24cb30908a2273fdfedb
+go version go1.27.1-X:nodwarf5 linux/amd64
+COMMAND: go test -p 4 -race -tags nogui ./internal/gateway -run \^\(TestCodexFittedImagesPastTheBudget\|TestServeWSLListensBesideLoopback\|TestCodexPoolSaysTheClientsVersion\|TestMarshalRawIsEncodingJSON\|TestClaudeClientCacheAbsentUnchanged\|FuzzMarshalRaw\)\$ -shuffle=1793015367380527894 -count=1 -v -timeout=15m
+-test.shuffle 1793015367380527894
+=== RUN   TestCodexFittedImagesPastTheBudget
+    codex_images_test.go:362: turn 2 made 19 of 30 images, with 10 kept
+    codex_images_test.go:362: turn 3 made 19 of 30 images, with 10 kept
+--- FAIL: TestCodexFittedImagesPastTheBudget (0.33s)
+=== RUN   TestServeWSLListensBesideLoopback
+    wsl_test.go:165: WSL network gone: http://[::1]:43915/ answers = true
+--- FAIL: TestServeWSLListensBesideLoopback (10.04s)
+=== RUN   TestCodexPoolSaysTheClientsVersion
+--- PASS: TestCodexPoolSaysTheClientsVersion (0.01s)
+=== RUN   TestMarshalRawIsEncodingJSON
+    fastjson_marshal_test.go:64: escape false:
+         marshalRaw   "[\"line\u2028sep\u2029\"]"
+         encoding/json "[\"line\\u2028sep\\u2029\"]"
+--- FAIL: TestMarshalRawIsEncodingJSON (0.00s)
+=== RUN   TestClaudeClientCacheAbsentUnchanged
+2026/10/26 22:02:52 claude: Claude Code pid 2762325 started, a run on claude-sonnet-5
+2026/10/26 22:02:52 claude: Claude Code pid 2762325 (claude-sonnet-5) ended after 0s (signal: terminated), 116 MiB resident at most
+    claude_client_cache_test.go:291: ordinary prompt changed: args -p --output-format stream-json --input-format stream-json --include-partial-messages --verbose --model claude-sonnet-5 --tools  --strict-mcp-config --mcp-config {"mcpServers":{"magpie":{"args":["claude-mcp-helper","/tmp/TestClaudeClientCacheAbsentUnchanged300538554/002/magpie-claude-3012411828/callback","/tmp/TestClaudeClientCacheAbsentUnchanged300538554/002/magpie-claude-3012411828/tools.json"],"command":"/tmp/go-build977973785/b001/gateway.test"}}} --setting-sources  --dangerously-skip-permissions
+        cache-disabled 0
+        told {"message":{"content":[{"cache_control":{"ttl":"1h","type":"ephemeral"},"text":"\u003cexternal_system_instructions\u003e\nshared\n\u003c/external_system_instructions\u003e\n\n","type":"text"},{"text":"Human: hello\n\n","type":"text"}],"role":"user"},"type":"user"}
+--- FAIL: TestClaudeClientCacheAbsentUnchanged (0.00s)
+=== RUN   FuzzMarshalRaw
+=== RUN   FuzzMarshalRaw/seed#0
+=== RUN   FuzzMarshalRaw/seed#1
+=== RUN   FuzzMarshalRaw/seed#2
+=== RUN   FuzzMarshalRaw/seed#3
+=== RUN   FuzzMarshalRaw/seed#4
+=== RUN   FuzzMarshalRaw/seed#5
+=== RUN   FuzzMarshalRaw/seed#6
+=== RUN   FuzzMarshalRaw/seed#7
+    fastjson_marshal_test.go:125: escape false:
+         marshalRaw   "[\"line\u2028sep\u2029\",null]"
+         encoding/json "[\"line\\u2028sep\\u2029\",null]"
+=== RUN   FuzzMarshalRaw/seed#8
+=== RUN   FuzzMarshalRaw/seed#9
+=== RUN   FuzzMarshalRaw/seed#10
+=== RUN   FuzzMarshalRaw/seed#11
+=== RUN   FuzzMarshalRaw/seed#12
+=== RUN   FuzzMarshalRaw/seed#13
+=== RUN   FuzzMarshalRaw/seed#14
+=== RUN   FuzzMarshalRaw/seed#15
+=== RUN   FuzzMarshalRaw/seed#16
+=== RUN   FuzzMarshalRaw/seed#17
+=== RUN   FuzzMarshalRaw/seed#18
+=== RUN   FuzzMarshalRaw/seed#19
+=== RUN   FuzzMarshalRaw/seed#20
+=== RUN   FuzzMarshalRaw/seed#21
+=== RUN   FuzzMarshalRaw/seed#22
+=== RUN   FuzzMarshalRaw/seed#23
+=== RUN   FuzzMarshalRaw/seed#24
+=== RUN   FuzzMarshalRaw/seed#25
+=== RUN   FuzzMarshalRaw/seed#26
+--- FAIL: FuzzMarshalRaw (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#0 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#1 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#2 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#3 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#4 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#5 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#6 (0.00s)
+    --- FAIL: FuzzMarshalRaw/seed#7 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#8 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#9 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#10 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#11 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#12 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#13 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#14 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#15 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#16 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#17 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#18 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#19 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#20 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#21 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#22 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#23 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#24 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#25 (0.00s)
+    --- PASS: FuzzMarshalRaw/seed#26 (0.00s)
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	10.439s
+FAIL
+EXIT_CODE=1

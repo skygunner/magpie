@@ -1,0 +1,26 @@
+$ GOTOOLCHAIN=go1.26.8 go test ./internal/gateway -run '^TestZCodeTrialQuotaRestsTheModelAlone$' -count=1 -v
+cwd=/home/vincenty/Projects/magpie-issues/evidence/r25-3661/clean-base-rlsrt3vr
+=== RUN   TestZCodeTrialQuotaRestsTheModelAlone
+=== RUN   TestZCodeTrialQuotaRestsTheModelAlone/expired_flash_trial
+testenv: a test asked models.dev:443, refused: tests stay off the network
+    zcode_trial_test.go:92: refusal rested "zcode@api key", want "zcode@api key/GLM-5.3-Flash-Trial"
+=== RUN   TestZCodeTrialQuotaRestsTheModelAlone/expired_trial
+    zcode_trial_test.go:92: refusal rested "zcode@api key", want "zcode@api key/GLM-5.3-Trial"
+=== RUN   TestZCodeTrialQuotaRestsTheModelAlone/account_quota
+=== RUN   TestZCodeTrialQuotaRestsTheModelAlone/account_authentication
+=== RUN   TestZCodeTrialQuotaRestsTheModelAlone/another_model_named
+=== RUN   TestZCodeTrialQuotaRestsTheModelAlone/nontrial_model
+=== RUN   TestZCodeTrialQuotaRestsTheModelAlone/quota_status
+--- FAIL: TestZCodeTrialQuotaRestsTheModelAlone (0.48s)
+    --- FAIL: TestZCodeTrialQuotaRestsTheModelAlone/expired_flash_trial (0.07s)
+    --- FAIL: TestZCodeTrialQuotaRestsTheModelAlone/expired_trial (0.07s)
+    --- PASS: TestZCodeTrialQuotaRestsTheModelAlone/account_quota (0.07s)
+    --- PASS: TestZCodeTrialQuotaRestsTheModelAlone/account_authentication (0.06s)
+    --- PASS: TestZCodeTrialQuotaRestsTheModelAlone/another_model_named (0.07s)
+    --- PASS: TestZCodeTrialQuotaRestsTheModelAlone/nontrial_model (0.07s)
+    --- PASS: TestZCodeTrialQuotaRestsTheModelAlone/quota_status (0.06s)
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.494s
+FAIL
+
+returncode=1

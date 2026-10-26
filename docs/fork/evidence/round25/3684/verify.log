@@ -1,0 +1,45 @@
+RED_EXIT_CODE=1
+GREEN_EXIT_CODE=1
+
+COMMAND: go vet ./...
+GOVET_EXIT_CODE=0
+
+COMMAND: go build ./...
+NATIVE_BUILD_EXIT_CODE=0
+
+COMMAND: env GOOS=linux GOARCH=amd64 go build -tags nogui ./...
+/bin/bash: line 5: env GOOS=linux GOARCH=amd64: command not found
+LINUX_NOGUI_EXIT_CODE=127
+
+COMMAND: env GOOS=windows GOARCH=amd64 go build ./...
+/bin/bash: line 5: env GOOS=windows GOARCH=amd64: command not found
+WINDOWS_BUILD_EXIT_CODE=127
+
+COMMAND: gofmt -l internal/gateway/
+GOFMT_EXIT_CODE=0
+
+COMMAND: env GOOS=linux GOARCH=amd64 go build -tags nogui ./...
+LINUX_NOGUI_FINAL_EXIT_CODE=0
+
+COMMAND: env GOOS=windows GOARCH=amd64 go build ./...
+WINDOWS_BUILD_FINAL_EXIT_CODE=0
+
+COMMAND: go vet ./...
+GREEN_FINAL_EXIT_CODE=0
+GOVET_FINAL_EXIT_CODE=0
+
+COMMAND: go build ./...
+NATIVE_BUILD_FINAL_EXIT_CODE=0
+
+COMMAND: env GOOS=linux GOARCH=amd64 go vet -tags nogui ./...
+LINUX_VET_EXIT_CODE=0
+
+COMMAND: env GOOS=windows GOARCH=amd64 go vet ./...
+WINDOWS_VET_EXIT_CODE=0
+
+COMMAND: gofmt -l internal/gateway/chattidy.go internal/gateway/chattidy_phantom_finish_test.go
+GOFMT_FINAL_EXIT_CODE=0
+
+NOTE: prior gateway package monitor killed at its watch deadline; rerun in background follows.
+GATEWAY_PACKAGE_EXIT_CODE=1
+BASELINE_FAILURE_EXIT_CODE=1

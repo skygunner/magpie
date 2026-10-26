@@ -1,0 +1,35 @@
+{
+  "issue": 3684,
+  "title": "[opencode-zen-free] free flash models return finish_reason=tool_calls with an empty tool_calls array; tooling clients stall (GLM-5.3-flash-free, DeepSeek-V4.1-flash-free)",
+  "verdict": "fixed_partial_scope",
+  "branch": "fix/r25-empty-tool-calls-finish",
+  "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+  "head": "91625dca0bb33ee696be639e659bdf4c8f1b6abd",
+  "testCommands": [
+    "GOTOOLCHAIN=go1.26.8 go test -race -count=1 -run TestChatPhantom -v ./internal/gateway",
+    "GOTOOLCHAIN=go1.26.8 go test -race -shuffle=on -count=1 -run 'TestChatPhantom|TestChatCallsEndToolCalls|TestTextWritten|TestChatTidy' -v ./internal/gateway"
+  ],
+  "testsAdded": [
+    "TestChatPhantomToolFinish",
+    "TestChatPhantomFinishKeepsRealCalls",
+    "TestChatPhantomFinishPerChoice"
+  ],
+  "filesChanged": [
+    "internal/gateway/chattidy.go",
+    "internal/gateway/chattidy_phantom_finish_test.go",
+    "docs/subsystems/gateway-routing.md"
+  ],
+  "scopeNote": "Only the phantom finish flag is fixed: a choice that delivered no actual calls has an upstream tool_calls finish normalized to stop, in streaming and whole replies, for missing/null/empty-array shapes. Real native and text-parsed calls keep tool_calls. Automatic retry of billed-but-empty Chat completions is explicitly NOT implemented (#3327's retry policy stays blocked); the issue remains open for that part. 6 of the 11 reported stall shapes are covered; the rest are the billed-empty cases.",
+  "preExistingRed": [
+    "TestClaudeClientCacheAbsentUnchanged - reproduced at the clean base 19253f67 with production code restored (baseline-failure.log), unrelated to this change (Claude client cache-control parameter regression)"
+  ],
+  "unverifiedBoundaries": [
+    "no live opencode-zen-free upstream request; fixtures follow the reported log shapes and existing test shapes through the real HTTP stack",
+    "the other 5 reported stall shapes (billed-but-empty responses needing a retry/empty-turn policy decision) are not addressed",
+    "gopls not installed: compiler, go vet and executable tests used instead; recorded in the commit message"
+  ],
+  "commentId": 6413055706,
+  "commentAuthor": "skygunner",
+  "commentCreatedAt": "2026-10-26T09:49:53Z",
+  "language": "en"
+}

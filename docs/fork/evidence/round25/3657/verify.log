@@ -1,0 +1,16 @@
+$ gofmt -l internal/library/
+exit=0 (no output)
+$ GOTOOLCHAIN=go1.26.8 go vet ./...
+exit=0
+$ GOTOOLCHAIN=go1.26.8 go build ./...
+exit=0
+$ GOTOOLCHAIN=go1.26.8 GOOS=linux GOARCH=amd64 go build -tags nogui ./...
+exit=0
+$ GOTOOLCHAIN=go1.26.8 GOOS=windows GOARCH=amd64 go build ./...
+exit=0
+$ GOTOOLCHAIN=go1.26.8 go test ./internal/library/ -count=1
+ok  	github.com/yetone/magpie/internal/library	23.630s
+exit=0
+$ GIT_MASTER=1 git ls-remote origin refs/heads/fix/r25-library-uncheckbox
+82d23059d13bf87fc1ef426bb785e4daf68aa77d	refs/heads/fix/r25-library-uncheckbox
+local head: 82d23059d13bf87fc1ef426bb785e4daf68aa77d

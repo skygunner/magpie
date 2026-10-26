@@ -17,6 +17,15 @@
   "url": "https://github.com/yetone/magpie/pull/1073",
   "title": "gui: a model the Settings pick has to be one magpie serves"
  },
+ "1105": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/1105#issuecomment-6389275629"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/1105",
+  "title": "images-API image models on any vendor (gitee half)"
+ },
  "1258": {
   "urls": [
    "https://github.com/yetone/magpie/pull/1258#issuecomment-6348637537",
@@ -36,6 +45,15 @@
   "type": "issue",
   "url": "https://github.com/yetone/magpie/issues/2008",
   "title": "gateway: the per-seat rest ladder's caps, base and state are all hard-coded — 5 config keys and one file write (#1772 follow-up)"
+ },
+ "2207": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/2207#issuecomment-6348174686"
+  ],
+  "category": "tests",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/2207",
+  "title": "test: TestPluginSOCKSProxy fails on Bun 1.4.3 (proxyconnect error instead of an HTTP 502), passes on the pinned 1.4.2"
  },
  "2259": {
   "urls": [
@@ -100,6 +118,60 @@
   "url": "https://github.com/yetone/magpie/issues/2530",
   "title": "Codex：供应商设为 Usage only 后，登录账户的原生模型仍出现在选择列表中"
  },
+ "2674": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/2674#issuecomment-6403620529"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/2674",
+  "title": "edit.BlockList drops block entries that follow a flow list in a dsh patch list"
+ },
+ "2741": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/2741#issuecomment-6394163102"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/2741",
+  "title": "commandcode host replay"
+ },
+ "2759": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/2759#issuecomment-6403875879"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/2759",
+  "title": "[bug] 在导入供应商时，导入来源目前有5个。在最右边的open code显示不全"
+ },
+ "2777": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/2777#issuecomment-6393185272"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/2777",
+  "title": "check-in account proxy"
+ },
+ "2866": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/2866#issuecomment-6393086996"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/2866",
+  "title": "Atom zh block split"
+ },
+ "2867": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/2867#issuecomment-6403924259"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/2867",
+  "title": "agent: drift details besides Codex's proxied one are shown in English in every language"
+ },
  "2923": {
   "urls": [
    "https://github.com/yetone/magpie/issues/2923#issuecomment-6352725039"
@@ -109,6 +181,15 @@
   "url": "https://github.com/yetone/magpie/issues/2923",
   "title": "gateway: Kimi refuses a tool whose top-level schema has no type, and magpie doesn't recognise the refusal"
  },
+ "2949": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/2949#issuecomment-6343163674"
+  ],
+  "category": "upstream_fixed",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/2949",
+  "title": "TestHeldClock: data race on time.Local under -race (ubuntu CI)"
+ },
  "2953": {
   "urls": [
    "https://github.com/yetone/magpie/issues/2953#issuecomment-6352556608"
@@ -117,6 +198,19 @@
   "type": "issue",
   "url": "https://github.com/yetone/magpie/issues/2953",
   "title": "edit: writing a key under a JSON array turns the array into an object and drops its entries"
+ },
+ "2998": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/2998#issuecomment-6415246814"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/2998",
+  "title": "agent: MiniMax Code moved data folder is not followed (#2998)",
+  "author": "skygunner",
+  "created_at": "2026-10-26T11:47:49Z",
+  "body_sha256": "68724807883824c345374341df37e474c0153a6a1e64ccd9dc0279cb521fbde8",
+  "evidence": "docs/fork/evidence/round25/2998/comment-readback.json"
  },
  "3020": {
   "urls": [
@@ -145,6 +239,15 @@
   "url": "https://github.com/yetone/magpie/issues/3035",
   "title": "SenseNova turns Codex's structured-output requests away with guided_grammar compile_grammar_error — the refusal isn't recognized, the 400 reaches the client"
  },
+ "3043": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3043#issuecomment-6392132968"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3043",
+  "title": "Registry own budget"
+ },
  "3062": {
   "urls": [
    "https://github.com/yetone/magpie/issues/3062#issuecomment-6352083061"
@@ -163,6 +266,15 @@
   "url": "https://github.com/yetone/magpie/issues/3076",
   "title": "provider: rest-cap is ignored for subscription accounts (withPicks doesn't copy RestCap), so 529 overload benches most of a Codex pool"
  },
+ "3095": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3095#issuecomment-6351919564"
+  ],
+  "category": "tests",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3095",
+  "title": "TestHoldReadsMigrationsOnce red under load: heldFor (1s) runs out between its two reads"
+ },
  "3097": {
   "urls": [
    "https://github.com/yetone/magpie/issues/3097#issuecomment-6351918961"
@@ -172,6 +284,24 @@
   "url": "https://github.com/yetone/magpie/issues/3097",
   "title": "gateway: Google 路由把未知顶层字段 options 原样转发上游，Gemini 模型恒定 400"
  },
+ "3100": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3100#issuecomment-6351920135"
+  ],
+  "category": "tests",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3100",
+  "title": "provider: TestSignInDoneOnceTheAccountIsBack races a plugin refresh left by an earlier test (catalog.Changed)"
+ },
+ "3117": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3117#issuecomment-6392132800"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3117",
+  "title": "Desktop 3P entrypoint"
+ },
  "3121": {
   "urls": [
    "https://github.com/yetone/magpie/issues/3121#issuecomment-6343428670"
@@ -180,6 +310,15 @@
   "type": "issue",
   "url": "https://github.com/yetone/magpie/issues/3121",
   "title": "gateway/antigravity: union type [\"string\",\"array\"] keeps items but collapses to string — Gemini 400 on tool schema"
+ },
+ "3131": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3131#issuecomment-6343569971"
+  ],
+  "category": "other",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3131",
+  "title": "【问题】OpenCode Zen Free 无法添加多账号：再次添加会替换第一个账号，而不是新增第二个"
  },
  "3139": {
   "urls": [
@@ -200,6 +339,33 @@
   "url": "https://github.com/yetone/magpie/issues/3141",
   "title": "proc.Look keeps \"not found\" for a tool installed in the same clock tick as its folder's last change"
  },
+ "3143": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3143#issuecomment-6343416196"
+  ],
+  "category": "upstream_fixed",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3143",
+  "title": "redact：Codex 的 function_call.namespace 被脱敏为占位符，导致上游 400、会话持续失败"
+ },
+ "3144": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3144#issuecomment-6343415582"
+  ],
+  "category": "upstream_fixed",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3144",
+  "title": "redact：本地 PII 模型把 reasoning_summary_delivery 的 sequential_cutoff 判成人名，导致 Codex 上游 400"
+ },
+ "3147": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3147#issuecomment-6343445315"
+  ],
+  "category": "other",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3147",
+  "title": "Usage: read the agy model from conversations/*.db; agy calls are recorded with an empty model"
+ },
  "3148": {
   "urls": [
    "https://github.com/yetone/magpie/issues/3148#issuecomment-6342963529",
@@ -219,6 +385,15 @@
   "url": "https://github.com/yetone/magpie/issues/3150",
   "title": "404 for an unknown \"auto/…\" model reports a synthesized id (\"group/auto-deepseek-v4-1-flash\") instead of the id the client sent"
  },
+ "3151": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3151#issuecomment-6343163165"
+  ],
+  "category": "upstream_fixed",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3151",
+  "title": "Library: Devin is incorrectly reported as having no user-wide instructions file"
+ },
  "3152": {
   "urls": [
    "https://github.com/yetone/magpie/issues/3152#issuecomment-6351033700"
@@ -237,14 +412,33 @@
   "url": "https://github.com/yetone/magpie/issues/3153",
   "title": "gateway: an allowed_tools tool_choice is dropped before the Grok plugin can read it"
  },
+ "3156": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3156#issuecomment-6403710605"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3156",
+  "title": "[bug] 修改路由组的模型列表后，实时路由里的组成员仍是旧的，重启 magpie 才更新"
+ },
  "3165": {
   "urls": [
-   "https://github.com/yetone/magpie/issues/3165#issuecomment-6351032820"
+   "https://github.com/yetone/magpie/issues/3165#issuecomment-6351032820",
+   "https://github.com/yetone/magpie/issues/3165#issuecomment-6415383816"
   ],
   "category": "product",
   "type": "issue",
   "url": "https://github.com/yetone/magpie/issues/3165",
   "title": "Chat passthrough for a \"deepseek\"-named upstream: injected `reasoning_content` collides with the client's echoed `reasoning` — 400 \"duplicate field \\`reasoning\\`"
+ },
+ "3169": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3169#issuecomment-6403679182"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3169",
+  "title": "Routing context card: an uncounted prompt reads 1.5–1.6x its neighbours, with no anchor to the last counted value"
  },
  "3173": {
   "urls": [
@@ -254,6 +448,15 @@
   "type": "issue",
   "url": "https://github.com/yetone/magpie/issues/3173",
   "title": "gateway/antigravity: `items` 为 oneOf/anyOf 联合类型（无 type）时 Gemini 400 —— plainSchema 未兜底 items"
+ },
+ "3174": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3174#issuecomment-6349009775"
+  ],
+  "category": "tests",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3174",
+  "title": "TestClaudeAccountServesModelsListedSinceItsFetch red in a full internal/provider run, green alone"
  },
  "3176": {
   "urls": [
@@ -319,6 +522,15 @@
   "url": "https://github.com/yetone/magpie/issues/3224",
   "title": "[bug] Drift 误报：Claude Code 的 `exit` 记录不带斜杠前缀，被 lastJSONLTime 当成一次使用，反复提示 bypassed"
  },
+ "3229": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3229#issuecomment-6350064115"
+  ],
+  "category": "tests",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3229",
+  "title": "gui tests: proto-menu-overflow reads the saved tray account before its POST arrives (red under load, passes alone)"
+ },
  "3233": {
   "urls": [
    "https://github.com/yetone/magpie/issues/3233#issuecomment-6350063562"
@@ -337,6 +549,24 @@
   "url": "https://github.com/yetone/magpie/issues/3234",
   "title": "TUI Agents page clips settings when an agent has many model fields (e.g. omp)"
  },
+ "3246": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3246#issuecomment-6403466440"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3246",
+  "title": "[Bug] ZCode 接入 magpie 后用一段时间会自动退出接入状态，需要手动重新接入"
+ },
+ "3248": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3248#issuecomment-6403504636"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3248",
+  "title": "gateway/antigravity: a reply restarted inside one Code Assist SSE stream reaches the agent spliced (gemini-4-argon, since 2026-10-21)"
+ },
  "3251": {
   "urls": [
    "https://github.com/yetone/magpie/issues/3251#issuecomment-6342260029"
@@ -345,6 +575,15 @@
   "type": "issue",
   "url": "https://github.com/yetone/magpie/issues/3251",
   "title": "gateway: 火山方舟月度额度用尽后每 15 分钟被重试一次 —— \"reset at … +0800 CST\" 不被 resetsWhen 读，套餐窗口也没进路由"
+ },
+ "3255": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3255#issuecomment-6342498748"
+  ],
+  "category": "upstream_fixed",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3255",
+  "title": "[Bug] panic: close of nil channel in sessions.refresh when PI_CODING_AGENT_DIR points to omp dir"
  },
  "3258": {
   "urls": [
@@ -391,6 +630,24 @@
   "url": "https://github.com/yetone/magpie/issues/3276",
   "title": "火山引擎返回的429重置时间不识别"
  },
+ "3277": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3277#issuecomment-6349008616"
+  ],
+  "category": "tests",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3277",
+  "title": "GUI test: codex-subagent-model reads the Routing story after a fixed 300ms wait, red under load"
+ },
+ "3280": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3280#issuecomment-6348173813"
+  ],
+  "category": "tests",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3280",
+  "title": "test: TestClaudeClientCacheAbsentUnchanged is red wherever /bin/sh's echo leaves \\n as written (bash as sh), green on dash"
+ },
  "3282": {
   "urls": [
    "https://github.com/yetone/magpie/issues/3282#issuecomment-6348173228"
@@ -399,6 +656,15 @@
   "type": "issue",
   "url": "https://github.com/yetone/magpie/issues/3282",
   "title": "Pi 集成：Google 模型未配置为 google-generative-ai，仍继承 openai-completions"
+ },
+ "3284": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3284#issuecomment-6348174237"
+  ],
+  "category": "tests",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3284",
+  "title": "provider: TestOpenCodeSessionOnEveryCall red under a full run's load (decisions differ), green alone and in its package"
  },
  "3285": {
   "urls": [
@@ -427,6 +693,15 @@
   "url": "https://github.com/yetone/magpie/issues/3302",
   "title": "Normalize missing `index: 0` in `/v1/embeddings` responses from upstream (e.g. Google Gemini)"
  },
+ "3303": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3303#issuecomment-6393262850"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3303",
+  "title": "npx cache bins"
+ },
  "3306": {
   "urls": [
    "https://github.com/yetone/magpie/issues/3306#issuecomment-6350368871"
@@ -436,6 +711,24 @@
   "url": "https://github.com/yetone/magpie/issues/3306",
   "title": "sessions, usage: Pi's reasoning tokens are read as 0, so a reply whose reasoning didn't stream reads several times its speed (Gemini 1,282 tok/s)"
  },
+ "3311": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3311#issuecomment-6351920677"
+  ],
+  "category": "tests",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3311",
+  "title": "gui tests: panel-usage window filter assertion shares the live panel request log"
+ },
+ "3329": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3329#issuecomment-6403289779"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3329",
+  "title": "dsh: comment markers between patch-list entries are dropped on rewrite, breaking comment-delimited managed blocks (Vibe Island)"
+ },
  "3339": {
   "urls": [
    "https://github.com/yetone/magpie/issues/3339#issuecomment-6364113316"
@@ -444,6 +737,15 @@
   "type": "issue",
   "url": "https://github.com/yetone/magpie/issues/3339",
   "title": "[Bug] Antigravity: 模型列表暴露 gemini-4-argon-disabled，调用返回 404（ref #3027）"
+ },
+ "3345": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3345#issuecomment-6363786237"
+  ],
+  "category": "upstream_fixed",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3345",
+  "title": "bug"
  },
  "3349": {
   "urls": [
@@ -475,12 +777,20 @@
  },
  "3365": {
   "urls": [
-   "https://github.com/yetone/magpie/issues/3365#issuecomment-6364536473"
+   "https://github.com/yetone/magpie/issues/3365#issuecomment-6364536473",
+   "https://github.com/yetone/magpie/issues/3365#issuecomment-6423389640"
   ],
   "category": "product",
   "type": "issue",
   "url": "https://github.com/yetone/magpie/issues/3365",
-  "title": "[Bug] redact：普通 key/版本号误判为 SECRET，示例密码导致 paperclip 在后续请求持续被替换"
+  "title": "[Bug] redact：普通 key/版本号误判为 SECRET，示例密码导致 paperclip 在后续请求持续被替换",
+  "sweep_2026_10_27_probe_reply": {
+   "id": 6423389640,
+   "author": "skygunner",
+   "created_at": "2026-10-26T17:52:57Z",
+   "language": "zh",
+   "evidence": "docs/fork/evidence/round23/3365-verifier-probe/comment-readback.json + probe.log"
+  }
  },
  "3370": {
   "urls": [
@@ -500,159 +810,6 @@
   "url": "https://github.com/yetone/magpie/issues/3374",
   "title": "[Bug] Codex subagent tasks are ignored when sent as agent_message through Magpie 0.1.1333"
  },
- "2207": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/2207#issuecomment-6348174686"
-  ],
-  "category": "tests",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/2207",
-  "title": "test: TestPluginSOCKSProxy fails on Bun 1.4.3 (proxyconnect error instead of an HTTP 502), passes on the pinned 1.4.2"
- },
- "3095": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3095#issuecomment-6351919564"
-  ],
-  "category": "tests",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3095",
-  "title": "TestHoldReadsMigrationsOnce red under load: heldFor (1s) runs out between its two reads"
- },
- "3100": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3100#issuecomment-6351920135"
-  ],
-  "category": "tests",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3100",
-  "title": "provider: TestSignInDoneOnceTheAccountIsBack races a plugin refresh left by an earlier test (catalog.Changed)"
- },
- "3174": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3174#issuecomment-6349009775"
-  ],
-  "category": "tests",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3174",
-  "title": "TestClaudeAccountServesModelsListedSinceItsFetch red in a full internal/provider run, green alone"
- },
- "3229": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3229#issuecomment-6350064115"
-  ],
-  "category": "tests",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3229",
-  "title": "gui tests: proto-menu-overflow reads the saved tray account before its POST arrives (red under load, passes alone)"
- },
- "3277": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3277#issuecomment-6349008616"
-  ],
-  "category": "tests",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3277",
-  "title": "GUI test: codex-subagent-model reads the Routing story after a fixed 300ms wait, red under load"
- },
- "3280": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3280#issuecomment-6348173813"
-  ],
-  "category": "tests",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3280",
-  "title": "test: TestClaudeClientCacheAbsentUnchanged is red wherever /bin/sh's echo leaves \\n as written (bash as sh), green on dash"
- },
- "3284": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3284#issuecomment-6348174237"
-  ],
-  "category": "tests",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3284",
-  "title": "provider: TestOpenCodeSessionOnEveryCall red under a full run's load (decisions differ), green alone and in its package"
- },
- "3311": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3311#issuecomment-6351920677"
-  ],
-  "category": "tests",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3311",
-  "title": "gui tests: panel-usage window filter assertion shares the live panel request log"
- },
- "2949": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/2949#issuecomment-6343163674"
-  ],
-  "category": "upstream_fixed",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/2949",
-  "title": "TestHeldClock: data race on time.Local under -race (ubuntu CI)"
- },
- "3143": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3143#issuecomment-6343416196"
-  ],
-  "category": "upstream_fixed",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3143",
-  "title": "redact：Codex 的 function_call.namespace 被脱敏为占位符，导致上游 400、会话持续失败"
- },
- "3144": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3144#issuecomment-6343415582"
-  ],
-  "category": "upstream_fixed",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3144",
-  "title": "redact：本地 PII 模型把 reasoning_summary_delivery 的 sequential_cutoff 判成人名，导致 Codex 上游 400"
- },
- "3151": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3151#issuecomment-6343163165"
-  ],
-  "category": "upstream_fixed",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3151",
-  "title": "Library: Devin is incorrectly reported as having no user-wide instructions file"
- },
- "3255": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3255#issuecomment-6342498748"
-  ],
-  "category": "upstream_fixed",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3255",
-  "title": "[Bug] panic: close of nil channel in sessions.refresh when PI_CODING_AGENT_DIR points to omp dir"
- },
- "3345": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3345#issuecomment-6363786237"
-  ],
-  "category": "upstream_fixed",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3345",
-  "title": "bug"
- },
- "3131": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3131#issuecomment-6343569971"
-  ],
-  "category": "other",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3131",
-  "title": "【问题】OpenCode Zen Free 无法添加多账号：再次添加会替换第一个账号，而不是新增第二个"
- },
- "3147": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3147#issuecomment-6343445315"
-  ],
-  "category": "other",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3147",
-  "title": "Usage: read the agy model from conversations/*.db; agy calls are recorded with an empty model"
- },
  "3392": {
   "urls": [
    "https://github.com/yetone/magpie/issues/3392#issuecomment-6380779544",
@@ -665,34 +822,6 @@
   "url": "https://github.com/yetone/magpie/issues/3392",
   "title": "「bug」　调用x.ai的bug，claude调用400错误、codex调用422错误"
  },
- "3444": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3444#issuecomment-6380789247"
-  ],
-  "category": "product",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3444",
-  "title": "[Bug] Codex 官方模型经 Magpie 返回 502：WebSocket 收到 StatusMessageTooBig 关闭帧"
- },
- "3440": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3440#issuecomment-6380798386",
-   "https://github.com/yetone/magpie/issues/3440#issuecomment-6383458761"
-  ],
-  "category": "product",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3440",
-  "title": "[Bug] Codex 官方订阅下「272K 时压缩」未生效，单次输入已达 359K"
- },
- "3447": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3447#issuecomment-6380807714"
-  ],
-  "category": "product",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3447",
-  "title": "[Bug] `web_search_20250305`: text 块始终没有 `citations[]`，依赖 `cited_text` 的客户端只能拿到 url+title（DSH 的  ..."
- },
  "3401": {
   "urls": [
    "https://github.com/yetone/magpie/issues/3401#issuecomment-6380817606",
@@ -704,14 +833,69 @@
   "url": "https://github.com/yetone/magpie/issues/3401",
   "title": "library: Reasonix Studio gets no MCP servers, skills or hooks"
  },
- "3487": {
+ "3430": {
   "urls": [
-   "https://github.com/yetone/magpie/issues/3487#issuecomment-6389261270"
+   "https://github.com/yetone/magpie/issues/3430#issuecomment-6403129004"
   ],
   "category": "product",
   "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3487",
-  "title": "quota card ms span + unknown amount"
+  "url": "https://github.com/yetone/magpie/issues/3430",
+  "title": "[Bug] 走 Messages API 的 Claude 回复，用量里的推理 token 恒为 0（aUsage 不读 output_tokens_details.thinking_tokens）"
+ },
+ "3434": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3434#issuecomment-6403682869"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3434",
+  "title": "bug(routing): Codex compaction can reclassify an unchanged native turn when transcript identity changes"
+ },
+ "3440": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3440#issuecomment-6380798386",
+   "https://github.com/yetone/magpie/issues/3440#issuecomment-6383458761"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3440",
+  "title": "[Bug] Codex 官方订阅下「272K 时压缩」未生效，单次输入已达 359K"
+ },
+ "3444": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3444#issuecomment-6380789247"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3444",
+  "title": "[Bug] Codex 官方模型经 Magpie 返回 502：WebSocket 收到 StatusMessageTooBig 关闭帧"
+ },
+ "3447": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3447#issuecomment-6380807714"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3447",
+  "title": "[Bug] `web_search_20250305`: text 块始终没有 `citations[]`，依赖 `cited_text` 的客户端只能拿到 url+title（DSH 的  ..."
+ },
+ "3455": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3455#issuecomment-6389279618"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3455",
+  "title": "url_citation on Responses/Chat search replies"
+ },
+ "3460": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3460#issuecomment-6403185254"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3460",
+  "title": "plugins: a provider whose models are spoken to with @ai-sdk/google can't be tested (Test models off, provider test refuses CodeAssist)"
  },
  "3470": {
   "urls": [
@@ -723,32 +907,23 @@
   "url": "https://github.com/yetone/magpie/issues/3470",
   "title": "#3470 session hit rates + day-rows follow-up (both deliveries)"
  },
- "3519": {
+ "3475": {
   "urls": [
-   "https://github.com/yetone/magpie/issues/3519#issuecomment-6389270118"
+   "https://github.com/yetone/magpie/issues/3475#issuecomment-6403009365"
   ],
   "category": "product",
   "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3519",
-  "title": "v4 fallback mark on a host with no IPv4"
+  "url": "https://github.com/yetone/magpie/issues/3475",
+  "title": "[Bug] Claude Desktop 网关模式开了 Enable tool search 后，Copilot 拒绝 tool-search-tool-2025-10-19（400 unsupported beta header），每个会话第一个请求失败，工具搜索实际没生效"
  },
- "3514": {
+ "3487": {
   "urls": [
-   "https://github.com/yetone/magpie/issues/3514#issuecomment-6389275410"
+   "https://github.com/yetone/magpie/issues/3487#issuecomment-6389261270"
   ],
   "category": "product",
   "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3514",
-  "title": "dsh subscription Claude on Messages"
- },
- "1105": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/1105#issuecomment-6389275629"
-  ],
-  "category": "product",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/1105",
-  "title": "images-API image models on any vendor (gitee half)"
+  "url": "https://github.com/yetone/magpie/issues/3487",
+  "title": "quota card ms span + unknown amount"
  },
  "3513": {
   "urls": [
@@ -759,41 +934,32 @@
   "url": "https://github.com/yetone/magpie/issues/3513",
   "title": "ChatGPT drawing size in words"
  },
- "3455": {
+ "3514": {
   "urls": [
-   "https://github.com/yetone/magpie/issues/3455#issuecomment-6389279618"
+   "https://github.com/yetone/magpie/issues/3514#issuecomment-6389275410"
   ],
   "category": "product",
   "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3455",
-  "title": "url_citation on Responses/Chat search replies"
+  "url": "https://github.com/yetone/magpie/issues/3514",
+  "title": "dsh subscription Claude on Messages"
  },
- "3117": {
+ "3519": {
   "urls": [
-   "https://github.com/yetone/magpie/issues/3117#issuecomment-6392132800"
+   "https://github.com/yetone/magpie/issues/3519#issuecomment-6389270118"
   ],
   "category": "product",
   "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3117",
-  "title": "Desktop 3P entrypoint"
+  "url": "https://github.com/yetone/magpie/issues/3519",
+  "title": "v4 fallback mark on a host with no IPv4"
  },
- "3043": {
+ "3528": {
   "urls": [
-   "https://github.com/yetone/magpie/issues/3043#issuecomment-6392132968"
+   "https://github.com/yetone/magpie/issues/3528#issuecomment-6403927302"
   ],
   "category": "product",
   "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3043",
-  "title": "Registry own budget"
- },
- "3530": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3530#issuecomment-6392564071"
-  ],
-  "category": "product",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3530",
-  "title": "Codex multi-home titles/state DBs"
+  "url": "https://github.com/yetone/magpie/issues/3528",
+  "title": "usage: a web search sent to Kimi Code's or WorkBuddy's search service, or to a search API, leaves no row in Usage › Requests"
  },
  "3529": {
   "urls": [
@@ -804,6 +970,15 @@
   "url": "https://github.com/yetone/magpie/issues/3529",
   "title": "Trae credits not summed"
  },
+ "3530": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3530#issuecomment-6392564071"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3530",
+  "title": "Codex multi-home titles/state DBs"
+ },
  "3531": {
   "urls": [
    "https://github.com/yetone/magpie/issues/3531#issuecomment-6392783800"
@@ -813,41 +988,23 @@
   "url": "https://github.com/yetone/magpie/issues/3531",
   "title": "sidebar gateway line moves"
  },
- "2866": {
+ "3541": {
   "urls": [
-   "https://github.com/yetone/magpie/issues/2866#issuecomment-6393086996"
+   "https://github.com/yetone/magpie/issues/3541#issuecomment-6403455103"
   ],
   "category": "product",
   "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/2866",
-  "title": "Atom zh block split"
+  "url": "https://github.com/yetone/magpie/issues/3541",
+  "title": "redact: user@host.local is counted as an email"
  },
- "2777": {
+ "3553": {
   "urls": [
-   "https://github.com/yetone/magpie/issues/2777#issuecomment-6393185272"
+   "https://github.com/yetone/magpie/issues/3553#issuecomment-6403129264"
   ],
   "category": "product",
   "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/2777",
-  "title": "check-in account proxy"
- },
- "3303": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3303#issuecomment-6393262850"
-  ],
-  "category": "product",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3303",
-  "title": "npx cache bins"
- },
- "2741": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/2741#issuecomment-6394163102"
-  ],
-  "category": "product",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/2741",
-  "title": "commandcode host replay"
+  "url": "https://github.com/yetone/magpie/issues/3553",
+  "title": "Codex shows 258K instead of 272K for magpie models because catalog omits effective_context_window_percent"
  },
  "3561": {
   "urls": [
@@ -858,6 +1015,15 @@
   "url": "https://github.com/yetone/magpie/issues/3561",
   "title": "pii downloads proxy"
  },
+ "3566": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3566#issuecomment-6403129516"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3566",
+  "title": "[Bug] gateway/Kimi: typed $ref target containing an untyped object oneOf still causes schema rejection"
+ },
  "3567": {
   "urls": [
    "https://github.com/yetone/magpie/issues/3567#issuecomment-6394559364"
@@ -867,50 +1033,23 @@
   "url": "https://github.com/yetone/magpie/issues/3567",
   "title": "tui keep proc.Command"
  },
- "3597": {
+ "3572": {
   "urls": [
-   "https://github.com/yetone/magpie/issues/3597#issuecomment-6400908682"
+   "https://github.com/yetone/magpie/issues/3572#issuecomment-6403372256"
   ],
   "category": "product",
   "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3597",
-  "title": "redact: a hash with a count before it goes as written (#3597)"
+  "url": "https://github.com/yetone/magpie/issues/3572",
+  "title": "gateway: switching from Vertex Gemini to Antigravity sends a rejected thought signature"
  },
- "3601": {
+ "3585": {
   "urls": [
-   "https://github.com/yetone/magpie/issues/3601#issuecomment-6400908955"
+   "https://github.com/yetone/magpie/issues/3585#issuecomment-6403818575"
   ],
   "category": "product",
   "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3601",
-  "title": "redact: a value a rule found is masked wherever it is in the same text (#3601)"
- },
- "3598": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3598#issuecomment-6400912188"
-  ],
-  "category": "product",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3598",
-  "title": "cli: library instructions set with no agent on says the text went to no agent (#3598)"
- },
- "3619": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3619#issuecomment-6400912438"
-  ],
-  "category": "product",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3619",
-  "title": "gateway: a 429 that says the model's own limit rests that model alone (#3619)"
- },
- "3629": {
-  "urls": [
-   "https://github.com/yetone/magpie/issues/3629#issuecomment-6400915163"
-  ],
-  "category": "product",
-  "type": "issue",
-  "url": "https://github.com/yetone/magpie/issues/3629",
-  "title": "redact: a systemd unit in a path is no address (#3629)"
+  "url": "https://github.com/yetone/magpie/issues/3585",
+  "title": "redact: the local model's cues match inside words (tool_call cues a phone, telemetry too)"
  },
  "3595": {
   "urls": [
@@ -921,6 +1060,99 @@
   "url": "https://github.com/yetone/magpie/issues/3595",
   "title": "sessions: an agy in a WSL distro is read with its conversations and calls (#3595)"
  },
+ "3597": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3597#issuecomment-6400908682"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3597",
+  "title": "redact: a hash with a count before it goes as written (#3597)"
+ },
+ "3598": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3598#issuecomment-6400912188"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3598",
+  "title": "cli: library instructions set with no agent on says the text went to no agent (#3598)"
+ },
+ "3601": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3601#issuecomment-6400908955"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3601",
+  "title": "redact: a value a rule found is masked wherever it is in the same text (#3601)"
+ },
+ "3614": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3614#issuecomment-6403290176"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3614",
+  "title": "[Bug] Routing: live request's Context window card says \"the model's window isn't known\" while the model's window is known"
+ },
+ "3619": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3619#issuecomment-6400912438"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3619",
+  "title": "gateway: a 429 that says the model's own limit rests that model alone (#3619)"
+ },
+ "3620": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3620#issuecomment-6410020815"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3620",
+  "title": "gui: a group's levels say why Save refused them while the editor is open (#3620)",
+  "author": "skygunner",
+  "created_at": "2026-10-26T06:48:49Z",
+  "body_sha256": "cf9d78e78e080c51d20ecb68b0798a0e74ac79b1e97a3d618f5038863746fb10",
+  "evidence": "docs/fork/evidence/round25/3620/comment-readback.json"
+ },
+ "3621": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3621#issuecomment-6408564893"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3621",
+  "title": "autostart: Open at login names the magpie on PATH, not the versioned file it points at (#3621)",
+  "author": "skygunner",
+  "created_at": "2026-10-26T04:56:26Z",
+  "body_sha256": "95d91bf5e3d4533c4dbf2c6764b7836c5ca4d4ca6b571ade76ebb47edb1785d5",
+  "evidence": "docs/fork/evidence/round25/3621/comment-readback.json"
+ },
+ "3622": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3622#issuecomment-6410545136"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3622",
+  "title": "plugin: a dist tarball bun.lock still names stays when pruneDist runs",
+  "author": "skygunner",
+  "created_at": "2026-10-26T07:24:13Z",
+  "body_sha256": "906b4397eb35c3c15023a25c7f4191085610acd104a97d3152c4b511edf1abfe",
+  "evidence": "docs/fork/evidence/round25/3622/comment-readback.json"
+ },
+ "3624": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3624#issuecomment-6400631669"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3624",
+  "title": "Usage -> View routing loads a historical trace off-screen instead of bringing the selected request into view"
+ },
  "3628": {
   "urls": [
    "https://github.com/yetone/magpie/issues/3628#issuecomment-6401392845"
@@ -929,5 +1161,188 @@
   "type": "issue",
   "url": "https://github.com/yetone/magpie/issues/3628",
   "title": "pii: the upgrade goroutine is owned, so a test's cleanup doesn't race it (#3628)"
+ },
+ "3629": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3629#issuecomment-6400915163"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3629",
+  "title": "redact: a systemd unit in a path is no address (#3629)"
+ },
+ "3630": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3630#issuecomment-6403245263"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3630",
+  "title": "修改供应商 ID 后，网关密钥里选好的模型没有跟着更新"
+ },
+ "3632": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3632#issuecomment-6408812631"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3632",
+  "title": "filememo: a write wakes what waits on Written, made only while one waits (#3632)",
+  "author": "skygunner",
+  "created_at": "2026-10-26T05:17:55Z",
+  "body_sha256": "d5b0b84c570207dc3a27528b1ff7b986ce61c899a3fdbfcc80681486c024b1b7",
+  "evidence": "docs/fork/evidence/round25/3632/comment-readback.json"
+ },
+ "3645": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3645#issuecomment-6408257043"
+  ],
+  "category": "tests",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3645",
+  "title": "gui tests: gate routing log trace updates on story checks (#3645)",
+  "author": "skygunner",
+  "created_at": "2026-10-26T04:29:47Z",
+  "body_sha256": "c95e735f71eaf72095d9907abcef5e93f65ed925954e6429da7354a5f72ba124",
+  "evidence": "docs/fork/evidence/round25/3645/comment-readback.json"
+ },
+ "3647": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3647#issuecomment-6408145744"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3647",
+  "title": "test: wait for the TLS listener to have taken the connection and stopped accepting via events, not durations",
+  "author": "skygunner",
+  "created_at": "2026-10-26T04:20:15Z",
+  "body_sha256": "95ee334854061b4861a8471bad550f46a78466ebb3c5dd0f7078bac81f9897df",
+  "evidence": "docs/fork/evidence/round25/3647/comment-readback.json"
+ },
+ "3648": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3648#issuecomment-6413258899"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3648",
+  "title": "dev tests: the handover's own close is the barrier for the taken connection",
+  "author": "skygunner",
+  "created_at": "2026-10-26T10:00:22Z",
+  "body_sha256": "3bd8eec1350b52539016680d0bb618025a8b77bb0663f26793550d15d5907674",
+  "evidence": "docs/fork/evidence/round25/3648/comment-readback.json"
+ },
+ "3650": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3650#issuecomment-6403822501"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3650",
+  "title": "A usage window with no `used` reads as 0% — which also puts a spent account first in the routing order"
+ },
+ "3655": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3655#issuecomment-6408456830"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3655",
+  "title": "gateway: a write_stdin wait on a running process is not a tool loop (hibaliqya-yonma, #3655)",
+  "author": "skygunner",
+  "created_at": "2026-10-26T04:46:54Z",
+  "body_sha256": "9102e24f58f53aa37b0ad0208b58e4566b3ba0fb21a509a3806538c8a52b2b1d",
+  "evidence": "docs/fork/evidence/round25/3655/comment-readback.json"
+ },
+ "3656": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3656#issuecomment-6408578981"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3656",
+  "title": "gui: account masking keeps aliases, plan and model names readable",
+  "author": "skygunner",
+  "created_at": "2026-10-26T04:57:37Z",
+  "body_sha256": "827d56bef36920cbbf8eaec4e1440304618fd7ffb0b5aef370388dcddd2bc9a3",
+  "evidence": "docs/fork/evidence/round25/3656/comment-readback.json"
+ },
+ "3657": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3657#issuecomment-6408073510"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3657",
+  "title": "library: a skill of the user's kept in ~/.agents/skills moves in when brought in, so the agents' ticks decide who has it (#3657)",
+  "author": "skygunner",
+  "created_at": "2026-10-26T04:14:23Z",
+  "body_sha256": "da42b70383c90b6aa5aa77a22854a2ba4c60d2308a08ff1eb9ec0159515cc530",
+  "evidence": "docs/fork/evidence/round25/3657/comment-readback.json"
+ },
+ "3661": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3661#issuecomment-6411723766"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3661",
+  "title": "gateway: a missing ZCode trial quota rests only its model (#3661)",
+  "author": "skygunner",
+  "created_at": "2026-10-26T08:36:48Z",
+  "body_sha256": "e07af70ea47d06d1cf681f37edda19b7cab0e9b453b3607a2da596f4038437df",
+  "evidence": "docs/fork/evidence/round25/3661/comment-readback.json"
+ },
+ "3668": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3668#issuecomment-6411424119"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3668",
+  "title": "gui: an account with no Grok plan says Grok, not an invented SuperGrok (#3668)",
+  "author": "skygunner",
+  "created_at": "2026-10-26T08:20:06Z",
+  "body_sha256": "28114a5f191876ab3c8587074351888aaf4fa238ed681f5518675cd5d92962ba",
+  "evidence": "docs/fork/evidence/round25/3668/comment-readback.json"
+ },
+ "3674": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3674#issuecomment-6410685355"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3674",
+  "title": "sessions, usage: a dsh call the gateway served is counted once (#3674)",
+  "author": "skygunner",
+  "created_at": "2026-10-26T07:33:44Z",
+  "body_sha256": "17a6cb8089baa74ba9ebf73d73609fdd795632e4b7c52c61abf7fda958efc737",
+  "evidence": "docs/fork/evidence/round25/3674/comment-readback.json"
+ },
+ "3684": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3684#issuecomment-6413055706"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3684",
+  "title": "gateway: a phantom tool_calls finish becomes stop when no call came (#3684)",
+  "author": "skygunner",
+  "created_at": "2026-10-26T09:49:53Z",
+  "body_sha256": "c40eb9ab4aa26769b983370cd5d43f213460a5af452891c36965b1e97fdd4c9d",
+  "evidence": "docs/fork/evidence/round25/3684/comment-readback.json"
+ },
+ "3194": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3194#issuecomment-6416184531"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3194",
+  "title": "Semgrep MCP OAuth fails with invalid_target (resource parameter rejected)",
+  "author": "skygunner",
+  "created_at": "2026-10-26T12:38:12Z",
+  "body_sha256": "fe965259278f2df76268a2f3926bd5afc555fc4feddb4c4528cd6e341522b880",
+  "evidence": "docs/fork/evidence/round25/3194/comment-readback.json"
  }
 }

@@ -1,0 +1,17 @@
+--- comment.md (unchanged local)
++++ comment-live.md (GET API)
+@@ -6,6 +6,8 @@
+ 
+ RED → GREEN: added `live logo fixture holds trace updates until the story is checked` in `routing-log-icons-wait.test.cjs`. It runs the actual fixture with old timer callbacks immediately eligible, modeling a reader that falls behind. On a clean copy of the base with only that new test added, it fails with `AssertionError [ERR_ASSERTION]: trace advanced before the story was checked` (`actual: [1, 2]`, `expected: [1]`). At this commit the same test passes, including checking that the final long poll remains pending.
+ 
++The failure also reproduces in the browser on the base when the reported mechanism is injected the way the standards prescribe (a late frame, not reruns): with every `requestAnimationFrame` callback delayed 1000ms while the fixture's fake still advances on its 300ms timers, the base's own test dies with the reported `locator.waitFor: Timeout 8000ms exceeded - waiting for locator('.rt-steps li.wait')` on WebKit, in both English and Chinese. At this commit the same injected run passes: the fixture delivers each step only after the one before has been seen, so no fixed 8s budget is racing a fake's cadence any more.
++
+ Validation:
+ - Both affected Node test files: **15 passed, 0 failed**, including Chromium and WebKit and all five live-story languages.
+ - `GOTOOLCHAIN=go1.26.8 go test ./internal/gui -count=1`: **PASS**, 44.363s.
+@@ -13,4 +15,4 @@
+ - `GOTOOLCHAIN=go1.26.8 GOOS=linux GOARCH=amd64 go build -tags nogui ./...` and `GOTOOLCHAIN=go1.26.8 GOOS=windows GOARCH=amd64 go build ./...`: PASS.
+ - Both changed JavaScript files passed `node --check`; the pushed branch SHA matches the commit above and contains exactly one commit over the base.
+ 
+-What was not tried: the complete 112-file Routing GUI run under the reporter's exact load, live provider requests, and Windows/macOS runtime testing. The isolated base browser test passed, as reported in the issue; the deterministic fixture regression supplies the failing baseline evidence. The JavaScript language server is unavailable locally. No Docker container was needed.
++What was not tried: the complete 112-file Routing GUI run under the reporter's exact load (three rounds at `--test-concurrency=6` under a synthetic 8-way load passed without reproducing it; the injected late frames above stand in for that), live provider requests, and Windows/macOS runtime testing. The JavaScript language server is unavailable locally. No Docker container was needed.

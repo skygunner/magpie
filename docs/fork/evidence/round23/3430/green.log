@@ -1,0 +1,8 @@
+=== RUN   TestMessagesReplyCountsItsThinkingTokens
+=== RUN   TestMessagesReplyCountsItsThinkingTokens/relayed
+=== RUN   TestMessagesReplyCountsItsThinkingTokens/translated
+--- PASS: TestMessagesReplyCountsItsThinkingTokens (0.01s)
+    --- PASS: TestMessagesReplyCountsItsThinkingTokens/relayed (0.01s)
+    --- PASS: TestMessagesReplyCountsItsThinkingTokens/translated (0.01s)
+PASS
+ok  	github.com/yetone/magpie/internal/gateway	0.022s

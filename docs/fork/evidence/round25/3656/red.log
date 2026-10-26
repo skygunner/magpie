@@ -1,0 +1,519 @@
+# COMMAND_METADATA {"issue": 3656, "label": "red", "tree": "base", "commit": "19253f67bca2310c32739a6eaac88546b3574dbc", "cwd": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/base", "command": "node --test internal/gui/tests/account-mask-alias-plan.test.cjs", "env": {"GOTOOLCHAIN": "go1.26.8", "HOME": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/home-4qipr_lj", "GOPATH": "/home/vincenty/go", "GOMODCACHE": "/home/vincenty/go/pkg/mod", "GOCACHE": "/home/vincenty/.cache/go-build", "NODE_PATH": "/home/vincenty/.npm/_npx/e41f203b7505f1fb/node_modules", "PLAYWRIGHT_BROWSERS_PATH": "/home/vincenty/.cache/ms-playwright"}, "extra_env": {}, "started_at": "2026-10-26T06:58:07.534835+00:00", "raw_log": "/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/red.log"}
+# BEGIN COMPLETE MERGED STDOUT/STDERR
+✖ chromium en 1100: masking keeps aliases and plans readable (476.316391ms)
+✖ chromium en 420: masking keeps aliases and plans readable (432.829861ms)
+✖ chromium zh 1100: masking keeps aliases and plans readable (510.081394ms)
+✖ chromium zh 420: masking keeps aliases and plans readable (475.801703ms)
+✖ chromium zh-TW 1100: masking keeps aliases and plans readable (491.826569ms)
+✖ chromium zh-TW 420: masking keeps aliases and plans readable (431.192389ms)
+✖ chromium ja 1100: masking keeps aliases and plans readable (466.290677ms)
+✖ chromium ja 420: masking keeps aliases and plans readable (433.912673ms)
+✖ chromium de 1100: masking keeps aliases and plans readable (582.458205ms)
+✖ chromium de 420: masking keeps aliases and plans readable (457.463306ms)
+✖ webkit en 1100: masking keeps aliases and plans readable (2542.783495ms)
+✖ webkit en 420: masking keeps aliases and plans readable (766.54306ms)
+✖ webkit zh 1100: masking keeps aliases and plans readable (901.735383ms)
+✖ webkit zh 420: masking keeps aliases and plans readable (742.071443ms)
+✖ webkit zh-TW 1100: masking keeps aliases and plans readable (936.465407ms)
+✖ webkit zh-TW 420: masking keeps aliases and plans readable (729.871043ms)
+✖ webkit ja 1100: masking keeps aliases and plans readable (745.235243ms)
+✖ webkit ja 420: masking keeps aliases and plans readable (630.497161ms)
+✖ webkit de 1100: masking keeps aliases and plans readable (714.475711ms)
+✖ webkit de 420: masking keeps aliases and plans readable (595.479485ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 0
+ℹ fail 20
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 14244.997383
+
+✖ failing tests:
+
+test at internal/gui/tests/account-mask-alias-plan.test.cjs:32:7
+✖ chromium en 1100: masking keeps aliases and plans readable (476.316391ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'cencrrhllct',
+  +   'tldhsr'
+  -   'Work laptop',
+  -   'Google'
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/base/internal/gui/tests/account-mask-alias-plan.test.cjs:59:16)
+      at runNextTicks (node:internal/process/task_queues:65:5)
+      at process.processImmediate (node:internal/timers:541:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'cencrrhllct', 'tldhsr' ],
+    expected: [ 'Work laptop', 'Google' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/account-mask-alias-plan.test.cjs:32:7
+✖ chromium en 420: masking keeps aliases and plans readable (432.829861ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'cencrrhllct',
+  +   'tldhsr'
+  -   'Work laptop',
+  -   'Google'
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/base/internal/gui/tests/account-mask-alias-plan.test.cjs:59:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'cencrrhllct', 'tldhsr' ],
+    expected: [ 'Work laptop', 'Google' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/account-mask-alias-plan.test.cjs:32:7
+✖ chromium zh 1100: masking keeps aliases and plans readable (510.081394ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'cencrrhllct',
+  +   'tldhsr'
+  -   'Work laptop',
+  -   'Google'
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/base/internal/gui/tests/account-mask-alias-plan.test.cjs:59:16)
+      at runNextTicks (node:internal/process/task_queues:65:5)
+      at process.processImmediate (node:internal/timers:541:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'cencrrhllct', 'tldhsr' ],
+    expected: [ 'Work laptop', 'Google' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/account-mask-alias-plan.test.cjs:32:7
+✖ chromium zh 420: masking keeps aliases and plans readable (475.801703ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'cencrrhllct',
+  +   'tldhsr'
+  -   'Work laptop',
+  -   'Google'
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/base/internal/gui/tests/account-mask-alias-plan.test.cjs:59:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'cencrrhllct', 'tldhsr' ],
+    expected: [ 'Work laptop', 'Google' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/account-mask-alias-plan.test.cjs:32:7
+✖ chromium zh-TW 1100: masking keeps aliases and plans readable (491.826569ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'cencrrhllct',
+  +   'tldhsr'
+  -   'Work laptop',
+  -   'Google'
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/base/internal/gui/tests/account-mask-alias-plan.test.cjs:59:16)
+      at runNextTicks (node:internal/process/task_queues:65:5)
+      at process.processImmediate (node:internal/timers:541:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'cencrrhllct', 'tldhsr' ],
+    expected: [ 'Work laptop', 'Google' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/account-mask-alias-plan.test.cjs:32:7
+✖ chromium zh-TW 420: masking keeps aliases and plans readable (431.192389ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'cencrrhllct',
+  +   'tldhsr'
+  -   'Work laptop',
+  -   'Google'
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/base/internal/gui/tests/account-mask-alias-plan.test.cjs:59:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'cencrrhllct', 'tldhsr' ],
+    expected: [ 'Work laptop', 'Google' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/account-mask-alias-plan.test.cjs:32:7
+✖ chromium ja 1100: masking keeps aliases and plans readable (466.290677ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'cencrrhllct',
+  +   'tldhsr'
+  -   'Work laptop',
+  -   'Google'
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/base/internal/gui/tests/account-mask-alias-plan.test.cjs:59:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'cencrrhllct', 'tldhsr' ],
+    expected: [ 'Work laptop', 'Google' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/account-mask-alias-plan.test.cjs:32:7
+✖ chromium ja 420: masking keeps aliases and plans readable (433.912673ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'cencrrhllct',
+  +   'tldhsr'
+  -   'Work laptop',
+  -   'Google'
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/base/internal/gui/tests/account-mask-alias-plan.test.cjs:59:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'cencrrhllct', 'tldhsr' ],
+    expected: [ 'Work laptop', 'Google' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/account-mask-alias-plan.test.cjs:32:7
+✖ chromium de 1100: masking keeps aliases and plans readable (582.458205ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'cencrrhllct',
+  +   'tldhsr'
+  -   'Work laptop',
+  -   'Google'
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/base/internal/gui/tests/account-mask-alias-plan.test.cjs:59:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'cencrrhllct', 'tldhsr' ],
+    expected: [ 'Work laptop', 'Google' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/account-mask-alias-plan.test.cjs:32:7
+✖ chromium de 420: masking keeps aliases and plans readable (457.463306ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'cencrrhllct',
+  +   'tldhsr'
+  -   'Work laptop',
+  -   'Google'
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/base/internal/gui/tests/account-mask-alias-plan.test.cjs:59:16)
+      at runNextTicks (node:internal/process/task_queues:65:5)
+      at process.processImmediate (node:internal/timers:541:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'cencrrhllct', 'tldhsr' ],
+    expected: [ 'Work laptop', 'Google' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/account-mask-alias-plan.test.cjs:32:7
+✖ webkit en 1100: masking keeps aliases and plans readable (2542.783495ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'cencrrhllct',
+  +   'tldhsr'
+  -   'Work laptop',
+  -   'Google'
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/base/internal/gui/tests/account-mask-alias-plan.test.cjs:59:16)
+      at runNextTicks (node:internal/process/task_queues:65:5)
+      at process.processImmediate (node:internal/timers:541:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'cencrrhllct', 'tldhsr' ],
+    expected: [ 'Work laptop', 'Google' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/account-mask-alias-plan.test.cjs:32:7
+✖ webkit en 420: masking keeps aliases and plans readable (766.54306ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'cencrrhllct',
+  +   'tldhsr'
+  -   'Work laptop',
+  -   'Google'
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/base/internal/gui/tests/account-mask-alias-plan.test.cjs:59:16)
+      at runNextTicks (node:internal/process/task_queues:65:5)
+      at process.processImmediate (node:internal/timers:541:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'cencrrhllct', 'tldhsr' ],
+    expected: [ 'Work laptop', 'Google' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/account-mask-alias-plan.test.cjs:32:7
+✖ webkit zh 1100: masking keeps aliases and plans readable (901.735383ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'cencrrhllct',
+  +   'tldhsr'
+  -   'Work laptop',
+  -   'Google'
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/base/internal/gui/tests/account-mask-alias-plan.test.cjs:59:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'cencrrhllct', 'tldhsr' ],
+    expected: [ 'Work laptop', 'Google' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/account-mask-alias-plan.test.cjs:32:7
+✖ webkit zh 420: masking keeps aliases and plans readable (742.071443ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'cencrrhllct',
+  +   'tldhsr'
+  -   'Work laptop',
+  -   'Google'
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/base/internal/gui/tests/account-mask-alias-plan.test.cjs:59:16)
+      at runNextTicks (node:internal/process/task_queues:65:5)
+      at process.processImmediate (node:internal/timers:541:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'cencrrhllct', 'tldhsr' ],
+    expected: [ 'Work laptop', 'Google' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/account-mask-alias-plan.test.cjs:32:7
+✖ webkit zh-TW 1100: masking keeps aliases and plans readable (936.465407ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'cencrrhllct',
+  +   'tldhsr'
+  -   'Work laptop',
+  -   'Google'
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/base/internal/gui/tests/account-mask-alias-plan.test.cjs:59:16)
+      at runNextTicks (node:internal/process/task_queues:65:5)
+      at process.processImmediate (node:internal/timers:541:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'cencrrhllct', 'tldhsr' ],
+    expected: [ 'Work laptop', 'Google' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/account-mask-alias-plan.test.cjs:32:7
+✖ webkit zh-TW 420: masking keeps aliases and plans readable (729.871043ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'cencrrhllct',
+  +   'tldhsr'
+  -   'Work laptop',
+  -   'Google'
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/base/internal/gui/tests/account-mask-alias-plan.test.cjs:59:16)
+      at runNextTicks (node:internal/process/task_queues:65:5)
+      at process.processImmediate (node:internal/timers:541:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'cencrrhllct', 'tldhsr' ],
+    expected: [ 'Work laptop', 'Google' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/account-mask-alias-plan.test.cjs:32:7
+✖ webkit ja 1100: masking keeps aliases and plans readable (745.235243ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'cencrrhllct',
+  +   'tldhsr'
+  -   'Work laptop',
+  -   'Google'
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/base/internal/gui/tests/account-mask-alias-plan.test.cjs:59:16)
+      at runNextTicks (node:internal/process/task_queues:65:5)
+      at process.processImmediate (node:internal/timers:541:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'cencrrhllct', 'tldhsr' ],
+    expected: [ 'Work laptop', 'Google' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/account-mask-alias-plan.test.cjs:32:7
+✖ webkit ja 420: masking keeps aliases and plans readable (630.497161ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'cencrrhllct',
+  +   'tldhsr'
+  -   'Work laptop',
+  -   'Google'
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/base/internal/gui/tests/account-mask-alias-plan.test.cjs:59:16)
+      at runNextTicks (node:internal/process/task_queues:65:5)
+      at process.processImmediate (node:internal/timers:541:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'cencrrhllct', 'tldhsr' ],
+    expected: [ 'Work laptop', 'Google' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/account-mask-alias-plan.test.cjs:32:7
+✖ webkit de 1100: masking keeps aliases and plans readable (714.475711ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'cencrrhllct',
+  +   'tldhsr'
+  -   'Work laptop',
+  -   'Google'
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/base/internal/gui/tests/account-mask-alias-plan.test.cjs:59:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'cencrrhllct', 'tldhsr' ],
+    expected: [ 'Work laptop', 'Google' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/account-mask-alias-plan.test.cjs:32:7
+✖ webkit de 420: masking keeps aliases and plans readable (595.479485ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+  +   'cencrrhllct',
+  +   'tldhsr'
+  -   'Work laptop',
+  -   'Google'
+    ]
+  
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-issues/evidence/round25-recovery/evscratch-evidence-repair/3656/base/internal/gui/tests/account-mask-alias-plan.test.cjs:59:16)
+      at runNextTicks (node:internal/process/task_queues:65:5)
+      at process.processImmediate (node:internal/timers:541:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'cencrrhllct', 'tldhsr' ],
+    expected: [ 'Work laptop', 'Google' ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+# END COMPLETE OUTPUT
+# CHECKED_RETURN_CODE 1

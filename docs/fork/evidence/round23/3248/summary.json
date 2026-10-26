@@ -1,0 +1,32 @@
+{
+  "issue": 3248,
+  "title": "Antigravity gemini-4-argon: one completion glued from two to four answers restarted inside one SSE stream",
+  "verdict": "fixed",
+  "skipReason": "",
+  "branch": "fix/3248-codeassist-restart",
+  "base": "01468003348ede896c5126e9fd81057e1e58765c",
+  "head": "db55f831b2a848f01741249fe2af71bcbfccc96e",
+  "testCommands": [
+    "go test ./internal/gateway/ -run 'TestCodeAssistRestart' -count=1",
+    "go test ./internal/gateway/ -count=1",
+    "go vet ./...",
+    "GOOS=linux GOARCH=amd64 go vet -tags nogui ./...",
+    "GOOS=windows GOARCH=amd64 go vet ./...",
+    "go build ./...",
+    "GOOS=linux GOARCH=amd64 go build -tags nogui ./...",
+    "GOOS=windows GOARCH=amd64 go build ./..."
+  ],
+  "testsAdded": [
+    "internal/gateway/codeassist_restart_test.go: TestCodeAssistRestartIsNotSpliced (content after finishReason, changed responseId, candidatesTokenCount gone back)",
+    "internal/gateway/codeassist_restart_test.go: TestCodeAssistRestartBeforeAnythingSaid (guard: a restart nothing reached the client for resets, no error)"
+  ],
+  "unverifiedBoundaries": [
+    "No live Antigravity account: the stream is the shape the issue's ledger describes, not a captured upstream body (the reporter could not get one).",
+    "How each client classifies the in-stream error is unverified; the reply ends with an error event and no finished answer, so the agent asks again, but whether Pi retries automatically was not observed."
+  ],
+  "filesChanged": [
+    "internal/gateway/codeassist.go",
+    "internal/gateway/codeassist_restart_test.go",
+    "docs/subsystems/gateway-routing.md"
+  ]
+}

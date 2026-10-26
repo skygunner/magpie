@@ -1,0 +1,18 @@
+COMMAND=['go', 'test', './internal/filememo', '-run', '^TestForgetsAcrossSynctestBubbles$', '-count=1', '-v', '-timeout=120s']
+CWD=/home/vincenty/Projects/magpie-issues/evidence/r25-3632/exit-proof-base-bgcpg6r2
+=== RUN   TestForgetsAcrossSynctestBubbles
+fatal error: close of synctest channel from outside bubble
+
+goroutine 12 [running, synctest bubble 2]:
+github.com/yetone/magpie/internal/filememo.Forget()
+	/home/vincenty/Projects/magpie-issues/evidence/r25-3632/exit-proof-base-bgcpg6r2/internal/filememo/filememo.go:91 +0x65
+github.com/yetone/magpie/internal/filememo.TestForgetsAcrossSynctestBubbles.func2(0xad26ae28908?)
+	/home/vincenty/Projects/magpie-issues/evidence/r25-3632/exit-proof-base-bgcpg6r2/internal/filememo/forget_bubble_test.go:14 +0xf
+testing.tRunner(0xad26ae28908, 0x6706e0)
+	/home/vincenty/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.8.linux-amd64/src/testing/testing.go:2036 +0xea
+created by testing/synctest.testingSynctestTest in goroutine 11
+	/home/vincenty/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.26.8.linux-amd64/src/testing/testing.go:2150 +0x277
+FAIL	github.com/yetone/magpie/internal/filememo	0.004s
+FAIL
+
+EXIT=1

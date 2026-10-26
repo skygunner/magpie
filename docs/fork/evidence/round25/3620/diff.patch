@@ -1,0 +1,94 @@
+diff --git a/internal/gui/assets/plugins/routing/client.js b/internal/gui/assets/plugins/routing/client.js
+index 67a3c21c..3076da6a 100644
+--- a/internal/gui/assets/plugins/routing/client.js
++++ b/internal/gui/assets/plugins/routing/client.js
+@@ -6329,9 +6329,16 @@ function routingPage(part) {
+     let own = d.levels.length > 0;
+     const shared = g && d.members.join() === g.members.join() ? g.shared || [] : null; // as saved
+     const lHint = el("div", "hint");
++    // why Save refused the levels, under them until one is picked: the
++    // pill says it for 3.5s and clears itself, and the editor is still
++    // open after that (#3620)
++    const lNeed = el("div", "rt-lneed");
++    let lRefused = false;
+     const chips = el("div", "rt-levels");
+     const drawLevels = () => {
+       chips.hidden = !own;
++      lNeed.hidden = !(lRefused && own && !d.levels.length);
++      lNeed.textContent = lNeed.hidden ? "" : t("Pick a level to offer, or leave them to its models");
+       lHint.textContent = own
+         ? t("Agents are offered these. A model without the level asked is sent the one it has nearest.")
+         : shared?.length ? t("Agents are offered the levels every model has: {levels}.", { levels: shared.join(", ") })
+@@ -6342,6 +6349,7 @@ function routingPage(part) {
+       c.onclick = () => {
+         d.levels = d.levels.includes(v) ? d.levels.filter((x) => x !== v) : LEVELS.filter((x) => x === v || d.levels.includes(x));
+         c.classList.toggle("on", d.levels.includes(v));
++        drawLevels();
+       };
+       chips.append(c);
+     }
+@@ -6353,7 +6361,7 @@ function routingPage(part) {
+         for (const c of chips.children) c.classList.toggle("on", d.levels.includes(c.textContent));
+       }
+       drawLevels();
+-    }), chips, lHint);
++    }), chips, lHint, lNeed);
+     drawLevels();
+     ed.append(el("label", "", t("Levels")), lw);
+ 
+@@ -6402,7 +6410,7 @@ function routingPage(part) {
+       }
+       if (d.rules.some((r) => r.intent) && !d.classifier) return status(t("Choose the model that tells which intent a message is"), "warn");
+       if (d.effort === "auto" && !d.classifier) return status(t("Choose the model that rates how hard a turn is"), "warn");
+-      if (own && !d.levels.length) return status(t("Pick a level to offer, or leave them to its models"), "warn");
++      if (own && !d.levels.length) { lRefused = true; drawLevels(); return status(t("Pick a level to offer, or leave them to its models"), "warn"); }
+       saveBtn.classList.add("busy");
+       // refused, Add can be pressed again (busy, it takes no clicks)
+       groupAction("save", { id: idOf(), from: g?.id, name: d.name.trim() || idOf(), members: namedOf(d), match: d.match, routing: d.routing, pick: d.pick || "", affinity: d.affinity, sink: !!d.sink && sinkable(d.routing), firstToken: d.firstToken || 0, patience: d.patience || 0, rules: d.rules, effort: d.effort, classifier: d.rules.some((r) => r.intent) || d.effort === "auto" ? d.classifier : "", context: d.context || 0, levels: own ? d.levels : [], family: g?.family || "", fast: d.fast.filter((x) => d.members.includes(x)), off: d.off.filter((x) => d.members.includes(x)), weights: Object.fromEntries(Object.entries(d.weights).filter(([x, n]) => d.members.includes(x) && n > 1)), unlists: !!d.unlists }, t(g ? "{name} saved" : "{name} added", { name: d.name.trim() || idOf() }))
+diff --git a/internal/gui/assets/plugins/routing/routing.css b/internal/gui/assets/plugins/routing/routing.css
+index 4e7d5b43..cc673a9b 100644
+--- a/internal/gui/assets/plugins/routing/routing.css
++++ b/internal/gui/assets/plugins/routing/routing.css
+@@ -761,6 +761,9 @@ button.rt-session { cursor: pointer; }
+ /* the levels a group names for agents (#295): one toggle each */
+ .rt-levels { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 6px; }
+ .rt-levels[hidden] { display: none; }
++/* why Save refused the levels, under them until one is picked (as a rule's own refusal) */
++.rt-lneed { color: var(--amber, var(--muted)); font-size: 11.5px; }
++.rt-lneed[hidden] { display: none; }
+ /* the field is the pill: the editor's boxed input (its border and focus ring) stays off it */
+ .rt-cond input, .editor .rt-cond input[type="text"], .editor .rt-cond input[type="number"], .editor .rt-cond input:focus { box-shadow: none; border-radius: 0; }
+ .editor .rt-cond input:focus-visible { box-shadow: none; border-radius: 0; }
+diff --git a/internal/gui/tests/README.md b/internal/gui/tests/README.md
+index 73d02c94..a824cabe 100644
+--- a/internal/gui/tests/README.md
++++ b/internal/gui/tests/README.md
+@@ -537,7 +537,9 @@ WebKit, English and Chinese (#295: a member with low/high/max took medium and
+ xhigh from the rest). "Its models' shared" names those levels; "Named" shows a
+ toggle per level, starting from the shared ones, and toggling them moves
+ nothing; saved, they go lowest first and the group's family stays. A group with
+-its own opens on them, none picked is refused, and back to shared saves none.
++its own opens on them, none picked is refused (the reason stays under the
++levels while the editor is open, not only in the 3.5s pill, #3620), and back
++to shared saves none.
+ 
+ `group-member-fast.test.cjs` sends a group's member in its vendor's fast mode,
+ in Chromium and WebKit, English and Chinese (vs on Discord: "gpt-6.1 sol ·
+diff --git a/internal/gui/tests/routing-levels.test.cjs b/internal/gui/tests/routing-levels.test.cjs
+index 1509faf8..16325574 100644
+--- a/internal/gui/tests/routing-levels.test.cjs
++++ b/internal/gui/tests/routing-levels.test.cjs
+@@ -133,7 +133,12 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
+       await chips().filter({ hasText: /^medium$/ }).click();
+       await chips().filter({ hasText: /^xhigh$/ }).click();
+       await save();
+-      await page.waitForFunction((s) => document.documentElement.innerText.includes(s), w.none);
++      // the reason stays under the levels while the editor is open: the
++      // pill says it for 3.5s and clears itself, so a wait on the pill is
++      // a race with that timer, and a click slow enough to outlast it
++      // left nothing to find (#3620)
++      await page.waitForFunction((s) => document.querySelector(".rt-gedit")?.innerText.includes(s) || document.querySelector("#status")?.textContent.includes(s), w.none);
++      assert(await ed.evaluate((e, s) => e.innerText.includes(s), w.none), "the reason is under the levels, not only in the pill");
+       assert.equal(posts.length, 0, "nothing saved with no level");
+       await row().locator(".segs .opt", { hasText: w.shared }).click();
+       assert.equal(await row().locator(".rt-levels").isHidden(), true);

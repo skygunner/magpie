@@ -1,0 +1,13 @@
+# GREEN — branch head f5fd1da3ff6ac4e894b2de81e9bb2aa5fa7363ad (same test bytes, cmp vs base copy)
+
+## go test -tags dev -count=20 (green20-raw.txt)
+GREEN20-EXIT=0
+ok  	github.com/yetone/magpie/internal/gui	0.275s
+
+## go test -tags dev -race -count=3 (race-raw.txt)
+RACE-EXIT=0
+ok  	github.com/yetone/magpie/internal/gui	1.126s
+
+## go test -tags dev -shuffle=on -count=2 -run TestDevBackendHandoverAnswersAConnectionItTook|TestDevShellRetriesCutRead
+SHUF-EXIT=0
+ok  github.com/yetone/magpie/internal/gui

@@ -1,0 +1,39 @@
+{
+  "issue": 3528,
+  "title": "usage: a web search sent to Kimi Code's or WorkBuddy's search service, or to a search API, leaves no row in Usage › Requests",
+  "verdict": "fixed",
+  "skipReason": "",
+  "branch": "fix/3528-search-usage-rows",
+  "base": "c0985122b3f62e460c73ea6d67c426beb4dc9db2",
+  "head": "f6064d5d6b1785760972ca2f6fe7f63e7776d747",
+  "testCommands": [
+    "GOTOOLCHAIN=go1.26.8 go test ./internal/gateway/ -run TestSearchesWriteARequestRow -count=1",
+    "GOTOOLCHAIN=go1.26.8 go test ./internal/gateway/ -count=1",
+    "GOTOOLCHAIN=go1.26.8 go test ./internal/gateway/ -run 'TestCachePartialUpdateMatrix|TestProbe1717SearchTotalZeroSplit' -count=1",
+    "GOTOOLCHAIN=go1.26.8 go vet ./internal/gateway/",
+    "GOTOOLCHAIN=go1.26.8 go build ./...",
+    "GOOS=linux GOARCH=amd64 GOTOOLCHAIN=go1.26.8 go build -tags nogui ./...",
+    "GOOS=windows GOARCH=amd64 GOTOOLCHAIN=go1.26.8 go build ./...",
+    "gofmt -l internal/gateway/search.go internal/gateway/search_api.go internal/gateway/search_kimi.go internal/gateway/search_workbuddy.go internal/gateway/search_usage_test.go internal/gateway/usage_cache_zero_split_test.go"
+  ],
+  "testsAdded": [
+    "internal/gateway/search_usage_test.go: TestSearchesWriteARequestRow — each of kimiSearch, wbSearch and askSearchAPI writes exactly one usage row, Kind web_search, under its provider (Tavily for the search API), status 200, with no tokens, and the ledger's token sums do not move"
+  ],
+  "countingChoice": "The row is logged and counted as a call, like a model search's row (its Kind is the same web_search and Usage's totals count every non-rejected record); its tokens, cache counts and cost are 0, so token and cost totals do not change. No counting code was changed; Calls goes up by one per search, as it already did for a search made by a searcher's model. usage_cache_zero_split_test.go's wantCacheLedger was narrowed to the turn's row, since a search made for a turn now writes its own row (as a model's search already did).",
+  "unverifiedBoundaries": [
+    "The Recent-calls ring (s.record) is not written for these three paths: only the Usage › Requests ledger row is, since there is no agent protocol or model to name in a Call",
+    "A search that fails before its request goes out (a masking error, a WorkBuddy Sign failure) still writes a row with status 0 and the error, which is how a failed call reads; not exercised by a test",
+    "No live Kimi Code/WorkBuddy account or real search API key was used: the paths are exercised against the package's fake services"
+  ],
+  "filesChanged": [
+    "internal/gateway/search.go",
+    "internal/gateway/search_api.go",
+    "internal/gateway/search_kimi.go",
+    "internal/gateway/search_workbuddy.go",
+    "internal/gateway/search_usage_test.go",
+    "internal/gateway/usage_cache_zero_split_test.go"
+  ],
+  "preExistingRed": [
+    "internal/gateway TestClaudeClientCacheAbsentUnchanged fails at the clean base c0985122 as well (gateway-package.log, base-pre-existing-claude-cache.log); it is a Claude CLI argument assertion unrelated to this change"
+  ]
+}

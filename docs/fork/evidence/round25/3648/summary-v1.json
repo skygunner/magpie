@@ -1,0 +1,45 @@
+{
+  "issue": 3648,
+  "repo": "yetone/magpie",
+  "base": "19253f67bca2310c32739a6eaac88546b3574dbc",
+  "branch": "fix/r25-dev-backend-handover",
+  "worktree": "/home/vincenty/Projects/magpie-issues/r25-dev-backend-handover",
+  "commit": "900957661c9c561fe060b32019eed4ad7834c298",
+  "pushed_to": "origin (skygunner/magpie)",
+  "remote_head_matches_local": true,
+  "base_is_ancestor": true,
+  "test": "TestDevBackendHandoverAnswersAConnectionItTook (-tags dev)",
+  "red": "20/20 red on clean base, 'unexpected EOF' (test only, change stashed)",
+  "green": "20/20 green with fix; -race -count=3; -shuffle=on -count=2",
+  "changed_files": [
+    "internal/gui/dev_on.go",
+    "internal/gui/dev_handover_test.go"
+  ],
+  "pre_existing_failures": {
+    "tests": [
+      "TestWebCompresses",
+      "TestVersionedFilesKept"
+    ],
+    "mode": "-tags dev only",
+    "proven": "identical output at clean base with change stashed; both pass without -tags dev"
+  },
+  "not_tried": [
+    "real make dev restart on Linux/macOS (handover exercised within one process)",
+    "Windows runtime (no handover; vet+build only)"
+  ],
+  "comment": {
+    "id": 6413258899,
+    "author": "skygunner",
+    "created_at": "2026-10-26T10:00:22Z",
+    "url": "https://github.com/yetone/magpie/issues/3648#issuecomment-6413258899",
+    "body_matches_comment_md": true,
+    "comments_by_us_total": 1
+  },
+  "issue_language": "chinese (CJK ratio >= 0.15)",
+  "head": "083079e46e9a1db8a1862286c7522f26e6e8aa00",
+  "commits": 2,
+  "note": "Follow-up normal commit replaces a fixed 100ms sleep in the regression with an event gate: the signal is seen and stopServing cancels the backend context before the held connection is handed on. deterministic-verify.log and verify-deterministic.log hold gofmt/diff--check/vet/test output with exit codes.",
+  "preExistingRed": [
+    "internal/gui under -tags dev: TestWebCompresses and TestVersionedFilesKept fail identically on the clean base 19253f67 (dev-tag only, not run by CI)"
+  ]
+}

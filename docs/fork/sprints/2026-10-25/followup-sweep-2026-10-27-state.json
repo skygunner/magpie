@@ -1,0 +1,4049 @@
+{
+ "fetched_at": "2026-10-26T17:34:35Z",
+ "issues": {
+  "1072": {
+   "number": 1072,
+   "state": "open",
+   "title": "library: desktop.ini and Thumbs.db are no more an edit of a skill tha…",
+   "updated_at": "2026-10-26T14:27:41Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": true,
+   "comments": [
+    {
+     "id": 6135350153,
+     "author": "yetone",
+     "created_at": "2026-10-13T00:34:42Z",
+     "body": "Sorry for the slow review.\n\nReviewed at head `32b51c17e4`. The bug is real and still on main: nothing on origin/main (`5e89b7f83`) knows `desktop.ini` or `Thumbs.db`. One list, `SkipInSkill`, for every walker of a skill is the right shape. Two things stop a merge.\n\n**1. It no longer merges.** Since "
+    },
+    {
+     "id": 6348636702,
+     "author": "skygunner",
+     "created_at": "2026-10-22T18:48:34Z",
+     "body": "I ported this still-current defect and the stored-hash review blocker onto recent main: [f42f29c4](https://github.com/skygunner/magpie/commit/f42f29c4), branch `fix/skill-desktop-metadata`, with credit to @TryWorld2026.\n\nThe existing skipInSkill list now decides the files used by hashing and its mem"
+    }
+   ],
+   "last_our_comment": "2026-10-22T18:48:34+00:00",
+   "new_after_ours": []
+  },
+  "1073": {
+   "number": 1073,
+   "state": "open",
+   "title": "gui: a model the Settings pick has to be one magpie serves",
+   "updated_at": "2026-10-26T14:22:05Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": true,
+   "comments": [
+    {
+     "id": 6164195187,
+     "author": "yetone",
+     "created_at": "2026-10-14T08:28:14Z",
+     "body": "Thanks @TryWorld2026, and sorry this sat for a week. I reviewed head `2681c8b5006611a1f2f473ad4b4818430fca31b3`.\n\n**What was run:**\n- At the PR's own head: `go test -run 'TestSettingsModelMustBeServed|TestCodexAutoReview|TestCodexTitles' ./internal/gui` passes.\n- With `api.go` put back to its parent"
+    },
+    {
+     "id": 6348635950,
+     "author": "skygunner",
+     "created_at": "2026-10-22T18:48:32Z",
+     "body": "I ported the current bug and the review requests onto recent main in my fork: [7ccf8d5d](https://github.com/skygunner/magpie/commit/7ccf8d5d), branch `fix/settings-served-models`, with credit to @TryWorld2026.\n\nNew Vision and Codex title/description/prediction picks use the same served-model list as"
+    }
+   ],
+   "last_our_comment": "2026-10-22T18:48:32+00:00",
+   "new_after_ours": []
+  },
+  "1105": {
+   "number": 1105,
+   "state": "open",
+   "title": "[bug] OpenRouter 上的 gpt-image 等 images API 生图模型被发到 chat/completions，返回 404",
+   "updated_at": "2026-10-24T20:40:18Z",
+   "closed_at": null,
+   "comments_count": 5,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6032013837,
+     "author": "yetone",
+     "created_at": "2026-10-07T06:02:24Z",
+     "body": "谢谢报告，定位得很准。对着代码看了，原因确实在 magpie 这边：\n\n`internal/gateway/draw.go` 的 `viaFor` 把 openrouter.ai 上的所有模型都判成走 chat，排在 `catalog.ImagesAPI(model)` 之前，所以 `openai/gpt-image-2` 先被发到 `/chat/completions`，拿到你看到的 404。chat 返回 404 后 magpie 其实会再试一次 images 接口，但用的是 OpenAI 的路径（`/images/generations`、`/images/edits`），不是 Open"
+    },
+    {
+     "id": 6141138582,
+     "author": "yetone",
+     "created_at": "2026-10-13T08:05:08Z",
+     "body": "抱歉让你久等了。修复已经合进 main（a75fa9e54，来自 #1116，感谢 @Ha1baraA11）：\n\n- OpenRouter 上只能走 images API 的模型（如 `openai/gpt-image-2`、`openai/gpt-image-1-mini`）现在直接发到 OpenRouter 自己的 `POST /api/v1/images`；\n- 带参考图时用 `input_references` 传过去；\n- 这条接口返回 404 时，不会再回头去试 chat；\n- 供应商的「测试」按钮对这类模型也改为探测 `/images`。\n\n我用真实的 OpenRouter ke"
+    },
+    {
+     "id": 6142913548,
+     "author": "yetone",
+     "created_at": "2026-10-13T09:51:15Z",
+     "body": "@Ti800 OpenRouter 上只能走 images API 的模型（如 `openai/gpt-image-2`）现在发到 OpenRouter 的 `/api/v1/images`，不再发到 chat/completions 而 404（a75fa9e54，来自 #1116）。已在 v0.1.1225 发布：https://github.com/yetone/magpie-releases/releases/tag/v0.1.1225 ，更新后麻烦确认一下。\n"
+    },
+    {
+     "id": 6387502852,
+     "author": "GEEKCX",
+     "created_at": "2026-10-24T17:46:53Z",
+     "body": "**另一个供应商复现：ai.gitee.com（Gitee AI / 模力方舟 Serverless）的 `z-image-turbo`，v0.1.1420 仍被发到 chat/completions。**\n\na75fa9e54（#1116）的修复看起来只对 `openrouter.ai` 特判生效，gitee 这种同样只把生图模型开在 OpenAI images 接口上的供应商，路由还是 chat：\n\n```\nmagpie mcp image → generate_image\n→ no image: ai.gitee.com: 400 Bad Request: 暂不支持该接口\n```\n\n直连"
+    },
+    {
+     "id": 6389275629,
+     "author": "skygunner",
+     "created_at": "2026-10-24T20:40:18Z",
+     "body": "@GEEKCX's Gitee AI case is fixed on `fix/issue-batch-1025a` ([3e3fd41a](https://github.com/skygunner/magpie/commit/3e3fd41a), skygunner's fork), following the direction in the comment:\n\n- `viaFor` now honors the user's Image-model mark (#1399's `KindImage`): a model whose name the catalog doesn't kn"
+    }
+   ],
+   "last_our_comment": "2026-10-24T20:40:18+00:00",
+   "new_after_ours": []
+  },
+  "1258": {
+   "number": 1258,
+   "state": "open",
+   "title": "fix(web): exit cleanly on SIGTERM and SIGINT",
+   "updated_at": "2026-10-23T11:59:41Z",
+   "closed_at": null,
+   "comments_count": 3,
+   "is_pr": true,
+   "comments": [
+    {
+     "id": 6135797712,
+     "author": "yetone",
+     "created_at": "2026-10-13T01:02:35Z",
+     "body": "Sorry for the slow follow-up.\n\nThe problem is still real on main. `magpie web` does nothing with SIGTERM itself, so `endProbesOnSignal` (in `internal/cli/signals.go`) handles it: it ends the probes and then dies of the signal. A planned stop therefore still looks like a crash.\n\nThis branch can't go "
+    },
+    {
+     "id": 6348637537,
+     "author": "skygunner",
+     "created_at": "2026-10-22T18:48:37Z",
+     "body": "I ported this onto current internal/cli in my fork: [8d5523f2](https://github.com/skygunner/magpie/commit/8d5523f2), branch `fix/web-signal-shutdown`, retaining @AmAzing129 as co-author. This branch also includes the separately posted #3285 plugin-host reaping fix.\n\nBoth `magpie web` and `magpie ser"
+    },
+    {
+     "id": 6364361000,
+     "author": "skygunner",
+     "created_at": "2026-10-23T11:59:41Z",
+     "body": "Upstream main moved through the files this branch touches, so the linked commit no longer cherry-picks clean. The branch is rebuilt on current main, same three commits in the same order (the #3285 plugin-host reaping fix, the reexec-fixture cleanup, then the signals change):\n\n- new head: [`c5334b59`"
+    }
+   ],
+   "last_our_comment": "2026-10-23T11:59:41+00:00",
+   "new_after_ours": []
+  },
+  "2008": {
+   "number": 2008,
+   "state": "open",
+   "title": "gateway: the per-seat rest ladder's caps, base and state are all hard-coded — 5 config keys and one file write (#1772 fo",
+   "updated_at": "2026-10-24T04:46:54Z",
+   "closed_at": null,
+   "comments_count": 6,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6147415076,
+     "author": "Gaudi-XIX",
+     "created_at": "2026-10-13T14:06:59Z",
+     "body": "Looking back at this after trying to build the thing myself: the skip already exists in two forms I could use today, so my ask is much narrower than it reads.\n\n**`magpie provider off <id>` already is a zero-cost seat skip.** With `off: true` in providers.json the CLI reads the seat as `not served: <"
+    },
+    {
+     "id": 6155502478,
+     "author": "yetone",
+     "created_at": "2026-10-13T21:24:06Z",
+     "body": "Thanks for narrowing it down. The cap shipped in two parts. Both will be in the next release:\n\n**1. Rest until the daily allowance resets (064cffdb).**\n\n```\nmagpie provider quota-rest <id> until 08:00          # this computer's clock\nmagpie provider quota-rest <id> until 00:00+08:00    # the vendor'"
+    },
+    {
+     "id": 6158045764,
+     "author": "yetone",
+     "created_at": "2026-10-14T00:22:47Z",
+     "body": "@Gaudi-XIX Both parts are out in **v0.1.1230**:\n- `magpie provider quota-rest <id> until <HH:MM>` (064cffdbf): a key out of its daily allowance rests until that time of day.\n- `magpie provider rest-cap <id> <duration>` (bf2584271): a per-provider cap on the rest ladder, up to 8 days.\n\nTo get it: upd"
+    },
+    {
+     "id": 6190804684,
+     "author": "Gaudi-XIX",
+     "created_at": "2026-10-15T11:18:27Z",
+     "body": "# #2008 follow-up (for Gaudi-XIX to post, English — matches the issue's voice)\n\nUpdated to 0.1.1239 here; both keys are live on this machine.\n\n## On the `until` check you asked for — not verified, and here is why\n\nI could not run the check I owe you, and I would rather say so than send you a\nnumber "
+    },
+    {
+     "id": 6348175184,
+     "author": "skygunner",
+     "created_at": "2026-10-22T18:27:02Z",
+     "body": "**Update — 2026-10-24:** the persistence implementation linked below has been superseded. Please use the [updated delivery comment](https://github.com/yetone/magpie/issues/2008#issuecomment-6364369875), which records the current `r3-rests` chain, head [`d639c8d7`](https://github.com/skygunner/magpie"
+    },
+    {
+     "id": 6364369875,
+     "author": "skygunner",
+     "created_at": "2026-10-23T12:00:12Z",
+     "body": "## Update — 2026-10-24: persistence follow-up and corrected delivery\n\nThe earlier persistence branches are superseded by [`r3-rests`](https://github.com/skygunner/magpie/tree/r3-rests), based on `b437e4adb4dba82446e0d625b040a8e2d95004b4`. The current ordered chain is:\n\n1. [`71b9805c793c228b7be789099"
+    }
+   ],
+   "last_our_comment": "2026-10-23T12:00:12+00:00",
+   "new_after_ours": []
+  },
+  "2207": {
+   "number": 2207,
+   "state": "open",
+   "title": "test: TestPluginSOCKSProxy fails on Bun 1.4.3 (proxyconnect error instead of an HTTP 502), passes on the pinned 1.4.2",
+   "updated_at": "2026-10-26T09:54:10Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6348174686,
+     "author": "skygunner",
+     "created_at": "2026-10-22T18:27:00Z",
+     "body": "Reproduced on Linux with the real Bun 1.4.3 and fixed the test in my fork: [d16f32c](https://github.com/skygunner/magpie/commit/d16f32c358755633bca5c6835ffd4c7e8fc24533), branch `fix/socks-proxy-test`.\n\nA failed HTTPS CONNECT is correctly surfaced as a transport error. The gateway already recognizes"
+    },
+    {
+     "id": 6392831928,
+     "author": "erickguan",
+     "created_at": "2026-10-25T03:13:08Z",
+     "body": "Seen again under a full go test -tags nogui ./... run on a WSL2 dev box (go1.27.3, 2026-10-25, current main), passing calmly on its own:\n\n    plugin_socks_test.go:128: https://vendor.invalid/v1/chat/completions through a SOCKS proxy that is down: 0 \"\", proxyconnect tcp: 502 Bad Gateway: socks connec"
+    }
+   ],
+   "last_our_comment": "2026-10-22T18:27:00+00:00",
+   "new_after_ours": [
+    {
+     "author": "erickguan",
+     "created_at": "2026-10-25T03:13:08Z",
+     "body": "Seen again under a full go test -tags nogui ./... run on a WSL2 dev box (go1.27.3, 2026-10-25, current main), passing calmly on its own:\n\n    plugin_s"
+    }
+   ]
+  },
+  "2259": {
+   "number": 2259,
+   "state": "open",
+   "title": "gateway: a group in the group's Affinity is never read — only the group the agent named keeps a conversation on its key",
+   "updated_at": "2026-10-23T04:39:54Z",
+   "closed_at": null,
+   "comments_count": 3,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6192487741,
+     "author": "ggbdpq",
+     "created_at": "2026-10-15T12:51:29Z",
+     "body": "接单交付：To do 的三条都有了着落——语义裁决、补丁、修前红测试。\n\n## 语义（To do 1）\n\n取「the answerer's own innermost group that sets one」：每个候选携带它所在的最内层设了 `Affinity` 的组的值（`innerAffinity`，与 #2246 的 `innerFirstToken` 同构）；会话由**回答它的那个 key 所在的内层组**的 mode 决定去留，链条上没有任何一层设置时回落点名组的值。\n\n没有选「its own scope」（scope = `group/<inner>`）：同一个会话经外层组和直接经"
+    },
+    {
+     "id": 6355087485,
+     "author": "skygunner",
+     "created_at": "2026-10-23T01:21:08Z",
+     "body": "Published a fix in my fork: https://github.com/skygunner/magpie/commit/ec3c82b159cd1101971205bdaa1c719bc434fcce\n\nThanks @ggbdpq for the patch and reproduction. I adapted 7112fe69cf93589e02038396da5d1a19e3d7e95e, preserving Co-authored-by attribution, and extended the cap/credit-hold handling and tes"
+    },
+    {
+     "id": 6357168177,
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:10:31Z",
+     "body": "Verified — `ec3c82b1` carries my 7112fe69's semantics with the exact trailer `Co-authored-by: ggbdpq <ggbdpq@gmail.com>` in the commit message (checked on the commit itself, not the branch). The plumbing is byte-identical: `innerAffinity`'s body, the candidate's `affinity` field, and the `planLevel`"
+    }
+   ],
+   "last_our_comment": "2026-10-23T01:21:08+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:10:31Z",
+     "body": "Verified — `ec3c82b1` carries my 7112fe69's semantics with the exact trailer `Co-authored-by: ggbdpq <ggbdpq@gmail.com>` in the commit message (checke"
+    }
+   ]
+  },
+  "2287": {
+   "number": 2287,
+   "state": "open",
+   "title": "An unreadable plugins.json is carried in a backup or sync as no plugins",
+   "updated_at": "2026-10-23T01:07:10Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6183857541,
+     "author": "ump45nose",
+     "created_at": "2026-10-15T03:40:04Z",
+     "body": "Patch for this, one commit on current `main` (d0ccbbeb):\n\n- Compare: https://github.com/yetone/magpie/compare/main...ump45nose:magpie:fix/2287-backup-unreadable-plugins\n- Patch for `git am`: https://github.com/ump45nose/magpie/commit/e930262825451d8a1e0df08f8ae8623eddc0c110.patch\n\n**Root cause.** `b"
+    },
+    {
+     "id": 6354911428,
+     "author": "skygunner",
+     "created_at": "2026-10-23T01:07:10Z",
+     "body": "Published a fix in my fork: https://github.com/skygunner/magpie/commit/c43ab301138e62548f72602a3dfd5a8f13fb83db\n\nThanks for the report and @ump45nose for the patch. I adapted e930262825451d8a1e0df08f8ae8623eddc0c110 onto the cumulative fork branch, preserving Co-authored-by attribution.\n\nThe shared "
+    }
+   ],
+   "last_our_comment": "2026-10-23T01:07:10+00:00",
+   "new_after_ours": []
+  },
+  "2323": {
+   "number": 2323,
+   "state": "open",
+   "title": "[feat] Hermes 接 magpie 时带一个 provider 插件：图片直达模型，而不是先被描述一遍（补丁见内，引 #2318）",
+   "updated_at": "2026-10-23T00:56:12Z",
+   "closed_at": null,
+   "comments_count": 3,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6186105477,
+     "author": "yetone",
+     "created_at": "2026-10-15T06:37:54Z",
+     "body": "\n感谢细致的分析和补丁！你定位的原因是对的：Hermes 的 auto 模式不读 `/v1/models` 的 `modalities`，所以 magpie 的模型都被当成\"能力未知\"，图片先交给辅助模型描述。\n\n不过我们不打算往 Hermes 的 plugins 目录里放 Python 代码。插件要 `exec_module` Hermes 自带的 custom provider 并重新注册它，这依赖 Hermes 的内部模块结构，还会影响用户自己的 custom provider。Hermes 本身已经有配置级的开关：`providers.<name>.models.<model>.sup"
+    },
+    {
+     "id": 6230061316,
+     "author": "sryimnoob123",
+     "created_at": "2026-10-17T05:16:36Z",
+     "body": "在 0.1.1278 上复核了一遍，你上面说的改造目前还没落地，先把证据贴在这里。\n\n**本机环境**：Windows，magpie CLI/托盘 0.1.1278，Hermes 接的网关 `127.0.0.1:3425/v1`。上游我也核了：`upstream/main`（7660399a；此前取证时的 e085d6e9 到它之间只前进两个提交，都未触及 `internal/agent/hermes.go`）和最新 release `v0.1.1279`（10-17T04:59Z）里，`internal/agent/hermes.go` 第 264 行仍是 `Models []string "
+    },
+    {
+     "id": 6354772359,
+     "author": "skygunner",
+     "created_at": "2026-10-23T00:56:12Z",
+     "body": "Published a fix in my fork: https://github.com/skygunner/magpie/commit/d03d4a7b49b69885c2ce6d2204df4a0ce7fcfcb9\n\nThanks for the diagnosis and follow-up. I followed the config-only approach discussed here; no Python provider plugin is installed. Hermes's provider models are now a mapping, with suppor"
+    }
+   ],
+   "last_our_comment": "2026-10-23T00:56:12+00:00",
+   "new_after_ours": []
+  },
+  "2389": {
+   "number": 2389,
+   "state": "open",
+   "title": "gateway: /v1/systemone sends its body upstream without redaction",
+   "updated_at": "2026-10-23T00:41:42Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6191000852,
+     "author": "ump45nose",
+     "created_at": "2026-10-15T11:29:33Z",
+     "body": "**Root cause:** `serve()` calls `redacted()` before routing (`gateway.go`), but `serveSystemOne` never did — it passed the raw body into `postDecide` / `serveDecisionGroup`, so with `redact: true` a secret in `state` reached the decision provider unmasked.\n\n**Change:** After `refuseOff`, call `redac"
+    },
+    {
+     "id": 6354583653,
+     "author": "skygunner",
+     "created_at": "2026-10-23T00:41:42Z",
+     "body": "Published a fix in my fork: https://github.com/skygunner/magpie/commit/ee1b018bdb21f67185fee59cc8d1b2c69aa21c4b\n\nThanks to @ump45nose for the diagnosis and original c3154fc1 patch, credited as co-author. I adapted it to the current routing and masking helpers. POST /v1/systemone now masks request bo"
+    }
+   ],
+   "last_our_comment": "2026-10-23T00:41:42+00:00",
+   "new_after_ours": []
+  },
+  "2460": {
+   "number": 2460,
+   "state": "open",
+   "title": "gateway: AutoVision ignores catalog-inferred image input for custom providers whose /models list contains only IDs",
+   "updated_at": "2026-10-23T00:33:43Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6207669110,
+     "author": "ump45nose",
+     "created_at": "2026-10-16T03:51:00Z",
+     "body": "## Patch for #2460\n\n**Root cause:** `autoVision()` filters each provider's exposed models with `sees`, which only looks at the fetched entry: `m.Images && (m.ImageInput == nil || *m.ImageInput)`. A custom OpenAI-compatible provider whose `/models` lists bare IDs leaves `Images` false, so the model i"
+    },
+    {
+     "id": 6354479109,
+     "author": "skygunner",
+     "created_at": "2026-10-23T00:33:43Z",
+     "body": "Published a fix in my fork: https://github.com/skygunner/magpie/commit/7e1562132153acd9c47771b8ed61c2b6c8a12b57\n\nThanks to @ump45nose for the diagnosis, patch and regression above, credited as co-author. I adapted the patch to the current stamp-cached small-model picker. AutoVision now checks the us"
+    }
+   ],
+   "last_our_comment": "2026-10-23T00:33:43+00:00",
+   "new_after_ours": []
+  },
+  "2473": {
+   "number": 2473,
+   "state": "open",
+   "title": "[Bug] Claude Desktop Credentials Test 被误判为标题请求，命中已关闭 provider",
+   "updated_at": "2026-10-23T04:39:57Z",
+   "closed_at": null,
+   "comments_count": 6,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6207645241,
+     "author": "ggbdpq",
+     "created_at": "2026-10-16T03:48:53Z",
+     "body": "接这单（hunt30 审计车道）。已在 main@7597c132 上核实根因：`desktopTurn` 的 `small(body)` 只看 `max_tokens <= 4096`，Desktop 的健康探测（max_tokens 1、无 tools、claude 形模型名）被当标题请求，带去 `claude-desktop.model` 里的旧会话模型，404。修法照报告里说的正向识别 `desktopTitle(body)`，`byClaudeCode` 参数随之冗余移除。补丁稍后贴在本 issue，分支：`hunt30-desktop-title`（fork ggbdpq/magp"
+    },
+    {
+     "id": 6207821907,
+     "author": "ggbdpq",
+     "created_at": "2026-10-16T04:04:53Z",
+     "body": "照报告的根因修了，红绿与消融都在 main@7597c132 上做过：\n\n- `desktopTurn` 不再拿 `max_tokens <= 4096` 当标题（`small`），改用 `desktopTitle(body)` 的正向识别：标题 prompt 的两种形状（Desktop 自有客户端的字符串 system、Claude Code `--system-prompt` 的 text block）都已在 `desktopTitle` 里。其余无 tools 的请求一律保留自己点名的模型——Claude Code 的分类器本来就是这个行为（#1539），Desktop 的探测现在也是。"
+    },
+    {
+     "id": 6288423883,
+     "author": "SivanCola",
+     "created_at": "2026-10-20T10:02:20Z",
+     "body": "Reproduced the stale-provider part of this issue on macOS with packaged Magpie 0.1.1296 and Claude Desktop 2.42304.2.\n\nIn this case provider A was still enabled globally, but Claude Desktop had been restricted to provider B. `GET /v1/models` correctly listed only B. `claude-desktop.model` still cont"
+    },
+    {
+     "id": 6345145900,
+     "author": "ggbdpq",
+     "created_at": "2026-10-22T15:55:58Z",
+     "body": "Gentle nudge on this one — no rush. The fix (branch `hunt30-desktop-title`, head 910522a7) still applies cleanly to current main. Since it was posted, SivanCola reproduced the stale-provider half of the report on macOS with packaged Magpie 0.1.1296 and Claude Desktop 2.42304.2, which lands right on "
+    },
+    {
+     "id": 6354354731,
+     "author": "skygunner",
+     "created_at": "2026-10-23T00:24:18Z",
+     "body": "Published a fix in my fork: https://github.com/skygunner/magpie/commit/9fd7a9d4c087d3c0f4caac1ff3d27a8350577744\n\nThanks to @ggbdpq for the diagnosis and posted fix above, credited as co-author. Desktop titles now use the existing positive system-prompt check (`desktopTitle`) for both Electron and Cl"
+    },
+    {
+     "id": 6357168998,
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:10:35Z",
+     "body": "Verified — `9fd7a9d4` applies clean (`git apply --3way --check`) to current main (`e00fbdbb`, checked 2026-10-23; its merge-base `63be4771` took a 444-commit wave in between without touching the site), with the exact trailer `Co-authored-by: ggbdpq <ggbdpq@gmail.com>` in the commit message. The prod"
+    }
+   ],
+   "last_our_comment": "2026-10-23T00:24:18+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:10:35Z",
+     "body": "Verified — `9fd7a9d4` applies clean (`git apply --3way --check`) to current main (`e00fbdbb`, checked 2026-10-23; its merge-base `63be4771` took a 444"
+    }
+   ]
+  },
+  "2530": {
+   "number": 2530,
+   "state": "open",
+   "title": "Codex：供应商设为 Usage only 后，登录账户的原生模型仍出现在选择列表中",
+   "updated_at": "2026-10-23T04:40:00Z",
+   "closed_at": null,
+   "comments_count": 4,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6217740057,
+     "author": "ggbdpq",
+     "created_at": "2026-10-16T14:31:27Z",
+     "body": "已定位:Usage only(`noModels: true`)只挡住了通用目录(`Provider.Exposed()`),而 Codex 专用目录 `codexModels()` 走 `CodexNativePicked()`,后者在 `len(p.Models)==0` 时返回\"不限制原生列表\",没有看 `NoModels`/`ServesNone()`,原生可见模型就漏进了 Codex 桌面端的选择器。正在按 TDD 准备修复(补 `noModels` 门,与通用目录同口径),基于 upstream/main a751f528。\n"
+    },
+    {
+     "id": 6218071968,
+     "author": "ggbdpq",
+     "created_at": "2026-10-16T14:48:28Z",
+     "body": "## 判定\n\n确认为缺陷,不是声明设计。报告者说的两个接口分别是通用列表 `GET /v1/models` 和 Codex 专用列表 `GET /backend-api/codex/models`(magpie 转发 ChatGPT 后端的原生列表再加 magpie 自有模型):前者走 `Provider.Exposed()`,`ServesNone`(Usage only)已被挡住——后者是同一语义的兄弟路径,没跟上「Usage only = 该账号不向任何 agent 供模型,只读余额与用量」的既定口径。\n\n## 根因\n\n- `internal/provider/codex_models."
+    },
+    {
+     "id": 6354217288,
+     "author": "skygunner",
+     "created_at": "2026-10-23T00:14:15Z",
+     "body": "Published a fix in my fork: https://github.com/skygunner/magpie/commit/a016fcee20251311b7a71b90474cc4d2f07a2445\n\nBased on @ggbdpq's diagnosis and proposed `ServesNone` fix above (credited as co-author). `CodexNativePicked` now treats Usage only as a narrowing to no visible native account models, bef"
+    },
+    {
+     "id": 6357169757,
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:10:38Z",
+     "body": "Verified https://github.com/skygunner/magpie/commit/a016fcee20251311b7a71b90474cc4d2f07a2445 by cherry-picking it onto upstream/main `63be4771` and ablating the product change on Windows (Go with pinned GOPATH/GOMODCACHE/GOCACHE).\n\nThe implementation lands on the diagnosed root cause: `CodexNativePi"
+    }
+   ],
+   "last_our_comment": "2026-10-23T00:14:15+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:10:38Z",
+     "body": "Verified https://github.com/skygunner/magpie/commit/a016fcee20251311b7a71b90474cc4d2f07a2445 by cherry-picking it onto upstream/main `63be4771` and ab"
+    }
+   ]
+  },
+  "2674": {
+   "number": 2674,
+   "state": "open",
+   "title": "edit.BlockList drops block entries that follow a flow list in a dsh patch list",
+   "updated_at": "2026-10-25T21:34:54Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6403620529,
+     "author": "skygunner",
+     "created_at": "2026-10-25T21:34:53Z",
+     "body": "As you described: `BlockList` computed the sequence's start line and the file's last non-comment line, then wrote the sequence back over everything between them, so block content that yaml accepts after a root flow sequence was simply dropped.\n\nFixed on [fix/2674-blocklist-tail](https://github.com/s"
+    }
+   ],
+   "last_our_comment": "2026-10-25T21:34:53+00:00",
+   "new_after_ours": []
+  },
+  "2741": {
+   "number": 2741,
+   "state": "open",
+   "title": "[Bug] Command Code built-in: stealth/reflection models 400 on replayed turns — reasoning_content is not replayed via the",
+   "updated_at": "2026-10-25T14:23:23Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6394163102,
+     "author": "skygunner",
+     "created_at": "2026-10-25T05:59:32Z",
+     "body": "Delivered on `fix/commandcode-replay-reasoning` ([741237cf](https://github.com/skygunner/magpie/commit/741237cf), skygunner's fork, on upstream/main 1b039a3c), following your source reading: `chatReplaysReasoning` now says commandcode wherever it is served — the plugin id it already knew, and the bu"
+    },
+    {
+     "id": 6398530482,
+     "author": "Edward4226",
+     "created_at": "2026-10-25T13:56:05Z",
+     "body": "## Result\n\nI independently cherry-picked skygunner's `741237cf` onto current upstream main `9277c256`; it applies cleanly. This broad host-level fix is preferable to a model-specific exception.\n\nVerification branch: https://github.com/Edward4226/magpie/tree/codex/verify-2741-commandcode-reasoning (r"
+    }
+   ],
+   "last_our_comment": "2026-10-25T05:59:32+00:00",
+   "new_after_ours": [
+    {
+     "author": "Edward4226",
+     "created_at": "2026-10-25T13:56:05Z",
+     "body": "## Result\n\nI independently cherry-picked skygunner's `741237cf` onto current upstream main `9277c256`; it applies cleanly. This broad host-level fix i"
+    }
+   ]
+  },
+  "2759": {
+   "number": 2759,
+   "state": "open",
+   "title": "[bug] 在导入供应商时，导入来源目前有5个。在最右边的open code显示不全",
+   "updated_at": "2026-10-25T21:56:12Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6403875879,
+     "author": "skygunner",
+     "created_at": "2026-10-25T21:56:12Z",
+     "body": "根因在导入面板那排来源标签的样式：`.apptabs` 是一条不换行的 flex（`flex: 1 1 0; min-width: max-content`），标签缩不到文字宽度以下，五个来源一多就溢出；而外层 `overflow-x: auto` 配着 `scrollbar-width: none`，横向滚动条被藏掉，末尾的 OpenCode 既看不见也拖不到，只能先选中一个再用方向键移过去。量到的数字：390px 窗口下滚动区 350px、内容 646px；900px 时 OpenCode 仍被切掉。\n\n修复在 [fix/import-source-row](https://github."
+    }
+   ],
+   "last_our_comment": "2026-10-25T21:56:12+00:00",
+   "new_after_ours": []
+  },
+  "2777": {
+   "number": 2777,
+   "state": "open",
+   "title": "[Bug] Daily check-in goes out through the global proxy, not the account's own (accountProxies ignored on the whole check",
+   "updated_at": "2026-10-25T03:57:11Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6393185272,
+     "author": "skygunner",
+     "created_at": "2026-10-25T03:57:11Z",
+     "body": "Delivered on `fix/checkin-account-proxy` ([69eaf094](https://github.com/skygunner/magpie/commit/69eaf094), skygunner's fork, on upstream/main 42976f9a), following the direction you laid out: each runner builder wraps its accounts' `do` with `CheckinVia(provider, user, do)` — `ViaLogin` into the ctx,"
+    }
+   ],
+   "last_our_comment": "2026-10-25T03:57:11+00:00",
+   "new_after_ours": []
+  },
+  "2866": {
+   "number": 2866,
+   "state": "open",
+   "title": "[bug] Atom fallback can hide Chinese notes when translated headings stay English",
+   "updated_at": "2026-10-25T03:44:39Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6393086996,
+     "author": "skygunner",
+     "created_at": "2026-10-25T03:44:39Z",
+     "body": "Delivered on `fix/atom-zh-sections` ([7aa04408](https://github.com/skygunner/magpie/commit/7aa04408), skygunner's fork, on upstream/main 42976f9a): `notes()` now finds where the Chinese begins by the blocks' own words, not a heading's characters.\n\nThe split goes at the first Chinese-led block — Han "
+    }
+   ],
+   "last_our_comment": "2026-10-25T03:44:39+00:00",
+   "new_after_ours": []
+  },
+  "2867": {
+   "number": 2867,
+   "state": "open",
+   "title": "agent: drift details besides Codex's proxied one are shown in English in every language",
+   "updated_at": "2026-10-25T22:00:15Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6403924259,
+     "author": "skygunner",
+     "created_at": "2026-10-25T22:00:15Z",
+     "body": "The GUI hands `Drift.Detail` to `tNotice`, and `tNotice` only translates templates registered in `NOTICES`; every detail but the proxied one was a plain English string built in `applied.go`/`reach.go`/`wiringOff`, so zh, zh-TW, ja and de readers got English in the row's tooltip and the \"how to fix\" "
+    }
+   ],
+   "last_our_comment": "2026-10-25T22:00:15+00:00",
+   "new_after_ours": []
+  },
+  "2923": {
+   "number": 2923,
+   "state": "open",
+   "title": "gateway: Kimi refuses a tool whose top-level schema has no type, and magpie doesn't recognise the refusal",
+   "updated_at": "2026-10-22T22:30:06Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6352725039,
+     "author": "skygunner",
+     "created_at": "2026-10-22T22:30:06Z",
+     "body": "Published a fix in my fork: https://github.com/skygunner/magpie/commit/2bddfe100fe475615250d7612de8619bef9cb3af\n\nThe gateway now recognizes the reported `tools.function.parameters.type is required and must be \"object\"` refusal and reuses its existing object-root retry and provider/model/upstream-pro"
+    }
+   ],
+   "last_our_comment": "2026-10-22T22:30:06+00:00",
+   "new_after_ours": []
+  },
+  "2949": {
+   "number": 2949,
+   "state": "open",
+   "title": "TestHeldClock: data race on time.Local under -race (ubuntu CI)",
+   "updated_at": "2026-10-22T14:25:00Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6343163674,
+     "author": "skygunner",
+     "created_at": "2026-10-22T14:25:00Z",
+     "body": "main 上已经修了：b641868e「gateway: TestHeldClock passes each zone in instead of writing time.Local (#2949)」。可关。"
+    }
+   ],
+   "last_our_comment": "2026-10-22T14:25:00+00:00",
+   "new_after_ours": []
+  },
+  "2953": {
+   "number": 2953,
+   "state": "open",
+   "title": "edit: writing a key under a JSON array turns the array into an object and drops its entries",
+   "updated_at": "2026-10-23T04:40:03Z",
+   "closed_at": null,
+   "comments_count": 3,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6274743548,
+     "author": "ggbdpq",
+     "created_at": "2026-10-19T18:50:03Z",
+     "body": "Verified the maintainer's repro on upstream `e4ac5e87` before touching anything: `SetJSON` with `customModels.1` on `{\"customModels\":[{\"model\":\"mine\"}]}` produces `{\"customModels\":{\"1\":{…}}}` — the array is replaced and the user's entry is gone. The spec implemented here is the maintainer's, exactly"
+    },
+    {
+     "id": 6352556608,
+     "author": "skygunner",
+     "created_at": "2026-10-22T22:19:17Z",
+     "body": "Published a fix in my fork: https://github.com/skygunner/magpie/commit/1805ff94340887ce329ca5ec2d198c3e80e50671\n\n`edit.SetJSON` and its preview (`PatchJSON`) now index arrays instead of replacing them with objects. An existing element is replaced at its index; the index at the array length appends; "
+    },
+    {
+     "id": 6357170536,
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:10:42Z",
+     "body": "Verified https://github.com/skygunner/magpie/commit/1805ff94340887ce329ca5ec2d198c3e80e50671 by cherry-picking it onto upstream/main `63be4771` and ablating the product change on Windows (Go with pinned GOPATH/GOMODCACHE/GOCACHE).\n\nThe commit adapts the proposed fix faithfully and extends it where t"
+    }
+   ],
+   "last_our_comment": "2026-10-22T22:19:17+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:10:42Z",
+     "body": "Verified https://github.com/skygunner/magpie/commit/1805ff94340887ce329ca5ec2d198c3e80e50671 by cherry-picking it onto upstream/main `63be4771` and ab"
+    }
+   ]
+  },
+  "2998": {
+   "number": 2998,
+   "state": "open",
+   "title": "agent: MiniMax Code 改了「数据目录」后，magpie 仍把 provider 写到 `~/.minimax`，因此桌面版的模型选择器里看不到",
+   "updated_at": "2026-10-26T11:50:54Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6415246814,
+     "author": "skygunner",
+     "created_at": "2026-10-26T11:47:49Z",
+     "body": "Fixed on `fix/r25-minimax-moved-data` (fork `skygunner/magpie`, head `4cad21e120deced2560e904f8b9ba845a471e3c9`, one commit on top of `19253f67`): magpie now reads the desktop app's own record of the move and reaches the file the app reads.\n\n**What changed.** `appdir.MiniMaxDirIn` reads `config.loca"
+    }
+   ],
+   "last_our_comment": "2026-10-26T11:47:49+00:00",
+   "new_after_ours": []
+  },
+  "3020": {
+   "number": 3020,
+   "state": "open",
+   "title": "[Bug] Claude Code 后台子代理的 <task-notification> 经 Magpie 后模型看不到（直连正常，A/B 可复现）",
+   "updated_at": "2026-10-23T04:40:06Z",
+   "closed_at": null,
+   "comments_count": 4,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6317523029,
+     "author": "ggbdpq",
+     "created_at": "2026-10-21T13:39:57Z",
+     "body": "## Summary\n\nThrough the Claude subscription bridge, a background task's `<task-notification>` never reaches the model. Claude Code sends the notification with the next request — the same one that carries the finished tools' results — and the bridge hands the waiting run the results plus only what it"
+    },
+    {
+     "id": 6352398582,
+     "author": "skygunner",
+     "created_at": "2026-10-22T22:09:24Z",
+     "body": "Published a fix in my fork: https://github.com/skygunner/magpie/commit/b7726551109dae0bc6b406cb2dddd62abd9d4e2f\n\nThe Claude subscription resume path now preserves complete `<task-notification>` blocks that were previously discarded as injected agent/system/developer notices when returning tool resul"
+    },
+    {
+     "id": 6356721264,
+     "author": "WardLu",
+     "created_at": "2026-10-23T03:32:40Z",
+     "body": "@yetone 大佬推进一下进度？这个还是挺影响的.."
+    },
+    {
+     "id": 6357181062,
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:11:33Z",
+     "body": "Verified https://github.com/skygunner/magpie/commit/b7726551109dae0bc6b406cb2dddd62abd9d4e2f by cherry-picking it onto upstream/main `63be4771` and ablating the product change on Windows (Go with pinned GOPATH/GOMODCACHE/GOCACHE).\n\nThe discard surface matches the diagnosis: the drop lives only in th"
+    }
+   ],
+   "last_our_comment": "2026-10-22T22:09:24+00:00",
+   "new_after_ours": [
+    {
+     "author": "WardLu",
+     "created_at": "2026-10-23T03:32:40Z",
+     "body": "@yetone 大佬推进一下进度？这个还是挺影响的.."
+    },
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:11:33Z",
+     "body": "Verified https://github.com/skygunner/magpie/commit/b7726551109dae0bc6b406cb2dddd62abd9d4e2f by cherry-picking it onto upstream/main `63be4771` and ab"
+    }
+   ]
+  },
+  "3027": {
+   "number": 3027,
+   "state": "open",
+   "title": "gemini-4-argon shows as magpie/antigravity/gemini-4-argon-disabled and is not working",
+   "updated_at": "2026-10-23T11:44:53Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6364113600,
+     "author": "skygunner",
+     "created_at": "2026-10-23T11:44:53Z",
+     "body": "This is the same shape as #3339 (the `-disabled` placeholder id): fixed in my fork at https://github.com/skygunner/magpie/commit/8b4ecbac — Antigravity ids ending `-disabled` (here `gemini-4-argon-disabled`) are left out of the offered model list, since the id itself answers nothing (every request N"
+    }
+   ],
+   "last_our_comment": "2026-10-23T11:44:53+00:00",
+   "new_after_ours": []
+  },
+  "3035": {
+   "number": 3035,
+   "state": "open",
+   "title": "SenseNova turns Codex's structured-output requests away with guided_grammar compile_grammar_error — the refusal isn't re",
+   "updated_at": "2026-10-25T14:16:35Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6352249039,
+     "author": "skygunner",
+     "created_at": "2026-10-22T22:00:15Z",
+     "body": "Published a fix in my fork: https://github.com/skygunner/magpie/commit/8f931a28e570d616409753163fc93dc0fb3cfde5\n\nThe shared structured-output refusal matcher now recognizes `guided_grammar` and `compile_grammar` in 400/422 replies. This lets the existing cascade retry the refused schema as a JSON ob"
+    },
+    {
+     "id": 6397596850,
+     "author": "skygunner",
+     "created_at": "2026-10-25T12:24:15Z",
+     "body": "更新：下面的补丁替代本评论最初提出的“全局 invalid request 子串匹配 + 指数 cooldown”方案。复核后认为，短消息没有提供账户故障的证据，不应据此休眠 key/account。\n\n补丁：https://github.com/skygunner/magpie/commit/223f9b0a7ebfd9bc8edb8e004a875004c87f0786\n分支：https://github.com/skygunner/magpie/tree/fix/bare-request-failover\n\n**为什么这样修**\n\n原路径会把没有明确原因的 `400 Invalid re"
+    }
+   ],
+   "last_our_comment": "2026-10-25T12:24:15+00:00",
+   "new_after_ours": []
+  },
+  "3043": {
+   "number": 3043,
+   "state": "open",
+   "title": "[BUG] 资源库 › 发现：MCP Registry 偶发 20s+ 延迟，撞上 20s 硬超时导致搜索 0 结果",
+   "updated_at": "2026-10-26T08:32:49Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6392132968,
+     "author": "skygunner",
+     "created_at": "2026-10-25T01:49:43Z",
+     "body": "根因确认并修复，独立分支 `fix/mcp-registry-timeout`（[11d176bd](https://github.com/skygunner/magpie/commit/11d176bd)，skygunner/magpie）。\n\n与你核对的一致：`market.go` 的共用 20s client 覆盖了全部市场请求，Registry 的慢尾（你实测 18% 超 20s、最慢 37.3s）一超就整页空结果。修法：Registry 的请求单独走 60s 预算的 client（盖过实测尾部），skills.sh 和图标继续用 20s；超时仍发生时报错保持 `SearchError"
+    },
+    {
+     "id": 6411650296,
+     "author": "yetone",
+     "created_at": "2026-10-26T08:32:49Z",
+     "body": "已合入 27ca0bef5，发在 v0.1.1585（感谢 @skygunner 的修复，作者署名保留；感谢 @shupivot 的测量）。\n\nMCP Registry 搜索现在用自己的 60 秒超时，不再和其他请求共用 20 秒。skills.sh 和图标仍然用原来的短超时。超过 60 秒还会失败的话，会明确提示是 MCP Registry 出的错。\n\n验证：手动去掉修复后，两个测试都失败，报错就是你遇到的 `context deadline exceeded (Client.Timeout exceeded while awaiting headers)`；恢复修复后通过。今天从我这里请求"
+    }
+   ],
+   "last_our_comment": "2026-10-25T01:49:43+00:00",
+   "new_after_ours": [
+    {
+     "author": "yetone",
+     "created_at": "2026-10-26T08:32:49Z",
+     "body": "已合入 27ca0bef5，发在 v0.1.1585（感谢 @skygunner 的修复，作者署名保留；感谢 @shupivot 的测量）。\n\nMCP Registry 搜索现在用自己的 60 秒超时，不再和其他请求共用 20 秒。skills.sh 和图标仍然用原来的短超时。超过 60 秒还会失败"
+    }
+   ]
+  },
+  "3062": {
+   "number": 3062,
+   "state": "open",
+   "title": "A relay's \"Referenced reasoning item …\" refusal is not read as an unreadable item, so a Codex thread 400s on every turn",
+   "updated_at": "2026-10-23T04:40:09Z",
+   "closed_at": null,
+   "comments_count": 3,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6291803000,
+     "author": "ggbdpq",
+     "created_at": "2026-10-20T13:19:24Z",
+     "body": "The relay's refusal now reads as an unreadable item: the thread is asked again without the reasoning the relay can't resolve, instead of 400ing on every turn.\n\nSetup as reported: the magpie gateway on current `main` (checked at `dee5c9d7`) with a Responses passthrough provider in front of OpenAI (op"
+    },
+    {
+     "id": 6352083061,
+     "author": "skygunner",
+     "created_at": "2026-10-22T21:50:01Z",
+     "body": "Published a fix in my fork: https://github.com/skygunner/magpie/commit/cf95652a876bb475a95c5769dbb09e8c743e3bc1\n\nThe shared `unreadableItem` matcher now recognizes the relay's exact “Referenced reasoning item … was not found or has expired” wording. This lets the existing Responses passthrough repai"
+    },
+    {
+     "id": 6357171568,
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:10:47Z",
+     "body": "Verified the adaptation: [cf95652a](https://github.com/skygunner/magpie/commit/cf95652a876bb475a95c5769dbb09e8c743e3bc1) carries the fix from my [patch above](#issuecomment-6291803000) (895240da) onto `main`. Re-ran the whole cycle myself on `main` @ 63be4771 (Windows, go 1.26.5), with the commit ch"
+    }
+   ],
+   "last_our_comment": "2026-10-22T21:50:01+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:10:47Z",
+     "body": "Verified the adaptation: [cf95652a](https://github.com/skygunner/magpie/commit/cf95652a876bb475a95c5769dbb09e8c743e3bc1) carries the fix from my [patc"
+    }
+   ]
+  },
+  "3076": {
+   "number": 3076,
+   "state": "open",
+   "title": "provider: rest-cap is ignored for subscription accounts (withPicks doesn't copy RestCap), so 529 overload benches most o",
+   "updated_at": "2026-10-25T01:55:43Z",
+   "closed_at": null,
+   "comments_count": 4,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6293991542,
+     "author": "ggbdpq",
+     "created_at": "2026-10-20T15:03:18Z",
+     "body": "**Summary**\n\nbinbinah reported (with production data) that `magpie provider rest-cap <id>` is silently dead for subscription-account providers such as `codex`. On v0.1.1236: `magpie provider rest-cap codex 1m` writes `\"restCap\": 1` into providers.json, but right after the write the command's own ech"
+    },
+    {
+     "id": 6345140970,
+     "author": "ggbdpq",
+     "created_at": "2026-10-22T15:55:44Z",
+     "body": "Cross-reference: on [#3176](https://github.com/yetone/magpie/issues/3176), skygunner published a branch for this same root cause — [skygunner:fix/account-rest-cap](https://github.com/skygunner/magpie/tree/fix/account-rest-cap), commit `c41b6fe`. It copies the same three fields (`RestCap`, `QuotaRest"
+    },
+    {
+     "id": 6347697853,
+     "author": "skygunner",
+     "created_at": "2026-10-22T18:03:09Z",
+     "body": "补充一个可取用的同根因修复：[skygunner/magpie 的 c41b6feb](https://github.com/skygunner/magpie/commit/c41b6febc30d8a2f0451a2be50e1778e0868de80)（分支 `fix/account-rest-cap`，基于 `87d703c5`），此前贴在 #3176。与 @ggbdpq 的补丁解决同一个字段遗漏，不是另一个根因。\n\n`withPicks` 现在把保存的 `RestCap`、`QuotaRest`、`QuotaResetAt` 一起带到订阅账号；`All` 取出的主账号和 `AlsoOn"
+    },
+    {
+     "id": 6392183113,
+     "author": "ggbdpq",
+     "created_at": "2026-10-25T01:55:43Z",
+     "body": "Thanks for re-checking against `ca4a1cde` and the targeted rerun. For the record on equivalence: `c41b6fe` and my `048abe41` carry a byte-identical line in `withPicks` (`a.QuotaRest, a.QuotaResetAt, a.RestCap = pk.QuotaRest, pk.QuotaResetAt, pk.RestCap`), and both sides lock the `off` semantics — yo"
+    }
+   ],
+   "last_our_comment": "2026-10-22T18:03:09+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-25T01:55:43Z",
+     "body": "Thanks for re-checking against `ca4a1cde` and the targeted rerun. For the record on equivalence: `c41b6fe` and my `048abe41` carry a byte-identical li"
+    }
+   ]
+  },
+  "3095": {
+   "number": 3095,
+   "state": "open",
+   "title": "TestHoldReadsMigrationsOnce red under load: heldFor (1s) runs out between its two reads",
+   "updated_at": "2026-10-23T08:06:27Z",
+   "closed_at": null,
+   "comments_count": 3,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6301447445,
+     "author": "ggbdpq",
+     "created_at": "2026-10-20T21:04:14Z",
+     "body": "## Summary\n\n`TestHoldReadsMigrationsOnce` measured wall time instead of the hold: on a loaded machine its two reads of migrations.json landed more than `heldFor` (1s, hold.go:108) apart, the held copy expired, the file was read again, and the test died on `hold_test.go:316: migrations.json read agai"
+    },
+    {
+     "id": 6351919564,
+     "author": "skygunner",
+     "created_at": "2026-10-22T21:40:12Z",
+     "body": "Published a fix in my fork: https://github.com/skygunner/magpie/commit/665af2426e7923646b1b6997121b058024f23d67\n\nThe four cache-count tests now temporarily extend their own hold lifetime and restore it afterward. The production one-second TTL is unchanged. The repeated-build test also clears its old"
+    },
+    {
+     "id": 6360423062,
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T08:06:27Z",
+     "body": "Verified `665af2426e7923646b1b6997121b058024f23d67` on Windows/amd64 (Go 1.26.8) against `yetone/magpie@be002aca`. The touched file has zero drift: `internal/provider/hold_test.go` is blob `6b5c415e` both at the commit's base and at `be002aca` — the exact blob this diff is written against — and the "
+    }
+   ],
+   "last_our_comment": "2026-10-22T21:40:12+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T08:06:27Z",
+     "body": "Verified `665af2426e7923646b1b6997121b058024f23d67` on Windows/amd64 (Go 1.26.8) against `yetone/magpie@be002aca`. The touched file has zero drift: `i"
+    }
+   ]
+  },
+  "3097": {
+   "number": 3097,
+   "state": "open",
+   "title": "gateway: Google 路由把未知顶层字段 options 原样转发上游，Gemini 模型恒定 400",
+   "updated_at": "2026-10-24T17:13:02Z",
+   "closed_at": null,
+   "comments_count": 4,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6319847049,
+     "author": "ggbdpq",
+     "created_at": "2026-10-21T15:33:54Z",
+     "body": "## Source & environment\n\nReported in yetone/magpie#3097 (0 comments when this was written): magpie\nv0.1.1294 (Docker, Linux aarch64), a client (Hermes Agent) with an\nOpenAI-compatible provider whose base URL is the gateway's `/v1`, routed to\nthe `google` preset (Gemini / Studio API key), model\n`goog"
+    },
+    {
+     "id": 6351918961,
+     "author": "skygunner",
+     "created_at": "2026-10-22T21:40:10Z",
+     "body": "Published a fix in my fork: https://github.com/skygunner/magpie/commit/a0b3c8f6ad99d34d6e412f9b410ecfd3f5ef7942\n\nGemini-compatible Chat forwarding now removes the top-level Ollama `options` field that produces the reported 400. Nested tool parameters named `options` and non-Gemini requests are prese"
+    },
+    {
+     "id": 6357172307,
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:10:51Z",
+     "body": "Verified the adaptation: [a0b3c8f6](https://github.com/skygunner/magpie/commit/a0b3c8f6ad99d34d6e412f9b410ecfd3f5ef7942) carries the fix from my [patch above](#issuecomment-6319847049) (e5b407b) onto `main`. Re-ran the whole cycle myself on `main` @ 63be4771 (Windows, go 1.26.5), with the commit che"
+    },
+    {
+     "id": 6387149252,
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T17:13:02Z",
+     "body": "Rebased onto `e57e785633a7976d9ad31771979a6ed5b2e8e99a` (current `main`) so the branch carries the latest upstream state: the old base had drifted by four commits, two of which reworked this fix's own test file, and `main` moved once more in the same package while this rebase was in flight, so the b"
+    }
+   ],
+   "last_our_comment": "2026-10-22T21:40:10+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:10:51Z",
+     "body": "Verified the adaptation: [a0b3c8f6](https://github.com/skygunner/magpie/commit/a0b3c8f6ad99d34d6e412f9b410ecfd3f5ef7942) carries the fix from my [patc"
+    },
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T17:13:02Z",
+     "body": "Rebased onto `e57e785633a7976d9ad31771979a6ed5b2e8e99a` (current `main`) so the branch carries the latest upstream state: the old base had drifted by "
+    }
+   ]
+  },
+  "3100": {
+   "number": 3100,
+   "state": "open",
+   "title": "provider: TestSignInDoneOnceTheAccountIsBack races a plugin refresh left by an earlier test (catalog.Changed)",
+   "updated_at": "2026-10-23T04:41:11Z",
+   "closed_at": null,
+   "comments_count": 3,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6304214540,
+     "author": "ggbdpq",
+     "created_at": "2026-10-20T23:35:25Z",
+     "body": "## Summary\n\n`TestSignInDoneOnceTheAccountIsBack` swaps the global `catalog.Changed` in to watch a removed account come back, and the fakeco subtest's plugin work answers in the background: the answer tells the agents (`catalog.Touched`, through `plugin.tell`) in a goroutine that reads `catalog.Chang"
+    },
+    {
+     "id": 6351920135,
+     "author": "skygunner",
+     "created_at": "2026-10-22T21:40:14Z",
+     "body": "Published a fix in my fork: https://github.com/skygunner/magpie/commit/f85bd1664b489e411c295643da1a28dbacfa0bbc\n\nThe sign-in test now waits for plugin refreshes and asynchronous notifications before replacing or restoring `catalog.Changed`. Its fake plugin also gets a local catalog fixture, so the t"
+    },
+    {
+     "id": 6357541048,
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:41:11Z",
+     "body": "Verified the fork fix on top of `63be4771` (Windows, Go 1.26.8, CGO enabled, race detector on): cherry-picked f85bd166 onto `63be4771` cleanly (no conflicts), ran the sign-in test under `-race -count=5` twice, and reproduced the reported race with the fix's waits reverted.\n\n**What was verified**\n\n- "
+    }
+   ],
+   "last_our_comment": "2026-10-22T21:40:14+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:41:11Z",
+     "body": "Verified the fork fix on top of `63be4771` (Windows, Go 1.26.8, CGO enabled, race detector on): cherry-picked f85bd166 onto `63be4771` cleanly (no con"
+    }
+   ]
+  },
+  "3117": {
+   "number": 3117,
+   "state": "open",
+   "title": "用量 › 会话：Claude Desktop（3P 模式）的会话被归为 Claude Code，Desktop 标签下项目、时长、工具和 Skill 为空",
+   "updated_at": "2026-10-25T01:49:42Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6385795129,
+     "author": "imbossa",
+     "created_at": "2026-10-24T15:06:47Z",
+     "body": "当只安装 claude desktop 时,切换到第三方 API,magpie 也会显示 claude code 的 agent 选项"
+    },
+    {
+     "id": 6392132800,
+     "author": "skygunner",
+     "created_at": "2026-10-25T01:49:42Z",
+     "body": "根因确认并修复，独立分支 `fix/claude-desktop-3p-sessions`（[58a0f39c](https://github.com/skygunner/magpie/commit/58a0f39c)，skygunner/magpie）。\n\n与你的推测一致：读取处只认 `entrypoint == \"claude-desktop\"` 精确匹配（`internal/sessions/calls.go` 的调用读、`traces_claude.go` 的追踪读、以及会话列表的解析），`claude-desktop-3p` 全部落到 Claude Code。修法按你的建议取 ent"
+    }
+   ],
+   "last_our_comment": "2026-10-25T01:49:42+00:00",
+   "new_after_ours": []
+  },
+  "3121": {
+   "number": 3121,
+   "state": "open",
+   "title": "gateway/antigravity: union type [\"string\",\"array\"] keeps items but collapses to string — Gemini 400 on tool schema",
+   "updated_at": "2026-10-22T15:55:32Z",
+   "closed_at": null,
+   "comments_count": 3,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6316597311,
+     "author": "ggbdpq",
+     "created_at": "2026-10-21T12:57:07Z",
+     "body": "Found the same root cause from #3173 (a 309-tool MCP set whose `items` sit under `oneOf`): it isn't the union branch — `plainSchema` folds oneOf/anyOf correctly — it is that a schema typed as a **list** of types keeps its `items` after the fold: `{\"type\":[\"string\",\"array\"],\"items\":{…}}` collapses to"
+    },
+    {
+     "id": 6343428670,
+     "author": "skygunner",
+     "created_at": "2026-10-22T14:37:33Z",
+     "body": "修了，在分支 [skygunner:fix/union-items](https://github.com/skygunner/magpie/tree/fix/union-items)（commit c638203，基于 main 87d703c5）。README 说本仓库不开 PR，放在这里供取用。\n\n按你提出的两条一起做（`plainSchema` 尾部加一段一致性整理）：\n\n- 折叠后的类型不是 array、但 schema 带 items/minItems/maxItems 时：type 联合里有 array 半边就取 array（你的 `disease`/`drug` 参数场景——保"
+    },
+    {
+     "id": 6345136723,
+     "author": "ggbdpq",
+     "created_at": "2026-10-22T15:55:32Z",
+     "body": "Verified skygunner's branch (`fix/union-items`, commit `c638203`, based on main `87d703c5`) against both this issue's shape and #3173's. It is red without the change, green with it, and its behavior supersedes my minimal branch everywhere the two differ.\n\n| Shape | my minimal branch (b7a40951, from "
+    }
+   ],
+   "last_our_comment": "2026-10-22T14:37:33+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-22T15:55:32Z",
+     "body": "Verified skygunner's branch (`fix/union-items`, commit `c638203`, based on main `87d703c5`) against both this issue's shape and #3173's. It is red wit"
+    }
+   ]
+  },
+  "3131": {
+   "number": 3131,
+   "state": "open",
+   "title": "【问题】OpenCode Zen Free 无法添加多账号：再次添加会替换第一个账号，而不是新增第二个",
+   "updated_at": "2026-10-22T14:44:09Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6343569971,
+     "author": "skygunner",
+     "created_at": "2026-10-22T14:44:09Z",
+     "body": "这个大概率不是 magpie 主程序的问题，而是 OpenCode Zen Free 插件自己的账号声明方式。多账号的 `#后缀` 键是 magpie 插件宿主按插件声明生成的：插件在 addAccount/APIKey 流程里用 `NewAccount` 之类标志告诉宿主新增一个账号，宿主才会写成 `opencode-zen-free#xxxx`；zen-free 每次都写主键，说明它的插件端没有走新增账号路径（或者压根没实现多账号）。对照你在 logins.json 里看到的 zcode/qoder/workbuddy 插件都是走对了的。\n\n修复位置在社区插件仓库 [magpie-comm"
+    }
+   ],
+   "last_our_comment": "2026-10-22T14:44:09+00:00",
+   "new_after_ours": []
+  },
+  "3139": {
+   "number": 3139,
+   "state": "open",
+   "title": "[Bug] 无界面 `magpie serve` 首次单独刷新 Claude 卡成功后仍带 `asOf`，远端显示旧缓存（v0.1.1296）",
+   "updated_at": "2026-10-24T16:58:22Z",
+   "closed_at": null,
+   "comments_count": 3,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6351281868,
+     "author": "skygunner",
+     "created_at": "2026-10-22T21:04:45Z",
+     "body": "Thanks for the precise diagnosis. Implemented on my fork by removing the nil-cache early return from `mergeCards`, letting its existing merge loop retain the first card. The partial refresh does not advance the full-list timestamp, and sequence ordering still keeps a newer single-card reading over a"
+    },
+    {
+     "id": 6385380710,
+     "author": "Lemonawa",
+     "created_at": "2026-10-24T14:26:39Z",
+     "body": "补充一组较新版本的独立复现：**Magpie 0.1.1406 的余额卡片也会遇到相同问题，不限于 Claude 订阅卡片。**\n\n真实环境中，Windows 客户端 0.1.1405 通过 Remote magpie 查看 Linux VPS 上 DeepSeek/OpenRouter 的余额，单卡刷新后偶尔立即显示“暂时无法获取最新额度”，时间却是刚刚。随后用下述隔离环境验证，排除了真实供应商失败、客户端 VPN 和管理页面代理的影响。\n\n### 复现环境\n\n- Linux Docker，运行实际版本为 **0.1.1406** 的 Magpie nogui 程序，启动 `magpie w"
+    },
+    {
+     "id": 6386993902,
+     "author": "skygunner",
+     "created_at": "2026-10-24T16:58:22Z",
+     "body": "谢谢这份隔离复现——路径找得很准。余额卡片和订阅卡片走的是**同一个** `mergeCards`（`KeyBalances → cacheCards(..., partial=true) → mergeCards(nil, got)`，`internal/provider/balance.go`），也就是本分支 [a11d605e](https://github.com/skygunner/magpie/commit/a11d605e014cd87bff83d2ec3485297dcdd37e86) 删掉 `kept == nil` 早退的那一处；计划卡片（`PlanQuotas`）同样。所"
+    }
+   ],
+   "last_our_comment": "2026-10-24T16:58:22+00:00",
+   "new_after_ours": []
+  },
+  "3141": {
+   "number": 3141,
+   "state": "open",
+   "title": "proc.Look keeps \"not found\" for a tool installed in the same clock tick as its folder's last change",
+   "updated_at": "2026-10-25T19:56:00Z",
+   "closed_at": null,
+   "comments_count": 4,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6351191858,
+     "author": "skygunner",
+     "created_at": "2026-10-22T20:59:49Z",
+     "body": "Implemented on my fork, adapting your `f9d7eac9` patch with `Co-authored-by` retained. Both cache layers now avoid keeping entries for recently changed directories: lookup answers and directory name listings. Stable and future-dated directories still reuse their caches; the normal two-second stat wi"
+    },
+    {
+     "id": 6355424288,
+     "author": "JoeyWu-tech",
+     "created_at": "2026-10-23T01:48:02Z",
+     "body": "@skygunner thanks, freezing the clock is right. On a busy runner the 100ms can pass between dating the folder and the second lookup, and then the test goes red on the fixed code too. I missed that. Your branch looks good to me.\n"
+    },
+    {
+     "id": 6370512222,
+     "author": "JoeyWu-tech",
+     "created_at": "2026-10-23T17:12:59Z",
+     "body": "One more test this covers: TestZedAppPath. zedAppPath finds the zed CLI through proc.Look, and the test symlinks `zed` into PATH right after a lookup there. On b437e4ad it's red 7 of 10 alone (`zed_credential_other_test.go:81: CLI's bundle: \".../Zed Preview.app\", <nil>`), and with f9d7eac9 on top it"
+    },
+    {
+     "id": 6402426230,
+     "author": "JoeyWu-tech",
+     "created_at": "2026-10-25T19:56:00Z",
+     "body": "Two more this covers: TestCopilotFolderFromAnIDEPluginIsNotTheCLI and TestQoderSettingsFromAnIDEPluginIsNotTheCLI. Each looks its CLI up on an empty PATH, writes it there, and looks again. On 9fc382e6, alone at -count=10, Copilot is red 7 of 10 (`ide_plugin_dir_test.go:36: the copilot command on PAT"
+    }
+   ],
+   "last_our_comment": "2026-10-22T20:59:49+00:00",
+   "new_after_ours": [
+    {
+     "author": "JoeyWu-tech",
+     "created_at": "2026-10-23T01:48:02Z",
+     "body": "@skygunner thanks, freezing the clock is right. On a busy runner the 100ms can pass between dating the folder and the second lookup, and then the test"
+    },
+    {
+     "author": "JoeyWu-tech",
+     "created_at": "2026-10-23T17:12:59Z",
+     "body": "One more test this covers: TestZedAppPath. zedAppPath finds the zed CLI through proc.Look, and the test symlinks `zed` into PATH right after a lookup "
+    },
+    {
+     "author": "JoeyWu-tech",
+     "created_at": "2026-10-25T19:56:00Z",
+     "body": "Two more this covers: TestCopilotFolderFromAnIDEPluginIsNotTheCLI and TestQoderSettingsFromAnIDEPluginIsNotTheCLI. Each looks its CLI up on an empty P"
+    }
+   ]
+  },
+  "3143": {
+   "number": 3143,
+   "state": "open",
+   "title": "redact：Codex 的 function_call.namespace 被脱敏为占位符，导致上游 400、会话持续失败",
+   "updated_at": "2026-10-22T14:36:57Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6313005210,
+     "author": "yetone",
+     "created_at": "2026-10-21T09:47:41Z",
+     "body": "已在 v0.1.1308 修复（88119d4f6）。感谢详细的报告和补丁思路。\n\n`namespace` 现在和 `name` 一样原样发送，同一类的字段也一并处理了：Responses `mcp_call` 的 `server_label`，以及 Anthropic `mcp_tool_use` 的 `server_name`。你自己消息里的同一个词仍会被遮住。\n\n测试用的是你给的请求体（`TestMaskJSONKeepsToolServerNames`）。更新后如果 Codex Desktop 还会 400，请在这里回复，我会重新打开处理；确认没问题后这个 issue 再关闭。\n"
+    },
+    {
+     "id": 6343416196,
+     "author": "skygunner",
+     "created_at": "2026-10-22T14:36:57Z",
+     "body": "main 上已经修了：88119d4f（2026-10-21）「redact: Codex's tool server names, stream_options and snake_case words go as written (#3143, #3144)」——`namespace` 进了 kept 表（internal/redact/json.go），注释也点名 Codex 对 namespace 的 ^[a-zA-Z0-9_-]+$ 校验。可关。"
+    }
+   ],
+   "last_our_comment": "2026-10-22T14:36:57+00:00",
+   "new_after_ours": []
+  },
+  "3144": {
+   "number": 3144,
+   "state": "open",
+   "title": "redact：本地 PII 模型把 reasoning_summary_delivery 的 sequential_cutoff 判成人名，导致 Codex 上游 400",
+   "updated_at": "2026-10-22T14:36:56Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6313005799,
+     "author": "yetone",
+     "created_at": "2026-10-21T09:47:43Z",
+     "body": "已在 v0.1.1308 修复（88119d4f6）。感谢详细的报告和补丁思路。\n\n修了两处：\n- `stream_options` 现在算请求设置，和 `reasoning`、`text` 一样原样发送。\n- 本地模型找到的人名如果是 snake_case 单词（例如 `sequential_cutoff`），一律不遮，不管它出现在哪里。所以工具参数或代码里的枚举值、标识符也不会再被当成人名。\n\n旁边真正的人名仍然会被遮住。测试用的是你给的请求体（`TestMaskJSONKeepsReasoningSummaryDelivery`）。更新后如果还有问题请在这里回复；确认没问题后这个 iss"
+    },
+    {
+     "id": 6343415582,
+     "author": "skygunner",
+     "created_at": "2026-10-22T14:36:55Z",
+     "body": "main 上已经修了：88119d4f（2026-10-21）「redact: Codex's tool server names, stream_options and snake_case words go as written (#3143, #3144)」——比 kept 表加字段更彻底：`modelTakes` 现在对 PERSON 拒绝一切 snake_case 词（`snakeWord`：纯 ASCII 字母数字加下划线，`sequential_cutoff`、`list_threads`、`mcp__codex_app`），不论它出现在哪个字段——设置、工具参数、代码里都一样（"
+    }
+   ],
+   "last_our_comment": "2026-10-22T14:36:55+00:00",
+   "new_after_ours": []
+  },
+  "3147": {
+   "number": 3147,
+   "state": "open",
+   "title": "Usage: read the agy model from conversations/*.db; agy calls are recorded with an empty model",
+   "updated_at": "2026-10-22T14:38:20Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6343445315,
+     "author": "skygunner",
+     "created_at": "2026-10-22T14:38:20Z",
+     "body": "这个修起来最稳的路径是按 transcript 的 step_index 与 `conversations/<id>.db` 的 `gen_metadata` 对上，从 protobuf blob 里取出模型串。但这个仓库的规矩是“另一应用的值要从该应用本身来”，而 `gen_metadata.data` 的 protobuf 布局没有公开 schema，靠猜字段序号风险大。\n\n能麻烦你提供一份**脱敏样本**吗（这个 issue 里你已经说明不含账号/内容/ID/token，最好直接给文件）：\n\n1. 挑一个最简单的对话，只发过一轮、只用过一个模型；\n2. 附上它的 `conversatio"
+    }
+   ],
+   "last_our_comment": "2026-10-22T14:38:20+00:00",
+   "new_after_ours": []
+  },
+  "3148": {
+   "number": 3148,
+   "state": "open",
+   "title": "Qoder IDE is detected as both \"VS Code\" and \"Qoder\" — duplicate agent entry",
+   "updated_at": "2026-10-23T08:03:19Z",
+   "closed_at": null,
+   "comments_count": 3,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6342963529,
+     "author": "skygunner",
+     "created_at": "2026-10-22T14:15:53Z",
+     "body": "看了一下 `vscodeCodeBinary`（internal/agent/vscode.go:337）：它只认 Cursor 的 product.json 身份，Qoder 确实会漏过去。修法本身很直接——把 Qoder 的身份加进已知排除名单。但这个仓库的规矩是另一应用的值要从该应用本身来，我不想猜 Qoder 的 product.json 写的是什么。\n\n装了 Qoder IDE 的朋友能贴一下这两个值吗：\n\n```sh\n# macOS\nplutil -extract applicationName raw -o - /Applications/Qoder.app/Contents/R"
+    },
+    {
+     "id": 6355706637,
+     "author": "Henvy-Mango",
+     "created_at": "2026-10-23T02:10:28Z",
+     "body": "> 3\\. 看了一下 `vscodeCodeBinary`（internal/agent/vscode.go:337）：它只认 Cursor 的 product.json 身份，Qoder 确实会漏过去。修法本身很直接——把 Qoder 的身份加进已知排除名单。但这个仓库的规矩是另一应用的值要从该应用本身来，我不想猜 Qoder 的 product.json 写的是什么。\n>         装了 Qoder IDE 的朋友能贴一下这两个值吗：\n>         # macOS\n>         plutil -extract applicationName raw -o - /Appli"
+    },
+    {
+     "id": 6360371525,
+     "author": "skygunner",
+     "created_at": "2026-10-23T08:03:19Z",
+     "body": "报告者给了确切值，排除项补上了，在分支 [skygunner:fix/qoder-ide-code](https://github.com/skygunner/magpie/tree/fix/qoder-ide-code)（commit 4aa39dbf，基于 main be002aca）。README 说本仓库不开 PR，放在这里供取用。\n\n- `vscodeCodeBinary` 的已知身份表在 Cursor 之外加了 Qoder IDE：`applicationName: \"qoder-cn\"`、`nameShort: \"QoderCN\"`（你贴的 Windows product.jso"
+    }
+   ],
+   "last_our_comment": "2026-10-23T08:03:19+00:00",
+   "new_after_ours": []
+  },
+  "3150": {
+   "number": 3150,
+   "state": "open",
+   "title": "404 for an unknown \"auto/…\" model reports a synthesized id (\"group/auto-deepseek-v4-1-flash\") instead of the id the clie",
+   "updated_at": "2026-10-22T14:32:13Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6314719338,
+     "author": "tahodev",
+     "created_at": "2026-10-21T11:23:59Z",
+     "body": "I ran into this too and put a fix together: the sent id is kept on the request context across `validateModel`'s canonicalization, and `unknownModel` (chat and embeddings) names it instead of the internal `group/auto-<slug>`; routing and the usage log still see the canonical id. Test included (`TestU"
+    },
+    {
+     "id": 6343313763,
+     "author": "skygunner",
+     "created_at": "2026-10-22T14:32:13Z",
+     "body": "修了（按你提的第一种期望：逐字回显请求里的 id），在分支 [skygunner:fix/unknown-model-sent-id](https://github.com/skygunner/magpie/tree/fix/unknown-model-sent-id)（commit 94861cc，基于 main 87d703c5）。README 说本仓库不开 PR，放在这里供取用。\n\n改法：\n\n- `requestModel` 现在把客户端原始发送的 model 一并返回；主入口（`s.handle`）、Gemini 的 `/v1beta/models/...`、Codex backend"
+    }
+   ],
+   "last_our_comment": "2026-10-22T14:32:13+00:00",
+   "new_after_ours": []
+  },
+  "3151": {
+   "number": 3151,
+   "state": "closed",
+   "title": "Library: Devin is incorrectly reported as having no user-wide instructions file",
+   "updated_at": "2026-10-22T14:26:22Z",
+   "closed_at": "2026-10-22T14:26:22Z",
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6343163165,
+     "author": "skygunner",
+     "created_at": "2026-10-22T14:24:59Z",
+     "body": "main 上已经修了：e6568888（2026-10-21）「library: Library → Instructions gives Devin its global AGENTS.md (#3151, eqe365 on Discord)」——`targets.go` 的 devin case 现在有 `t.Instructions = firstThere(a.Dir, \"AGENTS.md\", \"AGENT.md\")`，注释也引了本 issue 和 Devin CLI 3000.11.92 文档里的 AGENT.md 单数形式，测试在 internal/library/agent_"
+    }
+   ],
+   "last_our_comment": "2026-10-22T14:24:59+00:00",
+   "new_after_ours": []
+  },
+  "3152": {
+   "number": 3152,
+   "state": "open",
+   "title": "[Bug] Tool calls fail when model emits whole floats (e.g. limit 8.0) - Codex strict int parsing",
+   "updated_at": "2026-10-24T17:11:00Z",
+   "closed_at": null,
+   "comments_count": 6,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6321189749,
+     "author": "ggbdpq",
+     "created_at": "2026-10-21T16:36:03Z",
+     "body": "## Source & environment\n\nFrom #3152 (1024MrL, 2026-10-21): Codex 0.163.0-alpha.11 against magpie 0.1.1307's gateway (`wire_api=responses`), model `opencode-go/muse-spark-1.3-contributor`. Every `tool_search` call failed before it ran when the model wrote `limit` as a whole float (`{\"query\": \"exa web"
+    },
+    {
+     "id": 6351033700,
+     "author": "skygunner",
+     "created_at": "2026-10-22T20:51:15Z",
+     "body": "Implemented on my fork: [deefacd2](https://github.com/skygunner/magpie/commit/deefacd28c807b3e66e4183605ef44ecd1eada7b), adapting ggbdpq's patch with attribution retained.\n\nThe existing `wholeNums` normalizer now handles tool arguments from every model, rather than only Grok. Whole numbers with zero"
+    },
+    {
+     "id": 6357541987,
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:41:15Z",
+     "body": "Verified the fork commit on top of `63be4771` (Windows, Go 1.26.8): cherry-picked deefacd2, ran the whole-number family, and reproduced both regressions with the product files reverted.\n\n**What was verified**\n\n- The patch is my `4c03aaac` carried over with the changed lines verbatim identical — same"
+    },
+    {
+     "id": 6358237405,
+     "author": "1024MrL",
+     "created_at": "2026-10-23T05:37:14Z",
+     "body": "Tested the proposed fix end-to-end on Windows 11 with a real Codex + muse-spark session — it resolves the issue for me.\n\n**Setup**\n- Codex CLI 0.163.0-alpha.11 (the codex.exe bundled with Codex Desktop), `codex exec`, my normal config: provider magpie `http://127.0.0.1:3425/v1`, `wire_api = \"respons"
+    },
+    {
+     "id": 6360020959,
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T07:41:21Z",
+     "body": "That closes the field half — thank you. Those rows are the end-to-end confirmation both sides lacked: the verification note above and the original report each listed \"no real muse-spark turn, no real Codex session\" as the open gap, and your runs fill it on the reporter's own setup — the same args th"
+    },
+    {
+     "id": 6387127418,
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T17:10:59Z",
+     "body": "Rebased onto the current main (`e57e785633a7976d9ad31771979a6ed5b2e8e99a`). Upstream edited `docs/subsystems/gateway-routing.md` right next to the bullet this fix rewrites, which conflicted; the resolution keeps both sides — this fix's whole-float bullet (it now describes every model, not only Grok'"
+    }
+   ],
+   "last_our_comment": "2026-10-22T20:51:15+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:41:15Z",
+     "body": "Verified the fork commit on top of `63be4771` (Windows, Go 1.26.8): cherry-picked deefacd2, ran the whole-number family, and reproduced both regressio"
+    },
+    {
+     "author": "1024MrL",
+     "created_at": "2026-10-23T05:37:14Z",
+     "body": "Tested the proposed fix end-to-end on Windows 11 with a real Codex + muse-spark session — it resolves the issue for me.\n\n**Setup**\n- Codex CLI 0.163.0"
+    },
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T07:41:21Z",
+     "body": "That closes the field half — thank you. Those rows are the end-to-end confirmation both sides lacked: the verification note above and the original rep"
+    },
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T17:10:59Z",
+     "body": "Rebased onto the current main (`e57e785633a7976d9ad31771979a6ed5b2e8e99a`). Upstream edited `docs/subsystems/gateway-routing.md` right next to the bul"
+    }
+   ]
+  },
+  "3153": {
+   "number": 3153,
+   "state": "open",
+   "title": "gateway: an allowed_tools tool_choice is dropped before the Grok plugin can read it",
+   "updated_at": "2026-10-23T04:40:15Z",
+   "closed_at": null,
+   "comments_count": 3,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6319791623,
+     "author": "ggbdpq",
+     "created_at": "2026-10-21T15:30:55Z",
+     "body": "## Source & environment\n\nyetone/magpie#3153, opened and diagnosed by yetone (0 comments at the time of writing): a `tool_choice` object the Grok plugin should read is dropped before its `fetch`, so with the plugin's X search option on (grok 0.2.0) a request goes out with `x_search` over a client's `"
+    },
+    {
+     "id": 6351033261,
+     "author": "skygunner",
+     "created_at": "2026-10-22T20:51:14Z",
+     "body": "Implemented on my fork: [852182f6](https://github.com/skygunner/magpie/commit/852182f67446210d53f51ea776bdf87e20eb622c), adapting ggbdpq's proposed fix with attribution retained, plus a gateway-to-plugin regression test.\n\nThe Grok plugin now receives the client's unsupported `tool_choice` object (in"
+    },
+    {
+     "id": 6357173089,
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:10:55Z",
+     "body": "Verified the adaptation: [852182f6](https://github.com/skygunner/magpie/commit/852182f67446210d53f51ea776bdf87e20eb622c) carries the fix from my [patch above](#issuecomment-6319791623) (099cf6b2). I re-ran the ablation cycle myself (Windows, go 1.26.5), cherry-picking the commit onto f5b01574 — the "
+    }
+   ],
+   "last_our_comment": "2026-10-22T20:51:14+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:10:55Z",
+     "body": "Verified the adaptation: [852182f6](https://github.com/skygunner/magpie/commit/852182f67446210d53f51ea776bdf87e20eb622c) carries the fix from my [patc"
+    }
+   ]
+  },
+  "3156": {
+   "number": 3156,
+   "state": "open",
+   "title": "[bug] 修改路由组的模型列表后，实时路由里的组成员仍是旧的，重启 magpie 才更新",
+   "updated_at": "2026-10-25T21:42:31Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6403710605,
+     "author": "skygunner",
+     "created_at": "2026-10-25T21:42:31Z",
+     "body": "根因：那条说明里的成员是**请求发出时**规划下来的那份（trace 里 route 的成员），不是组现在的列表。所以编辑组并保存之后，这句文字仍然念旧成员，切页面也不会重新取——只有重启 magpie 让它重新规划才对得上。\n\n修复在 [fix/routing-group-members-live](https://github.com/skygunner/magpie/tree/fix/routing-group-members-live)（`f816c358`，基于 `01468003` 一个提交）：实时路由的说明改为念这个组**当前**的成员——和下面「路由组」用的是同一份 `/api"
+    }
+   ],
+   "last_our_comment": "2026-10-25T21:42:31+00:00",
+   "new_after_ours": []
+  },
+  "3165": {
+   "number": 3165,
+   "state": "open",
+   "title": "Chat passthrough for a \"deepseek\"-named upstream: injected `reasoning_content` collides with the client's echoed `reason",
+   "updated_at": "2026-10-26T12:13:40Z",
+   "closed_at": null,
+   "comments_count": 9,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6320485575,
+     "author": "ggbdpq",
+     "created_at": "2026-10-21T16:03:44Z",
+     "body": "## Source & environment\n\n- #3165 (wmfan2002-cloud): Chat passthrough to a self-hosted DeepSeek-compatible engine whose serde reads `reasoning_content` as an alias of `reasoning`. magpie's tool-turn replay (`withReasoningOnToolTurns`, `internal/gateway/chattidy.go`, reached from the `provider.Chat` b"
+    },
+    {
+     "id": 6327619924,
+     "author": "ggbdpq",
+     "created_at": "2026-10-21T22:07:57Z",
+     "body": "Following up on the two \"Kimi unchecked\" notes above (the siblings list and Not verified): I've since checked that path, and both questions close as no-action.\n\n- The collision I was worried about needs a Kimi upstream that aliases `reasoning` and `reasoning_content` the way DeepSeek's serde does. T"
+    },
+    {
+     "id": 6335023642,
+     "author": "realfirst",
+     "created_at": "2026-10-22T07:13:51Z",
+     "body": "Independent confirmation on magpie 0.1.1318 (macOS arm64), with a DSH/pi-ai client and a DeepSeek-compatible JD Cloud relay (custom provider, Chat base URL, model id contains `deepseek`):\n\n| assistant message | result |\n| --- | --- |\n| `reasoning` only | 200 |\n| `reasoning_content` only | 200 |\n| `r"
+    },
+    {
+     "id": 6335153526,
+     "author": "realfirst",
+     "created_at": "2026-10-22T07:21:54Z",
+     "body": "Patch from the branch `fix/chat-fold-reasoning-aliases` (commit 84c2b3a), inline in case PR creation stays unavailable:\n\n<details><summary>internal/gateway: fold reasoning aliases</summary>\n\n```diff\ndiff --git a/internal/gateway/chat_tool_reasoning_test.go b/internal/gateway/chat_tool_reasoning_test"
+    },
+    {
+     "id": 6341205131,
+     "author": "ggbdpq",
+     "created_at": "2026-10-22T12:51:51Z",
+     "body": "Verified the branch against current `main` (`ef6f3749`): cherry-picking `84c2b3a` applies cleanly (all three files), and:\n\n- `go test ./internal/gateway -run Reasoning -count=1` passes, including the new `TestChatBothReasoningSpellingsRelayed` and the updated `TestChatToolTurnWithoutReasoningRelayed"
+    },
+    {
+     "id": 6351032820,
+     "author": "skygunner",
+     "created_at": "2026-10-22T20:51:13Z",
+     "body": "Implemented on my fork: [d5b46244](https://github.com/skygunner/magpie/commit/d5b46244abb5da4572fc759688281296caab3c8d). This combines ggbdpq's tool-turn fix and realfirst's non-tool alias fix, with both authors credited.\n\nFor the existing DeepSeek Chat reasoning-replay path, reasoning carried in `r"
+    },
+    {
+     "id": 6357540177,
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:41:06Z",
+     "body": "Verified the combined commit (`d5b46244`) locally — cherry-picked onto `main` (`63be4771`), exercised through the gateway's in-process fake only, no real account touched.\n\n**Attribution checks out.** The commit carries both trailers, verbatim:\n\n```\nCo-authored-by: ggbdpq <ggbdpq@gmail.com>\n\nCo-autho"
+    },
+    {
+     "id": 6415383816,
+     "author": "skygunner",
+     "created_at": "2026-10-26T11:55:27Z",
+     "body": "Follow-up to the ablation in https://github.com/yetone/magpie/issues/3165#issuecomment-6357540177: independently reproduced it on `19253f67` plus the previously delivered fix. With only the tool-turn cleanup removed and the alias fold retained, all six existing regressions still pass. With only the "
+    },
+    {
+     "id": 6415719980,
+     "author": "ggbdpq",
+     "created_at": "2026-10-26T12:13:40Z",
+     "body": "Verdict on `1bb8143b` (\"gateway: thinking pi sends back in reasoning goes to DeepSeek once, as reasoning_content\"): **the failure reported here is landed**, for the face both this issue's table and the X report describe. Two faces this thread identified remain uncovered — both reproduced red on the "
+    }
+   ],
+   "last_our_comment": "2026-10-26T11:55:27+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-26T12:13:40Z",
+     "body": "Verdict on `1bb8143b` (\"gateway: thinking pi sends back in reasoning goes to DeepSeek once, as reasoning_content\"): **the failure reported here is lan"
+    }
+   ]
+  },
+  "3169": {
+   "number": 3169,
+   "state": "open",
+   "title": "Routing context card: an uncounted prompt reads 1.5–1.6x its neighbours, with no anchor to the last counted value",
+   "updated_at": "2026-10-25T21:39:48Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6403679182,
+     "author": "skygunner",
+     "created_at": "2026-10-25T21:39:48Z",
+     "body": "What the card could not say is exactly what happened: the uncounted prompt was the estimator's reading of the body, unscaled, while every counted request beside it had been scaled to the vendor's count. The estimator reads about four characters a token, so on a body that tokenizes lower the uncounte"
+    }
+   ],
+   "last_our_comment": "2026-10-25T21:39:48+00:00",
+   "new_after_ours": []
+  },
+  "3173": {
+   "number": 3173,
+   "state": "closed",
+   "title": "gateway/antigravity: `items` 为 oneOf/anyOf 联合类型（无 type）时 Gemini 400 —— plainSchema 未兜底 items",
+   "updated_at": "2026-10-22T18:03:11Z",
+   "closed_at": "2026-10-22T11:36:29Z",
+   "comments_count": 4,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6314662932,
+     "author": "huaiqing-afk",
+     "created_at": "2026-10-21T11:20:49Z",
+     "body": "补充说明：上游是 REA（`mcp__rea__*`，309 个工具），REA 侧已有相关跟踪。\n\n## 与 REA 侧 Issue 的关系\n\nREA 仓库（`morluto/rea`）已有同族问题的跟踪：\n\n- **#5201** — Gemini 拒绝整个工具目录：`trace_application_feature.seed.value` 的空字符串 `const` 序列化成空 enum 成员\n- **#4620** — Gemini CLI 用 REA 报 400 INVALID_ARGUMENT\n- **#3806**（PR）— `fix(mcp): make compact sch"
+    },
+    {
+     "id": 6316205998,
+     "author": "ggbdpq",
+     "created_at": "2026-10-21T12:43:30Z",
+     "body": "# gateway/antigravity: a tool schema's `items` left on a type that folds off array reaches Gemini and the turn dies with `$type == Type.ARRAY` (#3173)\n\n## Summary\n\nReported in #3173: a Codex → magpie → Antigravity (`gemini-3.8-flash`) turn fails before generation, deterministically, whenever a tool'"
+    },
+    {
+     "id": 6339774868,
+     "author": "huaiqing-afk",
+     "created_at": "2026-10-22T11:36:28Z",
+     "body": "Thanks @ggbdpq for the thorough investigation, test cases, and fix patch! Closing as resolved."
+    },
+    {
+     "id": 6347698356,
+     "author": "skygunner",
+     "created_at": "2026-10-22T18:03:11Z",
+     "body": "补充 #3121 下修复与本条的关系：[skygunner/magpie 的 c638203e](https://github.com/skygunner/magpie/commit/c638203ee99232910d6d3d989d44791ba4128692)（分支 `fix/union-items`，基于 `87d703c5`）也处理了嵌套 `items.items` 上的同类非法 schema。@ggbdpq 已在 [#3121 的验证回复](https://github.com/yetone/magpie/issues/3121#issuecomment-6345136723) 比"
+    }
+   ],
+   "last_our_comment": "2026-10-22T18:03:11+00:00",
+   "new_after_ours": []
+  },
+  "3174": {
+   "number": 3174,
+   "state": "open",
+   "title": "TestClaudeAccountServesModelsListedSinceItsFetch red in a full internal/provider run, green alone",
+   "updated_at": "2026-10-26T09:54:11Z",
+   "closed_at": null,
+   "comments_count": 6,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6315699216,
+     "author": "ggbdpq",
+     "created_at": "2026-10-21T12:17:38Z",
+     "body": "Taking this one. I'll reproduce the ordering dependency first (full-package run with `-count=1` vs the isolated runs) and chase which earlier test leaves the state behind — the two candidates you named are where I'll start. Patch to follow on this issue.\n"
+    },
+    {
+     "id": 6317749332,
+     "author": "ggbdpq",
+     "created_at": "2026-10-21T13:50:41Z",
+     "body": "## Summary\n\nThe red is a stale global credential cache answering a test with what an earlier test's leftover run read. `claudeCredential` (internal/provider/account.go:578) serves reads from one global slot by age alone (`claudeCacheTTL`, 10s, internal/provider/account.go:359; the serve is at :593)."
+    },
+    {
+     "id": 6349009775,
+     "author": "skygunner",
+     "created_at": "2026-10-22T19:07:26Z",
+     "body": "The same natural failure occurred during my full suite on Linux/amd64, Go 1.26.8: `TestClaudeAccountServesModelsListedSinceItsFetch` found no Claude account immediately after fixture sign-in.\n\nI adopted @ggbdpq’s helper fix above with co-author credit and retained a deterministic regression: [873c5d"
+    },
+    {
+     "id": 6350867242,
+     "author": "ggbdpq",
+     "created_at": "2026-10-22T20:42:22Z",
+     "body": "Verified — `873c5dfd` keeps the fix (the `forgetClaudeCredential()` after the fixture writes its login) and adds what my patch lacked: a deterministic regression that reads the empty fixture home first, so the miss is cached before `claudeSignIn` runs. With that line taken back out, `TestClaudeSignI"
+    },
+    {
+     "id": 6383764321,
+     "author": "yetone",
+     "created_at": "2026-10-24T11:40:47Z",
+     "body": "Seen again at 344d11484 (before rebase: 55dabef7b on f5b1d36ff): go test -tags nogui ./internal/provider/ ./internal/cli/ under a sandbox HOME at load ~300, provider took 649s and this was its only red (claude_models_test.go:52, find(All(), \"claude\") found no Account). Green alone -count=10 at the s"
+    },
+    {
+     "id": 6384114507,
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T12:18:10Z",
+     "body": "## Summary\n\nThe red at 344d114 is the original hole, not a second path: no fix ever landed upstream. I fetched `344d11484e411...` — its `claudeSignIn` is byte-identical to main's, and `account.go` / `account_test.go` / `claude_models_test.go` have a zero diff between main (`b9950956`) and that head."
+    }
+   ],
+   "last_our_comment": "2026-10-22T19:07:26+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-22T20:42:22Z",
+     "body": "Verified — `873c5dfd` keeps the fix (the `forgetClaudeCredential()` after the fixture writes its login) and adds what my patch lacked: a deterministic"
+    },
+    {
+     "author": "yetone",
+     "created_at": "2026-10-24T11:40:47Z",
+     "body": "Seen again at 344d11484 (before rebase: 55dabef7b on f5b1d36ff): go test -tags nogui ./internal/provider/ ./internal/cli/ under a sandbox HOME at load"
+    },
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T12:18:10Z",
+     "body": "## Summary\n\nThe red at 344d114 is the original hole, not a second path: no fix ever landed upstream. I fetched `344d11484e411...` — its `claudeSignIn`"
+    }
+   ]
+  },
+  "3176": {
+   "number": 3176,
+   "state": "open",
+   "title": "rest-cap (and quotaRest) set on a subscription provider is silently ignored: withPicks doesn't carry RestCap/QuotaRest",
+   "updated_at": "2026-10-22T15:55:43Z",
+   "closed_at": null,
+   "comments_count": 3,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6315699506,
+     "author": "ggbdpq",
+     "created_at": "2026-10-21T12:17:40Z",
+     "body": "This is the same defect as #3076, where a patch is already waiting: `withPicks` (internal/provider/provider.go:675) copies the provider's picks onto each signed-in account but leaves out `QuotaRest`, `QuotaResetAt` and `RestCap`, so the cap never reaches subscription accounts — the same one-line omi"
+    },
+    {
+     "id": 6343065990,
+     "author": "skygunner",
+     "created_at": "2026-10-22T14:20:28Z",
+     "body": "修了，在分支 [skygunner:fix/account-rest-cap](https://github.com/skygunner/magpie/tree/fix/account-rest-cap)（commit c41b6fe，基于 main 87d703c5）。README 说本仓库不开 PR，放在这里供取用。\n\n按你的建议把 `withPicks` 补上了，一处修两个入口（All 的主账号 + logins_on 的 AlsoOn 账号）：\n\n- 补的三个字段：`RestCap`、`QuotaRest`，以及同一族的 `QuotaResetAt`（#2008 的 `quota-re"
+    },
+    {
+     "id": 6345140495,
+     "author": "ggbdpq",
+     "created_at": "2026-10-22T15:55:43Z",
+     "body": "verified — I checked out `skygunner:fix/account-rest-cap` (`c41b6fe`, based on `main` `87d703c5`, an ancestor of today's tip `95be6bb7`) and re-ran the checks on it.\n\nCoverage vs. our [#3076](https://github.com/yetone/magpie/issues/3076) branch (`hunt53-d-restcap`, `048abe41`): the two commits carry"
+    }
+   ],
+   "last_our_comment": "2026-10-22T14:20:28+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-22T15:55:43Z",
+     "body": "verified — I checked out `skygunner:fix/account-rest-cap` (`c41b6fe`, based on `main` `87d703c5`, an ancestor of today's tip `95be6bb7`) and re-ran th"
+    }
+   ]
+  },
+  "3183": {
+   "number": 3183,
+   "state": "open",
+   "title": "[Bug] 原生 Responses 中继缺少明文协作标记，Codex V2 子任务丢失（v0.1.1311）",
+   "updated_at": "2026-10-23T04:41:22Z",
+   "closed_at": null,
+   "comments_count": 3,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6318641192,
+     "author": "ggbdpq",
+     "created_at": "2026-10-21T14:33:32Z",
+     "body": "## Summary\n\nThe branch of #141/#613 that no fix reached is the relay. On a vendor serving the Responses API natively, Codex's request is relayed as it came (`Server.passthrough`, internal/gateway/gateway.go:4179) — and the vendor's reply went back as it came too. A vendor that answers `collaboration"
+    },
+    {
+     "id": 6350770765,
+     "author": "skygunner",
+     "created_at": "2026-10-22T20:37:17Z",
+     "body": "Implemented both parts on my fork: [b1ae66c7](https://github.com/skygunner/magpie/commit/b1ae66c779355c897eed2337f83666447ae8db2a). The response-side fix and its original tests are adapted from ggbdpq's patch, with attribution retained.\n\nFor third-party Responses relays, an offered native namespaced"
+    },
+    {
+     "id": 6357543299,
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:41:22Z",
+     "body": "Verified the fork commit on top of `63be4771` (Windows, Go 1.26.8): cherry-picked b1ae66c7, ran the collaboration family in both packages, and reproduced both halves' regressions with the product files reverted.\n\n**What was verified**\n\n- Response side adapted from my `9fff5bab` faithfully: the `nsTi"
+    }
+   ],
+   "last_our_comment": "2026-10-22T20:37:17+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:41:22Z",
+     "body": "Verified the fork commit on top of `63be4771` (Windows, Go 1.26.8): cherry-picked b1ae66c7, ran the collaboration family in both packages, and reprodu"
+    }
+   ]
+  },
+  "3193": {
+   "number": 3193,
+   "state": "open",
+   "title": "usage: a custom provider's balance meters (\"…%\" in the balance path) ignore the Left/Used switch",
+   "updated_at": "2026-10-23T04:41:26Z",
+   "closed_at": null,
+   "comments_count": 3,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6327681200,
+     "author": "ggbdpq",
+     "created_at": "2026-10-21T22:11:48Z",
+     "body": "A balance part asked as a percent now reads the way every window does: Left says what is left of it and fills the bar with that, Used keeps the share the reply reported.\n\n**Summary**\n\nWith the Left/Used switch on Left, subscription windows read \"… left\", but a custom provider's balance meter stayed "
+    },
+    {
+     "id": 6351631831,
+     "author": "skygunner",
+     "created_at": "2026-10-22T21:24:00Z",
+     "body": "I carried this fix into the user fork, based on @ggbdpq’s [original patch](https://github.com/ggbdpq/magpie/commit/579942e679de66090299ba73f8c071a9f9bfb89c), with attribution retained and broader browser coverage.\n\n- Fix: [skygunner/magpie@15759adb](https://github.com/skygunner/magpie/commit/15759ad"
+    },
+    {
+     "id": 6357544117,
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:41:26Z",
+     "body": "Verified the fork commit on top of `63be4771` (Windows, Go 1.26.8) as far as this machine reaches: cherry-picked 15759adb, checked the renderer change line by line against my `579942e6`, and ran the Go-side budget gate. The browser regression itself I could not run — no Playwright or browsers instal"
+    }
+   ],
+   "last_our_comment": "2026-10-22T21:24:00+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:41:26Z",
+     "body": "Verified the fork commit on top of `63be4771` (Windows, Go 1.26.8) as far as this machine reaches: cherry-picked 15759adb, checked the renderer change"
+    }
+   ]
+  },
+  "3197": {
+   "number": 3197,
+   "state": "open",
+   "title": "Mid-stream upstream failure (Z.ai 502 / connection reset) leaves Pi with malformed SSE and hangs, even though failover w",
+   "updated_at": "2026-10-23T04:40:18Z",
+   "closed_at": null,
+   "comments_count": 3,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6325966863,
+     "author": "ggbdpq",
+     "created_at": "2026-10-21T20:35:28Z",
+     "body": "The relay already ended a stream whose upstream died mid-reply with the protocol's own error event, but what it appended began after a blank line — and that blank line completed whatever half line the upstream's last write had left standing into an event of its own. Pi read that event's truncated JS"
+    },
+    {
+     "id": 6350770188,
+     "author": "skygunner",
+     "created_at": "2026-10-22T20:37:15Z",
+     "body": "Implemented on my fork: [a6a2c260](https://github.com/skygunner/magpie/commit/a6a2c260e8a2425a8ea5276e46ac6753af9fd9c8), based on ggbdpq's proposed fix, with attribution retained.\n\nThe Chat SSE passthrough now retains an incomplete line until it is complete. If the upstream disconnects, the truncate"
+    },
+    {
+     "id": 6357173914,
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:10:59Z",
+     "body": "Verified the adaptation: [a6a2c260](https://github.com/skygunner/magpie/commit/a6a2c260e8a2425a8ea5276e46ac6753af9fd9c8) carries the fix from my [comment above](#issuecomment-6325966863) (52f5fba). Re-ran the cycle myself, the commit cherry-picked onto `main` @ 63be4771 (plus the two other hunt66 co"
+    }
+   ],
+   "last_our_comment": "2026-10-22T20:37:15+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T04:10:59Z",
+     "body": "Verified the adaptation: [a6a2c260](https://github.com/skygunner/magpie/commit/a6a2c260e8a2425a8ea5276e46ac6753af9fd9c8) carries the fix from my [comm"
+    }
+   ]
+  },
+  "3205": {
+   "number": 3205,
+   "state": "open",
+   "title": "gateway: kimiToolRefTypes writes a type beside a $ref whose target is {format, description, $ref}",
+   "updated_at": "2026-10-22T20:40:24Z",
+   "closed_at": null,
+   "comments_count": 3,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6325760878,
+     "author": "ggbdpq",
+     "created_at": "2026-10-21T20:24:46Z",
+     "body": "## Summary\n\n`kimiToolRefTypes` (internal/gateway/kimi_schema.go) wrote a `type` into every schema a tool's `$ref`s reach that has none. When the reached target was itself a `$ref` — zod writes one beside what it changed of a reused schema, a `format` and a `description` among them — that `type` land"
+    },
+    {
+     "id": 6350369324,
+     "author": "skygunner",
+     "created_at": "2026-10-22T20:17:01Z",
+     "body": "Adopted @ggbdpq's patch [4b3b8083](https://github.com/ggbdpq/magpie/commit/4b3b8083a19bc26b27af746ebc91d208eb53f645) in my fork, with `Co-authored-by: ggbdpq <ggbdpq@gmail.com>` preserved: [f5ec664](https://github.com/skygunner/magpie/commit/f5ec664), branch [`fix/kimi-ref-chain`](https://github.com"
+    },
+    {
+     "id": 6350830401,
+     "author": "ggbdpq",
+     "created_at": "2026-10-22T20:40:24Z",
+     "body": "Verified — `f5ec664b` carries my 4b3b8083's product change byte for byte (`git diff 4b3b8083 f5ec664b -- internal/gateway/kimi_schema.go` is empty), with `Co-authored-by: ggbdpq` preserved, plus ~100 lines of regression tests and the routing-doc note my patch didn't have.\n\nChecked the branch out and"
+    }
+   ],
+   "last_our_comment": "2026-10-22T20:17:01+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-22T20:40:24Z",
+     "body": "Verified — `f5ec664b` carries my 4b3b8083's product change byte for byte (`git diff 4b3b8083 f5ec664b -- internal/gateway/kimi_schema.go` is empty), w"
+    }
+   ]
+  },
+  "3213": {
+   "number": 3213,
+   "state": "open",
+   "title": "gateway: Qoder's per-model queue 503 rests the whole account, so sibling models are refused without asking upstream",
+   "updated_at": "2026-10-23T08:03:21Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6343670538,
+     "author": "skygunner",
+     "created_at": "2026-10-22T14:48:48Z",
+     "body": "修了（按你建议的第二种：在 `restAfterMarked` 的 default 分支收窄），在分支 [skygunner:fix/queue-model-rest](https://github.com/skygunner/magpie/tree/fix/queue-model-rest)（commit 1b9f089，基于 main 87d703c5）。README 说本仓库不开 PR，放在这里供取用。\n\n改动：\n\n- `fallback.go` 新增 `queuedWords`（`(?i)queued the request for`，按措辞不按厂商——任何以 5xx 回已把请求排进该"
+    },
+    {
+     "id": 6360371924,
+     "author": "skygunner",
+     "created_at": "2026-10-23T08:03:21Z",
+     "body": "分支跟着 main 走了一步：上游把 `restAfterMarked` 从 fallback.go 挪进了 routing.go（#3274 的 refusal 整理和新的 slow-start 休息），[skygunner:fix/queue-model-rest](https://github.com/skygunner/magpie/tree/fix/queue-model-rest) 已 rebase 到当前 main be002aca（commit 50eac57f），语义不变——queued 5xx 仍按 `restID` 只歇该模型、不计账号。internal/gateway "
+    }
+   ],
+   "last_our_comment": "2026-10-23T08:03:21+00:00",
+   "new_after_ours": []
+  },
+  "3224": {
+   "number": 3224,
+   "state": "open",
+   "title": "[bug] Drift 误报：Claude Code 的 `exit` 记录不带斜杠前缀，被 lastJSONLTime 当成一次使用，反复提示 bypassed",
+   "updated_at": "2026-10-22T20:01:19Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6332277167,
+     "author": "ump45nose",
+     "created_at": "2026-10-22T03:54:19Z",
+     "body": "Possible fix for this, in case it helps:\n\n**Root cause.** Claude Code writes the `/exit` and `/quit` it answers itself into `history.jsonl` as the bare word (`exit` / `quit`, per the report here; I didn't verify that independently). `lastJSONLTime` only passes over lines starting with `/`, so the ex"
+    },
+    {
+     "id": 6350064542,
+     "author": "skygunner",
+     "created_at": "2026-10-22T20:01:19Z",
+     "body": "Adopted and verified @ump45nose's fix from this thread, with `Co-authored-by` credit preserved:\nhttps://github.com/skygunner/magpie/tree/fix/claude-exit-drift\n\nClaude's LastUsed now passes over bare `exit` and `quit` records, as well as slash commands. Those local commands therefore cannot move its "
+    }
+   ],
+   "last_our_comment": "2026-10-22T20:01:19+00:00",
+   "new_after_ours": []
+  },
+  "3229": {
+   "number": 3229,
+   "state": "open",
+   "title": "gui tests: proto-menu-overflow reads the saved tray account before its POST arrives (red under load, passes alone)",
+   "updated_at": "2026-10-25T07:09:13Z",
+   "closed_at": null,
+   "comments_count": 3,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6350064115,
+     "author": "skygunner",
+     "created_at": "2026-10-22T20:01:18Z",
+     "body": "Implemented in the fork: https://github.com/skygunner/magpie/tree/fix/quota-picker-save-test\n\nThe test now waits until the settings handler has recorded the save before reading `trayUsages`. The fixture deliberately holds recording until after the click and Escape have returned, then releases it exp"
+    },
+    {
+     "id": 6388651931,
+     "author": "yetone",
+     "created_at": "2026-10-24T19:38:01Z",
+     "body": "Seen again in a whole GUI run (chromium, concurrency 4, load 80-160) at 1f156ba40/761904b5a:\n\n```\ntest at proto-menu-overflow.test.cjs:67:5\n✖ chromium zh: a quota picker taller than the window clamps and scrolls (3470.992458ms)\n  AssertionError [ERR_ASSERTION]: the last account was picked and saved:"
+    },
+    {
+     "id": 6394721247,
+     "author": "skygunner",
+     "created_at": "2026-10-25T07:09:13Z",
+     "body": "That second sighting is the same race as the first: the chromium zh case at the same `proto-menu-overflow.test.cjs:110` assertion, on a loaded machine — the picker's save POST lands after `last.click()` and Escape have returned, and the test reads `posts` before the route handler records it. Alone i"
+    }
+   ],
+   "last_our_comment": "2026-10-25T07:09:13+00:00",
+   "new_after_ours": []
+  },
+  "3233": {
+   "number": 3233,
+   "state": "open",
+   "title": "GUI: 切换协议标签页后 Anthropic baseURL 被改成 /v1beta",
+   "updated_at": "2026-10-22T20:01:16Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6350063562,
+     "author": "skygunner",
+     "created_at": "2026-10-22T20:01:16Z",
+     "body": "Implemented in the fork:\n- URL fix: https://github.com/skygunner/magpie/commit/9f7ada4f\n- Test save-completion follow-up: https://github.com/skygunner/magpie/commit/9829acc\n- Branch: https://github.com/skygunner/magpie/tree/fix/provider-protocol-url\n\nConsecutive tab switches were converting the prev"
+    }
+   ],
+   "last_our_comment": "2026-10-22T20:01:16+00:00",
+   "new_after_ours": []
+  },
+  "3234": {
+   "number": 3234,
+   "state": "open",
+   "title": "TUI Agents page clips settings when an agent has many model fields (e.g. omp)",
+   "updated_at": "2026-10-26T06:11:42Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6349585899,
+     "author": "skygunner",
+     "created_at": "2026-10-22T19:36:21Z",
+     "body": "Implemented in the fork: https://github.com/skygunner/magpie/commit/cebfc28361b5b4a29b71d3ddfbdfd039e69c2b96\n\nExpand the selected agent into wrapped field lines when its compact row exceeds the terminal width. The visible field window follows the selected field, keeps the config path visible, and re"
+    }
+   ],
+   "last_our_comment": "2026-10-22T19:36:21+00:00",
+   "new_after_ours": []
+  },
+  "3246": {
+   "number": 3246,
+   "state": "open",
+   "title": "[Bug] ZCode 接入 magpie 后用一段时间会自动退出接入状态，需要手动重新接入",
+   "updated_at": "2026-10-25T21:21:45Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6403466440,
+     "author": "skygunner",
+     "created_at": "2026-10-25T21:21:45Z",
+     "body": "你的推测方向是对的：`wired()` 看两个文件，而 `Sync` 在 `!wired()` 时直接 `return nil`，所以只要 ZCode 自己在重启/更新时把 `provider_config.json` 里的 magpie 规则去掉，magpie 既不会写回，也不会提示——Agents 页就显示未接入，只能手动重连。网关一直活着这一点也吻合：掉的是接入状态，不是进程。\n\n修复在 [fix/zcode-reconnect-after-rewrite](https://github.com/skygunner/magpie/tree/fix/zcode-reconnect-afte"
+    }
+   ],
+   "last_our_comment": "2026-10-25T21:21:45+00:00",
+   "new_after_ours": []
+  },
+  "3248": {
+   "number": 3248,
+   "state": "open",
+   "title": "gateway/antigravity: a reply restarted inside one Code Assist SSE stream reaches the agent spliced (gemini-4-argon, sinc",
+   "updated_at": "2026-10-25T21:25:00Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6336616737,
+     "author": "stabruriss",
+     "created_at": "2026-10-22T08:44:50Z",
+     "body": "Two corrections and a few more data points, from a colleague who went through the client session files independently:\n\n- In the JSON above, the 5,835-character case with an empty `segment_starts_by_repeated_opening` restarts at offset **3013**, not 2946 as I wrote; the 5,220-character case has **fou"
+    },
+    {
+     "id": 6403504636,
+     "author": "skygunner",
+     "created_at": "2026-10-25T21:25:00Z",
+     "body": "Confirmed in the decoder, as you put it: `codeAssistDecoder` read `responseId` only on the first chunk and then passed every generation's text parts through as deltas of the same answer, so a restart inside one SSE response could only arrive spliced.\n\nFixed on [fix/3248-codeassist-restart](https://g"
+    }
+   ],
+   "last_our_comment": "2026-10-25T21:25:00+00:00",
+   "new_after_ours": []
+  },
+  "3251": {
+   "number": 3251,
+   "state": "open",
+   "title": "gateway: 火山方舟月度额度用尽后每 15 分钟被重试一次 —— \"reset at … +0800 CST\" 不被 resetsWhen 读，套餐窗口也没进路由",
+   "updated_at": "2026-10-25T23:23:04Z",
+   "closed_at": null,
+   "comments_count": 5,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6342260029,
+     "author": "skygunner",
+     "created_at": "2026-10-22T13:43:02Z",
+     "body": "修了这里的第 1 层（`resetsWhen` 读 `+0800 CST` 形式的偏移），外加月度信任窗口，在分支 [skygunner:fix/volcengine-resets](https://github.com/skygunner/magpie/tree/fix/volcengine-resets)（commit e6c2b6fb，基于 main 87d703c5）。README 说本仓库不开 PR，所以放在这里供取用。\n\n**改了什么**\n\n- `resetsWhen` 除了 `UTC`/`GMT` 后跟偏移，也读偏移自身成数（`+0800`、`+08:00`）、后面可跟时区名（`"
+    },
+    {
+     "id": 6344963875,
+     "author": "yetone",
+     "created_at": "2026-10-22T15:47:32Z",
+     "body": "第 1 层已在 8278fd9b0ce1083e71ae4651bce5d138f940d95e 修复（main，尚未打 tag）。参考了 @skygunner 分支 `fix/volcengine-resets`（e6c2b6fb），提交里署了 Co-authored-by。\n\n**改了什么**\n\n- `resetsWhen` 现在也能读 Go 默认格式的时间：四位偏移、空格、大写时区名，再接标点或「重置」，如 `It will reset at 2026-10-25 23:59:59 +0800 CST.`。按 `+0800` 换算，`CST` 不参与（CST 本身就对应多个时区）。原来的"
+    },
+    {
+     "id": 6347835206,
+     "author": "yetone",
+     "created_at": "2026-10-22T18:09:55Z",
+     "body": "8278fd9b0 已随 v0.1.1325 发布（2026-10-23）。更新到 v0.1.1325 后，火山方舟 429 里 `reset at … +0800 CST` 这种时间会被读出来，按它等到重置，不再每 15 分钟重试一次。方便的话升级后帮忙看看是否如此；确认之前这个 issue 先开着。"
+    },
+    {
+     "id": 6356120638,
+     "author": "CNife",
+     "created_at": "2026-10-23T02:43:34Z",
+     "body": "<img width=\"1166\" height=\"140\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/c64e752c-3e2a-4cc0-aa1b-578eb6e9920b\" />\n\nbug 确认已经被修复了，感谢！"
+    },
+    {
+     "id": 6404834510,
+     "author": "Edward4226",
+     "created_at": "2026-10-25T23:23:04Z",
+     "body": "## 结论\n\n第 1 层已由 `8278fd9b` 修复，报告者也已确认。这里补的是第 2 层：Ark 用 AccessKey 从控制面读到的套餐窗口进入 routing allowance。\n\n本地候选只在一个保守条件下桥接：provider 只有一个实际启用的推理 key，且 AccessKey 完整。成功后，路由能看到 5 小时/周/月窗口；当月度窗口已满时，`restAfterMarked` 可以让该 key 休到套餐卡给出的月度重置，而不是退到 15 分钟 `quotaRest`。多 key 时保持 unknown，避免共享错误账号卡。\n\n## 依据\n\n- 分支：https://gi"
+    }
+   ],
+   "last_our_comment": "2026-10-22T13:43:02+00:00",
+   "new_after_ours": [
+    {
+     "author": "yetone",
+     "created_at": "2026-10-22T15:47:32Z",
+     "body": "第 1 层已在 8278fd9b0ce1083e71ae4651bce5d138f940d95e 修复（main，尚未打 tag）。参考了 @skygunner 分支 `fix/volcengine-resets`（e6c2b6fb），提交里署了 Co-authored-by。\n\n**改了什么**\n"
+    },
+    {
+     "author": "yetone",
+     "created_at": "2026-10-22T18:09:55Z",
+     "body": "8278fd9b0 已随 v0.1.1325 发布（2026-10-23）。更新到 v0.1.1325 后，火山方舟 429 里 `reset at … +0800 CST` 这种时间会被读出来，按它等到重置，不再每 15 分钟重试一次。方便的话升级后帮忙看看是否如此；确认之前这个 issue 先开"
+    },
+    {
+     "author": "CNife",
+     "created_at": "2026-10-23T02:43:34Z",
+     "body": "<img width=\"1166\" height=\"140\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/c64e752c-3e2a-4cc0-aa1b-578eb6e9920b\" />\n\nbug 确认已经被修复了，感谢！"
+    },
+    {
+     "author": "Edward4226",
+     "created_at": "2026-10-25T23:23:04Z",
+     "body": "## 结论\n\n第 1 层已由 `8278fd9b` 修复，报告者也已确认。这里补的是第 2 层：Ark 用 AccessKey 从控制面读到的套餐窗口进入 routing allowance。\n\n本地候选只在一个保守条件下桥接：provider 只有一个实际启用的推理 key，且 AccessKey"
+    }
+   ]
+  },
+  "3255": {
+   "number": 3255,
+   "state": "open",
+   "title": "[Bug] panic: close of nil channel in sessions.refresh when PI_CODING_AGENT_DIR points to omp dir",
+   "updated_at": "2026-10-23T02:18:43Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6342498748,
+     "author": "skygunner",
+     "created_at": "2026-10-22T13:54:14Z",
+     "body": "main 上 #2932 的 `distinctPaths` 已经把完全相同拼写的重复路径挡住了（你这条 $PI_CODING_AGENT_DIR=~/.omp/agent 的场景不再 panic）。\n\n不同拼写（链接、Windows 大小写）仍会双列——那是 #3258 记的事。我刚在 #3258 下贴了对应修复分支 [skygunner:fix/shared-session-folder](https://github.com/skygunner/magpie/tree/fix/shared-session-folder)（commit 4c3d6e2，基于 main 87d703c5）："
+    }
+   ],
+   "last_our_comment": "2026-10-22T13:54:14+00:00",
+   "new_after_ours": []
+  },
+  "3258": {
+   "number": 3258,
+   "state": "open",
+   "title": "sessions: two agents told to share one folder under different spellings (a link, a letter's case on Windows) read its se",
+   "updated_at": "2026-10-22T13:54:06Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6342495758,
+     "author": "skygunner",
+     "created_at": "2026-10-22T13:54:06Z",
+     "body": "修了这个（pi/omp 和 qoder/qoder-cn 两对都做），在分支 [skygunner:fix/shared-session-folder](https://github.com/skygunner/magpie/tree/fix/shared-session-folder)（commit 4c3d6e2，基于 main 87d703c5）。README 说本仓库不开 PR，放在这里供取用。\n\n按你说的第一种做法——**按 #2932 的 sameFolder 先例，由文件夹的属主 agent 读一次**：\n\n- `piFiles()`：`sameFolder(PiDir(), O"
+    }
+   ],
+   "last_our_comment": "2026-10-22T13:54:06+00:00",
+   "new_after_ours": []
+  },
+  "3259": {
+   "number": 3259,
+   "state": "open",
+   "title": "gateway: 流式下 narration-only 完成被改写为 `finish_reason: \"tool_calls\"`（mimo 系列必现，导致客户端误判丢工具调用并反复重试）",
+   "updated_at": "2026-10-22T14:10:08Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6342839037,
+     "author": "skygunner",
+     "created_at": "2026-10-22T14:10:08Z",
+     "body": "修了，在分支 [skygunner:fix/null-tool-calls](https://github.com/skygunner/magpie/tree/fix/null-tool-calls)（commit d2abf49，基于 main 87d703c5）。README 说本仓库不开 PR，放在这里供取用。\n\n根因正如你的字段差异分析：`chattidy` 的流式整理把「`tool_calls` 键存在且不是 `[]`」当作有调用，mimo 末帧的 `\"tool_calls\": null` 落进了这个分支，于是 `finish_reason: \"stop\"` 被改写成 `\"tool_"
+    }
+   ],
+   "last_our_comment": "2026-10-22T14:10:08+00:00",
+   "new_after_ours": []
+  },
+  "3260": {
+   "number": 3260,
+   "state": "open",
+   "title": "[Bug] Portable VS Code 能被识别，但使用了错误的 %APPDATA%\\Code\\User 数据目录",
+   "updated_at": "2026-10-26T06:11:45Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6349585359,
+     "author": "skygunner",
+     "created_at": "2026-10-22T19:36:20Z",
+     "body": "此前已在 fork 实现：[fix/vscode-portable-path](https://github.com/skygunner/magpie/tree/fix/vscode-portable-path)，提交 [e4ca1b34f841fc9aa84daf17510948c72b15c3f4](https://github.com/skygunner/magpie/commit/e4ca1b34f841fc9aa84daf17510948c72b15c3f4)。\n\n原修复沿 PATH 上实际的 launcher 解析 portable 数据目录，包括 Scoop 的 current "
+    },
+    {
+     "id": 6364978841,
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T12:34:03Z",
+     "body": "## Summary\n\nScoop's VS Code is a portable build: it was detected, but magpie's `Agent.Dir` stayed at `%APPDATA%\\Code\\User`, which doesn't exist — `code.cmd` on PATH was detection enough — so the provider, models and `settings.json` magpie wrote went where the build never reads. A portable build's Us"
+    }
+   ],
+   "last_our_comment": "2026-10-22T19:36:20+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T12:34:03Z",
+     "body": "## Summary\n\nScoop's VS Code is a portable build: it was detected, but magpie's `Agent.Dir` stayed at `%APPDATA%\\Code\\User`, which doesn't exist — `cod"
+    }
+   ]
+  },
+  "3266": {
+   "number": 3266,
+   "state": "open",
+   "title": "ZCode：5 小时额度重置后仍显示限流，旧 rate 状态未随额度恢复解除",
+   "updated_at": "2026-10-22T19:07:24Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6349009131,
+     "author": "skygunner",
+     "created_at": "2026-10-22T19:07:24Z",
+     "body": "已按 issue 中的根因做了最小修复：[942bf679](https://github.com/skygunner/magpie/commit/942bf6798e64cd25a3e9683ec6a30b325510205b)（分支 `fix/zcode-window-renewal`）。\n\n`plannedWords` 补充“小时的使用上限”。因此插件即使把 1308 中文错误包装成 `rate_limit_error`，也会记为 `quota / resets`；已有的额度恢复事件随后可以解除这条休眠，无需改变 `renewed()` 对真实限流的保护。\n\n留下了确定性回归：中文原文、"
+    }
+   ],
+   "last_our_comment": "2026-10-22T19:07:24+00:00",
+   "new_after_ours": []
+  },
+  "3276": {
+   "number": 3276,
+   "state": "closed",
+   "title": "火山引擎返回的429重置时间不识别",
+   "updated_at": "2026-10-23T05:08:30Z",
+   "closed_at": "2026-10-23T05:08:30Z",
+   "comments_count": 4,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6342270787,
+     "author": "skygunner",
+     "created_at": "2026-10-22T13:43:32Z",
+     "body": "你要的两点，第 1、3 点在分支 [skygunner:fix/volcengine-resets](https://github.com/skygunner/magpie/tree/fix/volcengine-resets)（commit e6c2b6fb，基于 main 87d703c5）上修了；README 说本仓库不开 PR，放在这里供取用。\n\n1. `resetsWhen` 现在读 `±HHMM` / `±HH:MM` 裸偏移，偏移后可跟时区缩写（`CST` 等）再到 重置/标点，`+0800` 按偏移读，不再要求 `UTC`/`GMT` 前缀。\n3. 8 天上限：没有全局放开——"
+    },
+    {
+     "id": 6344964639,
+     "author": "yetone",
+     "created_at": "2026-10-22T15:47:34Z",
+     "body": "已在 8278fd9b0ce1083e71ae4651bce5d138f940d95e 修复（main，尚未打 tag）。参考了 @skygunner 的分支，提交里署了 Co-authored-by。对照你列的三点：\n\n1. `+0800 CST` 现在能读了：按 `+0800` 换算，时区名 `CST` 不参与。范围只限 Go 打印时间的格式，也就是 Ark 实际发的这种；其他厂商原有的 `UTC+8` 写法不受影响。\n2. 你贴的这条 `AccountQuotaExceeded`（10-31 23:59:59 重置，当时距今 9 天）现在会记为 `fail=quota`、`by=rese"
+    },
+    {
+     "id": 6347835810,
+     "author": "yetone",
+     "created_at": "2026-10-22T18:09:57Z",
+     "body": "8278fd9b0 已随 v0.1.1325 发布（2026-10-23）。更新到 v0.1.1325 后，火山方舟 429 里 `reset at … +0800 CST` 这种时间会被读出来，按它等到重置，不再每 15 分钟重试一次。方便的话升级后帮忙看看是否如此；确认之前这个 issue 先开着。"
+    },
+    {
+     "id": 6356521288,
+     "author": "wyx1818",
+     "created_at": "2026-10-23T03:16:02Z",
+     "body": "> 5\\. [8278fd9](https://github.com/yetone/magpie/commit/8278fd9b0ce1083e71ae4651bce5d138f940d95e) 已随 v0.1.1325 发布（2026-10-23）。更新到 v0.1.1325 后，火山方舟 429 里 `reset at … +0800 CST` 这种时间会被读出来，按它等到重置，不再每 15 分钟重试一次。方便的话升级后帮忙看看是否如此；确认之前这个 issue 先开着。\n\n感谢作者，已经能正确识别重置时间了\n\n<img width=\"867\" height=\"254\" alt=\"Imag"
+    }
+   ],
+   "last_our_comment": "2026-10-22T13:43:32+00:00",
+   "new_after_ours": [
+    {
+     "author": "yetone",
+     "created_at": "2026-10-22T15:47:34Z",
+     "body": "已在 8278fd9b0ce1083e71ae4651bce5d138f940d95e 修复（main，尚未打 tag）。参考了 @skygunner 的分支，提交里署了 Co-authored-by。对照你列的三点：\n\n1. `+0800 CST` 现在能读了：按 `+0800` 换算，时区名 `"
+    },
+    {
+     "author": "yetone",
+     "created_at": "2026-10-22T18:09:57Z",
+     "body": "8278fd9b0 已随 v0.1.1325 发布（2026-10-23）。更新到 v0.1.1325 后，火山方舟 429 里 `reset at … +0800 CST` 这种时间会被读出来，按它等到重置，不再每 15 分钟重试一次。方便的话升级后帮忙看看是否如此；确认之前这个 issue 先开"
+    },
+    {
+     "author": "wyx1818",
+     "created_at": "2026-10-23T03:16:02Z",
+     "body": "> 5\\. [8278fd9](https://github.com/yetone/magpie/commit/8278fd9b0ce1083e71ae4651bce5d138f940d95e) 已随 v0.1.1325 发布（2026-10-23）。更新到 v0.1.1325 后，火山方舟 429"
+    }
+   ]
+  },
+  "3277": {
+   "number": 3277,
+   "state": "open",
+   "title": "GUI test: codex-subagent-model reads the Routing story after a fixed 300ms wait, red under load",
+   "updated_at": "2026-10-22T19:07:23Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6349008616,
+     "author": "skygunner",
+     "created_at": "2026-10-22T19:07:23Z",
+     "body": "I reproduced the stale-story failure and pushed a focused test fix: [435c03ac](https://github.com/skygunner/magpie/commit/435c03ac10c01e4f6b779fa40254cefd19bc5c10).\n\nThe test clicked a request, slept 300ms, then checked `.rt-steps`. If rendering took longer, it checked the previous request’s story. "
+    }
+   ],
+   "last_our_comment": "2026-10-22T19:07:23+00:00",
+   "new_after_ours": []
+  },
+  "3280": {
+   "number": 3280,
+   "state": "open",
+   "title": "test: TestClaudeClientCacheAbsentUnchanged is red wherever /bin/sh's echo leaves \\n as written (bash as sh), green on da",
+   "updated_at": "2026-10-22T18:26:58Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6348173813,
+     "author": "skygunner",
+     "created_at": "2026-10-22T18:26:57Z",
+     "body": "Fixed in my fork: [ef857324](https://github.com/skygunner/magpie/commit/ef857324101d0588b713f50b1b1304324a96bb3d), branch `fix/claude-harness-bytes`.\n\nThe shared harness now writes its data with fixed-format `printf '%s\\n'`, covering logs, control messages, session JSONL and replies. The cache test "
+    }
+   ],
+   "last_our_comment": "2026-10-22T18:26:57+00:00",
+   "new_after_ours": []
+  },
+  "3282": {
+   "number": 3282,
+   "state": "open",
+   "title": "Pi 集成：Google 模型未配置为 google-generative-ai，仍继承 openai-completions",
+   "updated_at": "2026-10-22T18:26:56Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6348173228,
+     "author": "skygunner",
+     "created_at": "2026-10-22T18:26:56Z",
+     "body": "已在我的 fork 提交修复：[279e9bd1](https://github.com/skygunner/magpie/commit/279e9bd1c40823112cd854860dfe46f2e903ccfa)，分支 `fix/pi-google-api`。\n\n问题有两层：生成 Pi 配置时没有 Gemini 分支；更早的 `magpieModels` 又把仅支持 Gemini/Code Assist 的模型能力丢掉了。现在这类模型会写入 `api: \"google-generative-ai\"` 和网关 `/v1beta` 地址。Pi、OmO、Prime Agent、StepCod"
+    }
+   ],
+   "last_our_comment": "2026-10-22T18:26:56+00:00",
+   "new_after_ours": []
+  },
+  "3284": {
+   "number": 3284,
+   "state": "open",
+   "title": "provider: TestOpenCodeSessionOnEveryCall red under a full run's load (decisions differ), green alone and in its package",
+   "updated_at": "2026-10-25T14:20:21Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6348174237,
+     "author": "skygunner",
+     "created_at": "2026-10-22T18:26:59Z",
+     "body": "I found a deterministic cause and fixed the test isolation in my fork: [30b23a3f](https://github.com/skygunner/magpie/commit/30b23a3fc6885d2f9fd2a079e80d7f53faa2282e), branch `fix/opencode-session-test`.\n\n`TestOpenCodeSessionsKeptBounded` generates over 1,000 IDs and leaves its shared millisecond co"
+    },
+    {
+     "id": 6398587235,
+     "author": "Edward4226",
+     "created_at": "2026-10-25T14:01:31Z",
+     "body": "## Result\n\nI independently verified the test-isolation fix on current upstream main `9277c256`.\n\n- Verification branch: https://github.com/Edward4226/magpie/tree/codex/verify-3284-session-test-isolation\n- Head commit: `3bfdf0db`\n- Original fix author: skygunner (`30b23a3f`)\n\nThe bounded-session stre"
+    }
+   ],
+   "last_our_comment": "2026-10-22T18:26:59+00:00",
+   "new_after_ours": [
+    {
+     "author": "Edward4226",
+     "created_at": "2026-10-25T14:01:31Z",
+     "body": "## Result\n\nI independently verified the test-isolation fix on current upstream main `9277c256`.\n\n- Verification branch: https://github.com/Edward4226/"
+    }
+   ]
+  },
+  "3285": {
+   "number": 3285,
+   "state": "open",
+   "title": "plugin host: every auto-update restart (syscall.Exec) leaves the old Bun host a zombie",
+   "updated_at": "2026-10-22T18:26:53Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6348172340,
+     "author": "skygunner",
+     "created_at": "2026-10-22T18:26:53Z",
+     "body": "I reproduced this with a real Bun host and a real Linux `exec`, and put a fix in my fork: [863a1e72](https://github.com/skygunner/magpie/commit/863a1e725073a19829e8986e92c92c20a48e6003) (branch `fix/reexec-plugin-host`; its follow-up only lets the parent test clean up fixtures).\n\n`Web.Wait` now drai"
+    }
+   ],
+   "last_our_comment": "2026-10-22T18:26:53+00:00",
+   "new_after_ours": []
+  },
+  "3289": {
+   "number": 3289,
+   "state": "open",
+   "title": "gateway: a shorter rest overwrites a longer one, so a 1s 429 rest replaces a 30-min out-of-credit rest and the provider ",
+   "updated_at": "2026-10-25T14:06:05Z",
+   "closed_at": null,
+   "comments_count": 3,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6348172755,
+     "author": "skygunner",
+     "created_at": "2026-10-22T18:26:54Z",
+     "body": "A fix is available in my fork: [b7df5885](https://github.com/skygunner/magpie/commit/b7df5885929617f648bf8b9022f77938e6bf7e19), branch `fix/rest-deadline-monotonic`.\n\nThe shared `restAfterMarked` writer now compares deadlines under the existing lock and keeps the longer rest together with its reason"
+    },
+    {
+     "id": 6352651715,
+     "author": "ggbdpq",
+     "created_at": "2026-10-22T22:25:19Z",
+     "body": "gateway: a shorter rest no longer overwrites a longer one (#3289, wjq990112)\n\nWhen concurrent requests on one provider fail differently, whichever rest is written last used to win, even if it was shorter. On a sub2tok account whose balance can't cover one request, a `402` `insufficient_balance` rest"
+    },
+    {
+     "id": 6398639767,
+     "author": "ggbdpq",
+     "created_at": "2026-10-25T14:06:05Z",
+     "body": "Rebased on current `main` (`39fed471`) — the branch held one commit, and it was moved onto it whole. This is an update of [the patch above](#issuecomment-6352651715); the fix itself is unchanged.\n\n## What upstream did to this face since the branch's base (`398803e3`)\n\nSeven commits touched `internal"
+    }
+   ],
+   "last_our_comment": "2026-10-22T18:26:54+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-22T22:25:19Z",
+     "body": "gateway: a shorter rest no longer overwrites a longer one (#3289, wjq990112)\n\nWhen concurrent requests on one provider fail differently, whichever res"
+    },
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-25T14:06:05Z",
+     "body": "Rebased on current `main` (`39fed471`) — the branch held one commit, and it was moved onto it whole. This is an update of [the patch above](#issuecomm"
+    }
+   ]
+  },
+  "3302": {
+   "number": 3302,
+   "state": "open",
+   "title": "Normalize missing `index: 0` in `/v1/embeddings` responses from upstream (e.g. Google Gemini)",
+   "updated_at": "2026-10-22T18:48:31Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6348635309,
+     "author": "skygunner",
+     "created_at": "2026-10-22T18:48:31Z",
+     "body": "Fixed in my fork: [38e36a7d](https://github.com/skygunner/magpie/commit/38e36a7d), branch `fix/embedding-indices`.\n\nSuccessful embedding replies now fill only absent or null `data[i].index` with the array position. The raw JSON values keep float precision, base64 vectors, unknown fields, explicit ze"
+    }
+   ],
+   "last_our_comment": "2026-10-22T18:48:31+00:00",
+   "new_after_ours": []
+  },
+  "3303": {
+   "number": 3303,
+   "state": "open",
+   "title": "dsh 只用 npx 启动（PATH 上没有 dsh）时整行停在 CLI not found：配置目录已找到，模型和接线却给不了",
+   "updated_at": "2026-10-25T05:34:38Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6393262850,
+     "author": "skygunner",
+     "created_at": "2026-10-25T04:06:55Z",
+     "body": "**已修复并交付到 fork**：[`fix/dsh-npx-config-writes`](https://github.com/skygunner/magpie/tree/fix/dsh-npx-config-writes)，提交 [`b8f2a4c8`](https://github.com/skygunner/magpie/commit/b8f2a4c8b0d87ff17e8b121925ded1ed80a79b47)（基于 upstream/main `42976f9a`）。\n\n根因是 `internal/proc` 的 `userDirs` 会检查 npm prefix、nvm、b"
+    }
+   ],
+   "last_our_comment": "2026-10-25T04:06:55+00:00",
+   "new_after_ours": []
+  },
+  "3306": {
+   "number": 3306,
+   "state": "open",
+   "title": "sessions, usage: Pi's reasoning tokens are read as 0, so a reply whose reasoning didn't stream reads several times its s",
+   "updated_at": "2026-10-22T20:17:00Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6350368871,
+     "author": "skygunner",
+     "created_at": "2026-10-22T20:17:00Z",
+     "body": "Implemented in my fork: [b506ff5](https://github.com/skygunner/magpie/commit/b506ff5), branch [`fix/pi-reasoning-usage`](https://github.com/skygunner/magpie/tree/fix/pi-reasoning-usage).\n\n`piUsage` now reads `usage.reasoning`, and `piCall` keeps it in the request record. Output totals are unchanged:"
+    }
+   ],
+   "last_our_comment": "2026-10-22T20:17:00+00:00",
+   "new_after_ours": []
+  },
+  "3311": {
+   "number": 3311,
+   "state": "open",
+   "title": "gui tests: panel-usage window filter assertion shares the live panel request log",
+   "updated_at": "2026-10-22T21:40:16Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6351920677,
+     "author": "skygunner",
+     "created_at": "2026-10-22T21:40:16Z",
+     "body": "Published a fix in my fork: https://github.com/skygunner/magpie/commit/4671590ddd370d6b95ee6800980f46c62f45fe84\n\nThe window assertion now records only that window's requests, separately from the still-open panel. A regression check explicitly makes the panel issue its unfiltered request after the wi"
+    }
+   ],
+   "last_our_comment": "2026-10-22T21:40:16+00:00",
+   "new_after_ours": []
+  },
+  "3329": {
+   "number": 3329,
+   "state": "open",
+   "title": "dsh: comment markers between patch-list entries are dropped on rewrite, breaking comment-delimited managed blocks (Vibe ",
+   "updated_at": "2026-10-26T02:01:45Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6356611351,
+     "author": "gushan1wood",
+     "created_at": "2026-10-23T03:23:23Z",
+     "body": "补充两点，方便定位：\n\n**1. 与 #2667 / #2674 同族**\n\n#2667 的修法是把 `---` 留在 `head` 里，让它在写回时原样保留——方向是对的。但 `head` 只接收**第一个条目之前**的行（`dshParse` 的 `len(items) == 0` 分支，`internal/agent/dsh.go:452`）。一旦注释出现在**两个条目之间**，它就不在 `head` 的保护范围，而是被 `:472` 的 `default:` 分支塞进 `items[len(items)-1].lines`，随后随该条目的重建而蒸发。\n\n所以 #2667 解决了\"文件头"
+    },
+    {
+     "id": 6403289779,
+     "author": "skygunner",
+     "created_at": "2026-10-25T21:07:17Z",
+     "body": "根因：`dshParse` 把第一条目之前的行交给了 `head`（#2667）、flow list 的尾部交给了它的条目（#2674），但**位于两个条目之间、顶格的注释行**落进了 default 分支，被追加到它*前面*那个条目上。`dshPutRoute`/`dshPutSearch` 是整块重建条目的行（`yaml.Node` 不携带注释，`dshSearchLines` 是模板），所以下一轮把它丢掉了。你的 Vibe Island 区块里 `>>> vibe-island managed block >>>` 跟着被 magpie 重写的那个条目一起消失，而 `<<<` 标记还在，"
+    }
+   ],
+   "last_our_comment": "2026-10-25T21:07:17+00:00",
+   "new_after_ours": []
+  },
+  "3339": {
+   "number": 3339,
+   "state": "closed",
+   "title": "[Bug] Antigravity: 模型列表暴露 gemini-4-argon-disabled，调用返回 404（ref #3027）",
+   "updated_at": "2026-10-24T17:44:22Z",
+   "closed_at": "2026-10-24T17:44:13Z",
+   "comments_count": 3,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6364113316,
+     "author": "skygunner",
+     "created_at": "2026-10-23T11:44:52Z",
+     "body": "已在 fork 里修好（也覆盖 #3027 的同一形状）：\n\n- commit：https://github.com/skygunner/magpie/commit/8b4ecbac（分支 [`fix/issue-batch-1023pm`](https://github.com/skygunner/magpie/tree/fix/issue-batch-1023pm)，基于当前 main）\n\n## 根因\n\n`fetchAvailableModels`（internal/provider/google.go）把 Antigravity 列出的每个模型都收进目录，只过滤 `chat_`/`tab"
+    },
+    {
+     "id": 6386557204,
+     "author": "Edward4226",
+     "created_at": "2026-10-24T16:19:09Z",
+     "body": "## Result\n\nThis is already fixed on current `origin/main` by `a7ed2f61d965dac1667cefedef75171fd30f4404` (`antigravity: a model Google marks disabled is left out of the list`). I re-verified that commit rather than publishing another patch.\n\nI verified on `20d63621d12c137986b4ba86a3fa3d7873fcb95a`.\n\n"
+    },
+    {
+     "id": 6387475578,
+     "author": "dreamfarer-space",
+     "created_at": "2026-10-24T17:44:21Z",
+     "body": "Thanks"
+    }
+   ],
+   "last_our_comment": "2026-10-23T11:44:52+00:00",
+   "new_after_ours": [
+    {
+     "author": "Edward4226",
+     "created_at": "2026-10-24T16:19:09Z",
+     "body": "## Result\n\nThis is already fixed on current `origin/main` by `a7ed2f61d965dac1667cefedef75171fd30f4404` (`antigravity: a model Google marks disabled i"
+    },
+    {
+     "author": "dreamfarer-space",
+     "created_at": "2026-10-24T17:44:21Z",
+     "body": "Thanks"
+    }
+   ]
+  },
+  "3345": {
+   "number": 3345,
+   "state": "open",
+   "title": "bug",
+   "updated_at": "2026-10-23T11:25:22Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6363786237,
+     "author": "skygunner",
+     "created_at": "2026-10-23T11:25:22Z",
+     "body": "这个崩溃和 #2932 是同一个 bug，main 上已经修了：**v0.1.1320 起**不再复现（你测的 1316–1319 全部在修复之前）。\n\n- 修复 commit：[572a1757](https://github.com/yetone/magpie/commit/572a1757)（`sessions: a path listed twice in one read is read once, so the start's warm-up no longer quits magpie (#2932)`），作者注明该修复在 Windows 11 上跑过整个 `internal/s"
+    }
+   ],
+   "last_our_comment": "2026-10-23T11:25:22+00:00",
+   "new_after_ours": []
+  },
+  "3349": {
+   "number": 3349,
+   "state": "open",
+   "title": "[bug] decide= on a plugin provider (commandcode-plan) reports saved but never persists — Command Code Jev unreachable wi",
+   "updated_at": "2026-10-24T16:19:10Z",
+   "closed_at": null,
+   "comments_count": 3,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6364310053,
+     "author": "skygunner",
+     "created_at": "2026-10-23T11:56:37Z",
+     "body": "## Update — 2026-10-24: corrected delivery after independent review\n\nMy original `b2497dd8` / `007b8b9b` delivery was incomplete: saving `decide=` alone did not demonstrate that the plugin's unlisted Jev could be discovered and routed. Review also found provider-identity regressions.\n\nThe current de"
+    },
+    {
+     "id": 6364831515,
+     "author": "skygunner",
+     "created_at": "2026-10-23T12:25:53Z",
+     "body": "**Update — 2026-10-24:** this was an intermediate follow-up. The corrected delivery, including plugin identity, explicit Jev discovery/routing and subsequent regression fixes, is documented in the [updated main delivery comment](https://github.com/yetone/magpie/issues/3349#issuecomment-6364310053). "
+    },
+    {
+     "id": 6386557419,
+     "author": "Edward4226",
+     "created_at": "2026-10-24T16:19:10Z",
+     "body": "## Result\n\nI independently verified the `decide=` persistence part of vincent's earlier patch. This is not a claim that those two commits fully resolve #3349, and it does not supersede skygunner's later `r3-batch` delivery.\n\nOriginal commits: `b2497dd82f46fe1279867aa42b2b4769d213c377`, `007b8b9b7433"
+    }
+   ],
+   "last_our_comment": "2026-10-23T12:25:53+00:00",
+   "new_after_ours": [
+    {
+     "author": "Edward4226",
+     "created_at": "2026-10-24T16:19:10Z",
+     "body": "## Result\n\nI independently verified the `decide=` persistence part of vincent's earlier patch. This is not a claim that those two commits fully resolv"
+    }
+   ]
+  },
+  "3352": {
+   "number": 3352,
+   "state": "open",
+   "title": "Routing treats a readable balance as \"allowance not known\": providers with balance but no usage windows (e.g. MiniMax Co",
+   "updated_at": "2026-10-23T19:48:52Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6364210763,
+     "author": "skygunner",
+     "created_at": "2026-10-23T11:50:47Z",
+     "body": "Published a fix in my fork: https://github.com/skygunner/magpie/commit/4fb09e6b (branch [`fix/issue-batch-1023pm`](https://github.com/skygunner/magpie/tree/fix/issue-batch-1023pm), based on current main).\n\nYour diagnosis was exact — both allowance readers dropped a `Windows: []` reading whole, balan"
+    },
+    {
+     "id": 6373404223,
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T19:48:52Z",
+     "body": "Verified skygunner's fix for #3352 (4fb09e6b, branch `fix/issue-batch-1023pm`), checked out and re-tested on top of current main (ea9454d2). The reporter's diagnosis is implemented exactly as suggested (\"at minimum\" half): both allowance readers dropped a `Windows: []` reading whole, and both now ta"
+    }
+   ],
+   "last_our_comment": "2026-10-23T11:50:47+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-23T19:48:52Z",
+     "body": "Verified skygunner's fix for #3352 (4fb09e6b, branch `fix/issue-batch-1023pm`), checked out and re-tested on top of current main (ea9454d2). The repor"
+    }
+   ]
+  },
+  "3358": {
+   "number": 3358,
+   "state": "open",
+   "title": "[Bug] Chat-to-Responses can silently complete Codex turns with no output or stop reason (v0.1.1327)",
+   "updated_at": "2026-10-23T12:25:52Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6364831214,
+     "author": "skygunner",
+     "created_at": "2026-10-23T12:25:52Z",
+     "body": "Published a fix in my fork: https://github.com/skygunner/magpie/commit/600fa01c (branch [`fix/issue-batch-1023pm`](https://github.com/skygunner/magpie/tree/fix/issue-batch-1023pm), based on current main).\n\n## Your suspected gap, confirmed\n\nExactly the three places you named. `emptyFails` covered Gem"
+    }
+   ],
+   "last_our_comment": "2026-10-23T12:25:52+00:00",
+   "new_after_ours": []
+  },
+  "3365": {
+   "number": 3365,
+   "state": "open",
+   "title": "[Bug] redact：普通 key/版本号误判为 SECRET，示例密码导致 paperclip 在后续请求持续被替换",
+   "updated_at": "2026-10-26T09:59:37Z",
+   "closed_at": null,
+   "comments_count": 3,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6361682824,
+     "author": "Ethereal49",
+     "created_at": "2026-10-23T09:20:58Z",
+     "body": "另外，我也愿意以 collaborator 身份参与修复并提交更改。如果你愿意邀请 `Ethereal49` 加入仓库，我可以基于上面的最小复现，先与你确认修复方向，再提交范围明确的修复和回归测试，保留正常凭据的脱敏保护，并按项目要求完成验证和 AI 辅助披露。"
+    },
+    {
+     "id": 6364536473,
+     "author": "skygunner",
+     "created_at": "2026-10-23T12:09:20Z",
+     "body": "## 2026-10-24 更正与更新\n\n原始交付 `4b6d93d9` 已被后续返工替代。原文“secret 里不会有 `x.y.z`”的判断不成立：真实凭据完全可能含点分数字或 `/`，不能单凭值的形状放行。\n\n当前交付：[`r3-batch`](https://github.com/skygunner/magpie/tree/r3-batch)，固定 head [`7f927133be68a452f662d0c7445a1432e66c426a`](https://github.com/skygunner/magpie/commit/7f927133be68a452f662d0c7445"
+    },
+    {
+     "id": 6413244526,
+     "author": "wh5938316",
+     "created_at": "2026-10-26T09:59:37Z",
+     "body": "补充一个实际使用中的同类现象：普通英文字符串 `verifier` 本身也被脱敏了，`verifier-node` 中的同一部分也会被替换。\n\n在 Magpie「请求内容 → 对照」界面中，可以看到以下差异（仅摘录与问题有关的短语，占位符哈希统一写作 `<hash>`）：\n\n| 这台电脑上的原文 | 厂商看到的样子 |\n| --- | --- |\n| `verifier nodes` | `{{PASSWORD_<hash>}} nodes` |\n| `verifier-node tagged droplets` | `{{PASSWORD_<hash>}}-node tagged dropl"
+    }
+   ],
+   "last_our_comment": "2026-10-23T12:09:20+00:00",
+   "new_after_ours": [
+    {
+     "author": "wh5938316",
+     "created_at": "2026-10-26T09:59:37Z",
+     "body": "补充一个实际使用中的同类现象：普通英文字符串 `verifier` 本身也被脱敏了，`verifier-node` 中的同一部分也会被替换。\n\n在 Magpie「请求内容 → 对照」界面中，可以看到以下差异（仅摘录与问题有关的短语，占位符哈希统一写作 `<hash>`）：\n\n| 这台电脑上的原文 |"
+    }
+   ]
+  },
+  "3370": {
+   "number": 3370,
+   "state": "open",
+   "title": "[Bug] Antigravity 适配层透传 JSON Schema 联合类型 type:[\"object\",\"array\"] + items，Google 严格校验必 400（带最小复现）",
+   "updated_at": "2026-10-24T06:30:57Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6363745685,
+     "author": "skygunner",
+     "created_at": "2026-10-23T11:22:57Z",
+     "body": "## 2026-10-24 更正与更新\n\n原说明有两处需要纠正：`[\"array\",\"object\"]` 的相反顺序仍可能留下对象关键字；“两个 commit 都可独立 cherry-pick”的说法也不成立，后续补强依赖前面的 #3121 折叠处理。\n\n当前独立交付分支为 [`r3-union`](https://github.com/skygunner/magpie/tree/r3-union)，base `b437e4adb4dba82446e0d625b040a8e2d95004b4`，按顺序取用以下三项：\n\n1. [`ad7beadd6dbffd8f5a36458b25dce3304"
+    },
+    {
+     "id": 6380928703,
+     "author": "Kurisu0306",
+     "created_at": "2026-10-24T06:30:57Z",
+     "body": "修复在 fork 分支上，向本仓库创建 PR 被拒绝（`Kurisu0306 does not have the correct permissions to execute CreatePullRequest`），和 #3442 一样。可以从 compare 建 PR：\n\nhttps://github.com/yetone/magpie/compare/main...Kurisu0306:magpie:fix/antigravity-union-items?expand=1\n\n`plainSchema` 把 `type: [\"object\",\"array\"]` 收成 `type: \"obje"
+    }
+   ],
+   "last_our_comment": "2026-10-23T11:22:57+00:00",
+   "new_after_ours": [
+    {
+     "author": "Kurisu0306",
+     "created_at": "2026-10-24T06:30:57Z",
+     "body": "修复在 fork 分支上，向本仓库创建 PR 被拒绝（`Kurisu0306 does not have the correct permissions to execute CreatePullRequest`），和 #3442 一样。可以从 compare 建 PR：\n\nhttps://gith"
+    }
+   ]
+  },
+  "3374": {
+   "number": 3374,
+   "state": "open",
+   "title": "[Bug] Codex subagent tasks are ignored when sent as agent_message through Magpie 0.1.1333",
+   "updated_at": "2026-10-24T04:46:50Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6364109042,
+     "author": "skygunner",
+     "created_at": "2026-10-23T11:44:37Z",
+     "body": "## Update and correction — 2026-10-24\n\nThe original `67b57000` delivery below is superseded. The current tested tree is [`r3-batch`](https://github.com/skygunner/magpie/tree/r3-batch), fixed head [`7f927133be68a452f662d0c7445a1432e66c426a`](https://github.com/skygunner/magpie/commit/7f927133be68a452"
+    }
+   ],
+   "last_our_comment": "2026-10-23T11:44:37+00:00",
+   "new_after_ours": []
+  },
+  "3392": {
+   "number": 3392,
+   "state": "open",
+   "title": "「bug」　调用x.ai的bug，claude调用400错误、codex调用422错误",
+   "updated_at": "2026-10-26T07:23:58Z",
+   "closed_at": null,
+   "comments_count": 9,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6380779544,
+     "author": "skygunner",
+     "created_at": "2026-10-24T06:14:29Z",
+     "body": "修好了，分支：https://github.com/skygunner/magpie/tree/fix/issue-batch-1024pm（commit [8ecab590](https://github.com/skygunner/magpie/commit/8ecab590)，基于当前 main dd1e8822，可直接 cherry-pick）。\n\n**根因**正是这条 422 的措辞：magpie 认得出「上游拒绝 custom 工具」的几种说法（DeepSeek 的 `Unsupported custom tool: 'exec'`、`Invalid tool type: 'cus"
+    },
+    {
+     "id": 6385388355,
+     "author": "kongkongklng",
+     "created_at": "2026-10-24T14:27:24Z",
+     "body": "您好，合并到我的分支后发现以下问题\ncodex：\n首次调用成功，\n第二次调用均失败（新开会话也不行）且第二次失败变为400\n\n<img width=\"468\" height=\"147\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/c496fa96-221f-4d0a-863f-cda50b857b4f\" />\n这是原始请求体\n{\"model\":\"xai/grok-4.7\",\"stream\":true,\"input\":[{\"type\":\"message\",\"id\":\"msg_d260b22b-83ec-585d-81fc"
+    },
+    {
+     "id": 6386768624,
+     "author": "skygunner",
+     "created_at": "2026-10-24T16:37:27Z",
+     "body": "两个都是根因明确的新缺口，已修好，还在这个分支：https://github.com/skygunner/magpie/tree/fix/issue-batch-1024pm（commit [d8ad9ab2](https://github.com/skygunner/magpie/commit/d8ad9ab2)，接在 8ecab590 之后，直接 cherry-pick 这个新提交即可）。\n\n**codex 第二次起 400「Could not decode the compaction blob」**：Codex 会把第一轮拿到的 reasoning item（sealed，带 `enc"
+    },
+    {
+     "id": 6394465930,
+     "author": "kongkongklng",
+     "created_at": "2026-10-25T06:38:18Z",
+     "body": "您好，codex实测已经没有问题，\n但是claude code还是存在400问题\n以下是原始响应体：\n{\"error\":{\"message\":\"xAI: Invalid request content: Schema validation failed: [standard_violation] /required: null is not of type \\\"array\\\"\",\"type\":\"invalid_request_error\"},\"type\":\"error\"}\n附claude提示：\n⏺ API Error: 400 xAI: Invalid request content: Sch"
+    },
+    {
+     "id": 6395007475,
+     "author": "skygunner",
+     "created_at": "2026-10-25T07:43:11Z",
+     "body": "这第三条也修好了，还在同一分支：https://github.com/skygunner/magpie/tree/fix/issue-batch-1024pm（commit [c172b65d](https://github.com/skygunner/magpie/commit/c172b65d)，接在 d8ad9ab2 之后，直接 cherry-pick 这个新提交即可）。\n\n**根因**：这次是工具 schema 里的空 required。某个工具的 `input_schema` 写了 `\"required\": null`（一个必填都没有时 Claude Code 自己的工具、或它挂的 "
+    },
+    {
+     "id": 6396319463,
+     "author": "kongkongklng",
+     "created_at": "2026-10-25T10:08:04Z",
+     "body": "{\"error\":{\"message\":\"xAI: Invalid request content: Schema validation failed: [standard_violation] /required: null is not of type \\\"array\\\"\",\"type\":\"invalid_request_error\"},\"type\":\"error\"}\nclaude还是出现这样的错误"
+    },
+    {
+     "id": 6397710434,
+     "author": "skygunner",
+     "created_at": "2026-10-25T12:35:51Z",
+     "body": "又找到一处上一条修复里的真实缺口，还在同一分支：https://github.com/skygunner/magpie/tree/fix/issue-batch-1024pm（commit [bf84dd4f](https://github.com/skygunner/magpie/commit/bf84dd4f86d236771ef3e8a3751a8b91f4a9c1a8)，接在 c172b65d 之后，直接 cherry-pick 这个新提交即可）。\n\n**先确认一件事**：上一条修复（c172b65d）已经会把每个工具 schema 根上和 properties 对象里的 `\"requ"
+    },
+    {
+     "id": 6398617542,
+     "author": "kongkongklng",
+     "created_at": "2026-10-25T14:04:09Z",
+     "body": "非常感谢，经过实测claude调用x.ai的问题已经修改完成\n后续会合并回主线吗？"
+    },
+    {
+     "id": 6401055823,
+     "author": "kongkongklng",
+     "created_at": "2026-10-25T17:50:19Z",
+     "body": "@yetone 当前bug我已经确认这个修复是有用的，希望可以尽快加入正式版"
+    }
+   ],
+   "last_our_comment": "2026-10-25T12:35:51+00:00",
+   "new_after_ours": [
+    {
+     "author": "kongkongklng",
+     "created_at": "2026-10-25T14:04:09Z",
+     "body": "非常感谢，经过实测claude调用x.ai的问题已经修改完成\n后续会合并回主线吗？"
+    },
+    {
+     "author": "kongkongklng",
+     "created_at": "2026-10-25T17:50:19Z",
+     "body": "@yetone 当前bug我已经确认这个修复是有用的，希望可以尽快加入正式版"
+    }
+   ]
+  },
+  "3401": {
+   "number": 3401,
+   "state": "open",
+   "title": "library: Reasonix Studio gets no MCP servers, skills or hooks",
+   "updated_at": "2026-10-26T10:34:29Z",
+   "closed_at": null,
+   "comments_count": 6,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6380817606,
+     "author": "skygunner",
+     "created_at": "2026-10-24T06:18:36Z",
+     "body": "Wired — Reasonix Studio now takes the Library's MCP servers and skills. Branch: https://github.com/skygunner/magpie/tree/fix/issue-batch-1024pm (commit [fd4bcb54](https://github.com/skygunner/magpie/commit/fd4bcb54), on current main dd1e8822).\n\n- **MCP**: `[[plugins]]` in the same config.toml magpie"
+    },
+    {
+     "id": 6380947268,
+     "author": "FuchaZ",
+     "created_at": "2026-10-24T06:33:05Z",
+     "body": "Thanks — I read `fd4bcb54` and the MCP side looks right to me (`[[plugins]]` in the same `config.toml`, `SetTOMLArrayTable` so the user's own array tables survive, `disabled_tools` as the tools-off key).\n\nEverything below is checked against **Studio 2.50.0** (`studio-v2.50.0`, tag `7bca7b7c`), which"
+    },
+    {
+     "id": 6383557929,
+     "author": "skygunner",
+     "created_at": "2026-10-24T11:17:53Z",
+     "body": "@FuchaZ Thanks for the Studio 2.50.0 source pointers and for offering a real Windows check. I have implemented the remaining Reasonix Library integration directly, in a **standalone branch** rather than the mixed round-10 batch:\n\nhttps://github.com/skygunner/magpie/tree/fix/reasonix-library-complete"
+    },
+    {
+     "id": 6385801640,
+     "author": "FuchaZ",
+     "created_at": "2026-10-24T15:07:23Z",
+     "body": "Ran it. Built `cf87dc37` with Go 1.26.8 (portable, nothing installed) and exercised it against a **real Windows install**, not a sandbox: Reasonix Studio **2.50.0** (`reasonix-studio-electron`, read from `resources/app.asar`) with magpie 0.1.1391 on Windows 11. All three things you asked for are bel"
+    },
+    {
+     "id": 6387030804,
+     "author": "skygunner",
+     "created_at": "2026-10-24T17:01:52Z",
+     "body": "这份验证已记录在案，round-13 留的\"真实 Windows Studio 2.50.0 上验证 hook 触发与共享技能识别\"这一项就此关闭：`PreToolUse`/`PostToolUse` 探针在真实 `bash` 调用前后触发（原生工具名匹配生效）、用户自有的 `Stop` 条目与六个 `[[plugins]]` 在双向同步后逐字节保留、`~/.agents/skills` 经 `readsShared` 计入。`hook list --json` 能离线确认装载，这条对上游也有用，记下了。GUI（Electron 窗口）路径仍未测，与你的 caveat 一致——CLI 与桌面共"
+    },
+    {
+     "id": 6413906612,
+     "author": "FuchaZ",
+     "created_at": "2026-10-26T10:34:29Z",
+     "body": "## 摘要（给扫 issue 的人看）\n\n**问题**：Reasonix Studio 在 magpie 里只接了模型（executor/planner/effort），Library 层的 MCP、skills、hooks 全都没有。结果是：在 Library 页面里配好 MCP 和技能，勾选不到 Reasonix Studio。\n\n**现状**：**实现已经写好了，只差维护者收割。**\n\n- 代码：`skygunner/magpie` 分支 `fix/reasonix-library-complete-1024`，head `cf87dc37`\n- 覆盖：MCP（`[[plugins]]`"
+    }
+   ],
+   "last_our_comment": "2026-10-24T17:01:52+00:00",
+   "new_after_ours": [
+    {
+     "author": "FuchaZ",
+     "created_at": "2026-10-26T10:34:29Z",
+     "body": "## 摘要（给扫 issue 的人看）\n\n**问题**：Reasonix Studio 在 magpie 里只接了模型（executor/planner/effort），Library 层的 MCP、skills、hooks 全都没有。结果是：在 Library 页面里配好 MCP 和技能，勾选不到"
+    }
+   ]
+  },
+  "3430": {
+   "number": 3430,
+   "state": "open",
+   "title": "[Bug] 走 Messages API 的 Claude 回复，用量里的推理 token 恒为 0（aUsage 不读 output_tokens_details.thinking_tokens）",
+   "updated_at": "2026-10-25T20:53:47Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6403129004,
+     "author": "skygunner",
+     "created_at": "2026-10-25T20:53:47Z",
+     "body": "根因确认在 `internal/gateway/anthropic.go`：`aUsage` 只有 input/output/cache 三个字段，没有 `output_tokens_details`，所以 `usage()` 永远填不出 `Usage.Reasoning`；反方向（magpie 把用量写回给 Claude 客户端的 `message_delta`）也没有 `thinking_tokens`。你自己贴的那行 Copilot 用量（output 1277、thinking 710）就是最干净的复现输入。\n\n修复在 [fix/anthropic-thinking-tokens](h"
+    }
+   ],
+   "last_our_comment": "2026-10-25T20:53:47+00:00",
+   "new_after_ours": []
+  },
+  "3434": {
+   "number": 3434,
+   "state": "open",
+   "title": "bug(routing): Codex compaction can reclassify an unchanged native turn when transcript identity changes",
+   "updated_at": "2026-10-25T21:40:08Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6403682869,
+     "author": "skygunner",
+     "created_at": "2026-10-25T21:40:08Z",
+     "body": "Reproduced from the code path you named: `ruleKey` held a group's turn decision by the conversation plus `firstWords(req)`, and a compaction replaces the transcript's first message with a summary - so the key changed, the turn's rule was not found, and the same native turn was classified again.\n\nFix"
+    }
+   ],
+   "last_our_comment": "2026-10-25T21:40:08+00:00",
+   "new_after_ours": []
+  },
+  "3440": {
+   "number": 3440,
+   "state": "open",
+   "title": "[Bug] Codex 官方订阅下「272K 时压缩」未生效，单次输入已达 359K",
+   "updated_at": "2026-10-24T14:52:45Z",
+   "closed_at": null,
+   "comments_count": 6,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6380752632,
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T06:11:31Z",
+     "body": "Taking this. Direction verified with one correction: your `codex_backend.go` pointer is the right file but the line has drifted on current main (dd1e8822) — official-model entries keep their own `model_context_window`, so Codex computes auto-compaction against 475000 and never reaches the 272K thres"
+    },
+    {
+     "id": 6380798386,
+     "author": "skygunner",
+     "created_at": "2026-10-24T06:16:34Z",
+     "body": "确认是 magpie 没把「272K 时压缩」套到官方订阅的原生模型上。修复分支：https://github.com/skygunner/magpie/tree/fix/issue-batch-1024pm（commit [e9926d70](https://github.com/skygunner/magpie/commit/e9926d70)，基于 main dd1e8822）。\n\n**根因**与你的定位一致：`codexModels` 把后端条目原样交给 Codex——`CodexNativeWindow` 只处理「用户在 codex provider 上单独设过的窗口」，而 Agen"
+    },
+    {
+     "id": 6380921629,
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T06:30:09Z",
+     "body": "<!-- Downgraded to a diagnosis: the 272K setting's delivery path (the model list\n     magpie serves) never reaches the ChatGPT account's own entries by design\n     (#674/#1385/#976), the reported numbers match Codex's own stock default, the\n     value in play is magpie's default (a 272K pick is stor"
+    },
+    {
+     "id": 6383458761,
+     "author": "skygunner",
+     "created_at": "2026-10-24T11:07:09Z",
+     "body": "@ggbdpq 感谢你先认领并完整追踪了这条路径。更正我上面把 e9926d70 当作确定性 bug 修复的表述：这实际涉及产品语义的改变，尚不应视为上游可直接采用的补丁。\n\n现有 #674 约定：用户没有给官方 ChatGPT/Codex 模型单独设窗口时，模型列表保留后端原值（例：gpt-6.1-sol 的 475000）。我 fork 的 e9926d70 会把 `settings.Compact()` 的默认 272000 也应用到这些原生条目，把后端值留在 `max_context_window`。但 `CompactAt=0` 同时代表“从未碰过此选项”和“选择默认 272K”，因"
+    },
+    {
+     "id": 6384956184,
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T13:44:44Z",
+     "body": "@skygunner Thanks for the honest correction — that takes real discipline after shipping a working patch.\n\nAnd yes, we've landed on the same conclusion. The `CompactAt` 0 ambiguity you describe is exactly why the diagnosis above declined to push the default onto the official entries — \"the settings c"
+    },
+    {
+     "id": 6385648896,
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T14:52:45Z",
+     "body": "## Summary\n\nThe small copy patch for the setting's scope, as offered above: option C. The Long conversations line now says what its delivery path is — the threshold rides the model list magpie serves — so a reader can tell why a subscription's own models don't follow it. This states today's behavior"
+    }
+   ],
+   "last_our_comment": "2026-10-24T11:07:09+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T13:44:44Z",
+     "body": "@skygunner Thanks for the honest correction — that takes real discipline after shipping a working patch.\n\nAnd yes, we've landed on the same conclusion"
+    },
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T14:52:45Z",
+     "body": "## Summary\n\nThe small copy patch for the setting's scope, as offered above: option C. The Long conversations line now says what its delivery path is —"
+    }
+   ]
+  },
+  "3444": {
+   "number": 3444,
+   "state": "open",
+   "title": "[Bug] Codex 官方模型经 Magpie 返回 502：WebSocket 收到 StatusMessageTooBig 关闭帧",
+   "updated_at": "2026-10-25T14:10:47Z",
+   "closed_at": null,
+   "comments_count": 10,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6379723412,
+     "author": "xiaoan17",
+     "created_at": "2026-10-24T04:13:53Z",
+     "body": "补充一个已完成的合成数据对照复现：**相同像素、相同图片尺寸、相同模型，仅增加 PNG 的无意义 ancillary 元数据，就能重复触发本 issue 的 502 / StatusMessageTooBig。** 不需要长会话或真实文档。\n\n### 本次测试环境\n\n- Magpie CLI 报告版本：`0.1.1349`（与 issue 正文的报告环境独立）。\n- Codex CLI：`0.164.0`；macOS：`27.0.1`，Apple Silicon。\n- 模型：`gpt-6-astra`，探针使用 `reasoning.effort=low`。\n- 入口：`POST http:/"
+    },
+    {
+     "id": 6380407297,
+     "author": "lj2026-web",
+     "created_at": "2026-10-24T05:31:09Z",
+     "body": "补充本轮新的关键对照：**同一个 `gpt-6.1-sol`、同一现有登录、完全相同的大请求，Magpie 返回 502/1009，官方 HTTP/SSE 正常完成；安装的 Codex 原生客户端还能自动回退 HTTP 完成大图请求。**\n\n这补齐了上一条评论中“尚未做官方 HTTP/SSE 对照”的缺口。本次全部为合成图片，没有提交真实会话、工作文件或截图，也未修改运行配置、重启网关。\n\n### 环境与对照结果\n\n- macOS / Apple Silicon\n- Magpie **0.1.1364**；本次查询 latest release 也是 v0.1.1364。\n- Codex CL"
+    },
+    {
+     "id": 6380752488,
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T06:11:30Z",
+     "body": "Taking this. Direction to verify first: the 502 body — `Post \"https://chatgpt.com/backend-api/codex/responses\": codex websocket: ... StatusMessageTooBig` — reads as magpie's own upstream fetch failing over a WebSocket transport, which matches your A/B (the same large request completes over official "
+    },
+    {
+     "id": 6380789247,
+     "author": "skygunner",
+     "created_at": "2026-10-24T06:15:33Z",
+     "body": "`StatusMessageTooBig` 的来源确认了：是 chatgpt.com 后端 **WebSocket 的单条消息大小上限**。修复分支：https://github.com/skygunner/magpie/tree/fix/issue-batch-1024pm（commit [b834f286](https://github.com/skygunner/magpie/commit/b834f286)，基于 main dd1e8822）。\n\n**链路**：0.1.1349 起（a2e98cd7，修 #3377 那道 121 秒墙）magpie 把流式 Codex 轮次作为一条 `"
+    },
+    {
+     "id": 6380996633,
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T06:38:04Z",
+     "body": "The leg that fails is magpie's own to chatgpt.com. Since a2e98cd7 a streamed Codex turn goes to the backend over its WebSocket (`internal/gateway/codex_socket.go`), as Codex's own client sends it — the client-facing route stays HTTP. The ceiling is not magpie's: the socket's read limit is off (`c.Se"
+    },
+    {
+     "id": 6381749068,
+     "author": "machenbin315-design",
+     "created_at": "2026-10-24T08:01:49Z",
+     "body": "补充本次独立完成的**精确字节边界探测**和一份**发送前分流**的修复补丁，供维护者选择。已阅读上面 skygunner 和 ggbdpq 的修复讨论；这里补充提前选择传输方式的实现和对应边界验证。\n\n### 真实上游探测\n\n日期：2026-10-24；macOS / Apple Silicon；本机 Magpie v0.1.1364（构建 commit `dd1e8822d916`）；本机 Codex CLI 0.163.0。\n\n使用不存在的模型、`stream=true, store=false`，在 JSON 对象内部添加空白，使 **最终 WebSocket `response.cr"
+    },
+    {
+     "id": 6382346937,
+     "author": "qiuyu21",
+     "created_at": "2026-10-24T09:07:29Z",
+     "body": "补充一组独立实测：**v0.1.1364 下，带 zstd 编码的大上下文请求经 Magpie 返回 502 / StatusMessageTooBig，同一份请求直连官方 HTTP/SSE 则完整完成。**\n\n已阅读前面的合成图片对照及补丁讨论；这次补充的是从实际故障聊天历史重建的大请求和 zstd 编码路径。\n\n### 环境与测试方法\n\n- macOS / arm64；Magpie `0.1.1364`，已通过安装二进制的 Go build info 核实构建提交为 `dd1e8822d916f8aeb085db4db93fc3d79e2263ed`。\n- 模型 `gpt-6.1-sol`"
+    },
+    {
+     "id": 6382572133,
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T09:30:27Z",
+     "body": "Thanks both — qiuyu21's zstd measurement lands exactly on the one face our patch left Not verified, so I went and closed it.\n\n**zstd is covered, now confirmed.** The decode happens before the socket: `codexSocketMessage` ([codex_socket.go L125-133](https://github.com/ggbdpq/magpie/blob/dd8ee62c4731b"
+    },
+    {
+     "id": 6385546264,
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T14:42:50Z",
+     "body": "Gap filled: I've now read machenbin's patch itself — the inline `git am` block in their comment (commit 62377764, based on 7d9165d8) — not just its description.\n\n**The shape, from the code.** One gate in `codexSocket.RoundTrip`: after `codexSocketMessage` builds the final `response.create` message —"
+    },
+    {
+     "id": 6398688763,
+     "author": "ggbdpq",
+     "created_at": "2026-10-25T14:10:47Z",
+     "body": "Update: our patch above (`dd8ee62c`, branch `hunt76-b-ws-message-too-big`) is superseded by upstream `3e9efe1d` (\"a Codex turn chatgpt.com's WebSocket refuses as too big goes over HTTP\") — withdrawing it; the branch stays for the record.\n\nI've read the two diffs side by side. Same trigger, same mech"
+    }
+   ],
+   "last_our_comment": "2026-10-24T06:15:33+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T06:38:04Z",
+     "body": "The leg that fails is magpie's own to chatgpt.com. Since a2e98cd7 a streamed Codex turn goes to the backend over its WebSocket (`internal/gateway/code"
+    },
+    {
+     "author": "machenbin315-design",
+     "created_at": "2026-10-24T08:01:49Z",
+     "body": "补充本次独立完成的**精确字节边界探测**和一份**发送前分流**的修复补丁，供维护者选择。已阅读上面 skygunner 和 ggbdpq 的修复讨论；这里补充提前选择传输方式的实现和对应边界验证。\n\n### 真实上游探测\n\n日期：2026-10-24；macOS / Apple Silicon；"
+    },
+    {
+     "author": "qiuyu21",
+     "created_at": "2026-10-24T09:07:29Z",
+     "body": "补充一组独立实测：**v0.1.1364 下，带 zstd 编码的大上下文请求经 Magpie 返回 502 / StatusMessageTooBig，同一份请求直连官方 HTTP/SSE 则完整完成。**\n\n已阅读前面的合成图片对照及补丁讨论；这次补充的是从实际故障聊天历史重建的大请求和 zst"
+    },
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T09:30:27Z",
+     "body": "Thanks both — qiuyu21's zstd measurement lands exactly on the one face our patch left Not verified, so I went and closed it.\n\n**zstd is covered, now c"
+    },
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T14:42:50Z",
+     "body": "Gap filled: I've now read machenbin's patch itself — the inline `git am` block in their comment (commit 62377764, based on 7d9165d8) — not just its de"
+    },
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-25T14:10:47Z",
+     "body": "Update: our patch above (`dd8ee62c`, branch `hunt76-b-ws-message-too-big`) is superseded by upstream `3e9efe1d` (\"a Codex turn chatgpt.com's WebSocket"
+    }
+   ]
+  },
+  "3447": {
+   "number": 3447,
+   "state": "closed",
+   "title": "[Bug] `web_search_20250305`: text 块始终没有 `citations[]`，依赖 `cited_text` 的客户端只能拿到 url+title（DSH 的 web_search 因此「搜到了但没有内容」）",
+   "updated_at": "2026-10-24T09:25:54Z",
+   "closed_at": "2026-10-24T08:38:42Z",
+   "comments_count": 5,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6380752243,
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T06:11:28Z",
+     "body": "Taking this. Direction verified on current main (dd1e8822): magpie's Anthropic stream side already knows citations (whole_stream.go re-emits a text block's `citations` as `citations_delta`), but the `web_search_20250305` tool-result-to-text translation fills none — so every client that reads `citati"
+    },
+    {
+     "id": 6380807714,
+     "author": "skygunner",
+     "created_at": "2026-10-24T06:17:34Z",
+     "body": "根因确认：你这两条路由走的都是 **magpie 自己的代搜管线**（raccoon/sn-deepseek 与 deepseek 官方都不在「上游自己会搜」的名单里，`searchHosts`），回复由 magpie 翻译成 Anthropic 形状——`server_tool_use` / `web_search_tool_result` 块是 magpie 合成的，而 magpie 从不给 text 块放 citations（修复前全仓库连 `web_search_result_location` 都不存在）。模型其实拿到过每页的摘录文本，客户端却一条也看不到。\n\n修复分支：https:"
+    },
+    {
+     "id": 6380981119,
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T06:36:17Z",
+     "body": "## Summary\n\n`/v1/messages` with the `web_search_20250305` tool answered with its `web_search_tool_result` and the text that read it, but the text carried no `citations[]` — so every client that reads `citations[].cited_text` for its snippets (dsh's `mapAnthropicResponse`) got urls alone and showed \""
+    },
+    {
+     "id": 6382090015,
+     "author": "HuHong-Tao",
+     "created_at": "2026-10-24T08:38:27Z",
+     "body": "已在 **magpie 0.1.1371**（macOS App，网关 `127.0.0.1:3425`，进程于 10-24 16:31 重启）上验证 —— main 的 `1d6b72ad`（v0.1.1369 起进正式版）已经覆盖本 issue，无需再用那两个 fork 分支（`fix/issue-batch-1024pm` / `hunt76-a-websearch-citations`）验证。\n\n## 实测（issue 里那条原始请求，原样重打）\n\n**路由 A：`auto/deepseek-v4.1-flash` → `raccoon/sn-deepseek-v4-1-flash`（"
+    },
+    {
+     "id": 6382529707,
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T09:25:54Z",
+     "body": "Confirming here as the author of the `hunt76-a-websearch-citations` branch: upstream `1d6b72ad` (in a release since v0.1.1369) covers this issue. @HuHong-Tao's field test on 0.1.1371 above is the proof — citations now arrive both streamed (`citations_delta` ahead of the text) and whole, with real ex"
+    }
+   ],
+   "last_our_comment": "2026-10-24T06:17:34+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T06:36:17Z",
+     "body": "## Summary\n\n`/v1/messages` with the `web_search_20250305` tool answered with its `web_search_tool_result` and the text that read it, but the text carr"
+    },
+    {
+     "author": "HuHong-Tao",
+     "created_at": "2026-10-24T08:38:27Z",
+     "body": "已在 **magpie 0.1.1371**（macOS App，网关 `127.0.0.1:3425`，进程于 10-24 16:31 重启）上验证 —— main 的 `1d6b72ad`（v0.1.1369 起进正式版）已经覆盖本 issue，无需再用那两个 fork 分支（`fix/issu"
+    },
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-24T09:25:54Z",
+     "body": "Confirming here as the author of the `hunt76-a-websearch-citations` branch: upstream `1d6b72ad` (in a release since v0.1.1369) covers this issue. @HuH"
+    }
+   ]
+  },
+  "3455": {
+   "number": 3455,
+   "state": "open",
+   "title": "gateway: a search magpie runs for a model gives Responses and Chat replies no url_citation annotations",
+   "updated_at": "2026-10-24T20:40:41Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6389279618,
+     "author": "skygunner",
+     "created_at": "2026-10-24T20:40:41Z",
+     "body": "Delivered on `fix/issue-batch-1025a` ([b78a4f07](https://github.com/skygunner/magpie/commit/b78a4f07), skygunner's fork): the URL match now gives the offsets it knows, and the same pages the Anthropic change cites are cited in OpenAI's shape.\n\n`urlCites` (`search_cite.go`) is the OpenAI form of `cit"
+    }
+   ],
+   "last_our_comment": "2026-10-24T20:40:41+00:00",
+   "new_after_ours": []
+  },
+  "3460": {
+   "number": 3460,
+   "state": "open",
+   "title": "plugins: a provider whose models are spoken to with @ai-sdk/google can't be tested (Test models off, provider test refus",
+   "updated_at": "2026-10-25T20:58:48Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6403185254,
+     "author": "skygunner",
+     "created_at": "2026-10-25T20:58:48Z",
+     "body": "The refusal is in the probe, not in inference: `pluginProtocol` maps a plugin model's `@ai-sdk/google` to CodeAssist (`internal/provider/plugins.go`), and `pluginProviderServing` has no address for that protocol, so `ModelTest` answers \"own-api\" (Test models off, \"Ask the model from an agent to try "
+    }
+   ],
+   "last_our_comment": "2026-10-25T20:58:48+00:00",
+   "new_after_ours": []
+  },
+  "3470": {
+   "number": 3470,
+   "state": "open",
+   "title": "sessions: hit rates from session files still count Kiro's uncounted cache as a miss",
+   "updated_at": "2026-10-25T01:49:56Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6389269893,
+     "author": "skygunner",
+     "created_at": "2026-10-24T20:39:43Z",
+     "body": "Delivered on `fix/issue-batch-1025a` ([fe330ea1](https://github.com/skygunner/magpie/commit/fe330ea1), skygunner's fork): `sessions.Tokens` carries `CacheUnknown` now — the prompt tokens of calls whose vendor counted no cache — and every hit rate that reads Tokens leaves them out of its denominator,"
+    },
+    {
+     "id": 6392134728,
+     "author": "skygunner",
+     "created_at": "2026-10-25T01:49:56Z",
+     "body": "Follow-up delivered on `fix/sessions-day-cache-unknown` ([4264a4b7](https://github.com/skygunner/magpie/commit/4264a4b7), on top of the first half [fe330ea1](https://github.com/skygunner/magpie/commit/fe330ea1) cherry-picked as this branch's base — same issue, one dependency): the open remainder is "
+    }
+   ],
+   "last_our_comment": "2026-10-25T01:49:56+00:00",
+   "new_after_ours": []
+  },
+  "3475": {
+   "number": 3475,
+   "state": "open",
+   "title": "[Bug] Claude Desktop 网关模式开了 Enable tool search 后，Copilot 拒绝 tool-search-tool-2025-10-19（400 unsupported beta header），每个会",
+   "updated_at": "2026-10-26T02:01:46Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6403009365,
+     "author": "skygunner",
+     "created_at": "2026-10-25T20:43:49Z",
+     "body": "根因：`betas()` 只朝一个方向适配 agent 的 beta 列表——Bedrock 的名字——其余名字按 agent 的要求原样转发。Claude Desktop 的网关模式以关闭 experimental betas 的方式运行 Claude Code，所以 **Enable tool search** 请求的是 `tool-search-tool-2025-10-19`（Bedrock/Vertex 对它的叫法）；Copilot 的 `/v1/messages` 和 `count_tokens` 用 `400 unsupported beta header(s)` 拒绝这个名字，"
+    }
+   ],
+   "last_our_comment": "2026-10-25T20:43:49+00:00",
+   "new_after_ours": []
+  },
+  "3487": {
+   "number": 3487,
+   "state": "open",
+   "title": "Quota card: an unknown usage amount renders as a full allowance; a plugin span sent in ms is read as seconds, charting a",
+   "updated_at": "2026-10-26T16:37:23Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6389261270,
+     "author": "skygunner",
+     "created_at": "2026-10-24T20:38:50Z",
+     "body": "Both root causes are fixed on `fix/issue-batch-1025a` ([d4944ace](https://github.com/skygunner/magpie/commit/d4944ace), skygunner's fork), my own filing from yesterday:\n\n- **The span unit**: `windowSpan` now takes a vendor's span only up to 400 days — past every window a vendor runs it is a misread "
+    },
+    {
+     "id": 6421541200,
+     "author": "skygunner",
+     "created_at": "2026-10-26T16:37:23Z",
+     "body": "Reporter follow-up: the Cloudflare plugin fixes are now deployed and confirmed working, and have been pushed to [magpie-community/plugins#366](https://github.com/magpie-community/plugins/pull/366) at [bdc302a](https://github.com/skygunner/plugins/commit/bdc302a6d66187d20d923673a61dd26ce13513a5).\n\nTh"
+    }
+   ],
+   "last_our_comment": "2026-10-26T16:37:23+00:00",
+   "new_after_ours": []
+  },
+  "3513": {
+   "number": 3513,
+   "state": "open",
+   "title": "draw: a ChatGPT account's gpt-image-2.5 ignores size on images/generations and images/edits",
+   "updated_at": "2026-10-25T00:35:01Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6389279389,
+     "author": "skygunner",
+     "created_at": "2026-10-24T20:40:40Z",
+     "body": "你验证过的\"把分辨率写进 prompt\"方案已实现，推在 fork 分支 `fix/issue-batch-1025a`（[fb29f08c](https://github.com/skygunner/magpie/commit/fb29f08c)，skygunner/magpie）：ChatGPT 账号的生图在 generations 和 edits 两条路径上都会把 `Generate at 1792x1024 resolution.` 写在 prompt 前面——与 `drawPrompt` 给 chat 类 drawer 追加 \"Aspect ratio\" 是同一机制的补齐；无 siz"
+    },
+    {
+     "id": 6391478013,
+     "author": "ggbdpq",
+     "created_at": "2026-10-25T00:35:01Z",
+     "body": "Verified skygunner's fix for #3513 (fb29f08c, branch [`fix/issue-batch-1025a`](https://github.com/skygunner/magpie/tree/fix/issue-batch-1025a), checked out and re-tested). Thank you @kilo-s — the A/B measurement is what makes this fixable without touching the upstream contract: the same request with"
+    }
+   ],
+   "last_our_comment": "2026-10-24T20:40:40+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-25T00:35:01Z",
+     "body": "Verified skygunner's fix for #3513 (fb29f08c, branch [`fix/issue-batch-1025a`](https://github.com/skygunner/magpie/tree/fix/issue-batch-1025a), checke"
+    }
+   ]
+  },
+  "3514": {
+   "number": 3514,
+   "state": "open",
+   "title": "dsh: Claude Code 订阅的 Claude 模型被分到 Chat Completions 路由，thinking 签名与 cache_control 在 dsh↔网关之间丢失",
+   "updated_at": "2026-10-24T20:40:16Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6389275410,
+     "author": "skygunner",
+     "created_at": "2026-10-24T20:40:16Z",
+     "body": "按你的建议实现了，推在 fork 分支 `fix/issue-batch-1025a`（[3053f99f](https://github.com/skygunner/magpie/commit/3053f99f)，skygunner/magpie），方案与致谢归你：`magpieModels` 对 `Native()==\"\"` 且 `MessagesFirst(model)` 为真的模型补 `APIs=[\"anthropic\"]`，`dshRouteOf\\] 自然把它们分进 `magpie-anthropic`，Pi/omp/droid 读同一个 `m.APIs` 一并受益。\n\n红→绿：`T"
+    }
+   ],
+   "last_our_comment": "2026-10-24T20:40:16+00:00",
+   "new_after_ours": []
+  },
+  "3519": {
+   "number": 3519,
+   "state": "open",
+   "title": "[bug] Remote magpie 指向纯 IPv6 地址时，IPv4 回退把主机锁 30 分钟，报 dial tcp4: lookup …: no such host",
+   "updated_at": "2026-10-25T00:27:09Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6389270118,
+     "author": "skygunner",
+     "created_at": "2026-10-24T20:39:44Z",
+     "body": "按你的诊断和修法实现并推到了 fork 分支 `fix/issue-batch-1025a`（[91fc2733](https://github.com/skygunner/magpie/commit/91fc2733)，skygunner/magpie），全部致谢归你：\n\n- 标记主机的 tcp4 拨号若错误是解析器回答\"该名字没有这个类型的地址\"（`DNSError.IsNotFound`，Windows 上就是 WSAHOST_NOT_FOUND / DNS_INFO_NO_RECORDS 的映射），即撤销标记、按原样继续 IPv6 拨号——你的 `noAddress` 方案原样移植。\n"
+    },
+    {
+     "id": 6391407503,
+     "author": "ggbdpq",
+     "created_at": "2026-10-25T00:27:09Z",
+     "body": "Verified skygunner's fix for #3519 (91fc2733, branch `fix/issue-batch-1025a`), checked out and re-tested independently. @Tinkler-i's diagnosis and `noAddress` design are ported exactly as suggested: a marked host:port's tcp4 dial whose error is the resolver's \"no address of this kind\" answer (`DNSEr"
+    }
+   ],
+   "last_our_comment": "2026-10-24T20:39:44+00:00",
+   "new_after_ours": [
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-25T00:27:09Z",
+     "body": "Verified skygunner's fix for #3519 (91fc2733, branch `fix/issue-batch-1025a`), checked out and re-tested independently. @Tinkler-i's diagnosis and `no"
+    }
+   ]
+  },
+  "3528": {
+   "number": 3528,
+   "state": "open",
+   "title": "usage: a web search sent to Kimi Code's or WorkBuddy's search service, or to a search API, leaves no row in Usage › Requ",
+   "updated_at": "2026-10-25T22:00:29Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6403927302,
+     "author": "skygunner",
+     "created_at": "2026-10-25T22:00:29Z",
+     "body": "Confirmed: `kimiSearch`, `wbSearch` and `askSearchAPI` send their own HTTP request, never go through `s.serve`, and so never reach the row writer - Usage > Requests had nothing for a search a user's plan or search key paid for.\n\nFixed on [fix/3528-search-usage-rows](https://github.com/skygunner/magp"
+    }
+   ],
+   "last_our_comment": "2026-10-25T22:00:29+00:00",
+   "new_after_ours": []
+  },
+  "3529": {
+   "number": 3529,
+   "state": "open",
+   "title": "trae_checkin.go: a claim's credits and extra_credits are added, as the trae plugin did before 0.2.21",
+   "updated_at": "2026-10-25T02:40:44Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6392564252,
+     "author": "skygunner",
+     "created_at": "2026-10-25T02:40:44Z",
+     "body": "Delivered on `fix/trae-checkin-credits` ([0a2a0d74](https://github.com/skygunner/magpie/commit/0a2a0d74), skygunner's fork, on upstream/main 641b1217): the Go check-in's fallback takes the claim's credits, else its extra_credits, else the status's count as before — never their sum, matching what tra"
+    }
+   ],
+   "last_our_comment": "2026-10-25T02:40:44+00:00",
+   "new_after_ours": []
+  },
+  "3530": {
+   "number": 3530,
+   "state": "open",
+   "title": "sessions: Codex thread names and sqlite_home are read from CODEX_HOME only, not its other folders",
+   "updated_at": "2026-10-25T03:39:54Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6392564071,
+     "author": "skygunner",
+     "created_at": "2026-10-25T02:40:42Z",
+     "body": "Delivered on `fix/codex-multi-home-sessions` ([8b9022cd](https://github.com/skygunner/magpie/commit/8b9022cd), skygunner's fork, on upstream/main 641b1217):\n\n- **Thread names.** The title cache is per folder now: `codexTitleIndexPaths()` walks `appdir.CodexHomes()`, and `CodexTitles`, `CodexTitleRec"
+    }
+   ],
+   "last_our_comment": "2026-10-25T02:40:42+00:00",
+   "new_after_ours": []
+  },
+  "3531": {
+   "number": 3531,
+   "state": "open",
+   "title": "gui: the sidebar's gateway line keeps the old port after Settings › Gateway address › Apply",
+   "updated_at": "2026-10-25T03:39:56Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6392783800,
+     "author": "skygunner",
+     "created_at": "2026-10-25T03:07:20Z",
+     "body": "Delivered on `fix/sidebar-gateway-line` ([7597f816](https://github.com/skygunner/magpie/commit/7597f816), skygunner's fork, on upstream/main 641b1217): the port save draws the sidebar's line from the move's own answer — `renderSideGw({url: res.settings.gateway, running: true})` beside `renderSetting"
+    }
+   ],
+   "last_our_comment": "2026-10-25T03:07:20+00:00",
+   "new_after_ours": []
+  },
+  "3541": {
+   "number": 3541,
+   "state": "open",
+   "title": "redact: user@host.local is counted as an email",
+   "updated_at": "2026-10-25T21:20:50Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6403455103,
+     "author": "skygunner",
+     "created_at": "2026-10-25T21:20:50Z",
+     "body": "The rule matched the mDNS name as an address: `realEmail` (internal/redact/redact.go) kept `user@host.local` because it only turned away `localhost`, the reserved examples and file-looking hosts. `.local` is a name the mDNS serves (RFC 6762), not a delegated TLD, so nothing that ends in it can be a "
+    }
+   ],
+   "last_our_comment": "2026-10-25T21:20:50+00:00",
+   "new_after_ours": []
+  },
+  "3553": {
+   "number": 3553,
+   "state": "open",
+   "title": "Codex shows 258K instead of 272K for magpie models because catalog omits effective_context_window_percent",
+   "updated_at": "2026-10-26T02:01:47Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6403129264,
+     "author": "skygunner",
+     "created_at": "2026-10-25T20:53:49Z",
+     "body": "The root cause is exactly the line you pointed at: the catalog entries `internal/codexcat` generates for magpie's own models omit `effective_context_window_percent`, so Codex applies its default 95% and a `context_window: 272000` entry shows up in Codex as 258400.\n\nFixed on [fix/codex-context-percen"
+    }
+   ],
+   "last_our_comment": "2026-10-25T20:53:49+00:00",
+   "new_after_ours": []
+  },
+  "3561": {
+   "number": 3561,
+   "state": "open",
+   "title": "privacy model: its download ignores Settings' Proxy (fails where a proxy is the only way out)",
+   "updated_at": "2026-10-25T06:12:29Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6394265586,
+     "author": "skygunner",
+     "created_at": "2026-10-25T06:12:29Z",
+     "body": "Delivered on `fix/pii-download-proxy` ([55dfe0a5](https://github.com/skygunner/magpie/commit/55dfe0a5), skygunner's fork, on upstream/main 1b039a3c) — your diagnosis and fix shape, credited as found: the client's transport now asks `netproxy.Func` and goes through `netproxy.Dispatch`, exactly the `p"
+    }
+   ],
+   "last_our_comment": "2026-10-25T06:12:29+00:00",
+   "new_after_ours": []
+  },
+  "3566": {
+   "number": 3566,
+   "state": "open",
+   "title": "[Bug] gateway/Kimi: typed $ref target containing an untyped object oneOf still causes schema rejection",
+   "updated_at": "2026-10-25T20:53:50Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6403129516,
+     "author": "skygunner",
+     "created_at": "2026-10-25T20:53:50Z",
+     "body": "根因：`internal/gateway/kimi_schema.go` 的 `collectRefTargets` 只给 `$ref` **目标本身**补类型；目标一旦已有 `type: object`，它就不再往里看，于是目标内部那个没有 `type` 的 `oneOf` 原样发出。Kimi 展开带类型的引用目标后，把无类型 union 判成“infinite recursion without termination condition”——和你的最小请求完全一致（只补 `y.type=object` 就 200）。\n\n修复在 [fix/issue-3566](https://githu"
+    }
+   ],
+   "last_our_comment": "2026-10-25T20:53:50+00:00",
+   "new_after_ours": []
+  },
+  "3567": {
+   "number": 3567,
+   "state": "closed",
+   "title": "TestNoCommandBypassesProc red on main since 75e78a5a0: internal/tui/keep.go uses os/exec",
+   "updated_at": "2026-10-25T15:16:07Z",
+   "closed_at": "2026-10-25T15:16:07Z",
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6394559364,
+     "author": "skygunner",
+     "created_at": "2026-10-25T06:49:50Z",
+     "body": "Delivered on `fix/tui-keep-proc-command` ([64bd29fa](https://github.com/skygunner/magpie/commit/64bd29fa), skygunner's fork, on upstream/main 1b039a3c) — the fix the issue names: `serveInBackground`'s `exec.Command(exe, \"serve\")` is `proc.Command` now, and `os/exec` left the file with its one use go"
+    },
+    {
+     "id": 6399387138,
+     "author": "yetone",
+     "created_at": "2026-10-25T15:16:05Z",
+     "body": "Fixed in cec54c1d0 with your change (credited as co-author): serveInBackground starts serve through proc.Command. The same commit fixes main's other red, TestTreeRSS on ubuntu. It read sleep's RSS before its loader ran (16 KiB) and now waits for it. In golang:1.26 docker the old test was red 13 of 5"
+    }
+   ],
+   "last_our_comment": "2026-10-25T06:49:50+00:00",
+   "new_after_ours": [
+    {
+     "author": "yetone",
+     "created_at": "2026-10-25T15:16:05Z",
+     "body": "Fixed in cec54c1d0 with your change (credited as co-author): serveInBackground starts serve through proc.Command. The same commit fixes main's other r"
+    }
+   ]
+  },
+  "3572": {
+   "number": 3572,
+   "state": "open",
+   "title": "gateway: switching from Vertex Gemini to Antigravity sends a rejected thought signature",
+   "updated_at": "2026-10-25T21:14:05Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6403372256,
+     "author": "skygunner",
+     "created_at": "2026-10-25T21:14:04Z",
+     "body": "Root cause is exactly what you pointed at: the one-time recovery only existed for Vertex AI.\n\n`internal/gateway/gateway.go` gated the retry on `p.IsVertex()`, and the matcher in `internal/gateway/vertex.go` only knew `Invalid thought signature`. Antigravity goes through `provider.CodeAssist` and say"
+    }
+   ],
+   "last_our_comment": "2026-10-25T21:14:04+00:00",
+   "new_after_ours": []
+  },
+  "3585": {
+   "number": 3585,
+   "state": "open",
+   "title": "redact: the local model's cues match inside words (tool_call cues a phone, telemetry too)",
+   "updated_at": "2026-10-25T21:51:25Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6403818575,
+     "author": "skygunner",
+     "created_at": "2026-10-25T21:51:25Z",
+     "body": "`cued` lowercased the 40 bytes before a value and asked `strings.Contains`, so any substring counted: `tool_call`/`callback` cued a phone (\"call\"), `telemetry`/`hotel` cued \"tel\", `monkey`/`keyboard` cued a secret (\"key\").\n\nFixed on [fix/redact-cue-words](https://github.com/skygunner/magpie/tree/fix"
+    }
+   ],
+   "last_our_comment": "2026-10-25T21:51:25+00:00",
+   "new_after_ours": []
+  },
+  "3595": {
+   "number": 3595,
+   "state": "open",
+   "title": "sessions: Antigravity CLI (agy) in a WSL distro: its conversations and calls aren't read",
+   "updated_at": "2026-10-25T17:58:46Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6401147159,
+     "author": "skygunner",
+     "created_at": "2026-10-25T17:58:46Z",
+     "body": "The WSL readers are in, on [fix/agy-wsl-sessions](https://github.com/skygunner/magpie/tree/fix/agy-wsl-sessions) (`96311a8a`, based on today's `main`):\n\n- `wslFiles` lists agy now — `wslAgents` gained `.gemini/antigravity-cli`, and `wslScan` reads its `brain/<id>/.system_generated/logs/transcript_fu"
+    }
+   ],
+   "last_our_comment": "2026-10-25T17:58:46+00:00",
+   "new_after_ours": []
+  },
+  "3597": {
+   "number": 3597,
+   "state": "open",
+   "title": "redact: a hash with a number before it (\"1 <sha1>\") is masked as a secret by the local model",
+   "updated_at": "2026-10-25T17:36:40Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6400908682,
+     "author": "skygunner",
+     "created_at": "2026-10-25T17:36:40Z",
+     "body": "The check that lets a tool-output hash through read only the span's first field: the model takes `1 2f1d0c9b…a291` as one span, the first field is the count `1`, and `hexRe` wants 7 or more hex digits, so the span survived as a secret.\n\nFixed on [fix/redact-hex-count](https://github.com/skygunner/ma"
+    }
+   ],
+   "last_our_comment": "2026-10-25T17:36:40+00:00",
+   "new_after_ours": []
+  },
+  "3598": {
+   "number": 3598,
+   "state": "open",
+   "title": "library: `magpie library instructions set` says \"every agent already has it\" when no agent is given the instructions",
+   "updated_at": "2026-10-25T17:37:00Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6400912188,
+     "author": "skygunner",
+     "created_at": "2026-10-25T17:37:00Z",
+     "body": "The instructions half of the message fba554c7 fixed for `mcp add`: the saved text has no agent to go to, but `printLibraryResult` read the empty `res.Changed` as \"every agent already has it\".\n\nFixed on [fix/library-instructions-no-agent](https://github.com/skygunner/magpie/tree/fix/library-instructi"
+    }
+   ],
+   "last_our_comment": "2026-10-25T17:37:00+00:00",
+   "new_after_ours": []
+  },
+  "3601": {
+   "number": 3601,
+   "state": "open",
+   "title": "redact: a secret found by its KEY= context is masked there only; the same value elsewhere goes as written",
+   "updated_at": "2026-10-25T17:36:41Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6400908955,
+     "author": "skygunner",
+     "created_at": "2026-10-25T17:36:41Z",
+     "body": "The repeat was missed because the known-values memory is written when the placeholder is made (`apply`), which runs after the finders — so within the first request only the context site matched, and the second copy first went masked on the next turn.\n\nFixed on [fix/redact-repeat-secret](https://gith"
+    }
+   ],
+   "last_our_comment": "2026-10-25T17:36:41+00:00",
+   "new_after_ours": []
+  },
+  "3614": {
+   "number": 3614,
+   "state": "open",
+   "title": "[Bug] Routing: live request's Context window card says \"the model's window isn't known\" while the model's window is know",
+   "updated_at": "2026-10-25T21:07:19Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6403290176,
+     "author": "skygunner",
+     "created_at": "2026-10-25T21:07:19Z",
+     "body": "Root cause is in the trace, not the card: a route's `prompt.window` was filled only when the request finished, so an in-flight route carried `prompt.window=null` even though routing had already decided the model's window (your `/api/gateway/trace` capture shows exactly that split: `done=false → wind"
+    }
+   ],
+   "last_our_comment": "2026-10-25T21:07:19+00:00",
+   "new_after_ours": []
+  },
+  "3619": {
+   "number": 3619,
+   "state": "open",
+   "title": "gateway: SophNet's model-scoped 429 (\"Model tpm limit exceeded\") rests the whole key, greying out every model on it",
+   "updated_at": "2026-10-25T17:37:01Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6400912438,
+     "author": "skygunner",
+     "created_at": "2026-10-25T17:37:01Z",
+     "body": "The wording reads the model as the one limited, but nothing in the rest ladder knew it: `Model tpm limit exceeded` matched no word list, so the 429 fell to the key-wide rest, and every sibling on the SophNet key greyed out with a local 429 naming another model's error — your trace's `rest.key: sophn"
+    }
+   ],
+   "last_our_comment": "2026-10-25T17:37:01+00:00",
+   "new_after_ours": []
+  },
+  "3620": {
+   "number": 3620,
+   "state": "open",
+   "title": "gui tests: routing-levels 'webkit zh: a group names the reasoning levels' times out at its 5s wait for the no-level mess",
+   "updated_at": "2026-10-26T06:48:49Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6410020815,
+     "author": "skygunner",
+     "created_at": "2026-10-26T06:48:49Z",
+     "body": "Implemented a change on [fix/r25-routing-levels-wait](https://github.com/skygunner/magpie/tree/fix/r25-routing-levels-wait), head `f74765fd4901221b022c275f6bb6dfac76e4a50b` (one commit above `19253f67bca2310c32739a6eaac88546b3574dbc`).\n\nIn `internal/gui/assets/plugins/routing/client.js`, Save with N"
+    }
+   ],
+   "last_our_comment": "2026-10-26T06:48:49+00:00",
+   "new_after_ours": []
+  },
+  "3621": {
+   "number": 3621,
+   "state": "open",
+   "title": "Linux 自启：没有包自带的条目时，magpie 写进去的 Exec 是带版本号的真实路径，升级回收后失效",
+   "updated_at": "2026-10-26T04:56:26Z",
+   "closed_at": null,
+   "comments_count": 0,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6408564893,
+     "author": "skygunner",
+     "created_at": "2026-10-26T04:56:26Z",
+     "body": "接着做了，分支 [`fix/r25-autostart-exec-stable`](https://github.com/skygunner/magpie/tree/fix/r25-autostart-exec-stable)（基于 main `19253f67`，提交 `0aac5452b2310d9a658b6787fdf6d57238de0102`）。\n\n**根因**：`internal/autostart/autostart.go` 的 `self()` 用 `os.Executable()` 加 `filepath.EvalSymlinks` 取运行中的文件，把解析后的带版本号真实路"
+    }
+   ],
+   "last_our_comment": "2026-10-26T04:56:26+00:00",
+   "new_after_ours": []
+  },
+  "3622": {
+   "number": 3622,
+   "state": "open",
+   "title": "[Bug] plugins/package.json 与 bun.lock 脱节时，一次 bun add 让所有插件的安装与更新一起失败",
+   "updated_at": "2026-10-26T08:35:23Z",
+   "closed_at": null,
+   "comments_count": 4,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6401620839,
+     "author": "JoeyWu-tech",
+     "created_at": "2026-10-25T18:41:52Z",
+     "body": "这个我来看。先用 bun 1.4.4 照你的步骤把 lock 落后于 package.json 的状态复现出来，找到是哪一步让 packages 段还指着旧 tarball 的。修法倾向你说的第 2 条，pruneDist 不删 lock 还指着的 tarball，不过 lock 本身为什么没跟上也得一起解决，不然只是不报错了，装上的可能还是旧版本。\n"
+    },
+    {
+     "id": 6402026087,
+     "author": "JoeyWu-tech",
+     "created_at": "2026-10-25T19:18:13Z",
+     "body": "复现上了：你给的那个状态，再加上 install cache 里没有旧版本（magpie 的 pruneInstallCache 会清掉），bun 1.4.2 到 1.4.4 的 `bun add` 和 `bun remove` 都是 `ENOENT extracting tarball`。\n\n不过在 Linux 上我没让 dist 更新这一步本身把 lock 写成这样，1.4.2/1.4.3 只是在 workspaces 段留个重复的 key，下一次 add 就自己好了。方便的话贴一下坏掉时 bun.lock 里这三个包的所有行（两个段都要，别过滤），还有 package.json 里有没有"
+    },
+    {
+     "id": 6410545136,
+     "author": "skygunner",
+     "created_at": "2026-10-26T07:24:13Z",
+     "body": "已定位并修复。分支：[fix/r25-plugin-lock-drift](https://github.com/skygunner/magpie/tree/fix/r25-plugin-lock-drift)（基于 upstream main `19253f67`，单提交 `984d3895`）。\n\n**根因**：`internal/plugin/dist.go` 的 `pruneDist()` 在每次 `install()` 成功后运行（`internal/plugin/store.go` 的 `install` → `bunAdd` → `pruneDist`），它删除 `plugins"
+    },
+    {
+     "id": 6411696795,
+     "author": "JoeyWu-tech",
+     "created_at": "2026-10-26T08:35:22Z",
+     "body": "补丁在这：https://github.com/JoeyWu-tech/magpie/tree/fix/3622-dist-lock\n\n两个 commit，63f4c0d5 和 f5bc278f，基于 origin/main 4e5b2ad8（现在的 27ca0bef 上也能直接打），`git format-patch --no-signature --full-index --stdout 4e5b2ad8..f5bc278f | sha256sum` 是 `7ece0d2a0e1d7e70024ef81db79a7f9b35184df62983ff883be094e397775ffe`。\n"
+    }
+   ],
+   "last_our_comment": "2026-10-26T07:24:13+00:00",
+   "new_after_ours": [
+    {
+     "author": "JoeyWu-tech",
+     "created_at": "2026-10-26T08:35:22Z",
+     "body": "补丁在这：https://github.com/JoeyWu-tech/magpie/tree/fix/3622-dist-lock\n\n两个 commit，63f4c0d5 和 f5bc278f，基于 origin/main 4e5b2ad8（现在的 27ca0bef 上也能直接打），`git fo"
+    }
+   ]
+  },
+  "3624": {
+   "number": 3624,
+   "state": "open",
+   "title": "Usage → View routing loads a historical trace off-screen instead of bringing the selected request into view",
+   "updated_at": "2026-10-26T03:43:08Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6400631669,
+     "author": "skygunner",
+     "created_at": "2026-10-25T17:11:22Z",
+     "body": "Implemented a focused fork fix: [reveal routing history opened from Usage](https://github.com/skygunner/magpie/commit/c931166aadb24c635d4897857da2a0766572e9b3).\n\nBoth Usage routing links (expanded details and the timestamp) now pass the trusted navigation click into `openRoute`. It waits for the vie"
+    }
+   ],
+   "last_our_comment": "2026-10-25T17:11:22+00:00",
+   "new_after_ours": []
+  },
+  "3628": {
+   "number": 3628,
+   "state": "open",
+   "title": "internal/pii: go upgrade() outlives its test and races the next one's cleanup under -race (red on main)",
+   "updated_at": "2026-10-26T17:13:50Z",
+   "closed_at": null,
+   "comments_count": 4,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6401238343,
+     "author": "JoeyWu-tech",
+     "created_at": "2026-10-25T18:06:57Z",
+     "body": "I'll take this one, unless you're already on it @erickguan. Same 6 warnings here on 42ec2700 with go1.26.8. In most of them the upgrade goroutine has already finished, it's just never joined, so nothing orders its reads before the cleanup's writes (polling `upgrading` can't help the path where upgra"
+    },
+    {
+     "id": 6401392845,
+     "author": "skygunner",
+     "created_at": "2026-10-25T18:20:46Z",
+     "body": "The goroutine is owned now, on [fix/pii-upgrade-race](https://github.com/skygunner/magpie/tree/fix/pii-upgrade-race) (`80cea91a`, based on today's `main`):\n\n- `goUpgrade` hands `go upgrade()` a done channel (`upgradeDone`, the last started's), and `waitUpgrade` waits for the one under way — at once "
+    },
+    {
+     "id": 6408063195,
+     "author": "JoeyWu-tech",
+     "created_at": "2026-10-26T04:13:32Z",
+     "body": "Patch: https://github.com/JoeyWu-tech/magpie/tree/fix/3628-pii-upgrade-joined\n\ncommit 8b61a25d on origin/main 42ec2700 (applies as is on c158b043, pii hasn't changed since), `git format-patch --no-signature --full-index --stdout 42ec2700..8b61a25d | sha256sum` is `a972fd96d1f9b43cb4fb2e03e2f5adafd27"
+    },
+    {
+     "id": 6422550349,
+     "author": "skygunner",
+     "created_at": "2026-10-26T17:13:50Z",
+     "body": "我把第三方指出的\"只加入最后一个升级\"修掉了，分支 [fix/r25-3628-upgrade-race](https://github.com/skygunner/magpie/tree/fix/r25-3628-upgrade-race)，head `b85fe71688e06df048b6f545d22695077153042a`，基于 `19253f67bca2310c32739a6eaac88546b3574dbc`，仅一个提交。\n\n确认了你的报告：`upgradeDone` 在每次 `start` 时被覆盖，`waitUpgrade` 只等最后一个升级；第一个 start 的升级（"
+    }
+   ],
+   "last_our_comment": "2026-10-26T17:13:50+00:00",
+   "new_after_ours": []
+  },
+  "3629": {
+   "number": 3629,
+   "state": "open",
+   "title": "[Bug] Masking personal data: systemd @.service units become EMAIL and 11-digit byte counters become PHONE",
+   "updated_at": "2026-10-25T17:37:17Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6400915163,
+     "author": "skygunner",
+     "created_at": "2026-10-25T17:37:17Z",
+     "body": "两个误判在当前 `main` 上状态不同，分别说明：\n\n**1. systemd 单元被当 EMAIL —— 仍复现，已修。**\n\n正则命中的其实是实例化单元 `name@instance.service`：`.service` 是一个真实存在的 TLD（IANA 列表里有），所以 `realEmail` 的文件后缀防线拦不住它，`/home/<user>/.config/systemd/user/demo@web.service` 里的单元名被当成邮箱掩码，`default.target.wants` 路径下同款再来一次，正好是面板里的 EMAIL ×2。\n\n修复在 [fix/masking"
+    }
+   ],
+   "last_our_comment": "2026-10-25T17:37:17+00:00",
+   "new_after_ours": []
+  },
+  "3630": {
+   "number": 3630,
+   "state": "open",
+   "title": "修改供应商 ID 后，网关密钥里选好的模型没有跟着更新",
+   "updated_at": "2026-10-25T21:03:48Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6403245263,
+     "author": "skygunner",
+     "created_at": "2026-10-25T21:03:48Z",
+     "body": "根因：`provider.Rename` 已经把路由组及其规则/分类器/fast/off/权重、catalog 文件、StepFun 登录、模型偏好和可见列表带到新 id，但**网关密钥自己的模型白名单和账号选择**存在 `caller-keys.json`（`internal/access`）里，没有任何代码改写它。于是改名后密钥仍然写着 `old/m1`，编辑器把它列进「当前未提供」，而这把密钥按旧 id 发请求时会被自己的白名单拒绝——provider 本身其实是好的。\n\n修复在 [fix/provider-rename-gateway-keys](https://github.com/"
+    }
+   ],
+   "last_our_comment": "2026-10-25T21:03:48+00:00",
+   "new_after_ours": []
+  },
+  "3632": {
+   "number": 3632,
+   "state": "open",
+   "title": "filememo: Forget closes a channel another synctest bubble made, so internal/provider crashes on main since 091153bf",
+   "updated_at": "2026-10-26T12:13:50Z",
+   "closed_at": null,
+   "comments_count": 5,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6401734825,
+     "author": "ggbdpq",
+     "created_at": "2026-10-25T18:52:26Z",
+     "body": "Taking this — reproducing the synctest cross-bubble close now.\n\n<sub>written with GLM-5.3-Flash (ZCode)</sub>\n"
+    },
+    {
+     "id": 6402238991,
+     "author": "ggbdpq",
+     "created_at": "2026-10-25T19:38:16Z",
+     "body": "## What main's CI does\n\nSince 091153bf (#3185) gave bubbles something to write, main's CI is red on ubuntu and macOS with the whole `internal/provider` package dead:\n\n```\nfatal error: close of synctest channel from outside bubble\n```\n\nEvery test of the package dies with it, on every OS, and takes th"
+    },
+    {
+     "id": 6408812631,
+     "author": "skygunner",
+     "created_at": "2026-10-26T05:17:55Z",
+     "body": "已修，分支 [`fix/r25-filememo-forget-bubble`](https://github.com/skygunner/magpie/tree/fix/r25-filememo-forget-bubble)（基于 19253f67bca2310c32739a6eaac88546b3574dbc，单提交 3a0b4479）。\n\n**根因**：#3185 之后 `internal/filememo` 的 `Forget()`（filememo.go:91）在锁内 `close(written)` 再 `written = make(chan struct{})`。`writte"
+    },
+    {
+     "id": 6415126653,
+     "author": "JoeyWu-tech",
+     "created_at": "2026-10-26T11:41:06Z",
+     "body": "补丁在这：https://github.com/JoeyWu-tech/magpie/tree/fix/3632-filememo-synctest\n\ncommit 0576b589，基于 origin/main c158b043（现在的 77f86010 上也能直接打），`git format-patch --no-signature --full-index --stdout c158b043..0576b589 | sha256sum` 是 `8066424dc3e62c1866ead2f936f2bea3a12ba4824bc8032bbd63c7e972db0802`。\n\n说好一会儿"
+    },
+    {
+     "id": 6415722952,
+     "author": "ggbdpq",
+     "created_at": "2026-10-26T12:13:50Z",
+     "body": "I re-checked all three patches against today's main (1bb8143b), and the ground moved under the first two: de49433f (#3185) landed after they were written and added a second close site. `wake` — which wakes the loops waiting on Written when Watch sees another process's write — closes and remakes the "
+    }
+   ],
+   "last_our_comment": "2026-10-26T05:17:55+00:00",
+   "new_after_ours": [
+    {
+     "author": "JoeyWu-tech",
+     "created_at": "2026-10-26T11:41:06Z",
+     "body": "补丁在这：https://github.com/JoeyWu-tech/magpie/tree/fix/3632-filememo-synctest\n\ncommit 0576b589，基于 origin/main c158b043（现在的 77f86010 上也能直接打），`git format-p"
+    },
+    {
+     "author": "ggbdpq",
+     "created_at": "2026-10-26T12:13:50Z",
+     "body": "I re-checked all three patches against today's main (1bb8143b), and the ground moved under the first two: de49433f (#3185) landed after they were writ"
+    }
+   ]
+  },
+  "3645": {
+   "number": 3645,
+   "state": "open",
+   "title": "gui tests: routing-log-icons 'live request's story keeps its logos' times out waiting for .rt-steps li.wait under load (",
+   "updated_at": "2026-10-26T04:56:25Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6408257043,
+     "author": "skygunner",
+     "created_at": "2026-10-26T04:29:47Z",
+     "body": "Fixed on the fork in [fix/r25-routing-log-icons-wait](https://github.com/skygunner/magpie/tree/fix/r25-routing-log-icons-wait), commit [833c7cd61728607fdba75637e3271099847c2e70](https://github.com/skygunner/magpie/commit/833c7cd61728607fdba75637e3271099847c2e70), based on upstream `19253f67bca2310c3"
+    }
+   ],
+   "last_our_comment": "2026-10-26T04:29:47+00:00",
+   "new_after_ours": []
+  },
+  "3647": {
+   "number": 3647,
+   "state": "open",
+   "title": "gateway: with TLS on, a handover still cuts a local connection whose first byte hasn't come yet",
+   "updated_at": "2026-10-26T09:38:32Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6408145744,
+     "author": "skygunner",
+     "created_at": "2026-10-26T04:20:15Z",
+     "body": "根因在 `tlsListener` 与 `ListenAndServe` 的收尾顺序（internal/gateway/tls.go、internal/gateway/gateway.go）：TLS 开启时，来自本机的连接先在 sniff goroutine 里等第一个字节（最多 `sniffWait` 10s），读到才通过 `conns` channel 交给 `http.Server`。交接开始时 drain goroutine 调 `srv.Shutdown`，它先关 listener（`tlsListener.Close` → `close(l.done)`）——这时还没交给 serv"
+    }
+   ],
+   "last_our_comment": "2026-10-26T04:20:15+00:00",
+   "new_after_ours": []
+  },
+  "3648": {
+   "number": 3648,
+   "state": "open",
+   "title": "make dev: the dev backend's own server still cuts a page request it took when a handover begins (#3568's cause)",
+   "updated_at": "2026-10-26T11:53:52Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6413258899,
+     "author": "skygunner",
+     "created_at": "2026-10-26T10:00:22Z",
+     "body": "我把这个弄清楚了，也把之前那条评论里站不住的验证说法一并更正。分支 [fix/r25-dev-backend-handover](https://github.com/skygunner/magpie/commits/fix/r25-dev-backend-handover)，现在 head 是 `6d3f202fa62935bc480db953efcfb15256641c08`（在 `90095766` 的修复之上，只改测试），基于 `19253f67`。\n\n先更正：我上一版说\"事件版测试在基线上 20/20 红\"，那是我搞错了。上一版把放行时机挂在 `backendCtx.Done`（`s"
+    }
+   ],
+   "last_our_comment": "2026-10-26T10:00:22+00:00",
+   "new_after_ours": []
+  },
+  "3650": {
+   "number": 3650,
+   "state": "open",
+   "title": "A usage window with no `used` reads as 0% — which also puts a spent account first in the routing order",
+   "updated_at": "2026-10-26T14:45:57Z",
+   "closed_at": null,
+   "comments_count": 2,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6403822501,
+     "author": "skygunner",
+     "created_at": "2026-10-25T21:51:44Z",
+     "body": "Both halves come from the same coercion: `host.js`'s `usageOf` did `used: Math.max(0, num(w?.used))`, so absent became 0; Go's `UsageWindow.Used float64` could not carry absence either; that 0 became a `QuotaWindow` with a used of 0, which the meter read as \"100% left\" (and as `NaN%` where the page "
+    },
+    {
+     "id": 6418937567,
+     "author": "yetone",
+     "created_at": "2026-10-26T14:45:57Z",
+     "body": "Fixed in v0.1.1608 (9733ed1b4). Thanks to skygunner for the fix: it was ported from the `fix/usage-absent-used` branch, with credit in the commit.\n\nA plugin usage window that leaves out `used` is no longer read as 0:\n- The card shows the plugin's own text, or \"No allowance reported\", with no percent"
+    }
+   ],
+   "last_our_comment": "2026-10-25T21:51:44+00:00",
+   "new_after_ours": [
+    {
+     "author": "yetone",
+     "created_at": "2026-10-26T14:45:57Z",
+     "body": "Fixed in v0.1.1608 (9733ed1b4). Thanks to skygunner for the fix: it was ported from the `fix/usage-absent-used` branch, with credit in the commit.\n\nA "
+    }
+   ]
+  },
+  "3655": {
+   "number": 3655,
+   "state": "open",
+   "title": "[Bug] write_stdin 等待长任务被 tool-loop guard 误判，提前结束 Codex 当前轮次",
+   "updated_at": "2026-10-26T04:46:54Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6408456830,
+     "author": "skygunner",
+     "created_at": "2026-10-26T04:46:54Z",
+     "body": "已在分支 [`fix/r25-write-stdin-wait`](https://github.com/skygunner/magpie/tree/fix/r25-write-stdin-wait)（基于上游 main 19253f67，单个提交 d9c57ab0）修复，未开 PR。\n\n### 根因\n\n`internal/gateway/tool_loop.go` 的 `toolLoopOf` 比较末尾连续 8 个工具交互（`toolLoopRepeats`）：`exchangeOf` 按「调用名 + 参数 + 结果」求和，`resultSum`/`steadyResult` 会把 Code"
+    }
+   ],
+   "last_our_comment": "2026-10-26T04:46:54+00:00",
+   "new_after_ours": []
+  },
+  "3656": {
+   "number": 3656,
+   "state": "open",
+   "title": "[Bug] 账号打码遮蔽自定义别名，并误遮蔽套餐名称",
+   "updated_at": "2026-10-26T05:02:00Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6408578981,
+     "author": "skygunner",
+     "created_at": "2026-10-26T04:57:37Z",
+     "body": "根因已定位并修复，分支 [`fix/r25-mask-alias-plan`](https://github.com/skygunner/magpie/tree/fix/r25-mask-alias-plan)（基于上游 main `19253f67`，单个提交 `95c0511`）。\n\n## 根因\n\n两个来源，都在 `internal/gui/assets/app.js` 的账号打码逻辑里：\n\n1. **自定义别名被当作账号收集。** `noteAccounts()` 遇到 `k === \"alias\"` 就把值收进 `accountNames`（第 24697 行附近），`names()`"
+    }
+   ],
+   "last_our_comment": "2026-10-26T04:57:37+00:00",
+   "new_after_ours": []
+  },
+  "3657": {
+   "number": 3657,
+   "state": "open",
+   "title": "[bug] 资源库：导入的技能取消勾选后，仍会被直读 ~/.agents/skills 的 Agent 使用",
+   "updated_at": "2026-10-26T04:17:59Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6408073510,
+     "author": "skygunner",
+     "created_at": "2026-10-26T04:14:23Z",
+     "body": "根因与修复：https://github.com/skygunner/magpie/commit/82d23059d13bf87fc1ef426bb785e4daf68aa77d（分支 [`fix/r25-library-uncheckbox`](https://github.com/skygunner/magpie/tree/fix/r25-library-uncheckbox)，基于 upstream main `19253f67`）\n\n**根因**（`internal/library/skills.go` 的 `importSkill`，行为自 #227 的 ac1f5221 起）：从 "
+    }
+   ],
+   "last_our_comment": "2026-10-26T04:14:23+00:00",
+   "new_after_ours": []
+  },
+  "3661": {
+   "number": 3661,
+   "state": "open",
+   "title": "[Bug] ZCode Start Plan 模型过期后仍参与路由，导致订阅模型一并被暂停",
+   "updated_at": "2026-10-26T08:36:48Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6411723766,
+     "author": "skygunner",
+     "created_at": "2026-10-26T08:36:48Z",
+     "body": "已推送一个仅修复“试用模型拒绝连带暂停账号”的补丁，未将整个 issue 标为已解决：\n\n- 分支：[fix/r25-expired-model-not-account-fault](https://github.com/skygunner/magpie/tree/fix/r25-expired-model-not-account-fault)\n- 提交：[e04a1b9948b672b168eae484e09ba9609acbcb53](https://github.com/skygunner/magpie/commit/e04a1b9948b672b168eae484e09ba9609ac"
+    }
+   ],
+   "last_our_comment": "2026-10-26T08:36:48+00:00",
+   "new_after_ours": []
+  },
+  "3668": {
+   "number": 3668,
+   "state": "open",
+   "title": "Grok provider is always labeled SuperGrok, including when plan is absent",
+   "updated_at": "2026-10-26T08:20:06Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6411424119,
+     "author": "skygunner",
+     "created_at": "2026-10-26T08:20:06Z",
+     "body": "I've pushed a focused fix for the Magpie-side account badge fallback in [3e6f4077577d0af80890a542a3fb0d08f8249260](https://github.com/skygunner/magpie/commit/3e6f4077577d0af80890a542a3fb0d08f8249260), on [`fix/r25-grok-plan-absent-label`](https://github.com/skygunner/magpie/tree/fix/r25-grok-plan-ab"
+    }
+   ],
+   "last_our_comment": "2026-10-26T08:20:06+00:00",
+   "new_after_ours": []
+  },
+  "3674": {
+   "number": 3674,
+   "state": "open",
+   "title": "Usage → Requests: a non-Codex agent's calls are counted twice (gateway + its own session file)",
+   "updated_at": "2026-10-26T07:43:42Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6410685355,
+     "author": "skygunner",
+     "created_at": "2026-10-26T07:33:44Z",
+     "body": "Reproduced and fixed on branch [`fix/r25-usage-dedup-session-file`](https://github.com/skygunner/magpie/tree/fix/r25-usage-dedup-session-file) (base 19253f67bca2310c32739a6eaac88546b3574dbc, single commit 18006848027b956553615e5dd462a2e6580cb92d).\n\n## Root cause\n\nCorrelation was gated on Codex in tw"
+    }
+   ],
+   "last_our_comment": "2026-10-26T07:33:44+00:00",
+   "new_after_ours": []
+  },
+  "3684": {
+   "number": 3684,
+   "state": "open",
+   "title": "[opencode-zen-free] free flash models return finish_reason=tool_calls with an empty tool_calls array; tooling clients st",
+   "updated_at": "2026-10-26T09:49:53Z",
+   "closed_at": null,
+   "comments_count": 1,
+   "is_pr": false,
+   "comments": [
+    {
+     "id": 6413055706,
+     "author": "skygunner",
+     "created_at": "2026-10-26T09:49:53Z",
+     "body": "Took #3684. Branch: `fix/r25-empty-tool-calls-finish` on [skygunner/magpie](https://github.com/skygunner/magpie/tree/fix/r25-empty-tool-calls-finish), commit `91625dca0bb33ee696be639e659bdf4c8f1b6abd`, base `19253f67bca2310c32739a6eaac88546b3574dbc`.\n\n## Root cause\n\n`chatTidy` (streamed) and `chatWh"
+    }
+   ],
+   "last_our_comment": "2026-10-26T09:49:53+00:00",
+   "new_after_ours": []
+  }
+ },
+ "errors": []
+}

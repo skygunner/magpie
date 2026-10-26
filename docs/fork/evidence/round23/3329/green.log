@@ -1,0 +1,2 @@
+$ go test -tags nogui -count=1 -run TestDshCommentsBetweenEntriesSurviveRewrite ./internal/agent
+ok  	github.com/yetone/magpie/internal/agent	0.016s

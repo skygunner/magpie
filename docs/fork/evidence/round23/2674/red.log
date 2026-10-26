@@ -1,0 +1,5 @@
+--- FAIL: TestBlockList (0.00s)
+    yaml_flow_test.go:48: "[]\n- id: a\n" taken for a flow list: "[]\n"
+FAIL
+FAIL	github.com/yetone/magpie/internal/edit	0.003s
+FAIL
