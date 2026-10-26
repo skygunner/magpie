@@ -121,7 +121,19 @@ something else shows up as drift.
 - Detection goes by an agent's folder, which an uninstall leaves behind, so an agent found by that alone is shown as gone (`CLIMissing`; #843, #2177, #2173): its CLI is on no PATH and in none of `proc.FindTool`'s folders nor where its own installer puts it (`~/.claude/local`, `~/.codex/packages/standalone`, `~/.opencode/bin`, Hermes' `hermes-agent` checkout), and nothing else that reads the folder is here (`cliHeld`): its desktop app (`HasApp`), an editor's extension (`~/.<editor>/extensions/<id>-*`: `anthropic.claude-code`, `openai.chatgpt`, `saoudrizwan.claude-dev`), Claude.app, OpenCode.app and Goose.app on a Mac, a JetBrains IDE's settings (its AI Assistant's agents and Cline's plugin) or Zed's `external_agents` (its Claude Code and Codex adapters). Where magpie can't tell (every shared folder, `cliShared`, on Windows, whose readers can be a Store app, a portable editor or a PATH only a shell profile sets, #1482, and there too one a desktop app of the agent's reads, `desktopApps`: DeepSeek Harness Desktop installs to any folder and puts its `dsh.cmd` in one the user picks, #2300, #2304; OpenCode and Goose off a Mac, Gemini, an agent detected its own way or by a command name other tools share, one with no install command but `cliOnly`'s Hermes), it is never gone. A gone row in the GUI shows "CLI not found" and none of its settings, nor Apply again; while connected it keeps its switch and Disconnect, and it folds under Not set up once not. Get started never offers it (`connectKind` is "no"). The TUI leaves it out and `magpie ls` says "CLI not found" (`TestCLIMissing*`, `agent-cli-missing.test.cjs`, `getting-started.test.cjs`).
 - Tests never touch the real machine. `TestMain` uses `testenv`, which points HOME, USERPROFILE, the XDG folders and APPDATA into a temporary folder, clears `agentenv.Vars` and puts failing stand-ins for keychain tools and agent CLIs on PATH. Agent-specific side effects (Aside, the Zed keychain, Codex's usage check) are also stubbed in `TestMain`.
 
+MiniMax Code's config and sessions use [`appdir.MiniMaxDirIn`](../../internal/appdir/minimax.go)
+(#2998). `MINIMAX_DATA_DIR` remains the override. Otherwise the Windows CN
+app's `%APPDATA%/MiniMax/minimax-agent-cn-config.json` supplies
+`config.localRuntimeDataParentDir`, with `.minimax` appended. Missing,
+unreadable, malformed, blank or relative records retain `~/.minimax`.
+Only that reported settings location is read; other builds retain the default.
+Library skills follow the resolved agent directory too.
+
 ## Verification
+
+```sh
+go test ./internal/agent -run '^TestMiniMaxDirDesktopRecord$'
+```
 
 ```sh
 go test -tags nogui ./internal/agent -run '^TestStepCode'
