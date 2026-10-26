@@ -590,12 +590,15 @@ const noReasoning = " "
 // withReasoningOnToolTurns gives each assistant message of a Chat request
 // that has tool calls, or that follows a tool message of its turn, and no
 // reasoning_content one: the thinking it sent back in another field
-// (reasoning, reasoning_details), else noReasoning. DeepSeek turns away a
-// reply after a tool result with none as it does a call (checked against
-// api.deepseek.com on 2026-10-12, #1822). A message with reasoning_content
-// of its own keeps it, any other reply is left as it is (DeepSeek doesn't
-// ask for its thinking), and a body with no tool calls comes back byte for
-// byte.
+// (reasoning, reasoning_details), else noReasoning. The field the thinking
+// rode in on goes, so it is carried once: a self-hosted DeepSeek engine's
+// serde reads reasoning_content as an alias of reasoning and takes a
+// message carrying both apart ("duplicate field `reasoning`", #3165).
+// DeepSeek turns away a reply after a tool result with none as it does a
+// call (checked against api.deepseek.com on 2026-10-12, #1822). A message
+// with reasoning_content of its own keeps it, any other reply is left as
+// it is (DeepSeek doesn't ask for its thinking), and a body with no tool
+// calls comes back byte for byte.
 func withReasoningOnToolTurns(body []byte) []byte {
 	afterTool := false
 	return editMessages(body, []string{"tool_calls"}, func(m map[string]json.RawMessage) bool {
@@ -616,13 +619,38 @@ func withReasoningOnToolTurns(body []byte) []byte {
 		}
 		var own *string
 		if decodeJSON(m["reasoning_content"], &own) == nil && own != nil {
-			return false
+			changed := false
+			for _, f := range messageReasoning[1:] {
+				if _, ok := m[f]; ok {
+					delete(m, f)
+					changed = true
+				}
+			}
+			return changed
 		}
 		think := reasoningText(m)
 		if think == "" {
 			think = noReasoning
 		}
+		for _, f := range messageReasoning[1:] {
+			delete(m, f)
+		}
 		m["reasoning_content"], _ = marshalPlain(think)
+		return true
+	})
+}
+
+// foldReasoningAliases keeps the DeepSeek spelling: its serde reads both
+// names as one field and refuses a message carrying both (#3165).
+func foldReasoningAliases(body []byte) []byte {
+	return editMessages(body, []string{"reasoning"}, func(m map[string]json.RawMessage) bool {
+		if _, ok := m["reasoning"]; !ok {
+			return false
+		}
+		if _, ok := m["reasoning_content"]; !ok {
+			return false
+		}
+		delete(m, "reasoning")
 		return true
 	})
 }
