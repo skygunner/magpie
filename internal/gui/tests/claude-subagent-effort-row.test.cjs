@@ -5,9 +5,10 @@
 // subagents are on Claude Code's pick (no model of their own) it reads
 // Default and can't be used: magpie writes no effort then, as the main model
 // at an effort pinned every subagent to it (KorenKrita on Discord). Given a
-// model, it opens the effort slider and posts the level picked. In Chromium
-// and WebKit, wide and narrow, in English and Chinese. No backend: the API is
-// faked here.
+// model, it opens the effort slider and posts the level picked. The tray
+// panel draws the same setting as a square, and behaves the same way (#3308).
+// In Chromium and WebKit, wide and narrow, in English and Chinese. No backend:
+// the API is faked here.
 const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const path = require("node:path");
@@ -31,11 +32,11 @@ const claude = (sub) => ({
   ],
 });
 
-function server(lang, sub, sets) {
+function server(lang, sub, sets, panel) {
   let cur = { agents: [claude(sub)], profiles: [] };
   return async (route) => {
     const req = route.request(), url = new URL(req.url());
-    if (url.pathname === "/boot.js") return route.fulfill({ contentType: "text/javascript", body: `window.bootPrefs = {lang:"${lang}",theme:"light",web:true};` });
+    if (url.pathname === "/boot.js") return route.fulfill({ contentType: "text/javascript", body: `window.bootPrefs = {lang:"${lang}",theme:"light",web:${!panel}};` });
     if (url.pathname === "/wails/runtime.js") return route.fulfill({ contentType: "text/javascript", body: "export const Window = {};" });
     if (url.pathname === "/api/state") return route.fulfill({ json: { ...cur, settings: { lang, theme: "light" } } });
     if (url.pathname === "/api/set") {
@@ -139,6 +140,64 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
           assert.deepEqual(errors, []);
         });
       }
+    }
+  }
+}
+
+// The tray panel draws that square through extraField, where the window's
+// control is built by hand: it behaves the same way while the subagents are
+// on Claude Code's pick (#3308).
+for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"])) {
+  for (const lang of ["en", "zh"]) {
+    for (const sub of ["", "magpie/v/flash"]) {
+      test(`${engine} ${lang}: the panel's subagent effort square, ${sub ? "with a model" : "disabled with none"}`, async (t) => {
+        const w = W[lang];
+        const browser = await (engine === "webkit" ? webkit.launch() : chromium.launch({ channel: "chromium" }));
+        const page = await browser.newPage({ viewport: { width: 440, height: 700 } });
+        page.setDefaultTimeout(5000);
+        const errors = [], sets = [];
+        page.on("pageerror", (e) => errors.push(e.message));
+        await page.route("**/*", server(lang, sub, sets, true));
+        t.after(async () => {
+          if (process.env.ARTIFACT_DIR) {
+            await fs.mkdir(process.env.ARTIFACT_DIR, { recursive: true });
+            await page.screenshot({ path: path.join(process.env.ARTIFACT_DIR, `${engine}-${lang}-${sub ? "model" : "none"}-panel-subagent-effort.png`), fullPage: true });
+          }
+          await browser.close();
+        });
+        await page.goto("http://magpie.test/?mode=panel");
+        await page.locator('#ptabs [data-ptab="agents"]').click();
+        await page.locator(`${cc} .ag-sum`).click();
+        const eff = page.locator(`${cc} .ag-open .field.extra[data-key="subagent_effort"]`);
+        await eff.waitFor();
+        const slider = page.locator("#pop.effort-picker:not([hidden])");
+
+        if (!sub) {
+          // no model: Default, unlit, and it can't be used, as in the window
+          assert.equal(await eff.isDisabled(), true);
+          assert.equal(await eff.evaluate((e) => e.classList.contains("set")), false, "a stashed level lit the square");
+          const title = await eff.getAttribute("title");
+          assert.ok(title.startsWith(w.sep(w.label, w.def)) && title.includes(w.first), title);
+          await eff.click({ force: true });
+          assert.equal(await slider.count(), 0, "a disabled square opened the slider");
+          assert.deepEqual(sets, []);
+        } else {
+          assert.equal(await eff.isDisabled(), false);
+          assert.equal(await eff.getAttribute("title"), w.sep(w.label, w.def) + "\n" + w.asks);
+          await eff.click();
+          await slider.waitFor();
+          assert.equal(await page.locator("#effortTicks i").count(), 4, "Default and three levels");
+          await page.locator("#effortRange").evaluate((r) => {
+            r.value = "3";
+            r.dispatchEvent(new Event("input", { bubbles: true }));
+            r.dispatchEvent(new Event("change", { bubbles: true }));
+          });
+          await page.waitForFunction(() => document.querySelector("#status")?.textContent);
+          assert.deepEqual(sets, [{ agent: "claude", field: "subagent_effort", value: "high" }]);
+          assert.equal(await eff.getAttribute("title"), w.sep(w.label, w.high));
+        }
+        assert.deepEqual(errors, []);
+      });
     }
   }
 }
