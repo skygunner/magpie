@@ -102,17 +102,23 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
 // 闪烁): each drawing made every logo afresh, and a logo made afresh loads
 // its picture again, which WebKit paints as nothing for a frame. A line
 // that says the same is the node it was, and a logo is the one it was.
+// Hold each trace update until the preceding story has been checked (#3645).
 function serveLive(lang, steps) {
   const base = serve(lang);
-  let n = 0;
-  return async (route) => {
+  const gates = Array.from({ length: steps.length + 1 }, () => Promise.withResolvers());
+  gates[0].resolve();
+  let n = 0, next = 1;
+  return Object.assign(async (route) => {
     const url = new URL(route.request().url());
     if (url.pathname !== "/api/gateway/trace") return base(route);
-    const i = Math.min(n++, steps.length - 1);
-    if (i && i === steps.length - 1 && n > steps.length) await new Promise((r) => setTimeout(r, 20e3));
-    else if (url.searchParams.get("wait")) await new Promise((r) => setTimeout(r, 300));
+    const request = Math.min(n++, steps.length);
+    await gates[request].promise;
+    const i = Math.min(request, steps.length - 1);
     return route.fulfill({ json: { mine: true, now: new Date().toISOString(), seq: 200 + i, totals: { requests: 1, rerouted: 1, errors: 0 }, routes: [steps[i]] } });
-  };
+  }, {
+    next: () => gates[next++].resolve(),
+    release: () => gates.forEach((g) => g.resolve()),
+  });
 }
 
 for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"])) {
@@ -126,11 +132,12 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       page.on("pageerror", (e) => errors.push(e.message));
       const live = { id: 200, seq: 200, time: new Date().toISOString(), agent: "claude", model: "glm-5.3-flash", provider: "zhipu", order: [glm, gpt] };
       const t429 = { id: glm.id, model: glm.model, start: live.time, done: true, status: 429, ms: 400, error: "rate limited" };
-      await page.route("**/*", serveLive(lang, [
+      const trace = serveLive(lang, [
         { ...live, tries: [{ id: glm.id, model: glm.model, start: live.time }] },
         { ...live, tries: [t429, { id: gpt.id, model: gpt.model, start: live.time }] },
         { ...live, tries: [t429, { id: gpt.id, model: gpt.model, start: live.time, done: true, status: 200, ms: 900 }], done: true, status: 200, ms: 1300, tokens: 300 },
-      ]));
+      ]);
+      await page.route("**/*", trace);
       t.after(() => browser.close());
       await page.goto("http://magpie.test/?view=routing");
       await page.locator(".rt-steps li.wait").waitFor();
@@ -141,6 +148,9 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         return window.__logos.map((x) => x.dataset.icon);
       });
       assert(first.includes("zhipu-color"), JSON.stringify(first));
+      trace.next();
+      await page.locator(".rt-steps li.bad").waitFor();
+      trace.next();
       await page.locator(".rt-steps li.ok").waitFor();
       const after = await page.locator(".rt-steps").evaluate((s) => {
         const now = [...s.querySelectorAll(".rt-named > .ic")];
