@@ -262,7 +262,8 @@ func (t *chatTidy) line(line []byte) []byte {
 			delete(delta, "reasoning_content")
 			inDelta = true
 		}
-		if calls, ok := delta["tool_calls"]; ok && string(calls) == "[]" {
+		var native []json.RawMessage
+		if calls, ok := delta["tool_calls"]; ok && decodeJSON(calls, &native) == nil && len(native) == 0 {
 			delete(delta, "tool_calls")
 			inDelta = true
 		} else if ok {
@@ -291,6 +292,10 @@ func (t *chatTidy) line(line []byte) []byte {
 		}
 		if inDelta {
 			c["delta"], _ = json.Marshal(delta)
+			changed = true
+		}
+		if string(bytes.TrimSpace(c["finish_reason"])) == `"tool_calls"` && !t.called[choice] {
+			c["finish_reason"] = json.RawMessage(`"stop"`)
 			changed = true
 		}
 		if t.called[choice] && string(bytes.TrimSpace(c["finish_reason"])) == `"stop"` {
@@ -519,9 +524,15 @@ func (t *chatWhole) flush() []byte {
 			}
 			mended = true
 		}
-		// calls the upstream made, ended "stop" (chatTidy)
 		var native []json.RawMessage
-		if string(bytes.TrimSpace(c["finish_reason"])) == `"stop"` && decodeJSON(msg["tool_calls"], &native) == nil && len(native) > 0 {
+		raw, has := msg["tool_calls"]
+		known := !has || decodeJSON(raw, &native) == nil
+		if string(bytes.TrimSpace(c["finish_reason"])) == `"tool_calls"` && known && len(native) == 0 {
+			c["finish_reason"] = json.RawMessage(`"stop"`)
+			changed = true
+		}
+		// calls the upstream made, ended "stop" (chatTidy)
+		if string(bytes.TrimSpace(c["finish_reason"])) == `"stop"` && known && len(native) > 0 {
 			c["finish_reason"] = json.RawMessage(`"tool_calls"`)
 			changed = true
 		}
