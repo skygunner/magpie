@@ -13,3 +13,11 @@ func TestForgetsAcrossSynctestBubbles(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) { Forget() })
 	synctest.Test(t, func(t *testing.T) { Forget() })
 }
+
+// wake (another process's write, seen by Watch) closes the same channel
+// Forget does, so it carries the same bubble rule: with no one waiting it
+// closes nothing, from whichever bubble it runs in.
+func TestWakeAcrossSynctestBubbles(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) { wake() })
+	synctest.Test(t, func(t *testing.T) { wake() })
+}
