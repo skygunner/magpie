@@ -917,6 +917,13 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
 	now := time.Now()
 	d := fallbackCooldown
 	why := failureOf(c, status, body)
+	if keyLimitedThere(header) {
+		// the key's own allowance there is out until the time it names,
+		// as one of this magpie's: told as out of quota, so its vendor's
+		// words are given again while it rests (quotaHeld), and not as a
+		// rate limit that passes in a minute (#3705)
+		why = failQuota
+	}
 	if header.Get(zdrHeader) != "" || zdrRefused(status, body) {
 		// Command Code's Zero Data Retention setting refused the request:
 		// the model and the account are as good as they were, and answer
@@ -1184,11 +1191,18 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
 // on Discord: "Remote Magpie: Claude Code: You've hit your session
 // limit" answered every model of it for the five hours it named).
 func remoteModelRest(c candidate, why string, header http.Header) bool {
-	if !c.p.IsRemoteMagpie() && header.Get(answeredThereHeader) == "" || header.Get(remoteKeyLimitHeader) != "" {
+	if !c.p.IsRemoteMagpie() && header.Get(answeredThereHeader) == "" || keyLimitedThere(header) {
 		return false
 	}
 	return why == failQuota || why == failCredit || why == failRate || why == failRestricted || why == failVerify
 }
+
+// keyLimitedThere says a refusal is another magpie's own gateway key out of
+// its limit rather than a model's of its providers (keyLimited's 429, which
+// carries remoteKeyLimitHeader): that key's allowance there, out until the
+// time it names, as one of this magpie's own is — not a rate limit that
+// passes (remoteModelRest, restAfterMarked).
+func keyLimitedThere(header http.Header) bool { return header.Get(remoteKeyLimitHeader) != "" }
 
 // restSlow counts a slow start — let go for no first token in its group's
 // FirstToken — against the candidate's model on its account or key
@@ -1345,11 +1359,14 @@ func (c candidate) allowance() (provider.Allowance, bool) {
 // keepRetry passes on, with a vendor's error, what it said about when to
 // try again: restAfter reads it to rest the candidate that long, and an
 // agent given the error reads it too. When it said so in the error itself
-// (ChatGPT's resets_at), that goes on as Retry-After.
+// (ChatGPT's resets_at), that goes on as Retry-After. Another magpie's own
+// key limit (remoteKeyLimitHeader) goes too: restAfter reads it to rest that
+// key whole (#3705), and the held writer leaves it out of what the agent
+// reads (holdWriter's pass and keepAlive).
 func keepRetry(dst, src http.Header, body []byte) {
 	for k, vs := range src {
 		l := strings.ToLower(k)
-		if l == "retry-after" || strings.Contains(l, "ratelimit") && strings.Contains(l, "reset") {
+		if l == "retry-after" || strings.Contains(l, "ratelimit") && strings.Contains(l, "reset") || l == strings.ToLower(remoteKeyLimitHeader) {
 			dst[k] = vs
 		}
 	}

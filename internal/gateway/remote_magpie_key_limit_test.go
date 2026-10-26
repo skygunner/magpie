@@ -9,6 +9,8 @@ import (
 	"sync/atomic"
 	"testing"
 
+	"github.com/yetone/magpie/internal/access"
+	"github.com/yetone/magpie/internal/budget"
 	"github.com/yetone/magpie/internal/provider"
 )
 
@@ -191,5 +193,102 @@ func anotherMagpieAddedByHand(t *testing.T, held bool) {
 	}
 	if asked.Load() != 2 {
 		t.Errorf("Qoder was asked %d times; want twice", asked.Load())
+	}
+}
+
+// #3705 (yetone): another magpie's key limit (keyLimited's 429, marked with
+// remoteKeyLimitHeader) never reached restAfter here — keepRetry carried
+// only Retry-After and the vendors' reset headers — so the key's limit
+// there rested one model here, and the next request for another model was
+// asked there and refused too. The header goes with the rest, and no further
+// than it: the agent is not handed a header of magpie's own.
+func TestRemoteMagpieKeyLimitReachesTheRestNotTheAgent(t *testing.T) {
+	fresh(t)
+	budget.Forget()
+	pinLimitClock(t)
+	var ccAsked, qdAsked atomic.Int32
+	up := func(n *atomic.Int32, model string) *httptest.Server {
+		s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			io.Copy(io.Discard, r.Body)
+			n.Add(1)
+			w.Header().Set("Content-Type", "application/json")
+			io.WriteString(w, `{"id":"c1","object":"chat.completion","model":"`+model+`","choices":[{"index":0,"message":{"role":"assistant","content":"hello"},"finish_reason":"stop"}],"usage":{"prompt_tokens":300,"completion_tokens":50}}`)
+		}))
+		t.Cleanup(s.Close)
+		return s
+	}
+	for _, p := range []provider.Provider{
+		{ID: "cc", Name: "Claude Code", Key: "k1", Models: []string{"claude-opus-5-5"}, Chat: up(&ccAsked, "claude-opus-5-5").URL + "/v1"},
+		{ID: "qd", Name: "Qoder", Key: "k2", Models: []string{"fast"}, Chat: up(&qdAsked, "fast").URL + "/v1"},
+	} {
+		if err := provider.Save(p); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// every request that reaches the other magpie, asked there or not
+	var there atomic.Int32
+	inner := New().Handler()
+	remote := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		there.Add(1)
+		inner.ServeHTTP(w, r)
+	}))
+	t.Cleanup(remote.Close)
+	// the key this magpie holds there, spent
+	keys, secrets := newCaller(t, "Office")
+	setLimit(t, keys[0].ID, &access.Limit{Period: "day", Tokens: 1})
+	sendThere := func(model string) *httptest.ResponseRecorder {
+		t.Helper()
+		req := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(`{"model":"`+model+`","messages":[{"role":"user","content":"hi"}]}`))
+		req.Header.Set("Authorization", "Bearer "+secrets[0])
+		rec := httptest.NewRecorder()
+		New().Handler().ServeHTTP(rec, req)
+		return rec
+	}
+	if rec := sendThere("cc/claude-opus-5-5"); rec.Code != http.StatusOK {
+		t.Fatalf("the key's first request there: %d %s", rec.Code, rec.Body.String())
+	}
+	id, err := provider.Add(provider.Provider{ID: "office", Name: "Remote magpie", Preset: provider.RemoteMagpiePreset, Key: secrets[0], Chat: strings.TrimPrefix(remote.URL, "http://"),
+		Models: []string{"cc/claude-opus-5-5", "qd/fast"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	office, _ := provider.Find(id)
+	if _, err := office.Fetch(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	send := func(model string) *httptest.ResponseRecorder {
+		t.Helper()
+		req := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(`{"model":"`+id+`/`+model+`","messages":[{"role":"user","content":"hi"}]}`))
+		rec := httptest.NewRecorder()
+		New().Handler().ServeHTTP(rec, req)
+		return rec
+	}
+	// the key's own limit there is the key's here: Claude Code's request
+	// is refused, and Qoder's is not asked there at all
+	rec := send("cc/claude-opus-5-5")
+	if rec.Code != http.StatusTooManyRequests {
+		t.Fatalf("Claude Code there, its key's own limit: %d %s; want its 429", rec.Code, rec.Body.String())
+	}
+	if got := rec.Header().Get(remoteKeyLimitHeader); got != "" {
+		t.Errorf("the agent was handed magpie's own %s: %q", remoteKeyLimitHeader, got)
+	}
+	if n := ccAsked.Load(); n != 1 {
+		t.Errorf("Claude Code was asked %d times there; want the one the limit counted", n)
+	}
+	if n := there.Load(); n != 2 {
+		t.Errorf("%d requests reached the other magpie; want the key's spent one and this", n)
+	}
+	rec = send("qd/fast")
+	if got := rec.Header().Get(remoteKeyLimitHeader); got != "" {
+		t.Errorf("the agent was handed magpie's own %s: %q", remoteKeyLimitHeader, got)
+	}
+	if n := there.Load(); n != 2 {
+		t.Errorf("%d requests reached the other magpie while its key rests; want 2: Qoder's is held here", n)
+	}
+	if n := qdAsked.Load(); n != 0 {
+		t.Errorf("Qoder was asked %d times there while the key rests; want never", n)
+	}
+	if rec.Code != http.StatusTooManyRequests || !strings.Contains(rec.Body.String(), "not asked again") {
+		t.Errorf("Qoder while the key rests: %d %s; want the key's 429 held here", rec.Code, rec.Body.String())
 	}
 }
