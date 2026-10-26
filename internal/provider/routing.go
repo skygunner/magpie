@@ -498,7 +498,9 @@ func Allowances(agent string) map[string]Allowance {
 				if q.Error != "" || len(q.Windows) == 0 {
 					continue
 				}
-				all[user] = allowanceOf(q.Windows, time.Now()).restartedBy(resetRunsOut(agent, user, q.Windows, q.Resets))
+				if a, ok := routedAllowance(agent, user, q, time.Now()); ok {
+					all[user] = a
+				}
 			}
 			c.Lock()
 			now := time.Now()
@@ -704,6 +706,19 @@ func (a Allowance) restartedBy(runsOut time.Time) Allowance {
 	return a
 }
 
+// routedAllowance is the allowance routing goes by from an account's
+// reading. ok is false when it tells no share at all — every window its
+// text or set aside, as a plugin's that doesn't say how much is used
+// (#3650): the account is then not known, as one never read, rather than
+// one with all of it left, ahead of the rest.
+func routedAllowance(agent, user string, q SubscriptionQuota, now time.Time) (Allowance, bool) {
+	a := allowanceOf(q.Windows, now)
+	if len(a) == 0 {
+		return nil, false
+	}
+	return a.restartedBy(resetRunsOut(agent, user, q.Windows, q.Resets)), true
+}
+
 // allowanceOf keeps the windows that can stop an account.
 func allowanceOf(ws []QuotaWindow, now time.Time) Allowance {
 	// Antigravity keeps the vendor's ids in its windows (and on disk),
@@ -729,7 +744,7 @@ func allowanceOf(ws []QuotaWindow, now time.Time) Allowance {
 	}
 	var a Allowance
 	for _, w := range ws {
-		if w.Aside {
+		if w.Aside || w.Text {
 			continue
 		}
 		l := Limit{Used: w.Used, Span: w.Span, Model: w.Model, Amount: w.Amount, Of: w.Limit, Unit: w.Unit, matches: w.matches, partial: w.partial, Name: w.Name, Credits: w.Credits}
