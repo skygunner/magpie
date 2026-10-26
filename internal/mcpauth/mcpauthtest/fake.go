@@ -65,6 +65,18 @@ type Fake struct {
 	// registration response lets it: the token endpoint takes it as
 	// registered
 	Assign string
+	// RefuseResource answers 400 invalid_target to a token request that
+	// carries the RFC 8707 resource, as Semgrep's does to one it advertised
+	// (#3194); one without it goes on as usual
+	RefuseResource bool
+	// RefuseTarget answers 400 invalid_target to every token request,
+	// resource or no
+	RefuseTarget bool
+
+	// TokenCalls are the token requests that came in, and TokenResources
+	// the resource each carried
+	TokenCalls     int
+	TokenResources []string
 
 	refuse  bool // RefuseTokens
 	codes   map[string]codeGrant
@@ -194,6 +206,13 @@ func New(t *testing.T) *Fake {
 		r.ParseForm()
 		f.mu.Lock()
 		defer f.mu.Unlock()
+		f.TokenCalls++
+		f.TokenResources = append(f.TokenResources, r.PostForm.Get("resource"))
+		if f.RefuseTarget || (f.RefuseResource && r.PostForm.Get("resource") != "") {
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"error": "invalid_target"})
+			return
+		}
 		fail := func(code string) {
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(map[string]string{"error": code})
@@ -205,7 +224,9 @@ func New(t *testing.T) *Fake {
 			delete(f.codes, r.PostForm.Get("code"))
 			sum := sha256.Sum256([]byte(r.PostForm.Get("code_verifier")))
 			if !ok || base64.RawURLEncoding.EncodeToString(sum[:]) != g.challenge || client(r) != g.client ||
-				r.PostForm.Get("redirect_uri") != g.redirect || r.PostForm.Get("resource") != g.resource {
+				r.PostForm.Get("redirect_uri") != g.redirect ||
+				// a server that refuses the resource takes the retry without it
+				(r.PostForm.Get("resource") != g.resource && !(f.RefuseResource && r.PostForm.Get("resource") == "")) {
 				fail("invalid_grant")
 				return
 			}

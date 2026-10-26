@@ -403,7 +403,26 @@ func (e *tokenError) Error() string {
 }
 
 // tokenRequest posts form to the record's token endpoint, as its client.
+// A stage that carries the RFC 8707 resource for a server that advertises
+// one but refuses the parameter is retried once without it (Semgrep,
+// #3194); the rest of the request, PKCE included, goes as it was. An
+// authorize URL the server refuses is browser-side and stays as it is.
 func tokenRequest(ctx context.Context, r Record, form url.Values) (tokens, error) {
+	t, err := postToken(ctx, r, form)
+	if err == nil || form.Get("resource") == "" {
+		return t, err
+	}
+	var te *tokenError
+	if !errors.As(err, &te) || te.Code != "invalid_target" {
+		return t, err
+	}
+	form.Del("resource")
+	return postToken(ctx, r, form)
+}
+
+// postToken posts the form once: the client_method's authentication, the
+// error codes, and the form answer GitHub gives its errors as a 200 with.
+func postToken(ctx context.Context, r Record, form url.Values) (tokens, error) {
 	if r.AuthMethod != "client_secret_basic" {
 		form.Set("client_id", r.ClientID)
 	}
