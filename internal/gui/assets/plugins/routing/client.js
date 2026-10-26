@@ -2596,9 +2596,41 @@ function routingPage(part) {
     }
     if (!matchesPurpose(r)) purpose = [];
     offline("");
+    // opened from another page (Usage's View routing), the click asks to go
+    // somewhere: the story of the request it named comes into view (#3624).
+    // A pick inside Routing keeps the page where it is (see pick).
+    const away = $("#view-routing").hidden;
     window.show("routing");
     if (o.context) ctxFor = r.id;
     pick(r);
+    if (away) {
+      // the page is still settling (quotas, providers, the stage's redraws) as
+      // the first scroll lands, and what sits above the story keeps changing
+      // height for a moment: bring the story in sight and keep it there until
+      // the layout is still, then hand the page back to the reader
+      const v = $("#view-routing");
+      let n = 0, calm = 0, watching = true;
+      const stop = () => { watching = false; };
+      const done = () => {
+        watching = false;
+        for (const type of ["wheel", "pointerdown", "touchstart", "keydown"]) v.removeEventListener(type, stop, { capture: true });
+      };
+      for (const type of ["wheel", "pointerdown", "touchstart", "keydown"]) v.addEventListener(type, stop, { once: true, passive: true, capture: true });
+      const reveal = () => {
+        const log = v.querySelector(".rt-log");
+        if (!watching || !log || v.hidden || ++n > 100) return done();
+        const r = log.getBoundingClientRect(), b = v.getBoundingClientRect();
+        if (r.top >= b.top - 1 && r.top < b.bottom) {
+          if (++calm >= 12) return done(); // in sight and the layout has stopped moving
+        } else {
+          calm = 0;
+          readerScrolls(1000);
+          log.scrollIntoView({ block: "nearest", behavior: n === 1 && !still() ? "smooth" : "auto" });
+        }
+        requestAnimationFrame(reveal);
+      };
+      requestAnimationFrame(reveal);
+    }
   };
 
   // what a call was for when it isn't a turn of the conversation, as
