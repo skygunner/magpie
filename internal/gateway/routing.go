@@ -720,6 +720,23 @@ func resetsAt(body []byte, now time.Time) time.Duration {
 // time to the minute at least, with no digit, colon or zone after it.
 var zhipuResets = regexp.MustCompile(`(?:\bYour limit will reset at|您的限额将在)\s*(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2}))?(\s*\S{0,3})`)
 
+// heldClause is how a refusal held out of its allowance says when it is
+// asked again: magpie's own words, and the ones another magpie's held
+// refusal already carries, so a refusal held there and then here says it
+// once (heldSaid).
+const heldClause = " (out of its allowance: "
+
+// heldSaid is a held refusal's words with the clause said once, back when
+// the first of what it holds is asked again. Another magpie's held refusal
+// (a Remote magpie) comes with the clause and its own time in it: that
+// clause goes, and this magpie's time is said instead (#3701).
+func heldSaid(said string, back time.Time) string {
+	if i := strings.Index(said, heldClause); i >= 0 {
+		said = said[:i]
+	}
+	return fmt.Sprintf("%s%snot asked again before %s)", said, heldClause, heldClock(back, time.Now()))
+}
+
 // heldClock is when a key or model held out of its allowance is asked
 // again, as an error put in words says it. The agent reading it, or a
 // Remote magpie's user, may be on another clock than this magpie's, so the
