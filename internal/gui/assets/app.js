@@ -17368,7 +17368,7 @@ function panelQuotaCard(q) {
   if (q.balanceCard) card.dataset.balCard = q.balanceCard;
   // by the name the user gave the account, or the key plan it stands
   // in for (#1515), before the account itself
-  card.append(el("span", "pq-user", q.alias || q.user || q.name));
+  card.append(el("span", "pq-user" + (q.alias ? " quota-alias" : ""), q.alias || q.user || q.name));
   card.title = [q.name, q.alias, q.user, q.seat && q.seat !== q.alias && "≡ " + q.seat, q.plan, q.until ? planTerm(q) : "", q.balance && t("Balance") + " " + q.balance].filter(Boolean).join(" · ");
   if (q.error) {
     card.classList.add("err");
@@ -24694,7 +24694,7 @@ function noteAccounts(x, depth = 0) {
     if (!Object.hasOwn(x, k)) continue;
     const v = x[k];
     if (typeof v === "string") {
-      if (k === "user" || k === "account" || k === "alias" || (k === "who" && x.kind === "account")) noteAccount(v);
+      if (k === "user" || k === "account" || (k === "who" && x.kind === "account")) noteAccount(v);
     } else if (k === "who" && x.kind === "account" && Array.isArray(v)) for (const w of v) noteAccount(w);
     else if (v && typeof v === "object") noteAccounts(v, depth + 1);
   }
@@ -24719,13 +24719,10 @@ window.noteAccounts = noteAccounts;
     for (const p of providers?.providers || []) {
       for (const n of [p.id, p.name, p.account?.agentName, p.account?.agent]) if (n) not.add(String(n).toLowerCase());
       if (p.account) { all.add((p.account.user || "").trim()); for (const l of p.account.logins || []) all.add((l.user || "").trim()); }
-      // the names the user gave accounts (#1515), as the accounts are
-      for (const n of Object.values(p.accountNames || {})) all.add(String(n).trim());
     }
     for (const q of quotas || []) {
       for (const n of [q.provider, q.name, q.plan]) if (n) not.add(String(n).toLowerCase());
       all.add((q.user || "").trim());
-      if (q.alias && q.alias !== q.seat) all.add(q.alias.trim());
     }
     for (const a of state?.agents || []) for (const n of [a.id, a.name]) if (n) not.add(String(n).toLowerCase());
     return [...all].filter((n) => n.length >= 2 && !IS_EMAIL.test(n) && !not.has(n.toLowerCase())).sort((a, b) => b.length - a.length);
@@ -24764,6 +24761,8 @@ window.noteAccounts = noteAccounts;
   // it is no account, so only an address is hidden there (#1973: the
   // project lingting-react-ui with the account lingting)
   const NAMELESS = "#sessionsPane, #contextPane";
+  // Display labels aren't identities (#3656).
+  const LABELS = ".quota-alias, .acct-who .rename, .plan, .subscription-head b, .model-value";
   // chosen is the Hide accounts choice made on this computer; until one is,
   // the accounts are hidden while Privacy masks personal data, which is
   // where one who wants them kept out of sight turns it on (inaction on
@@ -24784,8 +24783,9 @@ window.noteAccounts = noteAccounts;
       const all = finder(), reOf = (e) => e?.closest(NAMELESS) ? EMAIL : all;
       const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT), found = [];
       for (let n; (n = walk.nextNode());) {
-        if (n.data.length < 2 || SKIP.has(n.parentElement?.tagName) || n.parentElement?.closest(".pii")) continue;
-        const re = reOf(n.parentElement);
+        const parent = n.parentElement, e = parent?.closest(LABELS);
+        if (!parent || SKIP.has(parent.tagName) || parent.closest(".pii")) continue;
+        const re = e ? EMAIL : reOf(parent);
         re.lastIndex = 0;
         if (re.test(n.data)) found.push(n);
       }
@@ -24806,7 +24806,7 @@ window.noteAccounts = noteAccounts;
         if (bits.length > 1) { const run = el("span", "pii-run"); run.append(...bits); n.replaceWith(run); }
         else n.replaceWith(...bits);
       }
-      for (const e of [root, ...root.querySelectorAll("[title]")]) {
+      for (const e of [root, ...root.querySelectorAll("[title]:not(" + LABELS + ")")]) {
         // one masked already reads as an account too, its stars and all
         if (!e.dataset || "piiTitle" in e.dataset || !e.title) continue;
         let out = "", last = 0;
