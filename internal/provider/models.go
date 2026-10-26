@@ -2695,8 +2695,15 @@ func resolveIn(entries []Entry, id string) (Provider, string, bool) {
 	if pid, model, ok := strings.Cut(id, "/"); ok {
 		// the providers a request holds (All): an agent's value of a
 		// model not listed lands here
-		if p := lookIn(All(), pid); p != nil && p.On() && !p.ServesNone() {
-			return *p, model, true
+		if p := lookIn(All(), pid); p != nil {
+			if p.On() && !p.ServesNone() {
+				return *p, model, true
+			}
+			// the provider exists and isn't serving: the id names it, so it
+			// is served by nobody. Read as a bare model id it would find
+			// another provider's model of the same name — a group member
+			// reported as off was sent to that one (#3698, coderbiq)
+			return Provider{}, "", false
 		}
 	}
 	for i := range entries {
