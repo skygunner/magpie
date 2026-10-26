@@ -191,6 +191,9 @@ func modules() []found {
 	return out
 }
 
+// stamp changes when plugins.json or an agent module's file does: the one
+// it loads, and each file that one imports, which jsmod.Compile gave
+// back, so an edit to an imported file reloads too (#3723).
 func stamp() string {
 	var b strings.Builder
 	b.WriteString(plugin.ListStamp())
@@ -199,8 +202,29 @@ func stamp() string {
 		if fi, err := os.Stat(f.file); err == nil {
 			fmt.Fprint(&b, ":", fi.ModTime().UnixNano(), ":", fi.Size())
 		}
+		for _, x := range importsOf(f.file) {
+			if fi, err := os.Stat(x.Path); err == nil {
+				fmt.Fprint(&b, ":", x.Path, ":", fi.ModTime().UnixNano(), ":", fi.Size())
+			} else {
+				b.WriteString(":" + x.Path + ":gone")
+			}
+		}
 	}
 	return b.String()
+}
+
+// importsOf is the files the agent module in file imported when it last
+// loaded, kept for stamp: which files to look at, so that its once-a-second
+// look costs a stat of each and not what a load does.
+var importsMemo struct {
+	sync.Mutex
+	m map[string][]jsmod.File
+}
+
+func importsOf(file string) []jsmod.File {
+	importsMemo.Lock()
+	defer importsMemo.Unlock()
+	return importsMemo.m[file]
 }
 
 func load(st string) *set {
@@ -219,6 +243,9 @@ func load(st string) *set {
 		seen[a.Desc.ID] = f.e.Spec
 		s.list = append(s.list, a)
 	}
+	// the files imported are known only now: stamp again, so the set's
+	// own stamp matches the next look's and loading doesn't repeat
+	s.stamp = stamp()
 	return s
 }
 
@@ -229,10 +256,16 @@ func Compile(spec, file string) (*Agent, error) {
 	if t := plugin.Target(spec); t != file {
 		root = t
 	}
-	mod, err := jsmod.Compile(root, file, "an agent plugin")
+	mod, files, err := jsmod.Compile(root, file, "an agent plugin")
 	if err != nil {
 		return nil, err
 	}
+	importsMemo.Lock()
+	if importsMemo.m == nil {
+		importsMemo.m = map[string][]jsmod.File{}
+	}
+	importsMemo.m[file] = files
+	importsMemo.Unlock()
 	a := &Agent{Spec: spec, File: file, rt: moejs.NewRuntime(moejs.Options{})}
 	if err := a.rt.SetGlobal("console", console(a)); err != nil {
 		return nil, err
