@@ -219,18 +219,30 @@ type inst struct {
 	mu    sync.Mutex
 	armed bool // a call is running, which the timer may stop
 	fired bool
-	run   *Run // the request it serves
+	// done is closed by the timer's func once it has said whether it
+	// fired; disarm waits on it, so no interrupt outlives the call its
+	// timer was set for (#3742)
+	done chan struct{}
+	run  *Run // the request it serves
 }
+
+// afterFunc is time.AfterFunc; a test holds the func it runs.
+var afterFunc = time.AfterFunc
 
 func (m *mw) newInst() (*inst, error) {
 	in := &inst{m: m, rt: moejs.NewRuntime(moejs.Options{})}
-	in.timer = time.AfterFunc(time.Hour, func() {
+	in.timer = afterFunc(time.Hour, func() {
 		in.mu.Lock()
 		if in.armed {
 			in.fired = true
 			in.rt.Interrupt(errTimeout)
 		}
+		done := in.done // the func the timer runs closes it, once it has
+		// said whether it fired: disarm waits on it (#3742)
 		in.mu.Unlock()
+		if done != nil {
+			close(done)
+		}
 	})
 	in.timer.Stop()
 	if err := in.rt.SetGlobal("console", in.console()); err != nil {
@@ -263,17 +275,25 @@ func (m *mw) put(in *inst) {
 func (in *inst) arm(d time.Duration) {
 	in.mu.Lock()
 	in.armed, in.fired = true, false
+	in.done = make(chan struct{})
 	in.mu.Unlock()
 	in.timer.Reset(d)
 }
 
-// disarm ends what arm began, and says whether the timer stopped it.
+// disarm ends what arm began, and says whether the timer stopped it. The
+// timer's func can be on its way to Interrupt as the call it was set for
+// ends, and Stop doesn't wait for it; an interrupt that lands then would
+// stop the runtime's next call, which had its own time left (#3742). So
+// disarm waits for the func once Stop says it has begun, then clears the
+// interrupt it gave.
 func (in *inst) disarm() bool {
+	if !in.timer.Stop() {
+		<-in.done
+	}
 	in.mu.Lock()
 	in.armed = false
 	fired := in.fired
 	in.mu.Unlock()
-	in.timer.Stop()
 	if fired {
 		in.rt.ClearInterrupt()
 	}
