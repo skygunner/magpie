@@ -1,0 +1,151 @@
+From 1c8f94dec43db6981e182146c32b513fadf659b6 Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 08:33:20 +1000
+Subject: [PATCH] sessions: an agy title rewritten in place in the read's own
+ tick is seen (#3708, JoeyWu-tech)
+
+agy writes a conversation's title once its first reply is in, rewriting a
+page of conversation_summaries.db in place: its size stays the same, and
+on Linux's coarse clock (4ms here, CI's runners too) a write in the same
+tick as the read that saw it leaves the same mtime. The revision of mtime
+and size was unchanged, so the rows read before were served and the new
+title didn't show until the database changed again. TestAgyTitleLater was
+red 2 of 200, 3 of 3 with the mtime put back.
+
+The rows are now read again when the database was written within a small
+settle window (agySettle, 2s), whose revision is not kept: git's rule for
+a racily clean index, with a coarse filesystem's tick to spare. A
+database written long before is still read once and kept, as before.
+
+Red before the fix (go test -tags nogui ./internal/sessions/ -run
+TestAgySummariesSettle):
+    agy_settle_test.go:50: a title written in the settle window: "Listing the folder"
+Green after: the rewrite in the window is seen, one to a settled
+database isn't read again. Package: ok, TestAgyTitleLater 20 of 20 along
+with it; go vet and gofmt clean.
+---
+ internal/sessions/agy.go             | 21 ++++++++-
+ internal/sessions/agy_settle_test.go | 65 ++++++++++++++++++++++++++++
+ 2 files changed, 85 insertions(+), 1 deletion(-)
+ create mode 100644 internal/sessions/agy_settle_test.go
+
+diff --git a/internal/sessions/agy.go b/internal/sessions/agy.go
+index 10a71e0f..6be286d0 100644
+--- a/internal/sessions/agy.go
++++ b/internal/sessions/agy.go
+@@ -66,13 +66,26 @@ var agySummaries struct {
+ 	rows map[string]agySummary
+ }
+ 
++// agySettle is how recently agy may have written the database for what was
++// read not to be kept as its revision: a page rewritten in place in the
++// same clock tick as the read leaves the same mtime and size (a coarse
++// clock stamps 4ms here), so the next look would see no change and keep the
++// old title (#3708). Git's rule for a racily clean index, with a coarse
++// filesystem's tick to spare.
++const agySettle = 2 * time.Second
++
+ // agySummariesOf are the rows of the conversation_summaries.db in dir.
+ func agySummariesOf(dir string) map[string]agySummary {
+ 	path := filepath.Join(dir, "conversation_summaries.db")
+ 	rev := ""
++	settled := true
++	now := time.Now()
+ 	for _, p := range []string{path, path + "-wal"} {
+ 		if fi, err := os.Stat(p); err == nil {
+ 			rev += strconv.FormatInt(fi.ModTime().UnixNano(), 10) + ":" + strconv.FormatInt(fi.Size(), 10) + ";"
++			if now.Sub(fi.ModTime()) < agySettle {
++				settled = false
++			}
+ 		} else if p == path {
+ 			return nil
+ 		}
+@@ -89,7 +102,13 @@ func agySummariesOf(dir string) map[string]agySummary {
+ 		}
+ 		return nil
+ 	}
+-	agySummaries.path, agySummaries.rev, agySummaries.rows = path, rev, rows
++	agySummaries.path, agySummaries.rows = path, rows
++	// what a database written just now holds is served, but not kept as the
++	// revision a later look matches: it may be written again in this tick
++	agySummaries.rev = ""
++	if settled {
++		agySummaries.rev = rev
++	}
+ 	return rows
+ }
+ 
+diff --git a/internal/sessions/agy_settle_test.go b/internal/sessions/agy_settle_test.go
+new file mode 100644
+index 00000000..d05520fe
+--- /dev/null
++++ b/internal/sessions/agy_settle_test.go
+@@ -0,0 +1,65 @@
++package sessions
++
++import (
++	"database/sql"
++	"os"
++	"path/filepath"
++	"testing"
++	"time"
++)
++
++// agy writes a conversation's title once its first reply is in, rewriting a
++// page of conversation_summaries.db in place: the size stays the same, and a
++// write in the same clock tick as the read that saw it leaves the same mtime
++// too (TestAgyTitleLater went red 2 of 200 on a coarse Linux clock, #3708).
++// The rows are read again then: a database written within the settle window
++// keeps no revision to be reused from, as git keeps no stat for a file it
++// wrote in the same tick. One written long before is still read once.
++func TestAgySummariesSettle(t *testing.T) {
++	dir := putAgy(t)
++	path := filepath.Join(dir, "conversation_summaries.db")
++	title := func() string {
++		rows := agySummariesOf(dir)
++		return rows[agyRead].Title
++	}
++	if got := title(); got != "Listing the folder" {
++		t.Fatalf("title %q", got)
++	}
++	// the same rewrite twice: a page changed in place, its time put back
++	rewrite := func(to string) {
++		fi, err := os.Stat(path)
++		if err != nil {
++			t.Fatal(err)
++		}
++		db, err := sql.Open("sqlite", path)
++		if err != nil {
++			t.Fatal(err)
++		}
++		if _, err := db.Exec(`UPDATE conversation_summaries SET title = ? WHERE conversation_id = ?`, to, agyRead); err != nil {
++			t.Fatal(err)
++		}
++		db.Close()
++		if err := os.Chtimes(path, fi.ModTime(), fi.ModTime()); err != nil {
++			t.Fatal(err)
++		}
++	}
++	// written just now: the revision it has is not kept, so the next look
++	// reads it again and sees the new title
++	rewrite("Reading a.txt")
++	if got := title(); got != "Reading a.txt" {
++		t.Fatalf("a title written in the settle window: %q", got)
++	}
++	// written long before: a rewrite so close to its own time isn't told
++	// from the one read, and the rows read are kept
++	old := time.Now().Add(-time.Hour)
++	if err := os.Chtimes(path, old, old); err != nil {
++		t.Fatal(err)
++	}
++	if got := title(); got != "Reading a.txt" {
++		t.Fatalf("a settled database: %q", got)
++	}
++	rewrite("Listing the folder")
++	if got := title(); got != "Reading a.txt" {
++		t.Fatalf("a settled database was read again: %q", got)
++	}
++}
+-- 
+2.56.0
+

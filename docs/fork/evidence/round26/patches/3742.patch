@@ -1,0 +1,226 @@
+From fd442d4f97972547028709dd4e181867b948ece6 Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 08:16:39 +1000
+Subject: [PATCH] middleware: a timeout that fires as its call ends no longer
+ stops the next one (#3742, JoeyWu-tech)
+
+Each middleware runtime has one timer, reused for every call. When the
+timer's func fired just as the call it was set for ended, disarm's
+timer.Stop() didn't wait for it, so the func could still be on its way to
+Interrupt when the next call on that runtime armed. It then found armed
+true and stopped that call, which had its own time left: the call was
+kept as it was and read "took too long". The next event's onEvent,
+microseconds later, was the usual victim.
+
+The timer's func now closes a done channel once it has said whether it
+fired, and disarm waits for it once Stop says the func has begun, then
+clears the interrupt it gave. A call that ends in time pays one channel
+close; afterFunc stands in for time.AfterFunc so a test can hold the
+func.
+
+Red before the fix, in a synctest bubble with the timer's func held as
+the call it was set for ends (go test -tags nogui ./internal/middleware/
+-run TestLateInterruptSparesTheNextCall):
+    late_interrupt_test.go:70: the second call: interrupted: took too long
+Green after: the next call runs the hook, and the one that outstayed its
+limit reads took too long. TestLimitStopsAHookStillRunning, the everyday
+case, is green both ways. Package: 31 passed, go vet and gofmt clean.
+---
+ internal/middleware/late_interrupt_test.go | 119 +++++++++++++++++++++
+ internal/middleware/middleware.go          |  28 ++++-
+ 2 files changed, 143 insertions(+), 4 deletions(-)
+ create mode 100644 internal/middleware/late_interrupt_test.go
+
+diff --git a/internal/middleware/late_interrupt_test.go b/internal/middleware/late_interrupt_test.go
+new file mode 100644
+index 00000000..8bdb4c2d
+--- /dev/null
++++ b/internal/middleware/late_interrupt_test.go
+@@ -0,0 +1,119 @@
++package middleware
++
++import (
++	"strings"
++	"testing"
++	"testing/synctest"
++	"time"
++
++	"github.com/Calcium-Ion/moejs"
++)
++
++// A hook can end just as its time runs out: the timer's func has begun
++// and not yet given its interrupt. Stop doesn't wait for it, so the
++// interrupt landed after the next arm, on a call that had its own time
++// left, and that call was kept as it was, reading "took too long"
++// (#3742). Here the timer's func is held at that moment, so the next
++// call, of the time it has of its own, succeeds.
++func TestLateInterruptSparesTheNextCall(t *testing.T) {
++	e := file(t, `export function onRequest(body) { body.slow = true; return body; }`)
++	use(t, e)
++	synctest.Test(t, func(t *testing.T) {
++		// the timer's func is held while the call it was set for ends
++		begun, release := make(chan struct{}), make(chan struct{})
++		afterFunc = func(d time.Duration, f func()) *time.Timer {
++			return time.AfterFunc(d, func() {
++				close(begun)
++				<-release
++				f()
++			})
++		}
++		t.Cleanup(func() { afterFunc = time.AfterFunc })
++		was := requestLimit
++		t.Cleanup(func() { requestLimit = was })
++		requestLimit = 50 * time.Millisecond
++
++		// one middleware, one runtime, as a request's hooks share
++		s := current()
++		m := s.list[0]
++		in, err := m.get()
++		if err != nil {
++			t.Fatal(err)
++		}
++		defer m.put(in)
++
++		// the call whose time runs out as it ends: the timer's func
++		// begins as it ends and is held there
++		got := make(chan error, 1)
++		go func() {
++			in.arm(10 * time.Millisecond)
++			time.Sleep(20 * time.Millisecond)
++			if in.disarm() {
++				got <- errTimeout
++				return
++			}
++			got <- nil
++		}()
++		<-begun
++		synctest.Wait() // the first call has ended, the timer's func held
++		// disarm must not have returned before the func has said
++		// whether it fired: an interrupt it gave after the next arm
++		// would stop a call that had its own time left
++		if len(got) != 0 {
++			t.Error("disarm returned while its timer's func hadn't given its interrupt")
++		}
++		close(release)
++		synctest.Wait() // the timer's func has given its interrupt
++		// the first call, whose timer ran out as the func was held,
++		// reads took too long: its hook slept past its limit
++		if err := <-got; err == nil {
++			t.Error("the first call, that outstayed its limit, succeeded")
++		}
++
++		// the interrupt the held func gave lands between the calls:
++		// the next call, of the time it has of its own, must not be
++		// stopped by it
++		requestLimit = was
++		v, err := in.call(in.m.onReq, requestLimit, mustJSON(t, in, `{}`))
++		if err != nil {
++			t.Errorf("the second call: %v", err)
++		} else if !strings.Contains(in.text(v), `"slow"`) {
++			t.Errorf("the second call wasn't run: %s", in.text(v))
++		}
++	})
++}
++
++// mustJSON parses data as the call's argument.
++func mustJSON(t *testing.T, in *inst, data string) moejs.Value {
++	t.Helper()
++	v, err := in.rt.ParseJSON([]byte(data))
++	if err != nil {
++		t.Fatal(err)
++	}
++	return v
++}
++
++// The everyday case stays: a hook that outstays its limit is stopped,
++// reads "took too long" and the call after it runs.
++func TestLimitStopsAHookStillRunning(t *testing.T) {
++	e := file(t, `
++let n = 0;
++export function onRequest(body) { if (++n === 1) for (;;) {} body.n = n; return body; }`)
++	use(t, e)
++	was := requestLimit
++	t.Cleanup(func() { requestLimit = was })
++	requestLimit = 50 * time.Millisecond
++	r := Begin(info())
++	defer r.End()
++	if body, _ := r.Request([]byte(`{}`)); strings.Contains(string(body), `"n"`) {
++		t.Fatalf("the call that runs out: %s", body)
++	}
++	st := States()[e.Spec]
++	if st.Failures != 1 || !strings.Contains(st.Last, "too long") {
++		t.Fatalf("state %+v", st)
++	}
++	requestLimit = was
++	if body, _ := r.Request([]byte(`{}`)); !strings.Contains(string(body), `"n":2`) {
++		t.Fatalf("the call after: %s", body)
++	}
++}
+diff --git a/internal/middleware/middleware.go b/internal/middleware/middleware.go
+index 2830edc8..a12ddeee 100644
+--- a/internal/middleware/middleware.go
++++ b/internal/middleware/middleware.go
+@@ -219,18 +219,30 @@ type inst struct {
+ 	mu    sync.Mutex
+ 	armed bool // a call is running, which the timer may stop
+ 	fired bool
+-	run   *Run // the request it serves
++	// done is closed by the timer's func once it has said whether it
++	// fired; disarm waits on it, so no interrupt outlives the call its
++	// timer was set for (#3742)
++	done chan struct{}
++	run  *Run // the request it serves
+ }
+ 
++// afterFunc is time.AfterFunc; a test holds the func it runs.
++var afterFunc = time.AfterFunc
++
+ func (m *mw) newInst() (*inst, error) {
+ 	in := &inst{m: m, rt: moejs.NewRuntime(moejs.Options{})}
+-	in.timer = time.AfterFunc(time.Hour, func() {
++	in.timer = afterFunc(time.Hour, func() {
+ 		in.mu.Lock()
+ 		if in.armed {
+ 			in.fired = true
+ 			in.rt.Interrupt(errTimeout)
+ 		}
++		done := in.done // the func the timer runs closes it, once it has
++		// said whether it fired: disarm waits on it (#3742)
+ 		in.mu.Unlock()
++		if done != nil {
++			close(done)
++		}
+ 	})
+ 	in.timer.Stop()
+ 	if err := in.rt.SetGlobal("console", in.console()); err != nil {
+@@ -263,17 +275,25 @@ func (m *mw) put(in *inst) {
+ func (in *inst) arm(d time.Duration) {
+ 	in.mu.Lock()
+ 	in.armed, in.fired = true, false
++	in.done = make(chan struct{})
+ 	in.mu.Unlock()
+ 	in.timer.Reset(d)
+ }
+ 
+-// disarm ends what arm began, and says whether the timer stopped it.
++// disarm ends what arm began, and says whether the timer stopped it. The
++// timer's func can be on its way to Interrupt as the call it was set for
++// ends, and Stop doesn't wait for it; an interrupt that lands then would
++// stop the runtime's next call, which had its own time left (#3742). So
++// disarm waits for the func once Stop says it has begun, then clears the
++// interrupt it gave.
+ func (in *inst) disarm() bool {
++	if !in.timer.Stop() {
++		<-in.done
++	}
+ 	in.mu.Lock()
+ 	in.armed = false
+ 	fired := in.fired
+ 	in.mu.Unlock()
+-	in.timer.Stop()
+ 	if fired {
+ 		in.rt.ClearInterrupt()
+ 	}
+-- 
+2.56.0
+

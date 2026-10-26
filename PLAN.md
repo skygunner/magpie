@@ -1,3 +1,40 @@
+## 2026-10-27 第二十六轮：#3188、#3308、#3320、#3324、#3399、#3555、#3669、#3690、#3698、#3701、#3705、#3708、#3713、#3716、#3721、#3723、#3742、#3751、#3775、#3776
+
+本轮二十题全部是**别人报的、上游未修、帖里没有可用补丁**的：选题前先用台账 132 个既有 issue 做差集，
+再逐条对 `upstream/main` 源码复核，评论里已贴 patch 的一律弃做（#3511 就是因此放弃：`hunt79-h-3511` 已在帖里）。
+一题一分支，全部基于 `6afbe3f3`；推送后远端 SHA 读回一致；二十条回帖按原帖语言（15 en / 5 zh）发布并逐条 API 读回
+（author/issue/created_at/UTF-8 body SHA256 入 `evidence/round26/comment-readback.json`）。
+
+| # | 目标 | 修改范围 | 验收 | 状态 |
+|---|---|---|---|---|
+| M1 | #3776 日本手机号漏掩 | redact.go 新增 JP 规则 + 摘掉 eval `GuardKnown` | 报告者 CSV 红→绿，95 测试过 | 完成 ab40c7ea（en） |
+| M2 | #3775 `<total_tokens>` 计数被当机密 | model.go SECRET 加计数线索否决 | 假模型 span 红→绿，92 测试过 | 完成 c4fd6c4b（en） |
+| M3 | #3713 ClinePass 缺 canonicalSlug | upstream.go 解析扩 (provider,slug)，贯穿 Usage/Trace/Record | fixture 红→绿，usage 552 过 | 完成 129d94ae（zh） |
+| M4 | #3669 MiniMax CN 换域名 | presets/chat.inlineThink/planquota 三处同改 | think 与 plan-quota 表红→绿 | 完成 da00218e（en） |
+| M5 | #3701 中继的 held 拒绝说两遍 | gateway.go heldSaid 去掉已带子句 | 双网关 harness 红→绿 | 完成 5253cad3（en） |
+| M6 | #3690 claudeRoom freed 通道跨 bubble 关闭 | claude_room.go 由 first-waiter 持有 | synctest bubble fatal→绿 | 完成 56b4f317（en） |
+| M7 | #3705 远端 key 限额不透传 | routing.go 透传 X-Magpie-Limit-Reset + 两处过滤 + 归为超额 | 三问降为二问红→绿 | 完成 6c8bd9bc（en） |
+| M8 | #3716 Gemini 拒 options 不重试 | optionalFields 加 `options` | 400→200（2 次）红→绿 | 完成 62bb7d58（zh） |
+| M9 | #3324 路由历史按服务器日 | history.go 读侧取 viewer 时区，写侧不动 | 23:50 跨日红→绿 | 完成 0765619b（en） |
+| M10 | #3742 超时 interrupt 落到下一次调用 | middleware disarm 等函数结束 | synctest 第二次调用红→绿 | 完成 fd442d4f（en） |
+| M11 | #3723 改 import 不重载 | jsmod 返回所读文件，两处 stamp 纳入 | 两包 reload 测试红→绿 | 完成 e232a777（en） |
+| M12 | #3708 同 tick 同大小写看不到 | agy.go 加 settle 规则 | settle 测试红→绿，TitleLater 20/20 | 完成 1c8f94de（en） |
+| M13 | #3751 改写 Codex provider 移位偏移 | codex_provider.go 保持行长（短补齐/长拒绝） | 310 vs 319 红→绿 | 完成 7e061eda（zh） |
+| M14 | #3721 SIWC 账号读成 Codex | login_usage.go 按 agent 守卫 + 明确错误 | 无 codex/auth.json 红→绿 | 完成 20ac3a6c（en） |
+| M15 | #3698 关停供方的前缀成员落到别家 | models.go 前缀命中即止 | 绑定到 commandcode 红→绿 | 完成 6d7c04d0（en） |
+| M16 | #3399 Kimi K3.1 缺思考能力声明 | kimi.go 无 off 档写 always_thinking | capabilities 红→绿 | 完成 d19b48b8（zh） |
+| M17 | #3555 远端的 Try now 无转发 | trace.go OwnerUnrest + gui 接线 | 假 owner 200 红→绿 | 完成 1fe501d2（en） |
+| M18 | #3320 RTK 把配置当结论且不刷新 | library/client.js 措辞 + 可见即重读，五语言 | 容器内 playwright 8/8，基线红 | 完成 ff8cdd64（zh） |
+| M19 | #3188 sub2api percent 份额读成美元 | sub2api_usage.go + windowsLeft | 报告样例红→绿，42.9s 过 | 完成 0817d2e9（en） |
+| M20 | #3308 托盘面板子代理effort 未禁用 | app.js subEffortOff + 禁用样式 | 24/24（容器 chromium+webkit） | 完成 2a75e5d3（en） |
+
+收口：二十支普通推送、远端读回一致；`suite-r26-merged` 合并后全量 nogui **70 ok / 5 包红**
+（edit hardlink、gateway 五个、plugin SOCKS、provider synctest、testenv program），五个在基线 `6afbe3f3`、本机 umask 0027 下逐字同红；
+`internal/gui` 绿。GUI 相关两题在 docker1 一次性 playwright 1.62.1 容器里跑（基线与分支各一遍），容器与临时目录已删。
+台账 +20 units（149 总）、+20 分支记录、prior-comments 160、REQUIRED_SET +20；`generate.py --write/--selftest` 过。
+**#3323 未做**：sessions 的日/小时桶在解析期算进 state.Days，缓存只按一个时区，只穿 `?tz=` 会让越界行消失而不是换日——
+正确修法是存绝对时间并让缓存支持多时区，属独立一题；理由与边界写入 `evidence/round26/README.md` 与本轮 #3323 无回帖说明。
+
 ## 2026-10-26 第二十二轮（ZCode 会话）：#3597、#3601、#3598、#3619、#3629、#3595
 
 本会话开场先做现场甄别：**另一活跃会话正在本仓库工作**（fix/nvidia-parameters-routing

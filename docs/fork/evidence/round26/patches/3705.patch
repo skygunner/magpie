@@ -1,0 +1,253 @@
+From 6c8bd9bc98a75ef9ce37c80f0b5c22987857bc2e Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 06:01:41 +1000
+Subject: [PATCH] gateway: another magpie's key limit rests the key here, till
+ its reset (#3705, yetone)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+A Remote magpie refusing a request because its own gateway key is out of its
+limit answers 429 with X-Magpie-Limit-Reset. keepRetry carried only
+Retry-After and the vendors' reset headers, so that header never reached
+restAfter: the refusal read as a plain rate limit, rested the one model here
+for a minute, and the next request for another model was asked there and
+refused with the same 429 — every model of that magpie failing for as long
+as its key's limit lasted.
+
+keepRetry now carries X-Magpie-Limit-Reset too, and such a refusal is the
+key's allowance there rather than a rate limit: restAfterMarked tells it as
+out of quota, so the key rests whole until the time it names and the next
+request is answered from that rest (keyLimitedThere, whose name both places
+and remoteModelRest read it under). The header is magpie's own and stays
+here: holdWriter's pass and keepAlive leave it out, as they do the other
+notes (resetsHeader, refusedHeader, zdrHeader, answeredThereHeader).
+
+Verified: red without the fix — `go test -tags nogui ./internal/gateway/
+-count=1 -run TestRemoteMagpieKeyLimitReachesTheRestNotTheAgent` failed with
+"3 requests reached the other magpie while its key rests; want 2: Qoder's
+is held here", Qoder's request asked there and refused; green with it, and
+the agent gets neither the header nor an ask on the second model. gofmt -l
+silent, go vet -tags nogui ./internal/gateway/ silent, go build -tags nogui
+./... ok.
+---
+ internal/gateway/fallback.go                  |  4 +-
+ internal/gateway/gateway.go                   |  6 +-
+ .../gateway/remote_magpie_key_limit_test.go   | 99 +++++++++++++++++++
+ internal/gateway/routing.go                   | 23 ++++-
+ 4 files changed, 125 insertions(+), 7 deletions(-)
+
+diff --git a/internal/gateway/fallback.go b/internal/gateway/fallback.go
+index 6ae086e3..05e6a728 100644
+--- a/internal/gateway/fallback.go
++++ b/internal/gateway/fallback.go
+@@ -1843,7 +1843,7 @@ func (h *holdWriter) pass() {
+ 	}
+ 	dst := h.w.Header()
+ 	for k, v := range h.header {
+-		if k != resetsHeader && k != refusedHeader && k != zdrHeader && k != answeredThereHeader { // magpie's own notes, for restAfter and settle
++		if k != resetsHeader && k != refusedHeader && k != zdrHeader && k != answeredThereHeader && k != remoteKeyLimitHeader { // magpie's own notes, for restAfter and settle
+ 			dst[k] = v
+ 		}
+ 	}
+@@ -2248,7 +2248,7 @@ func (h *holdWriter) keepAlive() {
+ 		}
+ 		dst := h.w.Header()
+ 		for k, v := range src {
+-			if k != resetsHeader && k != refusedHeader && k != zdrHeader && k != answeredThereHeader && k != "Content-Length" {
++			if k != resetsHeader && k != refusedHeader && k != zdrHeader && k != answeredThereHeader && k != remoteKeyLimitHeader && k != "Content-Length" {
+ 				dst[k] = slices.Clone(v)
+ 			}
+ 		}
+diff --git a/internal/gateway/gateway.go b/internal/gateway/gateway.go
+index c39371db..be36c263 100644
+--- a/internal/gateway/gateway.go
++++ b/internal/gateway/gateway.go
+@@ -3618,10 +3618,12 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
+ 				continue
+ 			}
+ 		}
+-		if last && !held && !hw.passing && hw.failed() && c.p.Account == nil && quotaStatus(hw.code()) && (try.Fail == failQuota || try.Fail == failCredit || failure(hw.code(), hw.errBody()) == failQuota || failure(hw.code(), hw.errBody()) == failCredit) {
++		if last && !held && !hw.passing && hw.failed() && c.p.Account == nil && quotaStatus(hw.code()) && (try.Fail == failQuota || try.Fail == failCredit || failure(hw.code(), hw.errBody()) == failQuota || failure(hw.code(), hw.errBody()) == failCredit || keyLimitedThere(hw.header)) {
+ 			// the last key left is out of its allowance: it rests as the
+ 			// ones before it did, for the next request to be answered
+-			// from the rests until the first of them is back (#1772)
++			// from the rests until the first of them is back (#1772); its
++			// own limit at another magpie (remoteKeyLimitHeader) is the
++			// key's allowance there (#3705)
+ 			rest := s.restAfterMarked(c, hw.code(), hw.header, hw.errBody(), hw.sharedPool)
+ 			try.Fail, try.Rest = rest.Why, &rest
+ 		}
+diff --git a/internal/gateway/remote_magpie_key_limit_test.go b/internal/gateway/remote_magpie_key_limit_test.go
+index 41e0584a..46211b1a 100644
+--- a/internal/gateway/remote_magpie_key_limit_test.go
++++ b/internal/gateway/remote_magpie_key_limit_test.go
+@@ -9,6 +9,8 @@ import (
+ 	"sync/atomic"
+ 	"testing"
+ 
++	"github.com/yetone/magpie/internal/access"
++	"github.com/yetone/magpie/internal/budget"
+ 	"github.com/yetone/magpie/internal/provider"
+ )
+ 
+@@ -193,3 +195,100 @@ func anotherMagpieAddedByHand(t *testing.T, held bool) {
+ 		t.Errorf("Qoder was asked %d times; want twice", asked.Load())
+ 	}
+ }
++
++// #3705 (yetone): another magpie's key limit (keyLimited's 429, marked with
++// remoteKeyLimitHeader) never reached restAfter here — keepRetry carried
++// only Retry-After and the vendors' reset headers — so the key's limit
++// there rested one model here, and the next request for another model was
++// asked there and refused too. The header goes with the rest, and no further
++// than it: the agent is not handed a header of magpie's own.
++func TestRemoteMagpieKeyLimitReachesTheRestNotTheAgent(t *testing.T) {
++	fresh(t)
++	budget.Forget()
++	pinLimitClock(t)
++	var ccAsked, qdAsked atomic.Int32
++	up := func(n *atomic.Int32, model string) *httptest.Server {
++		s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++			io.Copy(io.Discard, r.Body)
++			n.Add(1)
++			w.Header().Set("Content-Type", "application/json")
++			io.WriteString(w, `{"id":"c1","object":"chat.completion","model":"`+model+`","choices":[{"index":0,"message":{"role":"assistant","content":"hello"},"finish_reason":"stop"}],"usage":{"prompt_tokens":300,"completion_tokens":50}}`)
++		}))
++		t.Cleanup(s.Close)
++		return s
++	}
++	for _, p := range []provider.Provider{
++		{ID: "cc", Name: "Claude Code", Key: "k1", Models: []string{"claude-opus-5-5"}, Chat: up(&ccAsked, "claude-opus-5-5").URL + "/v1"},
++		{ID: "qd", Name: "Qoder", Key: "k2", Models: []string{"fast"}, Chat: up(&qdAsked, "fast").URL + "/v1"},
++	} {
++		if err := provider.Save(p); err != nil {
++			t.Fatal(err)
++		}
++	}
++	// every request that reaches the other magpie, asked there or not
++	var there atomic.Int32
++	inner := New().Handler()
++	remote := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		there.Add(1)
++		inner.ServeHTTP(w, r)
++	}))
++	t.Cleanup(remote.Close)
++	// the key this magpie holds there, spent
++	keys, secrets := newCaller(t, "Office")
++	setLimit(t, keys[0].ID, &access.Limit{Period: "day", Tokens: 1})
++	sendThere := func(model string) *httptest.ResponseRecorder {
++		t.Helper()
++		req := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(`{"model":"`+model+`","messages":[{"role":"user","content":"hi"}]}`))
++		req.Header.Set("Authorization", "Bearer "+secrets[0])
++		rec := httptest.NewRecorder()
++		New().Handler().ServeHTTP(rec, req)
++		return rec
++	}
++	if rec := sendThere("cc/claude-opus-5-5"); rec.Code != http.StatusOK {
++		t.Fatalf("the key's first request there: %d %s", rec.Code, rec.Body.String())
++	}
++	id, err := provider.Add(provider.Provider{ID: "office", Name: "Remote magpie", Preset: provider.RemoteMagpiePreset, Key: secrets[0], Chat: strings.TrimPrefix(remote.URL, "http://"),
++		Models: []string{"cc/claude-opus-5-5", "qd/fast"}})
++	if err != nil {
++		t.Fatal(err)
++	}
++	office, _ := provider.Find(id)
++	if _, err := office.Fetch(context.Background()); err != nil {
++		t.Fatal(err)
++	}
++	send := func(model string) *httptest.ResponseRecorder {
++		t.Helper()
++		req := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(`{"model":"`+id+`/`+model+`","messages":[{"role":"user","content":"hi"}]}`))
++		rec := httptest.NewRecorder()
++		New().Handler().ServeHTTP(rec, req)
++		return rec
++	}
++	// the key's own limit there is the key's here: Claude Code's request
++	// is refused, and Qoder's is not asked there at all
++	rec := send("cc/claude-opus-5-5")
++	if rec.Code != http.StatusTooManyRequests {
++		t.Fatalf("Claude Code there, its key's own limit: %d %s; want its 429", rec.Code, rec.Body.String())
++	}
++	if got := rec.Header().Get(remoteKeyLimitHeader); got != "" {
++		t.Errorf("the agent was handed magpie's own %s: %q", remoteKeyLimitHeader, got)
++	}
++	if n := ccAsked.Load(); n != 1 {
++		t.Errorf("Claude Code was asked %d times there; want the one the limit counted", n)
++	}
++	if n := there.Load(); n != 2 {
++		t.Errorf("%d requests reached the other magpie; want the key's spent one and this", n)
++	}
++	rec = send("qd/fast")
++	if got := rec.Header().Get(remoteKeyLimitHeader); got != "" {
++		t.Errorf("the agent was handed magpie's own %s: %q", remoteKeyLimitHeader, got)
++	}
++	if n := there.Load(); n != 2 {
++		t.Errorf("%d requests reached the other magpie while its key rests; want 2: Qoder's is held here", n)
++	}
++	if n := qdAsked.Load(); n != 0 {
++		t.Errorf("Qoder was asked %d times there while the key rests; want never", n)
++	}
++	if rec.Code != http.StatusTooManyRequests || !strings.Contains(rec.Body.String(), "not asked again") {
++		t.Errorf("Qoder while the key rests: %d %s; want the key's 429 held here", rec.Code, rec.Body.String())
++	}
++}
+diff --git a/internal/gateway/routing.go b/internal/gateway/routing.go
+index 7aee7069..bd8e4814 100644
+--- a/internal/gateway/routing.go
++++ b/internal/gateway/routing.go
+@@ -917,6 +917,13 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
+ 	now := time.Now()
+ 	d := fallbackCooldown
+ 	why := failureOf(c, status, body)
++	if keyLimitedThere(header) {
++		// the key's own allowance there is out until the time it names,
++		// as one of this magpie's: told as out of quota, so its vendor's
++		// words are given again while it rests (quotaHeld), and not as a
++		// rate limit that passes in a minute (#3705)
++		why = failQuota
++	}
+ 	if header.Get(zdrHeader) != "" || zdrRefused(status, body) {
+ 		// Command Code's Zero Data Retention setting refused the request:
+ 		// the model and the account are as good as they were, and answer
+@@ -1184,12 +1191,19 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
+ // on Discord: "Remote Magpie: Claude Code: You've hit your session
+ // limit" answered every model of it for the five hours it named).
+ func remoteModelRest(c candidate, why string, header http.Header) bool {
+-	if !c.p.IsRemoteMagpie() && header.Get(answeredThereHeader) == "" || header.Get(remoteKeyLimitHeader) != "" {
++	if !c.p.IsRemoteMagpie() && header.Get(answeredThereHeader) == "" || keyLimitedThere(header) {
+ 		return false
+ 	}
+ 	return why == failQuota || why == failCredit || why == failRate || why == failRestricted || why == failVerify
+ }
+ 
++// keyLimitedThere says a refusal is another magpie's own gateway key out of
++// its limit rather than a model's of its providers (keyLimited's 429, which
++// carries remoteKeyLimitHeader): that key's allowance there, out until the
++// time it names, as one of this magpie's own is — not a rate limit that
++// passes (remoteModelRest, restAfterMarked).
++func keyLimitedThere(header http.Header) bool { return header.Get(remoteKeyLimitHeader) != "" }
++
+ // restSlow counts a slow start — let go for no first token in its group's
+ // FirstToken — against the candidate's model on its account or key
+ // (restID), and rests that model there from the slowRests'th in a row: a
+@@ -1345,11 +1359,14 @@ func (c candidate) allowance() (provider.Allowance, bool) {
+ // keepRetry passes on, with a vendor's error, what it said about when to
+ // try again: restAfter reads it to rest the candidate that long, and an
+ // agent given the error reads it too. When it said so in the error itself
+-// (ChatGPT's resets_at), that goes on as Retry-After.
++// (ChatGPT's resets_at), that goes on as Retry-After. Another magpie's own
++// key limit (remoteKeyLimitHeader) goes too: restAfter reads it to rest that
++// key whole (#3705), and the held writer leaves it out of what the agent
++// reads (holdWriter's pass and keepAlive).
+ func keepRetry(dst, src http.Header, body []byte) {
+ 	for k, vs := range src {
+ 		l := strings.ToLower(k)
+-		if l == "retry-after" || strings.Contains(l, "ratelimit") && strings.Contains(l, "reset") {
++		if l == "retry-after" || strings.Contains(l, "ratelimit") && strings.Contains(l, "reset") || l == strings.ToLower(remoteKeyLimitHeader) {
+ 			dst[k] = vs
+ 		}
+ 	}
+-- 
+2.56.0
+

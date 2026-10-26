@@ -1,0 +1,186 @@
+From 2a75e5d381a5adefc1703b25c536203b85b49d78 Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 09:26:18 +1000
+Subject: [PATCH] gui: the panel's subagent effort square is Default and won't
+ open while Claude Code's subagents have no model (#3308, yetone)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The tray panel drew Claude Code's subagent effort square through
+extraField like any other square: with no subagent model it read
+Default, still opened the effort slider, and a level picked there was
+only saved — nothing reaches Claude Code until a model is picked,
+because magpie writes no effort without one (11b9d671c). The square now
+follows the window's control: disabled at Default, unlit even when a
+level is stashed, titled "Set a subagent model first", and it opens the
+slider and lights up once a subagent model is picked. Codex's and
+Desktop's squares are untouched: theirs apply without a model.
+
+Red (against 6afbe3f3, before the fix):
+
+  docker run --rm -v /tmp/r26-3308:/w:ro -v /tmp/r26/pw:/pw:ro \
+    -e NODE_PATH=/pw/node_modules -e PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+    -w /w mcr.microsoft.com/playwright:v1.62.1-noble \
+    node --test internal/gui/tests/claude-subagent-effort-row.test.cjs
+
+  ✖ chromium en: the panel's subagent effort square, disabled with none
+    internal/gui/tests/claude-subagent-effort-row.test.cjs:177
+    AssertionError: false !== true   (isDisabled)
+  (the zh and webkit cases failed the same way, 4 of 24)
+
+Green: the same command, 24 pass, 0 fail. Check-in: go test -tags nogui
+./internal/gui/ -count=1 -run TestCoreScriptBudget passes, app.js at
+1,318,260 of its 1,325,845 bytes, no raise.
+---
+ internal/gui/assets/app.css                   |  2 +
+ internal/gui/assets/app.js                    | 14 +++-
+ .../tests/claude-subagent-effort-row.test.cjs | 69 +++++++++++++++++--
+ 3 files changed, 79 insertions(+), 6 deletions(-)
+
+diff --git a/internal/gui/assets/app.css b/internal/gui/assets/app.css
+index 103ef1cb..3335f4eb 100644
+--- a/internal/gui/assets/app.css
++++ b/internal/gui/assets/app.css
+@@ -807,6 +807,8 @@ body.panel #agents.extras .fields { width: 301px; grid-template-columns: minmax(
+ body.window #agents.extras .field.solo { grid-column: 1 / 3; }
+ .field.extra { grid-column: 3; width: 24px; padding: 0; justify-content: center; position: relative; color: var(--faint); }
+ .field.extra:hover, .field.extra.open { color: var(--fg-2); }
++/* nothing applies until a subagent model is picked (#3308) */
++.field.extra:disabled, .field.extra:disabled:hover { color: var(--faint); opacity: .5; cursor: default; }
+ .field.extra.set { color: var(--fg); }
+ .field.extra.set::after { content: ""; position: absolute; top: 3px; right: 3px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+ .field.main, .field.solo { justify-self: end; }
+diff --git a/internal/gui/assets/app.js b/internal/gui/assets/app.js
+index 08775fb2..05b9eeb5 100644
+--- a/internal/gui/assets/app.js
++++ b/internal/gui/assets/app.js
+@@ -3818,8 +3818,10 @@ const SAME_SESSION = "Same as the session";
+ function extraField(a, f) {
+   if (f.key === "ultracode") return ultracodeToggle(a, f);
+   const said = f.label === SUB_MODEL && codexSub(a) ? codexSubSaid(a, f) : null;
+-  const set = !!(f.value || f.custom || said?.old);
++  const off = f.label === SUB_EFFORT && subEffortOff(a);
++  const set = !!((f.value || f.custom || said?.old) && !off);
+   const b = el("button", "field extra" + (set ? " set" : ""));
++  b.disabled = off;
+   b.append(svg(EXTRA_GLYPH[f.label] || EXTRA_GLYPH.tiers, 13, 1.5));
+   const opt = optionFor(f, f.value);
+   b.title = said ? t("{label}: {value}", { label: t(f.label), value: said.name }) + "\n" + said.line
+@@ -3841,9 +3843,19 @@ function menuTitle(f) {
+ // that model's default; Claude Code's (#536), including Desktop's Code
+ // tab, at the effort its request asks for
+ function subEffortTitle(a, f, opt) {
++  // Claude Code's subagents with no model: magpie writes no effort, so the
++  // square is Default and says why (#3308)
++  if (subEffortOff(a)) return t("{label}: {value}", { label: t(f.label), value: t("default") }) + "\n" + t("Set a subagent model first");
+   return t("{label}: {value}", { label: t(f.label), value: effortName(opt || { value: f.value }) }) +
+     (f.value ? "" : "\n" + t(a.id === "claude" || a.id.split("@wsl:")[0] === "claude-desktop" ? "the effort Claude Code asks for" : "the session's effort, or the subagent model's own default"));
+ }
++// subEffortOff: Claude Code's subagents' effort with no model of their own.
++// Magpie writes no effort then (the old code wrote the main model at that
++// effort into CLAUDE_CODE_SUBAGENT_MODEL, pinning every subagent to it): a
++// level picked is kept for when a model is, and applies to nothing until
++// then. Codex's and Desktop's apply without a model, so only Claude Code's
++// reads Default and can't be used, as the window's control does (#3308)
++const subEffortOff = (a) => a.id.split("@wsl:")[0] === "claude" && !a.fields.find((f) => f.label === "subagents")?.value;
+ 
+ // agentPrefsButton: the panel's line that opens the agent's own settings
+ // (openAgentPrefs), named as its other lines are
+diff --git a/internal/gui/tests/claude-subagent-effort-row.test.cjs b/internal/gui/tests/claude-subagent-effort-row.test.cjs
+index 3a44e098..9e6b986f 100644
+--- a/internal/gui/tests/claude-subagent-effort-row.test.cjs
++++ b/internal/gui/tests/claude-subagent-effort-row.test.cjs
+@@ -5,9 +5,10 @@
+ // subagents are on Claude Code's pick (no model of their own) it reads
+ // Default and can't be used: magpie writes no effort then, as the main model
+ // at an effort pinned every subagent to it (KorenKrita on Discord). Given a
+-// model, it opens the effort slider and posts the level picked. In Chromium
+-// and WebKit, wide and narrow, in English and Chinese. No backend: the API is
+-// faked here.
++// model, it opens the effort slider and posts the level picked. The tray
++// panel draws the same setting as a square, and behaves the same way (#3308).
++// In Chromium and WebKit, wide and narrow, in English and Chinese. No backend:
++// the API is faked here.
+ const assert = require("node:assert/strict");
+ const fs = require("node:fs/promises");
+ const path = require("node:path");
+@@ -31,11 +32,11 @@ const claude = (sub) => ({
+   ],
+ });
+ 
+-function server(lang, sub, sets) {
++function server(lang, sub, sets, panel) {
+   let cur = { agents: [claude(sub)], profiles: [] };
+   return async (route) => {
+     const req = route.request(), url = new URL(req.url());
+-    if (url.pathname === "/boot.js") return route.fulfill({ contentType: "text/javascript", body: `window.bootPrefs = {lang:"${lang}",theme:"light",web:true};` });
++    if (url.pathname === "/boot.js") return route.fulfill({ contentType: "text/javascript", body: `window.bootPrefs = {lang:"${lang}",theme:"light",web:${!panel}};` });
+     if (url.pathname === "/wails/runtime.js") return route.fulfill({ contentType: "text/javascript", body: "export const Window = {};" });
+     if (url.pathname === "/api/state") return route.fulfill({ json: { ...cur, settings: { lang, theme: "light" } } });
+     if (url.pathname === "/api/set") {
+@@ -142,3 +143,61 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
+     }
+   }
+ }
++
++// The tray panel draws that square through extraField, where the window's
++// control is built by hand: it behaves the same way while the subagents are
++// on Claude Code's pick (#3308).
++for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"])) {
++  for (const lang of ["en", "zh"]) {
++    for (const sub of ["", "magpie/v/flash"]) {
++      test(`${engine} ${lang}: the panel's subagent effort square, ${sub ? "with a model" : "disabled with none"}`, async (t) => {
++        const w = W[lang];
++        const browser = await (engine === "webkit" ? webkit.launch() : chromium.launch({ channel: "chromium" }));
++        const page = await browser.newPage({ viewport: { width: 440, height: 700 } });
++        page.setDefaultTimeout(5000);
++        const errors = [], sets = [];
++        page.on("pageerror", (e) => errors.push(e.message));
++        await page.route("**/*", server(lang, sub, sets, true));
++        t.after(async () => {
++          if (process.env.ARTIFACT_DIR) {
++            await fs.mkdir(process.env.ARTIFACT_DIR, { recursive: true });
++            await page.screenshot({ path: path.join(process.env.ARTIFACT_DIR, `${engine}-${lang}-${sub ? "model" : "none"}-panel-subagent-effort.png`), fullPage: true });
++          }
++          await browser.close();
++        });
++        await page.goto("http://magpie.test/?mode=panel");
++        await page.locator('#ptabs [data-ptab="agents"]').click();
++        await page.locator(`${cc} .ag-sum`).click();
++        const eff = page.locator(`${cc} .ag-open .field.extra[data-key="subagent_effort"]`);
++        await eff.waitFor();
++        const slider = page.locator("#pop.effort-picker:not([hidden])");
++
++        if (!sub) {
++          // no model: Default, unlit, and it can't be used, as in the window
++          assert.equal(await eff.isDisabled(), true);
++          assert.equal(await eff.evaluate((e) => e.classList.contains("set")), false, "a stashed level lit the square");
++          const title = await eff.getAttribute("title");
++          assert.ok(title.startsWith(w.sep(w.label, w.def)) && title.includes(w.first), title);
++          await eff.click({ force: true });
++          assert.equal(await slider.count(), 0, "a disabled square opened the slider");
++          assert.deepEqual(sets, []);
++        } else {
++          assert.equal(await eff.isDisabled(), false);
++          assert.equal(await eff.getAttribute("title"), w.sep(w.label, w.def) + "\n" + w.asks);
++          await eff.click();
++          await slider.waitFor();
++          assert.equal(await page.locator("#effortTicks i").count(), 4, "Default and three levels");
++          await page.locator("#effortRange").evaluate((r) => {
++            r.value = "3";
++            r.dispatchEvent(new Event("input", { bubbles: true }));
++            r.dispatchEvent(new Event("change", { bubbles: true }));
++          });
++          await page.waitForFunction(() => document.querySelector("#status")?.textContent);
++          assert.deepEqual(sets, [{ agent: "claude", field: "subagent_effort", value: "high" }]);
++          assert.equal(await eff.getAttribute("title"), w.sep(w.label, w.high));
++        }
++        assert.deepEqual(errors, []);
++      });
++    }
++  }
++}
+-- 
+2.56.0
+

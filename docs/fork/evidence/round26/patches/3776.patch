@@ -1,0 +1,125 @@
+From ab40c7ea8a02f855aa8e8e51aa4a5df209be705d Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 05:25:53 +1000
+Subject: [PATCH] redact: a Japanese mobile (+81 90-1234-5678) is masked, in a
+ CSV and in prose (#3776, yetone)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The rules had one PHONE shape, a Chinese mobile (`(?:\+?86[- ]?)?1[3-9]\d{9}`),
+so a Japanese mobile went as written: the reporter's contacts CSV masked both
+emails and left `+81 90-1234-5678` in the text. Only the local models could
+find it, and AstrLink Guard did not, which is what the eval's GuardKnown for
+`tool-result-mixed` was recording (it fails once the value comes out right).
+
+`rules` gains a Japanese mobile beside the Chinese one:
+`(?:\+?81[- ]?|0)[789]0[- ]\d{4}[- ]\d{4}`, digits-bounded and personal, so
+090/080/070 with the country code or bare is masked and a landline (+81
+3-1234-5678) is not. `modelFits`'s PHONE case already takes the shape
+(numberLike, 10 digits, a separator, so `strings.Trim(v, digits) != ""`), which
+the model sub-case of the new test shows, so nothing there changed. The
+GuardKnown for #3776 in eval_cases_test.go is taken off, as its own failure
+asked.
+
+Without the rule, `go test -tags nogui ./internal/redact/ -count=1 -run
+TestMaskPhoneShapes` fails three cases, the reporter's among them:
+
+    redact_test.go:106: "90-1234-5678" still in "$ cat contacts.csv\nname,email,phone\nRina Kobayashi…
+
+With it that command passes (8 of 8), `TestMaskEval` passes, and the whole
+package passes: `go test -tags nogui ./internal/redact/ -count=1` → ok, 95
+tests. gofmt and `go vet -tags nogui ./internal/redact/` are clean.
+---
+ internal/redact/eval_cases_test.go |  2 +-
+ internal/redact/redact.go          |  3 ++
+ internal/redact/redact_test.go     | 46 ++++++++++++++++++++++++++++++
+ 3 files changed, 50 insertions(+), 1 deletion(-)
+
+diff --git a/internal/redact/eval_cases_test.go b/internal/redact/eval_cases_test.go
+index 88a67bf8..805ab28d 100644
+--- a/internal/redact/eval_cases_test.go
++++ b/internal/redact/eval_cases_test.go
+@@ -392,7 +392,7 @@ var evalCases = []evalCase{
+ 	{
+ 		ID: "tool-result-mixed", From: "true",
+ 		Text: "$ cat contacts.csv\nname,email,phone\nRina Kobayashi,rina.k@fastmail.com,+81 90-1234-5678\nOmar Haddad,omar.haddad@proton.me,+44 7700 900123",
+-		Mask: []evalValue{{V: "Rina Kobayashi", Kind: "PERSON"}, {V: "rina.k@fastmail.com", Kind: "EMAIL"}, {V: "90-1234-5678", Kind: "PHONE", GuardKnown: "#3776"}, {V: "Omar Haddad", Kind: "PERSON"}, {V: "omar.haddad@proton.me", Kind: "EMAIL"}, {V: "7700 900123", Kind: "PHONE"}},
++		Mask: []evalValue{{V: "Rina Kobayashi", Kind: "PERSON"}, {V: "rina.k@fastmail.com", Kind: "EMAIL"}, {V: "90-1234-5678", Kind: "PHONE"}, {V: "Omar Haddad", Kind: "PERSON"}, {V: "omar.haddad@proton.me", Kind: "EMAIL"}, {V: "7700 900123", Kind: "PHONE"}},
+ 		Keep: []evalValue{{V: "contacts.csv", Kind: "EMAIL"}},
+ 	},
+ }
+diff --git a/internal/redact/redact.go b/internal/redact/redact.go
+index c7e149dd..816102b3 100644
+--- a/internal/redact/redact.go
++++ b/internal/redact/redact.go
+@@ -178,6 +178,9 @@ var rules = append([]rule{
+ 	{kind: "EMAIL", re: regexp.MustCompile(`[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}`), markers: []string{"@"}, bound: alnum + "._%+-", ok: realEmail, at: notUserinfo, cat: catPersonal},
+ 	{kind: "ID_CARD", re: regexp.MustCompile(`[1-9]\d{5}(?:18|19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx]`), bound: alnum, ok: chineseID, cat: catPersonal},
+ 	{kind: "PHONE", re: regexp.MustCompile(`(?:\+?86[- ]?)?1[3-9]\d{9}`), bound: digits, cat: catPersonal},
++	// a Japanese mobile: 090, 080 or 070, with +81 for the country code
++	// and the dashes people keep in one (#3776); a landline is no mobile
++	{kind: "PHONE", re: regexp.MustCompile(`(?:\+?81[- ]?|0)[789]0[- ]\d{4}[- ]\d{4}`), bound: digits, cat: catPersonal},
+ 	{kind: "BANK_CARD", re: regexp.MustCompile(`[3-6]\d{3}(?:[ -]?\d{4}){2,3}(?:[ -]?\d{1,3})?`), bound: digits, ok: luhn, cat: catPersonal},
+ }, moreRules...)
+ 
+diff --git a/internal/redact/redact_test.go b/internal/redact/redact_test.go
+index 1379f36a..9e7c299e 100644
+--- a/internal/redact/redact_test.go
++++ b/internal/redact/redact_test.go
+@@ -72,6 +72,52 @@ func TestMask(t *testing.T) {
+ 	}
+ }
+ 
++// A phone is masked in the shapes the world writes it, and the numbers
++// that only look like one go as written (#3776: a Japanese mobile in a
++// CSV, which only the local model found, and not with AstrLink Guard).
++func TestMaskPhoneShapes(t *testing.T) {
++	// the reporter's file, byte for byte
++	const csv = "$ cat contacts.csv\nname,email,phone\nRina Kobayashi,rina.k@fastmail.com,+81 90-1234-5678\nOmar Haddad,omar.haddad@proton.me,+44 7700 900123"
++	cases := []struct {
++		name  string
++		in    string
++		model map[string]string // value → label, a model that finds them
++		gone  []string
++		kept  []string
++	}{
++		{name: "japanese-mobile-in-csv", in: csv, gone: []string{"90-1234-5678"}, kept: []string{"Rina Kobayashi", "contacts.csv"}},
++		{name: "japanese-mobile-with-country-code", in: csv, model: map[string]string{"+81 90-1234-5678": "private_phone"}, gone: []string{"90-1234-5678"}},
++		{name: "japanese-mobile-bare-090", in: "call 090-1234-5678 tomorrow", gone: []string{"090-1234-5678"}},
++		{name: "japanese-mobile-bare-080", in: "call 080-9876-5432 tomorrow", gone: []string{"080-9876-5432"}},
++		{name: "chinese-mobile", in: "call +86 13812345678 tomorrow", gone: []string{"13812345678"}},
++		{name: "japanese-landline", in: "office +81 3-1234-5678, mobile is another number", kept: []string{"3-1234-5678"}},
++		{name: "prose-numbers", in: "build v0.1.14 took 3.5s on 24 rows", kept: []string{"v0.1.14", "3.5s", "24"}},
++	}
++	for _, c := range cases {
++		t.Run(c.name, func(t *testing.T) {
++			o := Options{Secrets: true, Personal: true}
++			if c.model != nil {
++				f := &fakeModel{values: c.model}
++				o.Model = f.find
++			}
++			out, _ := Mask(c.in, o)
++			for _, g := range c.gone {
++				if strings.Contains(unmarked(out), g) {
++					t.Errorf("%q still in %q", g, out)
++				}
++			}
++			for _, k := range c.kept {
++				if !strings.Contains(out, k) {
++					t.Errorf("%q gone from %q", k, out)
++				}
++			}
++			if back := Restore(out, false); back != c.in {
++				t.Errorf("round trip: %q → %q", c.in, back)
++			}
++		})
++	}
++}
++
+ func TestMaskJSON(t *testing.T) {
+ 	body := `{"model":"sk-proj-notmasked-because-model-key","messages":[{"role":"user","content":[` +
+ 		`{"type":"text","text":"key: ` + openaiKey + `\nok"},` +
+-- 
+2.56.0
+

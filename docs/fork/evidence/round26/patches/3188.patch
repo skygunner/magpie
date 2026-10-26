@@ -1,0 +1,230 @@
+From 0817d2e9624f1d7b6bde53e6c1b00f5cccd78ce0 Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 08:50:18 +1000
+Subject: [PATCH] provider: a sub2api plan sold by shares reads as a share, not
+ dollars (#3188, wtj-0527)
+
+A sub2api deployment can sell a plan shared out by shares: a key has no
+dollar cap, only a share of each 5h/7d window, and its /v1/usage says so
+with "unit": "percent" on each rate_limits entry. magpie read every window
+as dollars, so the card said "37.5 / 100 USD" for a key that spent no
+money, and Check balance / magpie provider show said "$20.00".
+
+readSub2APIKeyLimits now reads such a window as the share used alone, with
+no Amount, Limit or Unit, so QuotaWindow.Count (and the GUI's quotaCount)
+says nothing of it, the way a subscription's window reads. Balance, whose
+dollar sum moved to windowsLeft, gives the share the fullest window has
+left, "20%". A window with no unit, "USD" or anything else reads as before,
+and KeyAllowance is unchanged since it goes by Used.
+
+Red, on unmodified 6afbe3f3:
+  go test -tags nogui ./internal/provider/ -count=1 -run 'TestSub2APIKeySharesAreNotDollars'
+  sub2api_usage_test.go:124: 5 hours = {Unlimited:false Name:5 hours Used:37.5
+  ResetsAt:... Amount:37.5 Limit:100 Unit:USD ...} Span:5h0m0s ...}
+
+Green, with the change:
+  go test -tags nogui ./internal/provider/ -count=1 -run 'TestSub2APIKeySharesAreNotDollars'
+  ok  github.com/yetone/magpie/internal/provider  0.014s
+
+Also green: TestReadSub2APIKeyLimits, TestSub2APIKeyLimitsOnItsCard and
+every TestKeyAllowance* unchanged; the whole package passes with
+-skip TestUnreadLoginsWriteErrorsKeepCredentials, which fatals ("close of
+synctest channel from outside bubble") identically on unmodified 6afbe3f3
+on this machine. gofmt -l is clean; go vet -tags nogui ./internal/provider/
+and go build -tags nogui ./... pass. The fixture is the issue's example
+reply byte for byte.
+---
+ docs/subsystems/providers-accounts.md         |  2 +-
+ internal/provider/balance.go                  | 29 +++++++--
+ internal/provider/sub2api_usage.go            | 18 ++++--
+ internal/provider/sub2api_usage_test.go       | 61 +++++++++++++++++++
+ .../sub2api_usage_key_limits_percent.json     |  3 +
+ 5 files changed, 103 insertions(+), 10 deletions(-)
+ create mode 100644 internal/provider/testdata/sub2api_usage_key_limits_percent.json
+
+diff --git a/docs/subsystems/providers-accounts.md b/docs/subsystems/providers-accounts.md
+index 4d80bd13..34cd099a 100644
+--- a/docs/subsystems/providers-accounts.md
++++ b/docs/subsystems/providers-accounts.md
+@@ -52,7 +52,7 @@ keys and accounts per request is in [Gateway routing and fallback](gateway-routi
+ | An endpoint's catalog | A key's provider with no catalog of its own (none named, none from a preset) is priced from the models.dev catalog whose `api` is one of its endpoints (`EndpointCatalog`, `catalog.AtEndpoint`; a trailing slash and case don't count, and an Anthropic base, kept as its root, is also matched with its `/v1`). Only when exactly one catalog is at that address, and it isn't a plan's (an id with `-plan`, or a `membershipCatalogs` one): a plan lists its membership's $0, and two catalogs at one address can't be told apart. A subscription's account never gets one. A provider at AMD's own endpoint is priced from `amd`, which lists Qwen3.8-27B at $0, a price, where its maker sells no such model and it had none (#2052); a relay's endpoint matches nothing and its model stays unpriced, never priced at a reseller's guess. `magpie model price` names the catalog, and says how to give a price when none is known. | [`models.go`](../../internal/provider/models.go), [`catalog.go`](../../internal/catalog/catalog.go) |
+ | A membership's $0 catalog | models.dev lists every model of Kimi Code's plans (`kimi-code-plan-global`, `kimi-code-plan-cn`) and of Xiaomi MiMo's Token Plans (`xiaomi-token-plan-cn`, `-sgp`, `-ams`) at $0: what the membership charges per token, not what the model costs. `membershipCatalogs` are never read for a price (`priceCatalogs`, `makerPriceCatalogs`), so a Xiaomi MiMo model is priced at `xiaomi`'s list price at every region, and each region of the preset names its own catalog, pay as you go `xiaomi` alone (#1873). A Kimi Code provider's model is priced at the Kimi API model it is (`kimiCodeAPI`, from Kimi Code's docs: k3 and k3-256k are kimi-k3, kimi-for-coding-highspeed is kimi-k2.7-code-highspeed), and kimi-for-coding (K2.8 Preview, not on the API) is unpriced rather than free (#1370). The alias is Kimi Code's alone (`kimiCodePlans`): a relay's own `k3` keeps its own price. A catalog other than these that lists a model at $0 still prices it at $0: models.dev has truly free models (nvidia, modelscope). The Requests list names the API model it was priced as (`PricedNameFor`). | [`models.go`](../../internal/provider/models.go) |
+ | A plugin's own price | A model no catalog prices (models.dev has no vendor's own model: Devin's SWE-2 and SWE-1.7 Lightning, Cursor's auto, Qoder's efficient) is priced at what its plugin lists it at (`ListPrice` → `pluginListPrice`, `plugin.Model.Cost`, read by `pluginPrice`: an input or output above 0, OpenCode's 0 being none), else at $0 when the plugin says the plan serves it free (`pluginFree`, `plugin.Model.Free`: Devin's Free cost tier, Qoder's and WorkBuddy's x0). Both come after every catalog, so a price a catalog gives is kept over the plugin's. Devin's plugin (0.1.18) lists each paid model at the price Devin's GetCliModelConfigs gives it (input, cached input and output per 1M tokens); a moved Devin user's calls on Devin's own models had no cost on Usage before (太陽と向日葵 on Discord, `TestPluginFreeModelCostsNothing`). A plugin that gives no price and doesn't say free leaves the model unpriced. | [`models.go`](../../internal/provider/models.go), [`plugins.go`](../../internal/provider/plugins.go), [`providers.go`](../../internal/plugin/providers.go) |
+-| A key's own windows | A sub2api key given a spending limit per 5 hours, day or 7 days answers its `/v1/usage` with `rate_limits` and no `remaining` (`readSub2APIKeyLimits`). With the Balance URL set to it, the key's card shows them as the windows *5 hours*, *1 day*, *7 days*, in USD, beside a balance field the user wrote; *Check balance* and `magpie provider show` give what its fullest window has left (`Balance`). A Balance URL at an account query left without its token (a sub2api panel's `/api/v1/user/profile`, new-api's `/api/user/self`, after the token was removed) asks the same panel's query for the key instead, the saved URL untouched (`keyQueryOf`, `BalanceQuery`), unless the user's Headers carry an Authorization or Cookie of their own. A Balance URL of the user's own is asked with GET, or with POST and no body when the provider's `BalanceMethod` says so (#2368: an endpoint that answers only a POST; the editor's GET/POST beside the URL, `balance.method=` on the command line); any other method is refused before anything is sent (`balanceMethodOf`). `KeyAllowance` gives routing the same windows: never waited for, read in the background at most once a minute, a failed read keeping the last, and seeded from the card's last reading (`quotas.json`) after a restart.  A key bought as a plan (Kimi Code, GLM Coding Plan and Z.ai, MiniMax Coding Plan, OpenCode Go, Command Code, Ollama Cloud: `planQuotaSourceOf`) gives routing its card's windows the same way (`planKeyWindows`, Zhipu's team quota behind a key with none of its own); the Usage page's read of its card is taken at once (`noteKeyAllowance`), and a key there that turns out pay-as-you-go, with no windows, is asked again only every 30 minutes (`keyNoWindowsAge`). A Command Code plan's key has its month of credits as a *Credits* window beside the 5-hour and weekly ones, as the signed-in subscription's card has (`cmdKeyWindows`, #2451): billing/credits leaves the plan out, so it is the key's billing/subscriptions plan, asked at most every ten minutes and the last one kept while it can't be read; a key whose plan was never read has its two windows alone. Ollama Cloud's `ollama.com/api/balance` (#1888, `readOllamaPlan`) tells the plan's included allowance as one window in USD, *Month* when its period is a month long, renewing at `period.until`, and Aside while credits bought on top are left; those credits are the key's balance card (`readOllamaCredits`), and a reply that names none has no balance card rather than $0. StepFun's Step Plan is read through a platform sign-in, not the key, and isn't one of them: the sign-in is the provider's own, kept by provider id in `stepfun-auth.json` (two StepFun providers on one site can be two accounts, #2384), one card per signed-in provider; a file from before that, kept by site, is given on read to the StepFun providers on that site (`stepfunBySite`), and copies of one sign-in are renewed together. Nor are Volcengine Ark's Coding Plan and Agent Plan (#1427): their 5-hour, weekly and monthly windows are told only to the account's access key (`AccessKeyID`, `SecretAccessKey`), asked of `open.volcengineapi.com` (`GetCodingPlanUsage`, `GetAFPUsage`) and signed as Volcengine's own SDK signs (`volcSign`), so they are cards on the Usage page (`volcPlanQuotas` in `PlanQuotas`), never routing's windows. Nor is Tencent Cloud's Token Plan 企业版 (#1574): what a team plan has used of its cycle's credits (专业套餐) or tokens (轻享套餐) is told only to the account's SecretId and SecretKey (kept as `AccessKeyID`, `SecretAccessKey`), asked of `tokenhub.tencentcloudapi.com` (`DescribeTokenPlanList`, `DescribeTokenPlan`, version 2026-03-22) and signed TC3-HMAC-SHA256 (`tc3Sign`), one card per team plan (`tencentPlanQuotas`). | [`sub2api_usage.go`](../../internal/provider/sub2api_usage.go), [`key_allowance.go`](../../internal/provider/key_allowance.go), [`volcengine_usage.go`](../../internal/provider/volcengine_usage.go), [`tencent_usage.go`](../../internal/provider/tencent_usage.go) |
++| A key's own windows | A sub2api key given a spending limit per 5 hours, day or 7 days answers its `/v1/usage` with `rate_limits` and no `remaining` (`readSub2APIKeyLimits`). With the Balance URL set to it, the key's card shows them as the windows *5 hours*, *1 day*, *7 days*, in USD, beside a balance field the user wrote; *Check balance* and `magpie provider show` give what its fullest window has left (`Balance`, `windowsLeft`). A window marked `"unit": "percent"` is a share of a plan the deployment sells by shares, not money (#3188): it is read as the share used alone, with no amount counted beside it, and `Balance` gives the share its fullest window has left, `20%`. A Balance URL at an account query left without its token (a sub2api panel's `/api/v1/user/profile`, new-api's `/api/user/self`, after the token was removed) asks the same panel's query for the key instead, the saved URL untouched (`keyQueryOf`, `BalanceQuery`), unless the user's Headers carry an Authorization or Cookie of their own. A Balance URL of the user's own is asked with GET, or with POST and no body when the provider's `BalanceMethod` says so (#2368: an endpoint that answers only a POST; the editor's GET/POST beside the URL, `balance.method=` on the command line); any other method is refused before anything is sent (`balanceMethodOf`). `KeyAllowance` gives routing the same windows: never waited for, read in the background at most once a minute, a failed read keeping the last, and seeded from the card's last reading (`quotas.json`) after a restart.  A key bought as a plan (Kimi Code, GLM Coding Plan and Z.ai, MiniMax Coding Plan, OpenCode Go, Command Code, Ollama Cloud: `planQuotaSourceOf`) gives routing its card's windows the same way (`planKeyWindows`, Zhipu's team quota behind a key with none of its own); the Usage page's read of its card is taken at once (`noteKeyAllowance`), and a key there that turns out pay-as-you-go, with no windows, is asked again only every 30 minutes (`keyNoWindowsAge`). A Command Code plan's key has its month of credits as a *Credits* window beside the 5-hour and weekly ones, as the signed-in subscription's card has (`cmdKeyWindows`, #2451): billing/credits leaves the plan out, so it is the key's billing/subscriptions plan, asked at most every ten minutes and the last one kept while it can't be read; a key whose plan was never read has its two windows alone. Ollama Cloud's `ollama.com/api/balance` (#1888, `readOllamaPlan`) tells the plan's included allowance as one window in USD, *Month* when its period is a month long, renewing at `period.until`, and Aside while credits bought on top are left; those credits are the key's balance card (`readOllamaCredits`), and a reply that names none has no balance card rather than $0. StepFun's Step Plan is read through a platform sign-in, not the key, and isn't one of them: the sign-in is the provider's own, kept by provider id in `stepfun-auth.json` (two StepFun providers on one site can be two accounts, #2384), one card per signed-in provider; a file from before that, kept by site, is given on read to the StepFun providers on that site (`stepfunBySite`), and copies of one sign-in are renewed together. Nor are Volcengine Ark's Coding Plan and Agent Plan (#1427): their 5-hour, weekly and monthly windows are told only to the account's access key (`AccessKeyID`, `SecretAccessKey`), asked of `open.volcengineapi.com` (`GetCodingPlanUsage`, `GetAFPUsage`) and signed as Volcengine's own SDK signs (`volcSign`), so they are cards on the Usage page (`volcPlanQuotas` in `PlanQuotas`), never routing's windows. Nor is Tencent Cloud's Token Plan 企业版 (#1574): what a team plan has used of its cycle's credits (专业套餐) or tokens (轻享套餐) is told only to the account's SecretId and SecretKey (kept as `AccessKeyID`, `SecretAccessKey`), asked of `tokenhub.tencentcloudapi.com` (`DescribeTokenPlanList`, `DescribeTokenPlan`, version 2026-03-22) and signed TC3-HMAC-SHA256 (`tc3Sign`), one card per team plan (`tencentPlanQuotas`). | [`sub2api_usage.go`](../../internal/provider/sub2api_usage.go), [`key_allowance.go`](../../internal/provider/key_allowance.go), [`volcengine_usage.go`](../../internal/provider/volcengine_usage.go), [`tencent_usage.go`](../../internal/provider/tencent_usage.go) |
+ | Account names and seats | `AccountNames` (by the account, in lower case, like `AccountCaps`) are names the user gives accounts, set by `SetAccountName` (GUI `provider/accountname`, `magpie accounts alias`); they live in providers.json only, never in a vendor's or plugin's sign-in. A GLM Coding Plan read with a key (`glmPlan`) and a ZCode account (built-in or `zcode-plugin`) whose windows' resets agree are one seat (`seatMatch`, #90/#953), shown once, on the account's card (`seatCards`, used by `quotas`, `Allotted` and `CachedCards`). A match is remembered in `seats.json` beside `quotas.json`: a failed read or a window with no reset yet is unknown and keeps the key's card off while the account is signed in; windows that disagree forget it (#1515). Cards carry `Seat` (the key provider's name, and the key's when it has several) and `Alias` (the user's name, else `Seat`), as `/v1/magpie/quotas`, `magpie quota` and `magpie accounts` do. Records (a trace's `who`, usage's `ProviderAccount`) keep the vendor's name, the key the user's name is kept by, and every list of them looks the name up as it is shown (`AccountShown`, `AccountShownOf`, `AccountRef.Shown`), so a request from before a rename reads by the new name too: the Routing page's accounts and requests (`userShown` in `plugins/routing/client.js`, from `/api/providers`' `accountNames`), its Several accounts pools (`onOf`), the Usage page's Accounts and the request log's Account filter (`usageapi`), `magpie usage`, and a gateway key's accounts (`AccountNames`, `/api/caller-keys`). Before plugins#310 (a renamed Kiro account read by its old name on every request after) those showed the vendor's name. | [`account_names.go`](../../internal/provider/account_names.go), [`account_seats.go`](../../internal/provider/account_seats.go) |
+ | Last served | `served.json` records when each account, plan or key last answered, shown as `lastServedAt` (#570) on `/v1/magpie/quotas` and on the Usage page's own cards (`Quotas` → `cardsServed`, this computer's cards only, the caches left alone). The Usage page and the tray panel show the last-answered account in full, and a menu bar card that follows the account in use (`codex|*`) takes the one that answered within the last hour, else `InUseLogin`'s guess, else the one that answered last at all (a plugin's accounts, #1516) (`trayInUseCard`; okingkee on X: A spent, B answering, the menu bar stayed on A). `NoteServed` calls `OnServedMoved` when a provider's answers move to another account or key, and `SwitchLogin` after a switch, so the menu bar reads its cards again at once. | [`served.go`](../../internal/provider/served.go), [`trayusage.go`](../../internal/gui/trayusage.go) |
+ | Partners | Services that pay to be listed first in the add sheet, under a heading of their own ("Partners · magpie's sponsors"). The list is `site/partners.js`, served at `usemagpie.ai/api/partners`: a change reaches users with a deploy, not a release. `Partners` never waits: it returns what was fetched last and fetches again behind the call on a process's first ask, whatever the kept list's age, and hourly after (10 minutes after a failure), keeping the list in `partners.json` in the cache folder. The magpie serving the gateway fetches it when it starts and whenever it is due, asked for or not (`KeepPartnersFresh`), so an app left open on another page still learns of a partner added. The file also says when the last fetch started (`tried`) and, when it failed, why (`error`, logged once until a fetch gets the list again), so a list that stops changing tells a fetch that fails from one that never came back (`tried` after `at`, no error) and from none asked (#3362). Each entry is checked again on every read (`validPartners`): its own id, never a built-in preset's, a name, an endpoint, https only, at most 12; what only magpie's presets may set (a decision API, no key, a user endpoint) is cleared. Its logo is fetched through `FetchIcon` and kept as an uploaded icon, used as it is while its `iconUrl` stays the same; the prune after a save of `providers.json` (`pruneIcons`) leaves the logos of the partners listed now (`keptPartnerIcons`), as it leaves a plugin's. A partner is a preset to the rest of magpie (`Preset`, `FromPreset`, the editor), and one no longer listed still is to the providers added from it (`Seen`), without the sponsored mark. The window lists a partner in the languages it names (`langs`) only and shows its tagline in the page's language (`notes`, else `en`). `MAGPIE_PARTNERS` points it elsewhere, `off` lists none; tests list none unless they name a list. How often each listed partner was shown, opened (its row, its key page) and added is counted per UTC day (`CountPartner`, capped at 20 of each and 5 adds, kept in `partner-counts.json` in the cache folder) and sent with the next day's stats event as `magpie partner` events (`internal/stats`); nothing is counted with the stats or their usage part off. A listed partner the add sheet (or the TUI's, or `magpie providers presets`) hasn't shown yet is new (`NoticePartners` keeps those shown, as `noticed` in `partners.json`, whatever the stats); the window's add button carries a small dot for it, with its name in the title, until the sheet shows it. | [`partners.go`](../../internal/provider/partners.go), [`partner_events.go`](../../internal/provider/partner_events.go), [`site/partners.js`](../../site/partners.js) |
+diff --git a/internal/provider/balance.go b/internal/provider/balance.go
+index c3d22fb6..bbc5ba58 100644
+--- a/internal/provider/balance.go
++++ b/internal/provider/balance.go
+@@ -1189,17 +1189,36 @@ func balanceSegmentOf(raw, path string) (balanceSegment, error) {
+ 
+ // Balance asks the vendor what is left on the provider's key in use. ok is
+ // false when there is no way to ask it. A key given limits and no quota of
+-// its own has what its fullest window has left: what it can spend now.
++// its own has what its fullest window has left: what it can spend now
++// (windowsLeft).
+ func Balance(ctx context.Context, p Provider) (amount string, ok bool, err error) {
+ 	amount, _, _, ws, ok, err := balanceRead(ctx, p)
+ 	if err == nil && amount == "" && len(ws) > 0 {
+-		left := ws[0].Limit - ws[0].Amount
+-		for _, w := range ws[1:] {
++		amount = windowsLeft(ws)
++	}
++	return amount, ok, err
++}
++
++// windowsLeft is what a key given limits and no quota of its own has left:
++// the least of its windows — in dollars, or, for a plan sold by shares
++// (readSub2APIKeyLimits, whose windows count nothing), as the share of 100
++// left in them, "20%".
++func windowsLeft(ws []QuotaWindow) string {
++	share := slices.ContainsFunc(ws, func(w QuotaWindow) bool { return w.Limit <= 0 })
++	left := math.Inf(1)
++	for _, w := range ws {
++		if share {
++			left = min(left, 100-w.Used)
++		} else {
+ 			left = min(left, w.Limit-w.Amount)
+ 		}
+-		amount = money("$", max(0, left))
+ 	}
+-	return amount, ok, err
++	left = max(0, left)
++	if share {
++		// balanceAmount tells n as a percent of 1, as a "%" field's is told
++		return balanceAmount("", left/100, true)
++	}
++	return money("$", left)
+ }
+ 
+ // balanceRead is what Balance reads, with the amounts of a balance field
+diff --git a/internal/provider/sub2api_usage.go b/internal/provider/sub2api_usage.go
+index c431cd56..bae4d608 100644
+--- a/internal/provider/sub2api_usage.go
++++ b/internal/provider/sub2api_usage.go
+@@ -28,14 +28,18 @@ var sub2APIWindows = []struct {
+ // "remaining":787.5,"window_start":…,"reset_at":…}. A window with no
+ // reset_at hasn't started, or has run out since (sub2api says used 0 for
+ // it then, and gives no window a limit of 0): it starts on the key's next
+-// request, so it renews within its span. ok is false for a reply without them — a key on the wallet, or not
+-// sub2api's.
++// request, so it renews within its span. A window of "unit": "percent" is
++// a share of a plan the deployment sells by shares, not money (#3188): its
++// share used is all it tells, and nothing of it is counted, so its Count
++// says nothing as a subscription's window does. ok is false for a reply
++// without them — a key on the wallet, or not sub2api's.
+ func readSub2APIKeyLimits(body []byte) (ws []QuotaWindow, ok bool) {
+ 	var r struct {
+ 		RateLimits []struct {
+ 			Window  string     `json:"window"`
+ 			Limit   float64    `json:"limit"`
+ 			Used    float64    `json:"used"`
++			Unit    string     `json:"unit"`
+ 			ResetAt *time.Time `json:"reset_at"`
+ 		} `json:"rate_limits"`
+ 	}
+@@ -47,8 +51,14 @@ func readSub2APIKeyLimits(body []byte) (ws []QuotaWindow, ok bool) {
+ 			if strings.TrimSpace(l.Window) != s.window || l.Limit <= 0 {
+ 				continue
+ 			}
+-			w := QuotaWindow{Name: s.name, Span: s.span, Amount: max(0, l.Used), Limit: l.Limit, Unit: "USD"}
+-			w.Used = min(100, max(0, l.Used/l.Limit*100))
++			w := QuotaWindow{Name: s.name, Span: s.span}
++			if strings.EqualFold(strings.TrimSpace(l.Unit), "percent") {
++				// a share of the plan: used alone, with no amount to count
++				w.Used = min(100, max(0, l.Used))
++			} else {
++				w.Amount, w.Limit, w.Unit = max(0, l.Used), l.Limit, "USD"
++				w.Used = min(100, max(0, l.Used/l.Limit*100))
++			}
+ 			if l.ResetAt != nil && !l.ResetAt.IsZero() {
+ 				t := *l.ResetAt
+ 				w.ResetsAt = &t
+diff --git a/internal/provider/sub2api_usage_test.go b/internal/provider/sub2api_usage_test.go
+index 850ac344..659509cd 100644
+--- a/internal/provider/sub2api_usage_test.go
++++ b/internal/provider/sub2api_usage_test.go
+@@ -95,6 +95,67 @@ func TestReadSub2APIKeyLimits(t *testing.T) {
+ 	}
+ }
+ 
++// A plan sold by shares rather than dollars says so with "unit": "percent"
++// on each rate_limits entry: the share used alone, with no Amount, Limit
++// or Unit, so the card counts nothing of it as it counts nothing of a
++// subscription's window, and the key's balance is the share its fullest
++// window has left — "20%", never "$20.00" (#3188, wtj-0527).
++func TestSub2APIKeySharesAreNotDollars(t *testing.T) {
++	keyLimitsHome(t)
++	b, err := os.ReadFile("testdata/sub2api_usage_key_limits_percent.json")
++	if err != nil {
++		t.Fatal(err)
++	}
++	reset := func(s string) time.Time {
++		v, err := time.Parse(time.RFC3339, s)
++		if err != nil {
++			t.Fatal(err)
++		}
++		return v
++	}
++	ws, ok := readSub2APIKeyLimits(b)
++	if !ok || len(ws) != 2 {
++		t.Fatalf("windows = %+v, %v", ws, ok)
++	}
++	five, week := ws[0], ws[1]
++	if five.Name != "5 hours" || five.Span != 5*time.Hour || five.Used != 37.5 ||
++		five.Amount != 0 || five.Limit != 0 || five.Unit != "" ||
++		five.ResetsAt == nil || !five.ResetsAt.Equal(reset("2026-10-21T18:00:00Z")) {
++		t.Fatalf("5 hours = %+v", five)
++	}
++	if week.Name != "7 days" || week.Span != 7*24*time.Hour || week.Used != 80 ||
++		week.Amount != 0 || week.Limit != 0 || week.Unit != "" ||
++		week.ResetsAt == nil || !week.ResetsAt.Equal(reset("2026-10-25T00:00:00Z")) {
++		t.Fatalf("7 days = %+v", week)
++	}
++	// the window counts nothing, as a subscription's does
++	if c := five.Count(false); c != "" {
++		t.Fatalf("5 hours' count = %q", c)
++	}
++	srv, _ := sub2apiServer(t, func() ([]byte, int) { return b, 200 })
++	p := sub2apiKey(t, srv)
++	if amount, ok, err := Balance(context.Background(), p); err != nil || !ok || amount != "20%" {
++		t.Fatalf("Balance = %q %v %v", amount, ok, err)
++	}
++
++	// a window with no unit, "USD" or anything else is money, as before
++	for _, c := range []struct{ name, unit string }{
++		{"no unit", ""},
++		{"USD", `,"unit":"USD"`},
++		{"another unit", `,"unit":"credits"`},
++	} {
++		body := []byte(`{"mode":"unrestricted","rate_limits":[{"window":"5h","limit":100,"used":37.5,"remaining":62.5` +
++			c.unit + `,"reset_at":"2026-10-21T18:00:00Z"}]}`)
++		ws, ok := readSub2APIKeyLimits(body)
++		if !ok || len(ws) != 1 || ws[0].Used != 37.5 || ws[0].Amount != 37.5 || ws[0].Limit != 100 || ws[0].Unit != "USD" {
++			t.Fatalf("%s = %+v, %v", c.name, ws, ok)
++		}
++		if got := ws[0].Count(false); got != "37.5 / 100 USD" {
++			t.Fatalf("%s count = %q", c.name, got)
++		}
++	}
++}
++
+ // keyLimitsHome gives a test a magpie of its own, without any key or
+ // window another test read.
+ func keyLimitsHome(t *testing.T) {
+diff --git a/internal/provider/testdata/sub2api_usage_key_limits_percent.json b/internal/provider/testdata/sub2api_usage_key_limits_percent.json
+new file mode 100644
+index 00000000..50401ce9
+--- /dev/null
++++ b/internal/provider/testdata/sub2api_usage_key_limits_percent.json
+@@ -0,0 +1,3 @@
++{"mode":"unrestricted","rate_limits":[
++  {"window":"5h","limit":100,"used":37.5,"remaining":62.5,"unit":"percent","reset_at":"2026-10-21T18:00:00Z"},
++  {"window":"7d","limit":100,"used":80,"remaining":20,"unit":"percent","reset_at":"2026-10-25T00:00:00Z"}]}
+\ No newline at end of file
+-- 
+2.56.0
+

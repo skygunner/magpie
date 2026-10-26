@@ -1,0 +1,90 @@
+From 62bb7d58883e8c8be8548396fc5d5b1b77aa882e Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 06:02:51 +1000
+Subject: [PATCH] gateway: a field an upstream refuses by name can be "options"
+ (#3716, fzh365)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Hermes sends "options" with its Chat request. Gemini, reached through
+magpie, answers 400 "Invalid JSON payload received. Unknown name
+\"options\": Cannot find field." — a field magpie may leave out and ask
+again, but "options" was not in optionalFields, so the refusal went back to
+the agent and the turn was lost.
+
+Verified: red without the fix — `go test -tags nogui ./internal/gateway/
+-count=1 -run TestOptionsFieldRefusedRetried` failed with "with options: 400
+after 1 calls, want 200 after 2: …Unknown name \"options\"…"; green with it:
+asked again without it, then 200 after 2 calls, and a request without
+"options" is sent once. gofmt -l silent, go vet -tags nogui
+./internal/gateway/ silent, go build -tags nogui ./... ok.
+
+A note on the two "did the upstream refuse this field?" checks: refusedOptional
+matches the field the vendor names (the regexes in unsupportedOptionalField),
+which is the one this fix goes through. refusesField is a plain substring
+match, and "options" is the tail of "stream_options" and
+"prompt_cache_options": it is only used for additionalToolsItem and
+cacheKeyField today, and "options" must not be routed through it.
+---
+ internal/gateway/gateway.go              |  2 +-
+ internal/gateway/optional_fields_test.go | 33 ++++++++++++++++++++++++
+ 2 files changed, 34 insertions(+), 1 deletion(-)
+
+diff --git a/internal/gateway/gateway.go b/internal/gateway/gateway.go
+index c39371db..50a1e310 100644
+--- a/internal/gateway/gateway.go
++++ b/internal/gateway/gateway.go
+@@ -5829,7 +5829,7 @@ const tierField = "service_tier"
+ // optionalFields are request fields OpenAI's APIs (or an agent's own
+ // vendor, Kimi's and Qwen's thinking switches) take that a request does
+ // without: an upstream that refuses one by name is asked again without it.
+-var optionalFields = []string{"store", "metadata", tierField, cacheKeyField, "prompt_cache_retention",
++var optionalFields = []string{"store", "metadata", "options", tierField, cacheKeyField, "prompt_cache_retention",
+ 	"prompt_cache_options", "safety_identifier", "stream_options", "parallel_tool_calls", "verbosity", "thinking", "enable_thinking"}
+ 
+ // refusedOptional lists optional fields an upstream explicitly rejects as
+diff --git a/internal/gateway/optional_fields_test.go b/internal/gateway/optional_fields_test.go
+index c9a1b419..1a0a1baf 100644
+--- a/internal/gateway/optional_fields_test.go
++++ b/internal/gateway/optional_fields_test.go
+@@ -274,3 +274,36 @@ func TestPromptCacheOptionsRefusedRetried(t *testing.T) {
+ 		}
+ 	}
+ }
++
++// #3716 (fzh365): Hermes sends "options" with its Chat request, and Gemini
++// through magpie turns it away by name ("Invalid JSON payload received.
++// Unknown name \"options\""): asked again without it, and not sent it again;
++// a request without it is sent once.
++func TestOptionsFieldRefusedRetried(t *testing.T) {
++	f := &fake{t: t, reply: optionalFieldReply(provider.Chat)}
++	f.refuse = func(b []byte) (int, string) {
++		var v map[string]json.RawMessage
++		json.Unmarshal(b, &v)
++		if _, present := v["options"]; present {
++			return 400, `{"error":{"message":"Invalid JSON payload received. Unknown name \"options\": Cannot find field.","code":400}}`
++		}
++		return 0, ""
++	}
++	setup(t, provider.Chat, f)
++	srv := New()
++	path, body := optionalFieldAsk(provider.Chat)
++	calls := f.calls
++	code, reply := postTo(t, srv, path, string(withFields([]byte(body), map[string]any{"options": map[string]any{"temperature": 0.2}})))
++	if code != 200 || f.calls-calls != 2 {
++		t.Fatalf("with options: %d after %d calls, want 200 after 2: %s", code, f.calls-calls, reply)
++	}
++	var sent map[string]json.RawMessage
++	json.Unmarshal(f.got, &sent)
++	if sent["options"] != nil {
++		t.Errorf("options sent again after it was refused: %s", f.got)
++	}
++	calls = f.calls
++	if code, reply := postTo(t, srv, path, body); code != 200 || f.calls-calls != 1 {
++		t.Errorf("without options: %d after %d calls, want 200 after one: %s", code, f.calls-calls, reply)
++	}
++}
+-- 
+2.56.0
+

@@ -1,0 +1,135 @@
+From 6d7c04d0e427e34f16606661616c8ceb8f56d161 Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 05:37:05 +1000
+Subject: [PATCH] provider: a group member of a provider that is off is not
+ sent to another one (#3698, coderbiq)
+
+resolveIn falls through when the "provider/" prefix names a provider that
+isn't serving: it looked the whole id up as a bare model id, then asked
+listedBy for the one provider listing it. A member saved as
+xiaomi/mimo-v2.6-pro, with Xiaomi MiMo switched off, matched Command Code's
+own catalog entry of that id (listed, not selected), so group requests went
+to commandcode/xiaomi/mimo-v2.6-pro while `magpie group show pro` said the
+member was skipped because xiaomi is off.
+
+Now a prefix naming a provider that exists and isn't serving ends
+resolution: the id belongs to that provider and is served by nobody. A
+prefix that names no provider still falls through as before, so a real
+vendor model id with a slash (commandcode's deepseek/deepseek-v4.1-flash)
+resolves as it did, and the qualified commandcode/xiaomi/mimo-v2.6-pro
+still reaches it.
+
+Siblings read that refusal as the off member it is: membersOff leaves it
+out, so group show's whyNotServed says "Xiaomi MiMo is off"; cleanFast no
+longer refuses a fast member of an off provider for having no fast mode
+(it isn't served, so nothing is asked); group share keeps it.
+
+Red, without the fix: go test -tags nogui ./internal/provider/ -run
+TestPrefixOfAnOffProviderResolvesNowhere -> models_test.go:325:
+xiaomi/mimo-v2.6-pro resolved to commandcode/xiaomi/mimo-v2.6-pro, want
+nothing (xiaomi is off); models_test.go:349: group serves
+[commandcode/xiaomi/mimo-v2.6-pro commandcode/deepseek/deepseek-v4.1-flash].
+
+Green: same command, ok; go test -tags nogui ./internal/provider/ -count=1
+-> 1 failed (TestUnreadLoginsWriteErrorsKeepCredentials, synctest close
+outside bubble, #3632, fails at the base too), the rest pass.
+./internal/gateway -run 'Group|Resolve|Bare|Model' 506 ok; ./internal/cli
+-run 'Group|Model|Resolve' 81 ok; ./internal/agent -run
+'Model|Resolve|Catalog' 222 ok. gofmt -l clean; go vet -tags nogui
+./internal/provider/ clean; go build -tags nogui ./... ok.
+---
+ internal/provider/models.go      | 11 ++++--
+ internal/provider/models_test.go | 58 ++++++++++++++++++++++++++++++++
+ 2 files changed, 67 insertions(+), 2 deletions(-)
+
+diff --git a/internal/provider/models.go b/internal/provider/models.go
+index 346fd47d..6f2ea469 100644
+--- a/internal/provider/models.go
++++ b/internal/provider/models.go
+@@ -2695,8 +2695,15 @@ func resolveIn(entries []Entry, id string) (Provider, string, bool) {
+ 	if pid, model, ok := strings.Cut(id, "/"); ok {
+ 		// the providers a request holds (All): an agent's value of a
+ 		// model not listed lands here
+-		if p := lookIn(All(), pid); p != nil && p.On() && !p.ServesNone() {
+-			return *p, model, true
++		if p := lookIn(All(), pid); p != nil {
++			if p.On() && !p.ServesNone() {
++				return *p, model, true
++			}
++			// the provider exists and isn't serving: the id names it, so it
++			// is served by nobody. Read as a bare model id it would find
++			// another provider's model of the same name — a group member
++			// reported as off was sent to that one (#3698, coderbiq)
++			return Provider{}, "", false
+ 		}
+ 	}
+ 	for i := range entries {
+diff --git a/internal/provider/models_test.go b/internal/provider/models_test.go
+index 2b721f11..d0bea2b8 100644
+--- a/internal/provider/models_test.go
++++ b/internal/provider/models_test.go
+@@ -291,3 +291,61 @@ func TestEntryForUnnamedModel(t *testing.T) {
+ 		t.Fatalf("name %q, default %q", e.Name, e.Default)
+ 	}
+ }
++
++// A member named with a provider's id is that provider's model, and while
++// that provider is off it is served by nobody: the id fell through the
++// prefix branch to a bare model id, which another provider's catalog has
++// (commandcode lists xiaomi/mimo-v2.6-pro), so a member reported as off by
++// `magpie group show` was sent to that provider instead (#3698, coderbiq).
++func TestPrefixOfAnOffProviderResolvesNowhere(t *testing.T) {
++	prefsHome(t)
++	live := func(pid string, ms ...string) {
++		t.Helper()
++		var list []catalog.Model
++		for _, id := range ms {
++			list = append(list, catalog.Model{ID: id})
++		}
++		if err := catalog.SaveLive(pid, "", list); err != nil {
++			t.Fatal(err)
++		}
++	}
++	// the full catalogs: what each vendor lists, selected or not
++	live("xiaomi", "mimo-v2.6-flash", "mimo-v2.6-pro")
++	live("commandcode", "deepseek/deepseek-v4.1-flash", "xiaomi/mimo-v2.6-pro")
++	for _, p := range []Provider{
++		{ID: "xiaomi", Name: "Xiaomi MiMo", Key: "k", Chat: "http://127.0.0.1:1/v1", Models: []string{"mimo-v2.6-flash", "mimo-v2.6-pro"}, Off: true},
++		{ID: "commandcode", Name: "Command Code", Key: "k", Chat: "http://127.0.0.1:1/v1", Models: []string{"deepseek/deepseek-v4.1-flash"}},
++	} {
++		if err := Save(p); err != nil {
++			t.Fatal(err)
++		}
++	}
++	// a model of an off provider is named by that provider
++	if p, model, ok := Resolve("xiaomi/mimo-v2.6-pro"); ok {
++		t.Errorf("xiaomi/mimo-v2.6-pro resolved to %s/%s, want nothing (xiaomi is off)", p.ID, model)
++	}
++	// a model whose id has a slash, under a provider that isn't named, is
++	// still the model of the provider that lists it
++	if p, model, ok := Resolve("deepseek/deepseek-v4.1-flash"); !ok || p.ID != "commandcode" || model != "deepseek/deepseek-v4.1-flash" {
++		t.Errorf("deepseek/deepseek-v4.1-flash = %s/%s %v, want commandcode/deepseek/deepseek-v4.1-flash", p.ID, model, ok)
++	}
++	// the same model, named by its own provider, resolves there
++	if p, model, ok := Resolve("commandcode/xiaomi/mimo-v2.6-pro"); !ok || p.ID != "commandcode" || model != "xiaomi/mimo-v2.6-pro" {
++		t.Errorf("commandcode/xiaomi/mimo-v2.6-pro = %s/%s %v", p.ID, model, ok)
++	}
++	// and a group of it is not sent to commandcode behind the user's back
++	if err := SaveGroup(Group{Name: "Pro", Members: []string{"xiaomi/mimo-v2.6-pro", "commandcode/deepseek/deepseek-v4.1-flash"}, Routing: Ordered}); err != nil {
++		t.Fatal(err)
++	}
++	_, ms, ok := FindGroup("group/pro")
++	if !ok {
++		t.Fatal("no group")
++	}
++	var got []string
++	for _, m := range ms {
++		got = append(got, m.Provider.ID+"/"+m.Model)
++	}
++	if len(got) != 1 || got[0] != "commandcode/deepseek/deepseek-v4.1-flash" {
++		t.Fatalf("group serves %v, want only commandcode/deepseek/deepseek-v4.1-flash", got)
++	}
++}
+-- 
+2.56.0
+

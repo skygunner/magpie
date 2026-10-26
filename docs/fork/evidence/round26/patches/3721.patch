@@ -1,0 +1,141 @@
+From 20ac3a6c1696f86e9b8b6a2bbf2514ccb9a9320a Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 05:31:02 +1000
+Subject: [PATCH] provider: a ChatGPT API account's allowance is no longer
+ Codex's (#3721, NoneMore)
+
+loginQuota's switch read every active login as the Codex account Codex is
+signed in to: `case l.Active` took codexToken(codexHome()) and then
+codexWindowsRenewing. Active means "the first account of this agent's own
+list" (listSideLogins), which is true of a Sign in with ChatGPT account
+too, so siwcProvider's account showed Codex's five-hour and weekly windows
+and Codex's plan, and Allowances("chatgpt-api") routed on them. A second
+SIWC account fell to savedLoginToken, which knows Codex alone and answered
+"chatgpt-api accounts can't be used side by side".
+
+Now a ChatGPT API login is answered before the token switch, as Claude's
+and Copilot's are: OpenAI publishes no way for an app to read a plan's
+usage with such a token, only the page it is shown at, so the account
+reads as an error saying that (SIWCUsageURL) with no windows and no plan
+borrowed. The card draws an error as one (panelQuotaCard's `q.error`
+branch), and Allowances skips a reading with an error, so routing treats
+the account as unknown rather than as Codex's. The Codex branch is also
+guarded by the agent's id now, so no other agent's first account can be
+read from Codex's home again. A wrong reading kept on disk under
+chatgpt-api/ is not brought back: keepLast only keeps the last reading for
+a passing error, and this one isn't.
+
+The missing SIWC usage card is a separate product call and is not added.
+
+Red, without the fix: go test -tags nogui ./internal/provider/ -run
+TestChatGPTAPIQuotaIsNotCodex -> chatgpt_api_test.go:366:
+me@example.com (active true): "Codex is signed out; run codex login", want
+"OpenAI doesn't let an app read this account's plan usage; it is shown at
+https://chatgpt.com/settings/usage" (and other@example.com: "chatgpt-api
+accounts can't be used side by side").
+
+Green: same command, ok; go test -tags nogui ./internal/provider/ -count=1
+-> 1004 passed, 1 failed (TestUnreadLoginsWriteErrorsKeepCredentials,
+synctest close outside bubble, #3632, fails at the base too), 4 skipped.
+gofmt -l clean; go vet -tags nogui ./internal/provider/ clean; go build
+-tags nogui ./... ok.
+---
+ internal/provider/chatgpt_api_test.go | 30 +++++++++++++++++++++++++++
+ internal/provider/login_usage.go      | 19 ++++++++++++++++-
+ 2 files changed, 48 insertions(+), 1 deletion(-)
+
+diff --git a/internal/provider/chatgpt_api_test.go b/internal/provider/chatgpt_api_test.go
+index 3d0e1e4a..332e785c 100644
+--- a/internal/provider/chatgpt_api_test.go
++++ b/internal/provider/chatgpt_api_test.go
+@@ -341,6 +341,36 @@ func TestChatGPTAPIRefresh(t *testing.T) {
+ 	}
+ }
+ 
++// A ChatGPT API account's allowance is read at its own vendor, never
++// Codex's: the first account of a side login is the active one
++// (listSideLogins), and a read that took that for Codex's own handed the
++// ChatGPT API account Codex's windows and plan (#3721, NoneMore).
++func TestChatGPTAPIQuotaIsNotCodex(t *testing.T) {
++	claudeHome(t) // a home with no Codex sign-in: nothing to borrow
++	auth, err := json.Marshal(siwcCreds{ClientID: "oaiapp_1", Subject: "user-1", Access: "at-1", Refresh: "rt-1", Expires: time.Now().Add(time.Hour)})
++	if err != nil {
++		t.Fatal(err)
++	}
++	for _, user := range []string{"me@example.com", "other@example.com"} {
++		if err := addSideLogin(savedLogin{Agent: ChatGPTAPIID, User: user, Plan: "plus", Auth: auth}, "", func(savedLogin) {}); err != nil {
++			t.Fatal(err)
++		}
++	}
++	ls := siwcLoginList()
++	if len(ls) != 2 || !ls[0].Active || ls[1].Active {
++		t.Fatalf("logins %+v", ls)
++	}
++	for _, l := range ls {
++		q := loginQuota(context.Background(), l)
++		if q.Error != errSIWCUsage.Error() {
++			t.Errorf("%s (active %v): %q, want %q", l.User, l.Active, q.Error, errSIWCUsage)
++		}
++		if len(q.Windows) != 0 || q.Plan != "plus" || q.Provider != ChatGPTAPIID {
++			t.Errorf("%s: %+v", l.User, q)
++		}
++	}
++}
++
+ // The request goes as Sign in with ChatGPT takes it: stored nowhere and
+ // streamed, without the fields it refuses or the tools OpenAI would run
+ // itself, a system message as a developer one; the agent's instructions
+diff --git a/internal/provider/login_usage.go b/internal/provider/login_usage.go
+index c24fece6..64c06f42 100644
+--- a/internal/provider/login_usage.go
++++ b/internal/provider/login_usage.go
+@@ -6,6 +6,7 @@ package provider
+ 
+ import (
+ 	"context"
++	"errors"
+ 	"net/http"
+ 	"strings"
+ 	"sync"
+@@ -283,6 +284,12 @@ func loginProvider(l Login) string {
+ 	return l.Agent
+ }
+ 
++// errSIWCUsage is what a ChatGPT API account's allowance reads as: OpenAI
++// publishes no way to read a plan's usage with such a sign-in, only the
++// page it is shown on, so magpie says that rather than borrowing Codex's
++// windows for an account that is not Codex's (#3721, NoneMore).
++var errSIWCUsage = errors.New("OpenAI doesn't let an app read this account's plan usage; it is shown at " + SIWCUsageURL)
++
+ func loginQuota(ctx context.Context, l Login) SubscriptionQuota {
+ 	ctx = ViaLogin(ctx, loginProvider(l), l.User) // asked through the account's own proxy
+ 	if strings.HasPrefix(l.Agent, "plugin:") {
+@@ -323,6 +330,14 @@ func loginQuota(ctx context.Context, l Login) SubscriptionQuota {
+ 		return SubscriptionQuota{Provider: l.Agent, Plan: l.Plan, Windows: []QuotaWindow{}, Error: "not signed in"}
+ 	}
+ 	q := SubscriptionQuota{Provider: l.Agent, Plan: l.Plan, Windows: []QuotaWindow{}}
++	if l.Agent == ChatGPTAPIID {
++		// OpenAI's Sign in with ChatGPT has no usage of its own magpie may
++		// read, and the account is a different one from Codex's: an
++		// account read as Codex's own took Codex's windows for its own
++		// (#3721, NoneMore)
++		q.Error = errSIWCUsage.Error()
++		return q
++	}
+ 	if l.Agent == "claude" && !l.Active {
+ 		// a saved account: what Claude Code told of it, or, when its card
+ 		// is refreshed, its /usage run in the account's own directory
+@@ -340,7 +355,9 @@ func loginQuota(ctx context.Context, l Login) SubscriptionQuota {
+ 	var renew codexRenew
+ 	switch {
+ 	case l.Agent == "claude": // Claude Code reads its own (claudeWindows)
+-	case l.Active:
++	case l.Agent == "codex" && l.Active:
++		// Active is the first account of an agent's own list, not a say of
++		// Codex's: only Codex's own sign-in is read from Codex's home
+ 		tok, accountID, err = codexToken(ctx, codexHome())
+ 		renew = func(ctx context.Context, stale string) (string, string, error) {
+ 			return codexTokenRenewing(ctx, codexHome(), stale)
+-- 
+2.56.0
+

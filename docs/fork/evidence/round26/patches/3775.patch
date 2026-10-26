@@ -1,0 +1,132 @@
+From c4fd6c4be066b803a60e590726839088948f8729 Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 05:27:08 +1000
+Subject: [PATCH] redact: a token count stays as written though the model calls
+ it a secret (#3775, yetone)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+AstrLink Guard labels `14902266` `common_secret` in
+`<system-reminder><total_tokens>14902266 tokens left</total_tokens></system-reminder>`,
+and magpie's checks on a model secret kept it: a bare hex run is only masked
+when something calls it a key (`secretCued`), and `tokens` held `token`, one
+of `secretCues`, so the count passed for a secret and was masked.
+
+`modelFits`'s SECRET case now vetoes a bare number with a counting word before
+it: all digits (`countDigits` by way of `strings.Trim(v, digits)`) and `cued`
+by `countCues` (tokens, count, total, left, remaining, items, rows) is not a
+secret. A numeric password has no such word before it and stays masked, which
+the test's two password cases hold. The eval's GuardKnown for `token-count` is
+taken off, as its own failure asked.
+
+Without the veto, `go test -tags nogui ./internal/redact/ -count=1 -run
+TestModelCountIsNoSecret` fails:
+
+    model_test.go:166: "14902266" gone from "<system-reminder><total_tokens>{{SECRET_sr2yspzt}} token…
+
+With it that command passes (5 of 5), `TestMaskEval` passes, and the whole
+package passes: `go test -tags nogui ./internal/redact/ -count=1` → ok, 92
+tests. gofmt and `go vet -tags nogui ./internal/redact/` are clean.
+---
+ internal/redact/eval_cases_test.go |  2 +-
+ internal/redact/model.go           | 10 ++++++++
+ internal/redact/model_test.go      | 41 ++++++++++++++++++++++++++++++
+ 3 files changed, 52 insertions(+), 1 deletion(-)
+
+diff --git a/internal/redact/eval_cases_test.go b/internal/redact/eval_cases_test.go
+index 88a67bf8..0f25988c 100644
+--- a/internal/redact/eval_cases_test.go
++++ b/internal/redact/eval_cases_test.go
+@@ -90,7 +90,7 @@ var evalCases = []evalCase{
+ 	{
+ 		ID: "token-count", From: "611b9e173",
+ 		Text: "<system-reminder><total_tokens>14902266 tokens left</total_tokens></system-reminder>",
+-		Keep: []evalValue{{V: "14902266", Kind: "ACCOUNT", GuardKnown: "#3775"}},
++		Keep: []evalValue{{V: "14902266", Kind: "ACCOUNT"}},
+ 	},
+ 	{
+ 		ID: "assistant-names", From: "611b9e173",
+diff --git a/internal/redact/model.go b/internal/redact/model.go
+index c3812ad5..1f81d93d 100644
+--- a/internal/redact/model.go
++++ b/internal/redact/model.go
+@@ -328,6 +328,13 @@ func modelFits(s string, a, b int, kind string) bool {
+ 		if a > 1 && (s[a-1] == '+' || s[a-1] == '/') && wordByte(s[a-2]) || b+1 < len(s) && (s[b] == '+' || s[b] == '/') && wordByte(s[b+1]) {
+ 			return false
+ 		}
++		// a count is no secret, though the model calls it one: a bare number
++		// after a word that counts it (a token count,
++		// <total_tokens>14902266 tokens left</…>) is #3775's. A numeric
++		// password has no counting word before it and stays masked.
++		if strings.Trim(v, digits) == "" && cued(s, a, countCues) {
++			return false
++		}
+ 		// a bare hex run is a hash or an id unless something calls it a key;
+ 		// one with words after it is a hash in a tool's output
+ 		if f := strings.Fields(v); len(f) > 1 && hexRe.MatchString(f[0]) || modCacheRe.MatchString(v) {
+@@ -512,6 +519,9 @@ var (
+ 	accountCues = []string{"account", "acct", "a/c", "iban", "routing", "sort code", "card", "账号", "帐号", "账户", "帐户", "卡号", "户名"}
+ 	secretCues  = []string{"key", "token", "secret", "password", "passwd", "密钥", "密码", "令牌"}
+ 	phoneCues   = []string{"phone", "tel", "mobile", "cell", "call", "whatsapp", "sms", "电话", "手机", "联系", "致电"}
++	// what counts a number: a count is no secret, whatever the model says
++	// of it (a token count, <total_tokens>14902266 tokens left, #3775)
++	countCues = []string{"tokens", "count", "total", "left", "remaining", "items", "rows"}
+ )
+ 
+ // cued says one of cues is in the 40 bytes before at, in any case.
+diff --git a/internal/redact/model_test.go b/internal/redact/model_test.go
+index 4da54aaf..b32eb50e 100644
+--- a/internal/redact/model_test.go
++++ b/internal/redact/model_test.go
+@@ -132,6 +132,47 @@ func TestModelSpanLeavesDelimiters(t *testing.T) {
+ 	}
+ }
+ 
++// A count the model labels a secret is no secret: a bare number right after
++// a word that counts it (a token count, <total_tokens>14902266 tokens left),
++// which AstrLink Guard takes for one (#3775). A numeric password has no such
++// word before it and stays masked.
++func TestModelCountIsNoSecret(t *testing.T) {
++	const n = "14902266"
++	for _, c := range []struct {
++		name string
++		in   string
++		gone []string
++		kept []string
++	}{
++		{
++			name: "token-count",
++			in:   "<system-reminder><total_tokens>" + n + " tokens left</total_tokens></system-reminder>",
++			kept: []string{n},
++		},
++		{name: "row-count", in: "rows remaining: " + n, kept: []string{n}},
++		{name: "numeric-password", in: "the vault password is " + n + ", don't log it", gone: []string{n}},
++		{name: "numeric-password-in-a-file", in: "password = \"" + n + "\"", gone: []string{n}},
++	} {
++		t.Run(c.name, func(t *testing.T) {
++			f := &fakeModel{values: map[string]string{n: "secret"}}
++			out, _ := Mask(c.in, Options{Secrets: true, Model: f.find})
++			for _, g := range c.gone {
++				if strings.Contains(unmarked(out), g) {
++					t.Errorf("%q still in %q", g, out)
++				}
++			}
++			for _, k := range c.kept {
++				if !strings.Contains(out, k) {
++					t.Errorf("%q gone from %q", k, out)
++				}
++			}
++			if back := Restore(out, false); back != c.in {
++				t.Errorf("round trip: %q → %q", c.in, back)
++			}
++		})
++	}
++}
++
+ // A request's texts go to the model once, together, each once: never its
+ // ids, kinds or tools' definitions, which are never masked, nor what a
+ // vendor sealed with a signature.
+-- 
+2.56.0
+

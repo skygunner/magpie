@@ -1344,5 +1344,185 @@
   "created_at": "2026-10-26T12:38:12Z",
   "body_sha256": "fe965259278f2df76268a2f3926bd5afc555fc4feddb4c4528cd6e341522b880",
   "evidence": "docs/fork/evidence/round25/3194/comment-readback.json"
+ },
+ "3188": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3188#issuecomment-6429785328"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3188",
+  "title": "provider: a sub2api `unit: \"percent\"` window is a share, not dollars (#3188)"
+ },
+ "3308": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3308#issuecomment-6429785833"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3308",
+  "title": "gui: the tray panel's subagent effort square is Default and won't open while no subagent model is set (#3308)"
+ },
+ "3320": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3320#issuecomment-6429784843"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3320",
+  "title": "gui: RTK's sandbox setting is not a verdict, and the count is reread when its page returns (#3320)"
+ },
+ "3324": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3324#issuecomment-6429780051"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3324",
+  "title": "gateway: Routing history is read in the viewer's day (#3324)"
+ },
+ "3399": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3399#issuecomment-6429783755"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3399",
+  "title": "agent: Kimi's thinking models declare a capability even without an off level (#3399)"
+ },
+ "3555": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3555#issuecomment-6429784291"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3555",
+  "title": "gui: \"Try now\" forwards the lift to the magpie that serves the gateway (#3555)"
+ },
+ "3669": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3669#issuecomment-6429777197"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3669",
+  "title": "provider: MiniMax China's presets point at api.minimax.cn (#3669)"
+ },
+ "3690": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3690#issuecomment-6429778471"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3690",
+  "title": "gateway: claudeRoom gives its freed channel to the waiter that needs it (#3690)"
+ },
+ "3698": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3698#issuecomment-6429783205"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3698",
+  "title": "provider: a member naming a provider that is off resolves nowhere (#3698)"
+ },
+ "3701": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3701#issuecomment-6429777819"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3701",
+  "title": "gateway: a held refusal relayed from another magpie says its clause once (#3701)"
+ },
+ "3705": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3705#issuecomment-6429778980"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3705",
+  "title": "gateway: another magpie's key limit rests that key here, and only here (#3705)"
+ },
+ "3708": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3708#issuecomment-6429781699"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3708",
+  "title": "sessions: an agy summaries database written within the settle window is read again (#3708)"
+ },
+ "3713": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3713#issuecomment-6429776643"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3713",
+  "title": "gateway: ClinePass's canonicalSlug is recorded with the route (#3713)"
+ },
+ "3716": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3716#issuecomment-6429779510"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3716",
+  "title": "gateway: an upstream's refusal of the `options` field is retried without it (#3716)"
+ },
+ "3721": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3721#issuecomment-6429782671"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3721",
+  "title": "provider: a ChatGPT-API login is not read as a Codex account (#3721)"
+ },
+ "3723": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3723#issuecomment-6429781209"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3723",
+  "title": "middleware, agent plugins: a module's own imports reload it (#3723)"
+ },
+ "3742": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3742#issuecomment-6429780633"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3742",
+  "title": "middleware: a timeout's interrupt no longer lands on the next call (#3742)"
+ },
+ "3751": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3751#issuecomment-6429782208"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3751",
+  "title": "sessions: a rewritten Codex provider keeps every recorded byte offset (#3751)"
+ },
+ "3775": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3775#issuecomment-6429791341"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3775",
+  "title": "redact: a token count inside `<total_tokens>` is no secret (#3775)"
+ },
+ "3776": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3776#issuecomment-6429790548"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3776",
+  "title": "redact: a Japanese mobile in a CSV is masked (#3776)"
  }
 }

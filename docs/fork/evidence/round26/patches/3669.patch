@@ -1,0 +1,136 @@
+From da00218e9bd1d857764dc5ee617e90532f25cd08 Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 06:04:40 +1000
+Subject: [PATCH] provider: MiniMax (China) presets point at api.minimax.cn,
+ which answers as the old host did (#3669, kshq1996)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The vendor moved its China site off api.minimaxi.com, and the preset still
+gave it, so a new MiniMax (China) provider was saved with a host the vendor
+no longer serves. The preset now has api.minimax.cn for Chat, Anthropic and
+the Website and KeysURL pages, and the Responses endpoint the vendor
+documents at the same base as Chat (platform.minimax.cn/api-reference/
+responses-create, GeneYu404 on the issue).
+
+The host is matched by name in two more places, and both follow it:
+`inlineThink` (chat.go) so a CN reply's <think> block still goes out as
+reasoning and back in the assistant's text, and `planQuotaSourceOf`'s host
+switch (planquota.go), which now takes api.minimax.cn as well as
+api.minimaxi.com and api.minimax.io — a provider saved before the move keeps
+the old host and still gets its plan card.
+
+Tests first, both red on the base:
+
+    $ go test -tags nogui ./internal/gateway/ -count=1 -run TestMiniMaxThinkingGoesBackInTags
+    minimax_think_test.go:102: MiniMax-M2.7 at api.minimax.cn: assistant content "Hello!", want "<think>…
+    $ go test -tags nogui ./internal/provider/ -count=1 -run 'TestPlanQuotaSource|TestPlanQuotas'
+    planquota_test.go:50: {Provider:… Chat:https://api.minimax.cn/v1 …}: got "" ok=false sure=false
+    planquota_test.go:362: cards: map[glm/home…  (no minimax-cn card)
+
+With both fixes the same two commands pass, the whole provider package passes
+(`go test -tags nogui ./internal/provider/ -count=1 -skip
+TestUnreadLoginsWriteErrorsKeepCredentials` → ok, 42s; that test aborts the
+run with a synctest fatal error at this base too, before and after), and the
+gateway package's run shows only the five failures it has at the base. gofmt,
+`go vet -tags nogui ./internal/provider/ ./internal/gateway/` and `go build
+-tags nogui ./...` are clean.
+---
+ internal/gateway/chat.go               | 2 +-
+ internal/gateway/minimax_think_test.go | 1 +
+ internal/provider/planquota.go         | 2 +-
+ internal/provider/planquota_test.go    | 5 +++--
+ internal/provider/presets.go           | 7 +++++--
+ 5 files changed, 11 insertions(+), 6 deletions(-)
+
+diff --git a/internal/gateway/chat.go b/internal/gateway/chat.go
+index da6dfe7b..7f48ed92 100644
+--- a/internal/gateway/chat.go
++++ b/internal/gateway/chat.go
+@@ -330,7 +330,7 @@ func buildChat(r *Request, model, host string, rejectTemp bool) []byte {
+ 	// interleaved thinking): the decoder takes it out as thinking (#1267),
+ 	// so it goes back in where it came from. A relay serving MiniMax's
+ 	// models may give the thinking apart and take it back otherwise.
+-	inlineThink := strings.HasSuffix(host, "minimax.io") || strings.HasSuffix(host, "minimaxi.com")
++	inlineThink := strings.HasSuffix(host, "minimax.io") || strings.HasSuffix(host, "minimaxi.com") || strings.HasSuffix(host, "minimax.cn")
+ 	// Gemini wants each step's thought signature back on its first call
+ 	// (#687), and one it can't check for a step it didn't sign
+ 	gemini := geminiCompat(host, model)
+diff --git a/internal/gateway/minimax_think_test.go b/internal/gateway/minimax_think_test.go
+index f6875a9c..e1eacc50 100644
+--- a/internal/gateway/minimax_think_test.go
++++ b/internal/gateway/minimax_think_test.go
+@@ -88,6 +88,7 @@ func TestMiniMaxThinkingGoesBackInTags(t *testing.T) {
+ 	for _, c := range []struct{ model, host, want string }{
+ 		{"MiniMax-M2.7", "api.minimax.io", "<think>\nThe user greets me.\n</think>\n\nHello!"},
+ 		{"MiniMax-M2.7", "api.minimaxi.com", "<think>\nThe user greets me.\n</think>\n\nHello!"},
++		{"MiniMax-M2.7", "api.minimax.cn", "<think>\nThe user greets me.\n</think>\n\nHello!"},
+ 		{"minimax/minimax-m3", "openrouter.ai", "Hello!"},
+ 		{"kimi-k3", "api.moonshot.cn", "Hello!"},
+ 	} {
+diff --git a/internal/provider/planquota.go b/internal/provider/planquota.go
+index f2ae827c..e0a154a7 100644
+--- a/internal/provider/planquota.go
++++ b/internal/provider/planquota.go
+@@ -57,7 +57,7 @@ func planQuotaSourceOf(p Provider) (planQuotaSource, bool) {
+ 			// preset too, and is told the plan's 5-hour and weekly windows;
+ 			// a pay-as-you-go key has none, and no card
+ 			return planQuotaSource{"https://api.commandcode.ai/alpha/billing/credits", true, readCommandCodePlan, false}, true
+-		case "api.minimaxi.com", "api.minimax.io":
++		case "api.minimax.cn", "api.minimaxi.com", "api.minimax.io":
+ 			// a Coding Plan key (sk-cp-…) is told its windows; a
+ 			// pay-as-you-go key isn't, and gets no card (#387)
+ 			return planQuotaSource{"https://" + hostOf(base) + "/v1/token_plan/remains", true, readMiniMaxPlan, false}, true
+diff --git a/internal/provider/planquota_test.go b/internal/provider/planquota_test.go
+index 2ca41b1e..f5032398 100644
+--- a/internal/provider/planquota_test.go
++++ b/internal/provider/planquota_test.go
+@@ -39,6 +39,7 @@ func TestPlanQuotaSource(t *testing.T) {
+ 		{Provider{Anthropic: "https://api.kimi.ai/coding/"}, "https://api.kimi.ai/coding/v1/usages", true, true},
+ 		{Provider{Chat: "https://api.commandcode.ai/provider/v1", Anthropic: "https://api.commandcode.ai/provider"}, "https://api.commandcode.ai/alpha/billing/credits", true, false},
+ 		{Provider{Chat: "https://api.minimaxi.com/v1", Anthropic: "https://api.minimaxi.com/anthropic"}, "https://api.minimaxi.com/v1/token_plan/remains", true, false},
++		{Provider{Chat: "https://api.minimax.cn/v1", Anthropic: "https://api.minimax.cn/anthropic"}, "https://api.minimax.cn/v1/token_plan/remains", true, false},
+ 		{Provider{Anthropic: "https://api.minimax.io/anthropic"}, "https://api.minimax.io/v1/token_plan/remains", true, false},
+ 		{Provider{Chat: "https://api.deepseek.com"}, "", false, false},
+ 		{Provider{Chat: "https://ollama.com/v1", Anthropic: "https://ollama.com"}, "https://ollama.com/api/balance", true, false},
+@@ -320,7 +321,7 @@ func TestPlanQuotas(t *testing.T) {
+ 			w.Write([]byte(zhipuResetList))
+ 		case "open.bigmodel.cn/api/biz/customer-package-reset/list glm-b":
+ 			w.Write([]byte(`{"code":1000,"msg":"身份验证失败。","success":false}`))
+-		case "api.minimaxi.com/v1/token_plan/remains Bearer sk-cp-k":
++		case "api.minimax.cn/v1/token_plan/remains Bearer sk-cp-k":
+ 			w.Write([]byte(`{"model_remains":[{"model_name":"general","current_interval_remaining_percent":75,"current_interval_status":1,
+ 				"current_weekly_remaining_percent":96,"current_weekly_status":1}],"base_resp":{"status_code":0,"status_msg":"success"}}`))
+ 		case "api.minimaxi.com/v1/token_plan/remains Bearer sk-api-k":
+@@ -346,7 +347,7 @@ func TestPlanQuotas(t *testing.T) {
+ 		// Go at models.dev's URL for it: the same card (ttmrmx on X)
+ 		{ID: "go-inference", Name: "OpenCode Go", Chat: "https://opencode.ai/inference/go/openai/v1", Key: "go-k"},
+ 		{ID: "zen", Name: "Zen", Chat: "https://opencode.ai/zen/v1", Key: "zen-k"},
+-		{ID: "minimax-cn", Name: "MiniMax (China)", Chat: "https://api.minimaxi.com/v1", Anthropic: "https://api.minimaxi.com/anthropic", Key: "sk-cp-k"},
++		{ID: "minimax-cn", Name: "MiniMax (China)", Chat: "https://api.minimax.cn/v1", Anthropic: "https://api.minimax.cn/anthropic", Key: "sk-cp-k"},
+ 		{ID: "minimax-payg", Name: "MiniMax API", Anthropic: "https://api.minimaxi.com/anthropic", Key: "sk-api-k"},
+ 	} {
+ 		if err := Save(p); err != nil {
+diff --git a/internal/provider/presets.go b/internal/provider/presets.go
+index 04080ae8..1a5c7654 100644
+--- a/internal/provider/presets.go
++++ b/internal/provider/presets.go
+@@ -190,9 +190,12 @@ var presets = []PresetDef{
+ 	{ID: "minimax", Name: "MiniMax", Icon: "minimax-color", Kind: KindVendor, Catalog: "minimax",
+ 		Chat: "https://api.minimax.io/v1", Anthropic: "https://api.minimax.io/anthropic",
+ 		Website: "https://platform.minimax.io", KeysURL: "https://platform.minimax.io/user-center/basic-information/interface-key"},
++	// MiniMax's China site moved from api.minimaxi.com to api.minimax.cn
++	// (#3669, kshq1996), the same paths, Responses at the Chat base; a
++	// provider saved before it keeps the old host and still answers
+ 	{ID: "minimax-cn", Name: "MiniMax (China)", Icon: "minimax-color", Kind: KindVendor, Catalog: "minimax",
+-		Chat: "https://api.minimaxi.com/v1", Anthropic: "https://api.minimaxi.com/anthropic",
+-		Website: "https://platform.minimaxi.com", KeysURL: "https://platform.minimaxi.com/user-center/basic-information/interface-key"},
++		Chat: "https://api.minimax.cn/v1", Responses: "https://api.minimax.cn/v1", Anthropic: "https://api.minimax.cn/anthropic",
++		Website: "https://platform.minimax.cn", KeysURL: "https://platform.minimax.cn/user-center/basic-information/interface-key"},
+ 	// a Step Plan is served at its own endpoints (step_plan/…), its key
+ 	// refused at the pay-as-you-go ones
+ 	{ID: "stepfun", Name: "StepFun", Icon: "stepfun-color", Kind: KindVendor, Catalog: "stepfun-ai-step-plan, stepfun-ai",
+-- 
+2.56.0
+

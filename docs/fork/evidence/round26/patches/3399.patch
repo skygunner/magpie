@@ -1,0 +1,115 @@
+From d19b48b8dc46e84d477b4cbc54bd525dd539348e Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 05:40:48 +1000
+Subject: [PATCH] agent: Kimi Code is told a model that always thinks so, and
+ it stops 400ing (#3399, kupakupar)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+kimiModelTables wrote the "thinking" capability only for a model with
+levels (len(m.Efforts) > 0). A model that thinks with a switch alone, or
+whose levels magpie knows none of — Kimi's own K3.1 Pro, Reasoning with no
+efforts, because models.dev leaves its levels out — was written with no
+capability at all, so Kimi Code ran the session at thinkingEffort "off" and
+the vendor refused it: "K3.1 Pro does not support disabled thinking mode".
+A model with levels but no level that turns thinking off had the same fate.
+
+Now every model that thinks gets "thinking" (Reasoning, or levels), and the
+new Kimi Code also gets "always_thinking" when none of its levels is
+"none", i.e. when it can't be asked to think off: catalog.go adds "none"
+only for the providers whose APIs are verified to accept it, so its absence
+is exactly "off may be refused". A model with an off level keeps what it
+had — "thinking" alone — and so does kimi-cli, which has no word for the
+key.
+
+"always_thinking" is read off the reporter's own Kimi Code 1.1.2 model
+tables: its native k3.1-pro carries capabilities ["thinking",
+"always_thinking", "image_in", "video_in", "tool_use",
+"dynamically_loaded_tools"], while magpie's table for the same model had
+["image_in", "tool_use"], and their 400 in the report names the disabled
+thinking mode. The repo has no other mention of the key.
+
+Red, without the fix: go test -tags nogui ./internal/agent/ -run
+TestKimiEfforts -> kimi_efforts_test.go:78: magpie/think/wide:
+{Capabilities:[thinking tool_use] ...}, want {Capabilities:[thinking
+always_thinking tool_use] ...}; magpie/think/toggled:
+{Capabilities:[tool_use] ...}, want {Capabilities:[thinking
+always_thinking tool_use] ...}.
+
+Green: same command, ok. go test -tags nogui ./internal/agent/ -count=1 ok
+(18s). gofmt -l clean; go vet -tags nogui ./internal/agent/ clean; go build
+-tags nogui ./... ok. Not verified: a real Kimi Code 1.1.2 session against
+the vendor (no such account here), and that kimi-cli would accept the key,
+which is why only the new Kimi Code is given it.
+---
+ internal/agent/kimi.go              | 11 ++++++++++-
+ internal/agent/kimi_efforts_test.go | 16 ++++++++++++----
+ 2 files changed, 22 insertions(+), 5 deletions(-)
+
+diff --git a/internal/agent/kimi.go b/internal/agent/kimi.go
+index 9f9c3a7c..c1653046 100644
+--- a/internal/agent/kimi.go
++++ b/internal/agent/kimi.go
+@@ -94,8 +94,17 @@ func kimiModelTables(path string, legacy bool, wrote map[string]map[string]strin
+ 			}
+ 		}
+ 		var caps []string
+-		if len(m.Efforts) > 0 {
++		if m.Reasoning || len(m.Efforts) > 0 {
+ 			caps = append(caps, strconv.Quote("thinking"))
++			// a model Kimi Code can't be told to think off: without a level
++			// for it, Kimi Code runs the session with thinking off, and a
++			// model that always thinks (Kimi's own K3.1, "does not support
++			// disabled thinking mode") refuses the request (#3399,
++			// kupakupar). Kimi Code's own model tables say both this and
++			// thinking; kimi-cli has no word for it
++			if !legacy && !slices.Contains(m.Efforts, "none") {
++				caps = append(caps, strconv.Quote("always_thinking"))
++			}
+ 		}
+ 		if m.Images {
+ 			caps = append(caps, strconv.Quote("image_in"))
+diff --git a/internal/agent/kimi_efforts_test.go b/internal/agent/kimi_efforts_test.go
+index 09aaacaa..bb6f43f2 100644
+--- a/internal/agent/kimi_efforts_test.go
++++ b/internal/agent/kimi_efforts_test.go
+@@ -26,13 +26,17 @@ func TestKimiEfforts(t *testing.T) {
+ 	t.Setenv("KIMI_CODE_HOME", "")
+ 	if err := provider.Save(provider.Provider{
+ 		ID: "think", Name: "Think", Chat: "https://example.test/v1", Key: "key",
+-		Models: []string{"deep", "wide", "plain"},
++		Models: []string{"deep", "wide", "toggled", "plain"},
+ 	}); err != nil {
+ 		t.Fatal(err)
+ 	}
+ 	if err := catalog.SaveLive("think", "https://example.test/v1", []catalog.Model{
+ 		{ID: "deep", Efforts: []string{"none", "high", "max"}},
+ 		{ID: "wide", Efforts: []string{"low", "medium"}},
++		// thinks with a switch alone, its vendor's levels unknown: Kimi
++		// Code's K3.1 Pro, whose own table says thinking and always_thinking
++		// (#3399, kupakupar)
++		{ID: "toggled", Reasoning: true},
+ 		{ID: "plain"},
+ 	}); err != nil {
+ 		t.Fatal(err)
+@@ -62,9 +66,13 @@ func TestKimiEfforts(t *testing.T) {
+ 	}
+ 	ms := read(path)
+ 	for k, want := range map[string]model{
+-		"magpie/think/deep":  {[]string{"thinking", "tool_use"}, []string{"high", "max"}, "high"},
+-		"magpie/think/wide":  {[]string{"thinking", "tool_use"}, []string{"low", "medium"}, ""},
+-		"magpie/think/plain": {[]string{"tool_use"}, nil, ""},
++		// none is Kimi Code's own off, so this one may be asked for off
++		"magpie/think/deep": {[]string{"thinking", "tool_use"}, []string{"high", "max"}, "high"},
++		// no level turns thinking off, and none of the levels say whether:
++		// told thinking alone, Kimi Code ran it with thinking off (#3399)
++		"magpie/think/wide":    {[]string{"thinking", "always_thinking", "tool_use"}, []string{"low", "medium"}, ""},
++		"magpie/think/toggled": {[]string{"thinking", "always_thinking", "tool_use"}, nil, ""},
++		"magpie/think/plain":   {[]string{"tool_use"}, nil, ""},
+ 	} {
+ 		if got := ms[k]; !reflect.DeepEqual(got, want) {
+ 			t.Errorf("%s: %+v, want %+v", k, got, want)
+-- 
+2.56.0
+

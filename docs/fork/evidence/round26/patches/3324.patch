@@ -1,0 +1,577 @@
+From 0765619b9dcab40c71c245c84ccc2fa046e52ed6 Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 06:11:21 +1000
+Subject: [PATCH] routing: the routing history's days are the reader's, not the
+ server's (#3324, yetone)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The history's files are named by this computer's day (saveRoute), and the
+Routing page read them by the day it picked, so a reader in another zone was
+given this computer's day: a route at 23:50 here (Honolulu's 00:50 the next
+morning there) was under the day before, and the day it belongs to showed
+none of it.
+
+The files keep their names. What changed is the read side: History takes the
+reader's zone (usage.Zone, which the page now names in ?tz=, as the Usage
+page does), works out the one or two of this computer's days that day spans
+(historyDaysFor), reads those files, and keeps a route only if it is the
+reader's day — a route whose time couldn't be read stays the file's day's.
+HistoryRoute, the single-route replay, searches the reader's day and its
+neighbours in the reader's zone. internal/gui/trace.go passes the zone from
+?tz= to both endpoints, internal/gui/context.go reads its days in it, and
+plugins/routing/client.js adds ?tz= to the two calls it makes (the browser's
+zone, browserZone).
+
+Verified: red without the read side's zone — with History's file days left
+as the server's (historyDaysFor returning the day asked, no per-route
+check) `go test -tags nogui ./internal/gateway/ -count=1 -run
+TestHistoryReadsTheReadersDay` failed: "2026-09-30 there: 1 routes, want
+none: 23:50 here is 2026-10-01 there" and "2026-10-01 there: 0 routes, want
+route 7". Green with it, and the same route is found by HistoryRoute under
+both days. go test ./internal/gateway -run 'TestHistory' and go test
+./internal/gui ok; gofmt -l silent, go vet -tags nogui ./internal/gateway/
+./internal/gui/ silent, go build -tags nogui ./... ok.
+
+Known limit, in History's comment as a shortcut: the days listed and their
+numbers are still the files' days — counting a day in the reader's zone
+means reading each route's time, which the tally doesn't (a 350 MB day,
+#3383) — so a reader far away may see a day's number include routes the next
+day there shows. The page's JS tests were not run: playwright isn't
+installed in this worktree, so `node --test` fails on the require.
+---
+ docs/subsystems/gateway-routing.md            |  2 +-
+ internal/gateway/history.go                   | 69 ++++++++++++----
+ internal/gateway/history_test.go              | 78 ++++++++++++++-----
+ internal/gateway/remote_group_served_test.go  |  2 +-
+ internal/gateway/subagent_turn_test.go        |  3 +-
+ internal/gateway/trace_folder_test.go         |  3 +-
+ internal/gui/assets/plugins/routing/client.js |  8 +-
+ internal/gui/context.go                       | 11 ++-
+ internal/gui/trace.go                         |  7 +-
+ 9 files changed, 136 insertions(+), 47 deletions(-)
+
+diff --git a/docs/subsystems/gateway-routing.md b/docs/subsystems/gateway-routing.md
+index aeb11763..1d9cf02e 100644
+--- a/docs/subsystems/gateway-routing.md
++++ b/docs/subsystems/gateway-routing.md
+@@ -39,7 +39,7 @@ backfilled; see [Gateway Session Aggregation](gateway-sessions.md).
+ | Image generation | `/v1/images/generations` and `/v1/images/edits` are translated to the selected model's image API. OpenRouter image-only models use its `/images` endpoint and send reference images as `input_references`; OpenRouter models that return images through chat stay on Chat Completions. Volcengine Ark (`isArk`: an `ark.*.volces.com` base, the preset's plans or one added by hand) is asked at `/images/generations` only, as its doc (https://www.volcengine.com/docs/82379/1541523) takes it (`drawArk`): `watermark: false`, since it marks every image otherwise; reference images as JSON `image` (a URL or data URL, an array for several), never a multipart edit; no `n`, so one request per image (`eachDrawing`); no ratio as `size`, so a ratio its doc lists is sent as that ratio's 2K size and any other is a 400 that says to put it in the prompt; no mask, no quality (JL on Discord, `TestArkDrawsWithoutWatermarkOncePerImage`). A routing group named for a drawing or a video (`drawingGroup`: `group/<id>`, or a bare id the group goes by that resolved to one of its members) is tried member by member in the order its routing plans for a chat (`drawingTries` over `planGroup`), each member over its own keys or accounts (`drawOnAccounts`, `startVideo`); the next member is asked while one fails as a chat's would move on (`retryable`: its vendor 5xx, out of quota, the model not served), never for a refusal of the request itself, and the call's `Fallback` names those tried first (#2005, tianxia3111: a group of two relays answered the first one's 502). Pause rules and a gateway key's group hold apply as for a chat. A failed drawing rests no member and no key. An account out of quota for the image model (`failure` reads `failQuota`) rests that model on it alone (`restDrawer`, keyed by `restID`), until the reset its refusal names (`resetsAt`: Antigravity's "Your quota will reset after 3h19m30s.") or `quotaRest`, so the next drawing asks the accounts that still have it first (`restLast`), and the account's text models stay in. Antigravity also tells a model's quota used up as a 200 whose stream is the error; `drawCodeAssist` gives such an error the status its words stand for (`saidStatus`: quota or rate 429, credit 402, else 502), as the images API's 200 with no image does, so a spent account hands the drawing to the next one as its 429 does (01huadalang on Discord: a 502 ended the drawing on the spent account; `TestAntigravityDrawingOutOfQuotaInsideTheReplyGoesOn`, `TestAntigravityDrawingQuotaRestsTheImageModel`). `TestImageGroupMovesOnToTheNextMember`, `TestVideoGroupMovesOnToTheNextMember`. An account's own list of models (#474) never bars a ChatGPT account's GPT Image, a Grok subscription's Grok Imagine or a WorkBuddy plan's image models (`listsCantName`): the list is picked from the editor's chat models, which they are never among, so a list kept for some chat models had every drawing refused as "set not to be served by any account" (heyiwei5 on X). A key's list, picked from models that include its image ones, still bars them. `TestCodexDrawsPastAccountModelLists`. A drawing is given Settings → Images → Image generation timeout (`imageTimeout`, 1 to 60 minutes, 5 when unset; neighbads on X: a slow image endpoint needed more) as its context's deadline (`drawTimeout`, `drawWithin`), and so is downloading an image answered as a link (`imageLongest`, never under `ImageLongest`). A drawing's request goes through a transport with no `ResponseHeaderTimeout` (`drawsApart`), since an images API sends its headers only once it has drawn, and every other request keeps `upstreamHeaderWait` (10 minutes). A video's submit, status and download calls keep 5 minutes each (`videoTimeout`). The `magpie mcp image` process, which may not read these settings (WSL), waits on a call up to `callLongest` (two hours and a minute), so it never cuts one the gateway still waits on. `TestLongImageTimeoutLetsASlowVendorFinish`, `TestImageTimeoutSettingReachesTheVendor`, `TestOnlyDrawingsWaitPastTheHeaderWait`. | [`draw.go`](../../internal/gateway/draw.go), [`draw_volcengine.go`](../../internal/gateway/draw_volcengine.go), [`video.go`](../../internal/gateway/video.go), [`catalog.go`](../../internal/catalog/catalog.go) |
+ | Affinity | A conversation stays with the key or account that answered it, so the vendor's prompt cache is read again. Modes: auto (""), `session`, `turn`, `off`, `strict`. Stored in `affinity.json` next to `providers.json`. A conversation is kept by its id (`conversationID`), and a Claude Code subagent's apart from its lead's by `x-claude-code-agent-id` (`stickKey`): Claude Code sends the session's id with its subagents' requests too, and a subagent's answer took the lead's stick over, so the lead's next turn was judged by the subagent's cache and moved to another account, where its whole conversation was written again (slkassinthehood on X, `TestClaudeConversationKeepsItsAccountsCache`). | [`affinity.go`](../../internal/gateway/affinity.go) |
+ | One try | `attempt` sends one candidate the request. It goes through the proxy of the account or key it uses, else the provider's (`p.Via`, `ProxyChoice`: `AccountProxies` holds an account's by its name, a key's by its `KeyID`). A request magpie makes for one provider while serving another's (a web search, an image description, a classifier call) takes its own provider's proxy or the global one, never the outer one: `netproxy.With` replaces a choice the context already names, "" too, and `webSearch` starts from none, so the search APIs follow the global proxy (#1522). A provider of the user's set not to check its certificate (`InsecureTLS`, #2383) has it skipped for its own base URLs' hosts alone, through `p.Via` ([Providers and accounts](providers-accounts.md)). Every request to one vendor's host shares one HTTP/2 connection (`upstreamTransport`); one with no frame for 20s is pinged, and dropped when no answer comes within 10s (`netproxy.HTTP2Health`, on `http.DefaultTransport` too), so a connection gone silent without closing (a proxy's way out died, a NAT forgot the flow) fails the requests on it, which move on as a 502 does, and the next request dials a new one. A live vendor answers a ping whatever its streams are doing, so a long wait for a first byte is not cut by it (#2843: a group's requests hung with no first byte until a restart; `TestGroupMovesOnFromSilentHTTP2Connection`). A subscription with its own client is served specially, such as Claude through the genuine Claude Code. The request is relayed as is (`passthrough`) when the model is usable on the agent's API, except that a Claude model where the provider has an Anthropic URL is translated to Messages from Chat or Responses too (`OnMessages`: OpenCode speaks Chat for every model, and a relay drops cache_control there), unless the user set the model's API or the vendor's list names its APIs. An account that only streams (`Account.Stream`: a plugin's, and most subscriptions magpie signs in to) has a request that asked for one body translated, which magpie always asks streamed, except a plugin's on Responses (`gathers`): that is relayed all the same, asked with `stream:true`, and the client given the `response` of the stream's `response.completed` (or `response.incomplete`) as one JSON body (`gathered` in [`gathered.go`](../../internal/gateway/gathered.go); its `output` filled from the stream's `response.output_item.done` items, or else its text, when that event's is empty). So the tools the vendor runs itself, and its response's `tools` and usage details, reach the client (plugins#112: a translation dropped Grok's `x_search`, and Grok answered without searching; `TestGrokPluginNonStreamKeepsHostedTools`). A stream that fails or ends before that event is a 502 (`TestGrokPluginNonStreamEndedShort`), never an empty 200. A Messages request is still translated, its stream having no event that holds the whole reply, and so is a subscription magpie signs in to itself (the ChatGPT backend's, Qoder's): its own code fits its requests. A request offering web search to a provider that doesn't search by itself is translated too, so magpie can search for it (`search.go`; a provider that searches for some of its models only, Command Code's Provider API, lists them in `searchModels` by API, and none count under its `x-cmd-zdr` header, #1590), but on the agent's own API where the provider serves it and no `ResponsesFirst`/`MessagesFirst` rule prefers another: Codex offers web_search on every turn, and each went out as Chat (#997). Otherwise it is translated (`translate`) to the first API `usable` gives: Chat, except Responses for OpenAI's models where their maker serves them (`ResponsesFirst`), Responses for every model at ModelScope, whose Chat API reports neither the tokens its cache answered nor reasoning while its Responses API reports both (`ResponsesTellsCache`, #1578; a 404 there sends the model to Chat, and only there), and Anthropic's Messages for a Claude model where the provider has an Anthropic URL (`MessagesFirst`, which keeps its cache breakpoints, #997). An API that answers the model is not served there (`wrongEndpoint`) is remembered in `unfit` until magpie restarts. A Chat API that refuses function tools with reasoning, with no other API to take them to, is asked once more with `reasoning_effort` `none` (#176), unless `none` is known refused (`turnedAway`); `none` refused naming the levels, the tools refusal is the answer, not a retry at the lowest level (#2670). When every API has turned the model away, the API the user picked for it (`ModelAPI`) is asked again, and without a pick each API the provider has a URL for (`Speaks`), Chat first. `Provider.Native`, the API agents with a per-model API (Pi, omp, droid) are wired to ask on, follows the same order. A custom provider with a Gemini URL (#1346) has Gemini last among the APIs it speaks: a Gemini client's request is relayed there, and any other is translated to it when it has no other, or when the user set Gemini as the model's API (`SetModelAPI` takes chat, responses, anthropic or gemini, each only where the provider has its URL; a model set to Gemini has no `Native`, so those agents ask it on their own API and it is translated). Upstream it is always asked `models/{model}:streamGenerateContent?alt=sse` under the base (`upstreamPath`), the model only in the path (`forwardOnce` drops the body's), so a Gemini client that asked for one JSON body is translated, as for Factory's generate route. | [`gateway.go`](../../internal/gateway/gateway.go) |
+-| Trace | The Routing view's record of each decision, written where the decision is made: candidates, rests, which try answered. `Route.Folder` is the folder the agent says it works in (`workDir`), its last two levels only (`shortFolder`, e.g. `workspace/magpie`), never the full path; a request that says none (a title, a topic check) takes its session's as said last (`trace.sessionFolder`), one without a session id has none (#1068). It is kept in the routing history on disk for as long as the route is (`history.go`: 30 days, 200 MB). The GUI shows it in By session's headings, a request row's tooltip, the stage's agent working in more than one folder, and the tray panel's agent tooltip. | [`trace.go`](../../internal/gateway/trace.go) |
++| Trace | The Routing view's record of each decision, written where the decision is made: candidates, rests, which try answered. `Route.Folder` is the folder the agent says it works in (`workDir`), its last two levels only (`shortFolder`, e.g. `workspace/magpie`), never the full path; a request that says none (a title, a topic check) takes its session's as said last (`trace.sessionFolder`), one without a session id has none (#1068). It is kept in the routing history on disk for as long as the route is (`history.go`: 30 days, 200 MB), a file a day named by this computer's day and read in the reader's zone: a reader in another zone picking a day is given its own day's routes (`History`, `HistoryRoute`, the page's `?tz=`, #3324). The GUI shows it in By session's headings, a request row's tooltip, the stage's agent working in more than one folder, and the tray panel's agent tooltip. | [`trace.go`](../../internal/gateway/trace.go) |
+ | Prompt | What each request's prompt held, part by part: the agent's system prompt, tool definitions (an MCP server's tools as one item), instruction files and skills, files its tools read, their other output, and the conversation. `inspectPrompt` reads it from the body as the agent sent it, before translation; `calibrated` scales the estimate to the prompt the vendor counted and sets the window of the model that answered. The route keeps names and sizes only, never the text, so the routing history on disk holds none. For the card's text (masaka on Discord), the trace keeps the last `promptBodies` (10) request bodies in memory only (at most 32 MiB each, 64 MiB together), masked as the vendor got them; for a model let have it unmasked, the masked copy is kept all the same. `PromptText` reads a part's items and their text from that body again (`prompt_text.go`), served to the GUI as `/api/context/text`; once a body is dropped, or magpie quits, its text is gone. It goes on the trace as `Route.Prompt`, with `Route.Conv` naming a conversation that has no session id. The GUI's `/api/context` scores each agent from it (`internal/gui/context.go`). A session's line and its compactions are its own turns': a call with a `Kind`, a Claude Code subagent's (`Route.Sub`, from `x-claude-code-agent-id`), and, in a session whose turns carry tool definitions, a request without any (auto mode's classifier, the title, the quota check) are left out, so a classifier's 40K after a 100K turn is no compaction (`toolSessions`, `TestContextSideCallsAreNoCompaction`). | [`prompt.go`](../../internal/gateway/prompt.go) |
+ | Vertex AI | A [Google Vertex AI provider](providers-accounts.md#responsibilities-and-sources-of-truth) speaks Gemini alone. A request goes to `<base>/publishers/google/models/<model>:streamGenerateContent?alt=sse` (`provider.VertexPath`, `upstreamPath`), the model named as the user's upstream name for it says (`UpstreamNameIn`, which the usage log's endpoint names too), with no `model` or `stream` field in its body (`passthrough`, `forwardOnce`, `geminiRequest`). A Gemini client's request is relayed as it came, its own `thinkingConfig`, `safetySettings` and the rest kept: streamed there, asked whole to `:generateContent` (`provider.VertexWholePath`), which answers one JSON body (Factory's rule of translating a whole request, as its route only streams, isn't Vertex AI's). Every other API's is translated (`buildFor`, `buildVertex`) and its stream read by `codeAssistDecoder`, which gives thought parts as reasoning, never as the answer's text. Effort: `vertexEffort` fits it to the model's levels, reasoning turned off going as `minimal` fitted the same way, and holds a model whose levels aren't known to `low`…`high`. `vertexThinking` sends Gemini 3 a `thinkingLevel` (`includeThoughts` false with reasoning off) and 2.5 a `thinkingBudget` in the model's range (`vertexBudgets`): turned off, the budget that stops its thinking, or Pro's least, as Pro can't stop. Thought signatures are every Gemini path's (#1445): a call's signature reaches the client in its id (`signedID`) and goes back on the call it came on, while a call with none in a step Vertex AI signed goes without; a step with nothing to give back has every call sent `skip_thought_signature_validator`. A 400 `Invalid thought signature.` is asked again with every call sent so (`withoutSignatures`), for that request only. A 400 refusing `minimal` (`geminiRefusedLevel`) is asked again at the model's lowest other level (`onEffort`), and `markUnfit(offRefused)` keeps that level until magpie restarts. Both retries are the translated path's. Vertex AI's own Google Search grounding isn't used: `searchHosts` names only `generativelanguage.googleapis.com` for Gemini, so magpie searches for it (`search.go`). | [`vertex.go`](../../internal/gateway/vertex.go), [`gateway.go`](../../internal/gateway/gateway.go), [`codeassist.go`](../../internal/gateway/codeassist.go), [`gemini.go`](../../internal/gateway/gemini.go), [`gemini_signature.go`](../../internal/gateway/gemini_signature.go), [`search.go`](../../internal/gateway/search.go) |
+ | Bedrock Mantle | A request on chat completions or Responses to an [Amazon Bedrock Mantle provider](providers-accounts.md#responsibilities-and-sources-of-truth) goes to the prefix that serves its model (`mantleRoutes`, `provider.MantleBase` in `forwardOnce`): `/openai/v1` for OpenAI's closed GPTs and xAI's Grok, `/v1` for the rest. A model Mantle refuses there with "model `x` isn't supported on this route" (a maker the rule doesn't know yet) is asked once more at the other prefix, and when it is taken there that prefix is remembered for the model in `unfit` (`mantleRouteKey`) until the gateway restarts. A model refused at both gets the first refusal and nothing is remembered (`mantleReroute`). Messages go to `/anthropic` alone. | [`mantle.go`](../../internal/gateway/mantle.go), [`gateway.go`](../../internal/gateway/gateway.go) |
+diff --git a/internal/gateway/history.go b/internal/gateway/history.go
+index addbdd24..4611fc00 100644
+--- a/internal/gateway/history.go
++++ b/internal/gateway/history.go
+@@ -15,6 +15,7 @@ import (
+ 	"io"
+ 	"os"
+ 	"path/filepath"
++	"slices"
+ 	"sort"
+ 	"strconv"
+ 	"strings"
+@@ -268,15 +269,40 @@ type HistoryDay struct {
+ 	Requests int    `json:"requests"`
+ }
+ 
++// historyDaysFor is the days this computer filed the reader's day under: day
++// in loc, from its midnight to the one after, falls in one or two of this
++// computer's days, which name the files (saveRoute).
++func historyDaysFor(day string, loc *time.Location) (first, last string) {
++	from, err := time.ParseInLocation(dayForm, day, loc)
++	if err != nil {
++		return "", "" // no day asked: no file is
++	}
++	first = from.In(time.Local).Format(dayForm)
++	last = from.AddDate(0, 0, 1).Add(-time.Nanosecond).In(time.Local).Format(dayForm)
++	return first, last
++}
++
+ // History is the days kept, newest first, and the routes of day, oldest
+-// first — its latest historyMax, and whether there were more.
+-func History(day string) (days []HistoryDay, routes []Route, cut bool) {
++// first — its latest historyMax, and whether there were more. day is the
++// reader's day, read in loc: the files are named by this computer's days
++// (saveRoute), and the reader's day spans one or two of them, which are the
++// ones read, each route kept only if it is the reader's day.
++// shortcut: the days listed, and their numbers, are the files' days — this
++// computer's — since counting one day in loc needs each route's time, which
++// tally doesn't read (a 350 MB day, #3383); upgrade if a reader far from
++// this computer reports a day whose number doesn't match the routes it shows.
++func History(day string, loc *time.Location) (days []HistoryDay, routes []Route, cut bool) {
+ 	history.mu.Lock()
+ 	defer history.mu.Unlock()
+ 	routes = []Route{}
+ 	if history.counts == nil {
+ 		history.counts = map[string]counted{}
+ 	}
++	first, last := historyDaysFor(day, loc)
++	asked := func(day string) bool { return day != "" && (day == first || day == last) }
++	// a route whose time couldn't be read is the file's day's, not another's:
++	// the file is named for the day it was written on
++	ofDay := func(r Route) bool { return r.Time.IsZero() || r.Time.In(loc).Format(dayForm) == day }
+ 	total := 0
+ 	for _, d := range historyFiles(HistoryDir()) {
+ 		// a .gz is read only when it is the one asked for, or it has
+@@ -285,7 +311,7 @@ func History(day string) (days []HistoryDay, routes []Route, cut bool) {
+ 		c, ok := history.counts[d.path]
+ 		if !strings.HasSuffix(d.path, ".gz") {
+ 			c = tally(d, c)
+-			if d.day == day {
++			if asked(d.day) {
+ 				// the lines before the latest historyMax aren't parsed: a
+ 				// route is written as it is done, so the file is nearly in
+ 				// time order, and historySlack more cover one done late
+@@ -294,25 +320,25 @@ func History(day string) (days []HistoryDay, routes []Route, cut bool) {
+ 					from = c.starts[k]
+ 				}
+ 				readDayFrom(d.path, from, func(line []byte) bool {
+-					routes = appendRoute(routes, line)
++					routes = appendRoute(routes, line, ofDay)
+ 					return true
+ 				})
+ 			}
+-		} else if d.day == day || !ok || c.size != d.size {
++		} else if asked(d.day) || !ok || c.size != d.size {
+ 			n, skip := 0, -1
+-			if d.day == day && ok && c.size == d.size {
++			if asked(d.day) && ok && c.size == d.size {
+ 				skip = c.n - historyMax - historySlack
+ 			}
+ 			readDay(d.path, func(line []byte) bool {
+-				if n++; d.day == day && n > skip {
+-					routes = appendRoute(routes, line)
++				if n++; asked(d.day) && n > skip {
++					routes = appendRoute(routes, line, ofDay)
+ 				}
+ 				return true
+ 			})
+ 			c = counted{size: d.size, n: n}
+ 		}
+ 		history.counts[d.path] = c
+-		if d.day == day {
++		if asked(d.day) {
+ 			total += c.n
+ 		}
+ 		if n := c.n; n > 0 {
+@@ -334,13 +360,17 @@ func History(day string) (days []HistoryDay, routes []Route, cut bool) {
+ // route done after the later ones began.
+ const historySlack = 200
+ 
+-func appendRoute(routes []Route, line []byte) []Route {
++// appendRoute is line, a kept route, added to routes when keep takes it.
++func appendRoute(routes []Route, line []byte, keep func(Route) bool) []Route {
+ 	var r Route
+ 	if json.Unmarshal(line, &r) != nil {
+ 		return routes
+ 	}
+ 	r.routedAgain()
+ 	r.Prompt.skillsApart()
++	if keep != nil && !keep(r) {
++		return routes
++	}
+ 	return append(routes, r)
+ }
+ 
+@@ -454,12 +484,23 @@ func readDayFrom(path string, off int64, f func([]byte) bool) {
+ 	}
+ }
+ 
+-// HistoryRoute searches the request's day and its neighbours (the browser and
+-// gateway may use different time zones), without holding up history writes.
+-func HistoryRoute(id int64, day time.Time) (Route, bool) {
++// HistoryRoute searches the request's day and its neighbours, without
++// holding up history writes. day is the reader's day in loc (History), and
++// the days either side of it are searched too: the browser and gateway may
++// use different time zones, a day being another there.
++func HistoryRoute(id int64, day time.Time, loc *time.Location) (Route, bool) {
+ 	needle := []byte(`"id":` + strconv.FormatInt(id, 10) + `,`)
++	var files []string
+ 	for _, offset := range []int{0, -1, 1} {
+-		name := filepath.Join(HistoryDir(), day.AddDate(0, 0, offset).Format(dayForm)+".jsonl")
++		first, last := historyDaysFor(day.AddDate(0, 0, offset).Format(dayForm), loc)
++		for _, filed := range []string{first, last} {
++			if !slices.Contains(files, filed) {
++				files = append(files, filed)
++			}
++		}
++	}
++	for _, filed := range files {
++		name := filepath.Join(HistoryDir(), filed+".jsonl")
+ 		for _, path := range []string{name, name + ".gz"} {
+ 			var found Route
+ 			readDay(path, func(line []byte) bool {
+diff --git a/internal/gateway/history_test.go b/internal/gateway/history_test.go
+index 45ff9582..b1c79fc8 100644
+--- a/internal/gateway/history_test.go
++++ b/internal/gateway/history_test.go
+@@ -15,6 +15,8 @@ import (
+ 	"time"
+ 
+ 	"github.com/yetone/magpie/internal/provider"
++	"github.com/yetone/magpie/internal/testenv"
++	"github.com/yetone/magpie/internal/usage"
+ )
+ 
+ // historyNoon holds the history's clock at noon of a past day and returns
+@@ -35,7 +37,7 @@ func TestHistoryKeepsSessionAndTokenTiers(t *testing.T) {
+ 	saveRoute(Route{ID: 1, Time: now, Session: "conversation", ParentSession: "parent-conversation", Kind: "thread_title", Usage: records, Done: true})
+ 	saveRoute(Route{ID: 2, Time: now, Tokens: 1000, Done: true}) // legacy route
+ 	pruneHistory(HistoryDir(), now.AddDate(0, 0, 1))
+-	_, routes, _ := History(now.Format(dayForm))
++	_, routes, _ := History(now.Format(dayForm), time.Local)
+ 	if len(routes) != 2 || routes[0].Session != "conversation" || routes[0].ParentSession != "parent-conversation" || len(routes[0].Usage) != 1 || routes[0].Usage[0] != (RouteUsage{Provider: "relay", Model: "m", Input: 20, Output: 5, CacheRead: 100, CacheWrite: 40}) {
+ 		t.Fatalf("compressed history lost accounting: %+v", routes)
+ 	}
+@@ -64,11 +66,11 @@ func TestHistoryKeepsDaysAndDropsOld(t *testing.T) {
+ 	if _, err := os.Stat(filepath.Join(dir, yday.Format(dayForm)+".jsonl.gz")); err != nil {
+ 		t.Fatal("yesterday isn't gzipped:", err)
+ 	}
+-	days, rs, _ := History(now.Format(dayForm))
++	days, rs, _ := History(now.Format(dayForm), time.Local)
+ 	if len(days) != 2 || days[0].Requests != 2 || days[1].Requests != 1 || len(rs) != 2 || rs[0].Model != "b" || rs[1].Model != "c" {
+ 		t.Fatalf("days %+v routes %+v", days, rs)
+ 	}
+-	if _, rs, _ := History(yday.Format(dayForm)); len(rs) != 1 || rs[0].Model != "a" {
++	if _, rs, _ := History(yday.Format(dayForm), time.Local); len(rs) != 1 || rs[0].Model != "a" {
+ 		t.Fatalf("yesterday, gzipped: %+v", rs)
+ 	}
+ 	// over the bytes kept: the oldest go, today stays
+@@ -104,7 +106,7 @@ func TestHistoryKeepsALateRouteWithItsDay(t *testing.T) {
+ 	kept := func(when string, ids ...int64) {
+ 		t.Helper()
+ 		want := []HistoryDay{{day, len(ids)}, {before.Format(dayForm), 1}}
+-		days, rs, _ := History(day)
++		days, rs, _ := History(day, time.Local)
+ 		var got []int64
+ 		for _, r := range rs {
+ 			got = append(got, r.ID)
+@@ -112,11 +114,11 @@ func TestHistoryKeepsALateRouteWithItsDay(t *testing.T) {
+ 		if !slices.Equal(days, want) || !slices.Equal(got, ids) {
+ 			t.Errorf("%s: days %+v, routes %v; want %+v, routes %v", when, days, got, want, ids)
+ 		}
+-		if days, _, _ := History(""); !slices.Equal(days, want) {
++		if days, _, _ := History("", time.Local); !slices.Equal(days, want) {
+ 			t.Errorf("%s: days live %+v; want %+v", when, days, want)
+ 		}
+ 		for _, id := range ids {
+-			if _, ok := HistoryRoute(id, yday); !ok {
++			if _, ok := HistoryRoute(id, yday, time.Local); !ok {
+ 				t.Errorf("%s: route %d not found", when, id)
+ 			}
+ 		}
+@@ -198,7 +200,7 @@ func TestHistoryKeepsADayCutShort(t *testing.T) {
+ 			os.WriteFile(path+".gz", gz.Bytes(), 0o600)
+ 			os.WriteFile(path, []byte(c.file), 0o600)
+ 			pruneHistory(dir, now)
+-			days, rs, _ := History(day)
++			days, rs, _ := History(day, time.Local)
+ 			var got []int64
+ 			for _, r := range rs {
+ 				got = append(got, r.ID)
+@@ -273,7 +275,7 @@ func TestHistoryLeavesADayItCantRead(t *testing.T) {
+ 	}
+ 	os.Chmod(path+".gz", 0o600)
+ 	pruneHistory(dir, now)
+-	days, rs, _ := History(day)
++	days, rs, _ := History(day, time.Local)
+ 	var got []int64
+ 	for _, r := range rs {
+ 		got = append(got, r.ID)
+@@ -326,7 +328,7 @@ func TestHistoryDropsADayWhole(t *testing.T) {
+ 	for _, f := range historyFiles(dir) {
+ 		left = append(left, filepath.Base(f.path))
+ 	}
+-	days, rs, _ := History(day)
++	days, rs, _ := History(day, time.Local)
+ 	var got []int64
+ 	for _, r := range rs {
+ 		got = append(got, r.ID)
+@@ -390,16 +392,16 @@ func TestHistoryRouteOutsideDayLimit(t *testing.T) {
+ 		if at == yesterday {
+ 			gzipFile(path)
+ 		}
+-		_, rows, cut := History(at.Format(dayForm))
++		_, rows, cut := History(at.Format(dayForm), time.Local)
+ 		if !cut || len(rows) != historyMax {
+ 			t.Fatalf("history: %d, cut %v", len(rows), cut)
+ 		}
+ 		id := at.UnixMilli() + 1
+-		if r, ok := HistoryRoute(id, at); !ok || r.ID != id || r.Model != "model" {
++		if r, ok := HistoryRoute(id, at, time.Local); !ok || r.ID != id || r.Model != "model" {
+ 			t.Fatalf("route: %+v, found %v", r, ok)
+ 		}
+ 	}
+-	if _, ok := HistoryRoute(42, now); ok {
++	if _, ok := HistoryRoute(42, now, time.Local); ok {
+ 		t.Fatal("found missing route")
+ 	}
+ }
+@@ -414,7 +416,7 @@ func TestHistoryRouteDayAndNoLock(t *testing.T) {
+ 	// A lookup must finish even while a history writer holds its mutex.
+ 	history.mu.Lock()
+ 	done := make(chan Route, 1)
+-	go func() { r, _ := HistoryRoute(123, day); done <- r }()
++	go func() { r, _ := HistoryRoute(123, day, time.Local); done <- r }()
+ 	select {
+ 	case r := <-done:
+ 		history.mu.Unlock()
+@@ -425,10 +427,10 @@ func TestHistoryRouteDayAndNoLock(t *testing.T) {
+ 		history.mu.Unlock()
+ 		t.Fatal("lookup waited for history mutex")
+ 	}
+-	if _, ok := HistoryRoute(123, day.AddDate(0, 0, -2)); !ok {
++	if _, ok := HistoryRoute(123, day.AddDate(0, 0, -2), time.Local); !ok {
+ 		t.Fatal("next day was not checked")
+ 	}
+-	if _, ok := HistoryRoute(123, day.AddDate(0, 0, 2)); ok {
++	if _, ok := HistoryRoute(123, day.AddDate(0, 0, 2), time.Local); ok {
+ 		t.Fatal("searched outside the three-day window")
+ 	}
+ }
+@@ -500,7 +502,7 @@ func TestHistoryReadsOnlyWhatWasAdded(t *testing.T) {
+ 		b.WriteString(line(i))
+ 	}
+ 	os.WriteFile(path, []byte(b.String()), 0o600)
+-	if days, rs, cut := History(day); len(days) != 1 || days[0].Requests != n || len(rs) != historyMax || !cut || rs[0].ID != int64(n-historyMax+1) {
++	if days, rs, cut := History(day, time.Local); len(days) != 1 || days[0].Requests != n || len(rs) != historyMax || !cut || rs[0].ID != int64(n-historyMax+1) {
+ 		t.Fatalf("days %+v, %d routes from %v, cut %v", days, len(rs), rs[0].ID, cut)
+ 	}
+ 	blank := bytes.Repeat([]byte(" "), len(line(1))-1)
+@@ -509,20 +511,20 @@ func TestHistoryReadsOnlyWhatWasAdded(t *testing.T) {
+ 	// a route added, and one being written
+ 	f.WriteAt([]byte(line(n+1)+line(n + 2)[:20]), int64(b.Len()))
+ 	f.Close()
+-	days, _, _ := History("")
++	days, _, _ := History("", time.Local)
+ 	if len(days) != 1 || days[0].Requests != n+2 {
+ 		t.Fatalf("days %+v, want %d requests", days, n+2)
+ 	}
+ 	f, _ = os.OpenFile(path, os.O_WRONLY, 0)
+ 	f.WriteAt([]byte(line(n+2)), int64(b.Len()+len(line(n+1))))
+ 	f.Close()
+-	days, rs, _ := History(day)
++	days, rs, _ := History(day, time.Local)
+ 	if len(days) != 1 || days[0].Requests != n+2 || len(rs) != historyMax || rs[len(rs)-1].ID != int64(n+2) {
+ 		t.Fatalf("days %+v, %d routes, last %d", days, len(rs), rs[len(rs)-1].ID)
+ 	}
+ 	// written over shorter: counted again from its start
+ 	os.WriteFile(path, []byte(line(1)), 0o600)
+-	if days, rs, cut := History(day); len(days) != 1 || days[0].Requests != 1 || len(rs) != 1 || cut {
++	if days, rs, cut := History(day, time.Local); len(days) != 1 || days[0].Requests != 1 || len(rs) != 1 || cut {
+ 		t.Fatalf("written over: days %+v, %d routes, cut %v", days, len(rs), cut)
+ 	}
+ }
+@@ -541,12 +543,46 @@ func BenchmarkHistoryLook(b *testing.B) {
+ 	one, _ := json.Marshal(r)
+ 	one = append(one, '\n')
+ 	os.WriteFile(path, bytes.Repeat(one, 20000), 0o600)
+-	History("")
++	History("", time.Local)
+ 	f, _ := os.OpenFile(path, os.O_WRONLY|os.O_APPEND, 0)
+ 	defer f.Close()
+ 	b.ResetTimer()
+ 	for b.Loop() {
+ 		f.Write(one)
+-		History("")
++		History("", time.Local)
++	}
++}
++
++// #3324 (yetone): the history's files are named by this computer's days, and
++// a reader in another zone picking a day was given this computer's: a route
++// at 23:50 here is 00:50 the next day there. The files stay as they are, and
++// the reader's day is read in the reader's zone.
++func TestHistoryReadsTheReadersDay(t *testing.T) {
++	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
++	// this computer's clock is UTC-11, the reader's UTC-10: an hour on
++	testenv.Zone(t, usage.Zone("Pacific/Midway"))
++	now := historyNoon(t)
++	late := time.Date(now.Year(), now.Month(), now.Day(), 23, 50, 0, 0, time.Local)
++	saveRoute(Route{ID: 7, Time: late, Model: "a", Done: true})
++	day, tomorrow := late.Format(dayForm), late.AddDate(0, 0, 1).Format(dayForm)
++	honolulu := usage.Zone("Pacific/Honolulu")
++	if _, routes, _ := History(day, time.Local); len(routes) != 1 || routes[0].ID != 7 {
++		t.Fatalf("the files are this computer's days: %s has %d routes, want route 7", day, len(routes))
++	}
++	if _, routes, _ := History(day, honolulu); len(routes) != 0 {
++		t.Errorf("%s there: %d routes, want none: 23:50 here is %s there", day, len(routes), tomorrow)
++	}
++	if _, routes, _ := History(tomorrow, honolulu); len(routes) != 1 || routes[0].ID != 7 {
++		t.Errorf("%s there: %d routes, want route 7", tomorrow, len(routes))
++	}
++	// the replay of one route finds it, whichever of the two days is named
++	for _, at := range []string{day, tomorrow} {
++		d, err := time.Parse(dayForm, at)
++		if err != nil {
++			t.Fatal(err)
++		}
++		if r, ok := HistoryRoute(7, d, honolulu); !ok || r.ID != 7 {
++			t.Errorf("route 7 of %s there: %+v, found %v", at, r, ok)
++		}
+ 	}
+ }
+diff --git a/internal/gateway/remote_group_served_test.go b/internal/gateway/remote_group_served_test.go
+index b6cee520..267dee94 100644
+--- a/internal/gateway/remote_group_served_test.go
++++ b/internal/gateway/remote_group_served_test.go
+@@ -139,7 +139,7 @@ func TestRemoteMagpieGroupHistory(t *testing.T) {
+ 	saveRoute(Route{ID: 2, Time: now.Add(time.Second), Model: "office/fake/sol", Done: true, Status: 200,
+ 		Tries:  []Try{{ID: "office", Model: "fake/sol", Done: true, Status: 200, Served: "luna", Swapped: true}},
+ 		Served: "luna", Swapped: true})
+-	_, rs, _ := History(now.Format(dayForm))
++	_, rs, _ := History(now.Format(dayForm), time.Local)
+ 	if len(rs) != 2 {
+ 		t.Fatalf("routes %+v", rs)
+ 	}
+diff --git a/internal/gateway/subagent_turn_test.go b/internal/gateway/subagent_turn_test.go
+index 09a4fef8..0760e523 100644
+--- a/internal/gateway/subagent_turn_test.go
++++ b/internal/gateway/subagent_turn_test.go
+@@ -6,6 +6,7 @@ import (
+ 	"net/http/httptest"
+ 	"strings"
+ 	"testing"
++	"time"
+ 
+ 	"github.com/yetone/magpie/internal/provider"
+ )
+@@ -84,7 +85,7 @@ func TestHistoryKeepsSubagentID(t *testing.T) {
+ 	saveRoute(Route{ID: 1, Time: now, Agent: "claude-desktop", SubagentID: "worker", Done: true})
+ 	saveRoute(Route{ID: 2, Time: now, Agent: "claude-desktop", Done: true})
+ 	pruneHistory(HistoryDir(), now.AddDate(0, 0, 1))
+-	_, routes, _ := History(now.Format(dayForm))
++	_, routes, _ := History(now.Format(dayForm), time.Local)
+ 	if len(routes) != 2 || routes[0].SubagentID != "worker" || routes[1].SubagentID != "" {
+ 		t.Fatalf("history: %+v", routes)
+ 	}
+diff --git a/internal/gateway/trace_folder_test.go b/internal/gateway/trace_folder_test.go
+index 8deed906..95f86176 100644
+--- a/internal/gateway/trace_folder_test.go
++++ b/internal/gateway/trace_folder_test.go
+@@ -8,6 +8,7 @@ import (
+ 	"net/http/httptest"
+ 	"strings"
+ 	"testing"
++	"time"
+ 
+ 	"github.com/yetone/magpie/internal/provider"
+ )
+@@ -103,7 +104,7 @@ func TestRouteKeepsItsFolderShort(t *testing.T) {
+ 		r.Time = now
+ 		saveRoute(r)
+ 	}
+-	_, kept, _ := History(now.Format(dayForm))
++	_, kept, _ := History(now.Format(dayForm), time.Local)
+ 	var folders []string
+ 	for _, r := range kept {
+ 		folders = append(folders, r.Folder)
+diff --git a/internal/gui/assets/plugins/routing/client.js b/internal/gui/assets/plugins/routing/client.js
+index 19581385..4b6116ab 100644
+--- a/internal/gui/assets/plugins/routing/client.js
++++ b/internal/gui/assets/plugins/routing/client.js
+@@ -1025,6 +1025,10 @@ function routingPage(part) {
+   // zones were kept are on the server's clock, told with its offset. When
+   // the clocks agree nothing is added.
+   const browserZone = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch { return ""; } };
++  // the routing history's days are the reader's, read in this zone: its files
++  // are the gateway computer's days, and a day here may be another there
++  // (#3324)
++  const zoneQuery = () => (browserZone() ? "&tz=" + encodeURIComponent(browserZone()) : "");
+   // zoneOffset is how far zone is ahead of UTC now, in minutes; null when
+   // this browser doesn't know it
+   function zoneOffset(zone, at = new Date()) {
+@@ -2729,7 +2733,7 @@ function routingPage(part) {
+   window.openRoute = async (id, time, o = {}) => {
+     let r = routes.get(id);
+     if (!r) {
+-      const res = await fetch("/api/gateway/route?id=" + encodeURIComponent(id) + "&day=" + encodeURIComponent(time.slice(0, 10)));
++      const res = await fetch("/api/gateway/route?id=" + encodeURIComponent(id) + "&day=" + encodeURIComponent(time.slice(0, 10)) + zoneQuery());
+       if (res.status === 404) throw new Error(t("Routing history for this request is no longer available."));
+       if (!res.ok) throw new Error(await res.text());
+       r = whole(await res.json());
+@@ -2945,7 +2949,7 @@ function routingPage(part) {
+   };
+   async function loadDays(d) {
+     try {
+-      const res = await (await fetch("/api/gateway/history?day=" + encodeURIComponent(d || ""))).json();
++      const res = await (await fetch("/api/gateway/history?day=" + encodeURIComponent(d || "") + zoneQuery())).json();
+       days = res.days || [];
+       noteAccounts(res.routes);
+       if (d && d === day) { past = (res.routes || []).map(whole); pastCut = !!res.cut; }
+diff --git a/internal/gui/context.go b/internal/gui/context.go
+index 413293ef..34988515 100644
+--- a/internal/gui/context.go
++++ b/internal/gui/context.go
+@@ -17,6 +17,7 @@ import (
+ 
+ 	"github.com/yetone/magpie/internal/gateway"
+ 	"github.com/yetone/magpie/internal/sessions"
++	"github.com/yetone/magpie/internal/usageapi"
+ )
+ 
+ // defaultWindow is the window a prompt is measured against when the
+@@ -517,15 +518,17 @@ func scoreAgent(a *ctxAgent, counted bool) {
+ 	}
+ }
+ 
+-// contextRoutes reads the routes of the days asked for: the history kept,
+-// and the live trace's not yet in it.
++// contextRoutes reads the routes of the days asked for — the reader's days,
++// which the page names in ?tz= (usageapi.ZoneOf), as the history is read in
++// them: the history kept, and the live trace's not yet in it.
+ func contextRoutes(r *http.Request, days int) []gateway.Route {
+ 	seen := map[int64]bool{}
+ 	var out []gateway.Route
+-	now := time.Now()
++	zone := usageapi.ZoneOf(r)
++	now := time.Now().In(zone)
+ 	for i := days - 1; i >= 0; i-- {
+ 		day := now.AddDate(0, 0, -i).Format("2006-01-02")
+-		_, rs, _ := gateway.History(day)
++		_, rs, _ := gateway.History(day, zone)
+ 		for _, x := range rs {
+ 			if !seen[x.ID] {
+ 				seen[x.ID] = true
+diff --git a/internal/gui/trace.go b/internal/gui/trace.go
+index 6b385f48..e66e1210 100644
+--- a/internal/gui/trace.go
++++ b/internal/gui/trace.go
+@@ -15,6 +15,7 @@ import (
+ 	"github.com/yetone/magpie/internal/provider"
+ 	"github.com/yetone/magpie/internal/sessions"
+ 	"github.com/yetone/magpie/internal/usage"
++	"github.com/yetone/magpie/internal/usageapi"
+ )
+ 
+ // traceJSON is the gateway's routing trace since the page last asked.
+@@ -351,7 +352,7 @@ func traceRoutes(mux *http.ServeMux) {
+ 			http.Error(rw, "invalid route day", http.StatusBadRequest)
+ 			return
+ 		}
+-		if route, ok := gateway.HistoryRoute(id, day); ok {
++		if route, ok := gateway.HistoryRoute(id, day, usageapi.ZoneOf(r)); ok {
+ 			writeJSON(rw, pricedRoutes([]gateway.Route{route})[0])
+ 			return
+ 		}
+@@ -382,7 +383,9 @@ func traceRoutes(mux *http.ServeMux) {
+ 	// disk — read whichever magpie serves the gateway
+ 	mux.HandleFunc("GET /api/gateway/history", func(rw http.ResponseWriter, r *http.Request) {
+ 		day := r.URL.Query().Get("day")
+-		days, routes, cut := gateway.History(day)
++		// the reader's day (its ?tz=), which the history's files, named by
++		// this computer's days, are read in
++		days, routes, cut := gateway.History(day, usageapi.ZoneOf(r))
+ 		rememberTitleHistory(day, routes)
+ 		writeJSON(rw, map[string]any{"days": days, "routes": pricedRoutes(routes), "cut": cut})
+ 	})
+-- 
+2.56.0
+

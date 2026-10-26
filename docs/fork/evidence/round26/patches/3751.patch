@@ -1,0 +1,156 @@
+From 7e061eda722b76a65f1fada3f6704808e2ebb8e8 Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 08:34:52 +1000
+Subject: [PATCH] sessions: moving a Codex session to another provider keeps
+ its byte offsets (#3751, JoeyWu-tech)
+
+setMetaProvider rebuilt a session_meta line as the bytes before the
+provider value, the new value and the bytes after it, so a provider id of
+another length changed the length of every line from that one on. Codex
+reads a rollout by the byte offsets it recorded (a fork's history_base,
+each turn's start and end in thread_history_1.sqlite): moving
+fake-provider to fake, 9 bytes shorter, left 6 of 11 offsets inside lines
+and 5 past the end of the file, and a fork failed to resume with "cutoff
+byte offset is past the source rollout"; the longer way round put every
+offset inside a line.
+
+A rewritten line now keeps its length: a shorter id is padded with the
+spaces JSON allows after a value, and a longer one isn't written at all,
+the line and the file left as they were rather than have Codex's offsets
+point into the middle of lines. The Codex-holds-it-open half of the same
+issue (#3616's writer lock) is out of scope here.
+
+Red before the fix (go test -tags nogui ./internal/sessions/ -run
+TestSetMetaProviderKeepsByteOffsets):
+    shorter_by_9: codex_meta_length_test.go:61: the file is 310 bytes, was 319
+    longer_by_9:  codex_meta_length_test.go:48: written true, want false
+Green after: every line keeps its length, line 2 starts at the same
+offset, the padded line is still JSON with the provider asked for, and a
+longer id writes nothing. Package: ok; go vet and gofmt clean.
+---
+ internal/sessions/codex_meta_length_test.go | 79 +++++++++++++++++++++
+ internal/sessions/codex_provider.go         | 13 ++++
+ 2 files changed, 92 insertions(+)
+ create mode 100644 internal/sessions/codex_meta_length_test.go
+
+diff --git a/internal/sessions/codex_meta_length_test.go b/internal/sessions/codex_meta_length_test.go
+new file mode 100644
+index 00000000..3e7a7007
+--- /dev/null
++++ b/internal/sessions/codex_meta_length_test.go
+@@ -0,0 +1,79 @@
++package sessions
++
++import (
++	"bytes"
++	"encoding/json"
++	"os"
++	"path/filepath"
++	"strings"
++	"testing"
++
++	"github.com/tidwall/gjson"
++)
++
++// Codex reads a rollout by the byte offsets it recorded: a fork's
++// history_base, and each turn's start and end in thread_history_1.sqlite.
++// Rewriting a session_meta with a provider id of another length moved every
++// offset after it, and a fork then failed to resume: "cutoff byte offset is
++// past the source rollout" for a shorter one, offsets into the middle of
++// lines for a longer one (#3751). So a rewritten line keeps its length, and
++// a longer id isn't written at all.
++func TestSetMetaProviderKeepsByteOffsets(t *testing.T) {
++	meta := func(provider string) string {
++		return `{"timestamp":"2026-09-20T15:48:28.100Z","type":"session_meta","payload":{"id":"` + mgCX + `","model_provider":"` + provider + `","cwd":"/work"}}` + "\n"
++	}
++	other := `{"timestamp":"2026-09-20T15:48:29.000Z","type":"response_item","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"hi"}]}}` + "\n"
++	for _, c := range []struct {
++		name    string
++		from    string
++		to      string
++		written bool
++	}{
++		{"shorter by 9", "fake-provider", "fake", true},
++		{"same length", "provider", "magpie-x", true},
++		{"longer by 9", "fake", "fake-provider", false},
++	} {
++		t.Run(c.name, func(t *testing.T) {
++			dir := t.TempDir()
++			path := filepath.Join(dir, "rollout-2026-09-20T15-48-28-"+mgCX+".jsonl")
++			before := meta(c.from) + other
++			if err := os.WriteFile(path, []byte(before), 0o644); err != nil {
++				t.Fatal(err)
++			}
++			written, err := rewriteCodexProvider(path, c.to)
++			if err != nil {
++				t.Fatal(err)
++			}
++			if written != c.written {
++				t.Fatalf("written %v, want %v", written, c.written)
++			}
++			after, err := os.ReadFile(path)
++			if err != nil {
++				t.Fatal(err)
++			}
++			if !c.written {
++				if string(after) != before {
++					t.Fatalf("a file left as it was became\n%s", after)
++				}
++				return
++			}
++			if len(after) != len(before) {
++				t.Fatalf("the file is %d bytes, was %d", len(after), len(before))
++			}
++			firstLine := bytes.IndexByte([]byte(before), '\n') + 1
++			if !bytes.Equal(after[:firstLine], append([]byte(nil), after[:firstLine]...)) ||
++				!bytes.HasPrefix(after[firstLine:], []byte(other)) {
++				t.Fatalf("the second line doesn't start at byte %d:\n%s", firstLine, after)
++			}
++			// the line is still JSON, its provider the one asked for
++			line := strings.SplitN(string(after), "\n", 2)[0]
++			if p := gjson.Get(line, "payload.model_provider").String(); p != c.to {
++				t.Fatalf("provider %q, want %q", p, c.to)
++			}
++			var v map[string]any
++			if err := json.Unmarshal([]byte(line), &v); err != nil {
++				t.Fatalf("the padded line isn't JSON: %v\n%s", err, line)
++			}
++		})
++	}
++}
+diff --git a/internal/sessions/codex_provider.go b/internal/sessions/codex_provider.go
+index 152932da..a953083c 100644
+--- a/internal/sessions/codex_provider.go
++++ b/internal/sessions/codex_provider.go
+@@ -473,6 +473,13 @@ func keptCopy(from, to string) error {
+ // to, every other byte as it was; any other line as it is. A session_meta
+ // that names no provider (a subagent's segment, an old Codex's) is left as
+ // it is too, so moving back gives the file it was.
++//
++// The line keeps its length: Codex reads a rollout by the byte offsets it
++// recorded (a fork's history_base, thread_history_1.sqlite's turns), so a
++// rewritten line would move every offset after it. A shorter id is padded
++// with the spaces JSON allows after the value, and a longer one isn't
++// written at all: the file is left as it was rather than have Codex's
++// offsets point into the middle of lines (#3751).
+ func setMetaProvider(line []byte, to string) ([]byte, bool) {
+ 	if !bytes.Contains(line[:min(len(line), 1024)], cxMeta) || gjson.GetBytes(line, "type").String() != "session_meta" {
+ 		return line, false
+@@ -482,8 +489,14 @@ func setMetaProvider(line []byte, to string) ([]byte, bool) {
+ 		return line, false
+ 	}
+ 	val, _ := json.Marshal(to)
++	if len(val) > len(r.Raw) {
++		return line, false
++	}
+ 	out := append([]byte{}, line[:r.Index]...)
+ 	out = append(out, val...)
++	for i := len(val); i < len(r.Raw); i++ {
++		out = append(out, ' ')
++	}
+ 	return append(out, line[r.Index+len(r.Raw):]...), true
+ }
+ 
+-- 
+2.56.0
+

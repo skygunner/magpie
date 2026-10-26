@@ -1,0 +1,142 @@
+{
+ "3188": {
+  "body_sha256": "e79d75a2be4943c4f9d5d4b8a88fc076600f3296e9a63fed483d49a3f6322f23",
+  "branch": "fix/3188-sub2api-percent",
+  "comment": "https://github.com/yetone/magpie/issues/3188#issuecomment-6429785328",
+  "comment_id": 6429785328,
+  "head": "0817d2e9624f1d7b6bde53e6c1b00f5cccd78ce0"
+ },
+ "3308": {
+  "body_sha256": "d70b50b87a0e80ab8102ef9eaf57314dc0a2761d20ffcc9ec1db40a469ec2e37",
+  "branch": "fix/3308-panel-subagent-effort",
+  "comment": "https://github.com/yetone/magpie/issues/3308#issuecomment-6429785833",
+  "comment_id": 6429785833,
+  "head": "2a75e5d381a5adefc1703b25c536203b85b49d78"
+ },
+ "3320": {
+  "body_sha256": "8ff79ddd8cc8dc93c1bd4c244b6c98407a217bc41cf508fc410e4fdbe69f8e43",
+  "branch": "fix/3320-rtk-verdict",
+  "comment": "https://github.com/yetone/magpie/issues/3320#issuecomment-6429784843",
+  "comment_id": 6429784843,
+  "head": "ff8cdd643b0a031efe9b584dc1307df69974dbd7"
+ },
+ "3324": {
+  "body_sha256": "3a6ab098d28569709e922cb3c28422cac0496e348b1edb0578649671f37887ab",
+  "branch": "fix/3324-history-viewer-day",
+  "comment": "https://github.com/yetone/magpie/issues/3324#issuecomment-6429780051",
+  "comment_id": 6429780051,
+  "head": "0765619b9dcab40c71c245c84ccc2fa046e52ed6"
+ },
+ "3399": {
+  "body_sha256": "1142fc43b7ed67dbf43547113ef549d04f9c4b1a992882669827cea0176090e8",
+  "branch": "fix/3399-kimi-thinking",
+  "comment": "https://github.com/yetone/magpie/issues/3399#issuecomment-6429783755",
+  "comment_id": 6429783755,
+  "head": "d19b48b8dc46e84d477b4cbc54bd525dd539348e"
+ },
+ "3555": {
+  "body_sha256": "1c3ca5d428cb33347c1137a98055f04394cb10137396a107f959d4a7e87611b2",
+  "branch": "fix/3555-unrest-owner",
+  "comment": "https://github.com/yetone/magpie/issues/3555#issuecomment-6429784291",
+  "comment_id": 6429784291,
+  "head": "1fe501d29a4f1c16cd8e70efbcfe386a1f300cc8"
+ },
+ "3669": {
+  "body_sha256": "dabdbef7c081efd47e4587419ca74af247af9a6fe9d9f0369d47e70907d4af9c",
+  "branch": "fix/3669-minimax-cn-url",
+  "comment": "https://github.com/yetone/magpie/issues/3669#issuecomment-6429777197",
+  "comment_id": 6429777197,
+  "head": "da00218e9bd1d857764dc5ee617e90532f25cd08"
+ },
+ "3690": {
+  "body_sha256": "d2a09d0a462cb641a7a7ac84d18729beb9f7fa4509fcf85b41df7f3a4967f20a",
+  "branch": "fix/3690-claude-room-freed",
+  "comment": "https://github.com/yetone/magpie/issues/3690#issuecomment-6429778471",
+  "comment_id": 6429778471,
+  "head": "56b4f3174abc0643854d4d82c1dc8a9b8660dc33"
+ },
+ "3698": {
+  "body_sha256": "276c7321fd2ec036625fa959fc6d2f1040e53f0c6ddcb31398fc9a0adc2df3aa",
+  "branch": "fix/3698-prefix-off",
+  "comment": "https://github.com/yetone/magpie/issues/3698#issuecomment-6429783205",
+  "comment_id": 6429783205,
+  "head": "6d7c04d0e427e34f16606661616c8ceb8f56d161"
+ },
+ "3701": {
+  "body_sha256": "5f0753954b62aafe5157f2f3fc135db330bdb42d7d9bedc760e69c0e842e4e0c",
+  "branch": "fix/3701-held-clause",
+  "comment": "https://github.com/yetone/magpie/issues/3701#issuecomment-6429777819",
+  "comment_id": 6429777819,
+  "head": "5253cad3f9961e7fa7cd28b9d704ecc509852de7"
+ },
+ "3705": {
+  "body_sha256": "3efd7d2a7243495940a2869eb5c9e3e78688adb1681c37e5c96e50ca11e23085",
+  "branch": "fix/3705-remote-key-limit",
+  "comment": "https://github.com/yetone/magpie/issues/3705#issuecomment-6429778980",
+  "comment_id": 6429778980,
+  "head": "6c8bd9bc98a75ef9ce37c80f0b5c22987857bc2e"
+ },
+ "3708": {
+  "body_sha256": "5a1c26e2bd06528020ef655a552d5098eb97e0baef1b69fcc0546e8753dd9b7e",
+  "branch": "fix/3708-agy-settle",
+  "comment": "https://github.com/yetone/magpie/issues/3708#issuecomment-6429781699",
+  "comment_id": 6429781699,
+  "head": "1c8f94dec43db6981e182146c32b513fadf659b6"
+ },
+ "3713": {
+  "body_sha256": "8bf6d80d010894d9e9b59799c1112baf27a5a80a6add7e4808b25d16b5970be9",
+  "branch": "fix/3713-canonical-slug",
+  "comment": "https://github.com/yetone/magpie/issues/3713#issuecomment-6429776643",
+  "comment_id": 6429776643,
+  "head": "129d94aeefb77b39a2eefb22eb463b23987a193e"
+ },
+ "3716": {
+  "body_sha256": "3c46afe8a834a4364fda9c941cc8dabe200649c73a7a059a315997cddd6d3423",
+  "branch": "fix/3716-options-field",
+  "comment": "https://github.com/yetone/magpie/issues/3716#issuecomment-6429779510",
+  "comment_id": 6429779510,
+  "head": "62bb7d58883e8c8be8548396fc5d5b1b77aa882e"
+ },
+ "3721": {
+  "body_sha256": "44cf1acda08c5c5e3f77b01231d0c2011a4b5c220159edf63a392a3bac2b790c",
+  "branch": "fix/3721-siwc-quota",
+  "comment": "https://github.com/yetone/magpie/issues/3721#issuecomment-6429782671",
+  "comment_id": 6429782671,
+  "head": "20ac3a6c1696f86e9b8b6a2bbf2514ccb9a9320a"
+ },
+ "3723": {
+  "body_sha256": "a009763cd9949946675fc410abc629489f81a627a6682dd57165b0e99a559597",
+  "branch": "fix/3723-import-stamps",
+  "comment": "https://github.com/yetone/magpie/issues/3723#issuecomment-6429781209",
+  "comment_id": 6429781209,
+  "head": "e232a77702ed3bcf310fc75f4ec526ca1d8944c2"
+ },
+ "3742": {
+  "body_sha256": "b2ac223bef5e026e490164659274207199f3e066dc9514d39799e07343175abc",
+  "branch": "fix/3742-late-interrupt",
+  "comment": "https://github.com/yetone/magpie/issues/3742#issuecomment-6429780633",
+  "comment_id": 6429780633,
+  "head": "fd442d4f97972547028709dd4e181867b948ece6"
+ },
+ "3751": {
+  "body_sha256": "d997511de91ecc4fb62bed36946af96fb630d8814a14057cc2b65f363c80e4d2",
+  "branch": "fix/3751-codex-meta-length",
+  "comment": "https://github.com/yetone/magpie/issues/3751#issuecomment-6429782208",
+  "comment_id": 6429782208,
+  "head": "7e061eda722b76a65f1fada3f6704808e2ebb8e8"
+ },
+ "3775": {
+  "body_sha256": "40c019f1061c827154f231d1ae1342caf3695f0e79f5fe050b948f21a1418656",
+  "branch": "fix/3775-token-count",
+  "comment": "https://github.com/yetone/magpie/issues/3775#issuecomment-6429791341",
+  "comment_id": 6429791341,
+  "head": "c4fd6c4be066b803a60e590726839088948f8729"
+ },
+ "3776": {
+  "body_sha256": "ef9720dc9a9f62af1510d73091573773d25c5ecc9f39a6ff4287b3c174094c17",
+  "branch": "fix/3776-jp-phone",
+  "comment": "https://github.com/yetone/magpie/issues/3776#issuecomment-6429790548",
+  "comment_id": 6429790548,
+  "head": "ab40c7ea8a02f855aa8e8e51aa4a5df209be705d"
+ }
+}

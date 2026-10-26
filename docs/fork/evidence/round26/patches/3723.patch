@@ -1,0 +1,392 @@
+From e232a77702ed3bcf310fc75f4ec526ca1d8944c2 Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 08:31:26 +1000
+Subject: [PATCH] middleware, agent plugins: an edit to a file the module
+ imports is loaded (#3723, JoeyWu-tech)
+
+A module could import files beside it, which jsmod.Compile read and
+bundled, but neither loader's stamp had them: internal/middleware's and
+internal/agentplug's stamp() folded only the entry file's time and size
+and plugins.json. So editing only an imported file kept the old code
+running until the entry or plugins.json changed, or magpie restarted, and
+a fix to an import that didn't compile stayed an old load error.
+
+jsmod.Compile now gives back the files it read besides the module, each
+with its path and the time and size from just before it was read. Both
+loaders keep that list per entry, and stamp() folds the current stat of
+each file in it, so a changed import loads the module again. A set stamps
+itself once more after loading, since only then are its imports known,
+so loading doesn't repeat.
+
+Red before the fix, a folder middleware whose entry imports names.js, the
+imported file rewritten with a later time (go test -tags nogui
+./internal/middleware/ ./internal/agentplug/ -run TestReloadOnImportedChange):
+    middleware: reload_imports_test.go:45: an imported change didn't reload: {"model":"m1","v":"one"}
+    agentplug:  reload_imports_test.go:59: an imported change didn't reload
+Green after: both reload and see the new mapping and name. Packages:
+middleware 31, agentplug, jsmod all pass (-race too); go vet and gofmt
+clean.
+---
+ internal/agentplug/agentplug.go            | 35 ++++++++++++-
+ internal/agentplug/reload_imports_test.go  | 61 ++++++++++++++++++++++
+ internal/jsmod/jsmod.go                    | 43 +++++++++++----
+ internal/middleware/middleware.go          | 42 ++++++++++++++-
+ internal/middleware/reload_imports_test.go | 47 +++++++++++++++++
+ 5 files changed, 216 insertions(+), 12 deletions(-)
+ create mode 100644 internal/agentplug/reload_imports_test.go
+ create mode 100644 internal/middleware/reload_imports_test.go
+
+diff --git a/internal/agentplug/agentplug.go b/internal/agentplug/agentplug.go
+index c15bfe2f..a6dbdb64 100644
+--- a/internal/agentplug/agentplug.go
++++ b/internal/agentplug/agentplug.go
+@@ -191,6 +191,9 @@ func modules() []found {
+ 	return out
+ }
+ 
++// stamp changes when plugins.json or an agent module's file does: the one
++// it loads, and each file that one imports, which jsmod.Compile gave
++// back, so an edit to an imported file reloads too (#3723).
+ func stamp() string {
+ 	var b strings.Builder
+ 	b.WriteString(plugin.ListStamp())
+@@ -199,10 +202,31 @@ func stamp() string {
+ 		if fi, err := os.Stat(f.file); err == nil {
+ 			fmt.Fprint(&b, ":", fi.ModTime().UnixNano(), ":", fi.Size())
+ 		}
++		for _, x := range importsOf(f.file) {
++			if fi, err := os.Stat(x.Path); err == nil {
++				fmt.Fprint(&b, ":", x.Path, ":", fi.ModTime().UnixNano(), ":", fi.Size())
++			} else {
++				b.WriteString(":" + x.Path + ":gone")
++			}
++		}
+ 	}
+ 	return b.String()
+ }
+ 
++// importsOf is the files the agent module in file imported when it last
++// loaded, kept for stamp: which files to look at, so that its once-a-second
++// look costs a stat of each and not what a load does.
++var importsMemo struct {
++	sync.Mutex
++	m map[string][]jsmod.File
++}
++
++func importsOf(file string) []jsmod.File {
++	importsMemo.Lock()
++	defer importsMemo.Unlock()
++	return importsMemo.m[file]
++}
++
+ func load(st string) *set {
+ 	s := &set{stamp: st, errs: map[string]string{}}
+ 	seen := map[string]string{}
+@@ -219,6 +243,9 @@ func load(st string) *set {
+ 		seen[a.Desc.ID] = f.e.Spec
+ 		s.list = append(s.list, a)
+ 	}
++	// the files imported are known only now: stamp again, so the set's
++	// own stamp matches the next look's and loading doesn't repeat
++	s.stamp = stamp()
+ 	return s
+ }
+ 
+@@ -229,10 +256,16 @@ func Compile(spec, file string) (*Agent, error) {
+ 	if t := plugin.Target(spec); t != file {
+ 		root = t
+ 	}
+-	mod, err := jsmod.Compile(root, file, "an agent plugin")
++	mod, files, err := jsmod.Compile(root, file, "an agent plugin")
+ 	if err != nil {
+ 		return nil, err
+ 	}
++	importsMemo.Lock()
++	if importsMemo.m == nil {
++		importsMemo.m = map[string][]jsmod.File{}
++	}
++	importsMemo.m[file] = files
++	importsMemo.Unlock()
+ 	a := &Agent{Spec: spec, File: file, rt: moejs.NewRuntime(moejs.Options{})}
+ 	if err := a.rt.SetGlobal("console", console(a)); err != nil {
+ 		return nil, err
+diff --git a/internal/agentplug/reload_imports_test.go b/internal/agentplug/reload_imports_test.go
+new file mode 100644
+index 00000000..cfcf6e59
+--- /dev/null
++++ b/internal/agentplug/reload_imports_test.go
+@@ -0,0 +1,61 @@
++package agentplug
++
++import (
++	"encoding/json"
++	"os"
++	"path/filepath"
++	"testing"
++	"time"
++
++	"github.com/yetone/magpie/internal/plugin"
++	"github.com/yetone/magpie/internal/settings"
++)
++
++// use makes plugins.json list one agent plugin in a folder of its own,
++// with files beside its entry, and loads it afresh.
++func use(t *testing.T, dir string) {
++	t.Helper()
++	if err := os.MkdirAll(settings.Dir(), 0o755); err != nil {
++		t.Fatal(err)
++	}
++	b, _ := json.Marshal(plugin.List{Plugins: []plugin.Entry{{Spec: dir}}})
++	if err := os.WriteFile(filepath.Join(settings.Dir(), "plugins.json"), b, 0o644); err != nil {
++		t.Fatal(err)
++	}
++	Reload()
++	t.Cleanup(func() {
++		os.Remove(filepath.Join(settings.Dir(), "plugins.json"))
++		Reload()
++	})
++}
++
++// An agent module can import files beside it (jsmod.Compile reads them),
++// but only the entry's own time and size were stamped, so an edit to an
++// imported file never reloaded the agent: the old name kept showing until
++// the entry or plugins.json changed (#3723). The files the module imports
++// are stamped too, so rewriting one reloads.
++func TestReloadOnImportedChange(t *testing.T) {
++	dir := t.TempDir()
++	os.WriteFile(filepath.Join(dir, "package.json"), []byte(`{"name":"t","magpie":{"agent":"./agent.js"}}`), 0o644)
++	os.WriteFile(filepath.Join(dir, "name.js"), []byte(`export const name = "Before";`), 0o644)
++	os.WriteFile(filepath.Join(dir, "agent.js"), []byte(`
++import { name } from "./name.js";
++export const agent = { id: "t", name, bin: "t", config: "~/.t.yml", model: "model" };
++export function connect() { return { k: "v" }; }`), 0o644)
++	use(t, dir)
++
++	list, errs := List()
++	if len(list) != 1 || list[0].Desc.Name != "Before" {
++		t.Fatalf("listed %+v %v", list, errs)
++	}
++	// only the imported file changes: a later time, the same size
++	imported := filepath.Join(dir, "name.js")
++	os.WriteFile(imported, []byte(`export const name = "After";`), 0o644)
++	later := time.Now().Add(time.Second)
++	os.Chtimes(imported, later, later)
++	nextCheck.Store(0)
++	list, errs = List()
++	if len(list) != 1 || list[0].Desc.Name != "After" {
++		t.Fatalf("an imported change didn't reload: %+v %v", list, errs)
++	}
++}
+diff --git a/internal/jsmod/jsmod.go b/internal/jsmod/jsmod.go
+index eea4e97d..8ffe50a9 100644
+--- a/internal/jsmod/jsmod.go
++++ b/internal/jsmod/jsmod.go
+@@ -13,21 +13,45 @@ import (
+ 	"github.com/Calcium-Ion/moejs"
+ )
+ 
++// File is a module's file as it was read: its path and its time and size
++// from just before, so a loader can tell it changed.
++type File struct {
++	Path            string
++	ModTimeUnixNano int64
++	Size            int64
++}
++
+ // Compile compiles the module in file and the modules it imports, which
+ // are files under root: there is no node_modules here, so a package is
+ // bundled into the module. what names the kind of module in an error
+-// ("a middleware").
+-func Compile(root, file, what string) (*moejs.Module, error) {
+-	src, err := os.ReadFile(file)
++// ("a middleware"). The files it read are given back besides the module,
++// the entry included, so a loader can load the module again when one of
++// them changed (#3723): the imports are otherwise invisible to it, and
++// an edit to an imported file kept running until the entry changed.
++func Compile(root, file, what string) (*moejs.Module, []File, error) {
++	var read []File
++	one := func(p string) (string, error) {
++		fi, err := os.Stat(p)
++		if err != nil {
++			return "", err
++		}
++		read = append(read, File{Path: p, ModTimeUnixNano: fi.ModTime().UnixNano(), Size: fi.Size()})
++		b, err := os.ReadFile(p)
++		if err != nil {
++			return "", err
++		}
++		return string(b), nil
++	}
++	src, err := one(file)
+ 	if err != nil {
+-		return nil, err
++		return nil, nil, err
+ 	}
+-	entry, err := moejs.Compile(file, string(src))
++	entry, err := moejs.Compile(file, src)
+ 	if err != nil {
+-		return nil, err
++		return nil, nil, err
+ 	}
+ 	mods := map[string]*moejs.Module{file: entry}
+-	return moejs.Link(entry, func(ref moejs.Referrer, spec string) (*moejs.Module, error) {
++	mod, err := moejs.Link(entry, func(ref moejs.Referrer, spec string) (*moejs.Module, error) {
+ 		if !strings.HasPrefix(spec, "./") && !strings.HasPrefix(spec, "../") {
+ 			return nil, fmt.Errorf("%q: %s imports only files beside it; bundle packages into it", spec, what)
+ 		}
+@@ -42,15 +66,16 @@ func Compile(root, file, what string) (*moejs.Module, error) {
+ 		if m, ok := mods[p]; ok {
+ 			return m, nil
+ 		}
+-		src, err := os.ReadFile(p)
++		src, err := one(p)
+ 		if err != nil {
+ 			return nil, err
+ 		}
+-		m, err := moejs.Compile(p, string(src))
++		m, err := moejs.Compile(p, src)
+ 		if err != nil {
+ 			return nil, err
+ 		}
+ 		mods[p] = m
+ 		return m, nil
+ 	})
++	return mod, read, err
+ }
+diff --git a/internal/middleware/middleware.go b/internal/middleware/middleware.go
+index 2830edc8..b4d422dc 100644
+--- a/internal/middleware/middleware.go
++++ b/internal/middleware/middleware.go
+@@ -140,7 +140,9 @@ func middlewares() []found {
+ 	return out
+ }
+ 
+-// stamp changes when plugins.json or a middleware's file does.
++// stamp changes when plugins.json or a middleware's file does: the one it
++// loads, and each file that one imports, which jsmod.Compile gave back,
++// so an edit to an imported module reloads too (#3723).
+ func stamp() string {
+ 	var b strings.Builder
+ 	b.WriteString(plugin.ListStamp())
+@@ -149,6 +151,13 @@ func stamp() string {
+ 		if fi, err := os.Stat(f.file); err == nil {
+ 			fmt.Fprint(&b, ":", fi.ModTime().UnixNano(), ":", fi.Size())
+ 		}
++		for _, x := range importsOf(f.file) {
++			if fi, err := os.Stat(x.Path); err == nil {
++				fmt.Fprint(&b, ":", x.Path, ":", fi.ModTime().UnixNano(), ":", fi.Size())
++			} else {
++				b.WriteString(":" + x.Path + ":gone")
++			}
++		}
+ 	}
+ 	return b.String()
+ }
+@@ -165,9 +174,37 @@ func load(st string) *set {
+ 		s.list = append(s.list, m)
+ 		s.hooked = s.hooked || m.hasReq || m.hasProv || m.hasEv || m.hasResp
+ 	}
++	// the files imported are known only now: stamp again, so the set's
++	// own stamp matches the next look's and loading doesn't repeat
++	s.stamp = stamp()
+ 	return s
+ }
+ 
++// importsOf is the files the middleware in file imported when it last
++// loaded, kept for stamp: which files to look at, so that its once-a-second
++// look costs a stat of each and not what a load does.
++var importsMemo struct {
++	sync.Mutex
++	m map[string][]jsmod.File
++}
++
++func importsOf(file string) []jsmod.File {
++	importsMemo.Lock()
++	defer importsMemo.Unlock()
++	return importsMemo.m[file]
++}
++
++// keepImports notes the files the middleware in file imports, as they were
++// read when it loaded, so the stamp looks at each of them.
++func keepImports(file string, files []jsmod.File) {
++	importsMemo.Lock()
++	if importsMemo.m == nil {
++		importsMemo.m = map[string][]jsmod.File{}
++	}
++	importsMemo.m[file] = files
++	importsMemo.Unlock()
++}
++
+ // compile compiles the middleware in file and the modules it imports,
+ // which are files beside it: there is no node_modules here, so a package
+ // is bundled into the middleware.
+@@ -176,11 +213,12 @@ func compile(e plugin.Entry, file string) (*mw, error) {
+ 	if t := plugin.Target(e.Spec); t != file {
+ 		root = t
+ 	}
+-	mod, err := jsmod.Compile(root, file, "a middleware")
++	mod, files, err := jsmod.Compile(root, file, "a middleware")
+ 	if err != nil {
+ 		return nil, err
+ 	}
+ 	m := &mw{spec: e.Spec, name: plugin.Name(e.Spec), mod: mod, options: []byte("{}")}
++	keepImports(file, files)
+ 	if len(e.Options) > 0 {
+ 		if b, err := jsonMarshal(e.Options); err == nil {
+ 			m.options = b
+diff --git a/internal/middleware/reload_imports_test.go b/internal/middleware/reload_imports_test.go
+new file mode 100644
+index 00000000..6de6b310
+--- /dev/null
++++ b/internal/middleware/reload_imports_test.go
+@@ -0,0 +1,47 @@
++package middleware
++
++import (
++	"os"
++	"path/filepath"
++	"testing"
++	"time"
++
++	"github.com/yetone/magpie/internal/plugin"
++)
++
++// A middleware's module can import files beside it (jsmod.Compile reads
++// them), but only the entry's own time and size were stamped, so an edit
++// to an imported file never reloaded the middleware: the old code kept
++// running until the entry or plugins.json changed (#3723). The files the
++// module imports are stamped too, so rewriting one reloads.
++func TestReloadOnImportedChange(t *testing.T) {
++	dir := t.TempDir()
++	os.WriteFile(filepath.Join(dir, "package.json"), []byte(`{"name":"names","magpie":{"middleware":"./index.js"}}`), 0o644)
++	os.WriteFile(filepath.Join(dir, "names.js"), []byte(`export const names = {"m1": "one"};`), 0o644)
++	os.WriteFile(filepath.Join(dir, "index.js"), []byte(`
++import { names } from "./names.js";
++export function onRequest(b) { b.v = names[b.model]; return b; }`), 0o644)
++	entry := plugin.Entry{Spec: dir}
++	if f, _ := plugin.Middleware(dir); f == "" {
++		t.Fatal("no middleware in the package")
++	}
++	use(t, entry)
++	run := func() string {
++		r := Begin(info())
++		defer r.End()
++		b, _ := r.Request([]byte(`{"model":"m1"}`))
++		return string(b)
++	}
++	if got := run(); got != `{"model":"m1","v":"one"}` {
++		t.Fatal(got)
++	}
++	// only the imported file changes: a later time, the same size
++	imported := filepath.Join(dir, "names.js")
++	os.WriteFile(imported, []byte(`export const names = {"m1": "two"};`), 0o644)
++	later := time.Now().Add(time.Second)
++	os.Chtimes(imported, later, later)
++	nextCheck.Store(0)
++	if got := run(); got != `{"model":"m1","v":"two"}` {
++		t.Fatal("an imported change didn't reload:", got)
++	}
++}
+-- 
+2.56.0
+

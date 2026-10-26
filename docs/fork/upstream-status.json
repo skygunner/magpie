@@ -16,8 +16,8 @@
    "evidence": "docs/fork/evidence/upstream-sync-2026-10-24/comments.json",
    "note": "Only the specified existing comments were updated. This does not change upstream-adoption or product-verification status."
   },
-  "checked_at": "2026-10-27T04:30:00Z",
-  "last_checked_upstream_sha": "d9a8148d7c1e56af756bceee74aadd4faa4aee60",
+  "checked_at": "2026-10-26T23:30:28Z",
+  "last_checked_upstream_sha": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
   "review_refs": {
    "batch": "95537ceb898a4f947f056af8f832663cc015c83c",
    "union": "cbc6c3b3ddd690d9f845ec2b6438cb3812cd5b12",
@@ -47,15 +47,15 @@
    "batch_chain_note": "batch is a forward-append chain: the v2 base fa22bc64 carries 15 commits (34dcacff…95537ceb), rebased onto b437e4ad, then bbd6e228 and 4e136a4b this round; see deliveries.r3-batch"
   },
   "totals": {
-   "entries": 140,
-   "issues": 137,
+   "entries": 160,
+   "issues": 157,
    "prs": 3,
-   "product": 121,
+   "product": 141,
    "tests_ci": 11,
    "upstream_existing": 6,
    "other": 2,
-   "code_entries": 132,
-   "units": 129
+   "code_entries": 152,
+   "units": 149
   },
   "counts_note": "Generated from the JSON by docs/fork/generate.py; not hand-written. 64 code-linked entries are not 64 independent fixes: units are grouped by first primary fix commit (60 groups).",
   "fork": "skygunner/magpie",
@@ -96,6 +96,35 @@
     "3622 apply-check recorded, no comment (JoeyWu patch duplicates semantics)"
    ],
    "evidence": "docs/fork/sprints/2026-10-25/followup-sweep-2026-10-27.md"
+  },
+  "round26": {
+   "date": "2026-10-26T23:30:28Z",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "units": 20,
+   "issues": [
+    3188,
+    3308,
+    3320,
+    3324,
+    3399,
+    3555,
+    3669,
+    3690,
+    3698,
+    3701,
+    3705,
+    3708,
+    3713,
+    3716,
+    3721,
+    3723,
+    3742,
+    3751,
+    3775,
+    3776
+   ],
+   "note": "Round 26: 20 issues filed by others, each one branch off upstream 6afbe3f3, one commit, one comment in the issue's own language. #3511 was dropped (a working patch is already in its thread) and #3323 was not attempted: its bucket is computed at parse time and fixing it means a per-zone cache and a new state format, which is not a one-branch change.",
+   "evidence": "docs/fork/evidence/round26/"
   }
  },
  "units": [
@@ -5501,6 +5530,806 @@
    },
    "archive": {},
    "round": 25
+  },
+  {
+   "id": "u-provider-a-sub2api-unit-percent-window-is-a-share-not-dollar-3188-0817d2e9",
+   "issues": [
+    3188
+   ],
+   "category": "product",
+   "title": "provider: a sub2api `unit: \"percent\"` window is a share, not dollars (#3188)",
+   "coverage": "Exactly the issue's contract: a percent entry is `Used` alone (no Amount/Limit/Unit), `Balance`'s dollar sum moved to `windowsLeft` (which says `20%`), other windows read as today, `KeyAllowance` untouched. The issue's example reply is the fixture byte for byte. `TestSub2APIKeySharesAreNotDollars` red then green; `./internal/provider` ok in 42.9s with the pre-existing synctest test skipped.",
+   "commits": [
+    "0817d2e9624f1d7b6bde53e6c1b00f5cccd78ce0"
+   ],
+   "commit_details": [
+    {
+     "sha": "0817d2e9624f1d7b6bde53e6c1b00f5cccd78ce0",
+     "title": "provider: a sub2api plan sold by shares reads as a share, not dollars (#3188, wtj-0527)",
+     "url": "https://github.com/skygunner/magpie/commit/0817d2e9624f1d7b6bde53e6c1b00f5cccd78ce0"
+    }
+   ],
+   "branch": "fix/3188-sub2api-percent",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "comments": {
+    "3188": [
+     "https://github.com/yetone/magpie/issues/3188#issuecomment-6429785328"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit body; targeted suite re-run at the pushed head (0817d2e9624f1d7b6bde53e6c1b00f5cccd78ce0); comment read back 2026-10-26T23:28:54Z (body SHA256 e79d75a2be4943c4). Full ./... at the round's merge: 70 ok / 5 red, all five red at base 6afbe3f3 in the same environment.",
+    "head": "0817d2e9624f1d7b6bde53e6c1b00f5cccd78ce0"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gui-the-tray-panel-s-subagent-effort-square-is-default-and-w-3308-2a75e5d3",
+   "issues": [
+    3308
+   ],
+   "category": "product",
+   "title": "gui: the tray panel's subagent effort square is Default and won't open while no subagent model is set (#3308)",
+   "coverage": "`subEffortOff` mirrors the window's rule; the square is drawn disabled and unlit with the window's existing \"Set a subagent model first\" title, plus a disabled style. No new i18n strings; what a picked level saves is unchanged. `claude-subagent-effort-row.test.cjs` red (4 of 24) then 24/24 on chromium+webkit in the docker1 playwright container; `TestCoreScriptBudget` unchanged.",
+   "commits": [
+    "2a75e5d381a5adefc1703b25c536203b85b49d78"
+   ],
+   "commit_details": [
+    {
+     "sha": "2a75e5d381a5adefc1703b25c536203b85b49d78",
+     "title": "gui: the panel's subagent effort square is Default and won't open while Claude Code's subagents have no model (#3308, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/2a75e5d381a5adefc1703b25c536203b85b49d78"
+    }
+   ],
+   "branch": "fix/3308-panel-subagent-effort",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "comments": {
+    "3308": [
+     "https://github.com/yetone/magpie/issues/3308#issuecomment-6429785833"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit body; targeted suite re-run at the pushed head (2a75e5d381a5adefc1703b25c536203b85b49d78); comment read back 2026-10-26T23:28:56Z (body SHA256 d70b50b87a0e80ab). Full ./... at the round's merge: 70 ok / 5 red, all five red at base 6afbe3f3 in the same environment.",
+    "head": "2a75e5d381a5adefc1703b25c536203b85b49d78"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gui-rtk-s-sandbox-setting-is-not-a-verdict-and-the-count-is-3320-ff8cdd64",
+   "issues": [
+    3320
+   ],
+   "category": "product",
+   "title": "gui: RTK's sandbox setting is not a verdict, and the count is reread when its page returns (#3320)",
+   "coverage": "`renderRTK` says what is known (\"is set to run its commands in its Windows sandbox…\") instead of asserting the write fails, and the panel rereads when it becomes visible, following the file's existing visibility pattern. Verified in a playwright 1.62.1 container on docker1: 8/8 (chromium+webkit, en/zh), red on unmodified assets; `TestCoreScriptBudget` unchanged, five languages updated. The Windows claim itself is unverified (no Windows box).",
+   "commits": [
+    "ff8cdd643b0a031efe9b584dc1307df69974dbd7"
+   ],
+   "commit_details": [
+    {
+     "sha": "ff8cdd643b0a031efe9b584dc1307df69974dbd7",
+     "title": "gui: the RTK tab says what Codex's sandbox setting is, and reads its count when it comes back into view (#3320, Glanci-0525)",
+     "url": "https://github.com/skygunner/magpie/commit/ff8cdd643b0a031efe9b584dc1307df69974dbd7"
+    }
+   ],
+   "branch": "fix/3320-rtk-verdict",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "comments": {
+    "3320": [
+     "https://github.com/yetone/magpie/issues/3320#issuecomment-6429784843"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit body; targeted suite re-run at the pushed head (ff8cdd643b0a031efe9b584dc1307df69974dbd7); comment read back 2026-10-26T23:28:53Z (body SHA256 8ff79ddd8cc8dc93). Full ./... at the round's merge: 70 ok / 5 red, all five red at base 6afbe3f3 in the same environment.",
+    "head": "ff8cdd643b0a031efe9b584dc1307df69974dbd7"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gateway-routing-history-is-read-in-the-viewer-s-day-3324-3324-0765619b",
+   "issues": [
+    3324
+   ],
+   "category": "product",
+   "title": "gateway: Routing history is read in the viewer's day (#3324)",
+   "coverage": "Writers keep the computer's day; the read side takes `?tz=` through `usageapi.ZoneOf`, reads the one or two files the viewer's day spans and keeps that day's routes; `HistoryRoute` searches the viewer's day ±1; `trace.go`, the Context tab and the routing page pass the zone. `TestHistoryReadsTheReadersDay` red then green. A `shortcut:` note records that the day list and its numbers are still the files' days.",
+   "commits": [
+    "0765619b9dcab40c71c245c84ccc2fa046e52ed6"
+   ],
+   "commit_details": [
+    {
+     "sha": "0765619b9dcab40c71c245c84ccc2fa046e52ed6",
+     "title": "routing: the routing history's days are the reader's, not the server's (#3324, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/0765619b9dcab40c71c245c84ccc2fa046e52ed6"
+    }
+   ],
+   "branch": "fix/3324-history-viewer-day",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "comments": {
+    "3324": [
+     "https://github.com/yetone/magpie/issues/3324#issuecomment-6429780051"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit body; targeted suite re-run at the pushed head (0765619b9dcab40c71c245c84ccc2fa046e52ed6); comment read back 2026-10-26T23:28:35Z (body SHA256 3a6ab098d2856970). Full ./... at the round's merge: 70 ok / 5 red, all five red at base 6afbe3f3 in the same environment.",
+    "head": "0765619b9dcab40c71c245c84ccc2fa046e52ed6"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-agent-kimi-s-thinking-models-declare-a-capability-even-witho-3399-d19b48b8",
+   "issues": [
+    3399
+   ],
+   "category": "product",
+   "title": "agent: Kimi's thinking models declare a capability even without an off level (#3399)",
+   "coverage": "A thinking-capable model whose levels have no off gets `always_thinking` (the key name comes from the reporter's captured Kimi Code 1.1.2 model table; the repo has no prior evidence of it); a model with an off level keeps `thinking` only, and kimi-cli gets neither. `TestKimiEfforts` red then green; `./internal/agent` ok. No live K3.1 account.",
+   "commits": [
+    "d19b48b8dc46e84d477b4cbc54bd525dd539348e"
+   ],
+   "commit_details": [
+    {
+     "sha": "d19b48b8dc46e84d477b4cbc54bd525dd539348e",
+     "title": "agent: Kimi Code is told a model that always thinks so, and it stops 400ing (#3399, kupakupar)",
+     "url": "https://github.com/skygunner/magpie/commit/d19b48b8dc46e84d477b4cbc54bd525dd539348e"
+    }
+   ],
+   "branch": "fix/3399-kimi-thinking",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "comments": {
+    "3399": [
+     "https://github.com/yetone/magpie/issues/3399#issuecomment-6429783755"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit body; targeted suite re-run at the pushed head (d19b48b8dc46e84d477b4cbc54bd525dd539348e); comment read back 2026-10-26T23:28:48Z (body SHA256 1142fc43b7ed67db). Full ./... at the round's merge: 70 ok / 5 red, all five red at base 6afbe3f3 in the same environment.",
+    "head": "d19b48b8dc46e84d477b4cbc54bd525dd539348e"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gui-try-now-forwards-the-lift-to-the-magpie-that-serves-the-3555-1fe501d2",
+   "issues": [
+    3555
+   ],
+   "category": "product",
+   "title": "gui: \"Try now\" forwards the lift to the magpie that serves the gateway (#3555)",
+   "coverage": "`OwnerUnrest` in `internal/gateway/trace.go` mirrors `OwnerTrace`'s owner URL, client and held-key gate; the GUI handler forwards before answering 400. `TestTryNowLiftsARestOfTheServingMagpie` red (400 nothing to lift) then green; no owner still 400; `./internal/gui` ok in 39s.",
+   "commits": [
+    "1fe501d29a4f1c16cd8e70efbcfe386a1f300cc8"
+   ],
+   "commit_details": [
+    {
+     "sha": "1fe501d29a4f1c16cd8e70efbcfe386a1f300cc8",
+     "title": "gui: Try now lifts the rest of the magpie that serves the gateway (#3555, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/1fe501d29a4f1c16cd8e70efbcfe386a1f300cc8"
+    }
+   ],
+   "branch": "fix/3555-unrest-owner",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "comments": {
+    "3555": [
+     "https://github.com/yetone/magpie/issues/3555#issuecomment-6429784291"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit body; targeted suite re-run at the pushed head (1fe501d29a4f1c16cd8e70efbcfe386a1f300cc8); comment read back 2026-10-26T23:28:50Z (body SHA256 1c3ca5d428cb3334). Full ./... at the round's merge: 70 ok / 5 red, all five red at base 6afbe3f3 in the same environment.",
+    "head": "1fe501d29a4f1c16cd8e70efbcfe386a1f300cc8"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-provider-minimax-china-s-presets-point-at-api-minimax-cn-366-3669-da00218e",
+   "issues": [
+    3669
+   ],
+   "category": "product",
+   "title": "provider: MiniMax China's presets point at api.minimax.cn (#3669)",
+   "coverage": "`minimax-cn` Chat/Anthropic/Responses/Website/KeysURL moved to `api.minimax.cn`, `minimax.cn` added to `inlineThink`'s suffix list, `api.minimax.cn` added to the plan-quota host switch with the old host kept. Think-split and plan-quota tests red then green; `./internal/provider` ok in 42s with the pre-existing synctest test skipped. Not verified live (no CN plan).",
+   "commits": [
+    "da00218e9bd1d857764dc5ee617e90532f25cd08"
+   ],
+   "commit_details": [
+    {
+     "sha": "da00218e9bd1d857764dc5ee617e90532f25cd08",
+     "title": "provider: MiniMax (China) presets point at api.minimax.cn, which answers as the old host did (#3669, kshq1996)",
+     "url": "https://github.com/skygunner/magpie/commit/da00218e9bd1d857764dc5ee617e90532f25cd08"
+    }
+   ],
+   "branch": "fix/3669-minimax-cn-url",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "comments": {
+    "3669": [
+     "https://github.com/yetone/magpie/issues/3669#issuecomment-6429777197"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit body; targeted suite re-run at the pushed head (da00218e9bd1d857764dc5ee617e90532f25cd08); comment read back 2026-10-26T23:28:24Z (body SHA256 dabdbef7c081efd4). Full ./... at the round's merge: 70 ok / 5 red, all five red at base 6afbe3f3 in the same environment.",
+    "head": "da00218e9bd1d857764dc5ee617e90532f25cd08"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gateway-clauderoom-gives-its-freed-channel-to-the-waiter-tha-3690-56b4f317",
+   "issues": [
+    3690
+   ],
+   "category": "product",
+   "title": "gateway: claudeRoom gives its freed channel to the waiter that needs it (#3690)",
+   "coverage": "`freed` is made by the first waiter and dropped with the last; `wake` (used by `nudge` and `release`) closes and clears it only while `waiting > 0`, and `take` makes it if nil under the same lock. `TestClaudeRoomEndsOutsideItsSynctestBubble` fatal (close from outside the bubble) then green, with the room's other tests.",
+   "commits": [
+    "56b4f3174abc0643854d4d82c1dc8a9b8660dc33"
+   ],
+   "commit_details": [
+    {
+     "sha": "56b4f3174abc0643854d4d82c1dc8a9b8660dc33",
+     "title": "gateway: a Claude Code run ending after its synctest bubble crashes no more (#3690, JoeyWu-tech)",
+     "url": "https://github.com/skygunner/magpie/commit/56b4f3174abc0643854d4d82c1dc8a9b8660dc33"
+    }
+   ],
+   "branch": "fix/3690-claude-room-freed",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "comments": {
+    "3690": [
+     "https://github.com/yetone/magpie/issues/3690#issuecomment-6429778471"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit body; targeted suite re-run at the pushed head (56b4f3174abc0643854d4d82c1dc8a9b8660dc33); comment read back 2026-10-26T23:28:29Z (body SHA256 d2a09d0a462cb641). Full ./... at the round's merge: 70 ok / 5 red, all five red at base 6afbe3f3 in the same environment.",
+    "head": "56b4f3174abc0643854d4d82c1dc8a9b8660dc33"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-provider-a-member-naming-a-provider-that-is-off-resolves-now-3698-6d7c04d0",
+   "issues": [
+    3698
+   ],
+   "category": "product",
+   "title": "provider: a member naming a provider that is off resolves nowhere (#3698)",
+   "coverage": "`resolveIn`'s prefix branch stops at a provider that exists but isn't serving instead of falling through to a bare id match on another provider; unknown prefixes still fall through. `TestPrefixOfAnOffProviderResolvesNowhere` red then green; sibling resolution suites unaffected.",
+   "commits": [
+    "6d7c04d0e427e34f16606661616c8ceb8f56d161"
+   ],
+   "commit_details": [
+    {
+     "sha": "6d7c04d0e427e34f16606661616c8ceb8f56d161",
+     "title": "provider: a group member of a provider that is off is not sent to another one (#3698, coderbiq)",
+     "url": "https://github.com/skygunner/magpie/commit/6d7c04d0e427e34f16606661616c8ceb8f56d161"
+    }
+   ],
+   "branch": "fix/3698-prefix-off",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "comments": {
+    "3698": [
+     "https://github.com/yetone/magpie/issues/3698#issuecomment-6429783205"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit body; targeted suite re-run at the pushed head (6d7c04d0e427e34f16606661616c8ceb8f56d161); comment read back 2026-10-26T23:28:46Z (body SHA256 276c7321fd2ec036). Full ./... at the round's merge: 70 ok / 5 red, all five red at base 6afbe3f3 in the same environment.",
+    "head": "6d7c04d0e427e34f16606661616c8ceb8f56d161"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gateway-a-held-refusal-relayed-from-another-magpie-says-its-3701-5253cad3",
+   "issues": [
+    3701
+   ],
+   "category": "product",
+   "title": "gateway: a held refusal relayed from another magpie says its clause once (#3701)",
+   "coverage": "`heldSaid` strips an already-written clause from `rested.said` before the held branch formats it; it is the only place that builds this clause. `TestRemoteMagpieHeldRefusalSaysItsClauseOnce` red (clause twice) then green over the file's two-gateway harness.",
+   "commits": [
+    "5253cad3f9961e7fa7cd28b9d704ecc509852de7"
+   ],
+   "commit_details": [
+    {
+     "sha": "5253cad3f9961e7fa7cd28b9d704ecc509852de7",
+     "title": "gateway: a refusal another magpie held says its clause once (#3701, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/5253cad3f9961e7fa7cd28b9d704ecc509852de7"
+    }
+   ],
+   "branch": "fix/3701-held-clause",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "comments": {
+    "3701": [
+     "https://github.com/yetone/magpie/issues/3701#issuecomment-6429777819"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit body; targeted suite re-run at the pushed head (5253cad3f9961e7fa7cd28b9d704ecc509852de7); comment read back 2026-10-26T23:28:26Z (body SHA256 5f0753954b62aafe). Full ./... at the round's merge: 70 ok / 5 red, all five red at base 6afbe3f3 in the same environment.",
+    "head": "5253cad3f9961e7fa7cd28b9d704ecc509852de7"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gateway-another-magpie-s-key-limit-rests-that-key-here-and-o-3705-6c8bd9bc",
+   "issues": [
+    3705
+   ],
+   "category": "product",
+   "title": "gateway: another magpie's key limit rests that key here, and only here (#3705)",
+   "coverage": "`keepRetry` carries `X-Magpie-Limit-Reset`, `holdWriter.pass`/`keepAlive` strip it from what an agent sees, and a refusal marked with it is told as out of quota (`keyLimitedThere`, `restAfterMarked` and the last-candidate branch) — carrying the header alone left the test red. `TestRemoteMagpieKeyLimitReachesTheRestNotTheAgent` red (3 asks, want 2) then green.",
+   "commits": [
+    "6c8bd9bc98a75ef9ce37c80f0b5c22987857bc2e"
+   ],
+   "commit_details": [
+    {
+     "sha": "6c8bd9bc98a75ef9ce37c80f0b5c22987857bc2e",
+     "title": "gateway: another magpie's key limit rests the key here, till its reset (#3705, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/6c8bd9bc98a75ef9ce37c80f0b5c22987857bc2e"
+    }
+   ],
+   "branch": "fix/3705-remote-key-limit",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "comments": {
+    "3705": [
+     "https://github.com/yetone/magpie/issues/3705#issuecomment-6429778980"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit body; targeted suite re-run at the pushed head (6c8bd9bc98a75ef9ce37c80f0b5c22987857bc2e); comment read back 2026-10-26T23:28:31Z (body SHA256 3efd7d2a72434959). Full ./... at the round's merge: 70 ok / 5 red, all five red at base 6afbe3f3 in the same environment.",
+    "head": "6c8bd9bc98a75ef9ce37c80f0b5c22987857bc2e"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-sessions-an-agy-summaries-database-written-within-the-settle-3708-1c8f94de",
+   "issues": [
+    3708
+   ],
+   "category": "product",
+   "title": "sessions: an agy summaries database written within the settle window is read again (#3708)",
+   "coverage": "A settl rule (`agySettle`): rows read from a database written within it are served but their revision is not kept, so the next look re-reads, as git's racily-clean rule does. `TestAgySummariesSettle` red then green; `TestAgyTitleLater` 20/20; package ok. `revision_cache.go` has the same shape with its own rule and was not folded in.",
+   "commits": [
+    "1c8f94dec43db6981e182146c32b513fadf659b6"
+   ],
+   "commit_details": [
+    {
+     "sha": "1c8f94dec43db6981e182146c32b513fadf659b6",
+     "title": "sessions: an agy title rewritten in place in the read's own tick is seen (#3708, JoeyWu-tech)",
+     "url": "https://github.com/skygunner/magpie/commit/1c8f94dec43db6981e182146c32b513fadf659b6"
+    }
+   ],
+   "branch": "fix/3708-agy-settle",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "comments": {
+    "3708": [
+     "https://github.com/yetone/magpie/issues/3708#issuecomment-6429781699"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit body; targeted suite re-run at the pushed head (1c8f94dec43db6981e182146c32b513fadf659b6); comment read back 2026-10-26T23:28:41Z (body SHA256 5a1c26e2bd065280). Full ./... at the round's merge: 70 ok / 5 red, all five red at base 6afbe3f3 in the same environment.",
+    "head": "1c8f94dec43db6981e182146c32b513fadf659b6"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gateway-clinepass-s-canonicalslug-is-recorded-with-the-route-3713-129d94ae",
+   "issues": [
+    3713
+   ],
+   "category": "product",
+   "title": "gateway: ClinePass's canonicalSlug is recorded with the route (#3713)",
+   "coverage": "The `upstreamOf` parse widened to (provider, slug); the slug rides beside `Upstream` through `gateway.Usage`, `gateway.Trace` and `usage.Record` at every existing assignment, and `rowText` carries it for cached pages. `TestClinePassSlugRecorded` red then green, negatives for `providerAttempts`/`modelAttempts`; `internal/usage` 552 tests pass. No GUI column (out of scope).",
+   "commits": [
+    "129d94aeefb77b39a2eefb22eb463b23987a193e"
+   ],
+   "commit_details": [
+    {
+     "sha": "129d94aeefb77b39a2eefb22eb463b23987a193e",
+     "title": "gateway: a ClinePass reply's canonicalSlug is kept beside the provider that answered (#3713, xdeers2)",
+     "url": "https://github.com/skygunner/magpie/commit/129d94aeefb77b39a2eefb22eb463b23987a193e"
+    }
+   ],
+   "branch": "fix/3713-canonical-slug",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "comments": {
+    "3713": [
+     "https://github.com/yetone/magpie/issues/3713#issuecomment-6429776643"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit body; targeted suite re-run at the pushed head (129d94aeefb77b39a2eefb22eb463b23987a193e); comment read back 2026-10-26T23:28:22Z (body SHA256 8bf6d80d010894d9). Full ./... at the round's merge: 70 ok / 5 red, all five red at base 6afbe3f3 in the same environment.",
+    "head": "129d94aeefb77b39a2eefb22eb463b23987a193e"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gateway-an-upstream-s-refusal-of-the-options-field-is-retrie-3716-62bb7d58",
+   "issues": [
+    3716
+   ],
+   "category": "product",
+   "title": "gateway: an upstream's refusal of the `options` field is retried without it (#3716)",
+   "coverage": "`\"options\"` added to `optionalFields`. `TestOptionsFieldRefusedRetried` red (400 after 1 call) then green (200 after 2), and a body without `options` is sent once. Commit body records `refusesField`'s substring matching.",
+   "commits": [
+    "62bb7d58883e8c8be8548396fc5d5b1b77aa882e"
+   ],
+   "commit_details": [
+    {
+     "sha": "62bb7d58883e8c8be8548396fc5d5b1b77aa882e",
+     "title": "gateway: a field an upstream refuses by name can be \"options\" (#3716, fzh365)",
+     "url": "https://github.com/skygunner/magpie/commit/62bb7d58883e8c8be8548396fc5d5b1b77aa882e"
+    }
+   ],
+   "branch": "fix/3716-options-field",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "comments": {
+    "3716": [
+     "https://github.com/yetone/magpie/issues/3716#issuecomment-6429779510"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit body; targeted suite re-run at the pushed head (62bb7d58883e8c8be8548396fc5d5b1b77aa882e); comment read back 2026-10-26T23:28:33Z (body SHA256 3c46afe8a834a436). Full ./... at the round's merge: 70 ok / 5 red, all five red at base 6afbe3f3 in the same environment.",
+    "head": "62bb7d58883e8c8be8548396fc5d5b1b77aa882e"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-provider-a-chatgpt-api-login-is-not-read-as-a-codex-account-3721-20ac3a6c",
+   "issues": [
+    3721
+   ],
+   "category": "product",
+   "title": "provider: a ChatGPT-API login is not read as a Codex account (#3721)",
+   "coverage": "`loginQuota`'s Codex branch is guarded by the agent id; a SIWC login returns an explicit error naming its own usage instead of borrowing Codex's windows. `TestChatGPTAPIQuotaIsNotCodex` red then green; 1004 tests pass, only the pre-existing synctest test fails (red at base too). The SIWC quota card is a separate call and is not added.",
+   "commits": [
+    "20ac3a6c1696f86e9b8b6a2bbf2514ccb9a9320a"
+   ],
+   "commit_details": [
+    {
+     "sha": "20ac3a6c1696f86e9b8b6a2bbf2514ccb9a9320a",
+     "title": "provider: a ChatGPT API account's allowance is no longer Codex's (#3721, NoneMore)",
+     "url": "https://github.com/skygunner/magpie/commit/20ac3a6c1696f86e9b8b6a2bbf2514ccb9a9320a"
+    }
+   ],
+   "branch": "fix/3721-siwc-quota",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "comments": {
+    "3721": [
+     "https://github.com/yetone/magpie/issues/3721#issuecomment-6429782671"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit body; targeted suite re-run at the pushed head (20ac3a6c1696f86e9b8b6a2bbf2514ccb9a9320a); comment read back 2026-10-26T23:28:44Z (body SHA256 44cf1acda08c5c5e). Full ./... at the round's merge: 70 ok / 5 red, all five red at base 6afbe3f3 in the same environment.",
+    "head": "20ac3a6c1696f86e9b8b6a2bbf2514ccb9a9320a"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-middleware-agent-plugins-a-module-s-own-imports-reload-it-37-3723-e232a777",
+   "issues": [
+    3723
+   ],
+   "category": "product",
+   "title": "middleware, agent plugins: a module's own imports reload it (#3723)",
+   "coverage": "`jsmod.Compile` reports the files it read (path, mtime nanos, size); both loaders' `stamp()` fold their current stat and a loaded set re-stamps itself after loading. `TestReloadOnImportedChange` red in both packages then green, `-race -count=2`. Only static imports are read.",
+   "commits": [
+    "e232a77702ed3bcf310fc75f4ec526ca1d8944c2"
+   ],
+   "commit_details": [
+    {
+     "sha": "e232a77702ed3bcf310fc75f4ec526ca1d8944c2",
+     "title": "middleware, agent plugins: an edit to a file the module imports is loaded (#3723, JoeyWu-tech)",
+     "url": "https://github.com/skygunner/magpie/commit/e232a77702ed3bcf310fc75f4ec526ca1d8944c2"
+    }
+   ],
+   "branch": "fix/3723-import-stamps",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "comments": {
+    "3723": [
+     "https://github.com/yetone/magpie/issues/3723#issuecomment-6429781209"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit body; targeted suite re-run at the pushed head (e232a77702ed3bcf310fc75f4ec526ca1d8944c2); comment read back 2026-10-26T23:28:39Z (body SHA256 a009763cd9949946). Full ./... at the round's merge: 70 ok / 5 red, all five red at base 6afbe3f3 in the same environment.",
+    "head": "e232a77702ed3bcf310fc75f4ec526ca1d8944c2"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-middleware-a-timeout-s-interrupt-no-longer-lands-on-the-next-3742-fd442d4f",
+   "issues": [
+    3742
+   ],
+   "category": "product",
+   "title": "middleware: a timeout's interrupt no longer lands on the next call (#3742)",
+   "coverage": "The timer's func closes a `done` channel under `in.mu`; `disarm` waits on it when `Stop` reports the func had begun, then clears the interrupt. `TestLateInterruptSparesTheNextCall` red (second call interrupted) then green, `-race -count=2`, 31 tests. `agentplug.limit` is the same shape but another author's #3727 patch; left alone.",
+   "commits": [
+    "fd442d4f97972547028709dd4e181867b948ece6"
+   ],
+   "commit_details": [
+    {
+     "sha": "fd442d4f97972547028709dd4e181867b948ece6",
+     "title": "middleware: a timeout that fires as its call ends no longer stops the next one (#3742, JoeyWu-tech)",
+     "url": "https://github.com/skygunner/magpie/commit/fd442d4f97972547028709dd4e181867b948ece6"
+    }
+   ],
+   "branch": "fix/3742-late-interrupt",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "comments": {
+    "3742": [
+     "https://github.com/yetone/magpie/issues/3742#issuecomment-6429780633"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit body; targeted suite re-run at the pushed head (fd442d4f97972547028709dd4e181867b948ece6); comment read back 2026-10-26T23:28:37Z (body SHA256 b2ac223bef5e026e). Full ./... at the round's merge: 70 ok / 5 red, all five red at base 6afbe3f3 in the same environment.",
+    "head": "fd442d4f97972547028709dd4e181867b948ece6"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-sessions-a-rewritten-codex-provider-keeps-every-recorded-byt-3751-7e061eda",
+   "issues": [
+    3751
+   ],
+   "category": "product",
+   "title": "sessions: a rewritten Codex provider keeps every recorded byte offset (#3751)",
+   "coverage": "`setMetaProvider` keeps the line's length: a shorter id is padded inside the JSON, a longer one refuses the rewrite so the existing \"one Codex has it open\" path handles it. `TestSetMetaProviderKeepsByteOffsets` red (310 vs 319 bytes; longer id written) then green; `TestMoveCodexProvider*` unaffected. The writer-lock half (#3616) is out of scope.",
+   "commits": [
+    "7e061eda722b76a65f1fada3f6704808e2ebb8e8"
+   ],
+   "commit_details": [
+    {
+     "sha": "7e061eda722b76a65f1fada3f6704808e2ebb8e8",
+     "title": "sessions: moving a Codex session to another provider keeps its byte offsets (#3751, JoeyWu-tech)",
+     "url": "https://github.com/skygunner/magpie/commit/7e061eda722b76a65f1fada3f6704808e2ebb8e8"
+    }
+   ],
+   "branch": "fix/3751-codex-meta-length",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "comments": {
+    "3751": [
+     "https://github.com/yetone/magpie/issues/3751#issuecomment-6429782208"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit body; targeted suite re-run at the pushed head (7e061eda722b76a65f1fada3f6704808e2ebb8e8); comment read back 2026-10-26T23:28:42Z (body SHA256 d997511de91ecc4f). Full ./... at the round's merge: 70 ok / 5 red, all five red at base 6afbe3f3 in the same environment.",
+    "head": "7e061eda722b76a65f1fada3f6704808e2ebb8e8"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-redact-a-token-count-inside-total-tokens-is-no-secret-3775-3775-c4fd6c4b",
+   "issues": [
+    3775
+   ],
+   "category": "product",
+   "title": "redact: a token count inside `<total_tokens>` is no secret (#3775)",
+   "coverage": "`modelFits`' `SECRET` case vetoes an all-digit value with a counting cue near it (tokens/count/total/left/remaining/items/rows); `GuardKnown: \"#3775\"` comes off. `TestModelCountIsNoSecret` red then green, numeric passwords still masked; package's 92 tests pass.",
+   "commits": [
+    "c4fd6c4be066b803a60e590726839088948f8729"
+   ],
+   "commit_details": [
+    {
+     "sha": "c4fd6c4be066b803a60e590726839088948f8729",
+     "title": "redact: a token count stays as written though the model calls it a secret (#3775, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/c4fd6c4be066b803a60e590726839088948f8729"
+    }
+   ],
+   "branch": "fix/3775-token-count",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "comments": {
+    "3775": [
+     "https://github.com/yetone/magpie/issues/3775#issuecomment-6429791341"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit body; targeted suite re-run at the pushed head (c4fd6c4be066b803a60e590726839088948f8729); comment read back 2026-10-26T23:29:18Z (body SHA256 40c019f1061c8271). Full ./... at the round's merge: 70 ok / 5 red, all five red at base 6afbe3f3 in the same environment.",
+    "head": "c4fd6c4be066b803a60e590726839088948f8729"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-redact-a-japanese-mobile-in-a-csv-is-masked-3776-3776-ab40c7ea",
+   "issues": [
+    3776
+   ],
+   "category": "product",
+   "title": "redact: a Japanese mobile in a CSV is masked (#3776)",
+   "coverage": "One PHONE rule beside the Chinese one, `(?:\\+?81[- ]?|0)[789]0[- ]\\d{4}[- ]\\d{4}`; the eval's `GuardKnown: \"#3776\"` comes off. `TestMaskPhoneShapes` red on the reporter's CSV line, green after; package's 95 tests pass. The AstrLink Guard half needs no change: the rule masks the number before a model is asked.",
+   "commits": [
+    "ab40c7ea8a02f855aa8e8e51aa4a5df209be705d"
+   ],
+   "commit_details": [
+    {
+     "sha": "ab40c7ea8a02f855aa8e8e51aa4a5df209be705d",
+     "title": "redact: a Japanese mobile (+81 90-1234-5678) is masked, in a CSV and in prose (#3776, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/ab40c7ea8a02f855aa8e8e51aa4a5df209be705d"
+    }
+   ],
+   "branch": "fix/3776-jp-phone",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "comments": {
+    "3776": [
+     "https://github.com/yetone/magpie/issues/3776#issuecomment-6429790548"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit body; targeted suite re-run at the pushed head (ab40c7ea8a02f855aa8e8e51aa4a5df209be705d); comment read back 2026-10-26T23:29:15Z (body SHA256 ef9720dc9a9f62af). Full ./... at the round's merge: 70 ok / 5 red, all five red at base 6afbe3f3 in the same environment.",
+    "head": "ab40c7ea8a02f855aa8e8e51aa4a5df209be705d"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
   }
  ],
  "pointed_elsewhere": [
@@ -8024,6 +8853,246 @@
    "archive": {
     "candidate": false
    }
+  },
+  {
+   "branch": "fix/3188-sub2api-percent",
+   "head": "0817d2e9624f1d7b6bde53e6c1b00f5cccd78ce0",
+   "kind": "product",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "fix_ids": [
+    "u-provider-a-sub2api-unit-percent-window-is-a-share-not-dollar-3188-0817d2e9"
+   ],
+   "replaced_by": "",
+   "note": "round-26",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3308-panel-subagent-effort",
+   "head": "2a75e5d381a5adefc1703b25c536203b85b49d78",
+   "kind": "product",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "fix_ids": [
+    "u-gui-the-tray-panel-s-subagent-effort-square-is-default-and-w-3308-2a75e5d3"
+   ],
+   "replaced_by": "",
+   "note": "round-26",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3320-rtk-verdict",
+   "head": "ff8cdd643b0a031efe9b584dc1307df69974dbd7",
+   "kind": "product",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "fix_ids": [
+    "u-gui-rtk-s-sandbox-setting-is-not-a-verdict-and-the-count-is-3320-ff8cdd64"
+   ],
+   "replaced_by": "",
+   "note": "round-26",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3324-history-viewer-day",
+   "head": "0765619b9dcab40c71c245c84ccc2fa046e52ed6",
+   "kind": "product",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "fix_ids": [
+    "u-gateway-routing-history-is-read-in-the-viewer-s-day-3324-3324-0765619b"
+   ],
+   "replaced_by": "",
+   "note": "round-26",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3399-kimi-thinking",
+   "head": "d19b48b8dc46e84d477b4cbc54bd525dd539348e",
+   "kind": "product",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "fix_ids": [
+    "u-agent-kimi-s-thinking-models-declare-a-capability-even-witho-3399-d19b48b8"
+   ],
+   "replaced_by": "",
+   "note": "round-26",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3555-unrest-owner",
+   "head": "1fe501d29a4f1c16cd8e70efbcfe386a1f300cc8",
+   "kind": "product",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "fix_ids": [
+    "u-gui-try-now-forwards-the-lift-to-the-magpie-that-serves-the-3555-1fe501d2"
+   ],
+   "replaced_by": "",
+   "note": "round-26",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3669-minimax-cn-url",
+   "head": "da00218e9bd1d857764dc5ee617e90532f25cd08",
+   "kind": "product",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "fix_ids": [
+    "u-provider-minimax-china-s-presets-point-at-api-minimax-cn-366-3669-da00218e"
+   ],
+   "replaced_by": "",
+   "note": "round-26",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3690-claude-room-freed",
+   "head": "56b4f3174abc0643854d4d82c1dc8a9b8660dc33",
+   "kind": "product",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "fix_ids": [
+    "u-gateway-clauderoom-gives-its-freed-channel-to-the-waiter-tha-3690-56b4f317"
+   ],
+   "replaced_by": "",
+   "note": "round-26",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3698-prefix-off",
+   "head": "6d7c04d0e427e34f16606661616c8ceb8f56d161",
+   "kind": "product",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "fix_ids": [
+    "u-provider-a-member-naming-a-provider-that-is-off-resolves-now-3698-6d7c04d0"
+   ],
+   "replaced_by": "",
+   "note": "round-26",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3701-held-clause",
+   "head": "5253cad3f9961e7fa7cd28b9d704ecc509852de7",
+   "kind": "product",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "fix_ids": [
+    "u-gateway-a-held-refusal-relayed-from-another-magpie-says-its-3701-5253cad3"
+   ],
+   "replaced_by": "",
+   "note": "round-26",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3705-remote-key-limit",
+   "head": "6c8bd9bc98a75ef9ce37c80f0b5c22987857bc2e",
+   "kind": "product",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "fix_ids": [
+    "u-gateway-another-magpie-s-key-limit-rests-that-key-here-and-o-3705-6c8bd9bc"
+   ],
+   "replaced_by": "",
+   "note": "round-26",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3708-agy-settle",
+   "head": "1c8f94dec43db6981e182146c32b513fadf659b6",
+   "kind": "product",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "fix_ids": [
+    "u-sessions-an-agy-summaries-database-written-within-the-settle-3708-1c8f94de"
+   ],
+   "replaced_by": "",
+   "note": "round-26",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3713-canonical-slug",
+   "head": "129d94aeefb77b39a2eefb22eb463b23987a193e",
+   "kind": "product",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "fix_ids": [
+    "u-gateway-clinepass-s-canonicalslug-is-recorded-with-the-route-3713-129d94ae"
+   ],
+   "replaced_by": "",
+   "note": "round-26",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3716-options-field",
+   "head": "62bb7d58883e8c8be8548396fc5d5b1b77aa882e",
+   "kind": "product",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "fix_ids": [
+    "u-gateway-an-upstream-s-refusal-of-the-options-field-is-retrie-3716-62bb7d58"
+   ],
+   "replaced_by": "",
+   "note": "round-26",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3721-siwc-quota",
+   "head": "20ac3a6c1696f86e9b8b6a2bbf2514ccb9a9320a",
+   "kind": "product",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "fix_ids": [
+    "u-provider-a-chatgpt-api-login-is-not-read-as-a-codex-account-3721-20ac3a6c"
+   ],
+   "replaced_by": "",
+   "note": "round-26",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3723-import-stamps",
+   "head": "e232a77702ed3bcf310fc75f4ec526ca1d8944c2",
+   "kind": "product",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "fix_ids": [
+    "u-middleware-agent-plugins-a-module-s-own-imports-reload-it-37-3723-e232a777"
+   ],
+   "replaced_by": "",
+   "note": "round-26",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3742-late-interrupt",
+   "head": "fd442d4f97972547028709dd4e181867b948ece6",
+   "kind": "product",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "fix_ids": [
+    "u-middleware-a-timeout-s-interrupt-no-longer-lands-on-the-next-3742-fd442d4f"
+   ],
+   "replaced_by": "",
+   "note": "round-26",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3751-codex-meta-length",
+   "head": "7e061eda722b76a65f1fada3f6704808e2ebb8e8",
+   "kind": "product",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "fix_ids": [
+    "u-sessions-a-rewritten-codex-provider-keeps-every-recorded-byt-3751-7e061eda"
+   ],
+   "replaced_by": "",
+   "note": "round-26",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3775-token-count",
+   "head": "c4fd6c4be066b803a60e590726839088948f8729",
+   "kind": "product",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "fix_ids": [
+    "u-redact-a-token-count-inside-total-tokens-is-no-secret-3775-3775-c4fd6c4b"
+   ],
+   "replaced_by": "",
+   "note": "round-26",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3776-jp-phone",
+   "head": "ab40c7ea8a02f855aa8e8e51aa4a5df209be705d",
+   "kind": "product",
+   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "fix_ids": [
+    "u-redact-a-japanese-mobile-in-a-csv-is-masked-3776-3776-ab40c7ea"
+   ],
+   "replaced_by": "",
+   "note": "round-26",
+   "category": "product"
   }
  ],
  "archive_policy": {
