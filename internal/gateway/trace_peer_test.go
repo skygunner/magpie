@@ -2,8 +2,10 @@ package gateway
 
 import (
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -95,5 +97,43 @@ func TestOwnerReadOnLoopbackAlone(t *testing.T) {
 	}
 	if _, ok := OwnerLanes(); ok {
 		t.Error("lanes read from another host")
+	}
+}
+
+// The unrest of another magpie's console is answered here, where the rest
+// is held, and here alone (#3555, yetone): it forgets how long an account
+// or model sits out, which a magpie on this computer may ask.
+func TestGatewayUnrestIsLoopbackOnly(t *testing.T) {
+	h := New().Handler()
+	rest := func(r *http.Request) *http.Request {
+		r.RemoteAddr = "127.0.0.1:50123"
+		return r
+	}
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, rest(httptest.NewRequest("POST", "/v1/magpie/unrest", strings.NewReader(`{"key":"acct-a"}`))))
+	if w.Code != 200 || !strings.Contains(w.Body.String(), `"lifted":false`) {
+		t.Fatalf("%d %s", w.Code, w.Body)
+	}
+	// a body that names no key lifts nothing
+	w = httptest.NewRecorder()
+	h.ServeHTTP(w, rest(httptest.NewRequest("POST", "/v1/magpie/unrest", strings.NewReader(`{}`))))
+	if w.Code != 400 {
+		t.Fatalf("%d %s", w.Code, w.Body)
+	}
+	// another machine, and a request a proxy here handed on: refused
+	for _, r := range []*http.Request{
+		httptest.NewRequest("POST", "/v1/magpie/unrest", strings.NewReader(`{"key":"acct-a"}`)),
+		rest(httptest.NewRequest("POST", "/v1/magpie/unrest", strings.NewReader(`{"key":"acct-a"}`))),
+	} {
+		if r.RemoteAddr == "" {
+			r.RemoteAddr = "192.168.0.9:50123"
+		} else {
+			r.Header.Set("X-Forwarded-For", "203.0.113.7")
+		}
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		if w.Code != 403 {
+			t.Fatalf("unrest reached from %s: %d %s", r.RemoteAddr, w.Code, w.Body)
+		}
 	}
 }

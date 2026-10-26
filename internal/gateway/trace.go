@@ -9,7 +9,9 @@ package gateway
 // values they are made with; nothing is worked out again afterwards.
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"math"
 	"net"
@@ -751,6 +753,31 @@ func (s *Server) gatewayTrace(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, map[string]any{"object": "trace", "now": time.Now(), "seq": st.Seq, "routes": st.Routes, "totals": st.Totals, "ids": st.IDs, "lifted": st.Lifted, "pid": os.Getpid(), "serves": Serves})
 }
 
+// gatewayUnrest lifts a rest of the magpie serving the gateway, for the
+// console of a magpie on this computer that doesn't serve it: the rest is
+// held in the serving magpie's memory, so lifting it anywhere else lifts
+// nothing (#3555, yetone). This computer alone, and never to a held key, as
+// the trace is.
+func (s *Server) gatewayUnrest(w http.ResponseWriter, r *http.Request) {
+	if !local(r) {
+		writeError(w, provider.Chat, http.StatusForbidden, "magpie's rests are lifted on this computer alone")
+		return
+	}
+	if refuseHeld(w, r, heldRefused) {
+		return
+	}
+	var in struct {
+		Key string `json:"key"`
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 4<<10)
+	b, err := io.ReadAll(r.Body)
+	if err != nil || decodeJSON(b, &in) != nil || strings.TrimSpace(in.Key) == "" {
+		writeError(w, provider.Chat, http.StatusBadRequest, "unrest needs the key the account or model rests by")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"lifted": s.Unrest(strings.TrimSpace(in.Key))})
+}
+
 // ownerURL is the gateway's address on loopback, where the magpie serving
 // it is read by another magpie on this computer (OwnerTrace, OwnerLanes).
 // An address on another interface, or another host, gives "": the trace is
@@ -823,7 +850,51 @@ func OwnerTrace(ctx context.Context, after int64, wait time.Duration) (TraceStat
 	return TraceState{Seq: out.Seq, Routes: out.Routes, Totals: out.Totals, IDs: out.IDs, Lifted: out.Lifted, By: &TraceBy{Pid: out.Pid, Serves: out.Serves}}, true
 }
 
+// OwnerUnrest lifts the rest of key in the magpie serving the gateway's
+// address, for a console that doesn't serve it (#3555, yetone): the rest is
+// held there, so this magpie's own Unrest lifts nothing. ok is false when
+// nothing answers there, a magpie too old to lift a rest of another's, or
+// one that refuses — the page then says there is nothing to lift, as before.
+func OwnerUnrest(ctx context.Context, key string) (lifted, ok bool) {
+	base := ownerURL()
+	if base == "" || strings.TrimSpace(key) == "" {
+		return false, false
+	}
+	body, err := json.Marshal(map[string]string{"key": strings.TrimSpace(key)})
+	if err != nil {
+		return false, false
+	}
+	// a lifted rest is answered at once; a hung magpie is let go, and the
+	// page at once when it stops asking
+	c := &http.Client{Timeout: 5 * time.Second}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, base+"/v1/magpie/unrest", bytes.NewReader(body))
+	if err != nil {
+		return false, false
+	}
+	req.Header.Set("Content-Type", "application/json")
+	res, err := c.Do(req)
+	if err != nil {
+		return false, false
+	}
+	defer res.Body.Close()
+	if res.StatusCode != http.StatusOK {
+		return false, false
+	}
+	b, err := io.ReadAll(io.LimitReader(res.Body, 1<<12))
+	if err != nil {
+		return false, false
+	}
+	var out struct {
+		Lifted bool `json:"lifted"`
+	}
+	if decodeJSON(b, &out) != nil {
+		return false, false
+	}
+	return out.Lifted, true
+}
+
 // OwnerLanes reads the lanes of the magpie serving the gateway's address, for
+
 // a console that doesn't serve it (the providers' rows show the same pills
 // wherever the gateway runs). ok is false when nothing answers there. It is
 // asked on every state read, so it waits no longer than ServedBy does.

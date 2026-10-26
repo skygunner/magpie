@@ -392,7 +392,17 @@ func traceRoutes(mux *http.ServeMux) {
 			Key string `json:"key"`
 		}
 		gw := served.Load()
-		if json.NewDecoder(r.Body).Decode(&in) != nil || in.Key == "" || gw == nil {
+		if json.NewDecoder(r.Body).Decode(&in) != nil || in.Key == "" {
+			http.Error(rw, "nothing to lift", http.StatusBadRequest)
+			return
+		}
+		if gw == nil {
+			// another magpie serves the gateway, and the rest it holds is
+			// lifted there: this one's own memory has none (#3555, yetone)
+			if lifted, ok := gateway.OwnerUnrest(r.Context(), in.Key); ok {
+				writeJSON(rw, map[string]bool{"lifted": lifted})
+				return
+			}
 			http.Error(rw, "nothing to lift", http.StatusBadRequest)
 			return
 		}
