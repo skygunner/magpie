@@ -15,6 +15,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -268,15 +269,40 @@ type HistoryDay struct {
 	Requests int    `json:"requests"`
 }
 
+// historyDaysFor is the days this computer filed the reader's day under: day
+// in loc, from its midnight to the one after, falls in one or two of this
+// computer's days, which name the files (saveRoute).
+func historyDaysFor(day string, loc *time.Location) (first, last string) {
+	from, err := time.ParseInLocation(dayForm, day, loc)
+	if err != nil {
+		return "", "" // no day asked: no file is
+	}
+	first = from.In(time.Local).Format(dayForm)
+	last = from.AddDate(0, 0, 1).Add(-time.Nanosecond).In(time.Local).Format(dayForm)
+	return first, last
+}
+
 // History is the days kept, newest first, and the routes of day, oldest
-// first — its latest historyMax, and whether there were more.
-func History(day string) (days []HistoryDay, routes []Route, cut bool) {
+// first — its latest historyMax, and whether there were more. day is the
+// reader's day, read in loc: the files are named by this computer's days
+// (saveRoute), and the reader's day spans one or two of them, which are the
+// ones read, each route kept only if it is the reader's day.
+// shortcut: the days listed, and their numbers, are the files' days — this
+// computer's — since counting one day in loc needs each route's time, which
+// tally doesn't read (a 350 MB day, #3383); upgrade if a reader far from
+// this computer reports a day whose number doesn't match the routes it shows.
+func History(day string, loc *time.Location) (days []HistoryDay, routes []Route, cut bool) {
 	history.mu.Lock()
 	defer history.mu.Unlock()
 	routes = []Route{}
 	if history.counts == nil {
 		history.counts = map[string]counted{}
 	}
+	first, last := historyDaysFor(day, loc)
+	asked := func(day string) bool { return day != "" && (day == first || day == last) }
+	// a route whose time couldn't be read is the file's day's, not another's:
+	// the file is named for the day it was written on
+	ofDay := func(r Route) bool { return r.Time.IsZero() || r.Time.In(loc).Format(dayForm) == day }
 	total := 0
 	for _, d := range historyFiles(HistoryDir()) {
 		// a .gz is read only when it is the one asked for, or it has
@@ -285,7 +311,7 @@ func History(day string) (days []HistoryDay, routes []Route, cut bool) {
 		c, ok := history.counts[d.path]
 		if !strings.HasSuffix(d.path, ".gz") {
 			c = tally(d, c)
-			if d.day == day {
+			if asked(d.day) {
 				// the lines before the latest historyMax aren't parsed: a
 				// route is written as it is done, so the file is nearly in
 				// time order, and historySlack more cover one done late
@@ -294,25 +320,25 @@ func History(day string) (days []HistoryDay, routes []Route, cut bool) {
 					from = c.starts[k]
 				}
 				readDayFrom(d.path, from, func(line []byte) bool {
-					routes = appendRoute(routes, line)
+					routes = appendRoute(routes, line, ofDay)
 					return true
 				})
 			}
-		} else if d.day == day || !ok || c.size != d.size {
+		} else if asked(d.day) || !ok || c.size != d.size {
 			n, skip := 0, -1
-			if d.day == day && ok && c.size == d.size {
+			if asked(d.day) && ok && c.size == d.size {
 				skip = c.n - historyMax - historySlack
 			}
 			readDay(d.path, func(line []byte) bool {
-				if n++; d.day == day && n > skip {
-					routes = appendRoute(routes, line)
+				if n++; asked(d.day) && n > skip {
+					routes = appendRoute(routes, line, ofDay)
 				}
 				return true
 			})
 			c = counted{size: d.size, n: n}
 		}
 		history.counts[d.path] = c
-		if d.day == day {
+		if asked(d.day) {
 			total += c.n
 		}
 		if n := c.n; n > 0 {
@@ -334,13 +360,17 @@ func History(day string) (days []HistoryDay, routes []Route, cut bool) {
 // route done after the later ones began.
 const historySlack = 200
 
-func appendRoute(routes []Route, line []byte) []Route {
+// appendRoute is line, a kept route, added to routes when keep takes it.
+func appendRoute(routes []Route, line []byte, keep func(Route) bool) []Route {
 	var r Route
 	if json.Unmarshal(line, &r) != nil {
 		return routes
 	}
 	r.routedAgain()
 	r.Prompt.skillsApart()
+	if keep != nil && !keep(r) {
+		return routes
+	}
 	return append(routes, r)
 }
 
@@ -454,12 +484,23 @@ func readDayFrom(path string, off int64, f func([]byte) bool) {
 	}
 }
 
-// HistoryRoute searches the request's day and its neighbours (the browser and
-// gateway may use different time zones), without holding up history writes.
-func HistoryRoute(id int64, day time.Time) (Route, bool) {
+// HistoryRoute searches the request's day and its neighbours, without
+// holding up history writes. day is the reader's day in loc (History), and
+// the days either side of it are searched too: the browser and gateway may
+// use different time zones, a day being another there.
+func HistoryRoute(id int64, day time.Time, loc *time.Location) (Route, bool) {
 	needle := []byte(`"id":` + strconv.FormatInt(id, 10) + `,`)
+	var files []string
 	for _, offset := range []int{0, -1, 1} {
-		name := filepath.Join(HistoryDir(), day.AddDate(0, 0, offset).Format(dayForm)+".jsonl")
+		first, last := historyDaysFor(day.AddDate(0, 0, offset).Format(dayForm), loc)
+		for _, filed := range []string{first, last} {
+			if !slices.Contains(files, filed) {
+				files = append(files, filed)
+			}
+		}
+	}
+	for _, filed := range files {
+		name := filepath.Join(HistoryDir(), filed+".jsonl")
 		for _, path := range []string{name, name + ".gz"} {
 			var found Route
 			readDay(path, func(line []byte) bool {

@@ -1025,6 +1025,10 @@ function routingPage(part) {
   // zones were kept are on the server's clock, told with its offset. When
   // the clocks agree nothing is added.
   const browserZone = () => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch { return ""; } };
+  // the routing history's days are the reader's, read in this zone: its files
+  // are the gateway computer's days, and a day here may be another there
+  // (#3324)
+  const zoneQuery = () => (browserZone() ? "&tz=" + encodeURIComponent(browserZone()) : "");
   // zoneOffset is how far zone is ahead of UTC now, in minutes; null when
   // this browser doesn't know it
   function zoneOffset(zone, at = new Date()) {
@@ -2729,7 +2733,7 @@ function routingPage(part) {
   window.openRoute = async (id, time, o = {}) => {
     let r = routes.get(id);
     if (!r) {
-      const res = await fetch("/api/gateway/route?id=" + encodeURIComponent(id) + "&day=" + encodeURIComponent(time.slice(0, 10)));
+      const res = await fetch("/api/gateway/route?id=" + encodeURIComponent(id) + "&day=" + encodeURIComponent(time.slice(0, 10)) + zoneQuery());
       if (res.status === 404) throw new Error(t("Routing history for this request is no longer available."));
       if (!res.ok) throw new Error(await res.text());
       r = whole(await res.json());
@@ -2945,7 +2949,7 @@ function routingPage(part) {
   };
   async function loadDays(d) {
     try {
-      const res = await (await fetch("/api/gateway/history?day=" + encodeURIComponent(d || ""))).json();
+      const res = await (await fetch("/api/gateway/history?day=" + encodeURIComponent(d || "") + zoneQuery())).json();
       days = res.days || [];
       noteAccounts(res.routes);
       if (d && d === day) { past = (res.routes || []).map(whole); pastCut = !!res.cut; }

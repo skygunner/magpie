@@ -17,6 +17,7 @@ import (
 
 	"github.com/yetone/magpie/internal/gateway"
 	"github.com/yetone/magpie/internal/sessions"
+	"github.com/yetone/magpie/internal/usageapi"
 )
 
 // defaultWindow is the window a prompt is measured against when the
@@ -517,15 +518,17 @@ func scoreAgent(a *ctxAgent, counted bool) {
 	}
 }
 
-// contextRoutes reads the routes of the days asked for: the history kept,
-// and the live trace's not yet in it.
+// contextRoutes reads the routes of the days asked for — the reader's days,
+// which the page names in ?tz= (usageapi.ZoneOf), as the history is read in
+// them: the history kept, and the live trace's not yet in it.
 func contextRoutes(r *http.Request, days int) []gateway.Route {
 	seen := map[int64]bool{}
 	var out []gateway.Route
-	now := time.Now()
+	zone := usageapi.ZoneOf(r)
+	now := time.Now().In(zone)
 	for i := days - 1; i >= 0; i-- {
 		day := now.AddDate(0, 0, -i).Format("2006-01-02")
-		_, rs, _ := gateway.History(day)
+		_, rs, _ := gateway.History(day, zone)
 		for _, x := range rs {
 			if !seen[x.ID] {
 				seen[x.ID] = true
