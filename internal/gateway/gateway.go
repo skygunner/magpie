@@ -5829,7 +5829,7 @@ const tierField = "service_tier"
 // optionalFields are request fields OpenAI's APIs (or an agent's own
 // vendor, Kimi's and Qwen's thinking switches) take that a request does
 // without: an upstream that refuses one by name is asked again without it.
-var optionalFields = []string{"store", "metadata", tierField, cacheKeyField, "prompt_cache_retention",
+var optionalFields = []string{"store", "metadata", "options", tierField, cacheKeyField, "prompt_cache_retention",
 	"prompt_cache_options", "safety_identifier", "stream_options", "parallel_tool_calls", "verbosity", "thinking", "enable_thinking"}
 
 // refusedOptional lists optional fields an upstream explicitly rejects as
