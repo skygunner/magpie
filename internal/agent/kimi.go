@@ -94,8 +94,17 @@ func kimiModelTables(path string, legacy bool, wrote map[string]map[string]strin
 			}
 		}
 		var caps []string
-		if len(m.Efforts) > 0 {
+		if m.Reasoning || len(m.Efforts) > 0 {
 			caps = append(caps, strconv.Quote("thinking"))
+			// a model Kimi Code can't be told to think off: without a level
+			// for it, Kimi Code runs the session with thinking off, and a
+			// model that always thinks (Kimi's own K3.1, "does not support
+			// disabled thinking mode") refuses the request (#3399,
+			// kupakupar). Kimi Code's own model tables say both this and
+			// thinking; kimi-cli has no word for it
+			if !legacy && !slices.Contains(m.Efforts, "none") {
+				caps = append(caps, strconv.Quote("always_thinking"))
+			}
 		}
 		if m.Images {
 			caps = append(caps, strconv.Quote("image_in"))
