@@ -66,13 +66,26 @@ var agySummaries struct {
 	rows map[string]agySummary
 }
 
+// agySettle is how recently agy may have written the database for what was
+// read not to be kept as its revision: a page rewritten in place in the
+// same clock tick as the read leaves the same mtime and size (a coarse
+// clock stamps 4ms here), so the next look would see no change and keep the
+// old title (#3708). Git's rule for a racily clean index, with a coarse
+// filesystem's tick to spare.
+const agySettle = 2 * time.Second
+
 // agySummariesOf are the rows of the conversation_summaries.db in dir.
 func agySummariesOf(dir string) map[string]agySummary {
 	path := filepath.Join(dir, "conversation_summaries.db")
 	rev := ""
+	settled := true
+	now := time.Now()
 	for _, p := range []string{path, path + "-wal"} {
 		if fi, err := os.Stat(p); err == nil {
 			rev += strconv.FormatInt(fi.ModTime().UnixNano(), 10) + ":" + strconv.FormatInt(fi.Size(), 10) + ";"
+			if now.Sub(fi.ModTime()) < agySettle {
+				settled = false
+			}
 		} else if p == path {
 			return nil
 		}
@@ -89,7 +102,13 @@ func agySummariesOf(dir string) map[string]agySummary {
 		}
 		return nil
 	}
-	agySummaries.path, agySummaries.rev, agySummaries.rows = path, rev, rows
+	agySummaries.path, agySummaries.rows = path, rows
+	// what a database written just now holds is served, but not kept as the
+	// revision a later look matches: it may be written again in this tick
+	agySummaries.rev = ""
+	if settled {
+		agySummaries.rev = rev
+	}
 	return rows
 }
 
