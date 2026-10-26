@@ -9,7 +9,10 @@ Each round rolls the line forward:
 
 1. `git fetch upstream --tags`; take the newest `vX.Y.Z` release tag (not
    `upstream/main`).
-2. Branch `prod/vX.Y.Z-p1` off the tag.
+2. Branch `prod/vX.Y.Z-p1` off the previous `prod/*` branch (not off the
+   tag), then `git merge vX.Y.Z` — the carried patch commits keep their
+   SHAs, so the table below stays true; resolve conflicts by keeping both
+   sides' semantics.
 3. For each patch in the table below, check whether upstream absorbed it:
    the fix of record is an ancestor of the tag, or an upstream commit says
    it fixes the same issue, or the issue is closed as fixed. Absorbed →
@@ -33,7 +36,13 @@ Each round rolls the line forward:
    real `group/fast-cheap` request 200. Push the branch; the branch is the
    record.
 
-## Carried patches (as of v0.1.1556-p1, 2026-10-26)
+## Carried patches (as of v0.1.1612-p1, 2026-10-27)
+
+Checked against v0.1.1612 (2026-10-26): none absorbed yet; #3623 still
+has no fix anywhere. At v0.1.1612 upstream made a plugin window's `Used`
+a pointer too (#3650); the merge keeps that beside #3487's pointer
+`Amount` — one conditional block each, and the aside-text condition
+reads both pointers.
 
 | upstream | fix of record (skygunner/magpie) | what it does |
 | --- | --- | --- |
@@ -49,3 +58,4 @@ Plugin (not this branch): `@magpie-community/opencode-cloudflare-workers-ai-auth
 `/config/magpie/plugins/` — survives image upgrades; re-verify after each.
 
 Not carried: #3623 (no fix exists on the fork yet; nothing to apply).
+Checked again at v0.1.1612: still zero comments, still nothing upstream.
