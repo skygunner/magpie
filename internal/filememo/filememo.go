@@ -88,13 +88,18 @@ func Forget() {
 	mu.Lock()
 	gen++
 	gens.Store(gen)
-	close(written)
-	written = make(chan struct{})
+	if written != nil {
+		close(written)
+		written = nil
+	}
 	mu.Unlock()
 }
 
-// written is closed, and made anew, by every Forget.
-var written = make(chan struct{})
+// written wakes what is waiting on Written: made while one waits, closed by
+// the next write (Forget) and gone with it, so a write no one waits on
+// closes nothing (a channel made in one synctest bubble can't be closed
+// from another: provider's tests, one bubble per subtest, since #3185).
+var written chan struct{}
 
 // Written is closed by the next write magpie makes (Forget): a loop that
 // follows magpie's files waits on it, and looks at them only every so
@@ -104,6 +109,9 @@ var written = make(chan struct{})
 func Written() <-chan struct{} {
 	mu.Lock()
 	defer mu.Unlock()
+	if written == nil {
+		written = make(chan struct{})
+	}
 	return written
 }
 
