@@ -291,3 +291,61 @@ func TestEntryForUnnamedModel(t *testing.T) {
 		t.Fatalf("name %q, default %q", e.Name, e.Default)
 	}
 }
+
+// A member named with a provider's id is that provider's model, and while
+// that provider is off it is served by nobody: the id fell through the
+// prefix branch to a bare model id, which another provider's catalog has
+// (commandcode lists xiaomi/mimo-v2.6-pro), so a member reported as off by
+// `magpie group show` was sent to that provider instead (#3698, coderbiq).
+func TestPrefixOfAnOffProviderResolvesNowhere(t *testing.T) {
+	prefsHome(t)
+	live := func(pid string, ms ...string) {
+		t.Helper()
+		var list []catalog.Model
+		for _, id := range ms {
+			list = append(list, catalog.Model{ID: id})
+		}
+		if err := catalog.SaveLive(pid, "", list); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// the full catalogs: what each vendor lists, selected or not
+	live("xiaomi", "mimo-v2.6-flash", "mimo-v2.6-pro")
+	live("commandcode", "deepseek/deepseek-v4.1-flash", "xiaomi/mimo-v2.6-pro")
+	for _, p := range []Provider{
+		{ID: "xiaomi", Name: "Xiaomi MiMo", Key: "k", Chat: "http://127.0.0.1:1/v1", Models: []string{"mimo-v2.6-flash", "mimo-v2.6-pro"}, Off: true},
+		{ID: "commandcode", Name: "Command Code", Key: "k", Chat: "http://127.0.0.1:1/v1", Models: []string{"deepseek/deepseek-v4.1-flash"}},
+	} {
+		if err := Save(p); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// a model of an off provider is named by that provider
+	if p, model, ok := Resolve("xiaomi/mimo-v2.6-pro"); ok {
+		t.Errorf("xiaomi/mimo-v2.6-pro resolved to %s/%s, want nothing (xiaomi is off)", p.ID, model)
+	}
+	// a model whose id has a slash, under a provider that isn't named, is
+	// still the model of the provider that lists it
+	if p, model, ok := Resolve("deepseek/deepseek-v4.1-flash"); !ok || p.ID != "commandcode" || model != "deepseek/deepseek-v4.1-flash" {
+		t.Errorf("deepseek/deepseek-v4.1-flash = %s/%s %v, want commandcode/deepseek/deepseek-v4.1-flash", p.ID, model, ok)
+	}
+	// the same model, named by its own provider, resolves there
+	if p, model, ok := Resolve("commandcode/xiaomi/mimo-v2.6-pro"); !ok || p.ID != "commandcode" || model != "xiaomi/mimo-v2.6-pro" {
+		t.Errorf("commandcode/xiaomi/mimo-v2.6-pro = %s/%s %v", p.ID, model, ok)
+	}
+	// and a group of it is not sent to commandcode behind the user's back
+	if err := SaveGroup(Group{Name: "Pro", Members: []string{"xiaomi/mimo-v2.6-pro", "commandcode/deepseek/deepseek-v4.1-flash"}, Routing: Ordered}); err != nil {
+		t.Fatal(err)
+	}
+	_, ms, ok := FindGroup("group/pro")
+	if !ok {
+		t.Fatal("no group")
+	}
+	var got []string
+	for _, m := range ms {
+		got = append(got, m.Provider.ID+"/"+m.Model)
+	}
+	if len(got) != 1 || got[0] != "commandcode/deepseek/deepseek-v4.1-flash" {
+		t.Fatalf("group serves %v, want only commandcode/deepseek/deepseek-v4.1-flash", got)
+	}
+}
