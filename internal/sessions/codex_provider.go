@@ -473,6 +473,13 @@ func keptCopy(from, to string) error {
 // to, every other byte as it was; any other line as it is. A session_meta
 // that names no provider (a subagent's segment, an old Codex's) is left as
 // it is too, so moving back gives the file it was.
+//
+// The line keeps its length: Codex reads a rollout by the byte offsets it
+// recorded (a fork's history_base, thread_history_1.sqlite's turns), so a
+// rewritten line would move every offset after it. A shorter id is padded
+// with the spaces JSON allows after the value, and a longer one isn't
+// written at all: the file is left as it was rather than have Codex's
+// offsets point into the middle of lines (#3751).
 func setMetaProvider(line []byte, to string) ([]byte, bool) {
 	if !bytes.Contains(line[:min(len(line), 1024)], cxMeta) || gjson.GetBytes(line, "type").String() != "session_meta" {
 		return line, false
@@ -482,8 +489,14 @@ func setMetaProvider(line []byte, to string) ([]byte, bool) {
 		return line, false
 	}
 	val, _ := json.Marshal(to)
+	if len(val) > len(r.Raw) {
+		return line, false
+	}
 	out := append([]byte{}, line[:r.Index]...)
 	out = append(out, val...)
+	for i := len(val); i < len(r.Raw); i++ {
+		out = append(out, ' ')
+	}
 	return append(out, line[r.Index+len(r.Raw):]...), true
 }
 
