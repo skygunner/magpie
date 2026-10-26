@@ -1127,6 +1127,10 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
 	if why == failQuota && clineModelLimited(c, body) {
 		id = c.restID()
 	}
+	// A missing ZCode trial entitlement leaves the subscription usable (#3661).
+	if why == failQuota && status == http.StatusBadRequest && zcodeTrialLimited(c, body) {
+		id = c.restID()
+	}
 	// out of credit, or of a quota, on a model that costs credits where
 	// the subscription serves other models free is that model's: the free
 	// ones draw on no credits, and the account still serves them (Creat.wu
