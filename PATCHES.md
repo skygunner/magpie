@@ -91,3 +91,17 @@ failures in gateway (Claude client cache, Codex image fitting, JSON separator
 escaping and WSL listener), pii (GPU residency), plugin (SOCKS proxy), and
 provider (synctest/filememo interaction). These are not represented as a
 green full suite. No unrelated fixes are included in this patch.
+
+Deployed 2026-10-27 AEST from code commit `dd670e6e67cdc4535917d9aa8bb2130abbf88e43`:
+
+- Image `magpie:0.1.1612-p2-hindsight`, ID
+  `sha256:83d4d91f973470791b33fb55789018f8faf8314e3d9b292dc5ba6f28b86f00a3`.
+- Healthy; unauthenticated/authenticated model-list checks returned 401/200,
+  with 198 models before and after. A non-streaming `group/fast-cheap` call
+  using Hindsight's caller credential returned 200 from `gpt-6-luna` in
+  11.95 seconds. No target-model/group membership was added by the rollout.
+- Backup: `/home/hermes/backups/magpie/pre-0.1.1612-p2-hindsight-20261026T175132Z/`
+  (complete stopped volume, container inspect, and providers.json).
+  Stopped rollback container: `magpie-pre-hindsight-20261026T175132Z`.
+- Upstream feature request: https://github.com/yetone/magpie/issues/3788.
+  This is a request for maintainer feedback, not an upstream PR or acceptance.
