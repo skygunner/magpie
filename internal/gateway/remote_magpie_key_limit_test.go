@@ -193,3 +193,58 @@ func anotherMagpieAddedByHand(t *testing.T, held bool) {
 		t.Errorf("Qoder was asked %d times; want twice", asked.Load())
 	}
 }
+
+// #3701 (yetone): a refusal another magpie held — one it wrote itself, the
+// clause with it — asked here and then held here in turn said the clause
+// twice: "(out of its allowance: not asked again before …) (out of its
+// allowance: not asked again before …)". The answer says it once.
+func TestRemoteMagpieHeldRefusalSaysItsClauseOnce(t *testing.T) {
+	fresh(t)
+	spent := `{"type":"error","error":{"type":"rate_limit_error","message":"You've hit your session limit · resets 8:10pm (America/Los_Angeles)"}}`
+	cc := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.Copy(io.Discard, r.Body)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusTooManyRequests)
+		io.WriteString(w, spent)
+	}))
+	t.Cleanup(cc.Close)
+	if err := provider.Save(provider.Provider{ID: "cc", Name: "Claude Code", Key: "k1", Models: []string{"claude-opus-5-5"}, Anthropic: cc.URL}); err != nil {
+		t.Fatal(err)
+	}
+	remote := httptest.NewServer(New().Handler())
+	t.Cleanup(remote.Close)
+	id, err := provider.Add(provider.Provider{ID: "office", Name: "Remote magpie", Preset: provider.RemoteMagpiePreset, Chat: strings.TrimPrefix(remote.URL, "http://")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	office, _ := provider.Find(id)
+	if _, err := office.Fetch(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	send := func(model string) *httptest.ResponseRecorder {
+		t.Helper()
+		req := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(`{"model":"`+model+`","messages":[{"role":"user","content":"hi"}]}`))
+		rec := httptest.NewRecorder()
+		New().Handler().ServeHTTP(rec, req)
+		return rec
+	}
+	// the other magpie's Claude Code is refused twice, and held there
+	for range 2 {
+		send("cc/claude-opus-5-5")
+	}
+	if rec := send("cc/claude-opus-5-5"); !strings.Contains(rec.Body.String(), "not asked again") {
+		t.Fatalf("the other magpie asked Claude Code again: %d %s; want it held there", rec.Code, rec.Body.String())
+	}
+	// asked there, its held refusal's clause comes back once
+	if rec := send(id + "/cc/claude-opus-5-5"); strings.Count(rec.Body.String(), "out of its allowance") != 1 {
+		t.Fatalf("the refusal asked there: %d %s; want its clause once", rec.Code, rec.Body.String())
+	}
+	// held here in turn, the clause is still said once
+	rec := send(id + "/cc/claude-opus-5-5")
+	if rec.Code != http.StatusTooManyRequests || !strings.Contains(rec.Body.String(), "not asked again") {
+		t.Fatalf("Claude Code asked again while it rests: %d %s; want its 429 held here", rec.Code, rec.Body.String())
+	}
+	if n := strings.Count(rec.Body.String(), "out of its allowance"); n != 1 {
+		t.Errorf("the held refusal says the clause %d times: %d %s", n, rec.Code, rec.Body.String())
+	}
+}

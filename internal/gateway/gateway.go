@@ -2790,7 +2790,7 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 			// refusal is given again without asking, with when the first
 			// of them is back as Retry-After, for an agent that waits as
 			// told to ask then rather than at once
-			msg := fmt.Sprintf("%s (out of its allowance: not asked again before %s)", rested.said, heldClock(back, time.Now()))
+			msg := heldSaid(rested.said, back)
 			held, heldBack, call.Status, call.Error = true, back, rested.Status, c.p.Name+": "+msg
 			// the answer names who held it, as one asked would: a magpie
 			// using this one rests that model of it alone (remoteModelRest)
