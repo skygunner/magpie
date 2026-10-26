@@ -28,14 +28,18 @@ var sub2APIWindows = []struct {
 // "remaining":787.5,"window_start":…,"reset_at":…}. A window with no
 // reset_at hasn't started, or has run out since (sub2api says used 0 for
 // it then, and gives no window a limit of 0): it starts on the key's next
-// request, so it renews within its span. ok is false for a reply without them — a key on the wallet, or not
-// sub2api's.
+// request, so it renews within its span. A window of "unit": "percent" is
+// a share of a plan the deployment sells by shares, not money (#3188): its
+// share used is all it tells, and nothing of it is counted, so its Count
+// says nothing as a subscription's window does. ok is false for a reply
+// without them — a key on the wallet, or not sub2api's.
 func readSub2APIKeyLimits(body []byte) (ws []QuotaWindow, ok bool) {
 	var r struct {
 		RateLimits []struct {
 			Window  string     `json:"window"`
 			Limit   float64    `json:"limit"`
 			Used    float64    `json:"used"`
+			Unit    string     `json:"unit"`
 			ResetAt *time.Time `json:"reset_at"`
 		} `json:"rate_limits"`
 	}
@@ -47,8 +51,14 @@ func readSub2APIKeyLimits(body []byte) (ws []QuotaWindow, ok bool) {
 			if strings.TrimSpace(l.Window) != s.window || l.Limit <= 0 {
 				continue
 			}
-			w := QuotaWindow{Name: s.name, Span: s.span, Amount: max(0, l.Used), Limit: l.Limit, Unit: "USD"}
-			w.Used = min(100, max(0, l.Used/l.Limit*100))
+			w := QuotaWindow{Name: s.name, Span: s.span}
+			if strings.EqualFold(strings.TrimSpace(l.Unit), "percent") {
+				// a share of the plan: used alone, with no amount to count
+				w.Used = min(100, max(0, l.Used))
+			} else {
+				w.Amount, w.Limit, w.Unit = max(0, l.Used), l.Limit, "USD"
+				w.Used = min(100, max(0, l.Used/l.Limit*100))
+			}
 			if l.ResetAt != nil && !l.ResetAt.IsZero() {
 				t := *l.ResetAt
 				w.ResetsAt = &t

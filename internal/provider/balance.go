@@ -1189,17 +1189,36 @@ func balanceSegmentOf(raw, path string) (balanceSegment, error) {
 
 // Balance asks the vendor what is left on the provider's key in use. ok is
 // false when there is no way to ask it. A key given limits and no quota of
-// its own has what its fullest window has left: what it can spend now.
+// its own has what its fullest window has left: what it can spend now
+// (windowsLeft).
 func Balance(ctx context.Context, p Provider) (amount string, ok bool, err error) {
 	amount, _, _, ws, ok, err := balanceRead(ctx, p)
 	if err == nil && amount == "" && len(ws) > 0 {
-		left := ws[0].Limit - ws[0].Amount
-		for _, w := range ws[1:] {
-			left = min(left, w.Limit-w.Amount)
-		}
-		amount = money("$", max(0, left))
+		amount = windowsLeft(ws)
 	}
 	return amount, ok, err
+}
+
+// windowsLeft is what a key given limits and no quota of its own has left:
+// the least of its windows — in dollars, or, for a plan sold by shares
+// (readSub2APIKeyLimits, whose windows count nothing), as the share of 100
+// left in them, "20%".
+func windowsLeft(ws []QuotaWindow) string {
+	share := slices.ContainsFunc(ws, func(w QuotaWindow) bool { return w.Limit <= 0 })
+	left := math.Inf(1)
+	for _, w := range ws {
+		if share {
+			left = min(left, 100-w.Used)
+		} else {
+			left = min(left, w.Limit-w.Amount)
+		}
+	}
+	left = max(0, left)
+	if share {
+		// balanceAmount tells n as a percent of 1, as a "%" field's is told
+		return balanceAmount("", left/100, true)
+	}
+	return money("$", left)
 }
 
 // balanceRead is what Balance reads, with the amounts of a balance field
