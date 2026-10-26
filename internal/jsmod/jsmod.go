@@ -13,21 +13,45 @@ import (
 	"github.com/Calcium-Ion/moejs"
 )
 
+// File is a module's file as it was read: its path and its time and size
+// from just before, so a loader can tell it changed.
+type File struct {
+	Path            string
+	ModTimeUnixNano int64
+	Size            int64
+}
+
 // Compile compiles the module in file and the modules it imports, which
 // are files under root: there is no node_modules here, so a package is
 // bundled into the module. what names the kind of module in an error
-// ("a middleware").
-func Compile(root, file, what string) (*moejs.Module, error) {
-	src, err := os.ReadFile(file)
-	if err != nil {
-		return nil, err
+// ("a middleware"). The files it read are given back besides the module,
+// the entry included, so a loader can load the module again when one of
+// them changed (#3723): the imports are otherwise invisible to it, and
+// an edit to an imported file kept running until the entry changed.
+func Compile(root, file, what string) (*moejs.Module, []File, error) {
+	var read []File
+	one := func(p string) (string, error) {
+		fi, err := os.Stat(p)
+		if err != nil {
+			return "", err
+		}
+		read = append(read, File{Path: p, ModTimeUnixNano: fi.ModTime().UnixNano(), Size: fi.Size()})
+		b, err := os.ReadFile(p)
+		if err != nil {
+			return "", err
+		}
+		return string(b), nil
 	}
-	entry, err := moejs.Compile(file, string(src))
+	src, err := one(file)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+	entry, err := moejs.Compile(file, src)
+	if err != nil {
+		return nil, nil, err
 	}
 	mods := map[string]*moejs.Module{file: entry}
-	return moejs.Link(entry, func(ref moejs.Referrer, spec string) (*moejs.Module, error) {
+	mod, err := moejs.Link(entry, func(ref moejs.Referrer, spec string) (*moejs.Module, error) {
 		if !strings.HasPrefix(spec, "./") && !strings.HasPrefix(spec, "../") {
 			return nil, fmt.Errorf("%q: %s imports only files beside it; bundle packages into it", spec, what)
 		}
@@ -42,15 +66,16 @@ func Compile(root, file, what string) (*moejs.Module, error) {
 		if m, ok := mods[p]; ok {
 			return m, nil
 		}
-		src, err := os.ReadFile(p)
+		src, err := one(p)
 		if err != nil {
 			return nil, err
 		}
-		m, err := moejs.Compile(p, string(src))
+		m, err := moejs.Compile(p, src)
 		if err != nil {
 			return nil, err
 		}
 		mods[p] = m
 		return m, nil
 	})
+	return mod, read, err
 }

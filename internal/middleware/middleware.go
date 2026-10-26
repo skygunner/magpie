@@ -140,7 +140,9 @@ func middlewares() []found {
 	return out
 }
 
-// stamp changes when plugins.json or a middleware's file does.
+// stamp changes when plugins.json or a middleware's file does: the one it
+// loads, and each file that one imports, which jsmod.Compile gave back,
+// so an edit to an imported module reloads too (#3723).
 func stamp() string {
 	var b strings.Builder
 	b.WriteString(plugin.ListStamp())
@@ -148,6 +150,13 @@ func stamp() string {
 		b.WriteString("|" + f.file)
 		if fi, err := os.Stat(f.file); err == nil {
 			fmt.Fprint(&b, ":", fi.ModTime().UnixNano(), ":", fi.Size())
+		}
+		for _, x := range importsOf(f.file) {
+			if fi, err := os.Stat(x.Path); err == nil {
+				fmt.Fprint(&b, ":", x.Path, ":", fi.ModTime().UnixNano(), ":", fi.Size())
+			} else {
+				b.WriteString(":" + x.Path + ":gone")
+			}
 		}
 	}
 	return b.String()
@@ -165,7 +174,35 @@ func load(st string) *set {
 		s.list = append(s.list, m)
 		s.hooked = s.hooked || m.hasReq || m.hasProv || m.hasEv || m.hasResp
 	}
+	// the files imported are known only now: stamp again, so the set's
+	// own stamp matches the next look's and loading doesn't repeat
+	s.stamp = stamp()
 	return s
+}
+
+// importsOf is the files the middleware in file imported when it last
+// loaded, kept for stamp: which files to look at, so that its once-a-second
+// look costs a stat of each and not what a load does.
+var importsMemo struct {
+	sync.Mutex
+	m map[string][]jsmod.File
+}
+
+func importsOf(file string) []jsmod.File {
+	importsMemo.Lock()
+	defer importsMemo.Unlock()
+	return importsMemo.m[file]
+}
+
+// keepImports notes the files the middleware in file imports, as they were
+// read when it loaded, so the stamp looks at each of them.
+func keepImports(file string, files []jsmod.File) {
+	importsMemo.Lock()
+	if importsMemo.m == nil {
+		importsMemo.m = map[string][]jsmod.File{}
+	}
+	importsMemo.m[file] = files
+	importsMemo.Unlock()
 }
 
 // compile compiles the middleware in file and the modules it imports,
@@ -176,11 +213,12 @@ func compile(e plugin.Entry, file string) (*mw, error) {
 	if t := plugin.Target(e.Spec); t != file {
 		root = t
 	}
-	mod, err := jsmod.Compile(root, file, "a middleware")
+	mod, files, err := jsmod.Compile(root, file, "a middleware")
 	if err != nil {
 		return nil, err
 	}
 	m := &mw{spec: e.Spec, name: plugin.Name(e.Spec), mod: mod, options: []byte("{}")}
+	keepImports(file, files)
 	if len(e.Options) > 0 {
 		if b, err := jsonMarshal(e.Options); err == nil {
 			m.options = b
