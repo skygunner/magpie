@@ -120,6 +120,25 @@ func ensureServe(ctx context.Context) error {
 // upgrading is set while upgrade runs.
 var upgrading atomic.Bool
 
+// upgrades counts the upgrade goroutines started and not yet done: a test
+// that puts the package's vars (dir, serveTag, oldTags) back waits on it,
+// so the goroutines read them only while they are the test's own (#3628).
+var upgrades sync.WaitGroup
+
+// startUpgrade runs upgrade as a goroutine upgrades counts.
+func startUpgrade() {
+	upgrades.Add(1)
+	go func() {
+		defer upgrades.Done()
+		upgrade()
+	}()
+}
+
+// waitUpgrade waits for every upgrade started, if any.
+func waitUpgrade() {
+	upgrades.Wait()
+}
+
 // upgrade fetches serveTag's pf-serve where only an older one is on disk
 // (magpie was updated since the model was downloaded), ends the old one so
 // that the next request starts the new, and deletes the old. One that
