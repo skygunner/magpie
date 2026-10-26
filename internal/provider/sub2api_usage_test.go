@@ -95,6 +95,67 @@ func TestReadSub2APIKeyLimits(t *testing.T) {
 	}
 }
 
+// A plan sold by shares rather than dollars says so with "unit": "percent"
+// on each rate_limits entry: the share used alone, with no Amount, Limit
+// or Unit, so the card counts nothing of it as it counts nothing of a
+// subscription's window, and the key's balance is the share its fullest
+// window has left — "20%", never "$20.00" (#3188, wtj-0527).
+func TestSub2APIKeySharesAreNotDollars(t *testing.T) {
+	keyLimitsHome(t)
+	b, err := os.ReadFile("testdata/sub2api_usage_key_limits_percent.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	reset := func(s string) time.Time {
+		v, err := time.Parse(time.RFC3339, s)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return v
+	}
+	ws, ok := readSub2APIKeyLimits(b)
+	if !ok || len(ws) != 2 {
+		t.Fatalf("windows = %+v, %v", ws, ok)
+	}
+	five, week := ws[0], ws[1]
+	if five.Name != "5 hours" || five.Span != 5*time.Hour || five.Used != 37.5 ||
+		five.Amount != 0 || five.Limit != 0 || five.Unit != "" ||
+		five.ResetsAt == nil || !five.ResetsAt.Equal(reset("2026-10-21T18:00:00Z")) {
+		t.Fatalf("5 hours = %+v", five)
+	}
+	if week.Name != "7 days" || week.Span != 7*24*time.Hour || week.Used != 80 ||
+		week.Amount != 0 || week.Limit != 0 || week.Unit != "" ||
+		week.ResetsAt == nil || !week.ResetsAt.Equal(reset("2026-10-25T00:00:00Z")) {
+		t.Fatalf("7 days = %+v", week)
+	}
+	// the window counts nothing, as a subscription's does
+	if c := five.Count(false); c != "" {
+		t.Fatalf("5 hours' count = %q", c)
+	}
+	srv, _ := sub2apiServer(t, func() ([]byte, int) { return b, 200 })
+	p := sub2apiKey(t, srv)
+	if amount, ok, err := Balance(context.Background(), p); err != nil || !ok || amount != "20%" {
+		t.Fatalf("Balance = %q %v %v", amount, ok, err)
+	}
+
+	// a window with no unit, "USD" or anything else is money, as before
+	for _, c := range []struct{ name, unit string }{
+		{"no unit", ""},
+		{"USD", `,"unit":"USD"`},
+		{"another unit", `,"unit":"credits"`},
+	} {
+		body := []byte(`{"mode":"unrestricted","rate_limits":[{"window":"5h","limit":100,"used":37.5,"remaining":62.5` +
+			c.unit + `,"reset_at":"2026-10-21T18:00:00Z"}]}`)
+		ws, ok := readSub2APIKeyLimits(body)
+		if !ok || len(ws) != 1 || ws[0].Used != 37.5 || ws[0].Amount != 37.5 || ws[0].Limit != 100 || ws[0].Unit != "USD" {
+			t.Fatalf("%s = %+v, %v", c.name, ws, ok)
+		}
+		if got := ws[0].Count(false); got != "37.5 / 100 USD" {
+			t.Fatalf("%s count = %q", c.name, got)
+		}
+	}
+}
+
 // keyLimitsHome gives a test a magpie of its own, without any key or
 // window another test read.
 func keyLimitsHome(t *testing.T) {
