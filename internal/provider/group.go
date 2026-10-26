@@ -164,11 +164,11 @@ type Group struct {
 	// together: one rate limited with quota left goes behind every other
 	// member's. Not for "rotate" or Manual.
 	Sink bool `json:"sink,omitempty"`
-	// FirstToken is how many seconds a member's streamed reply may take to
-	// its first content — text, reasoning or a tool call — before the next
-	// member is asked instead, nothing of it having reached the agent; 0
-	// waits as long as it takes. The last one left is always waited for,
-	// and the slow one doesn't rest.
+	// FirstToken is how many seconds a member may take to first content:
+	// text, reasoning or a tool call for streams; response body for JSON.
+	// Before any content reaches the agent, a timeout asks the next member.
+	// Zero and the last candidate wait indefinitely. Repeated slow starts
+	// rest the model; ModelCooldown opts into resting on the first one.
 	FirstToken int `json:"firstToken,omitempty"`
 	// Patience is how many seconds more a request may be kept, once every
 	// member has failed and nothing of a reply has been sent, for the

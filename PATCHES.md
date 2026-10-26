@@ -59,3 +59,35 @@ Plugin (not this branch): `@magpie-community/opencode-cloudflare-workers-ai-auth
 
 Not carried: #3623 (no fix exists on the fork yet; nothing to apply).
 Checked again at v0.1.1612: still zero comments, still nothing upstream.
+
+## Hindsight cooldown branch (v0.1.1612-p2-hindsight)
+
+`fix/hindsight-nonstream-cooldown` carries the p1 patches above and adds:
+
+- Group `FirstToken` also limits non-streaming first response content;
+  headers alone do not satisfy it. The final candidate still waits.
+- Provider JSON `modelCooldown` opts exact model IDs into model/account/key
+  cooldowns for slow starts and client cancellations after upstream dispatch.
+  Production opts `raccoon`'s `sn-sensenova-6-8-flash` into a 60-minute cap:
+  1, 2, 4, 8, 16, 32, 60, 60… minutes. Other provider settings and group
+  membership stay as configured. `RestCapOff` overrides this opt-in.
+- A resting opted-in model is not probed even when it is the last candidate;
+  requests with nothing available receive 503 and `Retry-After`.
+
+The fork deliberately counts manual in-flight cancellations too, has no GUI
+editor for the new field, and keeps the existing process-local failure state.
+Success resets the ladder. Queue/retry-pause cancellations do not count.
+
+Validation: new regressions fail with the old gateway logic, including a
+separate mutation removing the hard hold. Targeted gateway race tests pass
+five repetitions; provider normalization/cloning boundaries pass under race.
+Native/Linux/Windows vet and builds pass. A compiled Linux binary in a
+throwaway HOME, through its real HTTP listener, falls back after 1.006 seconds
+and sends zero upstream probes during timeout/cancellation holds.
+
+Full-suite comparison uses a clean checkout of the p1 source (`ed77bfdf`),
+with a temporary HOME, pinned Go caches and umask 022. Both have existing
+failures in gateway (Claude client cache, Codex image fitting, JSON separator
+escaping and WSL listener), pii (GPU residency), plugin (SOCKS proxy), and
+provider (synctest/filememo interaction). These are not represented as a
+green full suite. No unrelated fixes are included in this patch.
