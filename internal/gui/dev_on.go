@@ -19,6 +19,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/yetone/magpie/internal/gateway"
@@ -129,12 +130,71 @@ func devListen(h http.Handler) {
 		return
 	}
 	log.Println("dev ui:", "http://"+addr+"/?theme=dark")
-	devUI = &http.Server{Handler: h}
-	go devUI.Serve(ln)
+	devUI = newDevServe(ln, h)
+	go func() { devUI.done <- devUI.srv.Serve(ln) }()
 }
 
 // devUI is the page served on MAGPIE_DEV_UI, nil when it isn't.
-var devUI *http.Server
+var devUI *devServe
+
+// unreadWait is how long a dev handover waits for a connection taken to
+// send its first request: as for net/http's Shutdown, one that sends
+// nothing for 5s is idle.
+const unreadWait = 5 * time.Second
+
+// devServe is one of the page servers a dev handover drains: the backend's
+// own server, and the one on MAGPIE_DEV_UI. Its finish lets the listener
+// go, waits for Serve to return — by then every connection the server took
+// is noted (StateNew) — and for each of them to have had its first request
+// read, before Shutdown: Shutdown closes a connection whose first request
+// it reads after it began without an answer (go1.26.8 net/http/server.go,
+// #3648). The gateway's handover waits the same way (#3568).
+type devServe struct {
+	srv  *http.Server
+	ln   net.Listener
+	done chan error // Serve's end, once finish has let the listener go
+
+	mu     sync.Mutex
+	unread map[net.Conn]bool
+}
+
+func newDevServe(ln net.Listener, h http.Handler) *devServe {
+	p := &devServe{ln: ln, done: make(chan error, 1)}
+	p.srv = &http.Server{Handler: h, ConnState: p.note}
+	return p
+}
+
+// note is the server's ConnState: a connection is unread from StateNew to
+// its next state, whichever it is.
+func (p *devServe) note(c net.Conn, state http.ConnState) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	if state == http.StateNew {
+		if p.unread == nil {
+			p.unread = map[net.Conn]bool{}
+		}
+		p.unread[c] = true
+		return
+	}
+	delete(p.unread, c)
+}
+
+// finish stops the server taking connections and shuts it down once every
+// connection it took has had its first request read, unreadWait at most or
+// when ctx ends.
+func (p *devServe) finish(ctx context.Context) {
+	p.ln.Close()
+	<-p.done
+	for deadline := time.Now().Add(unreadWait); ; time.Sleep(10 * time.Millisecond) {
+		p.mu.Lock()
+		unread := len(p.unread)
+		p.mu.Unlock()
+		if unread == 0 || time.Now().After(deadline) || ctx.Err() != nil {
+			break
+		}
+	}
+	p.srv.Shutdown(ctx)
+}
 
 // devRole is this process's half of `make dev`: "backend", "shell", or ""
 // for the whole app in one process.
@@ -156,24 +216,29 @@ func devBackend(handler func(Windows) http.Handler) error {
 		return err
 	}
 	log.Println("dev backend:", "http://"+addr)
-	srv := &http.Server{Handler: h}
+	page := newDevServe(ln, h)
 	if handoverSignal == nil {
-		return srv.Serve(ln)
+		return page.srv.Serve(ln)
 	}
-	go srv.Serve(ln)
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, handoverSignal)
+	go func() { page.done <- page.srv.Serve(ln) }()
 	<-sig
 	log.Println("dev backend: handed over · finishing what's in flight")
 	// the page's long polls end within 20s; what the gateway streams, when it ends
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	go srv.Shutdown(ctx)
-	if devUI != nil {
-		go devUI.Shutdown(ctx)
-	}
+	var pages sync.WaitGroup
+	pages.Add(1)
+	go func() {
+		defer pages.Done()
+		page.finish(ctx)
+		if devUI != nil {
+			devUI.finish(ctx)
+		}
+	}()
 	stopServing()
-	srv.Shutdown(ctx)
+	pages.Wait()
 	return nil
 }
 
