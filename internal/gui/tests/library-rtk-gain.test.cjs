@@ -6,6 +6,10 @@
 // its commands in its Windows sandbox, where what RTK saves isn't in that
 // count, and reads the count again each time the RTK tab is opened. In
 // English and Chinese. No backend: the API is faked here.
+//
+// #3320: the sandbox line is what Codex's config sets, not a verdict that
+// nothing was written — the count beside it says what was read — and the
+// count is read again when the window or the page comes back to the RTK tab.
 const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const path = require("node:path");
@@ -52,14 +56,14 @@ const words = {
   en: {
     failed: `magpie couldn't read what RTK saved: ${WHY}`,
     scope: "RTK's own count (rtk gain): every command run through RTK on this computer, from any agent or terminal.",
-    sandbox: "Codex runs its commands in its Windows sandbox, as its own sandbox account: RTK keeps what it saves there in that account's history, not yours, so it isn't counted here.",
+    sandbox: "Codex is set to run its commands in its Windows sandbox, as its own sandbox account: RTK keeps what it saves there in that account's history, not yours, so it isn't counted here.",
     saved: "8.0k tokens saved over 42 commands — 89% on average",
     skills: "Skills",
   },
   zh: {
     failed: `magpie 读不到 RTK 的节省记录：${WHY}`,
     scope: "来自 RTK 自身的统计（rtk gain）：本机经过 RTK 的所有命令，不分 Agent 和终端。",
-    sandbox: "Codex 在 Windows 沙箱中以沙箱专用账户运行命令：RTK 的节省记录存在该账户下而非你的账户，此处无法统计。",
+    sandbox: "Codex 配置为在 Windows 沙箱中以沙箱专用账户运行命令：RTK 的节省记录存在该账户下而非你的账户，此处无法统计。",
     saved: "42 条命令共节省 8.0k token，平均省 89%",
     skills: "技能",
   },
@@ -101,6 +105,73 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         await ctx.close();
       });
     }
+    assert.deepEqual(errors, []);
+  });
+}
+
+// #3320: a config field is not evidence of a failed write. With Codex's
+// sandbox setting present, the count that was read is said as what it is,
+// and the sandbox line says what is set, not that nothing was recorded;
+// and the count is read again when the window comes back to the RTK tab,
+// without touching the tab itself.
+for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"])) {
+  test(engine + ": the sandbox setting isn't a verdict, and the window coming back rereads the count", async (t) => {
+    assert(["chromium", "webkit"].includes(engine), "BROWSER must be chromium or webkit");
+    const browser = await (engine === "webkit" ? webkit.launch() : chromium.launch({ channel: "chromium" }));
+    const errors = [];
+    t.after(async () => {
+      if (errors.length) console.log(errors);
+      await browser.close();
+    });
+    const en = words.en;
+    const gains = [
+      { commands: 42, input: 9000, saved: 8000, pct: 88.9 },
+      { commands: 43, input: 9200, saved: 8100, pct: 88.0 },
+    ];
+    const server2 = async (route) => {
+      const req = route.request(), url = new URL(req.url());
+      if (url.pathname === "/boot.js") return route.fulfill({ contentType: "text/javascript", body: `window.bootPrefs = {lang:"en",theme:"light",web:true};` });
+      if (url.pathname === "/wails/runtime.js") return route.fulfill({ contentType: "text/javascript", body: "export const Window = {};" });
+      if (url.pathname === "/api/state") return route.fulfill({ json: { agents: [], profiles: [], settings: { lang: "en", theme: "light" } } });
+      if (url.pathname === "/api/plugins") return route.fulfill({ json: { plugins: [] } });
+      if (url.pathname === "/api/library") return route.fulfill({ json: lib() });
+      if (url.pathname === "/api/library/rtk") {
+        const g = gains[Math.min(state.reads++, gains.length - 1)];
+        return route.fulfill({ json: { path: `${HOME}/.local/bin/rtk.exe`, version: "0.51.0", url: "https://www.rtk-ai.app", agents: [{ id: "codex", name: "Codex", icon: "", on: true }],
+          codexSandbox: "unelevated", gain: { commands: g.commands, input: g.input, saved: g.saved, pct: g.pct } } });
+      }
+      if (url.pathname === "/api/usage/quotas") return route.fulfill({ json: [] });
+      if (url.pathname === "/api/groups") return route.fulfill({ json: { groups: [] } });
+      if (url.pathname === "/api/providers") return route.fulfill({ json: { providers: [], gateway: { running: true } } });
+      if (url.pathname.startsWith("/api/")) return route.fulfill({ json: {} });
+      const file = path.join(assets, url.pathname === "/" ? "index.html" : url.pathname);
+      const contentType = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png" }[path.extname(file)];
+      await route.fulfill({ body: await fs.readFile(file), contentType });
+    };
+    const state = { reads: 0 };
+    const ctx = await browser.newContext({ viewport: { width: 980, height: 800 } });
+    await ctx.addInitScript(() => { try { localStorage.setItem("magpie.libTab", "rtk"); } catch {} });
+    const page = await ctx.newPage();
+    page.setDefaultTimeout(5000);
+    page.on("pageerror", (e) => errors.push(e.message));
+    await page.route("**/*", server2);
+    await page.goto("http://magpie.test/");
+    await page.locator('button[data-view="library"]').click();
+    const v = page.locator("#view-library");
+    const gain = v.locator(".lib-rtk-gain");
+    await gain.waitFor();
+    const first = await state.reads;
+    // the count was read with the sandbox setting beside it: said as what it is
+    assert.equal(await gain.textContent(), en.saved + " " + en.scope);
+    assert.equal(await v.locator(".lib-rtk-sandbox").textContent(),
+      "Codex is set to run its commands in its Windows sandbox, which can't write RTK's history: what RTK saves there isn't recorded, so it isn't counted here.");
+    // the window hidden and shown again, on the same tab: the count is read again
+    await page.evaluate(() => { document.dispatchEvent(new Event("visibilitychange")); });
+    await page.waitForFunction((want) => document.querySelector("#view-library .lib-rtk-gain")?.textContent.startsWith(want),
+      "8.1k tokens saved over 43 commands — 88% on average").catch(() => {});
+    assert.equal(await gain.textContent(), "8.1k tokens saved over 43 commands — 88% on average" + " " + en.scope);
+    assert.ok(state.reads > first, `the count wasn't reread (${state.reads} reads)`);
+    await ctx.close();
     assert.deepEqual(errors, []);
   });
 }

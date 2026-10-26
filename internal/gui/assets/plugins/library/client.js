@@ -725,6 +725,7 @@ magpie.plugin("library", (ctx) => {
     // RTK's count read afresh each time its tab is opened: an agent run
     // since adds to it (#741); the page keeps the last one until then
     if (id === "rtk" && rtk) loadRTK();
+    else if (id === "rtk") quietRTK();
     if (!lib) return page.querySelector(":scope > .lib-skel")?.replaceWith(skeleton(id));
     render(); syncLists();
   }
@@ -839,6 +840,14 @@ magpie.plugin("library", (ctx) => {
   let rtk = null;          // /api/library/rtk
   const rtkBusy = new Set(); // agents being switched
   let rtkLoading = false;
+  // quietRTK is loadRTK when it may run: the RTK tab alone, and nothing the
+  // reader is mid-way through — a switch, an install or an upgrade redraws
+  // the card from its own answer, which a read racing it would cover with
+  // the older state
+  function quietRTK() {
+    if (tab !== "rtk" || rtkInstalling || rtkUpgrading || rtkPathing || rtkBusy.size) return;
+    loadRTK();
+  }
   async function loadRTK() {
     if (rtkLoading) return;
     rtkLoading = true;
@@ -917,11 +926,14 @@ magpie.plugin("library", (ctx) => {
           : t("Nothing saved yet: the agents' commands go through RTK once it's switched on and the agent is restarted."));
       gain.append(" ", el("span", "lib-rtk-scope", t("RTK's own count (rtk gain): every command run through RTK on this computer, from any agent or terminal.")));
       card.append(gain);
-      // Codex's Windows sandbox: rtk runs there as another account, or one
-      // that can't write RTK's history, so what it saves isn't in that count
+      // Codex's Windows sandbox: the setting says where Codex is set to run
+      // its commands, not whether RTK's history was written — a config
+      // alone is no verdict that nothing was saved, so an account's worth
+      // of the one way is said as what is known, not as a failure
+      // (#3320, Glanci-0525)
       if (rtk.codexSandbox) card.append(el("p", "lib-rtk-note lib-rtk-sandbox", rtk.codexSandbox === "elevated"
-        ? t("Codex runs its commands in its Windows sandbox, as its own sandbox account: RTK keeps what it saves there in that account's history, not yours, so it isn't counted here.")
-        : t("Codex runs its commands in its Windows sandbox, which can't write RTK's history: what RTK saves there isn't recorded, so it isn't counted here.")));
+        ? t("Codex is set to run its commands in its Windows sandbox, as its own sandbox account: RTK keeps what it saves there in that account's history, not yours, so it isn't counted here.")
+        : t("Codex is set to run its commands in its Windows sandbox, which can't write RTK's history: what RTK saves there isn't recorded, so it isn't counted here.")));
       if (rtk.days?.length) card.append(rtkChart(rtk.days));
     } else {
       card.append(ttl);
@@ -5395,8 +5407,13 @@ magpie.plugin("library", (ctx) => {
       page.addEventListener("scroll", () => page.querySelector(".lib-head")?.classList.toggle("stuck", page.scrollTop > 0), { passive: true });
       document.addEventListener("visibilitychange", () => { if (!document.hidden) quietLoad(); });
       window.addEventListener("focus", quietLoad);
+      // the RTK tab's count grows while nobody looks (#3320): the window
+      // coming back, or the Library page itself, reads it again — the same
+      // two moments the rest of the page re-reads, no timer of its own
+      document.addEventListener("visibilitychange", () => { if (!document.hidden) quietRTK(); });
+      window.addEventListener("focus", quietRTK);
     },
-    open: () => (loading = load()),
+    open: () => { loading = load(); quietRTK(); },
     relang: () => load(),
     // one of the market's servers up close, from another page (Settings ›
     // Images' Magpie Image, #2091): its sheet over the MCP servers tab, to
