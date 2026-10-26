@@ -190,9 +190,12 @@ var presets = []PresetDef{
 	{ID: "minimax", Name: "MiniMax", Icon: "minimax-color", Kind: KindVendor, Catalog: "minimax",
 		Chat: "https://api.minimax.io/v1", Anthropic: "https://api.minimax.io/anthropic",
 		Website: "https://platform.minimax.io", KeysURL: "https://platform.minimax.io/user-center/basic-information/interface-key"},
+	// MiniMax's China site moved from api.minimaxi.com to api.minimax.cn
+	// (#3669, kshq1996), the same paths, Responses at the Chat base; a
+	// provider saved before it keeps the old host and still answers
 	{ID: "minimax-cn", Name: "MiniMax (China)", Icon: "minimax-color", Kind: KindVendor, Catalog: "minimax",
-		Chat: "https://api.minimaxi.com/v1", Anthropic: "https://api.minimaxi.com/anthropic",
-		Website: "https://platform.minimaxi.com", KeysURL: "https://platform.minimaxi.com/user-center/basic-information/interface-key"},
+		Chat: "https://api.minimax.cn/v1", Responses: "https://api.minimax.cn/v1", Anthropic: "https://api.minimax.cn/anthropic",
+		Website: "https://platform.minimax.cn", KeysURL: "https://platform.minimax.cn/user-center/basic-information/interface-key"},
 	// a Step Plan is served at its own endpoints (step_plan/…), its key
 	// refused at the pay-as-you-go ones
 	{ID: "stepfun", Name: "StepFun", Icon: "stepfun-color", Kind: KindVendor, Catalog: "stepfun-ai-step-plan, stepfun-ai",

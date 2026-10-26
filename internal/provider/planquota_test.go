@@ -39,6 +39,7 @@ func TestPlanQuotaSource(t *testing.T) {
 		{Provider{Anthropic: "https://api.kimi.ai/coding/"}, "https://api.kimi.ai/coding/v1/usages", true, true},
 		{Provider{Chat: "https://api.commandcode.ai/provider/v1", Anthropic: "https://api.commandcode.ai/provider"}, "https://api.commandcode.ai/alpha/billing/credits", true, false},
 		{Provider{Chat: "https://api.minimaxi.com/v1", Anthropic: "https://api.minimaxi.com/anthropic"}, "https://api.minimaxi.com/v1/token_plan/remains", true, false},
+		{Provider{Chat: "https://api.minimax.cn/v1", Anthropic: "https://api.minimax.cn/anthropic"}, "https://api.minimax.cn/v1/token_plan/remains", true, false},
 		{Provider{Anthropic: "https://api.minimax.io/anthropic"}, "https://api.minimax.io/v1/token_plan/remains", true, false},
 		{Provider{Chat: "https://api.deepseek.com"}, "", false, false},
 		{Provider{Chat: "https://ollama.com/v1", Anthropic: "https://ollama.com"}, "https://ollama.com/api/balance", true, false},
@@ -320,7 +321,7 @@ func TestPlanQuotas(t *testing.T) {
 			w.Write([]byte(zhipuResetList))
 		case "open.bigmodel.cn/api/biz/customer-package-reset/list glm-b":
 			w.Write([]byte(`{"code":1000,"msg":"身份验证失败。","success":false}`))
-		case "api.minimaxi.com/v1/token_plan/remains Bearer sk-cp-k":
+		case "api.minimax.cn/v1/token_plan/remains Bearer sk-cp-k":
 			w.Write([]byte(`{"model_remains":[{"model_name":"general","current_interval_remaining_percent":75,"current_interval_status":1,
 				"current_weekly_remaining_percent":96,"current_weekly_status":1}],"base_resp":{"status_code":0,"status_msg":"success"}}`))
 		case "api.minimaxi.com/v1/token_plan/remains Bearer sk-api-k":
@@ -346,7 +347,7 @@ func TestPlanQuotas(t *testing.T) {
 		// Go at models.dev's URL for it: the same card (ttmrmx on X)
 		{ID: "go-inference", Name: "OpenCode Go", Chat: "https://opencode.ai/inference/go/openai/v1", Key: "go-k"},
 		{ID: "zen", Name: "Zen", Chat: "https://opencode.ai/zen/v1", Key: "zen-k"},
-		{ID: "minimax-cn", Name: "MiniMax (China)", Chat: "https://api.minimaxi.com/v1", Anthropic: "https://api.minimaxi.com/anthropic", Key: "sk-cp-k"},
+		{ID: "minimax-cn", Name: "MiniMax (China)", Chat: "https://api.minimax.cn/v1", Anthropic: "https://api.minimax.cn/anthropic", Key: "sk-cp-k"},
 		{ID: "minimax-payg", Name: "MiniMax API", Anthropic: "https://api.minimaxi.com/anthropic", Key: "sk-api-k"},
 	} {
 		if err := Save(p); err != nil {
