@@ -18,11 +18,15 @@ const { chromium, webkit } = require("playwright");
 const assets = path.resolve(__dirname, "../assets");
 const options = [
   { value: "magpie/group/mine", label: "Mine", note: "routing group · via magpie", group: "Routing groups", ref: "group/mine", icon: "generic" },
+  { value: "magpie/group/night-shift", label: "night-shift", note: "routing group · via magpie", group: "Routing groups", ref: "group/night-shift", icon: "generic" },
   { value: "magpie/other/m1", label: "m1", note: "Other · via magpie", group: "Other", ref: "other/m1", icon: "generic" },
 ];
 const unlisted = [
   { id: "hunyuan/hy4", name: "hy4", provider: "Hunyuan", icon: "generic", groups: [] },
   { id: "hunyuan/hy3", name: "hy3", provider: "Hunyuan", icon: "generic", groups: ["group/mine"] },
+  // kept out of the lists by a group's unlists, not by its provider: the
+  // note names the group, not Codex (#2746, kudi68)
+  { id: "codex/gpt-6.1-sol", name: "gpt-6.1-sol", provider: "Codex", icon: "generic", groups: ["group/night-shift"], byGroup: true },
 ];
 const hunyuan = {
   id: "hunyuan", name: "Hunyuan", icon: "generic", chat: "https://hy.example.com/v1", responses: "", anthropic: "", catalog: "",
@@ -35,12 +39,14 @@ const words = {
   en: {
     none: "Hunyuan is used only through routing groups, and hy4 is in none, so no agent can use it. Make a group of it, or untick “Only through routing groups” in Hunyuan's models.",
     via: "Hunyuan is used only through routing groups: agents reach hy3 by picking Mine.",
+    byGroup: "A routing group keeps gpt-6.1-sol out of the lists: agents reach it by picking night-shift.",
     make: "Make a routing group of it", pick: "Pick Mine", save: "Add",
     lost: "In no routing group, so no agent can use them now: hy4.", makeOf: "Make a routing group of hy4",
   },
   zh: {
     none: "Hunyuan 设为只通过路由分组使用，而 hy4 不在任何分组中，没有 Agent 能用它。可为它建分组，或在 Hunyuan 的模型中取消勾选「只通过路由分组使用」。",
     via: "Hunyuan 设为只通过路由分组使用：选 Mine 即可用到 hy3。",
+    byGroup: "gpt-6.1-sol 被一个路由分组移出了列表：选 night-shift 即可用到它。",
     make: "用它建路由分组", pick: "选 Mine", save: "添加",
     lost: "不在任何路由分组中，暂无 Agent 能用：hy4。", makeOf: "用 hy4 建路由分组",
   },
@@ -49,7 +55,10 @@ const words = {
 function serve(lang, posts) {
   const state = () => ({ agents: [{ id: "claude", name: "Claude Code", path: "/test/claude", wired: true, fields: [{ key: "model", label: "model", value: "magpie/other/m1", options }] }],
     profiles: [], unlisted, settings: { lang, theme: "light" } });
-  const groups = { groups: [], pools: [], deciders: [], models: [{ id: "hunyuan/hy4", name: "hy4", provider: "hunyuan", providerName: "Hunyuan", icon: "generic" }] };
+  const groups = { groups: [
+    { id: "night-shift", name: "night-shift", members: ["codex/gpt-6.1-sol"], unlists: true },
+    { id: "day-shift", name: "day-shift", members: ["codex/gpt-6.1-sol"], unlists: true },
+  ], pools: [], deciders: [], models: [{ id: "hunyuan/hy4", name: "hy4", provider: "hunyuan", providerName: "Hunyuan", icon: "generic" }] };
   return async (r) => {
     const req = r.request(), url = new URL(req.url());
     const json = (data) => r.fulfill({ json: data });
@@ -166,6 +175,25 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       await page.locator("#list li.kept").getByRole("button", { name: w.make }).click();
       for (let i = 0; i < 40 && !posts.some((p) => p.path.startsWith("/api/window/main")); i++) await page.waitForTimeout(50);
       assert.equal(posts.find((p) => p.path.startsWith("/api/window/main"))?.path, "/api/window/main?view=routing&newgroup=hunyuan%2Fhy4");
+
+      // kept out of the lists by a group's unlists: the note names the group
+      // and doesn't blame the provider (#2746, kudi68); via is empty for a
+      // promoted group row, so o.home === ROUTING_GROUPS must be checked
+      // (and byGroup selects the by-group wording)
+      posts = [];
+      page = await open("http://magpie.test/", posts);
+      const field2 = page.locator(`${row} > .field.ag-start[data-key="model"]`);
+      await field2.waitFor();
+      // the field is set to the group, which the picker promotes: its option
+      // will have group:"", home:"Routing groups", so via finds it via home
+      await field2.evaluate((el) => el.value = "magpie/group/night-shift");
+      await filterFor(page, field2, "gpt-6.1-sol");
+      const kept2 = page.locator("#list li.kept");
+      await kept2.waitFor();
+      assert.equal(await kept2.locator(".kept-words b").textContent(), "gpt-6.1-sol");
+      const note2 = await kept2.locator(".kept-words span").textContent();
+      assert.equal(note2, w.byGroup);
+      assert.ok(!note2.includes("Codex"), "doesn't blame the provider");
 
       const missing = await page.evaluate((ks) => ks.filter((k) => !I18N.zh[k]), [
         "In no routing group, so no agent can use them now: {models}.", "Once saved, make a group of them in Routing.",
