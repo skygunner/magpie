@@ -1509,12 +1509,6 @@ func (s *Server) handle(from provider.Protocol) http.HandlerFunc {
 			return
 		}
 		noteAsked(r.Context(), model)
-		// Codex with magpie as its provider: spawn_agent names every
-		// model a subagent may be put on, not only Codex's first five
-		// (Gearclickist on Discord)
-		if from == provider.Responses && (fromCodex(r.Header) || agentOf(r) == "codex") {
-			body = spawnAgentModels(r, body, model, false)
-		}
 		if from == provider.Chat {
 			body = thinkingEffort(body)
 			// a tool Pi adds during a conversation, in a message of its
@@ -1901,6 +1895,14 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 	// keeps the masked one
 	if unredactedRoute(p, isGroup, ms) {
 		masked, body = body, plain
+	}
+	// Codex with magpie as its provider: spawn_agent names every model a
+	// subagent may be put on, not only Codex's first five (Gearclickist on
+	// Discord). The widening waits for the provider here rather than in
+	// handle: a relay set codex=as-sent is checked against the body Codex
+	// wrote (#1758), so its request goes as sent, unwidened (#3793).
+	if from == provider.Responses && (fromCodex(r.Header) || agentOf(r) == "codex") && !codexAsSent(p, r.Header) {
+		body = spawnAgentModels(r, body, asked, false)
 	}
 	// a gateway key held to some models (#882) is refused another, or a
 	// group it doesn't name with one it may not use in it

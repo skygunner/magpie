@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"reflect"
-	"slices"
 	"strings"
 	"testing"
 
@@ -88,23 +87,13 @@ func TestCodexAsSentWebSearch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !bytes.Contains(codex, []byte(`{"type":"web_search"`)) || !bytes.Contains(codex, []byte(`"role":"developer"`)) {
-		t.Fatal("the fixture is no longer a Codex turn offering web_search")
+	if !bytes.Contains(codex, []byte(`{"type":"web_search"`)) || !bytes.Contains(codex, []byte(`"role":"developer"`)) ||
+		!bytes.Contains(codex, []byte(`"spawn_agent"`)) || !bytes.Contains(codex, []byte("Available model overrides")) {
+		t.Fatal("the fixture is no longer a Codex turn offering web_search and spawn_agent")
 	}
-	// spawn_agent's description is widened with the catalog's models on
-	// every Codex turn, as sent or not (spawnAgentModels), so the turn
-	// goes without the multi-agent tools: each other tool is Codex's bytes
-	tools, _, _ := topMember(codex, "tools")
-	var each []json.RawMessage
-	if err := json.Unmarshal(tools, &each); err != nil {
-		t.Fatal(err)
-	}
-	each = slices.DeleteFunc(each, func(m json.RawMessage) bool { return bytes.Contains(m, []byte(`"spawn_agent"`)) })
-	kept, err := json.Marshal(each)
-	if err != nil {
-		t.Fatal(err)
-	}
-	codex = withMembers(codex, map[string][]byte{"tools": kept})
+	// spawn_agent stays in the turn as Codex sent it: with codex=as-sent
+	// the relay is checked against the body Codex wrote, so its description
+	// reaches it unwidened, with no catalogue of models added (#1758, #3793)
 	asked := bytes.Replace(codex, []byte(`"model":"gpt-5"`), []byte(`"model":"fake/m1"`), 1)
 	want := bytes.Replace(codex, []byte(`"model":"gpt-5"`), []byte(`"model":"m1"`), 1)
 	f := &fake{t: t, reply: sse(
