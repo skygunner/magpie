@@ -369,7 +369,14 @@ request alone. `Server.gatewayTrace` in
 
 A remote provider serves the conversation, token-counting, System One,
 embeddings, rerank, speech-to-text, image generation/edit and video
-creation/status/content APIs. Gemini clients enter through the local Gemini adapter and follow the
+creation/status/content APIs. Each request passed on to one carries
+`X-Magpie-Hop`, one more than the hop it came with, and a request that has
+already been through four magpies is refused 508 saying a Remote magpie
+provider points into its own chain: a provider that comes back to a magpie
+it already passed through ends in that answer instead of nesting until the
+computer runs out of memory (#3834, `TestRemoteMagpieLoopIsRefused` in
+[`remote_magpie_loop_test.go`](../../internal/gateway/remote_magpie_loop_test.go)).
+Gemini clients enter through the local Gemini adapter and follow the
 same model routing as other conversation clients. Responses uses HTTP/SSE;
 its WebSocket route still answers 426 (magpie's own leg to the ChatGPT
 backend is a WebSocket for a streamed turn: see

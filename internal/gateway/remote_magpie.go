@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"unicode"
@@ -27,7 +28,19 @@ import (
 const (
 	AgentHeader = "X-Magpie-Agent"
 	ViaHeader   = "X-Magpie-Via"
+	// HopHeader counts the magpies a request has been through: each one adds
+	// a hop as it passes the request on. A magpie handed a request with
+	// hopMost of them refuses it instead of passing it on again (#3834: a
+	// Remote magpie provider synced onto the computer it pointed at sent
+	// every request back to itself until the computer ran out of memory).
+	HopHeader = "X-Magpie-Hop"
 )
+
+// hopMost is how many magpies a request may pass through: another
+// computer's providers are one hop, and three is already nobody's setup. A
+// request through four that arrives at a fifth has a provider in its chain
+// pointing back at a magpie it came from.
+const hopMost = 4
 
 // caller is who a request is recorded as: its agent, and the computer it
 // was passed on from, "" for this one. session and native are the session
@@ -41,6 +54,9 @@ type caller struct {
 	// compact is DSH's compaction mark as it came, passed on with the
 	// session so the other magpie records the call as one (#2505)
 	compact string
+	// hop is how many magpies the request has been through (HopHeader),
+	// passed on as one more where it is passed on again
+	hop int
 	// ua is the User-Agent the request came with, as it came: the one a
 	// provider that passes the agent's on is sent (userAgentFor)
 	ua string
@@ -49,16 +65,25 @@ type caller struct {
 type callerCtx struct{}
 
 // withCaller notes on each request who it is recorded as, and takes the
-// headers that said so off it.
+// headers that said so off it. A request that has been through more
+// magpies than a chain ever is (#3834) is refused here with a 508, before
+// a provider is asked to pass it on again.
 func withCaller(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), callerCtx{}, callerFrom(r))
+		c := callerFrom(r)
+		if c.hop >= hopMost {
+			writeError(w, protoOfPath(r.URL.Path), http.StatusLoopDetected,
+				"magpie refused this request: it has been through "+strconv.Itoa(c.hop)+" magpies and came back around, so passing it on again would loop. A Remote magpie provider points at a magpie in that chain: turn it off, or point it at the computer it means")
+			return
+		}
+		ctx := context.WithValue(r.Context(), callerCtx{}, c)
 		if searchingFrom(r) {
 			// another magpie's search: only the model itself searches
 			ctx = context.WithValue(ctx, searchingKey{}, true)
 		}
 		r.Header.Del(AgentHeader)
 		r.Header.Del(ViaHeader)
+		r.Header.Del(HopHeader)
 		r.Header.Del(SearchingHeader)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -72,6 +97,9 @@ func withCaller(next http.Handler) http.Handler {
 // masking log named magpie where usage named Pi).
 func callerFrom(r *http.Request) caller {
 	c := caller{agent: agentOf(r), session: boundedSession(r.Header.Get(SessionHeader)), ua: r.Header.Get("User-Agent")}
+	// a hop that doesn't parse is none: the request goes on as one hop,
+	// which the magpie it reaches then counts
+	c.hop, _ = strconv.Atoi(strings.TrimSpace(r.Header.Get(HopHeader)))
 	if dshCompacts(r.Header) {
 		c.compact = boundedSession(r.Header.Get(dshCompactHeader))
 	}
@@ -130,6 +158,7 @@ func passOnCaller(ctx context.Context, req *http.Request) {
 	if !ok {
 		return
 	}
+	req.Header.Set(HopHeader, strconv.Itoa(c.hop+1))
 	if c.session != "" {
 		req.Header.Set(SessionHeader, c.session)
 	}
