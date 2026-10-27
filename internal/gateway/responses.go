@@ -1306,6 +1306,12 @@ func buildResponses(r *Request, model, host string, rejectTemp bool) []byte {
 		if v == "" || slices.Contains(include, v) || (v == "reasoning.encrypted_content" && out["reasoning"] == nil) {
 			continue
 		}
+		// xAI (Grok) doesn't support output.encrypted_content in include;
+		// it uses reasoning.encrypted_content instead. Drop the unsupported
+		// value rather than sending it and getting a 400 (#3871).
+		if v == "output.encrypted_content" && host == "api.x.ai" {
+			continue
+		}
 		include = append(include, v)
 	}
 	if len(r.Tools) > 0 || r.WebSearch {
