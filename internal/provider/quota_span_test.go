@@ -22,7 +22,7 @@ func TestCreditsRunningOutReachTheQuotaReport(t *testing.T) {
 	// no resetsAt, the soonest package's end in runsOutAt
 	used := 100 * 282 / 3400.0
 	u := plugin.Usage{Plan: "Free plan", Windows: []plugin.UsageWindow{{Name: "Credits", Used: &used,
-		Display: "282 / 3400", Amount: 282, Limit: 3400, Unit: "credits", RunsOutAt: "2026-10-30T17:34:42.000Z", RunsOut: 18.44}}}
+		Display: "282 / 3400", Amount: fptr(282), Limit: 3400, Unit: "credits", RunsOutAt: "2026-10-30T17:34:42.000Z", RunsOut: 18.44}}}
 	q := quotaOfPlugin(SubscriptionQuota{Kind: "subscription", Provider: "workbuddy", User: "133****0660"}, u)
 
 	got := quotaReport([]SubscriptionQuota{q}, nil, nil, now)
