@@ -336,6 +336,15 @@ func modelFits(s string, a, b int, kind string) bool {
 		if f := strings.Fields(v); len(f) > 1 && hexRe.MatchString(f[0]) || modCacheRe.MatchString(v) {
 			return false
 		}
+		// the count in <total_tokens>N tokens left</total_tokens> is no secret
+		// (#3878): a number immediately after <total_tokens> and before
+		// "tokens left</total_tokens> is a token counter, not a key.
+		const totalTokensPrefix = "<total_tokens>"
+		if a >= len(totalTokensPrefix) && s[a-len(totalTokensPrefix):a] == totalTokensPrefix {
+			if end := strings.Index(s[b:], "tokens left</total_tokens>"); end >= 0 && end < 20 {
+				return false
+			}
+		}
 		return !hexRe.MatchString(v) || secretCued(s, a)
 	case "EMAIL":
 		// a URL's user:password@host is no address, as for the rule's (#3538)
@@ -445,7 +454,7 @@ func numberLike(v string) bool {
 	letters := 0
 	for _, c := range v {
 		switch {
-		case c >= '0' && c <= '9', strings.ContainsRune(" -.()+/", c):
+		case c >= '0' && c <= '9', strings.ContainsRune(" -.()+/: ", c):
 		case unicode.IsLetter(c):
 			letters++
 		default:
