@@ -265,7 +265,11 @@ var presets = []PresetDef{
 	//
 	// TokenHub pay as you go: an API key of TokenHub's own (not the plan's
 	// sk-tp-), at tokenhub.tencentmaas.com in Guangzhou and
-	// tokenhub-intl.tencentmaas.com in Singapore. Each serves chat
+	// tokenhub-intl.tencentmaas.com in Singapore. The International
+	// console's keys answer at their own hosts (#3790): its console's
+	// example asks tokenhub.tencentcloudmaas.com in Guangzhou, and its API
+	// usage page lists Guangzhou, Singapore and Silicon Valley sites at
+	// tokenhub[-intl,-us].tencentcloudmaas.com. Each serves chat
 	// completions and Responses under /v1 (Responses converted from chat
 	// on its side for the models that speak chat alone) and Anthropic
 	// messages at /v1/messages, with its list at /v1/models. It serves Hy
@@ -288,6 +292,8 @@ var presets = []PresetDef{
 			{ID: "cn", Name: "Pay as you go · China", Chat: "https://tokenhub.tencentmaas.com/v1", Responses: "https://tokenhub.tencentmaas.com/v1", Anthropic: "https://tokenhub.tencentmaas.com",
 				Website: "https://cloud.tencent.com/document/product/1823/130078", KeysURL: "https://console.cloud.tencent.com/tokenhub/apikey", Catalog: "tencent-tokenhub"},
 			{ID: "intl", Name: "Pay as you go · Global", Chat: "https://tokenhub-intl.tencentmaas.com/v1", Responses: "https://tokenhub-intl.tencentmaas.com/v1", Anthropic: "https://tokenhub-intl.tencentmaas.com",
+				Website: "https://www.tencentcloud.com/document/product/1300/78939", KeysURL: "https://console.tencentcloud.com/tokenhub/apikey", Catalog: "tencent-tokenhub"},
+			{ID: "intl-gz", Name: "Pay as you go · Global · Guangzhou", Chat: "https://tokenhub.tencentcloudmaas.com/v1", Responses: "https://tokenhub.tencentcloudmaas.com/v1", Anthropic: "https://tokenhub.tencentcloudmaas.com",
 				Website: "https://www.tencentcloud.com/document/product/1300/78939", KeysURL: "https://console.tencentcloud.com/tokenhub/apikey", Catalog: "tencent-tokenhub"},
 			{ID: "enterprise", Name: "Enterprise plan · China", Chat: "https://tokenhub.tencentmaas.com/plan/v3", Responses: "https://tokenhub.tencentmaas.com/plan/v3", Anthropic: "https://tokenhub.tencentmaas.com/plan/anthropic",
 				Website: "https://cloud.tencent.com/document/product/1823/130659", KeysURL: "https://console.cloud.tencent.com/tokenhub/tokenplan",

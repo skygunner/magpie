@@ -55,7 +55,7 @@ func TestTencentCloud(t *testing.T) {
 		t.Fatalf("Tencent Cloud's presets: %+v", tc)
 	}
 	pr := &tc[0]
-	if len(pr.Regions) != 5 {
+	if len(pr.Regions) != 6 {
 		t.Fatalf("regions: %+v", pr.Regions)
 	}
 	for i, c := range tcRegions {
@@ -146,6 +146,46 @@ func TestTencentCloud(t *testing.T) {
 				t.Fatalf("%s: %+v", link, p)
 			}
 		}
+	}
+}
+
+// The International console's Guangzhou endpoint (#3790) is a region of
+// Tencent Cloud's: an International account's key, which the China region
+// answers 401, has a region of its own at tokenhub.tencentcloudmaas.com —
+// the console's own example, and its API usage page's Guangzhou site. An
+// entry imported at its endpoints lands on it, and a link names it.
+func TestTencentCloudIntlGuangzhou(t *testing.T) {
+	pr := Preset("tencent-cloud")
+	host := "https://tokenhub.tencentcloudmaas.com"
+	var r *Region
+	for i := range pr.Regions {
+		if pr.Regions[i].ID == "intl-gz" {
+			r = &pr.Regions[i]
+		}
+	}
+	if r == nil || r.Chat != host+"/v1" || r.Responses != host+"/v1" || r.Anthropic != host ||
+		r.Catalog != "tencent-tokenhub" || r.KeysURL != tcIntlKeys || r.Website != tcIntlDocs {
+		t.Fatalf("intl-gz: %+v", r)
+	}
+	// the China region is untouched: the reporter's key there 401s, so the
+	// new region is the only one at the International console's host
+	for _, other := range pr.Regions {
+		if other.ID != "intl-gz" && (other.Chat == host+"/v1" || other.Responses == host+"/v1" || other.Anthropic == host) {
+			t.Fatalf("%s also at %s", other.ID, host)
+		}
+	}
+	for _, e := range []endpoints{{chat: host + "/v1/"}, {responses: host + "/v1"}, {anthropic: host}} {
+		im, _ := imported("Tencent", "sk-x", e, nil)
+		if im.Preset != "tencent-cloud" || im.KeysURL != tcIntlKeys || im.Catalog != "tencent-tokenhub" {
+			t.Fatalf("imported from %+v: %+v", e, im)
+		}
+		if got := im.regionOf(pr); got == nil || got.ID != "intl-gz" {
+			t.Fatalf("imported from %+v at %+v", e, got)
+		}
+	}
+	p, err := ParseImport("magpie://import?preset=tencent-cloud&region=intl-gz")
+	if err != nil || p.Chat != host+"/v1" || p.Responses != host+"/v1" || p.Anthropic != host || p.KeysURL != tcIntlKeys || p.Website != tcIntlDocs {
+		t.Fatalf("link: %v %+v", err, p)
 	}
 }
 
