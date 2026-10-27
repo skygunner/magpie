@@ -195,6 +195,30 @@ func withEffortUpdates(conv, who, model, effort string, body []byte) ([]byte, bo
 	return b, true
 }
 
+// updatedEffort is the effort a Responses request's input last changes the
+// thread to with a configuration_update item, the top-level
+// reasoning.effort staying the effort it started at; an agent that chooses
+// its own, as omp does on auto (#3918), sends the change this way, so the
+// level the request is at is the last item's. "" when no item names one.
+func updatedEffort(body []byte) string {
+	if !bytes.Contains(body, []byte(`"configuration_update"`)) {
+		return ""
+	}
+	e := ""
+	inputItems(body, func(item []byte) bool {
+		if string(memberOrNil(item, "type")) != `"configuration_update"` {
+			return true
+		}
+		if v := memberOrNil(memberOrNil(item, "reasoning"), "effort"); v != nil {
+			if s, ok := stringBytes(v); ok && len(s) > 0 {
+				e = string(s)
+			}
+		}
+		return true
+	})
+	return e
+}
+
 // effortUpdatesRefused notes that who's model turned the items away: its
 // requests go as the agent sent them from now on.
 func effortUpdatesRefused(who, model string) {

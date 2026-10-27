@@ -335,6 +335,11 @@ func readResponses(body []byte, facts bool) (*Request, error) {
 		r.Thinking = true
 		r.ThinkOff = strings.EqualFold(strings.TrimSpace(q.Reasoning.Effort), "none")
 	}
+	if e := updatedEffort(body); e != "" {
+		// a translated request carries no configuration_update item, so
+		// the level the thread is at now goes as its own reasoning
+		r.Effort, r.Thinking, r.ThinkOff = effortOf(e), true, strings.EqualFold(strings.TrimSpace(e), "none")
+	}
 	var found []rTool // what Codex's tool searches found
 	var s string
 	if decodeJSON(q.Input, &s) == nil {

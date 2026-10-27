@@ -227,6 +227,50 @@ func TestTraceRecordsTheEffortSent(t *testing.T) {
 	}
 }
 
+// TestResponsesEffortUpdateIsTheRoutingEffort: omp keeps a thread's first
+// effort at the top of a Responses request and changes it mid-thread with a
+// configuration_update item, so the level it is at is the last item's, and
+// Routing says that rather than the level the thread started at (#3918).
+func TestResponsesEffortUpdateIsTheRoutingEffort(t *testing.T) {
+	s, up := fasted(t)
+	if err := provider.SetModelEfforts("oa/gpt-6.1-sol", []string{"low", "medium", "high", "xhigh"}); err != nil {
+		t.Fatal(err)
+	}
+	const user = `{"type":"message","role":"user","content":[{"type":"input_text","text":"hello"}]}`
+	update := func(effort string) string {
+		return `{"type":"configuration_update","reasoning":{"effort":"` + effort + `"}}`
+	}
+	for _, c := range []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{"as omp sends it", user + `,` + update("high") + `,` + user, "high"},
+		{"the last of its updates", user + `,` + update("high") + `,` + user + `,` + update("medium") + `,` + user, "medium"},
+		{"an update naming no effort", user + `,{"type":"configuration_update","reasoning":{"summary":"auto"}},` + user, "low"},
+		{"no update", user, "low"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			body := `{"model":"oa/gpt-6.1-sol","reasoning":{"effort":"low"},"input":[` + c.input + `]}`
+			rt := postProto(t, s, "/v1/responses", body)
+			if rt.Effort != c.want || rt.Tries[len(rt.Tries)-1].Effort != c.want {
+				t.Fatalf("route %q, try %q; want %q", rt.Effort, rt.Tries[len(rt.Tries)-1].Effort, c.want)
+			}
+		})
+	}
+	// a member another API serves gets no configuration_update item, so the
+	// level the thread is at now goes as the request's own effort
+	if err := provider.SetModelEfforts("rl/gpt-6.1-sol", []string{"low", "medium", "high", "xhigh"}); err != nil {
+		t.Fatal(err)
+	}
+	body := `{"model":"rl/gpt-6.1-sol","reasoning":{"effort":"low"},"input":[` + user + `,` + update("high") + `,` + user + `]}`
+	rt := postProto(t, s, "/v1/responses", body)
+	_, _, _, sent := up.last(t)
+	if rt.Effort != "high" || rt.Tries[len(rt.Tries)-1].Effort != "high" || sent["reasoning_effort"] != "high" {
+		t.Fatalf("route %q, try %q, sent %v; want high", rt.Effort, rt.Tries[len(rt.Tries)-1].Effort, sent["reasoning_effort"])
+	}
+}
+
 // requestEffort reads the reasoning a request asks for in each API's words.
 func TestRequestEffort(t *testing.T) {
 	for _, c := range []struct {

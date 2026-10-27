@@ -653,10 +653,18 @@ func withEffort(proto provider.Protocol, body []byte, effort string) []byte {
 }
 
 // requestEffort is the reasoning a request asks its model for, in its own
-// API's words: reasoning_effort, reasoning.effort, or — for Anthropic, when
-// it asks to think — output_config's effort or thinking's budget as the
-// level it is nearest. "" when it asks for none.
+// API's words: reasoning_effort, reasoning.effort — for Responses, the last
+// effort its configuration_update items set (updatedEffort) — or, for
+// Anthropic, when it asks to think, output_config's effort or thinking's
+// budget as the level it is nearest. "" when it asks for none.
 func requestEffort(proto provider.Protocol, body []byte) string {
+	if proto == provider.Responses {
+		// a thread the agent changes the effort of mid-thread asks the
+		// level it is at now, not the one it started at
+		if e := updatedEffort(body); e != "" {
+			return e
+		}
+	}
 	if proto != provider.Anthropic {
 		return bodyEffort(proto, body)
 	}
