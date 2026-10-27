@@ -7483,7 +7483,9 @@ function input(value, placeholder, type = "text") {
 // editor put away (Cancel, Escape, a click outside) takes it with it (#526)
 let providerDraftRef = null, providerDraftBase = "";
 function providerDraftValue() {
-  return JSON.stringify({ ...draft, headers: headersOf(draft?.headers), modelPrefs: modelPrefsOfDraft() });
+  // no id typed is none typed: a box cleared again leaves "" behind, which
+  // isn't a change the editor should ask to discard
+  return JSON.stringify({ ...draft, typed: (draft?.typed || "").trim() || undefined, headers: headersOf(draft?.headers), modelPrefs: modelPrefsOfDraft() });
 }
 function providerDirty() {
   // Price boxes parse on change; a page closed while typing hasn't blurred one yet.

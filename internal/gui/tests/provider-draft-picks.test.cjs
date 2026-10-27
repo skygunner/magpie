@@ -145,5 +145,50 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       assert.deepEqual(saves[2], []);
       assert.deepEqual(errors, []);
     });
+
+    test(`${engine} ${lang}: a model box typed in and cleared leaves nothing unsaved`, async (t) => {
+      const browser = await (engine === "webkit" ? webkit.launch() : chromium.launch({ channel: "chromium" }));
+      t.after(() => browser.close());
+      const page = await (await browser.newContext({ viewport: { width: 900, height: 760 }, reducedMotion: "reduce" })).newPage();
+      page.setDefaultTimeout(5000);
+      const errors = [];
+      page.on("pageerror", (e) => errors.push(e.message));
+      const saves = [];
+      await page.route("**/*", serve(lang, saves));
+      await page.goto("http://magpie.test/?view=providers");
+      const editor = page.locator("#modal:not([hidden]) .editor");
+      const open = async () => {
+        await page.locator(".row.provider", { hasText: "Router" }).click();
+        await editor.locator(".mchips .mchip").first().waitFor();
+      };
+      const button = (name) => editor.getByRole("button", { name, exact: true });
+      const box = () => editor.locator(".mfoot input");
+
+      // the models area: the filter and the add box typed in, both cleared
+      await open();
+      const filter = editor.locator(".mbulk input");
+      await filter.fill("vendor/model-2");
+      await filter.fill("");
+      await box().fill("vendor/model-30");
+      await box().fill("");
+      assert.equal(await page.evaluate(() => providerDirty()), false, "nothing is left to discard");
+      await button(w.cancel).click();
+      await editor.waitFor({ state: "detached" });
+      assert.equal(await page.locator("dialog.action-confirm").count(), 0, "Cancel closes without asking to discard");
+      assert.deepEqual(saves, []);
+
+      // a model id still typed is unsaved, and Cancel drops it
+      await open();
+      await box().fill("vendor/model-30");
+      await button(w.cancel).click();
+      const ask = page.locator("dialog.action-confirm[open]");
+      await ask.waitFor();
+      await ask.locator("button").last().click();
+      await editor.waitFor({ state: "detached" });
+      assert.deepEqual(saves, [], "Cancel saved nothing");
+      await open();
+      assert.equal(await box().inputValue(), "", "the typed id is gone");
+      assert.deepEqual(errors, []);
+    });
   }
 }
