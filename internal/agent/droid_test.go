@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/yetone/magpie/internal/catalog"
 	"github.com/yetone/magpie/internal/gateway"
 	"github.com/yetone/magpie/internal/provider"
 )
@@ -280,5 +281,27 @@ func TestDroidOverrideAndLegacy(t *testing.T) {
 	}
 	if _, err := os.Stat(a.Path); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// Droid clamps a custom model without reasoningEffort to none, so every
+// entry magpie writes carries the model's first advertised reasoning level.
+func TestDroidEntriesExposeReasoningEffort(t *testing.T) {
+	_, path := droidHome(t)
+	// the catalog model the relay serves advertises three levels
+	os.WriteFile(catalog.CachePath(), []byte(`{"zai":{"models":{"glm-4.6":{"id":"glm-4.6","name":"GLM-4.6","limit":{"context":204800},"reasoning_options":[{"type":"effort","values":["low","high","max"]}]}}}}`), 0o644)
+	catalog.Reset()
+	t.Cleanup(catalog.Reset)
+	a := droid(os.Getenv("HOME"))
+	if err := a.Apply("model", "magpie/relay/glm-4.6"); err != nil {
+		t.Fatal(err)
+	}
+	ms, _, _ := droidFile(t, path)
+	e := ms["custom:magpie/relay/glm-4.6"]
+	if e == nil {
+		t.Fatal("no magpie entry")
+	}
+	if e["reasoningEffort"] != "low" {
+		t.Fatalf("reasoningEffort: %v", e["reasoningEffort"])
 	}
 }

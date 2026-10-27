@@ -55,7 +55,8 @@ type droidEntry struct {
 	MaxOutputTokens int    `json:"maxOutputTokens,omitempty"`
 	// droid takes a model on Chat Completions as seeing no images unless
 	// told otherwise, so this is always written
-	NoImageSupport bool `json:"noImageSupport"`
+	NoImageSupport  bool   `json:"noImageSupport"`
+	ReasoningEffort string `json:"reasoningEffort,omitempty"`
 }
 
 // droidEntries are magpie's custom models as the catalog is now.
@@ -78,6 +79,9 @@ func droidEntriesAt(gw string) []droidEntry {
 		// shows; droid finds the model by its id, whatever its name
 		if e.DisplayName = m.Name; e.DisplayName == "" {
 			e.DisplayName = m.ID
+		}
+		if len(m.Efforts) > 0 {
+			e.ReasoningEffort = m.Efforts[0]
 		}
 		out = append(out, e)
 	}
