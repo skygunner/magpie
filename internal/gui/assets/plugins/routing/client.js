@@ -5721,7 +5721,10 @@ function routingPage(part) {
         // or leaving it keeps it, Escape puts it back
         if (d.routing === "weight") row.append(memberWeight(id, off));
         if (s) row.title = s.members.map((x) => memberLabel(s, x)).join(s.routing === "order" ? " → " : " · ");
-        if (!m && !s) { row.classList.add("off"); row.title = info?.providerOff ? offWords(info) : t("No provider serves {id} now; it is skipped", { id }); }
+        // what the gateway goes by, not the served models list: a member
+        // of a provider it resolves but doesn't list is routed all the
+        // same, so it is not said unserved (#3805)
+        if (!m && !s && !info?.ready) { row.classList.add("off"); row.title = info?.providerOff ? offWords(info) : t("No provider serves {id} now; it is skipped", { id }); }
         if (matched) {
           // a pattern's: it follows the catalog, so it is switched off
           // rather than taken out — the pattern would find it again

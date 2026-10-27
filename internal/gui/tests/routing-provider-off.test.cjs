@@ -19,8 +19,12 @@ const info = [
   { id: "a/sol", ready: true, provider: "a", name: "A Cloud", model: "sol", on: 1 },
   { id: "b/sol", ready: false, providerOff: true, provider: "b", name: "B Cloud", icon: "generic", model: "sol", on: 0 },
   { id: "c/sol", ready: false, on: 0 },
+  // ready but absent from models: the gateway routes it (groups.go sets
+  // ready through provider.Resolve, which reads more than the served
+  // list), so the editor may not grey it as unserved (#3805)
+  { id: "d/sol", ready: true, provider: "d", name: "D Cloud", model: "sol", on: 1 },
 ];
-const base = { members: ["a/sol", "b/sol", "c/sol"], ready: true, memberInfo: info, offers: [], shared: [] };
+const base = { members: ["a/sol", "b/sol", "c/sol", "d/sol"], ready: true, memberInfo: info, offers: [], shared: [] };
 const groups = { models, pools: [], groups: [
   { ...base, id: "auto-sol", name: "Sol", routing: "order" },
   { ...base, id: "hand", name: "Hand", routing: "manual", pick: "a/sol", picked: "a/sol" },
@@ -70,7 +74,7 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
 
         const card = page.locator(".rt-group", { hasText: "Sol" }).first();
         await card.waitFor();
-        assert.equal(await card.locator(".mem").first().textContent(), `A Cloud · sol → B Cloud · sol (${off}) → c/sol`);
+        assert.equal(await card.locator(".mem").first().textContent(), `A Cloud · sol → B Cloud · sol (${off}) → c/sol → D Cloud · sol`);
         // a manual group's pick says why it is skipped
         const hand = page.locator(".rt-group", { hasText: "Hand" });
         const pick = hand.locator('.rt-pick[data-member="b/sol"]');
@@ -79,6 +83,11 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         assert.equal(await pick.getAttribute("title"), why);
         assert.equal(await pick.evaluate((b) => b.classList.contains("off")), true);
         assert.equal(await hand.locator('.rt-pick[data-member="c/sol"]').getAttribute("title"), await say("No provider serves {id} now; it is skipped", { id: "c/sol" }));
+        // one the gateway routes (ready) is picked like any other, though
+        // the served models list lacks it (#3805)
+        const pickD = hand.locator('.rt-pick[data-member="d/sol"]');
+        assert.equal(await pickD.evaluate((b) => b.classList.contains("off")), false, "a ready member's pick is not greyed");
+        assert.equal(await pickD.getAttribute("title"), await say("Send every request to {name}", { name: "D Cloud · sol" }));
 
         // the editor: its row muted, saying why
         // the page puts back a scroll the reader didn't make, so at 420 the
@@ -90,6 +99,16 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         assert.equal(await row.getAttribute("title"), why);
         assert.equal(await row.evaluate((r) => r.classList.contains("off")), true);
         assert.equal(await row.locator(".n > span").first().textContent(), "sol");
+        // a member the gateway routes (ready) is not greyed in the editor
+        // either, though the served models list lacks it (#3805)
+        const rowD = ed.locator(".fbrow", { has: page.locator(".n", { hasText: "d/sol" }) });
+        assert.equal(await rowD.count(), 1);
+        assert.equal(await rowD.evaluate((r) => r.classList.contains("off")), false, "a ready member's editor row is not greyed");
+        assert.equal(await rowD.getAttribute("title"), null, "nor said unserved");
+        // one nothing is known of is still said unserved
+        const rowC = ed.locator(".fbrow", { has: page.locator(".n", { hasText: "c/sol" }) });
+        assert.equal(await rowC.evaluate((r) => r.classList.contains("off")), true);
+        assert.equal(await rowC.getAttribute("title"), await say("No provider serves {id} now; it is skipped", { id: "c/sol" }));
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), true, "nothing spills");
         assert.deepEqual(errors, []);
       });
