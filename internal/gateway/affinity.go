@@ -776,8 +776,10 @@ type sealedItem struct {
 // sealedKinds are the input items a vendor seals for itself: its
 // reasoning, and the compaction a conversation's earlier turns were
 // folded into (OpenAI's, when Codex compacts on its own models; magpie's
-// own is text by the time a request is sent).
-var sealedKinds = map[string]bool{"reasoning": true, "compaction": true, "compaction_summary": true}
+// own is text by the time a request is sent). A web_search_call carries
+// an encrypted_content bound to the account that ran the search; a new
+// account can't read it (#3887).
+var sealedKinds = map[string]bool{"reasoning": true, "compaction": true, "compaction_summary": true, "web_search_call": true}
 
 var compactionKinds = []string{"compaction", "compaction_summary"}
 
@@ -870,8 +872,47 @@ func withoutRefused(key, who string, body []byte) ([]byte, bool) {
 // withoutReasoning takes the sealed reasoning out of a Responses request's
 // input — what another account wrote and this one can't read. What was
 // said and done stays; only the model's private notes to itself go.
+// For web_search_call, only the encrypted_content is removed (#3887).
 func withoutReasoning(body []byte) ([]byte, bool) {
-	return withoutKinds(body, "reasoning")
+	if b, ok := withoutKinds(body, "reasoning"); ok {
+		return b, true
+	}
+	return stripWebSearchEncrypted(body)
+}
+
+// stripWebSearchEncrypted removes the encrypted_content field from
+// web_search_call items in a Responses request's input. The rest of the
+// search context (action, queries, id) is kept so the upstream can still
+// understand the search that was performed (#3887).
+func stripWebSearchEncrypted(body []byte) ([]byte, bool) {
+	var q map[string]json.RawMessage
+	if decodeJSONView(body, &q) != nil {
+		return nil, false
+	}
+	items, isList := inputList(q["input"])
+	if !isList {
+		return nil, false
+	}
+	changed := false
+	for i := range items {
+		var it map[string]json.RawMessage
+		if decodeJSONView(items[i], &it) != nil {
+			continue
+		}
+		if t, ok := it["type"]; ok && string(t) == `"web_search_call"` {
+			if _, ok := it["encrypted_content"]; ok {
+				delete(it, "encrypted_content")
+				items[i], _ = json.Marshal(it)
+				changed = true
+			}
+		}
+	}
+	if !changed {
+		return nil, false
+	}
+	q["input"], _ = json.Marshal(items)
+	b, err := marshalJSON(q)
+	return b, err == nil
 }
 
 // withoutCompaction takes out of a Responses request's input the sealed

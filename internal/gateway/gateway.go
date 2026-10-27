@@ -3063,6 +3063,15 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 					refused(stuck, c.vendor(), attemptBody, compactionKinds...)
 				}
 			}
+			// a web_search_call's encrypted_content bound to the previous
+			// account is what xAI complains about (#3887): strip it out
+			// and retry once more before giving up
+			if !ok {
+				resealed = 3
+				if b, ok = withoutKinds(body, "web_search_call"); ok {
+					refused(stuck, c.vendor(), attemptBody, "web_search_call")
+				}
+			}
 			if ok {
 				body = b
 				try.Fail = failForeign
