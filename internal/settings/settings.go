@@ -773,6 +773,11 @@ type Settings struct {
 	// it was while it is maximised, and a side fitted to a smaller screen
 	// keeps the larger one (gui's settle).
 	Window []int `json:"window,omitempty"`
+	// WindowAt is the main window's place as it last settled, x and y on the
+	// desktop, so it opens there again after a restart (#2785), rather than
+	// centred. Kept as it was while it is maximised, like Window (gui's
+	// settleAt).
+	WindowAt []int `json:"windowAt,omitempty"`
 	// WindowMaximised: the main window was maximised (zoomed, on the Mac)
 	// when it last settled, so it opens maximised again; Window is still the
 	// size it is restored to.
@@ -1101,9 +1106,9 @@ func (s Settings) Compact() int {
 }
 
 // KeepOwn puts back cur's settings that are this computer's own, which a
-// sync or a restored backup never brings from another: the window's size
-// and whether it was maximised, the proxy, the gateway's port, whether it
-// is shared on the local network and the addresses let in to it, the
+// sync or a restored backup never brings from another: the window's size,
+// place and whether it was maximised, the proxy, the gateway's port, whether
+// it is shared on the local network and the addresses let in to it, the
 // Dock, gateway mode, whether WSL is looked in, whether agents' sign-ins
 // are read, when allowances are read, the terminal app a session resumes
 // in, whether the local masking model is on (it is downloaded on this
@@ -1114,7 +1119,7 @@ func (s Settings) Compact() int {
 func (s *Settings) KeepOwn(cur Settings) {
 	s.GatewayConversations = cur.GatewayConversations
 	s.UIFont, s.CodeFont = cur.UIFont, cur.CodeFont
-	s.Window, s.Proxy, s.Port, s.Dock, s.DockWindow, s.Lightweight = cur.Window, cur.Proxy, cur.Port, cur.Dock, cur.DockWindow, cur.Lightweight
+	s.Window, s.WindowAt, s.Proxy, s.Port, s.Dock, s.DockWindow, s.Lightweight = cur.Window, cur.WindowAt, cur.Proxy, cur.Port, cur.Dock, cur.DockWindow, cur.Lightweight
 	s.ProxyCustom = cur.ProxyCustom
 	s.WindowMaximised, s.KeepAwake, s.KeepAwakeDisplay = cur.WindowMaximised, cur.KeepAwake, cur.KeepAwakeDisplay
 	s.TrayUsages, s.TrayUsage, s.TrayUsageEvery, s.TrayNoLogos, s.TrayNoBird, s.TrayPace, s.TrayNoCost = cur.TrayUsages, cur.TrayUsage, cur.TrayUsageEvery, cur.TrayNoLogos, cur.TrayNoBird, cur.TrayPace, cur.TrayNoCost

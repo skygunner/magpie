@@ -1,6 +1,9 @@
 package settings
 
-import "testing"
+import (
+	"slices"
+	"testing"
+)
 
 // Lightweight mode (#580) is off for a user who never chose (the owner,
 // 10-21: too slow to have by default), on for one who turned it on, and
@@ -73,18 +76,18 @@ func TestKeepAwakeKeptAndOwn(t *testing.T) {
 	}
 }
 
-// Whether the main window was maximised is this computer's, like its size:
-// a synced or restored bundle doesn't bring another's.
+// The main window's size, its place and whether it was maximised are this
+// computer's: a synced or restored bundle doesn't bring another's.
 func TestWindowMaximisedKeptAndOwn(t *testing.T) {
 	from := Settings{}
-	from.KeepOwn(Settings{Window: []int{900, 700}, WindowMaximised: true})
-	if !from.WindowMaximised || len(from.Window) != 2 {
-		t.Fatalf("KeepOwn dropped it: %v %v", from.Window, from.WindowMaximised)
+	from.KeepOwn(Settings{Window: []int{900, 700}, WindowAt: []int{120, 90}, WindowMaximised: true})
+	if !from.WindowMaximised || !slices.Equal(from.Window, []int{900, 700}) || !slices.Equal(from.WindowAt, []int{120, 90}) {
+		t.Fatalf("KeepOwn dropped it: %v %v %v", from.Window, from.WindowAt, from.WindowMaximised)
 	}
-	from = Settings{Window: []int{1200, 800}, WindowMaximised: true}
+	from = Settings{Window: []int{1200, 800}, WindowAt: []int{40, 40}, WindowMaximised: true}
 	from.KeepOwn(Settings{})
-	if from.WindowMaximised || from.Window != nil {
-		t.Fatalf("another computer's window here: %v %v", from.Window, from.WindowMaximised)
+	if from.WindowMaximised || from.Window != nil || from.WindowAt != nil {
+		t.Fatalf("another computer's window here: %v %v %v", from.Window, from.WindowAt, from.WindowMaximised)
 	}
 }
 

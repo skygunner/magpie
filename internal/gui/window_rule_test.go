@@ -48,6 +48,47 @@ func TestFitRoom(t *testing.T) {
 	}
 }
 
+// The window opens where it was last left (#2785), not centred: the place it
+// is moved to is kept as it settles, and used again. One left on a screen
+// since unplugged opens centred, where its title bar is in reach, rather than
+// off every screen; screens not looked at yet are unknown, not gone. A file
+// from an older magpie, or a place short of x and y, is no place.
+func TestMainWindowKeepsItsPlace(t *testing.T) {
+	screens := [][4]int{{0, 0, 1728, 1084}, {-1280, 0, 1280, 1024}}
+	var s settings.Settings
+	if !settleAt(&s, -1280, 0) || !slices.Equal(s.WindowAt, []int{-1280, 0}) {
+		t.Fatalf("settleAt kept %v", s.WindowAt)
+	}
+	if x, y, ok := openAt(s.WindowAt, screens); !ok || x != -1280 || y != 0 {
+		t.Errorf("openAt = %d, %d, %v; want -1280, 0, true", x, y, ok)
+	}
+	if settleAt(&s, -1280, 0) {
+		t.Errorf("settleAt changed a place it had kept: %v", s.WindowAt)
+	}
+	if !settleAt(&s, 100, 50) {
+		t.Errorf("settleAt kept nothing of a place moved to: %v", s.WindowAt)
+	}
+	// that second screen unplugged
+	if x, y, ok := openAt(s.WindowAt, screens[1:]); ok {
+		t.Errorf("openAt = %d, %d, %v on a screen that has gone; want centred", x, y, ok)
+	}
+	// just past its right edge, and its last point
+	if _, _, ok := openAt([]int{0, 0}, screens[1:]); ok {
+		t.Error("openAt kept a place past the screen's right edge")
+	}
+	if _, _, ok := openAt([]int{-1, 1023}, screens[1:]); !ok {
+		t.Error("openAt lost a place on the screen's last point")
+	}
+	if x, y, ok := openAt(s.WindowAt, nil); !ok || x != 100 || y != 50 {
+		t.Errorf("openAt with no screens looked at = %d, %d, %v; want the place kept", x, y, ok)
+	}
+	for _, saved := range [][]int{nil, {5}} {
+		if _, _, ok := openAt(saved, screens); ok {
+			t.Errorf("openAt(%v) = a place, want centred", saved)
+		}
+	}
+}
+
 // The window is kept as it settles: maximised or not, and the size it is
 // restored to. Maximised, the size kept stays the one the user gave it, so
 // it opens maximised and restores to that size (on a MacBook: zoomed last,

@@ -29,9 +29,9 @@ import (
 func (h *host) makeMain(url string) *application.WebviewWindow {
 	z := h.zoom()
 	// the window opens at the size it was last given, no smaller than its
-	// page's least at the text size (window_rule.go); maximised again, if it
-	// was: on Linux as it is made, elsewhere once it is first shown
-	// (placeMain)
+	// page's least at the text size, and where it was last left
+	// (window_rule.go, placeMain); maximised again, if it was: on Linux as it
+	// is made, elsewhere once it is first shown (placeMain)
 	minW, minH := windowMin(z, 0, 0)
 	width, height := openSize(settings.Load().Window, minW, minH)
 	state := application.WindowStateNormal
@@ -57,18 +57,20 @@ func (h *host) makeMain(url string) *application.WebviewWindow {
 		BackgroundColour: winBg,
 	})
 	h.zoomWhenLoaded(w)
-	// A resize is kept once it settles (settle): the size, or that the
-	// window is maximised. Nothing is kept of a window not placed and shown
-	// yet (placeMain: a text size can resize it, unmaximised as yet), one
-	// let go (0×0), or one full screen or minimised, which keeps what was
-	// kept before it went so; nor, on Linux, of one hidden by then, since
-	// X11 drops a hidden window's maximised state.
-	var resized *time.Timer
-	w.OnWindowEvent(events.Common.WindowDidResize, func(*application.WindowEvent) {
-		if resized != nil {
-			resized.Stop()
+	// A resize or a move is kept once it settles (settle, settleAt): the size
+	// and the place, or that the window is maximised. Nothing is kept of a
+	// window not placed and shown yet (placeMain: a text size can resize it,
+	// unmaximised as yet), one let go (0×0), or one full screen or
+	// minimised, which keeps what was kept before it went so; nor, on Linux,
+	// of one hidden by then, since X11 drops a hidden window's maximised
+	// state. A maximised window's place is the screen's, not one the user
+	// gave it, as its size is.
+	var settled *time.Timer
+	keep := func(*application.WindowEvent) {
+		if settled != nil {
+			settled.Stop()
 		}
-		resized = time.AfterFunc(500*time.Millisecond, func() {
+		settled = time.AfterFunc(500*time.Millisecond, func() {
 			if h.placed.Load() != w || w.IsFullscreen() || w.IsMinimised() || runtime.GOOS == "linux" && !w.IsVisible() {
 				return
 			}
@@ -77,11 +79,19 @@ func (h *host) makeMain(url string) *application.WebviewWindow {
 				return
 			}
 			sw, sh := fitScreen(w)
-			if s := settings.Load(); settle(&s, wd, ht, sw, sh, w.IsMaximised()) {
+			s := settings.Load()
+			changed := settle(&s, wd, ht, sw, sh, w.IsMaximised())
+			if !w.IsMaximised() {
+				x, y := w.Position()
+				changed = settleAt(&s, x, y) || changed
+			}
+			if changed {
 				settings.Save(s)
 			}
 		})
-	})
+	}
+	w.OnWindowEvent(events.Common.WindowDidResize, keep)
+	w.OnWindowEvent(events.Common.WindowDidMove, keep)
 	// Closing the window keeps the tray alive; quitting is a menu action.
 	// One lightweight mode lets go is closed for good.
 	w.RegisterHook(events.Common.WindowClosing, func(e *application.WindowEvent) {
@@ -321,8 +331,9 @@ func showHere(w *application.WebviewWindow) {
 }
 
 // placeMain puts the main window, made and not shown yet, as it was last
-// left; on the main thread, before its first Show. On Windows, a size kept
-// on a larger screen is fitted to this one's work area and centred: Windows
+// left; on the main thread, before its first Show. Its place is the one it
+// was last left at, if that screen is still here (openAt). On Windows, a
+// size kept on a larger screen is fitted to this one's work area: Windows
 // doesn't, and the title bar would be out of reach. Then, if it was
 // maximised, it is maximised again; on Linux it was made so (StartState),
 // since GTK can't be asked about a window not shown yet.
@@ -342,7 +353,16 @@ func showHere(w *application.WebviewWindow) {
 // to its own size, which the Mac fits to the screen again, so it couldn't
 // be restored at all.
 func (h *host) placeMain(w *application.WebviewWindow) {
-	if h.placed.Swap(w) == w || runtime.GOOS == "linux" {
+	if h.placed.Swap(w) == w {
+		return
+	}
+	// its place before it is shown anywhere: on Linux StartState has already
+	// maximised it, elsewhere it is zoomed below
+	x, y, left := openAt(settings.Load().WindowAt, h.rooms())
+	if left {
+		w.SetPosition(x, y)
+	}
+	if runtime.GOOS == "linux" {
 		return
 	}
 	if w.IsMaximised() {
@@ -353,7 +373,9 @@ func (h *host) placeMain(w *application.WebviewWindow) {
 	fw, fh, fitted := fitRoom(wd, ht, sw, sh)
 	if fitted && runtime.GOOS == "windows" {
 		w.SetSize(fw, fh)
-		w.Center()
+		if !left {
+			w.Center() // fitted to this screen, it is centred on it; a place of its own is kept
+		}
 		fitted = false
 	}
 	if settings.Load().WindowMaximised && !fitted {
@@ -388,4 +410,20 @@ func fitScreen(w *application.WebviewWindow) (int, int) {
 		return 0, 0
 	}
 	return screenRoom(w)
+}
+
+// rooms is each screen's work area, x, y, width and height, in the units of
+// the main window's Position: Linux places a window in the display's own
+// pixels, Windows and the Mac in its scaled ones (DIPs, points). None until
+// the app has looked at the screens.
+func (h *host) rooms() [][4]int {
+	var rooms [][4]int
+	for _, s := range h.app.Screen.GetAll() {
+		r := s.WorkArea
+		if runtime.GOOS == "linux" {
+			r = s.PhysicalWorkArea
+		}
+		rooms = append(rooms, [4]int{r.X, r.Y, r.Width, r.Height})
+	}
+	return rooms
 }

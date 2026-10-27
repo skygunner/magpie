@@ -3,11 +3,44 @@ package gui
 import "github.com/yetone/magpie/internal/settings"
 
 // The main window opens as it was last left: at the size it was last given
-// (settings.Window) and maximised again if it was (settings.WindowMaximised).
+// (settings.Window), where it was last left (settings.WindowAt) and maximised
+// again if it was (settings.WindowMaximised).
 
 // windowW, windowH is the main window's size, in points, before it is first
 // given one.
 const windowW, windowH = 660, 600
+
+// openAt is the place the main window opens at: the one it was last left at
+// (saved), when that point is on a screen this computer has now (rooms, each
+// screen's work area as x, y, width and height, in the window's own units).
+// A window left on a screen since unplugged opens centred instead: there, at
+// least, its title bar is in reach. Screens not looked at yet are unknown,
+// not gone, and the place saved is used.
+func openAt(saved []int, rooms [][4]int) (int, int, bool) {
+	if len(saved) != 2 {
+		return 0, 0, false
+	}
+	if len(rooms) == 0 {
+		return saved[0], saved[1], true
+	}
+	for _, r := range rooms {
+		if saved[0] >= r[0] && saved[0] < r[0]+r[2] && saved[1] >= r[1] && saved[1] < r[1]+r[3] {
+			return saved[0], saved[1], true
+		}
+	}
+	return 0, 0, false
+}
+
+// settleAt keeps in s the main window's place, x and y, as it settled, and
+// says whether s changed. The caller leaves a maximised window out: its place
+// is the screen's, not one the user gave it, as its size is (settle).
+func settleAt(s *settings.Settings, x, y int) bool {
+	if len(s.WindowAt) == 2 && s.WindowAt[0] == x && s.WindowAt[1] == y {
+		return false
+	}
+	s.WindowAt = []int{x, y}
+	return true
+}
 
 // openSize is the size, in points, the main window opens at: the one it was
 // last given (saved), else windowW×windowH; no smaller than its least (minW,
