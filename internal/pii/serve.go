@@ -51,9 +51,8 @@ type helper struct {
 // cold start every request and the Settings page waited minutes behind
 // one load (#3682).
 var srv struct {
-	mu   sync.Mutex
-	h    *helper
-	idle *time.Timer
+	mu sync.Mutex
+	h  *helper
 	// cpu is set once pf-serve died on the GPU, didn't load there, or
 	// hung there twice in a row: it runs on the CPU until gpuAgain, when
 	// the GPU is tried again (gpuRetryAfter); gpuLost says why, gpuFails
@@ -74,11 +73,23 @@ var srv struct {
 	lastErr error
 	fails   int
 	retryAt time.Time
-	// loading is set while pf-serve loads the model
-	loading bool
-	// stop is closed by Stop: a load under way gives up, and the request
-	// it was for fails rather than start pf-serve again
-	stop chan struct{}
+	// loading is set while pf-serve loads the model, and starting is the
+	// one that is: Stop ends it from whichever goroutine it is called on,
+	// a load under way giving up, and the request it was for failing
+	// rather than start pf-serve again (startOne)
+	loading  bool
+	starting *helper
+	// stopGen counts Stops: a request takes it when it gets its turn, and
+	// one a Stop moved on since was ended by that Stop. Stop closed a
+	// channel here before, made by the first request: made in a test's
+	// synctest bubble and closed outside it, that was fatal (#3722)
+	stopGen uint64
+	// idleGen counts answered requests. A timer is never stopped or reset
+	// by a later one, so no timer a test's request armed in a synctest
+	// bubble is touched from outside it; one whose pf-serve is gone, or
+	// which a later answer made stale, finds another one or idleGen moved
+	// on, and ends nothing (#3722)
+	idleGen uint64
 }
 
 // turn is pf-serve's pipe, held by the one request on it.
@@ -86,14 +97,6 @@ var turn = make(chan struct{}, 1)
 
 // waiting counts the requests waiting for their turn.
 var waiting atomic.Int32
-
-// stopCh is srv.stop, made the first time; mu is held.
-func stopCh() chan struct{} {
-	if srv.stop == nil {
-		srv.stop = make(chan struct{})
-	}
-	return srv.stop
-}
 
 // loadTimeout is how long pf-serve has to load the model on the CPU:
 // 1.6 GB read from a slow disk, and the warm-up's texts read on a slow
@@ -176,9 +179,10 @@ func candidates(cpu bool) []candidate {
 	return append(out, candidate{exe("pf-serve"), true})
 }
 
-// start runs pf-serve, the first of candidates that loads the model.
-// stop ends a load under way.
-func start(cpu bool, stop <-chan struct{}) (*helper, error) {
+// start runs pf-serve, the first of candidates that loads the model;
+// gen is the Stop generation the request took, and a Stop since ends a
+// load under way.
+func start(cpu bool, gen uint64) (*helper, error) {
 	if !Installed() {
 		return nil, ErrNotInstalled
 	}
@@ -190,7 +194,7 @@ func start(cpu bool, stop <-chan struct{}) (*helper, error) {
 	var errs []error
 	gpuLost := ""
 	for _, c := range candidates(cpu) {
-		h, err := startOne(c.path, c.cpu, stop)
+		h, err := startOne(c.path, c.cpu, gen)
 		if err == nil {
 			if gpuLost != "" {
 				// the GPU's failed and the CPU's loaded: the CPU until
@@ -204,6 +208,12 @@ func start(cpu bool, stop <-chan struct{}) (*helper, error) {
 		}
 		if errors.Is(err, errStopped) {
 			return nil, err
+		}
+		srv.mu.Lock()
+		stop := srv.stopGen != gen
+		srv.mu.Unlock()
+		if stop {
+			return nil, errStopped
 		}
 		if !c.cpu {
 			gpuLost = err.Error()
@@ -219,7 +229,7 @@ var upgrades sync.WaitGroup
 // errStopped is a request's when Stop ended pf-serve under it.
 var errStopped = errors.New("the local masking model was stopped")
 
-func startOne(path string, cpu bool, stop <-chan struct{}) (*helper, error) {
+func startOne(path string, cpu bool, gen uint64) (*helper, error) {
 	cmd := proc.Command(path, modelPath())
 	// Without GGML_METAL_NO_RESIDENCY, ggml's Metal residency set keeps a
 	// heartbeat that woke an idle pf-serve ~146 times a second for the 10
@@ -258,6 +268,24 @@ func startOne(path string, cpu bool, stop <-chan struct{}) (*helper, error) {
 		cmd.Wait()
 		close(h.exited)
 	}()
+	// in srv while it loads, for Stop to end it, and taken out again on
+	// every way out of here. A Stop between this and the lock was made
+	// before it was in: that one is seen below, so neither is missed
+	srv.mu.Lock()
+	srv.starting = h
+	stop := srv.stopGen != gen
+	srv.mu.Unlock()
+	defer func() {
+		srv.mu.Lock()
+		if srv.starting == h {
+			srv.starting = nil
+		}
+		srv.mu.Unlock()
+	}()
+	if stop {
+		h.kill()
+		return nil, errStopped
+	}
 	line := make(chan string, 1)
 	go func() {
 		s, _ := h.out.ReadString('\n')
@@ -269,9 +297,6 @@ func startOne(path string, cpu bool, stop <-chan struct{}) (*helper, error) {
 	case <-giveUp(wait):
 		h.kill()
 		return nil, fmt.Errorf("%s: the model didn't load in %s%s", baseName(path), wait, onWhat(cpu))
-	case <-stop:
-		h.kill()
-		return nil, errStopped
 	}
 	if err := json.Unmarshal([]byte(s), &h.hello); err != nil || h.hello.Error != "" || h.hello.Device == "" {
 		h.kill()
@@ -348,11 +373,18 @@ func lastSaid(stderr string, n int) string {
 }
 
 func (h *helper) kill() {
+	h.halt()
+	<-h.exited
+}
+
+// halt ends h and waits for nothing: Stop ends a load under way from
+// whichever goroutine called it, and h's channels are not to be waited on
+// from outside the bubble a test started it in (#3722).
+func (h *helper) halt() {
 	h.in.Close()
 	if h.cmd.Process != nil {
 		h.cmd.Process.Kill()
 	}
-	<-h.exited
 }
 
 // Warm starts pf-serve in the background, where the model is on disk, so
@@ -381,13 +413,16 @@ func Stop() {
 	}
 	srv.mu.Lock()
 	h := detachLocked()
+	starting := srv.starting
+	// the load under way gives up, and the request it was for fails rather
+	// than start pf-serve again
+	srv.stopGen++
 	// turned on again, it is tried at once
 	srv.lastErr, srv.fails, srv.retryAt = nil, 0, time.Time{}
-	if srv.stop != nil {
-		close(srv.stop)
-		srv.stop = nil
-	}
 	srv.mu.Unlock()
+	if starting != nil {
+		starting.halt()
+	}
 	if h != nil && !free {
 		h.kill()
 		return
@@ -408,10 +443,6 @@ func stopWhenFree() {
 
 // detachLocked takes pf-serve out of srv, for end; mu is held.
 func detachLocked() *helper {
-	if srv.idle != nil {
-		srv.idle.Stop()
-		srv.idle = nil
-	}
 	h := srv.h
 	srv.h = nil
 	return h
@@ -472,7 +503,7 @@ func classifyTurn(texts []string) ([][]redact.Found, error) {
 	var last error
 	for try := 0; try < 2; try++ {
 		srv.mu.Lock()
-		h, cpu, stop := srv.h, srv.cpu, stopCh()
+		h, cpu, gen := srv.h, srv.cpu, srv.stopGen
 		var gone *helper
 		if cpu && !time.Now().Before(srv.gpuAgain) {
 			// the GPU is tried again: a pf-serve on the CPU makes way.
@@ -490,10 +521,10 @@ func classifyTurn(texts []string) ([][]redact.Found, error) {
 		end(gone)
 		if h == nil {
 			var err error
-			h, err = start(cpu, stop)
+			h, err = start(cpu, gen)
 			srv.mu.Lock()
 			srv.loading = false
-			if err == nil && stopped(stop) {
+			if err == nil && srv.stopGen != gen {
 				err = errStopped
 			}
 			if err != nil {
@@ -523,7 +554,7 @@ func classifyTurn(texts []string) ([][]redact.Found, error) {
 		if srv.h == h {
 			srv.h = nil
 		}
-		if stopped(stop) {
+		if srv.stopGen != gen {
 			srv.mu.Unlock()
 			h.kill()
 			return nil, errStopped
@@ -543,23 +574,16 @@ func classifyTurn(texts []string) ([][]redact.Found, error) {
 	return nil, fmt.Errorf("the local masking model failed: %w", last)
 }
 
-func stopped(stop <-chan struct{}) bool {
-	select {
-	case <-stop:
-		return true
-	default:
-		return false
-	}
-}
-
 // idleLocked ends h after idleAfter with no request; mu is held. The timer
 // takes the turn only when it is free: a request on it sets the timer
-// again when it is answered.
+// again when it is answered. The timer is not kept: it is left where it
+// was made, and one whose pf-serve has been taken, or which a later answer
+// made stale, ends nothing (srv.idleGen), so none a test's request armed in
+// a synctest bubble is ever stopped from outside it (#3722).
 func idleLocked(h *helper) {
-	if srv.idle != nil {
-		srv.idle.Stop()
-	}
-	srv.idle = time.AfterFunc(idleAfter, func() {
+	srv.idleGen++
+	gen := srv.idleGen
+	time.AfterFunc(idleAfter, func() {
 		select {
 		case turn <- struct{}{}:
 		default:
@@ -568,7 +592,7 @@ func idleLocked(h *helper) {
 		defer func() { <-turn }()
 		srv.mu.Lock()
 		var gone *helper
-		if srv.h == h {
+		if srv.h == h && srv.idleGen == gen {
 			gone = detachLocked()
 		}
 		srv.mu.Unlock()

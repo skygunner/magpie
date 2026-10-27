@@ -124,7 +124,11 @@ var gsrv struct {
 	gen     int // counts the unloads
 	loadMS  int
 	loading bool
-	idle    *time.Timer
+	// idleGen counts answered requests: a timer is never stopped or reset
+	// by a later one, so none a test's request armed in a synctest bubble
+	// is touched from outside it; one a later answer made stale, or which
+	// found the model gone, unloads nothing (#3722)
+	idleGen uint64
 	failed  string
 	lastErr error
 	fails   int
@@ -217,22 +221,28 @@ func guardClassifyTurn(texts []string) ([][]redact.Found, error) {
 	}
 	gsrv.mu.Lock()
 	if gsrv.gen == gen && gsrv.m != nil { // not stopped meanwhile
-		if gsrv.idle != nil {
-			gsrv.idle.Stop()
-		}
-		gsrv.idle = time.AfterFunc(idleAfter, guardIdle)
+		gsrv.idleGen++
+		n := gsrv.idleGen
+		time.AfterFunc(idleAfter, func() { guardIdle(n) })
 	}
 	gsrv.mu.Unlock()
 	return out, nil
 }
 
 // guardIdle lets the model go after idleAfter with no request, unless
-// one is on it now (it sets the timer again when done).
-func guardIdle() {
+// one is on it now (it sets the timer again when done), or a request has
+// been answered since, which armed the timer that matters.
+func guardIdle(gen uint64) {
 	select {
 	case guardTurn <- struct{}{}:
 		defer func() { <-guardTurn }()
 	default:
+		return
+	}
+	gsrv.mu.Lock()
+	stale := gsrv.idleGen != gen
+	gsrv.mu.Unlock()
+	if stale {
 		return
 	}
 	guardUnload()
@@ -240,10 +250,7 @@ func guardIdle() {
 
 func guardUnload() {
 	gsrv.mu.Lock()
-	if gsrv.idle != nil {
-		gsrv.idle.Stop()
-		gsrv.idle = nil
-	}
+	gsrv.idleGen++ // a timer armed before this unloads nothing
 	gsrv.m = nil
 	gsrv.gen++
 	gsrv.mu.Unlock()
