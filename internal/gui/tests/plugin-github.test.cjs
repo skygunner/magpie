@@ -5,7 +5,8 @@
 // saying Unofficial, its owner and its stars. One whose package the market
 // already lists is the market's card alone. Install sends the spec magpie
 // gave: the npm name of one its author published there from the
-// repository, else github:owner/repo; one installed by any spec naming the
+// repository — npm's own of a bare name, so npm:<name> (#3928) — else
+// github:owner/repo; one installed by any spec naming the
 // repository reads Installed. Its page warns that nobody reviewed it and
 // says which of the two is installed, links GitHub (and npm when it is
 // npm's), shows the README and when the repository was last pushed. A
@@ -60,8 +61,10 @@ function server(lang, asked) {
     if (url.pathname === "/api/plugins/add") {
       const b = body();
       asked.push(["add", b]);
-      const r = REPOS.find((x) => x.spec === b.spec);
-      installed.push({ spec: b.spec, package: r.package, providers: [], version: r.version, moved: [] });
+      // resolve's answer: npm:<name> installs npm's package <name>
+      const spec = b.spec.replace(/^npm:/, "");
+      const r = REPOS.find((x) => x.spec === spec);
+      installed.push({ spec, package: r.package, providers: [], version: r.version, moved: [] });
       return json(state());
     }
     if (url.pathname === "/api/open") { asked.push(["open", body()]); return route.fulfill({ status: 204 }); }
@@ -174,7 +177,7 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
           assert.match(await upd.innerText(), /2026/, "the repository's last push");
           await shot(page.locator("#modal .dialog"), `plugins-github-page-${engine}-${lang}-${width}`);
 
-          // Install from the page: npm's name
+          // Install from the page: npm's own of a bare name, as npm:<name>
           const install = async (spec) => {
             const n = asked.filter(([k]) => k === "add").length;
             await dlg.locator(".pm-act", { hasText: new RegExp("^" + w.install + "$") }).click();
@@ -184,7 +187,7 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
             await dlg.locator(".bar button.text").last().click();
             await page.waitForFunction(() => document.querySelector("#modal").hidden);
           };
-          await install("opencode-claude-auth");
+          await install("npm:opencode-claude-auth");
           assert.equal(await scrolls(page), before, "a click scrolls nothing");
           await cards.first().locator(".pm-act.done").waitFor();
 
@@ -198,7 +201,6 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
           assert.equal(await dlg.locator(".pm-links a", { hasText: "GitHub" }).getAttribute("href"), "https://github.com/keli-wen/agy-staff");
           await install("github:keli-wen/agy-staff");
           await cards.nth(2).locator(".pm-act.done").waitFor();
-
           // a search finds them too
           await view.locator(".pm-find input").fill("quota");
           const found = view.locator(".pm-sec", { has: page.locator("h3", { hasText: w.section }) });

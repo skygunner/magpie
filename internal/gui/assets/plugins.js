@@ -79,6 +79,10 @@
   };
   // npm has the versions of a package: not a folder's, nor a git one's
   const onNPM = (spec) => !isPath(spec) && !isGit(spec);
+  // a card names one package: a bare npm name goes as npm:<name>, which
+  // resolve would otherwise take for the community plugin called by it, and
+  // npm: needs no market, so it installs with the list unread too (#3928)
+  const cardSpec = (pkg) => onNPM(pkg) && !pkg.startsWith("@") ? "npm:" + pkg : pkg;
   // a git one is out of date when its repository is at another commit than
   // the one installed, whatever version its package.json says (ARNO on
   // Discord: github:yuweihao17/codearts showed Update all the time, and
@@ -399,7 +403,7 @@
     b.onclick = (ev) => { ev.stopPropagation(); move(c); };
     return b;
   };
-  const install = (pkg, nm) => act(pkg, "add", { spec: pkg }, () => {
+  const install = (pkg, nm) => act(pkg, "add", { spec: cardSpec(pkg) }, () => {
     const subs = subsOf(pkg);
     status(subs.length ? t("{name} is installed — sign in to use it", { name: nm }) : t("{name} is installed", { name: nm }), "ok");
   });

@@ -76,9 +76,11 @@ function server(lang, asked) {
     if (url.pathname === "/api/plugins/add") {
       const b = body();
       asked.push(["add", b]);
+      // resolve's answer: npm:<name> installs npm's package <name>
+      const spec = b.spec.replace(/^npm:/, "");
       await new Promise((r) => setTimeout(r, 150));
-      installed.push({ spec: b.spec, providers: ["GitHub Copilot"], version: "0.0.7", latest: "0.0.9" });
-      subs.push({ id: "github-copilot-plugin", pid: "github-copilot", name: "GitHub Copilot", icon: "githubcopilot", spec: b.spec, signedIn: false, models: 34,
+      installed.push({ spec, providers: ["GitHub Copilot"], version: "0.0.7", latest: "0.0.9" });
+      subs.push({ id: "github-copilot-plugin", pid: "github-copilot", name: "GitHub Copilot", icon: "githubcopilot", spec, signedIn: false, models: 34,
         methods: [{ type: "oauth", label: "Login with GitHub" }] });
       return json({});
     }
@@ -185,10 +187,11 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         await dlg.locator(".pm-md a", { hasText: "the docs" }).click();
         assert.deepEqual(asked.find(([k]) => k === "open")[1], { url: "https://example.test/docs" });
 
-        // install from the page: the button becomes Sign in, which opens the add sheet's sign-in
+        // install from the page: the button becomes Sign in, which opens the add sheet's sign-in;
+        // npm's own package of a bare name is asked for as npm:<name> (#3928)
         await dlg.locator(".pm-act", { hasText: w.install }).click();
         await dlg.locator(".pm-act.go", { hasText: w.signIn }).waitFor();
-        assert.deepEqual(asked.find(([k]) => k === "add")[1], { spec: "opencode-copilot-auth" });
+        assert.deepEqual(asked.find(([k]) => k === "add")[1], { spec: "npm:opencode-copilot-auth" });
         // the page's one action is filled; on the card behind it, Sign in is
         // Install's tinted capsule, so no card in the grid shouts over the
         // rest (the Kiko03O1 reply on X: ui 设计能不能好看点)
