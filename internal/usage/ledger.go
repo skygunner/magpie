@@ -345,9 +345,10 @@ const UnknownProvider = "session-unknown"
 // unknown, and what the file doesn't say is left out. Nothing
 // stood between the agent and the vendor, so what was sent is what the agent
 // asked for. Claude Code's file names the model it asked for (as it runs) and
-// the one the API answered with, which is the served model; Codex's and
-// OpenCode's name only the one they asked for (OpenCode's reply keeps the
-// model it was sent to, never the one the response named) (#680).
+// the one the API answered with, which is the served model; Codex's,
+// OpenCode's and ZCode's name only the one they asked for (OpenCode's reply
+// keeps the model it was sent to, never the one the response named, and
+// ZCode keeps OpenCode's tables) (#680, #3005).
 func logRecord(c sessions.Call) Record {
 	r := Record{Time: c.Time, Agent: c.Agent, Provider: UnknownProvider, Model: c.Model, Served: c.Model, Requested: c.Requested,
 		Input: c.Input, Output: c.Output, CacheRead: c.CacheRead, CacheWrite: c.CacheWrite, CacheWrite1h: c.CacheWrite1h, Reasoning: c.Reasoning, Effort: c.Effort,
@@ -356,7 +357,7 @@ func logRecord(c sessions.Call) Record {
 		r.ResponseID = c.ResponseID
 		r.Compaction = codexCompactionOf(c)
 	}
-	if c.Agent == "codex" || c.Agent == "opencode" {
+	if c.Agent == "codex" || c.Agent == "opencode" || c.Agent == "zcode" {
 		r.Requested, r.Served = c.Model, ""
 	}
 	if r.Requested != "" {

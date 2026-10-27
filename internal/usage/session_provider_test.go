@@ -292,6 +292,29 @@ func TestOpenCodeSessionCallIsWhatItAskedFor(t *testing.T) {
 	}
 }
 
+// ZCode keeps OpenCode's tables, so its reply names only the model it was
+// sent to as well: the row says what was asked for rather than leaving it
+// empty beside a gateway row of the same request (#3005).
+func TestZCodeSessionCallIsWhatItAskedFor(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
+	t.Setenv("APPDATA", filepath.Join(home, "AppData", "Roaming"))
+	t.Setenv("LOCALAPPDATA", filepath.Join(home, "AppData", "Local"))
+	// the reporter's row: the model it was sent to, and the provider id
+	// ZCode recorded for it
+	logs := []sessions.Call{{Time: time.Now(), Agent: "zcode", Model: "auto-step-5-preview", Upstream: "new-provider-13",
+		Tokens: sessions.Tokens{Input: 10, Output: 2}}}
+	rows, _, _, _ := ledgerWith(time.Time{}, Filter{}, nil, logs)
+	if len(rows) != 1 {
+		t.Fatalf("rows %+v", rows)
+	}
+	if r := rows[0]; r.Requested != "auto-step-5-preview" || r.Model != "auto-step-5-preview" || r.Served != "" {
+		t.Fatalf("a ZCode call: requested %q model %q served %q", r.Requested, r.Model, r.Served)
+	}
+}
+
 // A Claude Code call outside every desktop root costs nothing to place:
 // a started magpie's first Requests read asks this of every call twice,
 // and the path arithmetic it skipped was a fifth of what that read
