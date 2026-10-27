@@ -143,7 +143,12 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         // (the 301st request of the day is about 85% of the way down; from
         // there, a list's height at a time, each drawn before the next)
         await scrollTo(page, Math.round(at.height * 0.8));
-        for (let i = 0; i < 60; i++) {
+        // the list is virtual, heights.get(id) ?? est (client.js): rows
+        // drawn measure truly, undrawn ones the stale estimate, so under
+        // load the estimate is short and a fixed 60-step loop ends far
+        // above the wide row (#3278, chromium ja 420). Walk the list
+        // itself: stop at its foot, not after a count.
+        for (let i = 0; i < 400 && at.top + at.view < at.height - 2; i++) {
           at = await look(page);
           if (at.models.includes(WIDE_MODEL)) break;
           await scrollTo(page, at.top + at.view);
