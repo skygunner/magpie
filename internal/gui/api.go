@@ -306,6 +306,10 @@ type unlistedJSON struct {
 	Provider string   `json:"provider"`
 	Icon     string   `json:"icon,omitempty"`
 	Groups   []string `json:"groups"`
+	// ByGroup: the provider isn't the one kept for routing groups — one of
+	// the groups above keeps this model out of the lists (Group.Unlists),
+	// so the page names that group instead of blaming the provider
+	ByGroup bool `json:"byGroup,omitempty"`
 }
 
 // unlistedModels lists provider.Unlisted for the page.
@@ -321,7 +325,7 @@ func unlistedModels() []unlistedJSON {
 		if gs == nil {
 			gs = []string{}
 		}
-		out = append(out, unlistedJSON{ID: e.ID, Name: e.Name, Provider: e.Provider.Name, Icon: e.Provider.Icon, Groups: gs})
+		out = append(out, unlistedJSON{ID: e.ID, Name: e.Name, Provider: e.Provider.Name, Icon: e.Provider.Icon, Groups: gs, ByGroup: !e.Provider.Unlisted})
 	}
 	return out
 }

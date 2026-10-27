@@ -5519,14 +5519,20 @@ function keptNote(m) {
   const words = el("span", "kept-words");
   const model = m.name || m.id;
   words.append(el("b", "", model));
-  const via = m.groups.map((g) => pick.options.find((o) => o.ref === g && o.group === ROUTING_GROUPS)).filter(Boolean);
+  const via = m.groups.map((g) => pick.options.find((o) => o.ref === g && (o.group === ROUTING_GROUPS || o.home === ROUTING_GROUPS))).filter(Boolean);
   const act = el("button", "text action");
   if (via.length) {
-    words.append(el("span", "", t("{provider} is used only through routing groups: agents reach {model} by picking {group}.", { provider: m.provider, model, group: via.map((o) => o.label || o.value).join(", ") })));
+    words.append(el("span", "", m.byGroup
+      // one of the groups keeps it out of the lists (Group.Unlists): name
+      // that group, not the provider (#2746)
+      ? t("A routing group keeps {model} out of the lists: agents reach it by picking {group}.", { model, group: via.map((o) => o.label || o.value).join(", ") })
+      : t("{provider} is used only through routing groups: agents reach {model} by picking {group}.", { provider: m.provider, model, group: via.map((o) => o.label || o.value).join(", ") })));
     act.textContent = t("Pick {group}", { group: via[0].label || via[0].value });
     act.onclick = (ev) => { ev.stopPropagation(); commit(via[0].value); };
   } else {
-    words.append(el("span", "", t("{provider} is used only through routing groups, and {model} is in none, so no agent can use it. Make a group of it, or untick “Only through routing groups” in {provider}'s models.", { provider: m.provider, model })));
+    words.append(el("span", "", m.byGroup
+      ? t("A routing group keeps {model} out of the lists: agents reach it by picking {group}.", { model, group: m.groups.map((g) => g.replace("group/", "")).join(", ") })
+      : t("{provider} is used only through routing groups, and {model} is in none, so no agent can use it. Make a group of it, or untick “Only through routing groups” in {provider}'s models.", { provider: m.provider, model })));
     act.textContent = t("Make a routing group of it");
     act.dataset.feature = "routing"; // made on the Routing page
     act.onclick = (ev) => {
