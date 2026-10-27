@@ -2583,7 +2583,10 @@ docker build -t magpie .
 docker run -d --name magpie -p 127.0.0.1:3425:3425 -p 127.0.0.1:3430:3430 -v magpie-config:/config magpie
 ```
 
-3425 is the gateway for agents. Inside the container it takes any key; a
+3425 is the gateway for agents, and 3430 the console: they are kept apart
+so a NAS publishes 3425 to the LAN and leaves 3430 on loopback or behind its
+reverse proxy, and the console isn't exposed wherever the gateway is. Inside
+the container it takes any key; a
 request from outside it, the host's own included, must carry an enabled
 gateway key as its API key, and one without gets 401. Make one in the
 browser UI (Gateway → Gateway keys) or with
