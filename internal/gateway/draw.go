@@ -257,15 +257,21 @@ func Drawers(p provider.Provider) []catalog.Model {
 	}
 	if p.IsPlugin() {
 		// a plugin in front of an OpenAI-compatible API: the image models
-		// its list names that draw on the images API, sent through its
-		// fetch under the base its chat goes to (01huadalang on Discord:
-		// the SenseNova plugin's sensenova-u1.5-lite)
+		// its list names that draw on the images API, and those its list
+		// says give images, which draw on chat completions with modalities,
+		// sent through its fetch under the base its chat goes to
+		// (01huadalang on Discord: the SenseNova plugin's
+		// sensenova-u1.5-lite; a gateway's google/gemini-3-pro-image, #1728)
 		var out []catalog.Model
 		for _, m := range p.Available() {
-			if catalog.DrawsID(m.ID) && catalog.ImagesAPI(m.ID) && p.PluginOpenAICompatible(m.ID) && p.ModelKind(m.ID) != provider.KindVideo {
-				m.Provider = p.ID
-				out = append(out, m)
+			if !p.PluginOpenAICompatible(m.ID) || p.ModelKind(m.ID) == provider.KindVideo {
+				continue
 			}
+			if !catalog.ImagesAPI(m.ID) && !slices.Contains(m.OutputModalities, "image") {
+				continue
+			}
+			m.Provider = p.ID
+			out = append(out, m)
 		}
 		return out
 	}

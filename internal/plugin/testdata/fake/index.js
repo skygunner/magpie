@@ -93,6 +93,14 @@ export const FakePlugin = async ({ client }) => ({
       cfg.provider[ID].models["sensenova-u1.5-lite"] = { name: "sensenova-u1.5-lite", limit: { context: 131072, output: 32768 } }
       cfg.provider[ID].models["flux-2"] = { name: "Flux 2", provider: { npm: "@ai-sdk/anthropic" }, limit: { context: 1000, output: 100 } }
     }
+    // $FAKE_ZENMUX: a gateway in front of an OpenAI-compatible API, as
+    // ZenMux's plugin lists its models from ZenMux's catalog (#1728): an
+    // image model on the images API, and a Gemini image model whose
+    // capabilities say it gives images, which is asked on chat completions
+    if (process.env.FAKE_ZENMUX) {
+      cfg.provider[ID].models["openai/gpt-image-2"] = { name: "GPT Image 2", modalities: { input: ["text", "image"], output: ["image"] }, limit: { context: 1000, output: 100 } }
+      cfg.provider[ID].models["google/gemini-3-pro-image"] = { name: "Gemini 3 Pro Image", modalities: { input: ["text", "image"], output: ["text", "image"] }, limit: { context: 1000, output: 100 } }
+    }
     // $FAKE_DEEPSEEK: a DeepSeek model, as Cline's cline-pass/deepseek-v4-pro
     if (process.env.FAKE_DEEPSEEK) cfg.provider[ID].models["deepseek-v4-pro"] = { name: "DeepSeek V4 Pro", limit: { context: 1000, output: 100 } }
     // $FAKE_GLM: a GLM model, as Cline's cline-pass/glm-5.3
