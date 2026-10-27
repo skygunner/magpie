@@ -583,7 +583,9 @@ func stepPlanQuota(ctx context.Context, p Provider) SubscriptionQuota {
 	case q.Plan == "":
 		q.Plan = "Step Plan"
 	}
-	return q
+	// no keepReading here: a live read is stamped (#3816), a failed or
+	// empty one readNow leaves alone
+	return readNow(q)
 }
 
 // stepPlanQuotas is a card for each StepFun provider in use that magpie

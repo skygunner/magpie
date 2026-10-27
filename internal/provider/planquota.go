@@ -725,6 +725,11 @@ func PlanQuotas(ctx context.Context) []SubscriptionQuota {
 				}
 			}
 			q = keepReading(ctx, q, tag)
+			// a success read just now says so (#3816); a time keepReading
+			// restored is not overwritten
+			if q.Error == "" && len(q.Windows) > 0 && q.ReadAt == nil {
+				q = readNow(q)
+			}
 			got[i] = &q
 		}()
 	}
