@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/godbus/dbus/v5"
@@ -38,14 +39,26 @@ func dropTrayName() {
 				return
 			}
 			// A watcher that filed the item under the name it was given up
-			// by drops it with the name (noctalia, #2421): register again by
-			// the connection's own name, which one that filed it so already
-			// takes as the item it has.
-			if own := conn.Names(); len(own) > 0 {
-				w := conn.Object("org.kde.StatusNotifierWatcher", "/StatusNotifierWatcher")
-				if c := w.Call("org.kde.StatusNotifierWatcher.RegisterStatusNotifierItem", 0, own[0]); c.Err != nil {
-					log.Println("tray: register", own[0]+":", c.Err)
+			// by drops it with the name (noctalia, #2421) and needs the
+			// registration again; one that keeps the item has it filed
+			// under the connection's own name already (COSMIC, #2804), and
+			// registering it again is a second icon, not the same one
+			// restored.
+			own := conn.Names()
+			if len(own) == 0 {
+				return
+			}
+			w := conn.Object("org.kde.StatusNotifierWatcher", "/StatusNotifierWatcher")
+			var items []string
+			if v, err := w.GetProperty("org.kde.StatusNotifierWatcher.RegisteredStatusNotifierItems"); err == nil && v.Store(&items) == nil {
+				for _, it := range items {
+					if it == own[0] || strings.HasPrefix(it, own[0]+"/") {
+						return
+					}
 				}
+			}
+			if c := w.Call("org.kde.StatusNotifierWatcher.RegisterStatusNotifierItem", 0, own[0]); c.Err != nil {
+				log.Println("tray: register", own[0]+":", c.Err)
 			}
 			return
 		}
