@@ -6,3 +6,5 @@
 {"type":"session/title","seq":4,"time":1790503206000,"data":{"title":"Build script tidy"}}
 {"rows":[[1,"x"],[2,"y"]]}
 {"type":"assistant/message","seq":5,"time":1790503260000,"data":{"message":{"role":"assistant","source":{"model":"deepseek-v4-flash","provider":"workbuddy-ai","replayState":{"response":{"provider":"workbuddy-ai","model":"deepseek-v4-flash","responseModel":"deepseek-v4-flash-sg"}}}},"usage":{"inputTokens":10,"outputTokens":5,"cacheReadTokens":200,"cacheWriteTokens":0,"reasoningTokens":1}}}
+{"type":"tool/call","seq":6,"time":1790503265000,"data":{"turn":1,"step":1,"callId":"call_00_a","name":"skill","arguments":"{\"name\":\"hindsight-coding-agent\"}"}}
+{"type":"tool/call","seq":7,"time":1790503270000,"data":{"turn":1,"step":1,"callId":"call_01_b","name":"read","arguments":"{\"filePath\":\"/work/dsh/build.sh\"}"}}

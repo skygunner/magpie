@@ -83,6 +83,15 @@ func checkOpenCode(t *testing.T, ss []Session) {
 	if oc.Resume != want {
 		t.Fatalf("resume %q", oc.Resume)
 	}
+	// its tool calls and the skill one called up, counted in every store
+	for _, x := range statsAt(0, statsNow).Sessions {
+		if x.Key != "opencode:"+ocMain {
+			continue
+		}
+		if x.ToolCalls != 2 || x.tools.of("read") != 1 || x.skills.of("debugging") != 1 {
+			t.Fatalf("opencode tools %v skills %v", x.tools, x.skills)
+		}
+	}
 }
 
 func TestOpenCodeFiles(t *testing.T) {
@@ -319,7 +328,7 @@ func ocMakeV2(t *testing.T, path string) *sql.DB {
 		{ocMain, "msg_0001", "user", `{"text":"Why does  the login test\nflake?","time":{"created":1790416805000}}`},
 		{ocMain, "msg_0001s", "synthetic", `{"text":"Called the Read tool with the following input","time":{"created":1790416805000}}`},
 		{ocMain, "msg_0002", "assistant", `{"agent":"build","model":{"id":"gpt-6-astra","providerID":"openai","variant":"high"},"content":[{"type":"reasoning","text":"…"},{"type":"text","text":"Let me look."}],"cost":0.01,"tokens":{"input":1000,"output":100,"reasoning":20,"cache":{"read":5000,"write":0}},"time":{"created":1790416806000,"completed":1790416830000}}`},
-		{ocMain, "msg_0003", "assistant", `{"agent":"build","model":{"id":"codex/gpt-6-luna","providerID":"magpie","variant":"default"},"content":[{"type":"text","text":"It races the clock."}],"cost":0,"tokens":{"input":300,"output":50,"reasoning":10,"cache":{"read":2000,"write":0}},"time":{"created":1790416890000,"completed":1790416980000}}`},
+		{ocMain, "msg_0003", "assistant", `{"agent":"build","model":{"id":"codex/gpt-6-luna","providerID":"magpie","variant":"default"},"content":[{"type":"text","text":"It races the clock."},{"type":"tool","id":"prt_0005","name":"read","state":{"status":"completed","input":{"filePath":"/work/oc/login_test.go"},"output":"  12: func TestLoginFlakes(t *testing.T) {"},"time":{"created":1790416900000}},{"type":"tool","id":"prt_0006","name":"skill","state":{"status":"completed","input":{"id":"debugging"},"output":"<skill_content name=\"debugging\">"},"time":{"created":1790416910000}}],"cost":0,"tokens":{"input":300,"output":50,"reasoning":10,"cache":{"read":2000,"write":0}},"time":{"created":1790416890000,"completed":1790416980000}}`},
 		{ocMain, "msg_0003i", "idle", `{"outcome":"succeeded","time":{"created":1790416980000}}`},
 		{ocChild, "msg_0004", "assistant", `{"agent":"general","model":{"id":"claude-opus-5-5","providerID":"anthropic"},"content":[],"cost":0,"tokens":{"input":40,"output":60,"reasoning":0,"cache":{"read":700,"write":300}},"time":{"created":1790416860000,"completed":1790416890000}}`},
 	} {

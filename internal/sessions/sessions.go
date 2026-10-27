@@ -922,7 +922,8 @@ func CachePath() string { return filepath.Join(filepath.Dir(catalog.CachePath())
 // 20: Codex's source and direct parent thread identity.
 // 21: Codex subagent nicknames and parent spawn task names.
 // 22: dsh's gateway conversation ids (Convs).
-const cacheVersion = 22
+// 23: OpenCode's, ZCode's and dsh's tool calls and skills a day.
+const cacheVersion = 23
 
 type cacheFile struct {
 	Version int               `json:"version"`

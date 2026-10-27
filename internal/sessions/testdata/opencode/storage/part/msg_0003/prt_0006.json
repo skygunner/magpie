@@ -1,0 +1,1 @@
+{"id": "prt_0006", "sessionID": "ses_1a2b3c4d5e6fAAAAAAAAAAAAAA", "messageID": "msg_0003", "type": "tool", "callID": "call_0002", "tool": "skill", "state": {"status": "completed", "input": {"name": "debugging"}, "output": "<skill_content name=\"debugging\">\n# Skill: debugging"}}

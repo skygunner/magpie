@@ -1,0 +1,1 @@
+{"id": "prt_0005", "sessionID": "ses_1a2b3c4d5e6fAAAAAAAAAAAAAA", "messageID": "msg_0003", "type": "tool", "callID": "call_0001", "tool": "read", "state": {"status": "completed", "input": {"filePath": "/work/oc/login_test.go"}, "output": "  12: func TestLoginFlakes(t *testing.T) {"}}

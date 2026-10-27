@@ -121,6 +121,10 @@ func TestTranscriptModelOpenCodeV2(t *testing.T) {
 		"assistant/thinking=gpt-6-astra",
 		"assistant/text=gpt-6-astra",
 		"assistant/text=codex/gpt-6-luna",
+		"assistant/tool_use=codex/gpt-6-luna",
+		"tool/tool_result=",
+		"assistant/tool_use=codex/gpt-6-luna",
+		"tool/tool_result=",
 	})
 }
 
@@ -141,5 +145,9 @@ func TestTranscriptModelOpenCodeFiles(t *testing.T) {
 	wantModels(t, tr, []string{
 		"user/text=",
 		"assistant/text=gpt-6-astra",
+		"assistant/tool_use=codex/gpt-6-luna",
+		"tool/tool_result=",
+		"assistant/tool_use=codex/gpt-6-luna",
+		"tool/tool_result=",
 	})
 }

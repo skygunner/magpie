@@ -70,6 +70,16 @@ func zcMakeDB(t *testing.T, path string) {
 			t.Fatal(err)
 		}
 	}
+	// its tool calls, one of them the Skill tool naming the skill it called
+	// up (as ZCode 3.14.3's parts have them)
+	for _, p := range [][2]string{
+		{"prt_z3", `{"type":"tool","callID":"call_z1","declarationIndex":0,"tool":"Bash","state":{"status":"completed","input":{"command":"go build ./..."},"output":"ok"}}`},
+		{"prt_z4", `{"type":"tool","callID":"call_z2","declarationIndex":1,"tool":"Skill","state":{"status":"completed","input":{"args":"port the parser","skill":"zcode-guide:zcode-configuration-guide"},"output":"<skill_content name=\"zcode-configuration-guide\">"}}`},
+	} {
+		if _, err := db.Exec("INSERT INTO part VALUES (?, ?, 'ses_zcA', 0, 0, ?)", p[0], "msg_z3", p[1]); err != nil {
+			t.Fatal(err)
+		}
+	}
 }
 
 func count(ss []Session, agent string) int {
@@ -150,6 +160,15 @@ func TestZCode(t *testing.T) {
 	if c := find(t, ss, "zcode", "ses_zcC"); c.Title != "" {
 		t.Fatalf("default title kept: %q", c.Title)
 	}
+	// its tool calls and the skill it called up
+	for _, x := range statsAt(0, statsNow).Sessions {
+		if x.Key != "zcode:ses_zcA" {
+			continue
+		}
+		if x.ToolCalls != 2 || x.tools.of("Bash") != 1 || x.tools.of("Skill") != 1 || x.skills.of("zcode-guide:zcode-configuration-guide") != 1 {
+			t.Fatalf("zcode tools %v skills %v", x.tools, x.skills)
+		}
+	}
 	if len(dbs) != 0 {
 		t.Fatalf("databases left open: %v", dbs)
 	}
@@ -171,7 +190,7 @@ func checkDsh(t *testing.T, ss []Session) {
 	if m := model(a, "deepseek-v4-flash"); m.Tokens != (Tokens{17, 8, 200, 0, 0}) {
 		t.Fatalf("flash, the subagent's in: %+v", m)
 	}
-	if !a.Start.Equal(at("2026-09-27T10:00:00Z")) || !a.Last.Equal(at("2026-09-27T10:01:00Z")) {
+	if !a.Start.Equal(at("2026-09-27T10:00:00Z")) || !a.Last.Equal(at("2026-09-27T10:01:10Z")) {
 		t.Fatalf("dsh times %s %s", a.Start, a.Last)
 	}
 	// the forks: what they were seeded with counted where it came from
@@ -186,6 +205,14 @@ func checkDsh(t *testing.T, ss []Session) {
 		t.Fatalf("format 0 fork: %+v", d)
 	}
 	s := statsAt(0, statsNow)
+	for _, x := range s.Sessions {
+		if x.Key != "dsh:dsh-a" {
+			continue
+		}
+		if x.ToolCalls != 2 || x.tools.of("read") != 1 || x.skills.of("hindsight-coding-agent") != 1 {
+			t.Fatalf("dsh tools %v skills %v", x.tools, x.skills)
+		}
+	}
 	if got, _ := usageOn(s, "2026-09-27", "/work/dsh"); got != (Tokens{898, 137, 6200, 0, 0}) {
 		t.Fatalf("dsh on the 27th: %+v", got)
 	}

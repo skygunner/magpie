@@ -1,6 +1,7 @@
 package sessions
 
 import (
+	"cmp"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -22,7 +23,8 @@ import (
 // part/<message>/<id>.json. The database is made from those files once,
 // which stay behind, so where there is a database only it is read. An
 // assistant message carries its model and its tokens, input without the
-// cache and output without the reasoning. A subagent's work is a session
+// cache and output without the reasoning, and the tools it called a part
+// of type tool each, the tool's name in tool. A subagent's work is a session
 // of its own whose parent is the session it ran in, and counts there.
 //
 // OpenCode 2 keeps its sessions in the same database but in tables of its
@@ -113,14 +115,41 @@ type ocMessage struct {
 	Semantics *struct {
 		Origin string `json:"origin"`
 	} `json:"semantics"`
+	// OpenCode 2: a reply's content, its tool calls among it
+	Content []ocPart `json:"content"`
 }
 
-// ocPart is a part of a message: only its text is looked at, for a title.
+// ocPart is a part of a message: its text is looked at for a title, and
+// a tool call among them counted.
 type ocPart struct {
 	Type      string `json:"type"`
 	Text      string `json:"text"`
 	Synthetic bool   `json:"synthetic"`
 	Ignored   bool   `json:"ignored"`
+	// a tool call: OpenCode's part names the tool in tool, OpenCode 2's
+	// content entry in name
+	Tool  string       `json:"tool"`
+	Name  string       `json:"name"`
+	State *ocPartState `json:"state"`
+}
+
+// ocPartState is a tool call's state, its input what the model sent.
+type ocPartState struct {
+	Input json.RawMessage `json:"input"`
+}
+
+// skillInput is what a call of the skill tool names the skill with:
+// OpenCode's own takes name, an older OpenCode 2 id (as its sessions on
+// disk have it), ZCode's Skill takes skill, dsh's arguments name.
+type skillInput struct {
+	Name  string `json:"name"`
+	ID    string `json:"id"`
+	Skill string `json:"skill"`
+}
+
+// skillName is the skill a skill tool's input names, "" for none.
+func skillName(in skillInput) string {
+	return cmp.Or(in.Name, in.ID, in.Skill)
 }
 
 // ocStore is where OpenCode keeps its sessions: its database or its files.
@@ -508,6 +537,20 @@ func parseOpenCode(f file) *state {
 			if s.Cwd == "" && m.Path != nil {
 				s.Cwd = m.Path.Cwd
 			}
+			// the tools the reply called, and the skill among them. OpenCode
+			// 2 keeps them in the reply's content; the older stores as parts
+			// of the message.
+			for _, p := range m.Content {
+				ocTool(s, at, p)
+			}
+			if len(m.Content) == 0 {
+				for _, b := range f.m().oc.parts(m.ID) {
+					var p ocPart
+					if json.Unmarshal(b, &p) == nil {
+						ocTool(s, at, p)
+					}
+				}
+			}
 			if t := m.Tokens; t != nil && m.ModelID != "" {
 				u := Tokens{Input: t.Input, Output: t.Output + t.Reasoning, CacheRead: t.Cache.Read, CacheWrite: t.Cache.Write}
 				if f.agent == "zcode" {
@@ -544,6 +587,24 @@ func ocTitle(s *state, parts [][]byte) {
 	if s.Title == "" && s.First == "" {
 		s.First = untagged(strings.Join(other, " "))
 	}
+}
+
+// ocTool counts a tool call, and the skill one called up, on the reply's
+// time, as its tokens are. A skill's input that doesn't read names no
+// skill; the call still counts.
+func ocTool(s *state, at time.Time, p ocPart) {
+	if p.Type != "tool" {
+		return
+	}
+	name := cmp.Or(p.Tool, p.Name)
+	skill := ""
+	if strings.EqualFold(name, "skill") && p.State != nil {
+		var in skillInput
+		if json.Unmarshal(p.State.Input, &in) == nil {
+			skill = skillName(in)
+		}
+	}
+	s.tool(at, name, skill)
 }
 
 // ocDefaultTitle is the title OpenCode gives a session before it names it.

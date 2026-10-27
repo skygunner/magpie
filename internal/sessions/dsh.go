@@ -30,8 +30,9 @@ import (
 // then an event per line: {type, seq, time, data}. A "user/message" is a
 // prompt typed when its source's kind is "user" (else instructions, a
 // plugin's, a subagent's report…), a "session/title" names the session,
-// and an "assistant/message" carries its model and its usage — input
-// without the cache, output with the reasoning. A session forked from
+// a "tool/call" is a tool called, its name in name and its arguments a
+// JSON string, and an "assistant/message" carries its model and its usage
+// — input without the cache, output with the reasoning. A session forked from
 // another starts with that one's events: before format 2 the first
 // seedLength of them, after it those up to a "session/end-seed" said to be
 // inherited. They count where they were first written. dsh has no command
@@ -237,7 +238,10 @@ type dshEvent struct {
 		Message struct {
 			Source dshSource `json:"source"`
 		} `json:"message"`
-		Usage *struct {
+		// a tool call's name, its arguments a JSON string
+		Name      string `json:"name"`
+		Arguments string `json:"arguments"`
+		Usage     *struct {
 			Input      int `json:"inputTokens"`
 			Output     int `json:"outputTokens"`
 			CacheRead  int `json:"cacheReadTokens"`
@@ -246,7 +250,7 @@ type dshEvent struct {
 	} `json:"data"`
 }
 
-var dshWanted = [][]byte{[]byte(`"user/message"`), []byte(`"session/title"`), []byte(`"session/title-llm-request"`), []byte(`"assistant/message"`), []byte(`"session/end-seed"`)}
+var dshWanted = [][]byte{[]byte(`"user/message"`), []byte(`"session/title"`), []byte(`"session/title-llm-request"`), []byte(`"assistant/message"`), []byte(`"tool/call"`), []byte(`"session/end-seed"`)}
 
 // dshCarry is what a read of a dsh session file carries on with: where it
 // read to and the header it read first.
@@ -367,6 +371,16 @@ func dshCount(s *state, h *dshHead, b []byte, main bool) {
 	s.saw(at, main)
 	if u := e.Data.Usage; e.Type == "assistant/message" && u != nil && e.Data.Message.Source.Model != "" {
 		s.use(dateOf(at), e.Data.Message.Source.Model, Tokens{Input: u.Input, Output: u.Output, CacheRead: u.CacheRead, CacheWrite: u.CacheWrite})
+	}
+	if e.Type == "tool/call" {
+		skill := ""
+		if strings.EqualFold(e.Data.Name, "skill") {
+			var in skillInput
+			if json.Unmarshal([]byte(e.Data.Arguments), &in) == nil {
+				skill = skillName(in)
+			}
+		}
+		s.tool(at, e.Data.Name, skill)
 	}
 }
 
