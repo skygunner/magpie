@@ -144,6 +144,39 @@ func TestCodexProxyNamesItsVariable(t *testing.T) {
 	}
 }
 
+// #3137 (cjyrainbow): with Codex Desktop in WSL the gateway is the Windows
+// host's address, not 127.0.0.1, and every remedy named 127.0.0.1 — advice
+// that exempts an address Codex never sends to.
+func TestCodexProxiedDetailNamesTheGatewayAddress(t *testing.T) {
+	const base = "http://172.20.240.1:3425/v1"
+	cases := []struct {
+		name string
+		goos string
+		from string
+		want string
+	}{
+		{"a variable", "darwin", "HTTP_PROXY", "add 172.20.240.1 to NO_PROXY where HTTP_PROXY is set"},
+		{"Windows' list", "windows", "Windows' proxy settings", `add 172.20.240.1 to "Don't use the proxy server for addresses beginning with"`},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			was := codexProxyOS
+			codexProxyOS = c.goos
+			t.Cleanup(func() { codexProxyOS = was })
+			d := codexProxiedDetail(base, "http://127.0.0.1:7897", c.from)
+			if !strings.Contains(d, "send 172.20.240.1 direct") || !strings.Contains(d, "DIRECT rule for 172.20.240.1") {
+				t.Fatalf("the direct rule names another address: %s", d)
+			}
+			if !strings.Contains(d, c.want) {
+				t.Fatalf("want %q in: %s", c.want, d)
+			}
+			if strings.Contains(d, "127.0.0.1 to NO_PROXY") || strings.Contains(d, "127.0.0.0/8") {
+				t.Fatalf("the gateway's address isn't 127.0.0.1: %s", d)
+			}
+		})
+	}
+}
+
 // liu_dyj on X: magpie opened from the Dock lacks the NO_PROXY a shell
 // profile sets, which the Codex a terminal or the ChatGPT app runs has.
 // The login shell's value is Codex's; magpie's own only where the shell
