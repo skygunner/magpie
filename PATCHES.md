@@ -32,6 +32,11 @@ Each round:
 4. Tag `prod/<tag>-pN` (annotated); build
    `docker build --build-arg VERSION=<tag>-pN -t magpie:<tag>-pN .`;
    smoke-test on a throwaway config (`magpie version`, 401 without a key).
+   Publish to Docker Hub: `docker tag` the image as
+   `bigshort/magpie-patched:<tag>-pN` and `:latest` (latest always points
+   at the newest round), push both, and refresh the repo's README — the
+   version header, the patch table, and the source tag link come from
+   this file's current round.
 5. On docker1: back up the volume and container config under
    `/home/hermes/backups/magpie/pre-<tag>-<ts>/` (volume tar + container
    inspect), stop and rename the running container to
@@ -84,4 +89,6 @@ Checked again at v0.1.1670: still zero comments, still nothing upstream.
   swap is replaced by this round's proper #3794 integration).
 - `prod/0.1.1670-p1` — 2026-10-27. Rolling merge of v0.1.1670 plus
   #3788/#3791 (`dd670e6`) and #3794 (`82d916e3`); plugin tarball rebuilt
-  from PR #366 `bdc302a`.
+  from PR #366 `bdc302a`. Published to Docker Hub as
+  `bigshort/magpie-patched:0.1.1670-p1` and `:latest` — from this round
+  on, every deployment is published there too.
