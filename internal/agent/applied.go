@@ -773,6 +773,11 @@ func (a *Agent) Disconnect() error {
 			return err
 		}
 	}
+	// also remove the provider/providers blocks magpie wrote (v1 and v2)
+	if a.Path != "" {
+		edit.DelJSON(a.Path, "provider."+magpieID)
+		edit.DelJSON(a.Path, "providers."+magpieID)
+	}
 	// what it was on through magpie, for switching it on again
 	back := reconnection{Magpie: map[string]string{}, Left: a.Values()}
 	for _, f := range a.Fields {

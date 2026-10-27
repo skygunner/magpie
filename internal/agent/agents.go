@@ -815,7 +815,7 @@ func openCodeLike(at place, id, name, icon, bin, dir, auth string, ua []string, 
 			break
 		}
 	}
-	provider := openCodeKept(path, func() any { return magpieProviderJSONAt("opencode", id, at.gw()) })
+	_ = openCodeKept(path, func() any { return magpieProviderJSONAt("opencode", id, at.gw()) })
 	opts := func(key string) func(map[string]string) []Option {
 		return func(cur map[string]string) []Option {
 			return append(ownOptions(auth, cur[key]), viaMagpie(id, magpieID+"/")...)
@@ -837,7 +837,10 @@ func openCodeLike(at place, id, name, icon, bin, dir, auth string, ua []string, 
 				if onMagpie() {
 					return nil
 				}
-				return edit.DelJSON(path, "provider."+magpieID)
+				if err := edit.DelJSON(path, "provider."+magpieID); err != nil {
+					return err
+				}
+				return edit.DelJSON(path, "providers."+magpieID)
 			}
 			v, err := openCodeRefAt(at, path, id, v)
 			if err != nil {
@@ -861,9 +864,9 @@ func openCodeLike(at place, id, name, icon, bin, dir, auth string, ua []string, 
 			// a model of magpie's chosen, but its provider gone from the
 			// file: put it back, or the agent has nothing to send it to
 			if _, ok := edit.GetJSON(path, "provider."+magpieID); !ok && onMagpie() {
-				return edit.SetJSON(path, edit.KV{Path: "provider." + magpieID, Value: provider()})
+				return openCodeV2Sync(path, onMagpie, id, at)
 			}
-			return syncJSONInOrder(path, "provider."+magpieID, provider)
+			return openCodeV2SyncInOrder(path, id, at)
 		},
 		Fields: []Field{
 			{Key: "model", Label: "model", Get: jsonGet(path, "model"), Set: set("model"), Options: opts("model")},
