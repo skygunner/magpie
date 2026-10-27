@@ -84,27 +84,29 @@ func TestRuleEffortUnsetOrUnknownLevels(t *testing.T) {
 	}
 }
 
-// Only the member the rule names: once it fails, the next member is asked
-// as the agent asked.
-func TestRuleEffortStaysWithItsMember(t *testing.T) {
-	s, a, b := ruled(t)
+// #3664: an intent names the model and the effort it is asked for, and
+// that model's provider turns the request away. The group fails over to
+// another of its members, and the turn keeps the intent's effort there
+// rather than falling back to the agent's own.
+func TestIntentEffortSurvivesTheGroupsFailover(t *testing.T) {
+	s, a, b, c := intented(t, provider.Rule{Use: "a/small", Intent: "simple questions", UseEffort: "low"})
 	for _, m := range []string{"a/small", "b/big"} {
 		if err := provider.SetModelEfforts(m, []string{"low", "medium", "high"}); err != nil {
 			t.Fatal(err)
 		}
 	}
-	setMembers(t, []string{"a/small", "b/big"}, provider.Rule{Use: "a/small", Tokens: 1000, UseEffort: "low"})
+	c.set("1", 0)
 	a.mu.Lock()
 	a.fail = 500
 	a.mu.Unlock()
 	out, r := postOK(t, s, "", chat(long(2000), nil, 0, `,"reasoning_effort":"medium"`))
-	if sent := sentBody(t, b); !strings.Contains(out, "from kb") || sent["reasoning_effort"] != "medium" {
-		t.Fatalf("fallback sent %v (%s)", sent, out)
+	if sent := sentBody(t, b); !strings.Contains(out, "from kb") || sent["reasoning_effort"] != "low" {
+		t.Fatalf("the member the group failed over to sent %v (%s)", sent, out)
 	}
 	if sent := sentBody(t, a); sent["reasoning_effort"] != "low" {
-		t.Fatalf("ruled member sent %v", sent)
+		t.Fatalf("the intent's member sent %v", sent)
 	}
-	if len(r.Tries) != 2 || r.Tries[0].RuleEffort != "low" || r.Tries[1].RuleEffort != "" {
+	if len(r.Tries) != 2 || r.Tries[0].RuleEffort != "low" || r.Tries[1].RuleEffort != "low" {
 		t.Fatalf("traced %+v", r.Tries)
 	}
 }

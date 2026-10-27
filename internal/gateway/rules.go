@@ -755,28 +755,42 @@ func ruleOver(hit *RuleHit, ms []provider.Member, cs []candidate, pl planned, af
 	return cs, pl
 }
 
-// ruleEffort is the reasoning a rule asks its member for (#2633), when c
-// is one of that member's keys or accounts — the outermost group's rule
-// that names one, as the turn's pick is the outermost group's — fitted to
-// the levels c's model has. A model whose levels aren't known is asked as
-// it would be without the rule: magpie can't tell it thinks. "" for none.
+// ruleEffort is the reasoning a rule asks its request for (#2633), fitted
+// to the levels c's model has: that of the outermost group's rule naming
+// one of c's members, as the turn's pick is the outermost group's. A
+// member the group fails over to is asked it too (#3664): the effort is
+// the turn's decision, so a provider that turns the request away doesn't
+// leave the member it went to instead at the agent's own level — and a
+// rule that names c wins over one it only fails over from. A model whose
+// levels aren't known is asked as it would be without the rule: magpie
+// can't tell it thinks. "" for none.
 // A rule after it that only fails over (Then) asks nothing of its member.
 func ruleEffort(c candidate, hit *RuleHit, nested []NestedRule) string {
 	hits := []*RuleHit{hit}
 	for _, n := range nested {
 		hits = append(hits, n.Rule)
 	}
+	asked := "" // the effort of the first rule with one, unless one names c
 	for _, h := range hits {
-		if h == nil || h.UseEffort == "" || !slices.ContainsFunc(h.members, func(m provider.Member) bool { return ofMember(c, m) }) {
+		if h == nil || h.UseEffort == "" {
 			continue
 		}
-		levels := c.p.Efforts(c.model)
-		if len(levels) == 0 {
-			return ""
+		if asked == "" {
+			asked = h.UseEffort
 		}
-		return fitLevel(h.UseEffort, levels)
+		if slices.ContainsFunc(h.members, func(m provider.Member) bool { return ofMember(c, m) }) {
+			asked = h.UseEffort
+			break
+		}
 	}
-	return ""
+	if asked == "" {
+		return ""
+	}
+	levels := c.p.Efforts(c.model)
+	if len(levels) == 0 {
+		return ""
+	}
+	return fitLevel(asked, levels)
 }
 
 // homeCands sends the keys or accounts of the rule's members as the
