@@ -1366,7 +1366,7 @@ func Handler(w Windows, gw *gateway.Server) http.Handler {
 			}
 		}
 		if v := strings.TrimSpace(in.ImageGen); v != "" && v != "off" && v != cur.ImageGen {
-			if _, _, ok := provider.Resolve(v); !ok {
+			if !gateway.DrawerResolves(v) {
 				fail(rw, fmt.Errorf("no model %s to generate images", v))
 				return
 			}

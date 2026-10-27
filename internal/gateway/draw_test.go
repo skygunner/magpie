@@ -221,6 +221,42 @@ func TestDrawerIsTheSettingOrAutomatic(t *testing.T) {
 	}
 }
 
+// A provider the user made Usage only serves no chat model, and still
+// draws with the image models magpie lists for it: the pick in Settings is
+// found, not reported missing (#3107).
+func TestDrawingUsesImageModelsOfAProviderServingNoChatModels(t *testing.T) {
+	fresh(t)
+	e := &easel{}
+	up := httptest.NewServer(e)
+	t.Cleanup(up.Close)
+	p := provider.Provider{ID: "relay", Name: "Relay", Chat: up.URL + "/v1", Key: "key", NoModels: true}
+	if err := provider.Save(p); err != nil {
+		t.Fatal(err)
+	}
+	if err := catalog.SaveLive(p.ID, p.Chat, []catalog.Model{
+		{ID: "Qwen3.5-27B"},
+		{ID: "Kwai-Kolors/Kolors", Draws: true},
+		{ID: "Tongyi-MAI/Z-Image-Turbo", Draws: true},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	st := settings.Load()
+	st.ImageGen = "relay/Kwai-Kolors/Kolors"
+	if err := settings.Save(st); err != nil {
+		t.Fatal(err)
+	}
+	code, answer, raw := postImages(t, New(), "/v1/images/generations", "application/json", `{"prompt":"a magpie"}`)
+	if code != 200 || answer.Model != st.ImageGen {
+		t.Fatalf("%d %s", code, raw)
+	}
+	if sent := e.got("/v1/images/generations"); len(sent) != 1 || !strings.Contains(sent[0], `"model":"Kwai-Kolors/Kolors"`) {
+		t.Fatalf("asked %v", sent)
+	}
+	if missing := DrawerMissing(); missing != "" {
+		t.Fatalf("the pick is reported missing: %q", missing)
+	}
+}
+
 func TestVendorFailureIsSaid(t *testing.T) {
 	s, _ := easeled(t)
 	p, _ := provider.Find("art")

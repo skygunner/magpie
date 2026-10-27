@@ -90,7 +90,7 @@ func drawer() (string, bool) {
 		return "", false
 	case "":
 	default:
-		if pickedMissing(v) == "" {
+		if drawerMissing(v) == "" {
 			return v, true
 		}
 	}
@@ -109,11 +109,31 @@ func Drawer() string {
 // when magpie can't find it any more, so that AutoDrawer's draws in its
 // place, as VisionMissing is Image recognition's. "" when none is named,
 // it is off, or it resolves.
-func DrawerMissing() string { return pickedMissing(settings.Load().ImageGen) }
+func DrawerMissing() string { return drawerMissing(settings.Load().ImageGen) }
+
+// drawerMissing is pickedMissing for the Image generation pick, resolved as
+// a drawing is: a provider the user made Usage only still draws with the
+// image models magpie lists for it (drawerServingNone, #3107).
+func drawerMissing(v string) string {
+	if v == "" || v == "off" || DrawerResolves(v) {
+		return ""
+	}
+	return v
+}
+
+// DrawerResolves is whether id names a model magpie can draw with, as a
+// drawing request resolves it (resolveDrawing).
+func DrawerResolves(id string) bool {
+	_, _, ok := resolveDrawing(id)
+	return ok
+}
 
 func resolveDrawing(id string) (provider.Provider, string, bool) {
 	if strings.Contains(id, "/") {
-		return provider.Resolve(id)
+		if p, model, ok := provider.Resolve(id); ok {
+			return p, model, true
+		}
+		return drawerServingNone(id)
 	}
 	for _, p := range provider.All() {
 		if !p.On() || p.DecideOnly() {
@@ -133,6 +153,27 @@ func resolveDrawing(id string) (provider.Provider, string, bool) {
 		}
 	}
 	return provider.Resolve(id)
+}
+
+// drawerServingNone resolves a provider/model id of a provider the user
+// made Usage only (ServesNone): provider.Resolve refuses every id of one,
+// as it serves no chat model, though magpie still lists the image models it
+// draws with, and asks them at its images API (#3107).
+func drawerServingNone(id string) (provider.Provider, string, bool) {
+	pid, model, ok := strings.Cut(id, "/")
+	if !ok {
+		return provider.Provider{}, "", false
+	}
+	p, err := provider.Find(pid)
+	if err != nil || !p.On() || !p.ServesNone() {
+		return provider.Provider{}, "", false
+	}
+	for _, m := range Drawers(*p) {
+		if m.ID == model {
+			return *p, model, true
+		}
+	}
+	return provider.Provider{}, "", false
 }
 
 // drawsFamily is whether a subscription whose image models magpie lists

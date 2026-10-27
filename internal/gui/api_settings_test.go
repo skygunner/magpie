@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/yetone/magpie/internal/catalog"
+	"github.com/yetone/magpie/internal/provider"
 	"github.com/yetone/magpie/internal/settings"
 )
 
@@ -28,6 +30,31 @@ func TestSettingsSearchProviderOff(t *testing.T) {
 	h.ServeHTTP(rec, httptest.NewRequest("POST", "/api/settings", strings.NewReader(`{"searcher":"missing-provider"}`)))
 	if rec.Code != http.StatusBadRequest || settings.Load().Searcher != "off" {
 		t.Fatalf("invalid provider changed the choice: %d %s", rec.Code, rec.Body)
+	}
+}
+
+// A provider the user made Usage only serves no chat model, and still
+// draws with the image models magpie lists for it: picking one under
+// Settings › Models › Image generation is saved, not turned away (#3107).
+func TestImageGenPickOfAProviderServingNoChatModelsSaves(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	const chat = "http://127.0.0.1:1/v1"
+	if err := provider.Save(provider.Provider{ID: "relay", Name: "Relay", Chat: chat, Key: "key", NoModels: true}); err != nil {
+		t.Fatal(err)
+	}
+	if err := catalog.SaveLive("relay", chat, []catalog.Model{{ID: "Qwen3.5-27B"}, {ID: "Kwai-Kolors/Kolors", Draws: true}}); err != nil {
+		t.Fatal(err)
+	}
+	rec := httptest.NewRecorder()
+	Handler(nil, nil).ServeHTTP(rec, httptest.NewRequest("POST", "/api/settings", strings.NewReader(`{"imageGen":"relay/Kwai-Kolors/Kolors"}`)))
+	if rec.Code != http.StatusOK || settings.Load().ImageGen != "relay/Kwai-Kolors/Kolors" {
+		t.Fatalf("%d %s", rec.Code, rec.Body)
+	}
+	// a chat model of the same provider is still none magpie draws with
+	rec = httptest.NewRecorder()
+	Handler(nil, nil).ServeHTTP(rec, httptest.NewRequest("POST", "/api/settings", strings.NewReader(`{"imageGen":"relay/Qwen3.5-27B"}`)))
+	if rec.Code != http.StatusBadRequest || settings.Load().ImageGen != "relay/Kwai-Kolors/Kolors" {
+		t.Fatalf("a chat model: %d %s", rec.Code, rec.Body)
 	}
 }
 
