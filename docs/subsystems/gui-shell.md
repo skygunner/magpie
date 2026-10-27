@@ -409,7 +409,15 @@ covers it in both engines, every language and a narrow window.
 - `Settings -> Sync and backup` and `/api/davsync/{action}` configure and run encrypted WebDAV, S3 or GitHub setup sync. They share the CLI's operations and expose credential presence, never the secrets. State, merge, failure and compatibility behavior are described in [Sync and backup](sync-backup.md).
 
 `openModal` makes the background inert when an editor opens fresh, leaving
-confirmations and menus interactive through redraws. `closeModal` releases
+confirmations and menus interactive through redraws. A region that drags the
+window is not itself made inert — the header, the sidebar's top strip and a
+page's tool bar in the sidebar's layout, each `--wails-draggable: drag`: Wails
+moves the window from the element under the press and skips an inert one, so
+with the titlebar inert a press on its empty strip fell through to the page and
+the window stopped moving on the Mac (#3322). What is in such a region is inert
+instead, along with the rest of the background;
+`modal-titlebar-drag.test.cjs` checks that the empty strip still drags and that
+a press on a tab there reaches nothing. `closeModal` releases
 that background as soon as the close animation starts, so clicks reach the
 page while the editor fades away. Opening an editor during that animation
 protects the background again. `ux-safety.test.cjs` checks these transitions.

@@ -91,7 +91,7 @@ for (const engine of process.env.BROWSER ? [process.env.BROWSER] : ["chromium", 
       const modal = page.locator("#modal");
       await page.getByRole("dialog").waitFor();
       assert.equal(await page.getByRole("dialog").getAttribute("aria-modal"), "true");
-      assert.equal(await page.locator("header").evaluate((e) => e.inert), true);
+      assert.equal(await page.locator("header button").first().evaluate((e) => e.inert), true);
       assert.ok(await page.locator("#modal label").evaluateAll((labels) => labels.filter((l) => l.htmlFor).every((l) => !!l.control)), "labels refer to controls");
       // Focus cycles in both directions, never entering the dimmed background.
       await page.locator("#modal .bar button:last-child").focus();
@@ -165,7 +165,7 @@ for (const engine of process.env.BROWSER ? [process.env.BROWSER] : ["chromium", 
         await dialog.waitFor();
         await page.evaluate(() => { renderProviders(); renderProviders(); });
         assert.equal(await dialog.evaluate((element) => element.inert), false, "redrawing the editor keeps the confirmation interactive");
-        assert.equal(await page.locator("header").evaluate((element) => element.inert), true, "the background stays inert through redraws");
+        assert.equal(await page.locator("header button").first().evaluate((element) => element.inert), true, "the background stays inert through redraws");
       }, false, /Relay/);
       assert.equal(posts.filter((p) => p.path === "/api/provider/delete").length, 0);
       assert.equal(await modal.isVisible(), true);
@@ -207,7 +207,7 @@ for (const engine of process.env.BROWSER ? [process.env.BROWSER] : ["chromium", 
       assert.equal(await page.locator("body").getAttribute("data-menu-choice"), "two");
       await page.locator("#modal").getByRole("button", { name: lang === "zh" ? "取消" : "Cancel", exact: true }).click();
       await page.locator("#modal").waitFor({ state: "hidden" });
-      assert.equal(await page.locator("header").evaluate((element) => element.inert), false);
+      assert.equal(await page.locator("header button").first().evaluate((element) => element.inert), false);
       for (const id of ["already-inert", "later-inert"]) {
         assert.equal(await page.locator("#" + id).evaluate((element) => element.inert), true, `${id} keeps its own inert state`);
       }
@@ -251,7 +251,7 @@ for (const engine of process.env.BROWSER ? [process.env.BROWSER] : ["chromium", 
       });
       assert.equal(closing, true);
       await page.mouse.click(reopeningPoint.x + reopeningPoint.width / 2, reopeningPoint.y + reopeningPoint.height / 2);
-      assert.equal(await page.locator("header").evaluate((e) => e.inert), true, "reopening during close protects the background again");
+      assert.equal(await page.locator("header button").first().evaluate((e) => e.inert), true, "reopening during close protects the background again");
       assert.equal(await page.locator("#modal").evaluate((m) => !m.hidden && !m.classList.contains("out")), true);
       await page.evaluate(() => {
         cancelEdit();
@@ -259,7 +259,7 @@ for (const engine of process.env.BROWSER ? [process.env.BROWSER] : ["chromium", 
         for (const a of [...modal.getAnimations(), ...modal.firstElementChild.getAnimations()]) a.finish();
       });
       await page.locator("#modal").waitFor({ state: "hidden" });
-      assert.equal(await page.locator("header").evaluate((e) => e.inert), false, "the reopened editor also releases its background");
+      assert.equal(await page.locator("header button").first().evaluate((e) => e.inert), false, "the reopened editor also releases its background");
     });
   }
 }

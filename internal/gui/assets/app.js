@@ -8511,6 +8511,8 @@ function modalFormDirty() {
 }
 function markModalSaved() { modalFormBase = modalFormValues(); }
 let modalBackgroundElements = [];
+const wailsDrag = (element) => getComputedStyle(element).getPropertyValue("--wails-draggable").trim() === "drag";
+const modalControls = "button, a[href], input, select, textarea, [tabindex]";
 function modalBackground(inert) {
   if (inert) {
     // A fresh editor may interrupt its closing animation; keep the original background.
@@ -8519,8 +8521,20 @@ function modalBackground(inert) {
     // over the dialog, and made inert it let every click through to the
     // fields beneath (#2188)
     const modal = $("#modal"), pop = $("#pop");
-    modalBackgroundElements = [...document.body.children].filter((element) =>
-      element !== modal && element !== pop && element.tagName !== "SCRIPT" && !element.inert);
+    // Wails moves the window from the element under the press, and skips an
+    // inert one: with the titlebar inert, a press on its empty strip fell
+    // through to the page and the window stopped moving on the Mac (#3322).
+    // The regions that drag the window — the header, the sidebar's top strip,
+    // a page's tool bar in the sidebar's layout — keep their drag, and what is
+    // in them is inert instead.
+    modalBackgroundElements = [...document.body.children]
+      .filter((element) => element !== modal && element !== pop && element.tagName !== "SCRIPT" && !element.inert)
+      .flatMap((element) => {
+        const regions = [element, ...element.children].filter((node) => wailsDrag(node) && !wailsDrag(node.parentElement));
+        if (!regions.length) return [element];
+        return [...element.children].filter((child) => !regions.includes(child) && !child.inert)
+          .concat(regions.flatMap((region) => [...region.querySelectorAll(modalControls)].filter((control) => !control.inert)));
+      });
     for (const element of modalBackgroundElements) element.inert = true;
   } else {
     for (const element of modalBackgroundElements) element.inert = false;
