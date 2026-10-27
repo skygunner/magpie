@@ -381,13 +381,25 @@ func desktopTierTurn(asked string) string {
 // leaves two alike (one provider's models named alike) the whole catalog id
 // after it, for Desktop's menu shows the name alone.
 func desktopNames(entries []provider.Entry) []string {
-	out := provider.Labels(entries)
-	same := map[string]int{}
-	for _, s := range out {
-		same[strings.ToLower(s)]++
+	return namesApart(provider.Labels(entries), entries)
+}
+
+// namesApart puts the whole catalog id after each of names that two or more
+// entries read alike by, for a menu that shows the name alone. A model
+// listed twice, as one is by its bare id as well, is not told apart from
+// itself.
+func namesApart(names []string, entries []provider.Entry) []string {
+	out := append([]string(nil), names...)
+	by := map[string]map[string]bool{}
+	for i, e := range entries {
+		k := strings.ToLower(out[i])
+		if by[k] == nil {
+			by[k] = map[string]bool{}
+		}
+		by[k][e.ID] = true
 	}
 	for i, e := range entries {
-		if same[strings.ToLower(out[i])] > 1 {
+		if len(by[strings.ToLower(out[i])]) > 1 {
 			out[i] += " (" + e.ID + ")"
 		}
 	}

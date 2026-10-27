@@ -1174,6 +1174,15 @@ func (s *Server) models(w http.ResponseWriter, r *http.Request) {
 				labels = append(labels, labels[b.Of])
 			}
 		}
+		// Cindy's menu names a model by its name alone, with Magpie under
+		// every row as the one provider it took magpie as, so the name says
+		// the model's provider there as Claude Desktop's menu does (#3017):
+		// the agents' list's name, and where two still read alike, their
+		// whole id after it
+		var cindyNames []string
+		if agentOf(r) == "cindy" {
+			cindyNames = namesApart(labels, rows)
+		}
 		for i, e := range rows {
 			m := modelObject(e)
 			if id, ok := ids[i]; ok {
@@ -1200,6 +1209,9 @@ func (s *Server) models(w http.ResponseWriter, r *http.Request) {
 			// plain, so two providers' models of one name are told apart
 			// there as they are here
 			m["magpie_label"] = labels[i]
+			if cindyNames != nil {
+				m["display_name"] = cindyNames[i]
+			}
 			if agentOf(r) == "cursor-local" {
 				cursorLocalModel(m, e)
 			}
