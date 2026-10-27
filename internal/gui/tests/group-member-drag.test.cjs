@@ -4,9 +4,9 @@
 // with a grip beside it drawn only while the row is under the pointer;
 // dragging it moves the model, Alt+↑/↓ moves it from the keyboard, which
 // stays on it, and Up and Down stay beside it. A pattern's members follow
-// the named ones and have no handle. Saved, the members go in the new
-// order. No click or drag moves the page. In English and Chinese, Chromium
-// and WebKit.
+// the named ones; a moved one is named at its place (#2730). Saved, the
+// members go in the new order. No click or drag moves the page. In English
+// and Chinese, Chromium and WebKit.
 const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const path = require("node:path");
@@ -80,9 +80,9 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       const row = (name) => ed.locator(".fbrow", { has: page.locator(".n > span:first-child", { hasText: new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`) }) });
       const handle = (name) => row(name).locator(".rt-mhandle");
 
-      // every named member has a handle with its number; the pattern's none
-      assert.deepEqual(await ed.locator(".fbrow .rt-mhandle").allTextContents(), ["1", "2", "3"]);
-      assert.equal(await handle("free:free").count(), 0, "a pattern's member has a handle");
+      // every member has a handle with its number, a pattern's too: moved,
+      // it is named where it lands (#2730)
+      assert.deepEqual(await ed.locator(".fbrow .rt-mhandle").allTextContents(), ["1", "2", "3", "4"]);
       assert.equal(await handle("two").getAttribute("aria-label"), w.move);
       // Up on all but the first named, Down on all but the last named
       const btns = async (name) => row(name).locator("button.text").allTextContents();
@@ -94,7 +94,7 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       const grip = (name) => handle(name).evaluate((h) => getComputedStyle(h, "::before").opacity);
       assert.equal(await grip("two"), "0");
       await row("two").locator(".n").hover();
-      await page.waitForFunction(() => [...document.querySelectorAll(".rt-mhandle")].map((h) => getComputedStyle(h, "::before").opacity).join() === "0,1,0");
+      await page.waitForFunction(() => [...document.querySelectorAll(".rt-mhandle")].map((h) => getComputedStyle(h, "::before").opacity).join() === "0,1,0,0");
 
       await ed.evaluate((x) => x.scrollIntoView({ block: "center" })); // by the test, as the reader would
       await page.waitForTimeout(200);

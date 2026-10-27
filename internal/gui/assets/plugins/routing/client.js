@@ -5599,21 +5599,31 @@ function routingPage(part) {
     const list = el("div", "fbl");
     const addBtn = el("button", "rt-gadd");
     addBtn.append(svg(PLUS, 11, 1.8), el("span", "", t("Add a model")));
-    // moveMember puts the member at `from` at `to` among those named — a
-    // pattern's follow them, in the catalog's order — and keeps the
-    // keyboard on its handle when it was there
+    // moveMember puts the member at `from` at `to`, and keeps the keyboard
+    // on its handle when it was there. A pattern's members follow those the
+    // group names, in the catalog's order, so one of them moved is named at
+    // the place it was moved to — no later than the first of them — and
+    // keeps it when the group is read (provider.matchesIn leaves a model the
+    // group names at its named place, #2730). Moving it later than its own is
+    // left to the catalog: a place among them isn't kept.
     const named = () => d.members.filter((x) => !d.matched.includes(x)).length;
     const moveMember = (from, to, keep) => {
-      if (to < 0 || to >= named() || to === from) return;
+      const id = d.members[from], byPattern = d.matched.includes(id);
+      if (byPattern) {
+        if (to < 0 || to >= from) return;
+        to = Math.min(to, named());
+      } else if (to < 0 || to >= named() || to === from) return;
       d.members.splice(to, 0, d.members.splice(from, 1)[0]);
+      if (byPattern) d.matched = d.matched.filter((x) => x !== id);
       draw();
       if (keep) list.querySelector(`.rt-mhandle[data-at="${to}"]`)?.focus({ preventScroll: true });
     };
-    // memberHandle is a named member's place in the order, which is also
-    // its handle (PAMI on Discord: only Up, one step a click): drag it to
+    // memberHandle is a member's place in the order, which is also its
+    // handle (PAMI on Discord: only Up, one step a click): drag it to
     // move the model, or Alt+↑/↓ from the keyboard; Up and Down stay
     // beside it. The grip that says so shows only on hover, as on the
-    // groups' cards.
+    // groups' cards. A pattern's member has one too: moved, it is named at
+    // its place (#2730).
     const memberHandle = (id, i, row) => {
       const b = el("button", "i ag-handle rt-mhandle", String(i + 1));
       b.type = "button";
@@ -5699,7 +5709,7 @@ function routingPage(part) {
         sw.append(el("i"));
         sw.onclick = () => { d.off = off ? d.off.filter((x) => x !== id) : [...d.off, id]; draw(); };
         if (off) row.classList.add("muted");
-        row.append(sw, matched ? el("span", "i", String(i + 1)) : memberHandle(id, i, row), memberIcon(id), n, el("span", "grow"));
+        row.append(sw, memberHandle(id, i, row), memberIcon(id), n, el("span", "grow"));
         // what the model is, in the same chips the Gateway page's list says it
         // in (modelInfo): its reasoning levels, whether it sees images and the
         // window it holds. A group mixing members that see images with ones
@@ -5773,6 +5783,8 @@ function routingPage(part) {
         if (d.routing === "weight") row.append(memberWeight(id, off));
         if (s) row.title = s.members.map((x) => memberLabel(s, x)).join(s.routing === "order" ? " → " : " · ");
         if (!m && !s) { row.classList.add("off"); row.title = info?.providerOff ? offWords(info) : t("No provider serves {id} now; it is skipped", { id }); }
+        // moved, a pattern's model is named among the group's own (#2730)
+        if (i) { const up = el("button", "text", t("Up")); up.onclick = () => moveMember(i, i - 1); row.append(up); }
         if (matched) {
           // a pattern's: it follows the catalog, so it is switched off
           // rather than taken out — the pattern would find it again
@@ -5780,7 +5792,6 @@ function routingPage(part) {
           list.append(row);
           return;
         }
-        if (i) { const up = el("button", "text", t("Up")); up.onclick = () => moveMember(i, i - 1); row.append(up); }
         if (i < named() - 1) { const down = el("button", "text", t("Down")); down.onclick = () => moveMember(i, i + 1); row.append(down); }
         const rm = el("button", "text", t("Remove"));
         rm.onclick = () => { d.members.splice(i, 1); rematch(); draw(); drawRules(); };
