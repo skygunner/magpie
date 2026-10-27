@@ -83,7 +83,7 @@ func TestQuotaSpanCarriesEveryWindowField(t *testing.T) {
 
 	// and what is carried is copied: a window with each set says each
 	at := time.Date(2026, 10, 30, 17, 0, 0, 0, time.UTC)
-	full := QuotaWindow{Unlimited: true, Name: "Credits", Used: 40, ResetsAt: &at, Display: "1 / 2", Text: true, Amount: 1, Limit: 2, Unit: "credits",
+	full := QuotaWindow{Unlimited: true, Name: "Credits", Used: 40, ResetsAt: &at, Display: "1 / 2", Text: true, Amount: 1, Limit: 2, Unit: "credits", AmountUnknown: true,
 		RunsOutAt: &at, RunsOut: 3, Pool: "P", Holds: &WindowHolds{}, HoldsWhy: "x"}
 	got := quotaReport([]SubscriptionQuota{{Provider: "p", Windows: []QuotaWindow{full}}}, nil, nil, at)
 	b, _ := json.Marshal(got[0].Windows[0])
