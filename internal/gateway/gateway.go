@@ -6156,6 +6156,30 @@ func asksResponses(body []byte) bool {
 	return false
 }
 
+// ToolsDroppedHeader names the provider-hosted tools a translated request
+// couldn't carry, by the types the client gave, comma-separated: web search
+// a provider that doesn't search and no searcher of magpie's answers, web
+// fetch anywhere, the server tools no other API has (#3206). A client that
+// reads it knows its model was left without a tool, rather than a 200 that
+// says nothing.
+const ToolsDroppedHeader = "X-Magpie-Tools-Dropped"
+
+// serverToolsDropped lists those of req.ServerTools the request isn't sent:
+// every one but a web search the upstream or magpie's searcher answers
+// (search), which no translated request has a wire for.
+func serverToolsDropped(req *Request, search bool) []string {
+	var out []string
+	for _, t := range req.ServerTools {
+		if search && (strings.HasPrefix(t, "web_search") || strings.HasPrefix(t, "google")) {
+			continue
+		}
+		if !slices.Contains(out, t) {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
 // translate serves a client API the provider lacks by speaking another
 // one to it. The provider is always streamed; the client gets whichever
 // it asked for.
@@ -6180,6 +6204,9 @@ func (s *Server) translate(w http.ResponseWriter, r *http.Request, p provider.Pr
 	if p.OpenCodeFree(model) {
 		zen = &zenReply{z: zenFreeTools(request)}
 	}
+	// own is the request's web search answered by magpie's searcher, its
+	// upstream having none; searched is either of them answering it
+	own, searched := false, false
 	if request.WebSearch {
 		// an API on which the provider searches by itself comes first;
 		// without one, its model is given magpie's search. A searcher
@@ -6192,15 +6219,21 @@ func (s *Server) translate(w http.ResponseWriter, r *http.Request, p provider.Pr
 				break
 			}
 		}
-		if !searching(r.Context()) && canSearchFor(p) && !searchesFor(p, to, model, request) {
-			ask := antigravityRound(w, p, s.askTranslated(p, to, model, r.Header, w.Header()))
-			if zen != nil {
-				ask = zenRound(zen.z, ask)
-			}
-			// a Kimi Code plan's own searches stay on it
-			r = r.WithContext(searchingOn(r.Context(), p))
-			return s.searchReply(w, r, from, p.Name, request, u, ask)
+		upstream := searchesFor(p, to, model, request)
+		own = !searching(r.Context()) && canSearchFor(p) && !upstream
+		searched = upstream || own
+	}
+	if dropped := serverToolsDropped(request, searched); len(dropped) > 0 {
+		w.Header().Set(ToolsDroppedHeader, strings.Join(dropped, ","))
+	}
+	if own {
+		ask := antigravityRound(w, p, s.askTranslated(p, to, model, r.Header, w.Header()))
+		if zen != nil {
+			ask = zenRound(zen.z, ask)
 		}
+		// a Kimi Code plan's own searches stay on it
+		r = r.WithContext(searchingOn(r.Context(), p))
+		return s.searchReply(w, r, from, p.Name, request, u, ask)
 	}
 	stream := request.Stream
 	request.Stream = true

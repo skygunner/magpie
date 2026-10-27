@@ -152,6 +152,7 @@ func readChat(body []byte, facts bool) (*Request, error) {
 			r.WebSearch = true
 		}
 		if t.Type != "" && t.Type != "function" {
+			r.ServerTools = append(r.ServerTools, t.Type)
 			continue
 		}
 		r.Tools = append(r.Tools, Tool{Name: t.Function.Name, Description: t.Function.Description, Schema: t.Function.Parameters, Strict: t.Function.Strict != nil && *t.Function.Strict})

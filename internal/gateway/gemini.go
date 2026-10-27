@@ -336,7 +336,10 @@ func parseGemini(body []byte) (*Request, error) {
 	}
 	for _, t := range g.Tools {
 		if t.GoogleSearch != nil || t.GoogleSnake != nil {
+			// Google's own search is carried as magpie's or the upstream's,
+			// never as the tool it was sent as
 			r.WebSearch = true
+			r.ServerTools = append(r.ServerTools, "googleSearch")
 		}
 		for _, f := range t.FunctionDeclarations {
 			if allowed != nil && !allowed[f.Name] {

@@ -342,6 +342,17 @@ recorded as a prediction failure (`noPrediction`).
   `TestUnroutedUnknownHoldAnsweredSooner`, `TestUnroutedSlowBodyNotCutOff`,
   `TestUnroutedMaskingNotCutOff`, `TestUnroutedSlotWaitNotCutOff`,
   `TestUnroutedMostLeavesOutMasking`, `TestMaskingModelWaitNotCutOffAtMost`.
+- A provider-hosted tool a translated request can't carry is named in
+  `X-Magpie-Tools-Dropped` (`ToolsDroppedHeader` and `serverToolsDropped` in
+  [`gateway.go`](../../internal/gateway/gateway.go)), by the type the client
+  gave, comma-separated: a web search neither the upstream nor magpie's
+  searcher answers (`web_search_20260209`, Codex's `web_search`, a Gemini
+  client's `googleSearch`), `web_fetch_20250910`, and every other server tool
+  no translated API has (`Request.ServerTools`, filled by each parser). A
+  relayed body goes as the client sent it and names nothing. Before, the tool
+  went missing between the request and the upstream while the reply said
+  nothing, so the model answered as if none had been offered (#3206,
+  ObsidianArch02). `TestServerToolsDroppedAreNamed`.
 
 ## Remote magpie APIs
 

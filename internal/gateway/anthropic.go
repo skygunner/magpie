@@ -226,6 +226,7 @@ func readAnthropic(body []byte, clientMarks, facts bool) (*Request, error) {
 			if strings.HasPrefix(t.Type, "web_search") {
 				r.WebSearch = true
 			}
+			r.ServerTools = append(r.ServerTools, t.Type)
 			if strings.HasPrefix(t.Type, "advisor_") {
 				// Claude Code's advisor: its instructions, which would
 				// have the model call a tool it hasn't got (advisor.go)

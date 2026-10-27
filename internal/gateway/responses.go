@@ -503,6 +503,16 @@ func readResponses(body []byte, facts bool) (*Request, error) {
 		case toolSearch:
 			if t.Execution == "client" {
 				offer(i, Tool{Name: toolSearch, Description: t.Description, Schema: t.Parameters}, nsTool{Search: true})
+			} else if i < sent {
+				// the server runs the search: another API has no such tool
+				r.ServerTools = append(r.ServerTools, t.Type)
+			}
+		default:
+			// a provider-hosted tool no other API has a wire for; the ones
+			// Codex's earlier searches found (found, after the client's) are
+			// magpie's own record, not the client's offer
+			if i < sent && t.Type != "" {
+				r.ServerTools = append(r.ServerTools, t.Type)
 			}
 		}
 	}
