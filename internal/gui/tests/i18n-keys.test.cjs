@@ -46,7 +46,14 @@ test("a plugin's words are its own", () => {
       const p = path.join(d, e.name);
       if (e.isDirectory()) {
         if (!["node_modules", ".git", "site", "tests", "testdata", "docs"].includes(e.name)) walk(p);
-      } else if (/\.(go|js|html|css)$/.test(e.name) && e.name !== "i18n.js") texts.push([p, fs.readFileSync(p, "utf8")]);
+      } else if (/\.(go|js|html|css)$/.test(e.name) && e.name !== "i18n.js") {
+        // A comment says nothing to a user: fetchClaudeRuns asks… read as
+        // the plugin's "Runs as" and turned the check red (#3897)
+        let s = fs.readFileSync(p, "utf8");
+        if (/\.(go|js)$/.test(e.name)) s = s.replace(/(^|\s)\/\/[^\n]*/g, "$1");
+        s = s.replace(/\/\*[\s\S]*?\*\//g, " ");
+        texts.push([p, s]);
+      }
     }
   };
   walk(repo);
