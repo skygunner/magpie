@@ -380,6 +380,11 @@ func TestPlanQuotas(t *testing.T) {
 	if q := got["go/"]; q.Name != "OpenCode Go" || len(q.Windows) != 1 || q.Windows[0].Name != "5 hours" {
 		t.Errorf("go: %+v", q)
 	}
+	// a live success says when it was read (#3816): the Usage page's timer
+	// and routing go by ReadAt, and a card without it looks never read
+	if q := got["go/"]; q.ReadAt == nil || time.Since(*q.ReadAt) > time.Minute {
+		t.Errorf("go read at: %+v", q)
+	}
 	if q := got["go-inference/"]; len(q.Windows) != 1 || q.Windows[0].Name != "5 hours" || q.Error != "" {
 		t.Errorf("go at the inference API: %+v", q)
 	}

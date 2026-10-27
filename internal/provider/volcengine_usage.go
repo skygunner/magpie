@@ -137,6 +137,11 @@ func volcPlanQuotas(ctx context.Context) []SubscriptionQuota {
 			out[i] = volcPlanQuota(j.p.Via(ctx), j.p, j.action, j.plan, j.region)
 			// a failed read shows what was last read, as a key's plan does
 			out[i] = keepReading(ctx, out[i], keyTag("volc "+j.action, j.p.AccessKeyID))
+			// a read just made says when (#3816); a kept time is not
+			// overwritten
+			if out[i].Error == "" && len(out[i].Windows) > 0 && out[i].ReadAt == nil {
+				out[i] = readNow(out[i])
+			}
 		}()
 	}
 	wg.Wait()

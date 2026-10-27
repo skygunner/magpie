@@ -230,6 +230,11 @@ func tencentPlanCards(ctx context.Context, p Provider, region string, now func()
 				q.Error = "Tencent Cloud told no quota for this Token Plan Enterprise: " + shapeOf(told)
 			}
 			out[i] = keepReading(ctx, q, keyTag("tencent "+region+" "+t.TeamID, p.AccessKeyID))
+			// a read just made says when (#3816); a kept time is not
+			// overwritten
+			if out[i].Error == "" && len(out[i].Windows) > 0 && out[i].ReadAt == nil {
+				out[i] = readNow(out[i])
+			}
 		}()
 	}
 	wg.Wait()
