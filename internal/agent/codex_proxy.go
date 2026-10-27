@@ -256,15 +256,37 @@ func codexProxyOK(cfg, base string) bool {
 // how to get it there.
 func codexProxiedDetail(base, proxy, from string) string {
 	host := strings.TrimPrefix(base, "http://")
+	// the gateway is not always 127.0.0.1: Codex Desktop in WSL reaches it
+	// at the Windows host's address (#3137), and the remedies must exempt
+	// the address Codex really sends to
+	gw := urlHost(base)
+	direct := gw
+	if ip := net.ParseIP(gw); ip != nil && ip.IsLoopback() {
+		direct = "127.0.0.0/8"
+	}
 	d := "Codex sends its requests for magpie (" + host + ") through the proxy at " + netproxy.Redact(proxy) + ", set in " + from + ", and that proxy doesn't pass them on to magpie: every turn fails, with 502 Bad Gateway, whichever model it is on. " +
-		"Have the proxy send 127.0.0.1 direct (a DIRECT rule for 127.0.0.0/8, or rule mode rather than global), "
+		"Have the proxy send " + gw + " direct (a DIRECT rule for " + direct + ", or rule mode rather than global), "
 	switch {
 	case strings.Contains(strings.ToUpper(from), "_PROXY"):
-		d += "or add 127.0.0.1 to NO_PROXY where " + from + " is set (your shell profile, such as ~/.zshrc, if it's there), "
+		d += "or add " + gw + " to NO_PROXY where " + from + " is set (your shell profile, such as ~/.zshrc, if it's there), "
 	case codexProxyOS == "windows":
-		d += "or add 127.0.0.1 to \"Don't use the proxy server for addresses beginning with\" in Windows' proxy settings (127.* there is not enough for Codex), "
+		d += "or add " + gw + " to \"Don't use the proxy server for addresses beginning with\" in Windows' proxy settings"
+		if ip := net.ParseIP(gw); ip != nil && ip.IsLoopback() {
+			d += " (127.* there is not enough for Codex)"
+		}
+		d += ", "
 	default:
-		d += "or add export NO_PROXY=127.0.0.1 to your shell profile (~/.zshrc): Codex in a terminal and the ChatGPT app's Codex both read it, "
+		d += "or add export NO_PROXY=" + gw + " to your shell profile (~/.zshrc): Codex in a terminal and the ChatGPT app's Codex both read it, "
 	}
 	return d + "then quit and reopen Codex. Until then, Disconnect from magpie puts Codex's config back as it was."
+}
+
+// urlHost is the host name of a gateway's base URL, 127.0.0.1 as it was
+// when the URL doesn't parse.
+func urlHost(base string) string {
+	u, err := url.Parse(base)
+	if err != nil || u.Hostname() == "" {
+		return "127.0.0.1"
+	}
+	return u.Hostname()
 }
