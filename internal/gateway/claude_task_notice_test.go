@@ -110,11 +110,11 @@ func TestClaudeTaskNotificationBesideTheUsersMessage(t *testing.T) {
 
 // Results with nothing after them, or a hook's notice alone, are handed
 // over as they were.
-func TestWithTaskNoticesLeavesOtherResults(t *testing.T) {
+func TestWithNoticesLeavesOtherResults(t *testing.T) {
 	for _, body := range []string{notifyBody(`]}`), cc296Hooks, reportedHooks} {
 		req := parsed(t, body)
 		results := []Part{{Kind: ToolResult, CallID: "call-1", Text: "hi"}}
-		if got := withTaskNotices(results, req.Messages); len(got) != 1 || got[0].Text != "hi" {
+		if got := withNotices(results, req.Messages); len(got) != 1 || got[0].Text != "hi" {
 			t.Fatalf("the result changed: %+v", got)
 		}
 	}

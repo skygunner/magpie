@@ -3426,10 +3426,13 @@ func saidWithResults(msgs []Message) string {
 		captions := withImages(m)
 		for _, p := range m.Parts {
 			// a background task's notification goes with the results
-			// (withTaskNotices), not as the user's
+			// (withNotices), not as the user's
 			text := p.Text
 			if p.Kind == Text && results && !captions {
 				text = taskNotice.ReplaceAllString(text, "")
+				// a sub-agent's report is the run's to hear, not the user's
+				// (withNotices, #2868)
+				text = agentMessage.ReplaceAllString(text, "")
 			}
 			switch {
 			case p.Kind == ToolResult:
@@ -3456,16 +3459,25 @@ func saidWithResults(msgs []Message) string {
 // </task-notification>.
 var taskNotice = regexp.MustCompile(`(?s)(?:\[SYSTEM NOTIFICATION - NOT USER INPUT\][^<]*)?<task-notification>.*?</task-notification>`)
 
-// withTaskNotices hands the run the notifications of background tasks
-// that came after the results (taskNotice), in a reminder at the end of the
-// last result, where Claude Code itself puts one for some models (inside
-// the tool_result's text). Claude Code 2.1.310 on Opus sends one that
-// arrives mid-turn as a {role: "system"} message after the results, and
-// before as a text block of the results' message; both were left out of
-// what the run was handed (#2060's rule for hooks' notices), so the run's
-// model never heard that a sub-agent it started in the background had
-// finished, nor its result, and waited for it (stones_2026 on Discord).
-func withTaskNotices(results []Part, msgs []Message) []Part {
+// agentMessage is a sub-agent's report handed to its parent as a message,
+// as the client's agent wraps one: <agent-message from="…">, the report,
+// </agent-message>. Also a message from another session of the same agent
+// (the wrapper names the sender).
+var agentMessage = regexp.MustCompile(`(?s)<agent-message\b[^>]*>.*?</agent-message>`)
+
+// withNotices hands the run the messages of the client's agent that came
+// after the results: the notifications of background tasks that ended
+// (taskNotice), and the reports sub-agents handed back and messages from
+// other sessions (agentMessage). Both are appended to the last result,
+// inside a system-reminder, where Claude Code itself puts one that lands in
+// a tool's result. Claude Code sends a report that arrives mid-turn as a
+// {role: "system"} message after the results, or as a text block of their
+// message, and saidWithResults drops those as the agent's, not the user's:
+// with the results' text the report reached the run (#2060's rule for
+// hooks' notices), as it does for a notification. Left out, the run's model
+// was told by the report's tool result to read a message it never got, and
+// went on without it (#2868).
+func withNotices(results []Part, msgs []Message) []Part {
 	if len(results) == 0 {
 		return results
 	}
@@ -3485,6 +3497,7 @@ func withTaskNotices(results []Part, msgs []Message) []Part {
 				seen = true
 			case p.Kind == Text && seen:
 				notices = append(notices, taskNotice.FindAllString(p.Text, -1)...)
+				notices = append(notices, agentMessage.FindAllString(p.Text, -1)...)
 			}
 		}
 	}
@@ -4535,7 +4548,7 @@ func (s *Server) serveSubscription(w http.ResponseWriter, r *http.Request, from 
 			run.mu.Unlock()
 		}
 		if err == nil {
-			events, err = run.continueWith(withTaskNotices(results, req.Messages), saidWithResults(req.Messages), more)
+			events, err = run.continueWith(withNotices(results, req.Messages), saidWithResults(req.Messages), more)
 		}
 		if err != nil {
 			run.abort()

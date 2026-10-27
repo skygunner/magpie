@@ -686,13 +686,25 @@ NOTIFICATION - NOT USER INPUT]" head) is not the user's either, but the
 run's model must hear it. Claude Code 2.1.310 sends one that finishes while
 its main agent is mid-turn as a `{role: "system"}` message after the
 results (several that finish together share one text block), or as text
-after them in their message. `withTaskNotices` appends each to the last
+after them in their message. `withNotices` appends each to the last
 result, inside `<system-reminder>`, as Claude Code itself does for a
 notification that lands in a tool's result, and `saidWithResults` strips
 them before judging what is left. Before, `agentNotice` dropped them
 whole, the run never heard the sub-agent finished, and the main agent
 waited for it (stones_2026 on Discord). A notification after a reply is a
 turn of its own and is told as it is.
+
+A sub-agent's report is a message of its own, and the same way
+(`agentMessage`, #2868). A sub-agent hands its report back with
+`SubagentHandback`, and the agent gives its parent a tool result that says
+the report went as a message from it, "Read it there; it is not repeated
+here", with the report after the results as `<agent-message from="…">` …
+`</agent-message>` — in a `{role: "system"}` message, in a reminder, or as
+text of the results' message. The wrapper names the sender and goes whole,
+so the run reads the report as the sub-agent's, not the user's. Before, a
+system message was the agent's to drop, the report went with it, and the
+run's model waited for a message it never got (WTHH031230, the same for a
+message from another session, which the agent wraps the same way).
 
 Where the result ends is said by the message's parts alone. A tool whose
 output says "Do not use tools." has it told as its output, inside the
