@@ -798,6 +798,10 @@ func (b *promptBuilder) anthropicBlock(role string, x rawBlock) {
 			case "image", "document":
 				b.add(PartFiles, c.Type, "image", imageTokens, imgPiece(c.Source))
 			default:
+				if src, ok := imageText(c.Text); ok {
+					b.add(PartFiles, "image", "image", imageTokens, imgPiece(imageURL(src)))
+					continue
+				}
 				n += tokensOf(c.Text)
 				texts = append(texts, c.Text)
 			}
@@ -973,12 +977,20 @@ func (b *promptBuilder) responsesItem(raw json.RawMessage) {
 		n := 0
 		var s string
 		if decodeJSONView(it.Output, &s) == nil {
-			n = tokensOf(s)
+			if src, ok := imageText(s); ok {
+				b.add(PartFiles, "image", "image", imageTokens, imgPiece(imageURL(src)))
+			} else {
+				n = tokensOf(s)
+			}
 		} else {
 			var texts []string
 			for _, p := range responsesContent(it.Output) {
 				if p.image {
 					b.add(PartFiles, "image", "image", imageTokens, imgPiece(p.src))
+					continue
+				}
+				if src, ok := imageText(p.text); ok {
+					b.add(PartFiles, "image", "image", imageTokens, imgPiece(imageURL(src)))
 					continue
 				}
 				n += tokensOf(p.text)
@@ -1072,6 +1084,10 @@ func (b *promptBuilder) chatCompletions(body []byte) bool {
 			for _, p := range parts {
 				if p.image {
 					b.add(PartFiles, "image", "image", imageTokens, imgPiece(p.src))
+					continue
+				}
+				if src, ok := imageText(p.text); ok {
+					b.add(PartFiles, "image", "image", imageTokens, imgPiece(imageURL(src)))
 					continue
 				}
 				n += tokensOf(p.text)

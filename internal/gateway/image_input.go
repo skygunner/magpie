@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"strings"
@@ -12,6 +13,52 @@ const imageOmitted = "[Image omitted: this model accepts text only.]"
 
 // errCurrentImage stops a walk at an image the latest turn gives the model.
 var errCurrentImage = errors.New("an image in the latest turn")
+
+// imageText is the image a tool's text is: a data: URL of an image and
+// nothing else. A tool that answers with a picture as text (Codex's
+// view_image, #3724) is counted as its base64 — 670k characters of it was
+// 167,598 tokens in one turn — and a model that can't see it was sent the
+// base64 as text, which its vendor refused as an invalid prompt from then
+// on. The picture goes where an image block goes, its text in its place.
+func imageText(s string) (string, bool) {
+	t := strings.TrimSpace(s)
+	if !strings.HasPrefix(t, "data:image/") || !strings.Contains(t, ";base64,") {
+		return "", false
+	}
+	return t, true
+}
+
+// imageURL is an image as the image_url an imgPiece carries.
+func imageURL(src string) json.RawMessage {
+	b, _ := json.Marshal(src)
+	return b
+}
+
+// asString is the text the block swap gave, as a string: a tool's result
+// that came as one text goes back as one.
+func asString(block json.RawMessage) json.RawMessage {
+	var b struct {
+		Text string `json:"text"`
+	}
+	decodeJSON(block, &b)
+	s, _ := json.Marshal(b.Text)
+	return s
+}
+
+// jsonImageText is whether a JSON value is an image's data: URL as text.
+func jsonImageText(val []byte) bool {
+	return bytes.HasPrefix(val, []byte(`"data:image/`))
+}
+
+// responsesToolResult is whether a Responses item is a tool's result, whose
+// images are the tool's rather than the user's.
+func responsesToolResult(kind string) bool {
+	switch kind {
+	case "function_call_output", "custom_tool_call_output", "local_shell_call_output", "tool_search_output":
+		return true
+	}
+	return false
+}
 
 // textOnlyBody rejects a user image in the latest turn and omits tool images
 // and images in older turns. It edits the wire JSON so passthrough keeps fields
@@ -100,7 +147,7 @@ func walkImages(proto provider.Protocol, body []byte, swap func(imageAt) (json.R
 		var kind string
 		if proto == provider.Responses {
 			decodeJSON(turn["type"], &kind)
-			if kind == "function_call_output" {
+			if responsesToolResult(kind) {
 				key, tool = "output", true
 			}
 		}
@@ -108,7 +155,26 @@ func walkImages(proto provider.Protocol, body []byte, swap func(imageAt) (json.R
 			decodeJSON(turn["role"], &kind)
 			tool = kind == "tool"
 		}
-		content, swapped, err := swapImageBlocks(proto, turn[key], i == len(turns)-1, tool, swap)
+		last := i == len(turns)-1
+		// a tool's picture that came as its text, before its blocks
+		if tool {
+			var s string
+			if decodeJSON(turn[key], &s) == nil {
+				if src, ok := imageText(s); ok {
+					out, err := swap(imageAt{Src: src, Last: last, Tool: true})
+					if err != nil {
+						return body, err
+					}
+					if out != nil {
+						turn[key] = asString(out)
+						turns[i], _ = json.Marshal(turn)
+						changed = true
+					}
+					continue
+				}
+			}
+		}
+		content, swapped, err := swapImageBlocks(proto, turn[key], last, tool, swap)
 		if err != nil {
 			return body, err
 		}
@@ -163,6 +229,8 @@ func anyImageBlock(proto provider.Protocol, turns []byte, contentKey string) boo
 		eachMember(turn, func(key, val []byte) bool {
 			if val[0] == '[' && (jsonStringIs(key, contentKey) || (proto == provider.Responses && jsonStringIs(key, "output"))) {
 				found = anyImageIn(proto, val)
+			} else if jsonImageText(val) && (jsonStringIs(key, contentKey) || jsonStringIs(key, "output")) {
+				found = true
 			}
 			return !found
 		})
@@ -193,6 +261,8 @@ func anyImageIn(proto provider.Protocol, blocks []byte) bool {
 		toolResult := false
 		eachMember(block, func(key, val []byte) bool {
 			switch {
+			case jsonImageText(val):
+				found = jsonStringIs(key, "text") || jsonStringIs(key, "content") || jsonStringIs(key, "output")
 			case proto == provider.Gemini && jsonStringIs(key, "functionResponse"):
 				if val[0] == '{' {
 					eachMember(val, func(k, v []byte) bool {
@@ -247,6 +317,23 @@ func swapImageBlocks(proto provider.Protocol, raw json.RawMessage, last, tool bo
 			}
 			continue
 		}
+		// a tool's picture that came as one of its text blocks
+		if tool {
+			var text string
+			if decodeJSON(block["text"], &text) == nil {
+				if src, ok := imageText(text); ok {
+					out, err := swap(imageAt{Src: src, Last: last, Tool: true})
+					if err != nil {
+						return raw, false, err
+					}
+					if out != nil {
+						blocks[i] = out
+						swapped = true
+					}
+					continue
+				}
+			}
+		}
 		// Gemini's function response holds a tool's images in its own parts
 		if proto == provider.Gemini && len(block["functionResponse"]) > 0 {
 			var fr map[string]json.RawMessage
@@ -264,6 +351,21 @@ func swapImageBlocks(proto provider.Protocol, raw json.RawMessage, last, tool bo
 			}
 		}
 		if proto == provider.Anthropic && kind == "tool_result" {
+			var text string
+			if decodeJSON(block["content"], &text) == nil {
+				if src, ok := imageText(text); ok {
+					out, err := swap(imageAt{Src: src, Last: last, Tool: true})
+					if err != nil {
+						return raw, false, err
+					}
+					if out != nil {
+						block["content"] = asString(out)
+						blocks[i], _ = json.Marshal(block)
+						swapped = true
+					}
+					continue
+				}
+			}
 			content, nested, err := swapImageBlocks(proto, block["content"], last, true, swap)
 			if err != nil {
 				return raw, false, err
