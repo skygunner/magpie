@@ -976,6 +976,12 @@ func delistedWith(p Provider, was *Provider) []string {
 // again (an Our Free Model channel not read yet when the picks were saved).
 // A list short of no pick is taken as it is: what it left out and lists
 // again later is new (TestClaudePicksOfEveryModelTakeOnesListedSince).
+// A list that fell back (ListError: the plugin's models hook couldn't read
+// its vendor's, plugin_relist.go) is none of that: it is short of every
+// model the vendor lists, so taken as it is, every one of them reads as
+// listed since and joins the picks (Qoder CN's user picked the free models
+// alone on one and found every model picked after Save, #3235). Nothing is
+// recorded for it, as nothing is dropped for it.
 func listedWith(p Provider, was *Provider) []string {
 	if len(p.Models) == 0 {
 		return nil
@@ -986,6 +992,12 @@ func listedWith(p Provider, was *Provider) []string {
 	from := p
 	if q, err := Find(p.ID); err == nil {
 		from = *q // with its account, whose list it is
+	}
+	if from.ListError() != "" {
+		if was == nil {
+			return nil
+		}
+		return was.PickedFrom
 	}
 	var ids []string
 	for _, m := range from.Available() {
