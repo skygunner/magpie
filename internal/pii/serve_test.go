@@ -14,7 +14,10 @@ import (
 	"github.com/yetone/magpie/internal/redact"
 )
 
-func person(s, e int) redact.Found { return redact.Found{Start: s, End: e, Label: "private_person"} }
+// person is a name at [s, e), as sure as the fake pf-serve says (main_test.go).
+func person(s, e int) redact.Found {
+	return redact.Found{Start: s, End: e, Label: "private_person", Score: float64(float32(0.98))}
+}
 
 // Short texts go to pf-serve joined, in one request, and what it finds
 // comes back to each text at that text's own offsets; a text seen before
@@ -55,7 +58,7 @@ func TestFindJoinsTextsAndMapsBack(t *testing.T) {
 func TestJoinSplitsAtChunkSize(t *testing.T) {
 	long := strings.Repeat("x", chunkSize)
 	texts := []string{"a", "b", long, "c"}
-	chunks, parts := join(missing(texts, []int{0, 1, 2, 3}, nil))
+	chunks, parts := join(pf.missing(texts, []int{0, 1, 2, 3}, nil))
 	if len(chunks) != 3 || chunks[0] != "a"+sep+"b" || chunks[1] != long || chunks[2] != "c" {
 		t.Fatalf("chunks = %d: %.20q", len(chunks), chunks)
 	}
