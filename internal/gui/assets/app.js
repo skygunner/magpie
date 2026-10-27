@@ -18350,7 +18350,7 @@ const ledRankValue = (m, x) => m === "speed" ? ledGroupSpeed(x)?.v || 0 : ledVal
 const ledPart = (m, x) => m === "speed" ? ledSpeed(x) : m === "cost" ? +x.cost || 0 : m === "calls" ? +x.calls || 0 : +x.tokens || 0;
 // a metric as its axis and its values say it
 const ledFormat = (m, v) => m === "cost" ? ledMoney(v) : m === "calls" || m === "speed" ? ledNum(Math.round(v)) : fmtN(Math.round(v));
-const ledFormatLong = (m, v) => m === "speed" ? (v > 0 ? t("{n} tok/s", { n: ledNum(Math.round(v)) }) : "—") : m === "cost" ? (fmtCost({ cost: v, unpriced: 0 }) || "—") : ledNum(Math.round(v));
+const ledFormatLong = (m, v) => m === "speed" ? (v > 0 ? t("{n} tok/s", { n: ledNum(Math.round(v)) }) : "—") : m === "cost" ? (fmtCost({ cost: v, unpriced: 0 }) || "—") : fmtN(Math.round(v));
 
 // an axis's top with four steps under it: round numbers, the top at least the largest value
 function ledAxis(max) {
