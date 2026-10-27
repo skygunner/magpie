@@ -74,8 +74,9 @@ func TestCodexOwnSignInAskedAgainAfterEOF(t *testing.T) {
 }
 
 // TestCodexOwnSignInEOFTold: a connection dropped on every try is asked
-// again only as many times as an overload is, and Codex is then told
-// OpenAI couldn't be reached, as before.
+// again only as many times as an overload is, and the exchange then ends
+// as the connection that failed, with no status magpie made up: the
+// reason stays in the routing view (#3135).
 func TestCodexOwnSignInEOFTold(t *testing.T) {
 	codexSignedIn(t)
 	pause := retryPause
@@ -96,15 +97,27 @@ func TestCodexOwnSignInEOFTold(t *testing.T) {
 	t.Cleanup(func() { provider.CodexBase = was })
 
 	s := New()
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest("POST", CodexPath+"/responses", strings.NewReader(`{"model":"gpt-6-luna","stream":false,"input":"ping"}`))
+	gw := httptest.NewServer(s.Handler())
+	t.Cleanup(gw.Close)
+	req, err := http.NewRequest("POST", gw.URL+CodexPath+"/responses", strings.NewReader(`{"model":"gpt-6-luna","stream":false,"input":"ping"}`))
+	if err != nil {
+		t.Fatal(err)
+	}
 	req.Header.Set("Authorization", "Bearer chatgpt-token")
 	req.Header.Set("chatgpt-account-id", "acct-1")
-	s.Handler().ServeHTTP(rec, req)
-	if rec.Code != 502 || !strings.Contains(rec.Body.String(), "OpenAI can't be reached") {
-		t.Fatalf("status %d, want 502 saying OpenAI can't be reached: %.300s", rec.Code, rec.Body.String())
+	res, err := gw.Client().Do(req)
+	if err == nil {
+		body, _ := io.ReadAll(res.Body)
+		res.Body.Close()
+		t.Fatalf("answered %d %.300s, want the connection Codex can wait out", res.StatusCode, body)
 	}
 	if n := posts.Load(); n != int64(lastRetries)+1 {
 		t.Fatalf("ChatGPT was asked %d times, want %d", n, lastRetries+1)
+	}
+	s.trace.mu.Lock()
+	last := *s.trace.routes[len(s.trace.routes)-1]
+	s.trace.mu.Unlock()
+	if !strings.Contains(last.Error, "OpenAI can't be reached") {
+		t.Fatalf("routing view says %q", last.Error)
 	}
 }
