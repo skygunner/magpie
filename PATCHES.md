@@ -108,6 +108,15 @@ reinstalled whenever the PR's runtime files change.
 Not carried: #3623 (no fix exists on the fork yet; nothing to apply).
 Checked again at v0.1.1670: still zero comments, still nothing upstream.
 
+User-directed, awaiting a fix (carry as soon as one exists — added
+2026-10-28): #3948, request observability — keep HTTP status and observed
+errors separate (a protocol mismatch records `200 · Protocol error` in
+Usage), and explain missing speed (non-streaming/untimed/insufficient
+sample). Split out of #3788's SSE regression diagnosis; no fix branch
+exists yet. Each round's sweep must look for one: a `fix/*3948*` /
+observability branch on the fork, or a fork commit referenced in the
+issue's comments. Pick it the moment it appears.
+
 ## Deployment history
 
 - `prod/0.1.1556-p1` — 2026-10-26. First patched build: the six bug
