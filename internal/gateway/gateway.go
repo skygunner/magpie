@@ -3789,6 +3789,11 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 	}
 	call.Usage.ResponseID = clientResponseID
 	finishCapture()
+	if call.Error == "" && r.Context().Err() == nil {
+		if msg := capture.protocolError(from, streams); msg != "" {
+			call.Status, call.Error, call.Usage.ErrType = capture.status, msg, "protocol_error"
+		}
+	}
 	// a reply the vendor gave that is no use to its caller all the same —
 	// a title request answered with no title (#743) — is in the Routing
 	// and Usage views with why

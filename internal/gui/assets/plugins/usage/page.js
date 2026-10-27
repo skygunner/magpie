@@ -964,12 +964,14 @@ function ledDetail(r, cols) {
   if (ledFailed_(r)) {
     add("Status", r.status ? String(r.status) : "—", "bad");
     add("Error type", r.err_type, "bad");
-    add(r.source === "log" ? "Error" : "Upstream said", r.err, "said");
+    add("Error source", t(r.source === "reported" ? "Client report" : r.source === "log" ? "Client log" : r.err_type === "protocol_error" ? "Gateway protocol check" : "Gateway / upstream"));
+    add("Error", r.err, "said");
   } else {
     // how it went, here as well as in the row's last column, which a narrow
     // window leaves out of sight (#799)
     add("Status", r.status ? String(r.status) : r.source === "log" ? t("Succeeded") : "");
   }
+  if (r.source !== "log" && r.source !== "reported") add("Client processing", t("Not observed by the gateway. HTTP status does not confirm that the client parsed or used the response."));
   if (Number.isFinite(r.ms) && r.ms > 0) add("Duration", (r.source === "log" ? "≈" : "") + ledTook(r.ms));
   // the way it was routed: the row's time links there too, which reads as
   // a time rather than a link (#799)
@@ -1002,6 +1004,7 @@ function ledDetail(r, cols) {
   }
   if (ledRowSpeed(r)) add("Speed", t("{n} tok/s", { n: ledNum(Math.round(ledRowSpeed(r))) }));
   else if (ledFloorSpeed(r)) add("Speed", "≥" + t("{n} tok/s", { n: ledNum(Math.round(ledFloorSpeed(r))) }));
+  else add("Speed", ledNoSpeed_(r));
   add("Request ID", r.rid);
   add("Endpoint", r.ep);
   const protos = ledProtos(r);
@@ -1714,7 +1717,7 @@ const ledNoSpeed_ = (r) => {
   if (ledFailed_(r)) return t("A failed request tells no speed");
   if (!(r.ms > 0)) return t("No duration was recorded to time a speed from");
   if (!(r.out > 0)) return t("No output tokens to time a speed from");
-  if (!(r.ttft_ms > 0)) return r.source === "log" ? t("The session file has no first token to time a speed from") : t("Not streamed: no first token to time a speed from");
+  if (!(r.ttft_ms > 0)) return r.source === "log" ? t("The session file has no first token to time a speed from") : t("No first-token timing was recorded: non-streaming or unavailable");
   const think = r.reasoning > 0, visible = think && !(r.first_text_ms > 0) && r.first_reasoning_ms >= r.ttft_ms && r.flow_ms > 0 && r.reasoning <= r.out;
   const n = think && !visible ? r.out - r.reasoning : r.out;
   if (!(n > 0)) return t("All its output was reasoning: no answer after it to time a speed from");
@@ -2034,7 +2037,7 @@ function renderLedger() {
     // how fast it wrote once it began, as CC Switch's log has it (#860)
     const v = ledRowSpeed(r), floor = ledFloorSpeed(r), f = ledFloor_(r);
     const ttft = r.ttft_ms > 0 ? " · " + t("TTFT {ms}", { ms: ledTook(r.ttft_ms) }) : "";
-    td(v ? t("{n} tok/s", { n: ledNum(Math.round(v)) }) : floor ? "≥" + t("{n} tok/s", { n: ledNum(Math.round(floor)) }) : "—", "n speed" + (v || floor ? "" : " faint"),
+    td(v ? t("{n} tok/s", { n: ledNum(Math.round(v)) }) : floor ? "≥" + t("{n} tok/s", { n: ledNum(Math.round(floor)) }) : bad ? "—" : t(!(r.ttft_ms > 0) && r.source !== "log" ? "Non-streaming / untimed" : "Insufficient sample"), "n speed" + (v || floor ? "" : " faint"),
       v ? (r.reasoning > 0 && r.first_text_ms > 0 ? t("{n} answer tokens in {ms} after the first text, the {r} reasoning tokens before it left out", { n: ledNum(ledDecode(r).n), ms: ledTook(ledDecode(r).w), r: ledNum(r.reasoning) })
         : t("{n} output tokens in {ms} after the first", { n: ledNum(ledDecode(r).n), ms: ledTook(ledDecode(r).w) })) + ttft
         : floor && f.gateway && f.answer ? t("At least: {n} answer tokens in {ms} after the first token, the {r} reasoning tokens left out. No first text was recorded, so reasoning after the first token is counted too", { n: ledNum(f.n), ms: ledTook(f.w), r: ledNum(r.reasoning) }) + ttft
@@ -2046,8 +2049,8 @@ function renderLedger() {
     const st = el("span", "st");
     // a status when the gateway logged the call; a session file has none,
     // and says only whether it went well
-    let word = r.status ? String(r.status) : r.source === "log" ? (bad ? r.err_type || t("Failed") : t("Succeeded")) : "—";
-    if (r.status && bad && r.err_type) word += " · " + r.err_type;
+    let word = r.status ? String(r.status) : r.source === "log" ? (bad ? r.err_type || t("Failed") : t("Succeeded")) : bad ? (r.source === "reported" ? t("Client-reported error") : r.err_type || t("Failed")) : "—";
+    if (r.status && bad) word += " · " + (r.source === "reported" ? t("Client-reported error") : r.err_type === "protocol_error" ? t("Protocol error") : r.err_type || t("Failed"));
     if (r.handed_on) word += " · " + t("handed on");
     else if (r.tries > 1) word += " · " + t("{n} tries", { n: r.tries });
     st.append(el("i", "dot"), document.createTextNode(word));

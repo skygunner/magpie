@@ -416,7 +416,7 @@ func TestOTelExportsBodiesWhenOn(t *testing.T) {
 
 func TestOTelWaterfallIncludesUnbilledFallback(t *testing.T) {
 	plan := &fake{ctype: "application/json", code: 429, reply: `{"error":{"message":"PRIVATE-ERROR"}}`}
-	spare := &fake{ctype: "application/json", reply: `{"id":"ok","choices":[],"usage":{"prompt_tokens":10,"completion_tokens":5}}`}
+	spare := &fake{ctype: "application/json", reply: `{"id":"ok","choices":[{"message":{"role":"assistant","content":"hello"},"finish_reason":"stop"}],"usage":{"prompt_tokens":10,"completion_tokens":5}}`}
 	twoProviders(t, plan, spare)
 	received := make(chan []byte, 64)
 	collector := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

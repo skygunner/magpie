@@ -185,16 +185,17 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
           await p.waitForTimeout(200);
 
           // the rows say each one's: measured, and at least
+          const sample = {en: "Insufficient sample", zh: "样本不足", "zh-TW": "樣本不足", ja: "サンプル不足", de: "Unzureichende Stichprobe"}[lang];
           const cell = (i) => p.locator(".led tbody tr.led-row").nth(i).locator("td.speed");
           assert.equal((await cell(0).textContent()).trim(), w.row);
           assert.equal((await cell(1).textContent()).trim(), w.cx);
           assert.equal((await cell(2).textContent()).trim(), w.rowFloor);
-          assert.equal((await cell(3).textContent()).trim(), "—");
-          assert.equal((await cell(4).textContent()).trim(), "—", "496 tokens over the whole turn tell nothing");
+          assert.equal((await cell(3).textContent()).trim(), sample);
+          assert.equal((await cell(4).textContent()).trim(), sample, "496 tokens over the whole turn tell nothing");
           assert.equal((await cell(5).textContent()).trim(), w.answer);
           assert((await cell(5).getAttribute("title")).includes(w.answerTip), "the answer's floor says so: " + (await cell(5).getAttribute("title")));
-          assert.equal((await cell(6).textContent()).trim(), "—", "Fallmonkey's 380 tokens over the whole turn tell nothing");
-          assert.equal((await cell(7).textContent()).trim(), "—", "Fallmonkey's 11-token astra answer tells nothing");
+          assert.equal((await cell(6).textContent()).trim(), sample, "Fallmonkey's 380 tokens over the whole turn tell nothing");
+          assert.equal((await cell(7).textContent()).trim(), sample, "Fallmonkey's 11-token astra answer tells nothing");
           assert.equal((await cell(8).textContent()).trim(), w.push);
           const pushTip = await cell(8).getAttribute("title");
           assert(pushTip.includes(w.turnTip) && pushTip.includes(w.n1200), "the whole turn's floor says so: " + pushTip);

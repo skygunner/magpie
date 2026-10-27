@@ -1074,3 +1074,19 @@ When Chat effort is fitted or a group overrides it, an effort-only alias
 that was identical is updated along with the top-level effort. This keeps
 the alias eligible for safe compatibility repair without rewriting conflicting
 or richer client settings.
+
+## Response protocol diagnostics
+
+After forwarding a non-streaming Chat, Responses or Anthropic reply,
+`captureResponseWriter.protocolError` checks the existing bounded diagnostic
+copy at the client boundary. An SSE reply, invalid JSON object, missing response
+array, or empty Chat `choices` records `protocol_error` in the existing request
+error fields. The HTTP status remains the status actually sent, including 200;
+Usage, Recent calls, Routing and observers therefore retain both facts. This
+check does not rewrite the reply, retry the call or apply account cooldown.
+
+Truncated or content-encoded copies are not parsed. Streaming replies are not
+validated by this check (an empty `choices` in a usage-only stream event is
+valid). Tool calls, refusals and empty text are accepted. This checks the response
+envelope, not client parsing or business completion, and cannot retrospectively
+validate historical records. `protocol_reply_test.go` covers these boundaries.

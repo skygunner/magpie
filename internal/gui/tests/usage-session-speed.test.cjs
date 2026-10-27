@@ -99,14 +99,14 @@ function server(lang) {
 
 const L = {
   en: {
-    speed: "Speed", gatewayFloor: "≥500 tok/s", floor: "≥98 tok/s", desktop: "≥125 tok/s", codexFloor: "≥25 tok/s", timed: "75 tok/s", codex: "150 tok/s",
+    sample: "Insufficient sample", speed: "Speed", gatewayFloor: "≥500 tok/s", floor: "≥98 tok/s", desktop: "≥125 tok/s", codexFloor: "≥25 tok/s", timed: "75 tok/s", codex: "150 tok/s",
     floorTip: "At least: 2,558 output tokens in 26 s, from the line that asked for it to its last. The session file has no first token, so the wait for it is counted too",
-    noFirst: "The session file has no first token to time a speed from", notStreamed: "Not streamed: no first token to time a speed from",
+    noFirst: "The session file has no first token to time a speed from", notStreamed: "No first-token timing was recorded: non-streaming or unavailable",
   },
   zh: {
-    speed: "速度", gatewayFloor: "≥500 token/秒", floor: "≥98 token/秒", desktop: "≥125 token/秒", codexFloor: "≥25 token/秒", timed: "75 token/秒", codex: "150 token/秒",
+    sample: "样本不足", speed: "速度", gatewayFloor: "≥500 token/秒", floor: "≥98 token/秒", desktop: "≥125 token/秒", codexFloor: "≥25 token/秒", timed: "75 token/秒", codex: "150 token/秒",
     floorTip: "下限：从发出请求的那一行到最后一行，26 秒 输出 2,558 个 token。会话文件没有首字时间，等首字的时间也算在里面",
-    noFirst: "会话文件没有首字时间，算不出速度", notStreamed: "非流式：没有首字时间，算不出速度",
+    noFirst: "会话文件没有首字时间，算不出速度", notStreamed: "未记录首字时间：非流式或计时不可用",
   },
 };
 
@@ -141,7 +141,7 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         assert.equal(await tip(0), w.floorTip);
         assert(!(await cell(0).getAttribute("class")).includes("faint"), "a floor isn't faint");
         // a short one: no speed, and not called "not streamed"
-        assert.equal(await text(1), "—");
+        assert.equal(await text(1), w.sample);
         assert.equal(await tip(1), w.noFirst);
         // what magpie timed is as it was
         assert.equal(await text(2), w.timed);
@@ -151,7 +151,7 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         assert.equal(await text(4), w.codex);
         // a failed call, and a reply in under a second, tell none
         assert.equal(await text(5), "—");
-        assert.equal(await text(6), "—");
+        assert.equal(await text(6), w.sample);
         // a Codex call in a turn of several tells its floor too
         assert.equal(await text(7), w.codexFloor);
         // Claude Desktop's file is Claude Code's

@@ -63,7 +63,7 @@ func (o *observed) end(call Call, millis int64) {
 	if o == nil {
 		return
 	}
-	rec := usage.Record{RouteID: o.routeID, Time: call.Time, Agent: call.Agent, Model: call.Model, Status: call.Status, Millis: millis}
+	rec := usage.Record{RouteID: o.routeID, Time: call.Time, Agent: call.Agent, Model: call.Model, Status: call.Status, Millis: millis, Error: call.Error, ErrType: call.Usage.ErrType}
 	for _, w := range o.watches {
 		w.End(rec)
 	}
