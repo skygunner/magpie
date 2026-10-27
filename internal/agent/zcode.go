@@ -148,7 +148,22 @@ func zcodeProviderJSON(path string, keep bool) any {
 		e := map[string]any{"name": m.Name, "limit": limit,
 			"modalities": map[string]any{"input": in, "output": []string{"text"}}}
 		if levels := zcodeLevels(m.Efforts); levels != nil {
-			e["reasoning"] = map[string]any{"enabled": true, "variants": levels, "defaultVariant": keptEffort(was[m.ID], levels, zcodeDefaultLevel(levels))}
+			def := keptEffort(was[m.ID], levels, zcodeDefaultLevel(levels))
+			// the schema ZCode 3.12.3 reads (resources/glm/zcode.cjs):
+			// levels and defaultLevel, and the options each level sends
+			// (#3852) — with only variants/defaultVariant, keys it
+			// ignores, nothing ever mapped a level to thinking, and an
+			// always-thinking model (kimi/k3.1-pro) was sent without
+			// thinking and turned away. A level named disabled turns
+			// thinking off. variants/defaultVariant stay first for the
+			// older ZCode.
+			byLevel := map[string]any{}
+			for _, l := range levels {
+				off := l == "disabled"
+				byLevel[l] = map[string]any{"thinking": map[string]any{"type": map[bool]string{true: "enabled", false: "disabled"}[!off]}}
+			}
+			e["reasoning"] = map[string]any{"enabled": true, "variants": levels, "defaultVariant": def,
+				"levels": levels, "defaultLevel": def, "providerOptionsByLevel": byLevel}
 		}
 		ms[m.ID] = e
 	}

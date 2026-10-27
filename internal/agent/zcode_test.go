@@ -220,7 +220,7 @@ func TestZCodeOutputAndReasoning(t *testing.T) {
 	b, _ := os.ReadFile(path)
 	for _, want := range []string{
 		`"limit":{"context":204800,"output":128000}`,
-		`"reasoning":{"defaultVariant":"high","enabled":true,"variants":["disabled","low","high","max"]}`,
+		`"reasoning":{"defaultLevel":"high","defaultVariant":"high","enabled":true,"levels":["disabled","low","high","max"],"providerOptionsByLevel":{"disabled":{"thinking":{"type":"disabled"}},"high":{"thinking":{"type":"enabled"}},"low":{"thinking":{"type":"enabled"}},"max":{"thinking":{"type":"enabled"}}},"variants":["disabled","low","high","max"]}`,
 		`"GLM-5-Turbo":{"reasoning":{"enabled":true,"variants":["enabled","off"],"defaultVariant":"enabled"},"limit":{"context":200000,"output":64000}}`,
 	} {
 		if !strings.Contains(string(b), want) {
