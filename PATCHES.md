@@ -69,7 +69,14 @@ Each round:
 ## Carried patches (as of v0.1.1767-p1, 2026-10-28)
 
 Checked against v0.1.1767 (2026-10-28): none absorbed yet; all nine
-issues still open, no branch or PR movement since the last sweep. This round's freshness sweep found #3035's fix had
+issues still open. #3487's source also gained `b6f71ebd`
+(`fix/3487-quota-span-fixture-1767`): a one-line test-fixture repair for
+`TestQuotaSpanCarriesEveryWindowField`, carried here as `3ea2e279`.
+
+Equivalence note for the sweep: `fix/hindsight-nonstream-cooldown`'s tip
+`b48a91bb` and `dfd128ca` are the same SSE fix on different bases — never
+pick both. This line tracks `fix/hindsight-nonstream-sse-1767`
+(v0.1.1767 base); the cooldown branch's newer tips are not picked. This round's freshness sweep found #3035's fix had
 evolved on the fork (the issue's own latest comment supersedes the
 original approach): `223f9b0a` (fix/bare-request-failover) is carried
 beside `8f931a28`. The #3487 source branch's six newer commits are other
@@ -88,8 +95,8 @@ pointer on this line.
 | yetone/magpie#3635 | `ad3badd3` + `4f7e63a8` | `fix/nvidia-parameters-routing` | NVIDIA parameter-list repair keeps reasoning effort; duplicate effort controls stay aligned through routing |
 | yetone/magpie#3636 | `0d3dca3d` | `fix/nvidia-parameters-routing` | an explicit unsupported-parameter 400 fails over to the group's remaining members |
 | yetone/magpie#3624 | `c931166a` | `fix/nvidia-parameters-routing` | Usage → View routing reveals the selected trace, not off-screen |
-| yetone/magpie#3788 | `dd670e6` | `fix/hindsight-nonstream-cooldown` | the group's first-response timeout also bounds non-streaming requests — headers alone don't count — so a slow member fails over before the caller gives up; the last candidate still waits |
-| yetone/magpie#3791 | `dd670e6` | `fix/hindsight-nonstream-cooldown` | provider JSON `modelCooldown` opts exact model ids into model/account/key cooldowns on 499s and slow starts: 1, 2, 4, 8, 16, 32, then the cap minutes; success resets the ladder; a cooling model is not probed even as last candidate (503 + Retry-After); `RestCapOff` overrides; production opts `raccoon`'s `sn-sensenova-6-8-flash` at a 60-minute cap |
+| yetone/magpie#3788 | `dd670e6` + `dfd128ca` | `fix/hindsight-nonstream-sse-1767` | the group's first-response timeout also bounds non-streaming requests — headers alone don't count — so a slow member fails over before the caller gives up; the last candidate still waits. `dfd128ca` keeps that wait out of SSE: a non-streaming wait no longer sends a keepalive and HTTP 200 (see the SSE follow-up section below) |
+| yetone/magpie#3791 | `dd670e6` + `dfd128ca` | `fix/hindsight-nonstream-sse-1767` | provider JSON `modelCooldown` opts exact model ids into model/account/key cooldowns on 499s and slow starts: 1, 2, 4, 8, 16, 32, then the cap minutes; success resets the ladder; a cooling model is not probed even as last candidate (503 + Retry-After); `RestCapOff` overrides; production opts `raccoon`'s `sn-sensenova-6-8-flash` at a 60-minute cap |
 | yetone/magpie#3794 | `82d916e3` | `fix/kilo-tools-count-fallback` | an explicit upstream tool-count limit (Kilo refusing 129 tools, max 128) fails the group over to the next member with the full tool list; the refusing member stays eligible for smaller requests |
 
 Plugin (not this branch): `@magpie-community/opencode-cloudflare-workers-ai-auth`
