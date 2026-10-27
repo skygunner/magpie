@@ -12473,6 +12473,7 @@ function renderSigning(sub) {
   const box = el("div", "signing" + (signing.state === "failed" ? " failed" : ""));
   const tt = el("span", "tt");
   if (signing.state === "risk") {
+    box.classList.add("risk");
     box.append(el("span", "mark", "!"));
     tt.append(el("span", "n", t("{name} accounts can be suspended", { name: sub.name })));
     if (sub.hint) tt.append(el("span", "s", t(sub.hint)));
@@ -12483,12 +12484,14 @@ function renderSigning(sub) {
     go.onclick = () => startSignIn(sub.agent, true, undefined, o);
     const close = el("button", "text", t("Cancel"));
     close.onclick = cancelSignIn;
+    const acts = el("div", "risk-acts");
     if (sub.importable) {
       const imp = el("button", "text", importSay(sub.agent).instead || t("Import instead…"));
       imp.title = importSay(sub.agent).from;
       imp.onclick = () => startImport(sub.agent);
-      box.append(close, imp, go);
-    } else box.append(close, go);
+      acts.append(close, imp, go);
+    } else acts.append(close, go);
+    box.append(acts);
     return box;
   }
   if (signing.state === "site") {
