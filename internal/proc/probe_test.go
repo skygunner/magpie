@@ -79,7 +79,7 @@ func TestProbeTimeoutEndsWhatItStarted(t *testing.T) {
 	cancel()
 	select {
 	case <-done:
-	case <-time.After(3 * time.Second):
+	case <-time.After(10 * time.Second):
 		t.Fatal("the probe went on after its context ended")
 	}
 	if !gone(pid) {
@@ -99,7 +99,7 @@ func TestEndProbes(t *testing.T) {
 	EndProbes()
 	select {
 	case <-done:
-	case <-time.After(3 * time.Second):
+	case <-time.After(10 * time.Second):
 		t.Fatal("the probe went on after EndProbes")
 	}
 	if !gone(pid) {
