@@ -105,14 +105,21 @@ func collectUntypedEnums(body []byte, node gjson.Result, inSchema bool, ins *[]t
 		})
 	case node.IsObject():
 		if inSchema && node.Index > 0 && node.Index < len(body) && body[node.Index] == '{' && !node.Get("type").Exists() {
-			var vals []gjson.Result
-			if e := node.Get("enum"); e.IsArray() {
-				vals = e.Array()
-			} else if c := node.Get("const"); c.Exists() {
-				vals = []gjson.Result{c}
-			}
-			if t := enumType(vals); t != "" {
-				*ins = append(*ins, typeInsert{node.Index, t})
+			// an object's or an array's keywords come first: a schema
+			// with items and a string enum given "string" went to Kimi
+			// with items on a string (#3867), as it did to Gemini
+			if t := keywordType(node); t == "object" || t == "array" {
+				*ins = append(*ins, typeInsert{node.Index, `"` + t + `"`})
+			} else {
+				var vals []gjson.Result
+				if e := node.Get("enum"); e.IsArray() {
+					vals = e.Array()
+				} else if c := node.Get("const"); c.Exists() {
+					vals = []gjson.Result{c}
+				}
+				if t := enumType(vals); t != "" {
+					*ins = append(*ins, typeInsert{node.Index, t})
+				}
 			}
 		}
 		node.ForEach(func(key, v gjson.Result) bool {
