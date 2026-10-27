@@ -161,6 +161,55 @@ func TestCodexKeychainAccountIsCodexs(t *testing.T) {
 	}
 }
 
+// A test's fake keychain is the keychain on every system: Codex's
+// default for [features] secret_auth_storage is off in a test, as on
+// macOS, so a config.toml naming "keyring" with no [features] is the
+// item the fake stands in for. On Windows the default (on there) read
+// it as Codex's encrypted storage, and the keychain tests here couldn't
+// see their item (#2808).
+func TestCodexKeychainInTestsIgnoresCodexsDefault(t *testing.T) {
+	was := secretAuthStorageDefault
+	t.Cleanup(func() { secretAuthStorageDefault = was })
+	secretAuthStorageDefault = true // as Codex's default is on Windows
+	home := signIn(t)
+	codexInKeychain(t, home, "keyring")
+	if b, _, err := readCodexLogin(filepath.Join(home, ".codex"), false); err != nil || len(b) == 0 {
+		t.Fatalf("a test's keyring isn't the fake keychain: %v", err)
+	}
+}
+
+// The exported hook gives another package's test the same (internal/agent's
+// TestCodexSignInInKeychain): Codex's Windows default is off while it is
+// in, so a keyring config there is the item the hook stands in for —
+// even one already read as the encrypted storage before the hook went
+// in, as the agent test's setup reads the home (a Save looks for
+// accounts): the parse is kept by the file, and the default is read
+// where the setting is asked of, not folded into what is kept.
+func TestCodexKeychainForTestIgnoresCodexsDefault(t *testing.T) {
+	was := secretAuthStorageDefault
+	t.Cleanup(func() { secretAuthStorageDefault = was })
+	secretAuthStorageDefault = true // as Codex's default is on Windows
+	dir := filepath.Join(t.TempDir(), ".codex")
+	os.MkdirAll(dir, 0o755)
+	os.WriteFile(filepath.Join(dir, "config.toml"), []byte("cli_auth_credentials_store = \"keyring\"\n"), 0o600)
+	// the setup's read, before the hook: under Windows's default the
+	// keyring is Codex's encrypted auth storage, and that parse is kept
+	if _, ok, _ := CodexSignInKnown(dir); ok {
+		t.Fatal("keyring under Codex's Windows default read as signed in")
+	}
+	item := []byte(`{"auth_mode":"chatgpt","tokens":{"access_token":"x","account_id":"acc-1"}}`)
+	restore := CodexKeychainForTest(func(service, account string) ([]byte, error) {
+		if service != codexKeychainService || account != codexKeychainAccount(dir) {
+			return nil, fs.ErrNotExist
+		}
+		return item, nil
+	})
+	defer restore()
+	if b, ok := CodexSignIn(dir); !ok || len(b) == 0 {
+		t.Fatalf("a test's keyring isn't the hook's keychain: %v %s", ok, b)
+	}
+}
+
 // #2367 (Dony2050): Codex set to keep its sign-in in the keychain has no
 // auth.json. Its account is found there all the same: the provider, its
 // saved login, the session identity and the agent's wiring all go by it.

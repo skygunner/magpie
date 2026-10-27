@@ -186,7 +186,22 @@ func codexKeychainAccount(home string) string {
 // the sign-in is kept.
 type codexStoreSetting struct {
 	Mode    string // file, keyring, auto or ephemeral
-	Secrets bool   // [features] secret_auth_storage
+	Secrets *bool  // [features] secret_auth_storage; nil: not said there
+}
+
+// secrets is the [features] secret_auth_storage setting as it stands
+// now: what config.toml names, or Codex's default for it, on on Windows
+// (secretAuthStorageDefault). The default is read here, not folded into
+// the parse, for the parse is kept by the file (filememo) until the
+// file changes: a default read into it would stand after the default
+// itself moved, and a test that puts the suite on the macOS default
+// (#2808) wasn't heard on a config.toml another package's setup had
+// already read under Windows's, which read it as the encrypted storage.
+func (s codexStoreSetting) secrets() bool {
+	if s.Secrets != nil {
+		return *s.Secrets
+	}
+	return secretAuthStorageDefault
 }
 
 // readCodexStoreSetting reads config.toml as Codex does: no file or no
@@ -203,14 +218,14 @@ func readCodexStoreSetting(home string) (codexStoreSetting, error) {
 		if err := toml.Unmarshal(b, &c); err != nil {
 			return codexStoreSetting{}, fmt.Errorf("%s doesn't read as TOML", path)
 		}
-		s := codexStoreSetting{Mode: c.Store, Secrets: secretAuthStorageDefault}
+		s := codexStoreSetting{Mode: c.Store}
 		if v, ok := c.Features["secret_auth_storage"].(bool); ok {
-			s.Secrets = v
+			s.Secrets = &v
 		}
 		return s, nil
 	})
 	if errors.Is(err, fs.ErrNotExist) {
-		return codexStoreSetting{Mode: "file", Secrets: secretAuthStorageDefault}, nil
+		return codexStoreSetting{Mode: "file"}, nil
 	}
 	if err != nil {
 		return codexStoreSetting{}, err
@@ -227,13 +242,13 @@ func readCodexStoreSetting(home string) (codexStoreSetting, error) {
 
 // keychainItem: the store is the keychain item magpie reads.
 func (s codexStoreSetting) keychainItem() bool {
-	return (s.Mode == "keyring" || s.Mode == "auto") && !s.Secrets && codexKeychainHere
+	return (s.Mode == "keyring" || s.Mode == "auto") && !s.secrets() && codexKeychainHere
 }
 
 // where names the store keyring and auto mean here.
 func (s codexStoreSetting) where() string {
 	switch {
-	case s.Secrets:
+	case s.secrets():
 		return "Codex's encrypted auth storage (features.secret_auth_storage)"
 	case runtime.GOOS == "darwin" || codexKeychainHere:
 		return "the macOS keychain"
@@ -696,13 +711,15 @@ func CodexSignInKnown(dir string) (b []byte, ok, known bool) {
 }
 
 // CodexKeychainForTest has Codex's keychain item read through find (no
-// item: fs.ErrNotExist) on every system, until restore.
+// item: fs.ErrNotExist) on every system, until restore: Codex's default
+// for [features] secret_auth_storage is off meanwhile, as on macOS, so
+// "keyring" with no [features] is that item, even on Windows (#2808).
 func CodexKeychainForTest(find func(service, account string) ([]byte, error)) (restore func()) {
-	old, oldHere := codexKeychain, codexKeychainHere
-	codexKeychain, codexKeychainHere = findOnly(find), true
+	old, oldHere, oldSecrets := codexKeychain, codexKeychainHere, secretAuthStorageDefault
+	codexKeychain, codexKeychainHere, secretAuthStorageDefault = findOnly(find), true, false
 	resetCodexKeychain()
 	return func() {
-		codexKeychain, codexKeychainHere = old, oldHere
+		codexKeychain, codexKeychainHere, secretAuthStorageDefault = old, oldHere, oldSecrets
 		resetCodexKeychain()
 	}
 }
