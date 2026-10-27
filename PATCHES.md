@@ -66,10 +66,15 @@ Each round:
 8. Accept: healthy, 401/200 auth pair, model count equal before/after, a
    real `group/fast-cheap` request 200. Push `prod` and the tag.
 
-## Carried patches (as of v0.1.1691-p1, 2026-10-27)
+## Carried patches (as of v0.1.1734-p1, 2026-10-27)
 
-Checked against v0.1.1691 (2026-10-27): none absorbed yet; all nine
-issues still open. The v0.1.1691 merge needed no conflict resolution. Integration notes: at
+Checked against v0.1.1734 (2026-10-27): none absorbed yet; all nine
+issues still open. This round's freshness sweep found #3035's fix had
+evolved on the fork (the issue's own latest comment supersedes the
+original approach): `223f9b0a` (fix/bare-request-failover) is carried
+beside `8f931a28`. The #3487 source branch's six newer commits are other
+issues' fixes and touch none of #3487's files; the other branches are
+docs-only ahead. Integration notes: at
 v0.1.1612 upstream made a plugin window's `Used` a pointer (#3650), kept
 beside #3487's pointer `Amount`; at v0.1.1670 upstream added runs-out
 spans (#3762) whose new test wrote a bare `Amount` — adapted to the
@@ -77,7 +82,7 @@ pointer on this line.
 
 | upstream | fix of record (skygunner/magpie) | source to track | what it does |
 | --- | --- | --- | --- |
-| yetone/magpie#3035 | `8f931a28` | `fix/sensenova-grammar-refusal` | recognize SenseNova's guided_grammar compile_grammar refusal and retry the schema as json_object |
+| yetone/magpie#3035 | `8f931a28` + `223f9b0a` | `fix/sensenova-grammar-refusal`, `fix/bare-request-failover` | recognize SenseNova's guided_grammar compile_grammar refusal and retry the schema as json_object; an otherwise unexplained 400/422 `Invalid request` also fails over to the next candidate, resting nothing |
 | yetone/magpie#3417 | `e75480ec` | `fix/codex-expiry-window` | Codex expiry-only resets stay inside the expiry window |
 | yetone/magpie#3487 | `d4944ace` | `fix/issue-batch-1025a` | quota card: a null amount is not a full allowance; a millisecond span is not charted as seconds |
 | yetone/magpie#3635 | `ad3badd3` + `4f7e63a8` | `fix/nvidia-parameters-routing` | NVIDIA parameter-list repair keeps reasoning effort; duplicate effort controls stay aligned through routing |
