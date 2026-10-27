@@ -1665,6 +1665,9 @@ func (s *Server) drawGemini(ctx context.Context, p provider.Provider, model stri
 		cfg["imageConfig"] = map[string]string{"aspectRatio": r}
 	}
 	body, _ := json.Marshal(map[string]any{"contents": []map[string]any{{"role": "user", "parts": parts}}, "generationConfig": cfg})
+	// Google lists a model as "models/<id>", which an id keeps; the path
+	// below names one "models/" itself (#3313)
+	model = strings.TrimPrefix(model, "models/")
 	base := strings.TrimSuffix(strings.TrimRight(p.Base(provider.Chat), "/"), "/openai")
 	url := base + "/models/" + model + ":generateContent"
 	return s.eachDrawing(d.N, func() (drawn, int, error) {
