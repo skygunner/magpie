@@ -22,9 +22,10 @@ func isSummaryKind(kind string) bool {
 }
 
 // isPredictionKind: the Codex app's guess at the user's next message,
-// shown in its composer (composer_predictions, #1970)
+// shown in its composer (composer_predictions, #1970; thread_sample, the
+// name ChatGPT desktop 26.1021 sends it under, #3903)
 func isPredictionKind(kind string) bool {
-	return kind == "composer_predictions"
+	return kind == "composer_predictions" || kind == "thread_sample"
 }
 
 // Codex projects turn metadata into headers, but its canonical transport is

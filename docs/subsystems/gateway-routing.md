@@ -123,7 +123,8 @@ foreign sealed history or repair ChatGPT's response protection.
 
 Codex's composer predictions (#1970), its guess at the user's next message,
 are another hidden turn on a fork of the thread, sent only through the
-ChatGPT sign-in, with `thread_source` `composer_predictions`. Each one reads
+ChatGPT sign-in, with `thread_source` `composer_predictions`, or
+`thread_sample` as ChatGPT desktop 26.1021 sends it (#3903). Each one reads
 the whole conversation again. `CodexPredictions` selects where they go: empty
 sends them as Codex asked, `off` answers `{"suggestion":null}` from magpie
 and sends nothing (`sentNowhere`, as title Off mode), and a model id sends

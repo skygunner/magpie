@@ -76,6 +76,10 @@ const REQUEST_KINDS = {
     "purpose": "kind:thread_description",
     "name": "Description"
   },
+  "thread_sample": {
+    "purpose": "kind:composer_predictions",
+    "name": "Prediction"
+  },
   "thread_spawn": {
     "purpose": "kind:collab_spawn",
     "name": "Subagent"

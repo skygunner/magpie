@@ -23,6 +23,13 @@ const predictionSchema = `{"$schema":"https://json-schema.org/draft/2020-12/sche
 // fork of the thread, on the thread's own model, its thread_source
 // composer_predictions, its prompt ending in the schema.
 func codexPredictionRequest(t *testing.T, s *Server, path, model string) *httptest.ResponseRecorder {
+	return codexPredictionRequestAs(t, s, path, model, "composer_predictions")
+}
+
+// codexPredictionRequestAs is that request as a client naming another
+// thread_source: ChatGPT desktop 26.1021 sends its predictions as
+// thread_sample, the same {"suggestion"} request by another name (#3903).
+func codexPredictionRequestAs(t *testing.T, s *Server, path, model, source string) *httptest.ResponseRecorder {
 	t.Helper()
 	prompt := "Predict the user's next message.\n\nReturn only JSON matching this schema: " + predictionSchema + "."
 	in, _ := json.Marshal(prompt)
@@ -35,7 +42,7 @@ func codexPredictionRequest(t *testing.T, s *Server, path, model string) *httpte
 	req := httptest.NewRequest("POST", path, strings.NewReader(body))
 	req.Header.Set("Authorization", "Bearer chatgpt-token")
 	req.Header.Set("session_id", "prediction-thread")
-	req.Header.Set("x-codex-turn-metadata", `{"thread_source":"composer_predictions","forked_from_thread_id":"main-chat"}`)
+	req.Header.Set("x-codex-turn-metadata", `{"thread_source":"`+source+`","forked_from_thread_id":"main-chat"}`)
 	s.Handler().ServeHTTP(rec, req)
 	return rec
 }
@@ -122,6 +129,35 @@ func TestCodexPredictionsSetting(t *testing.T) {
 	want := "openai:composer_predictions magpie:composer_predictions fake:composer_predictions openai:"
 	if got := strings.Join(kinds, " "); got != want {
 		t.Errorf("ledger %s\nwant   %s", got, want)
+	}
+}
+
+// ChatGPT desktop 26.1021 asks for its composer prediction as
+// thread_sample (#3903), which the report saw go upstream with predictions
+// off: it is the same request, so predictions off answers it here with no
+// suggestion, sent nowhere, and the ledger has it as a prediction.
+func TestThreadSamplePredictionOff(t *testing.T) {
+	f := &fake{t: t, reply: predictionReply(`{"suggestion":"From the model"}`)}
+	setup(t, provider.Chat, f)
+	chatgptCalls := 0
+	chatgpt(t, func(w http.ResponseWriter, r *http.Request) {
+		io.ReadAll(r.Body)
+		chatgptCalls++
+		w.Header().Set("Content-Type", "text/event-stream")
+		io.WriteString(w, sse(`data: {"type":"response.completed","response":{"id":"r1","output":[{"type":"message","role":"assistant","content":[{"type":"output_text","text":"{\"suggestion\":\"From ChatGPT\"}"}]}]}}`))
+	})
+	saveCodexPredictions(t, "off")
+	s := New()
+	rec := codexPredictionRequestAs(t, s, CodexPath+"/responses", "gpt-6-luna", "thread_sample")
+	if text, n := outputText(t, rec.Body.String()); rec.Code != 200 || n != 1 || text != `{"suggestion":null}` || chatgptCalls != 0 || f.calls != 0 {
+		t.Fatalf("thread_sample off: %d %q, %d items, chatgpt %d, magpie model %d", rec.Code, rec.Body.String(), n, chatgptCalls, f.calls)
+	}
+	var last usage.Record
+	for _, u := range usage.Load(time.Time{}) {
+		last = u
+	}
+	if last.Kind != "thread_sample" || usage.PurposeOf(last.Kind) != "kind:composer_predictions" || !last.IsRejected() || !strings.Contains(last.Error, "predictions are off") {
+		t.Fatalf("ledger: %+v", last)
 	}
 }
 

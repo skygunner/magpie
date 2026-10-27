@@ -15,7 +15,7 @@ const now = new Date();
 const day = [now.getFullYear(), now.getMonth() + 1, now.getDate()].map((n) => String(n).padStart(2, "0")).join("-");
 const at = (i) => new Date(now.getTime() - (i + 1) * 60e3).toISOString();
 const seat = { id: "codex", provider: "openai", name: "OpenAI", who: "Codex's own sign-in", kind: "account", agent: "codex", model: "gpt-6-luna" };
-const kinds = ["guardian", "thread_title", "thread_title_reconsideration", "memory_consolidation", "luna_reserve", "ambient_suggestions", "ambient_suggestion_safety", "composer_predictions", "something_new", ""];
+const kinds = ["guardian", "thread_title", "thread_title_reconsideration", "memory_consolidation", "luna_reserve", "ambient_suggestions", "ambient_suggestion_safety", "composer_predictions", "thread_sample", "something_new", ""];
 const routes = kinds.map((kind, i) => ({
   id: 100 - i, seq: 100 - i, time: at(i), agent: "codex", model: "gpt-6-luna", provider: "openai", ...(kind ? { kind } : {}),
   order: [seat], tries: [{ id: seat.id, model: "gpt-6-luna", start: at(i), done: true, status: 200, ms: 900 }],
@@ -48,8 +48,8 @@ function serve(lang) {
 }
 
 const want = {
-  en: ["Approval check", "Title", "Title", "Memory", "Luna Reserve", "Suggestions", "Suggestions", "Prediction", "something_new"],
-  zh: ["审批判定", "标题", "标题", "记忆", "Luna 储备", "提示词建议", "提示词建议", "预测", "something_new"],
+  en: ["Approval check", "Title", "Title", "Memory", "Luna Reserve", "Suggestions", "Suggestions", "Prediction", "Prediction", "something_new"],
+  zh: ["审批判定", "标题", "标题", "记忆", "Luna 储备", "提示词建议", "提示词建议", "预测", "预测", "something_new"],
 };
 
 for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"])) {
