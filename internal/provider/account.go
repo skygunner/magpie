@@ -404,6 +404,20 @@ func parseClaudeCredentials(b []byte) (claudeCredentials, bool) {
 	return c, c.OAuth.AccessToken != ""
 }
 
+// plan is the subscription the credential is on. subscriptionType is what
+// Claude Code wrote from Anthropic's payload, and its `auth status` reads
+// the same mapping — which misses the new Max subscription identifiers and
+// answers "pro" for a Max account (anthropics/claude-code#47647). The
+// credential's rate-limit tier is what Anthropic's API enforces and names
+// the Max plans (default_claude_max_5x, default_claude_max_20x), so a Max
+// tier says Max whatever subscriptionType says (#2838).
+func (c claudeCredentials) plan() string {
+	if strings.Contains(c.OAuth.RateLimitTier, "claude_max") {
+		return "max"
+	}
+	return c.OAuth.SubscriptionType
+}
+
 // marshal writes into copies: c.raw is shared with every copy of c, the
 // cached one included, which other goroutines marshal at the same time.
 func (c claudeCredentials) marshal() ([]byte, error) {
@@ -775,14 +789,19 @@ func claudeAccount() (Provider, bool) {
 	if signedOut {
 		return claudeStandInAccount()
 	}
-	plan := c.OAuth.SubscriptionType
-	if statusPlan != "" {
+	// a Max tier in the credential is Anthropic's own mapping of the account's
+	// plan, and stands over the CLI's "pro" for a Max account
+	// (anthropics/claude-code#47647); otherwise the CLI's reading, which is
+	// the fresher of the two when the credential's subscriptionType is a
+	// plan Claude Code wrote before, still corrects it
+	plan := c.plan()
+	if statusPlan != "" && plan != "max" {
 		plan = statusPlan
 	}
 	// named as its saved login is (liveLogin): it is then the account Logins
 	// flags Active, not served a second time beside itself, and its
 	// allowances and limits are found under its name (#177)
-	user, acct := claudeSignedInUser(c.OAuth.SubscriptionType, statusPlan, user)
+	user, acct := claudeSignedInUser(plan, statusPlan, user)
 	if b, err := c.marshal(); err == nil && user != "" {
 		// by its sign-in when its profile is another's (claudeSignInOwner)
 		l := savedLogin{Agent: "claude", User: user, Auth: b}

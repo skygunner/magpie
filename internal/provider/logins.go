@@ -690,7 +690,7 @@ func liveLogin(agent string) (savedLogin, bool) {
 		if signedOut {
 			return savedLogin{}, false
 		}
-		l := savedLogin{Agent: agent, Plan: c.OAuth.SubscriptionType, Auth: b}
+		l := savedLogin{Agent: agent, Plan: c.plan(), Auth: b}
 		var acct map[string]any
 		if l.User, acct = claudeSignedInUser(l.Plan, plan, user); acct != nil {
 			l.Profile, _ = json.Marshal(acct)
