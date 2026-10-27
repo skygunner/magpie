@@ -158,7 +158,9 @@ var HTTP1 func(u *url.URL) bool
 // for HTTP/1.1 (http1Only), and one to a host whose certificate the
 // provider's user said not to check (WithUncheckedTLS) through a clone
 // kept for that host alone (uncheckTLS). A host whose IPv6 is taken but
-// goes nowhere is dialed over IPv4 (v4Fallback).
+// goes nowhere is dialed over IPv4 (v4Fallback), and a request whose
+// kept-alive connection was dropped is sent again at once (replayable) —
+// magpie's own requests, to a vendor as much as the gateway's.
 func Dispatch(base *http.Transport) http.RoundTripper {
 	v4Fallback(base)
 	return &dispatch{base: base, own: map[route]*http.Transport{}}
@@ -180,6 +182,7 @@ type route struct {
 }
 
 func (d *dispatch) RoundTrip(req *http.Request) (*http.Response, error) {
+	req = replayable(req)
 	r := route{choice: choiceOf(req.Context()), h1: HTTP1 != nil && HTTP1(req.URL), unchecked: uncheckedHost(req)}
 	if r == (route{}) {
 		return v4Retry(d.base, req)
