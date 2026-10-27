@@ -2111,6 +2111,24 @@ func (p Provider) kimiCodeMember() bool {
 	return slices.ContainsFunc(p.Catalogs(), func(c string) bool { return slices.Contains(kimiCodePlans, c) })
 }
 
+// memberPriceIn is what a call that names no provider costs when its model
+// is a membership plan's own id, as a Kimi Code session's "k3-256k" is: the
+// first configured membership that prices it, at what the user set for it,
+// else the Kimi API model it is (kimiCodeAPI), else its maker's. No
+// models.dev catalog of its own lists that id and no maker's prefix names
+// it, so left at its maker's a bare id is unpriced (#3331, westlinkin).
+func memberPriceIn(s settings.Settings, all []Provider, model string) (catalog.Price, bool) {
+	for _, p := range all {
+		if !p.kimiCodeMember() {
+			continue
+		}
+		if pr, ok := priceOf(s, p, true, model); ok {
+			return pr, true
+		}
+	}
+	return catalog.Price{}, false
+}
+
 // kimiCodeAPI is the Kimi API model a Kimi Code model id is, as Kimi
 // Code's docs name it (https://www.kimi.com/code/docs/en/, 2026-10-09):
 // k3 is K3, k3-256k "K3 256K context version … the same results as K3",
@@ -2189,7 +2207,14 @@ func priceIn(s settings.Settings, all []Provider, providerID, model string) (cat
 	if !known {
 		p = Provider{ID: providerID}
 	}
-	return priceOf(s, p, known, model)
+	pr, ok := priceOf(s, p, known, model)
+	if ok || known {
+		return pr, ok
+	}
+	// a session file names its own model, "kimi-code/k3-256k", and the part
+	// before the slash is no provider magpie has: a Kimi Code plan the user
+	// configured prices its own ids (#3331)
+	return memberPriceIn(s, all, model[strings.LastIndexByte(model, '/')+1:])
 }
 
 // priceOf is EffectivePriceIn for a provider already looked up, for a

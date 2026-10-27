@@ -9,6 +9,7 @@ import (
 
 	"github.com/yetone/magpie/internal/catalog"
 	"github.com/yetone/magpie/internal/provider"
+	"github.com/yetone/magpie/internal/settings"
 )
 
 // #1370 (maicent): the Usage page counted a Kimi Code membership's k3 at
@@ -72,5 +73,47 @@ func TestKimiCodeCost(t *testing.T) {
 	s := Summarize(Month)
 	if s.Unpriced != 1 || math.Abs(s.Cost-2*k3) > 1e-9 || math.Abs(sum.Cost-2*k3) > 1e-9 {
 		t.Fatalf("summary cost %v unpriced %d, ledger %v; want %v and 1", s.Cost, s.Unpriced, sum.Cost, 2*k3)
+	}
+}
+
+// #3331 (westlinkin): a Kimi Code session not through magpie writes its own
+// model name in its wire file ("kimi-code/k3-256k"), which names no provider
+// magpie has, so the Usage page counted the call at no price while the same
+// model through magpie was counted at the plan's. The reporter's Kimi Code
+// (China) entry prices k3-256k, and that price is the call's.
+func TestKimiCodeSessionCostAtItsPlan(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
+	t.Setenv("XDG_CACHE_HOME", filepath.Join(home, ".cache"))
+	catalog.Reset()
+	t.Cleanup(catalog.Reset)
+	p, err := provider.FromPreset("kimi-code-cn")
+	if err != nil {
+		t.Fatal(err)
+	}
+	p.Key = "sk-test"
+	if err := provider.Save(p); err != nil {
+		t.Fatal(err)
+	}
+	s := settings.Load()
+	s.ModelPrices = map[string]settings.ModelPrice{
+		"kimi-code-cn/k3-256k": {Input: new(2.5), Output: new(12.5),
+			CacheRead: new(0.25), CacheWrite: new(2.5)},
+	}
+	if err := settings.Save(s); err != nil {
+		t.Fatal(err)
+	}
+	// the reporter's usage.record, as logRecord makes it: no provider, the
+	// model by Kimi Code's own name for it
+	r := Record{Time: time.Now(), Agent: "kimi", Provider: UnknownProvider, Model: "kimi-code/k3-256k",
+		Input: 20257, Output: 230}
+	if Pricer()(r) == nil {
+		t.Fatal("a local Kimi Code call has no price")
+	}
+	want := (20257*2.5 + 230*12.5) / 1e6
+	if cost, priced := NewCoster()(r); !priced || math.Abs(cost-want) > 1e-9 {
+		t.Errorf("cost %v priced %v, want %v", cost, priced, want)
 	}
 }
