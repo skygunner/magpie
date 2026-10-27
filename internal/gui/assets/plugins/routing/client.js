@@ -4759,7 +4759,7 @@ function routingPage(part) {
   let tellsFor = null, tellsOf = null;
   const tellOf = (m) => {
     if (!m) return "";
-    if (tellsFor !== groups?.models) { tellsFor = groups?.models; tellsOf = modelTells(tellsFor || [], (x) => x.name || x.id, (x) => x.id, (x) => x.provider || x.providerName || ""); }
+    if (tellsFor !== groups?.models) { tellsFor = groups?.models; tellsOf = modelTells(tellsFor || [], (x) => x.name || x.id, (x) => x.id, () => ""); }
     return tellsOf.get(m.id) || "";
   };
   const modelName = (m) => { const tell = tellOf(m); return (m.name || m.id) + (tell ? " · " + tell : ""); };
@@ -5680,7 +5680,7 @@ function routingPage(part) {
         const n = el("span", "n");
         // its whole name on hover, which a tight row ellipsizes
         const nm = el("span", "", memberName(id));
-        nm.title = memberName(id);
+        nm.title = memberLabel(d, id);
         n.append(nm);
         if (m || s) n.append(el("small", "", subOf(id) ? memberNote(id) : m.providerName));
         else if (info?.providerOff) n.append(el("small", "", `${info.name} · ${t("switched off")}`));
