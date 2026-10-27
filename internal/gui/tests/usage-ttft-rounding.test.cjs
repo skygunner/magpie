@@ -96,8 +96,8 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
 
         // the speed trend's tooltip, the report's
         await reader.click(p, p.locator("#ledMetric .opt").filter({ hasText: w.speed }));
-        await p.waitForTimeout(150);
-        const box = await p.locator("#ledChart rect.col.all").first().boundingBox();
+        await p.waitForTimeout(1500);
+        const box = await p.locator("#ledChart rect.col").first().boundingBox();
         await p.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
         const tip = p.locator("#ledChart .tip");
         await tip.waitFor();
@@ -107,6 +107,36 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         assert.deepEqual(errors, []);
         await ctx.close();
       });
+    }
+  });
+}
+
+// #2755 (tianxia3111): the tokens trend's tooltip said the raw
+// thousand-separated count (15,522) while the rest of the page formats
+// tokens the page's way — 15.5K, or 1.6 万 with Settings' 万/亿 units on.
+for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"])) {
+  test(engine + ": the tokens trend's tooltip says tokens the page's way", async (t) => {
+    const browser = await (engine === "webkit" ? webkit.launch() : chromium.launch({ channel: "chromium" }));
+    t.after(() => browser.close());
+    for (const lang of ["en", "zh"]) {
+      const ctx = await browser.newContext({ viewport: { width: 1100, height: 800 }, reducedMotion: "reduce" });
+      const p = await ctx.newPage();
+      p.setDefaultTimeout(5000);
+      await p.route("**/*", async (route) => {
+        const u = new URL(route.request().url());
+        if (u.pathname === "/boot.js") return route.fulfill({ contentType: "text/javascript", body: `window.bootPrefs = {lang:"${lang}",theme:"light",web:false,chineseUnits:${lang === "zh"}};` });
+        if (u.pathname === "/wails/runtime.js") return route.fulfill({ contentType: "text/javascript", body: "export const Window = {};" });
+        if (u.pathname.startsWith("/api/")) return route.fulfill({ json: {} });
+        const f = require("node:path").join("/w/internal/gui/assets", u.pathname === "/" ? "index.html" : u.pathname);
+        const ct = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css" }[require("node:path").extname(f)];
+        return route.fulfill({ body: await require("node:fs").promises.readFile(f), contentType: ct });
+      });
+      await p.goto("http://magpie.test/");
+      const got = await p.evaluate(() => ledFormatLong("tokens", 15522));
+      const want = "15.5K";
+      assert.notEqual(got, "15,522", "no raw thousand-separated count: " + got);
+      assert.equal(got, want, "tokens said the page's way: " + got + " (want " + want + ")");
+      await ctx.close();
     }
   });
 }
