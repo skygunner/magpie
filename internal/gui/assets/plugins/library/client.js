@@ -2717,7 +2717,9 @@ magpie.plugin("library", (ctx) => {
       if (lib.skills.length > 8) rh.append(skillFilter(box, all));
       const fresh = lib.skills.filter((s) => s.kind === "github" || s.kind === "git" || s.origin);
       rh.append(el("span", "grow"));
-      if (lib.skills.length > 1) rh.append(sortBy("libSkills", SKILL_SORTS(), () => { if (box.isConnected) drawSkills(box, all); }));
+      // the page is drawn again, the bar with the list: where Clean up is
+      // depends on the sort (#3122)
+      if (lib.skills.length > 1) rh.append(sortBy("libSkills", SKILL_SORTS(), () => { if (box.isConnected) render(); }));
       if (lib.skills.length > 1) rh.append(foldAllButton(box, all));
       // the groups traced again: a pack added a while ago is mostly older
       // copies its repository has edited since (White Immortal on Discord)
@@ -2746,9 +2748,9 @@ magpie.plugin("library", (ctx) => {
         autoChecked = true;
         setTimeout(() => checkSkills(true), 0);
       }
-      // skills their source no longer has, from one place only: no group
-      // heading is drawn to hold its Clean up, so the bar does
-      if (skillGroups().length === 1) {
+      // skills their source no longer has, from one place only: a flat list
+      // has no group heading to hold its Clean up, so the bar does
+      if (flatSkills()) {
         const gone = lib.skills.filter(isGone);
         if (gone.length) rh.append(cleanUpButton(gone));
       }
@@ -2931,6 +2933,9 @@ magpie.plugin("library", (ctx) => {
   // By source (the groups, as they always were) or one flat list of every
   // skill by name, A→Z or Z→A (#481)
   const SKILL_SORTS = () => [["source", t("By source")], ...NAME_SORTS];
+  // the skills as one flat list by name rather than groups by source: one
+  // group of its own, with no source to name above it
+  const flatSkills = () => sortOf("libSkills", SKILL_SORTS()) !== "source";
   // the groups, and each skill's text to filter by, worked out once for
   // each answer from magpie and each pick
   let grouped = null;
@@ -3132,21 +3137,23 @@ magpie.plugin("library", (ctx) => {
     if (drawn?.box !== box) drawn = { box, lists: new Map() };
     const hitsOf = (g) => skillHits(g, q);
     const cards = [];
-    const single = groups.length === 1;
+    // One source's skills keep its heading (#3122): the repository named
+    // above them, its chips and its fold, as any group's have. A flat list
+    // is one group too, and stands on its own.
+    const bare = groups.length === 1 && flatSkills();
     const redraw = () => { drawSkills(box, all); };
     const shown = [];
     for (const g of groups) {
       const hits = hitsOf(g);
       if (!hits.length) continue;
-      if (!single) shown.push(g);
-      const folded = !single && groupFolded(g, q);
+      if (!bare) shown.push(g);
+      const folded = !bare && groupFolded(g, q);
       let w = drawn.lists.get(g.key);
       if (!folded) {
         if (!w) drawn.lists.set(g.key, (w = windowed()));
         w.set(groupItems(g, hits, all, !!q, redraw));
       }
-      // from one place only: its list with no heading over it
-      if (single) {
+      if (bare) {
         const card = el("div", "list lib-list lib-vcard");
         w.el.classList.add("bare");
         card.append(w.el);

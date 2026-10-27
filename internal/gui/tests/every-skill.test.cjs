@@ -53,7 +53,8 @@ const press = async (page, loc) => {
   const b = await loc.boundingBox();
   await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2);
 };
-const lit = (page) => page.locator("#view-library .lib-ag.on[data-agent]").count();
+// every row's chip: a group's heading (and a part's) has chips of its own (#3122)
+const lit = (page) => page.locator("#view-library .lib-row:not(.lib-grouphead):not(.lib-subhead) .lib-ag.on[data-agent]").count();
 
 const words = {
   en: { on: "Turn all on", off: "Turn all off", ask: "Turn off all 3 skills?", aside: /taken out of Claude Code, Codex, Pi/, cancel: "Cancel", onDone: "3 skills are on for all 3 agents", offDone: "3 skills are off for all 3 agents", tip: "Give every skill to all 3 agents that can take skills" },

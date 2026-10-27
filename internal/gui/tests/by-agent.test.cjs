@@ -66,7 +66,8 @@ const press = async (page, loc) => {
 // the sheet grows out of the button that opened it: a click at a button's
 // place lands once it has
 const settled = (page) => page.waitForFunction(() => !document.querySelector("#modal").getAnimations({ subtree: true }).length);
-const lit = (page, id) => page.locator(`#view-library .lib-ag.on[data-agent="${id}"]`).count();
+// every row's chip: a group's heading (and a part's) has chips of its own (#3122)
+const lit = (page, id) => page.locator(`#view-library .lib-row:not(.lib-grouphead):not(.lib-subhead) .lib-ag.on[data-agent="${id}"]`).count();
 
 const words = {
   en: {

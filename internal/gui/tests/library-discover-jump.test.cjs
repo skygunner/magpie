@@ -64,6 +64,10 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         const view = page.locator("#view-library");
         const head = view.locator(".lib-head");
         await view.locator('.mk[data-market="skills"] .mk-card').first().waitFor();
+        // dozens of skills from one source start folded, as any group that
+        // big does: opened, as the reader would, for the market under them
+        for (const h of await view.locator(".lib-grouphead:not(.open) .who .name").all()) await h.click();
+        await view.locator(".lib-skill").first().waitFor();
         const go = head.getByRole("button", { name: words[lang].discover, exact: true });
 
         for (const kind of ["skills", "mcp"]) {

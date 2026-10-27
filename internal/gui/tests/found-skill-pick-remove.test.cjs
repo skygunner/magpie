@@ -83,14 +83,21 @@ function server(lang, state, posts) {
 // the reader scrolls (not a click) till what they'll press is out from
 // under the bar that stays in view at the list's foot
 const reach = async (page, loc) => {
-  for (let i = 0; i < 20; i++) {
+  // the wheel turns over the list itself: a row under the foot bar or
+  // below the fold is not where a wheel scrolls the list (#3122)
+  const v = await page.locator("#view-library").boundingBox();
+  for (let i = 0; i < 40; i++) {
     const b = await loc.boundingBox();
     if (b && await loc.evaluate((e, [x, y]) => e.contains(document.elementFromPoint(x, y)), [b.x + b.width / 2, b.y + b.height / 2])) return;
-    await page.mouse.move(b.x + b.width / 2, Math.max(b.y - 40, 10));
+    await page.mouse.move(v.x + v.width / 2, v.y + v.height / 3);
     await page.mouse.wheel(0, 120);
     await page.waitForTimeout(80);
   }
-  assert.fail(`${loc} is never out from under the bar`);
+  const at = await loc.evaluate((e) => {
+    const r = e.getBoundingClientRect(), v = e.closest(".view"), hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+    return { y: Math.round(r.y), h: Math.round(r.height), hit: hit?.className || hit?.tagName, inner: innerHeight, sy: document.scrollingElement.scrollTop, sh: document.scrollingElement.scrollHeight, vs: v?.scrollTop, vh: v?.scrollHeight };
+  });
+  assert.fail(`${loc} is never out from under the bar: ${JSON.stringify(at)}`);
 };
 // a click where the thing is; nothing scrolls, and what was clicked stays put
 const press = async (page, loc) => {
@@ -98,11 +105,13 @@ const press = async (page, loc) => {
   await page.waitForFunction(() => !document.querySelector("#view-library").getAnimations({ subtree: true }).some((a) => a.effect?.getComputedTiming().endTime !== Infinity));
   const b = await loc.boundingBox();
   const sel = String(loc);
-  const scrolls = () => page.evaluate(() => [...document.querySelectorAll("*")].filter((e) => e.scrollTop).map((e) => (e.id || e.className) + ":" + e.scrollTop).join(" "));
+  // the page and the view: 1px is rounding, as click-scroll.test.cjs holds
+  const scrolls = () => page.evaluate(() => [document.scrollingElement.scrollTop, document.querySelector("#view-library")?.scrollTop || 0]);
   const top = await scrolls();
   await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2);
   await page.waitForTimeout(200);
-  assert.equal(await scrolls(), top, `${sel}'s click scrolled the page`);
+  const moved = (await scrolls()).reduce((m, v, i) => Math.max(m, Math.abs(v - top[i])), 0);
+  assert(moved <= 1, `${sel}'s click moved the page by ${moved}px: ${top} → ${await scrolls()}`);
   if (!(await loc.count())) return;
   const a = await loc.boundingBox();
   if (a && a.width) assert(Math.abs(a.y - b.y) <= 1, `${sel} moved on the screen from ${Math.round(b.y)} to ${Math.round(a.y)}`);

@@ -3,10 +3,10 @@
 // said each of them failed, and they could only be taken out one by one.
 // A skill an update or a check found its source without carries "Removed
 // upstream" (no Update available, no update icon), Update all says them
-// apart from failures, and Clean up N, in the group's heading or, with one
-// group only, in the bar, asks first, naming each one and saying which was
-// changed here, then sends skills/remove-gone with their names. Nothing is
-// sent before the answer, and Cancel sends nothing. In English and
+// apart from failures, and Clean up N, in the group's heading, or in the bar
+// for a flat list (A→Z), which has no heading, asks first, naming each one
+// and saying which was changed here, then sends skills/remove-gone with
+// their names. Nothing is sent before the answer, and Cancel sends nothing. In English and
 // Chinese, in Chromium and WebKit, wide and narrow. No backend: the API is
 // faked here.
 const assert = require("node:assert/strict");
@@ -121,11 +121,18 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
           assert.equal(await row(n).locator(".lib-rowacts button.lib-icon").count(), await row("soft").locator(".lib-rowacts button.lib-icon").count() - 1, n + " has an update icon");
         }
         assert.equal(await v.locator(".lib-skill .lib-tag.lib-gone").count(), 2);
-        // Clean up: in the bar with one group, in the group's heading with more
+        // Clean up: in one source's heading now that one is drawn (#3122),
+        // and in the bar for a flat list, which has no heading to hold it
         const clean = v.locator("button.lib-cleanup");
         assert.equal(await clean.count(), 1, "one Clean up");
         assert.equal((await clean.textContent()).trim(), w.clean);
-        assert.equal(await v.locator(".row-head button.lib-cleanup").count(), single ? 1 : 0, "where Clean up is");
+        assert.equal(await v.locator(".lib-grouphead button.lib-cleanup").count(), 1, "Clean up is in the group's heading");
+        const sort = page.locator('.segs.sortby[data-sort="libSkills"]');
+        await sort.locator(".opt").nth(1).click(); // A→Z
+        await page.waitForFunction(() => !document.querySelector("#view-library .lib-grouphead"));
+        assert.equal(await v.locator(".lib-skillshead button.lib-cleanup").count(), 1, "Clean up is in the bar for a flat list");
+        await sort.locator(".opt").nth(0).click(); // By source
+        await page.waitForFunction(() => !!document.querySelector("#view-library .lib-grouphead button.lib-cleanup"));
         // Update N leaves the gone ones out
         const updN = v.locator("button.lib-updall:not(.lib-cleanup)", { hasText: w.updN });
         assert(await updN.count() >= 1, "Update 1");
