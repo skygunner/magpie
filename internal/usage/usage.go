@@ -785,8 +785,9 @@ type Group struct {
 	Model           string `json:"model,omitempty"`
 	ProviderKeyID   string `json:"providerKeyId,omitempty"`
 	ProviderKeyName string `json:"providerKeyName,omitempty"`
-	// Account is the subscription account of an Accounts group: "" for
-	// the calls of an account's provider whose record names none
+	// Account is the subscription account of an Accounts group: its name,
+	// or a provider key's under KeyAccountPrefix (#3838); "" for the calls
+	// of an account's provider whose record names none
 	Account       string `json:"account,omitempty"`
 	CallerKeyID   string `json:"callerKeyId,omitempty"`
 	CallerKeyName string `json:"callerKeyName,omitempty"`
@@ -861,6 +862,36 @@ func (r Record) Account() string {
 		return r.Host[i+4:]
 	}
 	return ""
+}
+
+// KeyAccountPrefix marks the Account filter's choice of a provider key rather
+// than a sign-in (#3838): a key named like an account is still its own choice.
+const KeyAccountPrefix = "key:"
+
+// AccountOrKey is what the Account filter tells a call apart by, and the
+// choice it offers for it: the subscription account that answered the call,
+// or, for a key plan, the provider key its record names, the key's
+// fingerprint when the provider gives it no name (#3838). "" when the record
+// names neither, which is never guessed from today's keys.
+func (r Record) AccountOrKey() string {
+	if who := r.Account(); who != "" {
+		return who
+	}
+	if r.ProviderKeyName != "" {
+		return KeyAccountPrefix + r.ProviderKeyName
+	}
+	if r.ProviderKeyID != "" {
+		return KeyAccountPrefix + r.ProviderKeyID
+	}
+	return ""
+}
+
+// KeyAccountName is the provider key who names, and whether it names one
+// (AccountOrKey's KeyAccountPrefix): the key as its provider names it, which
+// is what the choice shows.
+func KeyAccountName(who string) (string, bool) {
+	key, ok := strings.CutPrefix(who, KeyAccountPrefix)
+	return key, ok && key != ""
 }
 
 // Point is one bar of the timeline.

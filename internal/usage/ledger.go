@@ -64,7 +64,8 @@ type Filter struct {
 	Provider  string // a provider's id, as the ledger's rows have it
 	Purpose   string // PurposeOf's key; empty keeps every purpose
 	// Account narrows to the calls a subscription account answered, by its
-	// name as Record.Account gives it (#557)
+	// name as Record.Account gives it (#557), or, for a key plan, to the ones
+	// a provider key answered, by Record.AccountOrKey's choice (#3838)
 	Account string
 	// Failed keeps the rows of the requests the agent got an error for
 	// (Record.LostRequest), Retried those of the requests answered after a
@@ -171,7 +172,7 @@ func (f Filter) keepsRecord(r *Record, codexIdentity bool, subagent, parentAgent
 	if f.Purpose != "" && PurposeOf(r.Kind) != f.Purpose {
 		return false
 	}
-	if f.Account != "" && r.Account() != f.Account {
+	if f.Account != "" && r.AccountOrKey() != f.Account {
 		return false
 	}
 	if !f.computer(r) {

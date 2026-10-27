@@ -164,7 +164,7 @@ func (pass *cellPass) part(ps *pairedRows, rows *chunkRows, c *rowChunk, r *Row)
 		if uncounted {
 			k.bits |= cellUncounted
 		} else {
-			k.model, k.callerID, k.callerName, k.account, k.computer = r.Model, r.CallerKeyID, r.CallerKeyName, r.Account(), r.Computer
+			k.model, k.callerID, k.callerName, k.account, k.computer = r.Model, r.CallerKeyID, r.CallerKeyName, r.AccountOrKey(), r.Computer
 			switch r.Source {
 			case "log":
 				k.source = cellDirect

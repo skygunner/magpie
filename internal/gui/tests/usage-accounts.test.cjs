@@ -43,7 +43,7 @@ function fixture(lang, requests) {
     return { ...totals(filtered), total: filtered.length, offset, period: q.get("period"),
       rows: filtered.slice(offset, offset + (+q.get("limit") || 100)), callerKeys: [],
       agents: [{ id: "codex", name: "Codex" }], providers: [{ id: "codex", name: "Codex" }, { id: "claude", name: "Claude" }],
-      accounts: [{ id: "a@example.com", providers: ["Codex", "Claude"] }, { id: "b@example.com", providers: ["Codex"] }] };
+      accounts: [{ id: "a@example.com", providers: ["Codex", "Claude"] }, { id: "b@example.com", providers: ["Codex"] }, { id: "key:new", name: "new", key: true, providers: ["Kimi Code"] }] };
   };
   return async (route) => {
     const req = route.request(), url = new URL(req.url());
@@ -109,6 +109,8 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       const item = page.locator(".sess-menu .pm-item", { hasText: "b@example.com" });
       assert.equal((await item.locator(".pm-note").textContent()).trim(), "Codex");
       assert.equal((await page.locator(".sess-menu .pm-item", { hasText: "a@example.com" }).locator(".pm-note").textContent()).trim(), "Codex · Claude");
+      // a key plan's key is offered too, marked as a provider key (#3838)
+      assert.equal((await page.locator(".sess-menu .pm-item", { hasText: "new" }).locator(".pm-note").textContent()).trim(), lang === "zh" ? "供应商密钥 · Kimi Code" : "Provider key · Kimi Code");
       await item.click();
       await page.waitForFunction(() => document.querySelectorAll(".led tbody tr").length === 10);
       assert.equal(requests.at(-1).get("account"), "b@example.com");

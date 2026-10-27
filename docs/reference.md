@@ -501,7 +501,11 @@ over after a failover, the one `X-Magpie-Account` pinned. The account is named
 as the Routing view names it (its email or login, never a token); the CSV
 adds `provider_account` (JSON `providerAccount`), `magpie usage --csv
 --account <name>` keeps one account's calls, and the app's Usage page has an
-Accounts list and an Account filter on Requests. An older record names the
+Accounts list and an Account filter on Requests. The filter also offers the
+provider keys a key plan's calls went through, named as the provider names
+the key (its fingerprint when it has no name) and marked as a provider key;
+its value is `key:<name>`, so a key is never taken for a sign-in. An older
+record names the
 account its call went out as when its host says so (`chatgpt.com as
 dee@example.com`); otherwise it appears as **account not recorded**, never
 inferred from today's sign-in. OTLP export never carries the account.

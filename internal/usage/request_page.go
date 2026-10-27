@@ -46,8 +46,9 @@ type RequestPage struct {
 	// Reported are the calls a client told magpie of (#1874), which went
 	// straight to their vendor: counted in Sum, apart from both of those.
 	Reported Totals
-	// Accounts are the subscription accounts that answered calls in the
-	// period, by provider and account, for the Account filter (#557)
+	// Accounts are the accounts that answered calls in the period, by
+	// provider and account, for the Account filter: subscription accounts
+	// and key plans' provider keys (#557, #3838)
 	Accounts []Group
 	Bucket   string
 	Series   []SeriesPoint
@@ -1984,9 +1985,10 @@ func addCallerRow(groups map[string]*Group, r *Row, d *Totals) {
 }
 
 // Account choices cover the period too: each account that answered a call,
-// by provider, for the Account filter, whatever else is picked.
+// by provider, for the Account filter, whatever else is picked, and each
+// provider key a key plan's calls went through (#3838).
 func addAccountRow(groups map[[2]string]*Group, r *Row, d *Totals) {
-	who := r.Account()
+	who := r.AccountOrKey()
 	if who == "" || r.IsRejected() {
 		return
 	}

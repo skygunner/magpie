@@ -160,7 +160,7 @@ func TestRequestPageByAccount(t *testing.T) {
 			ids = append(ids, g.ID)
 		}
 		slices.Sort(ids)
-		if strings.Join(ids, ",") != "claude@a@example.com,cx@a@example.com,cx@b@example.com" {
+		if strings.Join(ids, ",") != "claude@a@example.com,cx@a@example.com,cx@b@example.com,relay@key:Team" {
 			t.Fatalf("account choices: %v", ids)
 		}
 	}

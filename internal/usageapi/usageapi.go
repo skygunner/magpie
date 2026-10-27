@@ -253,8 +253,9 @@ type Ledger struct {
 	Agents    []Named  `json:"agents"`
 	Providers []Named  `json:"providers"`
 	Purposes  []string `json:"purposes"`
-	// Accounts: the subscription accounts that answered calls in the
-	// period, for the Account filter (#557)
+	// Accounts: the accounts that answered calls in the period, for the
+	// Account filter: subscription accounts and key plans' provider keys
+	// (#557, #3838)
 	Accounts []Account `json:"accounts"`
 	// Computers: this one ("this", no name) and the others whose usage
 	// sync brought (#542), for the filter; none while there are none
@@ -268,13 +269,14 @@ type Share struct {
 	Icon string `json:"icon,omitempty"`
 }
 
-// Account is a subscription account the Account filter offers: its
-// name, as the record keeps it and the filter asks by, the name the user
-// gave it in magpie when there is one (plugins#310), and the providers it
-// answered for, by name.
+// Account is a choice of the Account filter: its id, as the record keeps it
+// and the filter asks by, the name the user gave the account in magpie when
+// there is one (plugins#310), the providers it answered for, by name, and
+// whether it is a provider key rather than a sign-in (#3838).
 type Account struct {
 	ID        string   `json:"id"`
 	Name      string   `json:"name,omitempty"`
+	Key       bool     `json:"key,omitempty"`
 	Providers []string `json:"providers"`
 }
 
@@ -360,7 +362,11 @@ func LedgerPage(p usage.Period, f usage.Filter, offset, limit int) Ledger {
 	at := map[string]int{}
 	for _, g := range l.Accounts {
 		name := which(g.Provider).Name
-		own := provider.AccountNameOf(g.Provider, g.Account)
+		who, key := usage.KeyAccountName(g.Account)
+		own := provider.AccountNameOf(g.Provider, who)
+		if key {
+			own = who
+		}
 		if i, ok := at[g.Account]; ok {
 			a := &out.Accounts[i]
 			if !slices.Contains(a.Providers, name) {
@@ -370,7 +376,7 @@ func LedgerPage(p usage.Period, f usage.Filter, offset, limit int) Ledger {
 			continue
 		}
 		at[g.Account] = len(out.Accounts)
-		out.Accounts = append(out.Accounts, Account{ID: g.Account, Name: own, Providers: []string{name}})
+		out.Accounts = append(out.Accounts, Account{ID: g.Account, Name: own, Key: key, Providers: []string{name}})
 	}
 	// what each is of: the rows of the filter, or, for the dimension the
 	// filter has picked, of the rows without that pick
@@ -447,7 +453,7 @@ func OwnPage(l Ledger, key string) Ledger {
 	l.Providers = slices.DeleteFunc(l.Providers, func(a Named) bool { return !providers[a.ID] })
 	accounts := map[string]bool{}
 	for _, r := range l.Rows {
-		accounts[r.Account()] = true
+		accounts[r.AccountOrKey()] = true
 	}
 	l.Accounts = slices.DeleteFunc(l.Accounts, func(a Account) bool { return !accounts[a.ID] })
 	return l
