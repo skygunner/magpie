@@ -43,11 +43,15 @@ func relaysAny() bool {
 	return slices.ContainsFunc(l.MCP, func(s *Server) bool { return s.Transport == "http" && mcpauth.SignedIn(s.Name, s.URL) })
 }
 
+// relayed says whether magpie signs in to the server itself and gives it
+// to the agents through the gateway's /mcp/<name> (#615).
+func relayed(s *Server) bool { return s.Transport == "http" && mcpauth.SignedIn(s.Name, s.URL) }
+
 // through is the server as an agent that reaches the gateway at base is
 // given it. Only a streamable HTTP server is relayed: an SSE one's stream
 // names the address to post to, which would have to be rewritten.
 func through(s *Server, base string) *Server {
-	if s.Transport != "http" || !mcpauth.SignedIn(s.Name, s.URL) {
+	if !relayed(s) {
 		return s
 	}
 	c := *s

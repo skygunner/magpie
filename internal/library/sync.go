@@ -1,6 +1,7 @@
 package library
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -85,6 +86,10 @@ func (l *Library) sync() *Result {
 // have what was unticked taken out, after the rest.
 func syncSteps(all, gone []*Target, b *backups, res *Result) []func(*Library) {
 	var steps []func(*Library)
+	// an entry magpie wrote into an agent's MCP file that was changed there
+	// since is taken into the library first, so the sync after writes it to
+	// every agent rather than its old one over it (takeMCPEdits)
+	steps = append(steps, func(l *Library) { l.takeMCPEdits(all) })
 	for _, t := range all {
 		steps = append(steps, func(l *Library) {
 			l.syncInstructions(t, b, res)
@@ -186,8 +191,12 @@ func (l *Library) syncMCP(t *Target, b *backups, res *Result) {
 		return
 	}
 	how := toolsOffOf(t)
-	toolsOff := map[string][]string{} // what magpie's in each entry's list now
-	startup := map[string]float64{}   // the startup timeout magpie's in each entry now
+	toolsOff := map[string][]string{}     // what magpie's in each entry's list now
+	startup := map[string]float64{}       // the startup timeout magpie's in each entry now
+	wrote := map[string]json.RawMessage{} // each entry as magpie's write reads back
+	for name, e := range a.MCPEntries {
+		wrote[name] = e
+	}
 	entries, err := t.MCP.entries()
 	if err != nil {
 		res.fail(id, "mcp", err)
@@ -267,6 +276,9 @@ func (l *Library) syncMCP(t *Target, b *backups, res *Result) {
 				mine = append(mine, s.Name)
 				toolsOff[s.Name] = offMine
 				startup[s.Name] = t.MCP.startupWritten(s, old)
+				if e := entryJSON(old); e != nil {
+					wrote[s.Name] = e // magpie's, as the file has it
+				}
 				continue
 			}
 		}
@@ -274,12 +286,26 @@ func (l *Library) syncMCP(t *Target, b *backups, res *Result) {
 			mine = append(mine, s.Name)
 			toolsOff[s.Name] = offMine
 			startup[s.Name] = t.MCP.startupWritten(s, old)
+			if e := t.MCP.wroteEntry(s.Name); e != nil {
+				wrote[s.Name] = e
+			} else {
+				delete(wrote, s.Name) // unknown, never taken as unchanged
+			}
 		} else if old != nil {
 			toolsOff[s.Name] = prev // the entry is as it was
 			startup[s.Name] = a.Startup[s.Name]
 		}
 	}
 	a.MCP = mine
+	for k := range wrote {
+		if !slices.Contains(mine, k) {
+			delete(wrote, k)
+		}
+	}
+	a.MCPEntries = wrote
+	if len(a.MCPEntries) == 0 {
+		a.MCPEntries = nil
+	}
 	for k, v := range startup {
 		if v == 0 || !slices.Contains(mine, k) {
 			delete(startup, k)

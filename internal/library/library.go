@@ -108,6 +108,11 @@ type Applied struct {
 	// entry (Codex's startup_timeout_sec): one there other than this is
 	// the user's
 	Startup map[string]float64 `json:"startup,omitempty"`
+	// MCPEntries are, for each server, its entry as the agent's file read
+	// back after magpie wrote it (entryJSON): one where the server in it is
+	// no longer that one was changed in the agent, and the library takes it
+	// (takeMCPEdits)
+	MCPEntries map[string]json.RawMessage `json:"mcpEntries,omitempty"`
 }
 
 var mu lock // one change at a time, from the page or the CLI's process

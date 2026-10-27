@@ -948,6 +948,27 @@ func (f *mcpFile) entries() (map[string]map[string]any, error) {
 	return out, nil
 }
 
+// entryJSON is an entry as JSON, for the record of what magpie wrote into
+// an agent's file (Applied.MCPEntries).
+func entryJSON(v any) json.RawMessage {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return nil
+	}
+	return b
+}
+
+// wroteEntry is the entry for the server as the file reads back after
+// magpie wrote it, or nil when it can't be read now: a file that can't be
+// read leaves it unknown, never taken as unchanged.
+func (f *mcpFile) wroteEntry(name string) json.RawMessage {
+	es, err := f.entries()
+	if err != nil || es[name] == nil {
+		return nil
+	}
+	return entryJSON(es[name])
+}
+
 // entriesParsed counts parseEntries, for a test to see a file parsed once.
 var entriesParsed atomic.Int64
 
