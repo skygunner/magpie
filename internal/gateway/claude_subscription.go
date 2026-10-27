@@ -416,6 +416,13 @@ func clientWorkDir(req *Request) string {
 	if fi, err := os.Stat(dir); err != nil || !fi.IsDir() {
 		return ""
 	}
+	// a directory that can be stat-ed but not entered (mode 0644, or a
+	// sandbox parent) passes the check above and is then used as the
+	// child's working directory, where exec fails EACCES: resolving "."
+	// inside it needs search permission (#3812).
+	if _, err := os.Stat(filepath.Join(dir, ".")); err != nil {
+		return ""
+	}
 	return dir
 }
 
