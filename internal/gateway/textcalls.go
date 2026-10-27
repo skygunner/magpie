@@ -26,7 +26,121 @@ import (
 
 // textCallMarks are what a call written into the text opens with, beside
 // DeepSeek's DSML tags, which dsmlMark reads.
-var textCallMarks = []string{"<tool_call>"}
+var textCallMarks = []string{"<tool_call>", "<tool_call", "<call:tool"}
+
+// callName is the name="…" on a call-tagged opener (the trae-cn spellings
+// name the tool there, not in a JSON body).
+var callName = regexp.MustCompile(`name\s*=\s*"([^"]+)"`)
+
+// markAt is where in s a text-call opener begins and how long its mark
+// is: -1 for none. A mark only counts when it is a complete opener (a
+// space or '>' follows the new spellings; the original <tool_call> already
+// carries its closing '>').
+func markAt(s string) (int, int) {
+	at, mark := -1, 0
+	for _, m := range textCallMarks {
+		i := 0
+		for {
+			j := strings.Index(s[i:], m)
+			if j < 0 {
+				break
+			}
+			i += j
+			k := i + len(m)
+			ok := false
+			switch {
+			case m == "<tool_call>":
+				ok = true
+			case k >= len(s):
+				ok = true
+			case s[k] == '>' || strings.ContainsRune(" \t\r\n", rune(s[k])):
+				ok = true
+			}
+			if ok && (at < 0 || i < at) {
+				at, mark = i, len(m)
+			}
+			i += len(m)
+		}
+	}
+	return at, mark
+}
+
+// callTag reads an opener that names the tool in an attribute (the trae-cn
+// spellings): it returns where its '>' ends and the name it names, or false
+// when no '>' closes it (or an attribute runs into a '<').
+func callTag(s string, at, mark int) (end int, name string, ok bool) {
+	rest := s[at+mark:]
+	i := strings.IndexByte(rest, '>')
+	if i < 0 || strings.ContainsRune(rest[:i], '<') {
+		return 0, "", false
+	}
+	if m := callName.FindStringSubmatch(rest[:i]); m != nil {
+		name = m[1]
+	}
+	return at + mark + i + 1, name, true
+}
+
+// callTagCall reads a call written as <tool_call name="Bash">…</tool_call>
+// or <call:tool name="Bash">…</call:tool>, with <parameter name="k">v</parameter>
+// and <command>v</command> children. It returns the call, how much of s it
+// took (through its close tag when one is there), and whether it was a call
+// of one of names.
+func callTagCall(s string, name string, names map[string]bool) (writtenCall, int, bool) {
+	// offered tool names are lower case in the request; the spellings in
+	// the text (Bash, Edit) are not, so match case-insensitively and use
+	// the offered name's casing for the call.
+	if !names[name] {
+		if !names[strings.ToLower(name)] {
+			return writtenCall{}, 0, false
+		}
+		name = strings.ToLower(name)
+	}
+	end := len(s)
+	for _, closeTag := range []string{"</tool_call>", "</call:tool>", "</tool>"} {
+		if i := strings.Index(s, closeTag); i >= 0 && i < end {
+			end = i
+		}
+	}
+	block := s[:end]
+	consumed := end
+	for _, ct := range []string{"</tool_call>", "</call:tool>", "</tool>"} {
+		if strings.HasPrefix(s[end:], ct) {
+			consumed = end + len(ct)
+			break
+		}
+	}
+	if consumed == end {
+		consumed = len(s)
+	}
+	args := map[string]any{}
+	paramRe := regexp.MustCompile(`<parameter\s+name\s*=\s*"([^"]+)"\s*>([^<]*)</parameter>`)
+	for _, m := range paramRe.FindAllStringSubmatch(block, -1) {
+		key := m[1]
+		val := strings.TrimSuffix(strings.TrimSpace(m[2]), cutMark(strings.TrimSpace(m[2])))
+		var v any
+		if decodeJSON([]byte(strings.TrimSpace(val)), &v) == nil {
+			args[key] = v
+		} else {
+			args[key] = val
+		}
+	}
+	cmdRe := regexp.MustCompile(`<command>([^<]*)</command>`)
+	for _, m := range cmdRe.FindAllStringSubmatch(block, -1) {
+		val := strings.TrimSuffix(strings.TrimSpace(m[1]), cutMark(strings.TrimSpace(m[1])))
+		var v any
+		if decodeJSON([]byte(strings.TrimSpace(val)), &v) == nil {
+			args["command"] = v
+		} else {
+			args["command"] = val
+		}
+	}
+	b, err := json.Marshal(args)
+	if err != nil {
+		return writtenCall{}, 0, false
+	}
+	b, _ = callArgs(b)
+	return writtenCall{Name: name, Args: b}, consumed, true
+}
 
 // dsmlMark tells whether s begins with a DSML tag's mark, read as the
 // parse regexes read one (dsmlTag): <, spaces, / and spaces for a close
@@ -198,31 +312,49 @@ func textCallAt(s string) (at, tail int) {
 func parseTextCalls(s string, names map[string]bool) (calls []writtenCall, rest string, ok bool) {
 	var left strings.Builder
 	for s != "" {
-		h := strings.Index(s, "<tool_call>")
+		h, markLen := markAt(s)
 		d := dsmlInvoke.FindStringSubmatchIndex(s)
 		switch {
 		case h >= 0 && (d == nil || h < d[0]):
 			left.WriteString(s[:h])
-			if t := strings.TrimLeft(s[h+len("<tool_call>"):], " \t\r\n"); t == "" || strings.HasPrefix(t, "<") {
-				// no JSON after it: DeepSeek's own tags, an invoke or the
-				// closes of one (#823), or nothing; the opener is dropped
-				// and what follows read as it is
-				s = t
-				continue
+			if markLen == len("<tool_call>") {
+				rest := s[h+markLen:]
+				if t := strings.TrimLeft(rest, " \t\r\n"); t == "" || strings.HasPrefix(t, "<") {
+					// no JSON after it: DeepSeek's own tags, an invoke or the
+					// closes of one (#823), or nothing; the opener is dropped
+					// and what follows read as it is
+					s = t
+					continue
+				}
+				c, n, good := paramCall(rest, names)
+				if !good {
+					c, n, good = hermesCall(rest, names)
+				}
+				if !good && !strings.HasPrefix(strings.TrimLeft(rest, " \t\r\n"), "{") {
+					// GLM's own: the name, then its arguments in pairs (#906)
+					c, n, good = glmCall(rest, names)
+				}
+				if !good {
+					return nil, "", false
+				}
+				calls = append(calls, c)
+				s = s[h+markLen+n:]
+			} else {
+				end, name, ok := callTag(s, h, markLen)
+				if !ok || !names[strings.ToLower(name)] {
+					// not a call this request offered: leave the opener
+					// as text and move on past it
+					left.WriteString(s[h : h+markLen])
+					s = s[h+markLen:]
+					continue
+				}
+				c, n, good := callTagCall(s[end:], strings.ToLower(name), names)
+				if !good {
+					return nil, "", false
+				}
+				calls = append(calls, c)
+				s = s[end+n:]
 			}
-			c, n, good := paramCall(s[h+len("<tool_call>"):], names)
-			if !good {
-				c, n, good = hermesCall(s[h+len("<tool_call>"):], names)
-			}
-			if !good && !strings.HasPrefix(strings.TrimLeft(s[h+len("<tool_call>"):], " \t\r\n"), "{") {
-				// GLM's own: the name, then its arguments in pairs (#906)
-				c, n, good = glmCall(s[h+len("<tool_call>"):], names)
-			}
-			if !good {
-				return nil, "", false
-			}
-			calls = append(calls, c)
-			s = s[h+len("<tool_call>")+n:]
 		case d != nil:
 			left.WriteString(s[:d[0]])
 			c, n, good := dsmlCall(s[d[0]:], s[d[2]:d[3]], d[1]-d[0], names)
@@ -281,7 +413,7 @@ func settled(native, holding bool, pending, held string) (string, string, bool) 
 // cutMark is the end of s that is a mark's beginning cut short (</ of
 // </tool_call>), "" when there's none; a lone < may be text.
 func cutMark(s string) string {
-	for _, m := range append([]string{"</tool_call>", "</parameter>"}, textCallMarks...) {
+	for _, m := range append([]string{"</tool_call>", "</parameter>", "</tool_call>", "</call:tool>"}, textCallMarks...) {
 		for n := len(m) - 1; n >= 2; n-- {
 			if strings.HasSuffix(s, m[:n]) {
 				return m[:n]
@@ -516,6 +648,13 @@ func callArgs(raw json.RawMessage) (json.RawMessage, bool) {
 	var m map[string]any
 	if decodeJSON(raw, &m) != nil {
 		return nil, false
+	}
+	// a call written as {"arguments":{...}} (the trae-cn spellings do this)
+	// carries its real arguments one level down
+	if len(m) == 1 {
+		if v, ok := m["arguments"].(map[string]any); ok {
+			m = v
+		}
 	}
 	b, err := json.Marshal(m)
 	return b, err == nil

@@ -47,3 +47,51 @@ func TestTextWrittenParamCallRelayed(t *testing.T) {
 		t.Fatalf("no parameters: text %q calls %v finish %q", text, calls, finish)
 	}
 }
+
+// #2789 (turtle4512, trae-cn): the model writes its calls as
+// <call:tool name="Bash">…</call:tool> or <tool_call name="Bash">…</tool_call>,
+// with the arguments as XML children, and sometimes as {"arguments":{…}}.
+// Those must be rescued like the Hermes/DeepSeek spellings.
+func TestTextCallXMLSpellingsRelayed(t *testing.T) {
+	body := `{"model":"a/m","stream":true,"messages":[{"role":"user","content":"hi"}],` + textCallTools + `}`
+
+	// <call:tool name="Bash">\n<command>ls</command>\n</call:tool>
+	text, calls, finish, raw := relayedChat(t, body,
+		chunkOf("Let me run it.\n\n<call:tool name=\"Bash\">\n<command>ls</command>\n</call:tool>"),
+		stopChunk)
+	var bash struct{ Command string }
+	if text != "Let me run it.\n\n" || json.Unmarshal([]byte(calls["bash"]), &bash) != nil ||
+		bash.Command != "ls" || finish != "tool_calls" {
+		t.Fatalf("call:tool: text %q calls %v finish %q\n%s", text, calls, finish, raw)
+	}
+
+	// <tool_call name="Bash">\n<parameter name="command">ls</parameter>
+	text, calls, finish, raw = relayedChat(t, body,
+		chunkOf("Let me run it.\n\n<tool_call name=\"Bash\">\n<parameter name=\"command\">ls</parameter>"),
+		stopChunk)
+	if text != "Let me run it.\n\n" || json.Unmarshal([]byte(calls["bash"]), &bash) != nil ||
+		bash.Command != "ls" || finish != "tool_calls" {
+		t.Fatalf("tool_call: text %q calls %v finish %q\n%s", text, calls, finish, raw)
+	}
+
+	// a name the request did not offer stays text
+	block := "<call:tool name=\"rm_rf\">\n<command>rm -rf /</command>\n</call:tool>"
+	text, calls, finish, _ = relayedChat(t, body, chunkOf(block), stopChunk)
+	if text != block || len(calls) != 0 || finish != "stop" {
+		t.Fatalf("unknown tool: text %q calls %v finish %q", text, calls, finish)
+	}
+
+	// {"name":"Edit","arguments":{"arguments":{"file_path":"a.ts"}}} peels one level
+	text, calls, finish, raw = relayedChat(t, body,
+		chunkOf("<tool_call>{\"name\":\"edit\",\"arguments\":{\"arguments\":{\"file_path\":\"a.ts\",\"oldText\":\"x\",\"newText\":\"y\"}}}</tool_call>"),
+		stopChunk)
+	var ed struct {
+		FilePath string `json:"file_path"`
+		OldText  string `json:"oldText"`
+		NewText  string `json:"newText"`
+	}
+	if text != "" || json.Unmarshal([]byte(calls["edit"]), &ed) != nil ||
+		ed.FilePath != "a.ts" || ed.OldText != "x" || ed.NewText != "y" || finish != "tool_calls" {
+		t.Fatalf("peeled arguments: text %q calls %v finish %q\n%s", text, calls, finish, raw)
+	}
+}
