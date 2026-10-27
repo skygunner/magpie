@@ -1187,6 +1187,12 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
 	if why == failQuota && zcodeTrialRefused(c, status, body) {
 		id = c.restID()
 	}
+	// a free model fails only on its own, not on the account's window:
+	// its failure is not inherited by the account and vice-versa
+	// (#3738: a 429/502 on a free model rests the model, not the account).
+	if (why == failQuota || why == failCredit) && c.p.FreeModel(c.model) {
+		id = c.restID()
+	}
 	// out of credit, or of a quota, on a model that costs credits where
 	// the subscription serves other models free is that model's: the free
 	// ones draw on no credits, and the account still serves them (Creat.wu
@@ -1363,6 +1369,12 @@ func (s *Server) rateRest(c candidate, header http.Header, body []byte, sharedPo
 func (c candidate) full(now time.Time) time.Time {
 	a, _ := c.allowance()
 	if spendsCredits(c.p, a) {
+		return time.Time{}
+	}
+	// a free model shares an account-wide free quota only, so its own
+	// failure does not ride the account's window: a free model's
+	// allowance used up rests the model, not the account (#3738).
+	if c.p.FreeModel(c.model) {
 		return time.Time{}
 	}
 	return a.Full(c.model, provider.SpentShareOf(c.p.Routing), now)
