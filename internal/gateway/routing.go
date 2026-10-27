@@ -393,6 +393,8 @@ func failure(status int, body []byte) string {
 		// English one as a rate limit, and each rested its own fallback
 		// (#1669)
 		return failQuota
+	case status == 429 && zhipuResets.Match(body):
+		return failQuota
 	case status == 429 && minuteLimit(body):
 		// a limit per minute, whatever it calls itself: back in a
 		// minute, not a plan used up (minuteWords)
@@ -406,6 +408,8 @@ func failure(status int, body []byte) string {
 		// for (zoecats on Discord). A limit that says it is back in
 		// hours stays out of quota below
 		return failRate
+	case status == 429 && usedUpWords.Match(body):
+		return failQuota
 	case status == 429 && rateWords.Match(body) && !plannedWords.Match(urlWords.ReplaceAll(body, nil)):
 		return failRate
 	case status >= 500 && quotaCodes.Match(body), status < 500 && usedUpWords.Match(body), status == 429 && plannedWords.Match(body):
