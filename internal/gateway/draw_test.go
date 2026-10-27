@@ -242,6 +242,7 @@ func TestViaFor(t *testing.T) {
 		want  drawVia
 	}{
 		{google, "gemini-2.5-flash-image", viaGemini},
+		{google, "nano-banana-pro-preview", viaGemini},
 		{google, "imagen-4.0-generate-001", viaImages},
 		{router, "openai/gpt-image-2", viaImages},
 		{router, "openai/gpt-5-image", viaChat},
@@ -253,6 +254,78 @@ func TestViaFor(t *testing.T) {
 		if got := viaFor(tc.p, tc.model); got != tc.want {
 			t.Errorf("%s at %s: %s, want %s", tc.model, tc.p.Chat, got, tc.want)
 		}
+	}
+}
+
+// #2836 (kinhit): a Google image model draws on generateContent. Its images
+// API is predict's: a gemini-3-image or a Nano Banana is a 404 there, "or is
+// not supported for predict". A Nano Banana's id doesn't say gemini, so it
+// was asked on the compatibility layer's chat completions and then its images
+// API, and neither drew it. Imagen, which predict draws, stays on the images
+// API.
+func TestGoogleNanoBananaDrawsOnGenerateContent(t *testing.T) {
+	fresh(t)
+	b64 := base64.StdEncoding.EncodeToString(pngBytes)
+	var mu sync.Mutex
+	var paths []string
+	s := New()
+	s.client = &http.Client{Transport: roundTripFunc(func(r *http.Request) (*http.Response, error) {
+		mu.Lock()
+		paths = append(paths, r.URL.Path)
+		mu.Unlock()
+		answer := func(code int, body string) (*http.Response, error) {
+			return &http.Response{StatusCode: code, Header: http.Header{"Content-Type": []string{"application/json"}},
+				Body: io.NopCloser(strings.NewReader(body)), Request: r}, nil
+		}
+		switch {
+		case strings.HasSuffix(r.URL.Path, ":generateContent"):
+			return answer(200, `{"candidates":[{"content":{"parts":[{"inlineData":{"mimeType":"image/png","data":"`+b64+`"}}]}}]}`)
+		case strings.HasSuffix(r.URL.Path, "/chat/completions"):
+			// Google's answer to an image model on the compatibility layer,
+			// as the reporter's request got it
+			return answer(404, `{"error":{"code":404,"message":"models/nano-banana-pro-preview is not found for API version v1main, or is not supported for predict. Call ModelService.ListModels to see the list of available models and their supported methods.","status":"NOT_FOUND"}}`)
+		case strings.HasSuffix(r.URL.Path, "/images/generations"):
+			return answer(200, `{"created":1,"data":[{"b64_json":"`+b64+`"}]}`)
+		}
+		return answer(404, `{"error":{"code":404,"message":"unexpected "}}`)
+	})}
+	if err := provider.Save(provider.Provider{ID: "google", Name: "Google Gemini",
+		Chat: "https://generativelanguage.googleapis.com/v1beta/openai", Key: "key",
+		Models: []string{"nano-banana-pro-preview", "gemini-nano-banana-2.1", "imagen-4.0-generate-001"}}); err != nil {
+		t.Fatal(err)
+	}
+	for _, model := range []string{"nano-banana-pro-preview", "gemini-nano-banana-2.1"} {
+		mu.Lock()
+		paths = nil
+		mu.Unlock()
+		code, a, raw := postImages(t, s, "/v1/images/generations", "application/json",
+			`{"model":"google/`+model+`","prompt":"a small red circle on white"}`)
+		mu.Lock()
+		asked := append([]string(nil), paths...)
+		mu.Unlock()
+		if code != 200 || len(a.Data) != 1 {
+			t.Fatalf("%s: %d %s", model, code, raw)
+		}
+		if want := []string{"/v1beta/models/" + model + ":generateContent"}; !slices.Equal(asked, want) {
+			t.Errorf("%s: asked %v, want %v", model, asked, want)
+		}
+		if b, _ := base64.StdEncoding.DecodeString(a.Data[0].B64); string(b) != string(pngBytes) {
+			t.Errorf("%s: image %q", model, b)
+		}
+	}
+	// Imagen draws on the images API's predict alone, and stays there
+	mu.Lock()
+	paths = nil
+	mu.Unlock()
+	if code, _, raw := postImages(t, s, "/v1/images/generations", "application/json",
+		`{"model":"google/imagen-4.0-generate-001","prompt":"a magpie"}`); code != 200 {
+		t.Fatalf("imagen: %d %s", code, raw)
+	}
+	mu.Lock()
+	asked := append([]string(nil), paths...)
+	mu.Unlock()
+	if want := []string{"/v1beta/openai/images/generations"}; !slices.Equal(asked, want) {
+		t.Errorf("imagen: asked %v, want %v", asked, want)
 	}
 }
 

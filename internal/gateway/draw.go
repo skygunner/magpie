@@ -826,7 +826,11 @@ func viaFor(p provider.Provider, model string) drawVia {
 		// another magpie's images API asks the model's vendor the way
 		// that model draws there
 		return viaImages
-	case isGoogle(p) && strings.Contains(strings.ToLower(model), "gemini"):
+	case isGoogle(p) && !strings.Contains(strings.ToLower(model), "imagen"):
+		// Google's images API is predict's, and only some of its image
+		// models answer there: a gemini-3-image or a Nano Banana is a 404,
+		// "or is not supported for predict". generateContent serves them
+		// all (#2836)
 		return viaGemini
 	case isOpenRouter(p):
 		if catalog.ImagesAPI(model) {
