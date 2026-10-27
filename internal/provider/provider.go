@@ -1548,6 +1548,29 @@ func (p Provider) Speaks() []Protocol {
 	return out
 }
 
+// WithResponsesAtChatBase is p with the Responses API at its Chat base,
+// where model's vendor's list names the Responses API for it and the
+// provider keeps one OpenAI base alone (…/v1, which serves both OpenAI
+// APIs): a new-api or one-api relay says so in supported_endpoint_types
+// (#2822). p comes back as it was in every other case.
+func (p Provider) WithResponsesAtChatBase(model string) Provider {
+	if p.Responses != "" || p.Chat == "" || p.Account != nil || p.IsPlugin() {
+		return p
+	}
+	base := strings.TrimRight(p.Chat, "/")
+	u, err := url.Parse(base)
+	// both OpenAI APIs are asked under the one base, never under an
+	// endpoint pasted whole (…/chat/completions) or a URL with a query
+	if err != nil || u.Host == "" || u.RawQuery != "" || !strings.HasSuffix(u.Path, "/v1") {
+		return p
+	}
+	if !slices.Contains(p.APIs(model), Responses) {
+		return p
+	}
+	p.Responses = base
+	return p
+}
+
 // FactoryGemini is Factory's sign-in, whose Gemini models are asked on its
 // own generate route (…/generate, the model in the body), not at
 // models/{model}:streamGenerateContent as Google's Gemini API asks them.

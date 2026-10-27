@@ -25,6 +25,22 @@ func TestEndpointAPIs(t *testing.T) {
 			t.Errorf("%v: %q", c.in, got)
 		}
 	}
+	// a relay's supported_endpoint_types, of which "openai" alone names
+	// no API of OpenAI's two (#2822)
+	for _, c := range []struct {
+		in   []string
+		want string
+	}{
+		{[]string{"openai", "chat", "responses"}, "chat,responses"},
+		{[]string{"openai", "openai-chat", "openai-response"}, "chat,responses"},
+		{[]string{"anthropic"}, "anthropic"},
+		{[]string{"openai", "gemini"}, ""},
+		{nil, ""},
+	} {
+		if got := strings.Join(EndpointTypeAPIs(c.in), ","); got != c.want {
+			t.Errorf("%v: %q", c.in, got)
+		}
+	}
 }
 
 // A list that tells each model's context window (Command Code, OpenRouter)

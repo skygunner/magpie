@@ -618,6 +618,11 @@ func fetchPage(ctx context.Context, url, key string, anthropic bool, headers map
 		}
 		input := imageInput(r.Modalities.Input)
 		apis := EndpointAPIs(r.Endpoints)
+		for _, api := range EndpointTypeAPIs(r.Types) {
+			if !slices.Contains(apis, api) {
+				apis = append(apis, api)
+			}
+		}
 		if native := EndpointAPIs(r.Native); len(native) > 0 {
 			apis = native
 		}
@@ -691,6 +696,10 @@ type liveModel struct {
 	// Code's Claude models on /messages alone, its open ones on
 	// /chat/completions and /responses
 	Endpoints []string `json:"supported_endpoints"`
+	// the same APIs in the type names a new-api or one-api relay lists:
+	// "chat", "responses" and "anthropic", where "openai" alone names
+	// none of them (#2822)
+	Types []string `json:"supported_endpoint_types"`
 	// the context window, where the list tells it (OpenRouter, Command
 	// Code); any, as a vendor's odd value mustn't lose the whole list
 	ContextLength any `json:"context_length"`
@@ -801,6 +810,29 @@ func EndpointAPIs(endpoints []string) []string {
 		case "/responses":
 			api = "responses"
 		case "/messages":
+			api = "anthropic"
+		}
+		if api != "" && !slices.Contains(out, api) {
+			out = append(out, api)
+		}
+	}
+	return out
+}
+
+// EndpointTypeAPIs names the APIs of a model list's supported_endpoint_types
+// — "chat", "responses", "anthropic" — the type names new-api and one-api
+// relays list (#2822); nil when it names none of them. "openai" alone is
+// left out: it says nothing of which of OpenAI's two APIs the model is on.
+func EndpointTypeAPIs(types []string) []string {
+	var out []string
+	for _, t := range types {
+		var api string
+		switch strings.ToLower(strings.TrimSpace(t)) {
+		case "chat", "openai-chat":
+			api = "chat"
+		case "responses", "openai-response":
+			api = "responses"
+		case "anthropic":
 			api = "anthropic"
 		}
 		if api != "" && !slices.Contains(out, api) {

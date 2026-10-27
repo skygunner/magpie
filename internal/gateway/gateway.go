@@ -3886,6 +3886,10 @@ func (s *Server) attempt(w http.ResponseWriter, r *http.Request, from provider.P
 		r, model = r.WithContext(ctx), m
 		noteMember(w, r, p, model)
 	}
+	// a relay whose model list names the Responses API for the model, and
+	// whose one base URL is the Chat URL the user set, is asked on
+	// Responses there (#2822)
+	p = p.WithResponsesAtChatBase(model)
 	// a backend that only streams gets a non-streaming request translated
 	// (the provider is always streamed on that path) rather than relayed,
 	// except a plugin's on Responses, which is relayed streamed and given
