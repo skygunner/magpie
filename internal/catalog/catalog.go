@@ -129,6 +129,44 @@ type Model struct {
 	// doesn't, or didn't say. A plugin's model it says searches by itself
 	// (m.searches) is "native" too.
 	WebSearch string `json:",omitempty"`
+	// Codex, on a model a vendor lists the way Codex's own catalog does
+	// (a sub2api asked with Codex's client_version), is that entry as the
+	// vendor gave it (CodexEntry): Codex is handed it as it is, its
+	// instructions and window and all, rather than an entry magpie made up
+	// from models.dev (ctopsc on Discord). Its context_window,
+	// max_context_window, input_modalities and reasoning levels are read
+	// into the fields above too, so the rest of magpie says what it says.
+	Codex json.RawMessage `json:",omitempty"`
+}
+
+// CodexLevels are the efforts of a Codex catalog entry's
+// supported_reasoning_levels; false when raw is no such entry.
+func CodexLevels(raw json.RawMessage) ([]string, bool) {
+	if len(raw) == 0 || !CodexEntry(raw) {
+		return nil, false
+	}
+	var e struct {
+		Levels any `json:"supported_reasoning_levels"`
+	}
+	json.Unmarshal(raw, &e)
+	return levelsOf(e.Levels), true
+}
+
+// CodexEntry reports whether raw, one row of a model list, is a model as
+// Codex's own catalog lists it (/backend-api/codex/models, codex-rs's
+// ModelInfo): a slug, its reasoning levels, its shell and its
+// instructions. A plain OpenAI list's row has none of them.
+func CodexEntry(raw json.RawMessage) bool {
+	var e struct {
+		Slug         string          `json:"slug"`
+		Levels       json.RawMessage `json:"supported_reasoning_levels"`
+		Shell        json.RawMessage `json:"shell_type"`
+		Instructions json.RawMessage `json:"base_instructions"`
+	}
+	if json.Unmarshal(raw, &e) != nil {
+		return false
+	}
+	return e.Slug != "" && len(e.Levels) > 0 && len(e.Shell) > 0 && len(e.Instructions) > 0
 }
 
 func imageInput(modalities []string) *bool {
@@ -469,6 +507,9 @@ var (
 	// listed are the bare ids of every model models.dev lists, whatever it
 	// says of them: an id listed is never taken for another (renamed)
 	listed map[string]bool
+	// labs are the models models.dev lists under their lab alone
+	// (models.json), by bare id: none of its providers lists them
+	labs map[string]mdModel
 	// canonical are the bare ids of every model models.dev says an entry is
 	// (canonical_model_id, #1520): DeepSeek's deepseek-flash is
 	// deepseek/deepseek-v4.1-flash, the id WorkBuddy and the relays serve it
@@ -602,6 +643,31 @@ func loadGen() (map[string]mdProvider, int) {
 							}
 						}
 					}
+					// and a model no provider lists at all, only its lab
+					// (models.dev's models.json): a gated one, as Claude
+					// Mythos 5.1 is since models.dev took it out of
+					// anthropic's list, that a vendor's own list or the
+					// account's still serves (iebb on Discord). Its lab
+					// file holds what is the model's on every host — name,
+					// window, reply limit, thinking, images — and no
+					// price. One a provider lists keeps its answers.
+					labs = map[string]mdModel{}
+					for id, x := range readLabs() {
+						b := bareID(id)
+						if listed[b] || canonical[b] {
+							continue
+						}
+						if x.ID == "" {
+							x.ID = id
+						}
+						if _, ok := labs[b]; !ok || id < labs[b].ID {
+							labs[b] = x
+						}
+						vote(b, b, "lab:"+id, x)
+					}
+					for b := range labs {
+						listed[b] = true
+					}
 					windows = map[string]int{}
 					for id, by := range sizes {
 						windows[id] = mostGiven(by)
@@ -630,6 +696,7 @@ func loadGen() (map[string]mdProvider, int) {
 							images[id] = true
 						}
 					}
+					labKinEfforts(m)
 					return
 				}
 			}
@@ -647,7 +714,7 @@ func Reset() {
 	loaded = false
 	built = nil
 	gen++
-	mdev, images, windows, outputs, efforts, thinks, names, listed, canonical = nil, nil, nil, nil, nil, nil, nil, nil, nil
+	mdev, images, windows, outputs, efforts, thinks, names, listed, canonical, labs = nil, nil, nil, nil, nil, nil, nil, nil, nil, nil
 	loadMu.Unlock()
 	if Forget != nil {
 		Forget()
@@ -704,16 +771,19 @@ func syncLock(ctx context.Context, onlyIfMissing bool) error {
 	if err := os.WriteFile(p, b, 0o644); err != nil {
 		return err
 	}
+	// the lab catalog beside it is best effort: without it the provider
+	// catalog answers alone, and one kept before is kept
+	_ = syncLabs(ctx)
 	Reset()
 	Touched() // names, reasoning levels and context windows may be others
 	return nil
 }
 
 // Stale reports whether no catalog exists or the cache is older than a day
-// (fresh.go).
+// (fresh.go), or magpie's has no lab catalog beside it yet (labs.go).
 func Stale() bool {
 	src := Source()
-	if src == "" {
+	if src == "" || labsMissing() {
 		return true
 	}
 	st, err := os.Stat(src)
