@@ -66,10 +66,10 @@ Each round:
 8. Accept: healthy, 401/200 auth pair, model count equal before/after, a
    real `group/fast-cheap` request 200. Push `prod` and the tag.
 
-## Carried patches (as of v0.1.1734-p1, 2026-10-27)
+## Carried patches (as of v0.1.1767-p1, 2026-10-28)
 
-Checked against v0.1.1734 (2026-10-27): none absorbed yet; all nine
-issues still open. This round's freshness sweep found #3035's fix had
+Checked against v0.1.1767 (2026-10-28): none absorbed yet; all nine
+issues still open, no branch or PR movement since the last sweep. This round's freshness sweep found #3035's fix had
 evolved on the fork (the issue's own latest comment supersedes the
 original approach): `223f9b0a` (fix/bare-request-failover) is carried
 beside `8f931a28`. The #3487 source branch's six newer commits are other
