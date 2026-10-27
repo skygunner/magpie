@@ -18,7 +18,11 @@ func gatewayResponse(w http.ResponseWriter, r *http.Request, proto provider.Prot
 	}}
 	return capture, func() {
 		defer capture.full.discard()
-		if streamOf(body) {
+		// a reply the handler never began stays unwritten: flushing it would
+		// send the 200 for an exchange that failed before any answer, and
+		// Codex retries a 200 as an answer, not as the connection that
+		// failed (#3135)
+		if streamOf(body) && capture.status != 0 {
 			_ = http.NewResponseController(w).Flush()
 		}
 		output, err := capture.full.read()

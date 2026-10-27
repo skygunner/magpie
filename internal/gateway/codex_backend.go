@@ -1123,9 +1123,18 @@ func (s *Server) codexUpstreamOn(w http.ResponseWriter, r *http.Request, rest st
 				if rest == "/responses" {
 					msg = codexUnreached(modelOf(body), err)
 				}
-				failWith(502, msg)
 				end(502, msg, 0, 0)
-				return
+				if kept.sent {
+					// Codex holds the stream's headers already: the failure
+					// is told on the stream it is reading
+					streamError(w, provider.Responses, kept.model, 502, msg)
+					return
+				}
+				// OpenAI never answered, so it has no status to pass on: a
+				// status magpie makes up is an answer Codex retries as a
+				// wrong one, never the failed connection it waits out
+				// (#3135), so the client's exchange ends as one
+				panic(http.ErrAbortHandler)
 			}
 			if on != nil {
 				// one of magpie's accounts: a revoked sign-in shows on its
@@ -1569,10 +1578,12 @@ func codexKeyRefused(msg []byte) string {
 		"or sign Codex in with ChatGPT, or with an OpenAI API key"
 }
 
-// codexUnreached says why a model of Codex's own failed with 502: OpenAI,
-// where it goes with Codex's own sign-in, couldn't be reached — often from
-// a Codex whose only sign-in is a relay's key, whose own models it still
-// lists (#322) — and what to do about it.
+// codexUnreached says why a model of Codex's own failed: OpenAI, where
+// it goes with Codex's own sign-in, couldn't be reached — often from a
+// Codex whose only sign-in is a relay's key, whose own models it still
+// lists (#322) — and what to do about it. It is said in the routing view:
+// the client itself is given the failed connection, not a status magpie
+// made up (#3135).
 func codexUnreached(model string, err error) string {
 	return "OpenAI can't be reached (" + err.Error() + "). " + model + " is one of Codex's own models, " +
 		"which goes to OpenAI with Codex's own sign-in: pick one of magpie's models in Codex " +
