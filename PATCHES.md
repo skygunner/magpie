@@ -1,48 +1,54 @@
-# prod/ rolling line — upstream release + skygunner patches
+# prod line — upstream releases + skygunner patches
 
-This branch is the source of the production image on docker1 (10.0.0.31,
-container `magpie`, image `magpie:<tag>-pN`, ports 3425/3430, volume
-`magpie-config`). One branch per deployed release, named after the image
-tag; old `prod/*` branches stay as deployment records.
+How the fork is organized (since 2026-10-27):
 
-Each round rolls the line forward:
+- `main` mirrors `upstream/main` (fast-forward only). A fix forks off it as
+  `fix/<topic>`, one fix per branch, is verified there, and is replied to
+  the upstream issue.
+- `prod` is the rolling integration line: each round merges the newest
+  upstream **release tag** (never `upstream/main` — unreleased commits
+  don't ship) and cherry-picks the fixes chosen for deployment. This file
+  is the manifest of what the line carries.
+- Each deployment is tagged `prod/<image-tag>` (e.g. `prod/0.1.1670-p1`).
+  The tag is the deployment record; `magpie:<tag>` images build from it.
+- A patch leaves the manifest only when upstream absorbs it: the fix of
+  record is an ancestor of the merged tag, or an upstream commit says it
+  fixes the same issue, or the issue closes as fixed.
 
-1. `git fetch upstream --tags`; take the newest `vX.Y.Z` release tag (not
-   `upstream/main`).
-2. Branch `prod/vX.Y.Z-p1` off the previous `prod/*` branch (not off the
-   tag), then `git merge vX.Y.Z` — the carried patch commits keep their
-   SHAs, so the table below stays true; resolve conflicts by keeping both
-   sides' semantics.
-3. For each patch in the table below, check whether upstream absorbed it:
-   the fix of record is an ancestor of the tag, or an upstream commit says
-   it fixes the same issue, or the issue is closed as fixed. Absorbed →
-   skip. Otherwise `git cherry-pick -x <sha>`, resolve conflicts by keeping
-   both sides' semantics.
-4. Verify: each patch's own regression tests, the GUI tests it ships
-   (`node --test` with playwright, both engines), `go vet`, and
+Each round:
+
+1. `git fetch upstream --tags`; merge the newest `vX.Y.Z` into `prod`.
+   Carried cherry-picks keep their SHAs, so the table below stays true.
+   Resolve conflicts by keeping both sides' semantics; adapt new upstream
+   tests that meet a carried type change (noted below when it happens).
+2. Add new fixes: `git cherry-pick -x` from their `fix/*` branches, in
+   branch order.
+3. Gate: each patch's own regression tests, the GUI tests below in both
+   engines (`node --test` with playwright), `go vet`,
+   `TestCoreScriptBudget` (if app.js goes over, shorten the patch's own
+   comments before considering a budget raise), and
    `go test -tags nogui ./...` — attribute every red against a clean
-   checkout of the same tag before blaming the patches. `TestCoreScriptBudget`
-   is part of the gate: if app.js goes over, shorten the patch's own
-   comments before considering a budget raise.
-5. `docker build --build-arg VERSION=<tag>-p1 -t magpie:<tag>-p1 .`,
-   smoke-test on a throwaway config (`magpie version`, 401 without a key),
-   then on docker1: back up the volume and container config under
-   `/home/hermes/backups/magpie/pre-<tag>-<ts>/`, stop and rename the old
-   container to `magpie-pre-<tag>-<ts>` (kept stopped), run the new one
-   with the same flags (`-p 3425:3425 -p 3430:3430 -v magpie-config:/config:z
-   --user nonroot --restart unless-stopped` and the two MAGPIE_* env vars,
+   checkout of the same tag before blaming the line.
+4. Tag `prod/<tag>-pN` (annotated); build
+   `docker build --build-arg VERSION=<tag>-pN -t magpie:<tag>-pN .`;
+   smoke-test on a throwaway config (`magpie version`, 401 without a key).
+5. On docker1: back up the volume and container config under
+   `/home/hermes/backups/magpie/pre-<tag>-<ts>/` (volume tar + container
+   inspect), stop and rename the running container to
+   `magpie-pre-<tag>-<ts>` (kept stopped), run the new image with the same
+   flags (`-p 3425:3425 -p 3430:3430 -v magpie-config:/config:z --user
+   nonroot --restart unless-stopped`, the two MAGPIE_* env vars,
    `web --addr 0.0.0.0:3430 --no-open`).
-6. Accept: healthy, 401/200 auth pair, model count equal before/after,
-   real `group/fast-cheap` request 200. Push the branch; the branch is the
-   record.
+6. Accept: healthy, 401/200 auth pair, model count equal before/after, a
+   real `group/fast-cheap` request 200. Push `prod` and the tag.
 
-## Carried patches (as of v0.1.1612-p1, 2026-10-27)
+## Carried patches (as of v0.1.1670-p1, 2026-10-27)
 
-Checked against v0.1.1612 (2026-10-26): none absorbed yet; #3623 still
-has no fix anywhere. At v0.1.1612 upstream made a plugin window's `Used`
-a pointer too (#3650); the merge keeps that beside #3487's pointer
-`Amount` — one conditional block each, and the aside-text condition
-reads both pointers.
+Checked against v0.1.1670: none absorbed yet. Integration notes: at
+v0.1.1612 upstream made a plugin window's `Used` a pointer (#3650), kept
+beside #3487's pointer `Amount`; at v0.1.1670 upstream added runs-out
+spans (#3762) whose new test wrote a bare `Amount` — adapted to the
+pointer on this line.
 
 | upstream | fix of record (skygunner/magpie) | what it does |
 | --- | --- | --- |
@@ -52,81 +58,30 @@ reads both pointers.
 | yetone/magpie#3635 | `ad3badd3` + `4f7e63a8` | NVIDIA parameter-list repair keeps reasoning effort; duplicate effort controls stay aligned through routing |
 | yetone/magpie#3636 | `0d3dca3d` | an explicit unsupported-parameter 400 fails over to the group's remaining members |
 | yetone/magpie#3624 | `c931166a` | Usage → View routing reveals the selected trace, not off-screen |
+| yetone/magpie#3788 | `dd670e6` (fix/hindsight-nonstream-cooldown) | the group's first-response timeout also bounds non-streaming requests — headers alone don't count — so a slow member fails over before the caller gives up; the last candidate still waits |
+| yetone/magpie#3791 | `dd670e6` (fix/hindsight-nonstream-cooldown) | provider JSON `modelCooldown` opts exact model ids into model/account/key cooldowns on 499s and slow starts: 1, 2, 4, 8, 16, 32, then the cap minutes; success resets the ladder; a cooling model is not probed even as last candidate (503 + Retry-After); `RestCapOff` overrides; production opts `raccoon`'s `sn-sensenova-6-8-flash` at a 60-minute cap |
+| yetone/magpie#3794 | `82d916e3` (fix/kilo-tools-count-fallback) | an explicit upstream tool-count limit (Kilo refusing 129 tools, max 128) fails the group over to the next member with the full tool list; the refusing member stays eligible for smaller requests |
 
 Plugin (not this branch): `@magpie-community/opencode-cloudflare-workers-ai-auth`
-0.0.4 tarball (plugins PR #366), installed in the `magpie-config` volume at
-`/config/magpie/plugins/` — survives image upgrades; re-verify after each.
+0.0.4 tarball, rebuilt from plugins PR #366 head `bdc302a` (span in
+seconds per the magpie contract, used percent for the router, 429 rests
+the account instead of the card's percent, Analytics reads), installed in
+the `magpie-config` volume at `/config/magpie/plugins/`. Re-verify after
+each image upgrade.
 
 Not carried: #3623 (no fix exists on the fork yet; nothing to apply).
-Checked again at v0.1.1612: still zero comments, still nothing upstream.
+Checked again at v0.1.1670: still zero comments, still nothing upstream.
 
-## Hindsight cooldown branch (v0.1.1612-p2-hindsight)
+## Deployment history
 
-`fix/hindsight-nonstream-cooldown` carries the p1 patches above and adds:
-
-- Group `FirstToken` also limits non-streaming first response content;
-  headers alone do not satisfy it. The final candidate still waits.
-- Provider JSON `modelCooldown` opts exact model IDs into model/account/key
-  cooldowns for slow starts and client cancellations after upstream dispatch.
-  Production opts `raccoon`'s `sn-sensenova-6-8-flash` into a 60-minute cap:
-  1, 2, 4, 8, 16, 32, 60, 60… minutes. Other provider settings and group
-  membership stay as configured. `RestCapOff` overrides this opt-in.
-- A resting opted-in model is not probed even when it is the last candidate;
-  requests with nothing available receive 503 and `Retry-After`.
-
-The fork deliberately counts manual in-flight cancellations too, has no GUI
-editor for the new field, and keeps the existing process-local failure state.
-Success resets the ladder. Queue/retry-pause cancellations do not count.
-
-Validation: new regressions fail with the old gateway logic, including a
-separate mutation removing the hard hold. Targeted gateway race tests pass
-five repetitions; provider normalization/cloning boundaries pass under race.
-Native/Linux/Windows vet and builds pass. A compiled Linux binary in a
-throwaway HOME, through its real HTTP listener, falls back after 1.006 seconds
-and sends zero upstream probes during timeout/cancellation holds.
-
-Full-suite comparison uses a clean checkout of the p1 source (`ed77bfdf`),
-with a temporary HOME, pinned Go caches and umask 022. Both have existing
-failures in gateway (Claude client cache, Codex image fitting, JSON separator
-escaping and WSL listener), pii (GPU residency), plugin (SOCKS proxy), and
-provider (synctest/filememo interaction). These are not represented as a
-green full suite. No unrelated fixes are included in this patch.
-
-Deployed 2026-10-27 AEST from code commit `dd670e6e67cdc4535917d9aa8bb2130abbf88e43`:
-
-- Image `magpie:0.1.1612-p2-hindsight`, ID
-  `sha256:83d4d91f973470791b33fb55789018f8faf8314e3d9b292dc5ba6f28b86f00a3`.
-- Healthy; unauthenticated/authenticated model-list checks returned 401/200,
-  with 198 models before and after. A non-streaming `group/fast-cheap` call
-  using Hindsight's caller credential returned 200 from `gpt-6-luna` in
-  11.95 seconds. No target-model/group membership was added by the rollout.
-- Backup: `/home/hermes/backups/magpie/pre-0.1.1612-p2-hindsight-20261026T175132Z/`
-  (complete stopped volume, container inspect, and providers.json).
-  Stopped rollback container: `magpie-pre-hindsight-20261026T175132Z`.
-- Upstream feature request: https://github.com/yetone/magpie/issues/3788.
-  This is a request for maintainer feedback, not an upstream PR or acceptance.
-
-## Pending deployment: tool-count failover (#3794)
-
-Fork branch `fix/kilo-tools-count-fallback` adds a narrow request-shape
-match for an upstream's explicit tool-count limit, such as Kilo refusing
-129 tools with a maximum of 128. The next group member receives the full
-tool list; the refusing member stays eligible for a smaller request.
-The implementation, regression tests and contract are in `fallback.go`,
-`tool_count_fallback_test.go` and `docs/subsystems/gateway-routing.md`.
-Upstream feature request: https://github.com/yetone/magpie/issues/3794.
-
-Validation with Go 1.26.8: targeted gateway race tests pass five repetitions;
-native/Linux/Windows vet and builds pass. The compiled Linux gateway in a
-temporary HOME receives the same 129-tool request, gets the simulated Kilo
-400, and obtains a 200 from the next upstream with all 129 tools preserved.
-Full-suite checks are not green: Claude cache, PII GPU fixtures, plugin
-SOCKS handling and provider synctest/filememo failures also reproduce on
-the unchanged `a84d79cc` baseline. Go 1.27 and umask 027 add environment
-failures; final targeted checks use Go 1.26.8 and umask 022.
-
-Candidate image `magpie:0.1.1612-p3-tools` is built on docker1 from the
-existing p2 image with only the gateway binary replaced. Production still
-runs `magpie:0.1.1612-p2-hindsight`. Deployment is explicitly deferred by
-the user until a maintenance window; the image has only had isolated
-checks. Follow the deployment and rollback procedure above when scheduled.
+- `prod/0.1.1556-p1` — 2026-10-26. First patched build: the six bug
+  patches above at v0.1.1556.
+- `prod/0.1.1612-p1` — 2026-10-27. Rolling merge of v0.1.1612.
+- `magpie:0.1.1612-p2-hindsight` — 2026-10-27 (no tag; pre-scheme).
+  `dd670e6` deployed for the Hindsight 499 problem; running before this
+  round. Superseded by `prod/0.1.1670-p1`.
+- `magpie:0.1.1612-p3-tools` — candidate only, never deployed (its binary
+  swap is replaced by this round's proper #3794 integration).
+- `prod/0.1.1670-p1` — 2026-10-27. Rolling merge of v0.1.1670 plus
+  #3788/#3791 (`dd670e6`) and #3794 (`82d916e3`); plugin tarball rebuilt
+  from PR #366 `bdc302a`.
