@@ -180,10 +180,21 @@ func insertKey(raw, stripped []byte, from int, key string, value any) ([]byte, e
 	k, _ := json.Marshal(key)
 	// An object the user keeps on one line stays on that line when what
 	// magpie adds to it is an object of its own (#3814): the subtree is the
-	// unit the user laid out. A scalar goes on its own line in the file's
-	// style, as the file's other scalars are.
+	// unit the user laid out. The file's root is the exception — its style
+	// is the file's, as it was, so a fresh file's first write is laid out
+	// over lines the way every writer of these configs did. A scalar goes
+	// on its own line in the file's style, as the file's other scalars are.
+	at := open
+	for at > 0 && strings.ContainsRune(" \t\r\n", rune(raw[at-1])) {
+		at--
+	}
+	end := close + 1
+	for end < len(raw) && strings.ContainsRune(" \t\r\n", rune(raw[end])) {
+		end++
+	}
 	pretty := bytes.IndexByte(raw, '\n') >= 0
-	if _, isObj := value.(map[string]any); isObj && bytes.IndexByte(raw[open:close+1], '\n') < 0 {
+	if _, isObj := value.(map[string]any); isObj && (at > 0 || end < len(raw)) &&
+		bytes.IndexByte(raw[open:close+1], '\n') < 0 {
 		pretty = false
 	}
 	empty := len(bytes.TrimSpace(raw[open+1:close])) == 0
