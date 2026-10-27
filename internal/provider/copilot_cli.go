@@ -250,5 +250,6 @@ func copilotDirect(ctx context.Context, app copilotApp) (copilotSession, error) 
 	s := copilotSession{Token: github, ExpiresAt: time.Now().Add(30 * time.Minute).Unix(), direct: true}
 	s.Endpoints.API = u.Endpoints.API
 	copilotSessions[github] = s
+	copilotSessionTraded(github, s.Token)
 	return s, nil
 }

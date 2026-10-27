@@ -457,6 +457,7 @@ func copilotSeenAPIs(model string) []Protocol {
 func ForgetCopilotForTest() {
 	copilotMu.Lock()
 	copilotSessions = map[string]copilotSession{}
+	copilotTraded = map[string]string{}
 	copilotMu.Unlock()
 	copilotAutoMu.Lock()
 	copilotAutoSessions = map[string]copilotAutoSession{}

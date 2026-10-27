@@ -1218,6 +1218,9 @@ func (s copilotSession) headers() map[string]string {
 var (
 	copilotMu       sync.Mutex
 	copilotSessions = map[string]copilotSession{} // by GitHub token
+	// copilotTraded is the session traded in answer to a 403, by GitHub
+	// token: "" while the answer is on its way (copilotSessionRefused)
+	copilotTraded = map[string]string{}
 )
 
 type copilotApp struct {
@@ -1541,6 +1544,7 @@ func copilotToken(ctx context.Context, app copilotApp) (copilotSession, error) {
 		return copilotSession{}, errors.New("Copilot is signed out (" + APIError(b, res.Status) + "); sign in to Copilot again")
 	}
 	copilotSessions[github] = s
+	copilotSessionTraded(github, s.Token)
 	copilotRefusals.Lock()
 	delete(copilotRefusals.at, github)
 	delete(copilotRefusals.status, github)

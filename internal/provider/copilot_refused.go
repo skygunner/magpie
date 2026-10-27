@@ -11,6 +11,7 @@ package provider
 
 import (
 	"context"
+	"net/http"
 	"regexp"
 	"sync"
 	"time"
@@ -38,8 +39,11 @@ var copilotSessionGone = regexp.MustCompile(`(?i)not available for session`)
 
 // copilotRefused notes a refusal of model for the account, and says whether
 // the request is worth sending again: when Auto picked the model, as Auto
-// then picks another.
+// then picks another, or when Copilot refused the session it was sent with.
 func copilotRefused(ctx context.Context, app copilotApp, model string, status int, body []byte) bool {
+	if status == http.StatusForbidden {
+		return copilotSessionRefused(app)
+	}
 	a, ok := ctx.Value(copilotAutoKey{}).(copilotAutoSession)
 	if status == 400 && copilotSessionGone.Match(body) && ok && a.Model == model && a.Token != "" {
 		// Auto's session isn't taken for its pick any more: it is let
@@ -89,6 +93,41 @@ func copilotRefused(ctx context.Context, app copilotApp, model string, status in
 	}
 	copilotAutoMu.Unlock()
 	return true
+}
+
+// copilotSessionRefused drops the session a 403 on a model request named:
+// Copilot kept refusing it while a session traded afresh served the same
+// model from the same account, and magpie sent the refused one until its
+// expires_at — a restart traded a new one, and only then did requests go
+// through (#3310). The request is sent again once with a session traded
+// after it. Refused too, that session isn't traded again: the account is
+// refused, not the session, and its 403 is passed on.
+func copilotSessionRefused(app copilotApp) bool {
+	copilotMu.Lock()
+	defer copilotMu.Unlock()
+	cur, ok := copilotSessions[app.Token]
+	if !ok || cur.Token == copilotTraded[app.Token] {
+		return false
+	}
+	delete(copilotSessions, app.Token)
+	copilotTraded[app.Token] = ""
+	return true
+}
+
+// copilotSessionTraded records the session just traded for the GitHub
+// token github, as copilotSessionRefused and copilotToken read it; the
+// caller holds copilotMu.
+func copilotSessionTraded(github, token string) {
+	prev, traded := copilotTraded[github]
+	switch {
+	case !traded:
+	case prev == "":
+		// the session a 403 refused's answer
+		copilotTraded[github] = token
+	default:
+		// the answer stood: the session after it starts clean
+		delete(copilotTraded, github)
+	}
 }
 
 // copilotRefuses reports whether the account was refused model lately.
