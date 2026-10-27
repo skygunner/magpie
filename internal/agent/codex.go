@@ -475,7 +475,7 @@ func codexIn(at place) *Agent {
 			}
 		}
 		if !named {
-			return edit.SetTOMLTop(path, edit.KV{Path: "model_catalog_json", Value: deskRef})
+			return edit.SetTOMLTopPreserving(path, edit.KV{Path: "model_catalog_json", Value: deskRef})
 		}
 		return nil
 	}
@@ -524,7 +524,7 @@ func codexIn(at place) *Agent {
 		model, effort := get("model"), get("model_reasoning_effort")
 		if e := catalog.Efforts(ms, model); len(e) > 0 && effort != "" && !contains(e, effort) {
 			to := codexcat.ModelDefault(e, effort)
-			if err := edit.SetTOMLTop(path, edit.KV{Path: "model_reasoning_effort", Value: to}); err != nil {
+			if err := edit.SetTOMLTopPreserving(path, edit.KV{Path: "model_reasoning_effort", Value: to}); err != nil {
 				return err
 			}
 			// magpie's own change, which Disconnect undoes while it stands
@@ -1078,7 +1078,7 @@ func codexIn(at place) *Agent {
 		owned := stashLoad()[at.key("codex.failover")] == "1"
 		switch {
 		case on && !viaBase():
-			if err := edit.SetTOMLTop(path, edit.KV{Path: "openai_base_url", Value: at.codexURL()}); err != nil {
+			if err := edit.SetTOMLTopPreserving(path, edit.KV{Path: "openai_base_url", Value: at.codexURL()}); err != nil {
 				return err
 			}
 			stash(map[string]string{at.key("codex.failover"): "1"})
@@ -1217,7 +1217,7 @@ func codexIn(at place) *Agent {
 			back = append(back, edit.KV{Path: "model_reasoning_effort", Value: e})
 		}
 		if len(back) > 0 {
-			if err := edit.SetTOMLTop(path, back...); err != nil {
+			if err := edit.SetTOMLTopPreserving(path, back...); err != nil {
 				return "", err
 			}
 		}
@@ -1285,7 +1285,7 @@ func codexIn(at place) *Agent {
 				if err := edit.DelTOMLTop(path, "model_provider", "model_catalog_json"); err != nil {
 					return err
 				}
-				if err := edit.SetTOMLTop(path,
+				if err := edit.SetTOMLTopPreserving(path,
 					edit.KV{Path: "openai_base_url", Value: at.codexURL()},
 					edit.KV{Path: "model", Value: v},
 				); err != nil {
@@ -1323,7 +1323,7 @@ func codexIn(at place) *Agent {
 			if u := get("openai_base_url"); u == "" || viaBase() {
 				kv = append(kv, edit.KV{Path: "openai_base_url", Value: at.codexURL()})
 			}
-			if err := edit.SetTOMLTop(path, kv...); err != nil {
+			if err := edit.SetTOMLTopPreserving(path, kv...); err != nil {
 				return err
 			}
 			if err := takeTables(); err != nil {
@@ -1336,7 +1336,7 @@ func codexIn(at place) *Agent {
 		// joined, a model of Codex's own is picked beside magpie's, as in
 		// Codex's /model: it stays connected
 		if joined() && !api() && chatGPT() {
-			if err := edit.SetTOMLTop(path, edit.KV{Path: "model", Value: v}); err != nil {
+			if err := edit.SetTOMLTopPreserving(path, edit.KV{Path: "model", Value: v}); err != nil {
 				return err
 			}
 			return settle()
@@ -1344,7 +1344,7 @@ func codexIn(at place) *Agent {
 		if _, err := unroute(); err != nil {
 			return err
 		}
-		if err := edit.SetTOMLTop(path, edit.KV{Path: "model", Value: v}); err != nil {
+		if err := edit.SetTOMLTopPreserving(path, edit.KV{Path: "model", Value: v}); err != nil {
 			return err
 		}
 		if err := failover(); err != nil {
@@ -1373,7 +1373,7 @@ func codexIn(at place) *Agent {
 			switch {
 			case now != "" && !isMagpie(now):
 			case was != "" && !isMagpie(was):
-				err = edit.SetTOMLTop(path, edit.KV{Path: "model", Value: was})
+				err = edit.SetTOMLTopPreserving(path, edit.KV{Path: "model", Value: was})
 			case isMagpie(get("model")):
 				err = edit.DelTOMLTop(path, "model")
 			}
@@ -1421,7 +1421,7 @@ func codexIn(at place) *Agent {
 			if err := edit.DelTOMLTop(path, "model_provider", "model_catalog_json"); err != nil {
 				return false, err
 			}
-			if err := edit.SetTOMLTop(path, edit.KV{Path: "openai_base_url", Value: at.codexURL()}); err != nil {
+			if err := edit.SetTOMLTopPreserving(path, edit.KV{Path: "openai_base_url", Value: at.codexURL()}); err != nil {
 				return false, err
 			}
 			stash(map[string]string{at.key("codex.joined"): "1"})
@@ -1538,7 +1538,7 @@ func codexIn(at place) *Agent {
 					if err := edit.DelTOMLTop(path, "model_provider", "model_catalog_json"); err != nil {
 						return err
 					}
-					if err := edit.SetTOMLTop(path,
+					if err := edit.SetTOMLTopPreserving(path,
 						edit.KV{Path: "openai_base_url", Value: at.codexURL()},
 						edit.KV{Path: "model", Value: own},
 					); err != nil {
@@ -1581,7 +1581,7 @@ func codexIn(at place) *Agent {
 				// set up by a magpie from before #259: the threads started
 				// on Codex's built-in provider reach magpie too
 				if get("openai_base_url") == "" {
-					if err := edit.SetTOMLTop(path, edit.KV{Path: "openai_base_url", Value: at.codexURL()}); err != nil {
+					if err := edit.SetTOMLTopPreserving(path, edit.KV{Path: "openai_base_url", Value: at.codexURL()}); err != nil {
 						return err
 					}
 				}
@@ -1715,7 +1715,7 @@ func codexIn(at place) *Agent {
 					if v == "" {
 						err = edit.DelTOMLTop(path, "model_reasoning_effort")
 					} else {
-						err = edit.SetTOMLTop(path, edit.KV{Path: "model_reasoning_effort", Value: v})
+						err = edit.SetTOMLTopPreserving(path, edit.KV{Path: "model_reasoning_effort", Value: v})
 					}
 					if err != nil {
 						return err
@@ -2101,7 +2101,7 @@ func codexKeptGateway(path string) string {
 func codexMoveGateway(path, from, to string) error {
 	from, to = strings.TrimSuffix(from, "/"), strings.TrimSuffix(to, "/")
 	if u, _ := edit.GetTOMLTop(path, "openai_base_url"); strings.HasPrefix(u, from+"/") {
-		if err := edit.SetTOMLTop(path, edit.KV{Path: "openai_base_url", Value: to + strings.TrimPrefix(u, from)}); err != nil {
+		if err := edit.SetTOMLTopPreserving(path, edit.KV{Path: "openai_base_url", Value: to + strings.TrimPrefix(u, from)}); err != nil {
 			return err
 		}
 	}
