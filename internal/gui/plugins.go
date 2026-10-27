@@ -113,6 +113,9 @@ type pluginEntryJSON struct {
 	// Moved are the built-in subscriptions moved onto it, which stop
 	// with it when it is removed or turned off (no built-in to go back to)
 	Moved []string `json:"moved"`
+	// Carries are the provider names the plugin declares it carries,
+	// from its package.json's magpie.carries field (#3902)
+	Carries []string `json:"carries,omitempty"`
 	// AutoUpdated is the update magpie made to it by itself lately
 	AutoUpdated *plugin.Updated `json:"autoUpdated,omitempty"`
 	// Middleware is the gateway middleware it has, run in the gateway
@@ -354,6 +357,7 @@ func pluginsState(ctx context.Context, w Windows) pluginsJSON {
 			}
 		}
 		j.Moved = provider.MovedOnto(e.Spec)
+	j.Carries = plugin.Carries(e.Spec)
 		if j.Moved == nil {
 			j.Moved = []string{}
 		}

@@ -1163,6 +1163,15 @@
       c.title = t("{names} runs on this plugin in place of the built-in", { names });
       nm.append(c);
     }
+    // the provider names the plugin declares it carries (magpie.carries
+    // in package.json): shown even for vendors magpie never had as built-ins
+    const carries = (e.carries || []).filter(Boolean);
+    if (carries.length && !e.off) {
+      const c = el("span", "pm-chip moved");
+      c.append(el("span", "dot"), el("span", "", t("Serves {names}", { names: carries.join(t(", ")) })));
+      c.title = t("{names} runs on this plugin", { names: carries.join(t(", ")) });
+      nm.append(c);
+    }
     // gateway middleware runs in magpie's gateway, not as a subscription:
     // the row says so, and how it is doing, on a line of its own
     const mw = e.middleware;
