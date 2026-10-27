@@ -97,6 +97,7 @@ pointer on this line.
 | yetone/magpie#3624 | `c931166a` | `fix/nvidia-parameters-routing` | Usage → View routing reveals the selected trace, not off-screen |
 | yetone/magpie#3788 | `dd670e6` + `dfd128ca` | `fix/hindsight-nonstream-sse-1767` | the group's first-response timeout also bounds non-streaming requests — headers alone don't count — so a slow member fails over before the caller gives up; the last candidate still waits. `dfd128ca` keeps that wait out of SSE: a non-streaming wait no longer sends a keepalive and HTTP 200 (see the SSE follow-up section below) |
 | yetone/magpie#3791 | `dd670e6` + `dfd128ca` | `fix/hindsight-nonstream-sse-1767` | provider JSON `modelCooldown` opts exact model ids into model/account/key cooldowns on 499s and slow starts: 1, 2, 4, 8, 16, 32, then the cap minutes; success resets the ladder; a cooling model is not probed even as last candidate (503 + Retry-After); `RestCapOff` overrides; production opts `raccoon`'s `sn-sensenova-6-8-flash` at a 60-minute cap |
+| yetone/magpie#3948 | `56eb1ba1` | `fix/request-protocol-visibility` | a completed non-streaming response is checked by its existing bounded capture: SSE-instead-of-JSON, malformed JSON, missing arrays and empty Chat choices record `protocol_error` while keeping the committed HTTP status (Usage shows `200 · Protocol error`); missing speed says non-streaming/untimed or insufficient sample — diagnostic recording only, no new retry/cooldown policy |
 | yetone/magpie#3794 | `82d916e3` | `fix/kilo-tools-count-fallback` | an explicit upstream tool-count limit (Kilo refusing 129 tools, max 128) fails the group over to the next member with the full tool list; the refusing member stays eligible for smaller requests |
 
 Plugin (not this branch): `@magpie-community/opencode-cloudflare-workers-ai-auth`
@@ -108,14 +109,10 @@ reinstalled whenever the PR's runtime files change.
 Not carried: #3623 (no fix exists on the fork yet; nothing to apply).
 Checked again at v0.1.1670: still zero comments, still nothing upstream.
 
-User-directed, awaiting a fix (carry as soon as one exists — added
-2026-10-28): #3948, request observability — keep HTTP status and observed
-errors separate (a protocol mismatch records `200 · Protocol error` in
-Usage), and explain missing speed (non-streaming/untimed/insufficient
-sample). Split out of #3788's SSE regression diagnosis; no fix branch
-exists yet. Each round's sweep must look for one: a `fix/*3948*` /
-observability branch on the fork, or a fork commit referenced in the
-issue's comments. Pick it the moment it appears.
+User-directed entries now carried: #3948 was registered here on
+2026-10-28 while no fix existed; `fix/request-protocol-visibility`
+(`56eb1ba1`) appeared the same day and is carried in the table above.
+This section stays for the next user-directed request without a fix.
 
 ## Deployment history
 
