@@ -1183,11 +1183,18 @@ func switchLogin(agent, user string) error {
 // was none, or the agent was on that one already.
 func switchSavedLogin(agent, user string) (from string, _ error) {
 	if agent == "claude" {
-		// nor while Claude Code runs in the account's own directory for
-		// magpie (inSavedClaudeDir), which may refresh it there
+		// nor while Claude Code runs in the account's own directory, in this
+		// magpie (inSavedClaudeDir), which may refresh it there, or another's
+		// (holdClaudeRun): one refresh token would be Claude Code's own and
+		// the run's, and the directory taken away under the run (#3254)
 		mu := claudeDirRun(user)
 		mu.Lock()
 		defer mu.Unlock()
+		unlock, err := holdClaudeRun(user)
+		if err != nil {
+			return "", err
+		}
+		defer unlock()
 	}
 	// not while a saved account is being refreshed: the agent would be
 	// given the refresh token that refresh is spending
@@ -1342,6 +1349,15 @@ func ForgetLogin(agent, user string) error {
 		return forgetSIWCLogin(user)
 	case "gemini", "antigravity":
 		return forgetGoogleLogin(agent, user)
+	}
+	if agent == "claude" {
+		// not while Claude Code runs in the account's own directory, in this
+		// magpie or another's: it is the directory removed (#3254)
+		unlock, err := holdClaudeRun(user)
+		if err != nil {
+			return err
+		}
+		defer unlock()
 	}
 	if agent == "codex" {
 		// the account Codex is signed in to, with another saved: Codex is

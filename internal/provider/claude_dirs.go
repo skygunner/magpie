@@ -21,6 +21,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/yetone/magpie/internal/filelock"
 	"github.com/yetone/magpie/internal/proc"
 	"github.com/yetone/magpie/internal/settings"
 	"golang.org/x/text/unicode/norm"
@@ -81,6 +82,8 @@ func clearClaudeDir(dir string) {
 }
 
 // forgetClaudeDir removes a saved account's config directory altogether.
+// Its callers hold the account's run lock (holdClaudeRun) first, without
+// which a Claude Code still running in the directory loses it under itself.
 // ClaudeHandedOver is told of a saved Claude account switched in to Claude
 // Code itself, whose directory forgetClaudeDir has just removed: a Claude
 // Code still running there (the gateway's, waiting for its conversation's
@@ -129,6 +132,46 @@ func claudeDirRun(user string) *sync.RWMutex {
 	return mu
 }
 
+// claudeRunLockPath is the lock on a saved Claude account's config
+// directory: beside the directories it guards, not in one, which a removal
+// takes away.
+func claudeRunLockPath(user string) string {
+	return filepath.Join(filepath.Dir(claudeDirsRoot()), "claude-runs", filepath.Base(claudeAccountDir(user))+".lock")
+}
+
+// claudeRunInUseError is a switch's or a removal's refusal while another
+// magpie runs Claude Code in the account's config directory: the sign-in
+// would be Claude Code's twice, and the directory taken away under the run
+// (#3254).
+type claudeRunInUseError struct{ user string }
+
+func (e *claudeRunInUseError) Error() string {
+	return fmt.Sprintf("another magpie is running Claude Code in %s's folder: switch or remove the account once it ends", e.user)
+}
+
+// holdClaudeRun takes that lock without waiting, and says so when another
+// magpie's Claude Code runs in the directory now. Where no lock can be taken
+// at all — a file system without locks — it goes on as before there was one:
+// no magpie there holds it either.
+func holdClaudeRun(user string) (unlock func(), err error) {
+	path := claudeRunLockPath(user)
+	_ = os.MkdirAll(filepath.Dir(path), 0o700)
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o600)
+	if err != nil {
+		return func() {}, nil
+	}
+	got, err := filelock.TryLock(f)
+	if err != nil {
+		f.Close()
+		return func() {}, nil
+	}
+	if !got {
+		f.Close()
+		return nil, &claudeRunInUseError{user: user}
+	}
+	return func() { filelock.Unlock(f); f.Close() }, nil
+}
+
 // inSavedClaudeDir runs f with the config directory of the saved Claude
 // account user (claudeSavedDir), and keeps what Claude Code made of the
 // sign-in there in logins.json once it is done: a refreshed one is the
@@ -137,6 +180,11 @@ func inSavedClaudeDir(user string, f func(dir string) error) error {
 	mu := claudeDirRun(user)
 	mu.RLock()
 	defer mu.RUnlock()
+	// held over the whole run, Claude Code refreshing the sign-in in the
+	// directory all the while: another magpie's switch, sign-in or removal of
+	// the account takes it first (holdClaudeRun)
+	unlock, _ := filelock.Lock(claudeRunLockPath(user), filelock.Wait)
+	defer unlock()
 	dir, err := claudeSavedDir(user)
 	if err != nil {
 		return err

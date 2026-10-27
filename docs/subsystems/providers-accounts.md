@@ -255,8 +255,13 @@ and `TestHistoricalWindowHoldsUsesEachWindowsOwnReading`.
   `.siwc.lock`) since this change; Claude's saved tokens (`savedTokenMu`),
   MCP servers' (`mcpauth`'s renew lock) and plugins' were already held so.
   Google's, Vertex AI's and Copilot's refresh tokens don't rotate. Claude
-  Code run in its own folder (`claudeDirRun`) is held in this process only;
-  the bridge's turns hold the restart back, so the two don't overlap there.
+  Code run in its own folder is held in this process (`claudeDirRun`) and, for
+  as long as it runs, in every magpie on the computer (`holdClaudeRun`, a lock
+  file under `claude-runs/` beside the account's directory): a switch, a
+  sign-in on to the account and a removal of it take that lock first, and a
+  switch or a removal refuse while another magpie runs Claude Code in the
+  folder (#3254). The bridge's turns hold the restart back, so the two don't
+  overlap there.
   `TestCodexRefreshWaitsForAnotherMagpie`,
   `TestChatGPTAPIRefreshWaitsForAnotherMagpie`.
 

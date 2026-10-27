@@ -918,8 +918,13 @@ func addLogin(l savedLogin) (using bool, err error) {
 	}
 	if l.Agent == "claude" {
 		// signed in afresh: what Claude Code kept for it beside the
-		// agent's own is an older sign-in, and gives way
-		forgetClaudeDir(l.User)
+		// agent's own is an older sign-in, and gives way — unless Claude
+		// Code runs in it, here or in another magpie, which keeps it for
+		// now (#3254: the directory goes out from under the run)
+		if unlock, err := holdClaudeRun(l.User); err == nil {
+			forgetClaudeDir(l.User)
+			unlock()
+		}
 	}
 	loginsSeenAt.Store(0)
 	forgetAccountCaches()
