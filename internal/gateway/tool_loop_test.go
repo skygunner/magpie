@@ -111,6 +111,40 @@ func toolTurns(from provider.Protocol, n int, turn exchangeOfTurn, stream bool, 
 	return fmt.Sprintf(`{"tools":[{"functionDeclarations":[{"name":"run_shell_command","parameters":{"type":"object"}}]}],"contents":[%s]}`, strings.Join(items, ","))
 }
 
+// answerlessTurns is a request of from's API whose newest n turns each ask
+// what arg says and are answered by nothing: the client never sends a tool
+// result back. It is the reporter's session (#3615: zcode on Windows made
+// 1088 requests to group/auto-kimi-k3 in 5h08m, stop=tool_calls on every
+// one, the prompt growing by the call alone, and no result ever added).
+func answerlessTurns(from provider.Protocol, n int, arg func(i int) string, stream bool) string {
+	var items []string
+	switch from {
+	case provider.Responses:
+		items = append(items, `{"type":"message","role":"user","content":[{"type":"input_text","text":"why does parse panic?"}]}`)
+		for i := range n {
+			items = append(items, fmt.Sprintf(`{"type":"function_call","name":"exec_command","arguments":%q,"call_id":"call_%d"}`, arg(i), i))
+		}
+		return fmt.Sprintf(`{"model":"wb/deepseek-v4-pro","stream":%t,"store":false,"instructions":"You are Codex.","tools":[{"type":"function","name":"exec_command","parameters":{"type":"object","properties":{"cmd":{"type":"string"}}}}],"input":[%s]}`, stream, strings.Join(items, ","))
+	case provider.Chat:
+		items = append(items, `{"role":"user","content":"why does parse panic?"}`)
+		for i := range n {
+			items = append(items, fmt.Sprintf(`{"role":"assistant","content":null,"tool_calls":[{"id":"call_%d","type":"function","function":{"name":"exec_command","arguments":%q}}]}`, i, arg(i)))
+		}
+		return fmt.Sprintf(`{"model":"wb/deepseek-v4-pro","stream":%t,"tools":[{"type":"function","function":{"name":"exec_command","parameters":{"type":"object"}}}],"messages":[%s]}`, stream, strings.Join(items, ","))
+	case provider.Anthropic:
+		items = append(items, `{"role":"user","content":"why does parse panic?"}`)
+		for i := range n {
+			items = append(items, fmt.Sprintf(`{"role":"assistant","content":[{"type":"tool_use","id":"toolu_%d","name":"Bash","input":%s}]}`, i, arg(i)))
+		}
+		return fmt.Sprintf(`{"model":"wb/deepseek-v4-pro","max_tokens":8000,"stream":%t,"tools":[{"name":"Bash","input_schema":{"type":"object"}}],"messages":[%s]}`, stream, strings.Join(items, ","))
+	}
+	items = append(items, `{"role":"user","parts":[{"text":"why does parse panic?"}]}`)
+	for i := range n {
+		items = append(items, fmt.Sprintf(`{"role":"model","parts":[{"functionCall":{"name":"run_shell_command","args":%s}}]}`, arg(i)))
+	}
+	return fmt.Sprintf(`{"tools":[{"functionDeclarations":[{"name":"run_shell_command","parameters":{"type":"object"}}]}],"contents":[%s]}`, strings.Join(items, ","))
+}
+
 var toolLoopAsks = []struct {
 	name   string
 	from   provider.Protocol
@@ -261,6 +295,76 @@ func TestToolLoopLetsProgressBy(t *testing.T) {
 				t.Fatalf("the user's word after the notice was stopped (vendor asked %d):\n%s", v.asked.Load(), got)
 			}
 		})
+	}
+}
+
+// The reporter's session (easonlao, #3615): zcode on Windows made 1088
+// requests in 5h08m, stop=tool_calls on every one, and the prompt grew by
+// the call alone — the client never sent a tool result back. Every turn was
+// the same call answered by nothing, so stoppedToolLoop, which reads the
+// turns' results, saw no loop and sent all of them upstream. Once the same
+// call is asked toolLoopRepeats turns in a row with no result for any of
+// them, the next turn is answered by magpie and sent nowhere, and it says
+// the result never came back.
+func TestToolLoopStuckWithoutResults(t *testing.T) {
+	same := func(int) string {
+		return `{"cmd":"sed -n 1,200p src/parser.rs","workdir":"/Users/eason/code/app"}`
+	}
+	for _, x := range toolLoopAsks {
+		t.Run(x.name, func(t *testing.T) {
+			v := &countingVendor{}
+			gw := toolLoopOn(t, v)
+			// one turn short of the loop goes on to the vendor
+			got := askAgent(t, gw+x.path, answerlessTurns(x.from, toolLoopRepeats-1, same, x.stream))
+			if strings.Contains(got, "magpie stopped") || v.asked.Load() != 1 {
+				t.Fatalf("%d answerless turns of the same call were stopped (vendor asked %d):\n%s", toolLoopRepeats-1, v.asked.Load(), got)
+			}
+			got = askAgent(t, gw+x.path, answerlessTurns(x.from, toolLoopRepeats, same, x.stream))
+			if !strings.Contains(got, "magpie stopped this turn") || !strings.Contains(got, x.done) || !strings.Contains(got, "never sent back a result") {
+				t.Fatalf("the agent wasn't told of the loop in its API:\n%s", got)
+			}
+			if !strings.Contains(got, "sed -n 1,200p src/parser.rs") {
+				t.Fatalf("the notice doesn't name the call:\n%s", got)
+			}
+			if n := v.asked.Load(); n != 1 {
+				t.Fatalf("the vendor was asked %d times for a looping turn", n)
+			}
+			var rec usage.Record
+			for range 50 {
+				if recs := usage.Load(time.Time{}); len(recs) > 0 {
+					rec = recs[len(recs)-1]
+					break
+				}
+				time.Sleep(20 * time.Millisecond)
+			}
+			if rec.Provider != "magpie" || !rec.Rejected || !strings.Contains(rec.Error, "tool loop") || !strings.Contains(rec.Error, "no result") {
+				t.Fatalf("usage record %+v", rec)
+			}
+		})
+	}
+}
+
+// A turn that asks a different call, or a word from the user between the
+// calls, is progress: the count starts again, as toolLoopOf's does.
+func TestToolLoopStuckNeedsTheSameCallAndNoWord(t *testing.T) {
+	v := &countingVendor{}
+	gw := toolLoopOn(t, v)
+	differing := func(i int) string { return fmt.Sprintf(`{"path":"src/f%d.rs"}`, i) }
+	got := askAgent(t, gw+"/v1/messages", answerlessTurns(provider.Anthropic, toolLoopRepeats, differing, true))
+	if strings.Contains(got, "magpie stopped") || v.asked.Load() != 1 {
+		t.Fatalf("turns asking different calls were stopped (vendor asked %d):\n%s", v.asked.Load(), got)
+	}
+	var items []string
+	items = append(items, `{"role":"user","content":"why does parse panic?"}`)
+	for i := range toolLoopRepeats {
+		items = append(items,
+			fmt.Sprintf(`{"role":"assistant","content":[{"type":"tool_use","id":"toolu_%d","name":"Bash","input":{"path":"src/parser.rs"}}]}`, i),
+			`{"role":"user","content":"go on"}`)
+	}
+	body := fmt.Sprintf(`{"model":"wb/deepseek-v4-pro","max_tokens":8000,"stream":true,"tools":[{"name":"Bash","input_schema":{"type":"object"}}],"messages":[%s]}`, strings.Join(items, ","))
+	got = askAgent(t, gw+"/v1/messages", body)
+	if strings.Contains(got, "magpie stopped") || v.asked.Load() != 2 {
+		t.Fatalf("the user's words between the calls were stopped (vendor asked %d):\n%s", v.asked.Load(), got)
 	}
 }
 

@@ -24,8 +24,13 @@ import (
 // conversation, so the loop is in the request itself: its newest turns are
 // the same calls with the same arguments answered with the same results.
 //
+// The other way is a client that never sends a result back: every turn asks
+// the same call and nothing answers it, so the model asks again, and the
+// request's own history is all that shows it (#3615).
+//
 // stoppedToolLoop answers a request whose last toolLoopRepeats turns are
-// all that one exchange here, in the agent's own API, with a notice that
+// all that one exchange, or all the same call with no result back, here, in
+// the agent's own API, with a notice that
 // ends the agent's turn, and sends it nowhere. A turn that got a different
 // result (a poll whose answer moved, a file that changed) is progress and
 // starts the count again, as does anything the user says: the notice
@@ -33,8 +38,9 @@ import (
 // the conversation. It is on with Settings' Stop looping replies
 // (settings.NoLoopGuard off), as loopGuard is.
 
-// toolLoopRepeats is how many turns in a row of the same calls answered
-// with the same results stop the next: the ninth is answered here.
+// toolLoopRepeats is how many turns in a row of the same calls, answered
+// with the same results or with none, stop the next: the ninth is answered
+// here.
 const toolLoopRepeats = 8
 
 // toolLoopWho is who answered such a turn, as the Routing view names it.
@@ -49,6 +55,18 @@ var toolResultMarks = map[provider.Protocol][][]byte{
 	provider.Gemini:    {[]byte(`"functionResponse"`), []byte(`"function_response"`)},
 }
 
+// toolCallMarks are what each API writes a tool call with, for a
+// conversation whose results never came back to be read too. They are
+// matched loosely, a mark counting a result beside a call as well: too
+// many only makes the guard read the body, where too few would let a loop
+// by unread.
+var toolCallMarks = map[provider.Protocol][][]byte{
+	provider.Responses: {[]byte(`"function_call"`), []byte(`"custom_tool_call"`)},
+	provider.Chat:      {[]byte(`"tool_calls"`)},
+	provider.Anthropic: {[]byte(`"tool_use"`)},
+	provider.Gemini:    {[]byte(`"functionCall"`)},
+}
+
 // stoppedToolLoop answers r here when its conversation is stuck in a tool
 // loop, and says whether it did.
 func (s *Server) stoppedToolLoop(w http.ResponseWriter, r *http.Request, from provider.Protocol, body []byte) bool {
@@ -61,6 +79,9 @@ func (s *Server) stoppedToolLoop(w http.ResponseWriter, r *http.Request, from pr
 	}
 	loop, ok := toolLoopOf(req.Messages)
 	if !ok {
+		loop, ok = toolLoopUnansweredOf(req.Messages)
+	}
+	if !ok {
 		return false
 	}
 	why := loop.why()
@@ -70,10 +91,13 @@ func (s *Server) stoppedToolLoop(w http.ResponseWriter, r *http.Request, from pr
 	return true
 }
 
-// mayLoop: body has results enough to hold a loop.
+// mayLoop: body has calls or results enough to hold a loop.
 func mayLoop(from provider.Protocol, body []byte) bool {
 	n := 0
 	for _, m := range toolResultMarks[from] {
+		n += bytes.Count(body, m)
+	}
+	for _, m := range toolCallMarks[from] {
 		n += bytes.Count(body, m)
 	}
 	return n >= toolLoopRepeats
@@ -130,6 +154,9 @@ func tailOf(from provider.Protocol, body []byte) []byte {
 type toolLoop struct {
 	calls []Part // the turn's calls, for the notice to name
 	turns int
+	// unanswered: none of the turns' results came back, so nothing in the
+	// conversation says whether the calls ran
+	unanswered bool
 }
 
 // toolLoopOf is the loop msgs end in, when their last toolLoopRepeats
@@ -148,6 +175,73 @@ func toolLoopOf(msgs []Message) (toolLoop, bool) {
 		return toolLoop{}, false
 	}
 	return toolLoop{calls: last.calls, turns: n}, true
+}
+
+// toolLoopUnansweredOf is the loop msgs end in where the results never came
+// back: toolLoopRepeats assistant turns in a row, each the same calls, with
+// no result after any of them (#3615). A client that never sends a tool's
+// result, as zcode did for 1088 turns in five hours, leaves the model asking
+// for it again and again, and the request's own history is all that shows
+// it. A turn asking a different call, a reply that says anything else, and
+// a result or a word from the user are progress and start the count again,
+// as toolLoopOf's do.
+func toolLoopUnansweredOf(msgs []Message) (toolLoop, bool) {
+	var key string
+	var calls []Part
+	asked := 0
+walk:
+	for i := len(msgs) - 1; i >= 0; i-- {
+		m := msgs[i]
+		if m.Role != "assistant" {
+			if len(m.Parts) > 0 {
+				break // a result, or a word from the user
+			}
+			continue // a turn with nothing in it
+		}
+		newest := asked == 0
+		here := 0
+		for j := len(m.Parts) - 1; j >= 0; j-- {
+			p := m.Parts[j]
+			if p.Kind != ToolCall {
+				continue
+			}
+			k := p.Name + "\x00" + steadyArgs(p.Args)
+			if asked == 0 {
+				key = k
+			} else if k != key {
+				break walk // a turn asking a different call
+			}
+			asked++
+			here++
+		}
+		if here == 0 {
+			if saidOn(m.Parts) {
+				break // a reply that said something, not a call
+			}
+			continue // a reasoning turn between the calls
+		}
+		if newest {
+			for _, p := range m.Parts { // the newest turn's calls, for the notice to name
+				if p.Kind == ToolCall {
+					calls = append(calls, p)
+				}
+			}
+		}
+	}
+	if asked < toolLoopRepeats {
+		return toolLoop{}, false
+	}
+	return toolLoop{calls: calls, turns: asked, unanswered: true}, true
+}
+
+// saidOn is whether parts say something the user reads.
+func saidOn(parts []Part) bool {
+	for _, p := range parts {
+		if p.Kind == Text && strings.TrimSpace(p.Text) != "" {
+			return true
+		}
+	}
+	return false
 }
 
 // exchange is one turn of tool use: the assistant's calls and the results
@@ -306,11 +400,18 @@ func (l toolLoop) called() string {
 
 // why is what the Routing, Usage and Sessions views say of the turn.
 func (l toolLoop) why() string {
+	if l.unanswered {
+		return fmt.Sprintf("tool loop: the same tool call was asked %d turns in a row and no result came back for it (%s); answered by magpie, sent nowhere", l.turns, l.called())
+	}
 	return fmt.Sprintf("tool loop: the same tool call got the same result %d turns in a row (%s); answered by magpie, sent nowhere", l.turns, l.called())
 }
 
 // notice is what the agent shows the user, as the turn's answer.
 func (l toolLoop) notice() string {
+	if l.unanswered {
+		return fmt.Sprintf("magpie stopped this turn before it reached the model: the agent asked the same tool call %d times in a row and never sent back a result for it (%s). No result reaching the model means nothing says whether the call ran, and each further turn would spend your quota with no progress. Tell the agent how to go on and the conversation continues; Settings › Models › Replies › Stop looping replies turns this check off.",
+			l.turns, l.called())
+	}
 	return fmt.Sprintf("magpie stopped this turn before it reached the model: the agent ran the same tool call %d times in a row and got the same result every time (%s). The model is stuck repeating it, and each further turn would spend your quota with no progress, so this turn was sent nowhere. Tell the agent how to go on and the conversation continues; Settings › Models › Replies › Stop looping replies turns this check off.",
 		l.turns, l.called())
 }
