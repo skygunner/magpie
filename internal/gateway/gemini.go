@@ -657,7 +657,8 @@ func (e *geminiEncoder) flushTool() {
 }
 
 func (e *geminiEncoder) event(ev Event) {
-	if ev.Kind != KStart && !e.started {
+	// as chat's event: an error after the reply began is said alone (#3792)
+	if ev.Kind != KStart && ev.Kind != KError && !e.started {
 		e.start(Event{})
 	}
 	switch ev.Kind {
