@@ -31,6 +31,7 @@ import (
 	"time"
 
 	"github.com/yetone/magpie/internal/provider"
+	"github.com/yetone/magpie/internal/routes"
 	"github.com/yetone/magpie/internal/settings"
 )
 
@@ -450,7 +451,7 @@ func (s *Server) planGroup(g provider.Group, ms []provider.Member, from provider
 	var pl planned
 	var asides []candidate
 	var wAsides []Weighed
-	out := planLevel(g, ms, 0, from, &pl, &asides, &wAsides)
+	out := planLevel(g, ms, 0, from, &pl, &asides, &wAsides, "")
 	if sinks(g.Sink, g.Routing) {
 		out, pl.order = sinkPlanned(out, pl.order)
 	}
@@ -484,10 +485,33 @@ func innerPatience(m provider.Member) int {
 	return 0
 }
 
+// freeAlso fills wg.free when the routing that weighed cs doesn't weigh
+// by free but an enclosing one does (freeBy, #3847): the flag is the
+// seat's own property — its vendor serves the model at no cost — and
+// #3763's row reads it wherever the seat sits, nested group or not.
+func freeAlso(wg *weighing, cs []candidate, freeBy string) {
+	if wg == nil || wg.free != nil || freeBy == "" {
+		return
+	}
+	if st, ok := routes.Find(freeBy); !ok || !st.ByFree {
+		return
+	}
+	wg.free = map[string]bool{}
+	for _, c := range cs {
+		wg.free[c.rest] = c.p.FreeModel(c.model)
+	}
+}
+
 // planLevel orders the models ms of g, a group depth groups down from the
 // one asked for, adding to pl's order as it goes: those set aside and
-// those unlisted it gathers for planGroup to put last.
-func planLevel(g provider.Group, ms []provider.Member, depth int, from provider.Protocol, pl *planned, asides *[]candidate, wAsides *[]Weighed) []candidate {
+// those unlisted it gathers for planGroup to put last. freeBy is the
+// nearest routing above g that weighs by free, "" when none: a seat's
+// free-ness is its own (#3847), so a flag the enclosing group asked for
+// reaches the seats of a group inside it, planned by their own routing.
+func planLevel(g provider.Group, ms []provider.Member, depth int, from provider.Protocol, pl *planned, asides *[]candidate, wAsides *[]Weighed, freeBy string) []candidate {
+	if st, ok := routes.Find(g.Routing); ok && st.ByFree {
+		freeBy = g.Routing
+	}
 	keys := func(m provider.Member) []candidate {
 		cs, aside, left, barred := perKeyBarred(m.Provider, m.Model, from)
 		// the effort the member is fixed at goes with each of its keys:
@@ -544,7 +568,7 @@ func planLevel(g provider.Group, ms []provider.Member, depth int, from provider.
 					j++
 				}
 				var sub planned
-				cs := planLevel(m.Via[depth], ms[i:j], depth+1, from, &sub, asides, wAsides)
+				cs := planLevel(m.Via[depth], ms[i:j], depth+1, from, &sub, asides, wAsides, freeBy)
 				cs, sub.order = sinkOwn(m.Via[depth], cs, sub.order)
 				pl.left = append(pl.left, sub.left...)
 				pl.capped = append(pl.capped, sub.capped...)
@@ -562,6 +586,7 @@ func planLevel(g provider.Group, ms []provider.Member, depth int, from provider.
 				// would try, and tried whole in its own order (kchen0x
 				// on X: Antigravity in order inside a Smart group)
 				cs, wg := weigh(m.Provider, keys(m), m.Model, from)
+				freeAlso(&wg, cs, freeBy)
 				var order []Weighed
 				for k, c := range cs {
 					w := weighed(c, m.Provider, wg, false, from)
@@ -606,6 +631,7 @@ func planLevel(g provider.Group, ms []provider.Member, depth int, from provider.
 			routing = "" // the member picked, its keys or accounts weighed smartly
 		}
 		weighedHeads, wg := weigh(provider.Provider{ID: provider.GroupPrefix + g.ID, Routing: routing}, heads, "", from)
+		freeAlso(&wg, heads, freeBy)
 		var out []candidate
 		for i, c := range weighedHeads {
 			k := at[c.seat()][0]
@@ -636,7 +662,7 @@ func planLevel(g provider.Group, ms []provider.Member, depth int, from provider.
 				j++
 			}
 			at := len(pl.order)
-			cs := planLevel(m.Via[depth], ms[i:j], depth+1, from, pl, asides, wAsides)
+			cs := planLevel(m.Via[depth], ms[i:j], depth+1, from, pl, asides, wAsides, freeBy)
 			var order []Weighed
 			cs, order = sinkOwn(m.Via[depth], cs, pl.order[at:])
 			pl.order = append(pl.order[:at], order...)
@@ -645,6 +671,7 @@ func planLevel(g provider.Group, ms []provider.Member, depth int, from provider.
 			continue
 		}
 		cs, wg := weigh(m.Provider, keys(m), m.Model, from)
+		freeAlso(&wg, cs, freeBy)
 		for k, c := range cs {
 			w := weighed(c, m.Provider, wg, false, from)
 			w.Turn = k == 0 && goesRound(m.Provider.Routing) && len(cs) > 1
