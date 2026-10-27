@@ -124,3 +124,7 @@ func TestCodexHeadersReachKeyedRelay(t *testing.T) {
 		}
 	}
 }
+
+// #3851: a Codex Desktop request resuming a TUI thread should have its
+// originator normalized to "Codex Desktop" instead of forwarding the
+// TUI originator.

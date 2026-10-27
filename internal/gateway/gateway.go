@@ -4253,6 +4253,16 @@ func (s *Server) forwardOnce(ctx context.Context, p provider.Provider, to provid
 				continue
 			}
 			if codexClientHeader(k) {
+				// normalize originator: if Desktop UA but TUI originator,
+				// rewrite originator to match the Desktop UA (#3851)
+				if k == "originator" && fromCodex(in) {
+					identity := codexClientIdentity(in)
+					if identity != "" {
+						req.Header[k] = []string{identity}
+						seen[k] = []string{identity}
+						continue
+					}
+				}
 				req.Header[k] = slices.Clone(vs)
 				seen[k] = vs
 			}
@@ -4406,6 +4416,21 @@ func codexClientHeader(k string) bool {
 		return true
 	}
 	return codexHeader(k)
+}
+
+// codexClientIdentity returns the identity the request presents as, or ""
+// if it isn't a Codex client. The identity is what the originator header
+// says, or a canonical form derived from the User-Agent. Used to normalize
+// a mixed identity (#3851): a Desktop request with a TUI originator should
+// have its originator rewritten to match the User-Agent.
+func codexClientIdentity(in http.Header) string {
+	if ua := in.Get("User-Agent"); strings.HasPrefix(strings.ToLower(ua), "codex desktop") {
+		return "Codex Desktop"
+	}
+	if orig := in.Get("originator"); strings.HasPrefix(strings.ToLower(orig), "codex") {
+		return orig
+	}
+	return ""
 }
 
 // passthrough relays a request the provider understands as-is, with the
