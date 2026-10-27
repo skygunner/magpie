@@ -1312,6 +1312,10 @@ function routingPage(part) {
   let wanted = document.body.classList.contains("window") && Number(params.get("req")) || 0;
   let cur = null;           // the route the header and the log tell of: the newest played
   let pinned = null;        // a past route picked from the strip
+  // what a route opened from another page (the Usage page's Requests, the
+  // Context tab) replaced: the day, the request and the purpose filter
+  // Routing had, given back by the log's own button (#3202)
+  let jumpBack = null;
   let rows = new Map();     // id → { li, wire, st, bi, tg, w, rid, up }
   const subs = new Map();   // a group in the group's way down → its heading { li, wire, key, up }
   // A provider's keys serving one model, FOLD_AT or more of them side by
@@ -2492,7 +2496,7 @@ function routingPage(part) {
     log.hidden = !r;
     if (!r) return;
     const on = () => listed().filter((x) => x.id >= logR.id);
-    const head = JSON.stringify([document.documentElement.lang, !!rp, pinned?.id, r.id, r.time, r.done, !!pinned && on().length > 1, bodiesFor === r.id, r.masked?.key, r.masked?.n]);
+    const head = JSON.stringify([document.documentElement.lang, !!rp, pinned?.id, r.id, r.time, r.done, !!pinned && on().length > 1, bodiesFor === r.id, r.masked?.key, r.masked?.n, !!jumpBack]);
     if (headKey !== head) {
       headKey = head;
       logHead.replaceChildren(
@@ -2519,6 +2523,11 @@ function routingPage(part) {
           from.onclick = () => replay(on(), pinned);
           logHead.append(from);
         }
+      }
+      if (jumpBack && !rp) {
+        const undo = el("button", "text", t("Back to the routing you left"));
+        undo.onclick = () => backTo();
+        logHead.append(undo);
       }
       if (pinned && !rp) {
         const live = el("button", "text", t("Back to live"));
@@ -2801,6 +2810,17 @@ function routingPage(part) {
     say(affWhy(r, true) || ruleWhy(r, true) || firstWhy(r));
   }
 
+  // backTo gives back the day, the request and the purpose filter that a
+  // route opened from another page took, as they were (#3202)
+  async function backTo() {
+    const was = jumpBack;
+    jumpBack = null;
+    if (!was) return;
+    purpose = was.purpose;
+    await lookAt(was.day); // the day's own list again, or live's
+    if (was.pinned) pick(was.pinned);
+  }
+
   // o.context: opened to see its context window (the Usage page's
   // Context tab), which shows unfolded for it
   window.openRoute = async (id, time, o = {}) => {
@@ -2812,6 +2832,10 @@ function routingPage(part) {
       r = whole(await res.json());
       noteAccounts(r);
     }
+    // the first jump keeps what the reader had; a later one doesn't write
+    // over it with the request it opened, so the button still goes back to
+    // where the reader was
+    if (!jumpBack && (day || pinned || purpose.length)) jumpBack = { day, pinned, purpose };
     day = routes.has(id) ? "" : r.time.slice(0, 10);
     if (day) {
       await loadDays(day);
