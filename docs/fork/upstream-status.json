@@ -4861,19 +4861,25 @@
    ],
    "category": "product",
    "title": "gui: import source tiles wrap instead of hiding past the row's edge (#2759)",
-   "coverage": "Delivered scope per commit body and issue thread.",
+   "coverage": "Delivered scope per commit body and issue thread. | 2026-10-27 follow-up: rebased onto upstream/main 11dcc743 (the delivery sat on c0985122, 172 commits back) as a single commit f45e9fa3, net diff vs main still app.css (2 lines) plus the one test file; red re-proved on the new base (8/8 fail on clean 11dcc743 with the test alone), green on the head. The delivery's stated unasserted boundary — whether the sheet still scrolls fully when the wrapped row takes three lines on a short viewport — was measured instead (390px wide: row 104px, sheet content 353px, .dialog needs no scroll and the Import bar stays inside the window at heights 900/600/400/300/250px; with 8 providers per source .applist scrolls inside the sheet). An assertion for it was written and dropped: it passed on the base and with .dialog overflow-y forced to hidden, so it could not fail for its claimed reason. That boundary still has no automated assertion.",
    "commits": [
-    "0483a01f649dc2263983f26662faa512a44489af"
+    "0483a01f649dc2263983f26662faa512a44489af",
+    "f45e9fa3c352b23cbc241eaa5a2f31e7276b1bcf"
    ],
    "commit_details": [
     {
      "sha": "0483a01f649dc2263983f26662faa512a44489af",
      "title": "gui: import source tiles wrap instead of hiding past the row's edge (#2759)",
      "url": "https://github.com/skygunner/magpie/commit/0483a01f649dc2263983f26662faa512a44489af"
+    },
+    {
+     "sha": "f45e9fa3c352b23cbc241eaa5a2f31e7276b1bcf",
+     "title": "gui: import source tiles wrap instead of hiding past the row's edge (#2759)",
+     "url": "https://github.com/skygunner/magpie/commit/f45e9fa3c352b23cbc241eaa5a2f31e7276b1bcf"
     }
    ],
    "branch": "fix/import-source-row",
-   "base": "c0985122b3f62e460c73ea6d67c426beb4dc9db2",
+   "base": "11dcc743f47b72a7fca403a6974f514d5810d7a2",
    "comments": {
     "2759": [
      "https://github.com/yetone/magpie/issues/2759#issuecomment-6403875879"
@@ -4881,8 +4887,8 @@
    },
    "verify": {
     "state": "pass",
-    "evidence": "Independent re-run on a clean checkout: the new test fails at c0985122 and passes at the pushed head; logs in docs/fork/evidence/round23/2759/.",
-    "head": "0483a01f649dc2263983f26662faa512a44489af"
+    "head": "f45e9fa3c352b23cbc241eaa5a2f31e7276b1bcf",
+    "evidence": "docs/fork/evidence/round23/2759-followup/: red-on-11dcc743.log (8/8 fail on clean 11dcc743 with the test alone), green.log (8/8 pass on the head), net-diff-vs-main.patch, measurements.md, comment-followup-readback.md"
    },
    "upstream": {
     "status": "reported"
@@ -8595,14 +8601,14 @@
   },
   {
    "branch": "fix/import-source-row",
-   "head": "0483a01f649dc2263983f26662faa512a44489af",
+   "head": "f45e9fa3c352b23cbc241eaa5a2f31e7276b1bcf",
    "kind": "product",
-   "base": "c0985122b3f62e460c73ea6d67c426beb4dc9db2",
+   "base": "11dcc743f47b72a7fca403a6974f514d5810d7a2",
    "fix_ids": [
     "u-issue-2759-import-source-row-0483a01f"
    ],
    "replaced_by": "",
-   "note": "round-23",
+   "note": "round-23; rebased onto 11dcc743 on 2026-10-27 (round-26 follow-up)",
    "category": "product"
   },
   {
@@ -10239,12 +10245,12 @@
    "language": "zh",
    "status": "published_verified",
    "published_at": "2026-10-25T21:56:12Z",
-   "verified_at": "2026-10-25T21:56:12Z",
+   "verified_at": "2026-10-27T05:19:05Z",
    "delivery": "fix/import-source-row",
-   "delivery_head": "0483a01f649dc2263983f26662faa512a44489af",
-   "body_sha256": "89331a3ce00aab5d3918a1dc7fb55fa17d4570f548ef219f98a18b731ea4bef3",
-   "evidence": "docs/fork/evidence/round23/2759/comment-readback.json",
-   "body_updated_at": "2026-10-25T21:56:12Z"
+   "delivery_head": "f45e9fa3c352b23cbc241eaa5a2f31e7276b1bcf",
+   "body_sha256": "f9ce1c1857e49c97c1f593a812657ff9d49a887ff1b5398c948dfa26513f0650",
+   "evidence": "docs/fork/evidence/round23/2759-followup/comment-readback.json",
+   "body_updated_at": "2026-10-27T05:19:05Z"
   },
   {
    "issue": 2867,

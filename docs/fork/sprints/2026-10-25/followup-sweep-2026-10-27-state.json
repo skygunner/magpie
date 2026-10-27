@@ -512,8 +512,10 @@
      "body": "根因在导入面板那排来源标签的样式：`.apptabs` 是一条不换行的 flex（`flex: 1 1 0; min-width: max-content`），标签缩不到文字宽度以下，五个来源一多就溢出；而外层 `overflow-x: auto` 配着 `scrollbar-width: none`，横向滚动条被藏掉，末尾的 OpenCode 既看不见也拖不到，只能先选中一个再用方向键移过去。量到的数字：390px 窗口下滚动区 350px、内容 646px；900px 时 OpenCode 仍被切掉。\n\n修复在 [fix/import-source-row](https://github."
     }
    ],
-   "last_our_comment": "2026-10-25T21:56:12+00:00",
-   "new_after_ours": []
+   "last_our_comment": "2026-10-27T05:19:05+00:00",
+   "new_after_ours": [],
+   "action": "rework",
+   "disposition": "REBASED+MEASURED after the sweep: branch rewritten onto upstream/main 11dcc743 (f45e9fa3), red re-proved on the new base, the delivery's unasserted short-viewport boundary measured (an assertion was written and dropped as vacuous); delivery comment edited with the follow-up."
   },
   "2777": {
    "number": 2777,

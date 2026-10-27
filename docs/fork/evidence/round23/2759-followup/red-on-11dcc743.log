@@ -1,0 +1,130 @@
+✖ chromium en 390px: every import source tile fits its row (488.845862ms)
+✖ chromium en 900px: every import source tile fits its row (457.538749ms)
+✖ chromium zh 390px: every import source tile fits its row (456.187878ms)
+✖ chromium zh 900px: every import source tile fits its row (435.848424ms)
+✖ webkit en 390px: every import source tile fits its row (681.682068ms)
+✖ webkit en 900px: every import source tile fits its row (676.900951ms)
+✖ webkit zh 390px: every import source tile fits its row (738.086049ms)
+✖ webkit zh 900px: every import source tile fits its row (684.737468ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 0
+ℹ fail 8
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4828.619702
+
+✖ failing tests:
+
+test at internal/gui/tests/import-source-tabs.test.cjs:29:7
+✖ chromium en 390px: every import source tile fits its row (488.845862ms)
+  AssertionError [ERR_ASSERTION]: Claude Code– is cut off: 243.6..390.5 of 350.0
+      at TestContext.<anonymous> (/tmp/opencode/magpie-base-2759/internal/gui/tests/import-source-tabs.test.cjs:74:18)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/import-source-tabs.test.cjs:29:7
+✖ chromium en 900px: every import source tile fits its row (457.538749ms)
+  AssertionError [ERR_ASSERTION]: OpenCode1 is cut off: 507.6..642.7 of 564.0
+      at TestContext.<anonymous> (/tmp/opencode/magpie-base-2759/internal/gui/tests/import-source-tabs.test.cjs:74:18)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/import-source-tabs.test.cjs:29:7
+✖ chromium zh 390px: every import source tile fits its row (456.187878ms)
+  AssertionError [ERR_ASSERTION]: Claude Code– is cut off: 243.6..390.5 of 350.0
+      at TestContext.<anonymous> (/tmp/opencode/magpie-base-2759/internal/gui/tests/import-source-tabs.test.cjs:74:18)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/import-source-tabs.test.cjs:29:7
+✖ chromium zh 900px: every import source tile fits its row (435.848424ms)
+  AssertionError [ERR_ASSERTION]: OpenCode1 is cut off: 507.6..642.7 of 564.0
+      at TestContext.<anonymous> (/tmp/opencode/magpie-base-2759/internal/gui/tests/import-source-tabs.test.cjs:74:18)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/import-source-tabs.test.cjs:29:7
+✖ webkit en 390px: every import source tile fits its row (681.682068ms)
+  AssertionError [ERR_ASSERTION]: Claude Code– is cut off: 243.6..390.5 of 350.0
+      at TestContext.<anonymous> (/tmp/opencode/magpie-base-2759/internal/gui/tests/import-source-tabs.test.cjs:74:18)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/import-source-tabs.test.cjs:29:7
+✖ webkit en 900px: every import source tile fits its row (676.900951ms)
+  AssertionError [ERR_ASSERTION]: OpenCode1 is cut off: 507.6..642.7 of 564.0
+      at TestContext.<anonymous> (/tmp/opencode/magpie-base-2759/internal/gui/tests/import-source-tabs.test.cjs:74:18)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/import-source-tabs.test.cjs:29:7
+✖ webkit zh 390px: every import source tile fits its row (738.086049ms)
+  AssertionError [ERR_ASSERTION]: Claude Code– is cut off: 243.6..390.5 of 350.0
+      at TestContext.<anonymous> (/tmp/opencode/magpie-base-2759/internal/gui/tests/import-source-tabs.test.cjs:74:18)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/import-source-tabs.test.cjs:29:7
+✖ webkit zh 900px: every import source tile fits its row (684.737468ms)
+  AssertionError [ERR_ASSERTION]: OpenCode1 is cut off: 507.6..642.7 of 564.0
+      at TestContext.<anonymous> (/tmp/opencode/magpie-base-2759/internal/gui/tests/import-source-tabs.test.cjs:74:18)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

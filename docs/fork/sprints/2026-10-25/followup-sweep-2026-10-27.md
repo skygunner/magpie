@@ -32,7 +32,7 @@ Actions this sweep:
 | 2530 | open | independent verification/rebase by ggbdpq (2026-10-23); no action — evidence reviewed |
 | 2674 | open | no change since our last touch; no action, evidence reviewed |
 | 2741 | open | independent verification/rebase by Edward4226 (2026-10-25); no action — evidence reviewed |
-| 2759 | open | no change since our last touch; no action, evidence reviewed |
+| 2759 | open | FOLLOWED UP after this sweep (2026-10-27): branch rebased onto main `11dcc743` (`f45e9fa3`), red re-proved on the new base, the delivery's unasserted short-viewport boundary measured (its assertion was written and dropped as vacuous), comment edited. See docs/fork/evidence/round23/2759-followup/. |
 | 2777 | open | no change since our last touch; no action, evidence reviewed |
 | 2866 | open | no change since our last touch; no action, evidence reviewed |
 | 2867 | open | no change since our last touch; no action, evidence reviewed |

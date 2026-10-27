@@ -1042,10 +1042,10 @@ Round-3 trees (base `b437e4ad`): batch `7f927133`, union `275b7a2e`, rests `d639
 ### u-issue-2759-import-source-row-0483a01f
 
 - Issues: #2759 (product)
-- Commits: `0483a01f` — branch `fix/import-source-row`
-- Coverage: Delivered scope per commit body and issue thread.
+- Commits: `0483a01f`, `f45e9fa3` — branch `fix/import-source-row`
+- Coverage: Delivered scope per commit body and issue thread. | 2026-10-27 follow-up: rebased onto upstream/main 11dcc743 (the delivery sat on c0985122, 172 commits back) as a single commit f45e9fa3, net diff vs main still app.css (2 lines) plus the one test file; red re-proved on the new base (8/8 fail on clean 11dcc743 with the test alone), green on the head. The delivery's stated unasserted boundary — whether the sheet still scrolls fully when the wrapped row takes three lines on a short viewport — was measured instead (390px wide: row 104px, sheet content 353px, .dialog needs no scroll and the Import bar stays inside the window at heights 900/600/400/300/250px; with 8 providers per source .applist scrolls inside the sheet). An assertion for it was written and dropped: it passed on the base and with .dialog overflow-y forced to hidden, so it could not fail for its claimed reason. That boundary still has no automated assertion.
 - Upstream: reported
-- Verification: pass at `0483a01f` — Independent re-run on a clean checkout: the new test fails at c0985122 and passes at the pushed head; logs in docs/fork/evidence/round23/2759/.
+- Verification: pass at `f45e9fa3` — docs/fork/evidence/round23/2759-followup/: red-on-11dcc743.log (8/8 fail on clean 11dcc743 with the test alone), green.log (8/8 pass on the head), net-diff-vs-main.patch, measurements.md, comment-followup-readback.md
 - Comment on #2759: https://github.com/yetone/magpie/issues/2759#issuecomment-6403875879
 
 ### u-issue-2867-2867-drift-detail-i18n-a6df7cec
@@ -1413,9 +1413,9 @@ Round-3 trees (base `b437e4ad`): batch `7f927133`, union `275b7a2e`, rests `d639
 
 ## Branches (from git at this run)
 
-188 remote heads (this run's snapshot), 16 local-only, 1 symref(s) excluded.
+188 remote heads (this run's snapshot), 15 local-only, 1 symref(s) excluded.
 
-- `dev` maintenance/maintenance head `19ec534a` — ledger head was 3aae9406
+- `dev` maintenance/maintenance head `42d9e921` — ledger head was 3aae9406
 - `fix/2674-blocklist-tail` fix/product head `92b3d82c` base `01468003` → fix_ids: u-issue-2674-2674-blocklist-tail-92b3d82c — round-23
 - `fix/2867-drift-detail-i18n` fix/product head `a6df7cec` base `c0985122` → fix_ids: u-issue-2867-2867-drift-detail-i18n-a6df7cec — round-23
 - `fix/3188-sub2api-percent` fix/product head `0817d2e9` base `6afbe3f3` → fix_ids: u-provider-a-sub2api-unit-percent-window-is-a-share-not-dollar-3188-0817d2e9 — round-26
@@ -1476,7 +1476,7 @@ Round-3 trees (base `b437e4ad`): batch `7f927133`, union `275b7a2e`, rests `d639
 - `fix/hermes-vision-mapping` fix/batch-chain head `d03d4a7b` base `7aad6a50` → fix_ids: u-fix-gui-reap-plugin-hosts-before-web-update-reex-863a1e72, u-test-gui-wait-for-the-chosen-codex-subagent-stor-435c03ac, u-gateway-classify-chinese-hourly-usage-limits-as--942bf679, u-test-provider-invalidate-cached-misses-after-cla-873c5dfd, u-agent-use-vs-code-portable-data-for-settings-and-e4ca1b34, u-fix-tui-keep-agent-fields-readable-in-narrow-ter-cebfc283, u-agent-do-not-count-claude-exit-records-as-gatewa-18c0967e, u-test-gui-wait-for-the-quota-picker-save-to-be-re-c24a50e3, u-gui-preserve-the-original-url-across-protocol-sw-9f7ada4f, u-sessions-retain-pi-and-omp-reasoning-in-request--b506ff56, u-gateway-follow-kimi-tool-schema-reference-chains-f5ec664b, u-gateway-keep-a-severed-chat-stream-free-of-parti-a6a2c260, u-gateway-preserve-plaintext-codex-collaboration-t-b1ae66c7, u-gateway-carry-deepseek-reasoning-under-one-field-d5b46244, u-provider-let-the-grok-plugin-read-allowed-tool-c-852182f6, u-gateway-normalize-whole-tool-numbers-from-every--deefacd2, u-proc-recheck-tools-installed-within-a-directory--89bceb39, u-provider-retain-the-first-single-card-quota-refr-a11d605e, u-fix-gui-apply-left-display-to-custom-balance-per-15759adb, u-fix-gateway-omit-ollama-options-from-gemini-chat-a0b3c8f6, u-test-provider-keep-hold-assertions-independent-o-665af242, u-test-provider-drain-plugin-callbacks-before-swap-f85bd166, u-test-gui-isolate-the-window-s-usage-requests-fro-4671590d, u-gateway-recognize-a-relay-s-expired-reasoning-it-cf95652a, u-gateway-recognize-sensenova-s-guided-grammar-for-8f931a28, u-gateway-deliver-background-task-notifications-wi-b7726551, u-edit-index-json-arrays-without-replacing-their-e-1805ff94, u-gateway-retry-kimi-s-untyped-tool-roots-as-objec-2bddfe10, u-fix-provider-keep-usage-only-models-out-of-codex-a016fcee, u-gateway-keep-desktop-credential-probes-on-their--9fd7a9d4, u-gateway-include-inferred-and-user-set-image-inpu-7e156213, u-gateway-apply-privacy-policy-to-direct-system-on-ee1b018b, u-agent-advertise-hermes-model-vision-capabilities-d03d4a7b
 - `fix/hindsight-nonstream-cooldown` fix/unknown head `a84d79cc` base `83493514`
 - `fix/hold-test-expiry` fix/batch-chain head `665af242` base `7aad6a50` → fix_ids: u-fix-gui-reap-plugin-hosts-before-web-update-reex-863a1e72, u-test-gui-wait-for-the-chosen-codex-subagent-stor-435c03ac, u-gateway-classify-chinese-hourly-usage-limits-as--942bf679, u-test-provider-invalidate-cached-misses-after-cla-873c5dfd, u-agent-use-vs-code-portable-data-for-settings-and-e4ca1b34, u-fix-tui-keep-agent-fields-readable-in-narrow-ter-cebfc283, u-agent-do-not-count-claude-exit-records-as-gatewa-18c0967e, u-test-gui-wait-for-the-quota-picker-save-to-be-re-c24a50e3, u-gui-preserve-the-original-url-across-protocol-sw-9f7ada4f, u-sessions-retain-pi-and-omp-reasoning-in-request--b506ff56, u-gateway-follow-kimi-tool-schema-reference-chains-f5ec664b, u-gateway-keep-a-severed-chat-stream-free-of-parti-a6a2c260, u-gateway-preserve-plaintext-codex-collaboration-t-b1ae66c7, u-gateway-carry-deepseek-reasoning-under-one-field-d5b46244, u-provider-let-the-grok-plugin-read-allowed-tool-c-852182f6, u-gateway-normalize-whole-tool-numbers-from-every--deefacd2, u-proc-recheck-tools-installed-within-a-directory--89bceb39, u-provider-retain-the-first-single-card-quota-refr-a11d605e, u-fix-gui-apply-left-display-to-custom-balance-per-15759adb, u-fix-gateway-omit-ollama-options-from-gemini-chat-a0b3c8f6, u-test-provider-keep-hold-assertions-independent-o-665af242
-- `fix/import-source-row` fix/product head `0483a01f` base `c0985122` → fix_ids: u-issue-2759-import-source-row-0483a01f — round-23
+- `fix/import-source-row` fix/product head `f45e9fa3` base `11dcc743` → fix_ids: u-issue-2759-import-source-row-0483a01f — round-23; rebased onto 11dcc743 on 2026-10-27 (round-26 follow-up)
 - `fix/initial-single-quota-refresh` fix/single-fix head `47f44679` base `7aad6a50` → fix_ids: u-provider-retain-the-first-single-card-quota-refr-a11d605e
 - `fix/issue-3475` fix/product head `3dfc880c` base `01468003` → fix_ids: u-issue-3475-issue-3475-3dfc880c — round-23
 - `fix/issue-3566` fix/product head `bafd1361` base `01468003` → fix_ids: u-issue-3566-issue-3566-bafd1361 — round-23
@@ -1597,12 +1597,12 @@ Round-3 trees (base `b437e4ad`): batch `7f927133`, union `275b7a2e`, rests `d639
 - `fix/workbuddy-model-promotions` fix/unknown head `ceeb8b25` base `01468003`
 - `fix/zcode-reconnect-after-rewrite` fix/product head `c4495b30` base `01468003` → fix_ids: u-issue-3246-zcode-reconnect-after-rewrite-c4495b30 — round-23
 - `fix/zcode-window-renewal` fix/single-fix head `942bf679` base `7aad6a50` → fix_ids: u-gateway-classify-chinese-hourly-usage-limits-as--942bf679
-- `main` protected/stale-protected head `be002aca` — stale branch named main at the 10-22 upstream-main snapshot be002aca; not the mirror ref and not the delivery line; kept, unknown purpose; treat as protected: do not delete without instruction
-- `prod/v0.1.1556-p1` fix/unknown head `9c15233d` base `9fc382e6`
-- `prod/v0.1.1612-p1` fix/unknown head `ed77bfdf` base `83493514`
+- `main` protected/stale-protected head `5e3dd1d5` — stale branch named main at the 10-22 upstream-main snapshot be002aca; not the mirror ref and not the delivery line; kept, unknown purpose; treat as protected: do not delete without instruction; ledger head was be002aca
+- `prod` fix/unknown head `92c4a576` base `a87f0519`
 - `r3-batch` fix/batch-chain head `7f927133` base `b437e4ad` → fix_ids: u-provider-antigravity-s-disabled-ids-are-left-out-8b4ecbac, u-gateway-preserve-plaintext-codex-collaboration-t-b1ae66c7, u-provider-decide-set-on-a-signed-in-provider-stay-b2497dd8, u-provider-a-balance-only-reading-knows-the-accoun-4fb09e6b, u-gateway-an-ordinary-chat-upstream-that-says-noth-600fa01c, u-redact-a-placeholder-url-s-password-and-version--4b6d93d9, u-gateway-a-subagent-s-task-reaches-a-responses-ap-67b57000 — forward-appended over the reviewed 885c1b8b; read back
 - `r3-rests` fix/single-fix head `d639c8d7` base `b437e4ad` → fix_ids: u-fix-gateway-persist-provider-rest-deadlines-acro-8d72abec — pushed and read back 2026-10-24 (origin head d639c8d7)
 - `r3-union` fix/single-fix head `275b7a2e` base `b437e4ad` → fix_ids: u-gateway-a-schema-s-type-union-beside-items-keeps-c638203e, u-gateway-a-union-s-array-half-leaves-the-object-h-b2336968 — pushed and read back 2026-10-24 (origin head 275b7a2e)
+- `suite-r26-merged` fix/unknown head `c100a01d` base `6afbe3f3`
 - `fix/2849-per-key-plan` local-only (historical snapshot, unavailable on this machine) head `c0985122`
 - `fix/3166-responses-continuation` local-only (historical snapshot, unavailable on this machine) head `c0985122`
 - `fix/3323-stats-viewer-zone` local-only (historical snapshot, unavailable on this machine) head `6afbe3f3`
@@ -1618,7 +1618,6 @@ Round-3 trees (base `b437e4ad`): batch `7f927133`, union `275b7a2e`, rests `d639
 - `fix/webdav-digest-auth` local-only (historical snapshot, unavailable on this machine) head `0437ae4c`
 - `r4-work` local-only (historical snapshot, unavailable on this machine) head `4e136a4b`
 - `r5-work` local-only (historical snapshot, unavailable on this machine) head `1952329f`
-- `suite-r26-merged` local-only (historical snapshot, unavailable on this machine) head `c100a01d`
 
 ## Archive
 
