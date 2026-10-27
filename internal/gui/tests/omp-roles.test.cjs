@@ -51,13 +51,17 @@ const fresh = () => ({
   profiles: [],
 });
 
-function server(lang, sets) {
-  let cur = fresh();
+function server(lang, sets, lateState = 0) {
+  let cur = fresh(), firstState = true;
   return async (route) => {
     const req = route.request(), url = new URL(req.url());
     if (url.pathname === "/boot.js") return route.fulfill({ contentType: "text/javascript", body: `window.bootPrefs = {lang:"${lang}",theme:"light",web:true};` });
     if (url.pathname === "/wails/runtime.js") return route.fulfill({ contentType: "text/javascript", body: "export const Window = {};" });
-    if (url.pathname === "/api/state") return route.fulfill({ json: { ...cur, settings: { lang, theme: "light" } } });
+    if (url.pathname === "/api/state") {
+      // a busy machine answers the first state read late, and the rows are drawn after it
+      if (firstState && lateState) { firstState = false; await new Promise((r) => setTimeout(r, lateState)); }
+      return route.fulfill({ json: { ...cur, settings: { lang, theme: "light" } } });
+    }
     if (url.pathname === "/api/set") {
       const body = req.postDataJSON();
       sets.push({ agent: body.agent, field: body.field, value: body.value });
@@ -109,9 +113,17 @@ const W = {
 };
 
 const omp = '.row.agent[data-id="omp"]';
+// the walk's opening: the rows are drawn after the first state read, which a
+// busy machine answers after the 5s the rest of the walk gives a step (#3899)
+async function open(page) {
+  await page.goto("http://magpie.test/");
+  await page.locator(omp).waitFor({ timeout: 30000 });
+}
 const items = (page) => page.locator("#pop:not([hidden]) #list li").evaluateAll((es) => es.map((e) => [e.querySelector(".v")?.textContent, e.querySelector(".n")?.textContent || ""]));
 
-for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"])) {
+const engines = process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"];
+
+for (const engine of engines) {
   for (const width of [1100, 390]) for (const lang of ["en", "zh", "ja", "de"]) {
     test(`${engine} ${lang} ${width}px: omp's roles and their thinking levels are one square, OpenCode's small model is a picker`, async (t) => {
       const w = W[lang];
@@ -128,8 +140,7 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         }
         await browser.close();
       });
-      await page.goto("http://magpie.test/");
-      await page.locator(omp).waitFor();
+      await open(page);
       await page.locator(`${omp} .ag-link`).click();
 
       // one square for the roles; the model and the session's thinking are the pickers
@@ -223,4 +234,26 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       assert.deepEqual(errors, []);
     });
   }
+}
+
+// #3899: a loaded run was red on the first wait, `waiting for locator('.row.agent[data-id="omp"]')`
+// for 5s, because a busy machine answers the first state read after it. The
+// first wait holds as long as that takes; the rest of the walk keeps its 5s.
+for (const engine of engines) {
+  test(`${engine} en 390px: omp's row is waited for when the first state read takes past 5s`, async (t) => {
+    const browser = await (engine === "webkit" ? webkit.launch() : chromium.launch({ channel: "chromium" }));
+    const page = await browser.newPage({ viewport: { width: 390, height: 760 } });
+    page.setDefaultTimeout(5000);
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(e.message));
+    await page.route("**/*", server("en", [], 6000));
+    t.after(() => browser.close());
+    await open(page);
+    // the row the wait found is the one the walk opens, with its roles square
+    await page.locator('.row.agent[data-id="omp"] .ag-link').click();
+    const square = page.locator('.row.agent[data-id="omp"] .extras-cell .field.extra[data-key="tiers"]');
+    await square.waitFor();
+    assert.ok((await square.getAttribute("aria-label")).startsWith(W.en.summary), await square.getAttribute("aria-label"));
+    assert.deepEqual(errors, []);
+  });
 }
