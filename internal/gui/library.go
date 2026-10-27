@@ -363,6 +363,23 @@ func libraryRoutes(mux *http.ServeMux, w Windows) {
 		}
 		writeJSON(rw, st)
 	})
+	mux.HandleFunc("POST /api/library/mcp-signin/{id}/callback", func(rw http.ResponseWriter, r *http.Request) {
+		var in struct{ URL string }
+		if err := json.NewDecoder(r.Body).Decode(&in); err != nil || in.URL == "" {
+			http.Error(rw, "no callback URL", http.StatusBadRequest)
+			return
+		}
+		if err := mcpauth.PasteCallback(r.PathValue("id"), in.URL); err != nil {
+			fail(rw, err)
+			return
+		}
+		st, ok := mcpauth.Progress(r.PathValue("id"))
+		if !ok {
+			http.NotFound(rw, r)
+			return
+		}
+		writeJSON(rw, st)
+	})
 	mux.HandleFunc("POST /api/library/mcp-signin/{id}/cancel", func(rw http.ResponseWriter, r *http.Request) {
 		mcpauth.Cancel(r.PathValue("id"))
 		rw.WriteHeader(http.StatusNoContent)

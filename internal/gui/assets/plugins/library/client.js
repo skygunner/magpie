@@ -1887,6 +1887,25 @@ magpie.plugin("library", (ctx) => {
         link.append(u, cp);
         box.append(link);
       }
+      if (sg?.state === "waiting" && sg.pasteCallback) {
+        box.append(el("div", "lib-signin-err", t("If the page the browser ends on won't load (magpie runs on a server or in Docker), copy its whole address and paste it here.")));
+        const row = el("div", "lib-app");
+        const paste = el("input");
+        paste.type = "text";
+        paste.placeholder = t("Callback URL");
+        paste.spellcheck = false;
+        paste.autocomplete = "off";
+        paste.onkeydown = (e) => { e.stopPropagation(); if (e.isComposing || e.keyCode === 229) return; if (e.key === "Enter") submit.click(); };
+        const submit = button(t("Done"), "action", async () => {
+          try {
+            const st = await api("library/mcp-signin/" + sg.id + "/callback", { url: paste.value.trim() });
+            mcpSigning = { ...st, name };
+            if (st.state === "waiting") draw(); else follow(st.id);
+          } catch (e) { status(e.message, "err", 6000); }
+        });
+        row.append(paste, submit);
+        box.append(row);
+      }
       if (sg?.state === "failed") box.append(el("div", "lib-signin-err", sg.error));
     };
     async function start() {

@@ -778,11 +778,12 @@ func appMethod(m meta, secret string) string {
 
 // State is where a sign-in stands, for the page to show.
 type State struct {
-	ID     string `json:"id"`
-	Server string `json:"server"`
-	URL    string `json:"url,omitempty"` // the sign-in page, to open
-	State  string `json:"state"`         // waiting, done, failed or canceled
-	Error  string `json:"error,omitempty"`
+	ID            string `json:"id"`
+	Server        string `json:"server"`
+	URL           string `json:"url,omitempty"` // the sign-in page, to open
+	State         string `json:"state"`         // waiting, done, failed or canceled
+	Error         string `json:"error,omitempty"`
+	PasteCallback bool   `json:"pasteCallback,omitempty"` // callback URL can be pasted
 }
 
 type flow struct {
@@ -792,6 +793,10 @@ type flow struct {
 	done     chan struct{}
 	claimed  bool
 	finished bool
+	redirect string
+	state    string
+	verifier string
+	rec      Record
 }
 
 var flows = struct {
@@ -887,8 +892,8 @@ func StartWith(ctx context.Context, name, serverURL string, app *App) (State, er
 	}
 	au.RawQuery = aq.Encode()
 
-	f := &flow{done: make(chan struct{}), st: State{ID: randomToken(9), Server: name, URL: au.String(), State: "waiting"}}
 	rec := Record{URL: serverURL, Resource: m.Resource, Issuer: m.Issuer, TokenURL: m.TokenURL, ClientID: id, Secret: secret, AuthMethod: method, Scope: m.Scope}
+	f := &flow{done: make(chan struct{}), st: State{ID: randomToken(9), Server: name, URL: au.String(), State: "waiting", PasteCallback: true}, redirect: redirect, state: state, verifier: verifier, rec: rec}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/callback", func(w http.ResponseWriter, r *http.Request) {
 		v := r.URL.Query()
@@ -1010,6 +1015,99 @@ func (f *flow) end(st State) {
 		delete(flows.m, f.st.ID)
 		flows.Unlock()
 	}()
+}
+
+// PasteCallback finishes the sign-in id with the address its browser ended
+// on, for a browser that can't reach the callback port here (magpie on a
+// server or in Docker).
+func PasteCallback(id, raw string) error {
+	flows.Lock()
+	f := flows.m[id]
+	flows.Unlock()
+	if f == nil {
+		return errors.New("no such sign-in")
+	}
+	return f.pasteCallback(raw)
+}
+
+func (f *flow) pasteCallback(raw string) error {
+	f.mu.Lock()
+	st, redirect, srv, state := f.st, f.redirect, f.srv, f.state
+	f.mu.Unlock()
+	if !st.PasteCallback || srv == nil {
+		return errors.New("this sign-in can't be finished from a pasted address")
+	}
+	if st.State != "waiting" {
+		return errors.New("this sign-in is over; start it again")
+	}
+	u, err := url.Parse(strings.TrimSpace(raw))
+	if err != nil || u.Scheme != "http" || u.RawQuery == "" {
+		return errors.New("paste the whole address the browser ended on, starting with http://")
+	}
+	if !ownCallback(u, redirect, state) {
+		return errors.New("that address isn't from this sign-in: paste the one its browser tab ended on")
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://"+u.Host+u.RequestURI(), nil)
+	if err != nil {
+		return err
+	}
+	rep := &pastedReply{h: http.Header{}}
+	srv.Handler.ServeHTTP(rep, req)
+	f.mu.Lock()
+	claimed := f.claimed
+	f.mu.Unlock()
+	if !claimed {
+		if st := f.status(); st.State == "failed" {
+			return errors.New(st.Error)
+		}
+		return errors.New("that address didn't finish the sign-in; start it again")
+	}
+	select {
+	case <-f.done:
+	case <-ctx.Done():
+		return errors.New("the sign-in is still finishing; magpie shows the account when it's done")
+	}
+	switch st := f.status(); st.State {
+	case "done":
+		return nil
+	case "failed":
+		return errors.New(st.Error)
+	}
+	return errors.New("the sign-in was canceled")
+}
+
+func ownCallback(u *url.URL, redirect, state string) bool {
+	want, err := url.Parse(redirect)
+	if err != nil || u.Port() != want.Port() {
+		return false
+	}
+	switch strings.ToLower(u.Hostname()) {
+	case "localhost", "127.0.0.1", "::1":
+	default:
+		return false
+	}
+	q := u.Query()
+	return u.Path == want.Path && q.Get("state") == state
+}
+
+// pastedReply is what the callback handler answers a pasted address; only
+// its status counts.
+type pastedReply struct {
+	h    http.Header
+	code int
+}
+
+func (p *pastedReply) Header() http.Header { return p.h }
+func (p *pastedReply) WriteHeader(code int) {
+	if p.code == 0 {
+		p.code = code
+	}
+}
+func (p *pastedReply) Write(b []byte) (int, error) {
+	p.WriteHeader(http.StatusOK)
+	return len(b), nil
 }
 
 // Progress is a sign-in Start began.
