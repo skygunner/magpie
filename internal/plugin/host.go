@@ -153,6 +153,13 @@ var (
 	// under it, and so is any RPC result, so a child that never ends a line
 	// fails the host rather than making it allocate without bound.
 	maxWireLine = 32 << 20
+	// writeBudget bounds the bytes the writer's queue holds together. callLimit
+	// bounds how many lines wait, not how big they are, and a fetch's line
+	// carries its request's whole body in base64: a full queue of images held
+	// gigabytes and the machine was killed (#3074). A line bigger than the
+	// budget goes alone, so a request past it still reaches the child. Tests
+	// lower it.
+	writeBudget = 64 << 20
 	// streamWait is how long a fetch waits for a stream's window to come
 	// free when the budget's are all held, while its request lives. Past
 	// the budget a fetch used to fail at once (errTooManyCalls), and the
@@ -428,6 +435,9 @@ type host struct {
 	// child applies backpressure instead of growing the backlog.
 	out      chan writeReq
 	outSpace chan struct{}
+	// outBytes is the wire bytes of the lines queued for the writer now, held
+	// to writeBudget while a line is admitted (see enqueueLine).
+	outBytes int
 	mu       sync.Mutex
 	calls    map[int64]*call
 	next     int64
@@ -1254,14 +1264,19 @@ func (h *host) enqueueLine(ctx context.Context, line []byte, done chan error, c 
 			}
 			return errHostGone
 		}
-		select {
-		case h.out <- req:
-			if c != nil && state == callSending {
-				c.transitionLocked(callAccepted, nil, nil)
+		// the queue holds writeBudget of bytes, the line in hand counted: a
+		// line bigger than the whole budget goes alone rather than never
+		if h.outBytes == 0 || h.outBytes+len(req.b) <= writeBudget {
+			select {
+			case h.out <- req:
+				h.outBytes += len(req.b)
+				if c != nil && state == callSending {
+					c.transitionLocked(callAccepted, nil, nil)
+				}
+				h.mu.Unlock()
+				return nil
+			default:
 			}
-			h.mu.Unlock()
-			return nil
-		default:
 		}
 		if h.outSpace == nil {
 			h.outSpace = make(chan struct{})
@@ -1278,8 +1293,13 @@ func (h *host) enqueueLine(ctx context.Context, line []byte, done chan error, c 
 	}
 }
 
-func (h *host) tookWrite() {
+// tookWrite is the writer taking a line of n bytes out of the queue, so that
+// many bytes admit another line.
+func (h *host) tookWrite(n int) {
 	h.mu.Lock()
+	if h.outBytes -= n; h.outBytes < 0 {
+		h.outBytes = 0 // a line queued by a test was counted by nobody
+	}
 	if h.outSpace != nil {
 		close(h.outSpace)
 		h.outSpace = nil
@@ -1296,7 +1316,7 @@ func (h *host) writerLoop() {
 		case <-h.dead:
 			return
 		case req := <-h.out:
-			h.tookWrite()
+			h.tookWrite(len(req.b))
 			if !h.alive() {
 				if req.done != nil {
 					req.done <- errHostGone

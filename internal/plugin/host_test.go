@@ -68,7 +68,7 @@ func (f *fakeHost) drain() {
 		case <-f.host.dead:
 			return
 		case req := <-f.out:
-			f.host.tookWrite()
+			f.host.tookWrite(len(req.b))
 			var v map[string]any
 			if json.Unmarshal(req.b, &v) == nil {
 				f.outMu.Lock()
@@ -1515,4 +1515,57 @@ func TestHostEnqueueWaitsForRoom(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestHostQueueHoldsWriteBudget: the writer's queue is bounded by the bytes it
+// holds, not only by how many lines wait in it. A fetch's line carries its
+// request's whole body in base64, so a queue of image-carrying requests could
+// hold gigabytes (#3074).
+func TestHostQueueHoldsWriteBudget(t *testing.T) {
+	old := writeBudget
+	writeBudget = 2 << 10
+	t.Cleanup(func() { writeBudget = old })
+	line := bytes.Repeat([]byte("x"), 1<<10)
+
+	t.Run("a line waits for the bytes it needs", func(t *testing.T) {
+		h := failureTestHost(t)
+		h.out = make(chan writeReq, 4) // room for more lines than the budget holds
+		for i := range 2 {
+			if err := h.enqueueLine(context.Background(), line, nil, nil, callSending); err != nil {
+				t.Fatalf("line %d: %v", i, err)
+			}
+		}
+		result := make(chan error, 1)
+		go func() { result <- h.enqueueLine(context.Background(), line, nil, nil, callSending) }()
+		waitFor(t, "a line waiting for the queue's bytes", func() bool {
+			h.mu.Lock()
+			defer h.mu.Unlock()
+			return h.outSpace != nil
+		})
+		select {
+		case err := <-result:
+			t.Fatalf("a line past the queue's byte budget was queued anyway: %v", err)
+		default:
+		}
+		// the writer taking a line makes room for this one
+		req := <-h.out
+		h.tookWrite(len(req.b))
+		select {
+		case err := <-result:
+			if err != nil {
+				t.Fatalf("the line queued once room came: %v", err)
+			}
+		case <-time.After(5 * time.Second):
+			t.Fatal("the line waited on bytes the writer had already freed")
+		}
+	})
+
+	t.Run("a line bigger than the budget goes alone", func(t *testing.T) {
+		h := failureTestHost(t)
+		h.out = make(chan writeReq, 4)
+		big := bytes.Repeat([]byte("x"), 4<<10)
+		if err := h.enqueueLine(context.Background(), big, nil, nil, callSending); err != nil {
+			t.Fatalf("a line bigger than the budget never went: %v", err)
+		}
+	})
 }
