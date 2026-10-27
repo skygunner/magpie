@@ -189,7 +189,7 @@ func (s *Server) serveRetrieval(w http.ResponseWriter, r *http.Request, path, op
 			s.record(call)
 			return
 		}
-		what := "embeddings"
+		what := operation // the operation routed for: embeddings or rerank (#3925)
 		if _, audio := req.(*audioForm); audio {
 			what = "audio"
 		}

@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/yetone/magpie/internal/maskrec"
 	"github.com/yetone/magpie/internal/provider"
 	"github.com/yetone/magpie/internal/settings"
 	"github.com/yetone/magpie/internal/usage"
@@ -214,6 +215,35 @@ func TestRetrievalRedacts(t *testing.T) {
 	}
 	if sent := l.got("/v1/rerank"); len(sent) != 1 || strings.Contains(sent[0], secret) {
 		t.Fatalf("vendor was sent %v", sent)
+	}
+}
+
+// #3925: the record a masked retrieval leaves behind names the operation it
+// was routed for, so a rerank's whole documents are not audited as an
+// embeddings call.
+func TestRetrievalRecordNamesItsOperation(t *testing.T) {
+	s, _ := shelved(t)
+	if err := settings.Save(settings.Settings{Redact: true}); err != nil {
+		t.Fatal(err)
+	}
+	before, _ := maskrec.List(0, 200, maskrec.Filter{})
+	was := map[int64]bool{}
+	for _, r := range before {
+		was[r.Key] = true
+	}
+	secret := "sk-ant-api03-" + strings.Repeat("Ab3x", 20)
+	if code, raw := postRetrieval(t, s, "/v1/rerank", `{"model":"lib/rerank-1","query":"q","documents":["`+secret+`","b"]}`); code != 200 {
+		t.Fatalf("%d %s", code, raw)
+	}
+	after, _ := maskrec.List(0, 200, maskrec.Filter{})
+	var fresh []maskrec.Record
+	for _, r := range after {
+		if !was[r.Key] {
+			fresh = append(fresh, r)
+		}
+	}
+	if len(fresh) != 1 || fresh[0].What != "rerank" {
+		t.Fatalf("the rerank's record: %+v (all new %+v)", fresh, fresh)
 	}
 }
 
