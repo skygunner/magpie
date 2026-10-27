@@ -1550,7 +1550,11 @@ func (e *chatEncoder) start(ev Event) {
 }
 
 func (e *chatEncoder) event(ev Event) {
-	if ev.Kind != KStart && !e.started {
+	// An error is not the reply's beginning: one said after the reply began
+	// (streamError, cutLoop) goes out alone, where auto-starting would open
+	// a second completion a client that already has one reads as another
+	// reply (#3792).
+	if ev.Kind != KStart && ev.Kind != KError && !e.started {
 		e.start(Event{})
 	}
 	switch ev.Kind {

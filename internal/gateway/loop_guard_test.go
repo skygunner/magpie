@@ -446,7 +446,20 @@ func TestLoopEndsTheReplyOnEveryProtocol(t *testing.T) {
 		t.Run(x.name, func(t *testing.T) {
 			v := &loopingVendor{letGo: make(chan bool, 4)}
 			gw := deepseekOn(t, v)
-			loopCut(t, v, askStream(t, gw+x.path, x.body), x.done, x.failed, "ds", x.asks)
+			got := askStream(t, gw+x.path, x.body)
+			loopCut(t, v, got, x.done, x.failed, "ds", x.asks)
+			if x.name == "chat" {
+				// the reply is a Chat stream passed through as it comes, so
+				// the only completion id it can carry is one the error began:
+				// an error after the reply is said alone, not as a second
+				// message with a role delta (#3792)
+				if strings.Contains(got, "chatcmpl-") {
+					t.Fatalf("the loop's error began a completion of its own:\n%s", got[max(len(got)-800, 0):])
+				}
+				if n := strings.Count(got, `"role":"assistant"`); n != x.asks {
+					t.Fatalf("the reply has %d role deltas, want one per try (%d):\n%s", n, x.asks, got[max(len(got)-800, 0):])
+				}
+			}
 		})
 	}
 }
