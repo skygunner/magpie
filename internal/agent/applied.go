@@ -856,7 +856,19 @@ func (a *Agent) reconnect(now map[string]string) (bool, error) {
 			record(a.ID, k, v)
 		}
 	}
-	return a.Wired(), nil
+	return a.mainConnectionWired(), nil
+}
+
+// mainConnectionWired returns true if the agent's primary connection to
+// magpie is established. For agents with a Joined or Beside check, those
+// must be true; otherwise Wired() is used. This prevents reconnect from
+// succeeding when only auxiliary fields (sub-agent, memory model) are
+// restored but the main connection (e.g. Codex's openai_base_url) is not.
+func (a *Agent) mainConnectionWired() bool {
+	if a.Joined != nil || a.Beside != nil {
+		return (a.Joined != nil && a.Joined()) || (a.Beside != nil && a.Beside())
+	}
+	return a.Wired()
 }
 
 // lastJSONLTime reads the newest Unix timestamp (seconds or milliseconds)
