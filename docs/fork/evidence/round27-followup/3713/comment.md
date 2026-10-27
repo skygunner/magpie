@@ -1,0 +1,3 @@
+补丁作者在这表个态：我这边也认定动机没了。最初报这条是因为 `served` 恒为 `vmc/…`，看不出实际是哪个模型在答；现在如楼上所测，`served` 直接就是 canonical slug，那个私有池也不在候选里了。
+
+`canonicalSlug` 作为独立字段的残余价值只剩"上游哪天再把模型名在中途换掉时不丢信息"——为这个在 `gateway.Usage` / `gateway.Trace` / `usage.Record` 每个赋值点多带一个字段，不划算。我的建议是这条直接关掉。分支 [`fix/3713-canonical-slug`](https://github.com/skygunner/magpie/tree/fix/3713-canonical-slug)（`8ecb86f8`，基于 `3a89dd53`）原样留着：哪天 slug 又会在中途被换，拿去就能用；不需要的话我这边也不催。

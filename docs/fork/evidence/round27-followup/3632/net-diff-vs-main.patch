@@ -1,0 +1,80 @@
+diff --git a/internal/filememo/filememo.go b/internal/filememo/filememo.go
+index 94531e46..41bd2f20 100644
+--- a/internal/filememo/filememo.go
++++ b/internal/filememo/filememo.go
+@@ -88,8 +88,10 @@ func Forget() {
+ 	mu.Lock()
+ 	gen++
+ 	gens.Store(gen)
+-	close(written)
+-	written = make(chan struct{})
++	if written != nil {
++		close(written)
++		written = nil
++	}
+ 	mu.Unlock()
+ }
+ 
+@@ -98,13 +100,19 @@ func Forget() {
+ // disk tells.
+ func wake() {
+ 	mu.Lock()
+-	close(written)
+-	written = make(chan struct{})
++	if written != nil {
++		close(written)
++		written = nil
++	}
+ 	mu.Unlock()
+ }
+ 
+-// written is closed, and made anew, by every Forget.
+-var written = make(chan struct{})
++// written wakes what is waiting on Written: made while one waits, closed by
++// the next write (Forget, or another process's that Watch is told of) and
++// gone with it, so a write no one waits on closes nothing (a channel made
++// in one synctest bubble can't be closed from another: provider's tests,
++// one bubble per subtest, since #3185).
++var written chan struct{}
+ 
+ // Written is closed by the next write magpie makes (Forget), or by
+ // another process's that Watch is told of: a loop that follows magpie's
+@@ -115,6 +123,9 @@ var written = make(chan struct{})
+ func Written() <-chan struct{} {
+ 	mu.Lock()
+ 	defer mu.Unlock()
++	if written == nil {
++		written = make(chan struct{})
++	}
+ 	return written
+ }
+ 
+diff --git a/internal/filememo/forget_bubble_test.go b/internal/filememo/forget_bubble_test.go
+new file mode 100644
+index 00000000..6f029915
+--- /dev/null
++++ b/internal/filememo/forget_bubble_test.go
+@@ -0,0 +1,23 @@
++package filememo
++
++import (
++	"testing"
++	"testing/synctest"
++)
++
++// The Written channel a loop waits on is made and closed by the same
++// filememo: one that Forget made in a synctest bubble can't be closed by a
++// later Forget from another bubble (provider's logins tests, one bubble per
++// subtest, since #3185), so a channel is made only while someone waits.
++func TestForgetsAcrossSynctestBubbles(t *testing.T) {
++	synctest.Test(t, func(t *testing.T) { Forget() })
++	synctest.Test(t, func(t *testing.T) { Forget() })
++}
++
++// wake (another process's write, seen by Watch) closes the same channel
++// Forget does, so it carries the same bubble rule: with no one waiting it
++// closes nothing, from whichever bubble it runs in.
++func TestWakeAcrossSynctestBubbles(t *testing.T) {
++	synctest.Test(t, func(t *testing.T) { wake() })
++	synctest.Test(t, func(t *testing.T) { wake() })
++}
