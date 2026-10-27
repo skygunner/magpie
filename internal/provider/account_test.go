@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -85,6 +86,12 @@ func isolate(t testing.TB) {
 	oldCodexKeychain, oldCodexHere := codexKeychain, codexKeychainHere
 	codexKeychain = &fakeKeychain{}
 	resetCodexKeychain()
+	// nor the Copilot CLI's (#3058), and nothing a test read before is kept
+	oldCopilotKeychain := copilotKeychainRead
+	copilotKeychainRead = func(string) ([]byte, error) { return nil, fs.ErrNotExist }
+	copilotSecrets.Lock()
+	copilotSecrets.at, copilotSecrets.tok = nil, nil
+	copilotSecrets.Unlock()
 	// a test's keychain answers at once: however loaded the machine, a
 	// read isn't taken for one waiting on a prompt
 	oldHold := keychainHold
@@ -108,6 +115,7 @@ func isolate(t testing.TB) {
 		codexKeychain, codexKeychainHere = oldCodexKeychain, oldCodexHere
 		keychainHold = oldHold
 		resetCodexKeychain()
+		copilotKeychainRead = oldCopilotKeychain
 		forgetClaudeCredential()
 		forgetClaudeStatus()
 		devinStatus.forget()

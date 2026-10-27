@@ -7,16 +7,17 @@ package provider
 // exchange answers 403): the CLI sends it as is, under its own integration.
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -154,36 +155,184 @@ var copilotSecrets struct {
 	tok map[string]string
 }
 
+// copilotAsk is held while `security` may put a prompt up: one at a time,
+// and a reader that can't have it doesn't wait out a dialog (#3058).
+var copilotAsk sync.Mutex
+
 // copilotCLISecret reads the CLI's token from the keychain, once in a
-// while: each read may ask the user to allow it.
-var copilotCLISecret = func(account string) string {
+// while: each read may ask the user to allow it. Tests stand in for it, so
+// no test reaches the runner's own keychain.
+var copilotCLISecret = copilotCLISecretFrom
+
+// copilotCLISecretFrom is the read behind copilotCLISecret: a token kept
+// an hour, a refusal kept until the CLI's sign-in changes, and no lock
+// every reader takes held over the process (#3058).
+func copilotCLISecretFrom(account string) string {
 	if settings.AccountDiscoveryOff() {
 		return ""
 	}
 	c := &copilotSecrets
 	c.Lock()
-	defer c.Unlock()
 	if c.at == nil {
 		c.at, c.tok = map[string]time.Time{}, map[string]string{}
 	}
+	tok, at := c.tok[account], c.at[account]
+	c.Unlock()
 	ttl := time.Hour
-	if c.tok[account] == "" {
-		ttl = 10 * time.Minute // denied or absent; don't ask again at once
+	if tok == "" {
+		ttl = keychainDeniedTTL // denied or absent; don't ask again at once
 	}
-	if at, ok := c.at[account]; ok && time.Since(at) < ttl {
-		return c.tok[account]
+	if !at.IsZero() && time.Since(at) < ttl {
+		return tok
 	}
-	var out []byte
+	// the user denied the prompt for the sign-in the CLI has now: that
+	// stands until the CLI's sign-in changes, not for ten minutes (#3058)
+	mark := copilotCLISignInMark()
+	if copilotKeychainDenied(account, mark) {
+		c.Lock()
+		c.at[account], c.tok[account] = time.Now(), ""
+		c.Unlock()
+		return ""
+	}
+	if !copilotAsk.TryLock() {
+		// a prompt is up: the kept read stands, nobody waits on the dialog
+		return tok
+	}
+	defer copilotAsk.Unlock()
+	c.Lock()
+	// the ask this one was behind landed: its answer stands
+	if moved := c.at[account]; !moved.Equal(at) {
+		tok = c.tok[account]
+		c.Unlock()
+		return tok
+	}
+	c.Unlock()
+	out, err := copilotKeychainRead(account)
+	tok = ""
+	if err == nil {
+		tok = strings.TrimSpace(string(out))
+	}
+	c.Lock()
+	c.at[account], c.tok[account] = time.Now(), tok
+	c.Unlock()
+	switch {
+	case err == nil:
+		copilotKeychainForgetDenied(account)
+	case errors.Is(err, errKeychainRefused):
+		copilotKeychainDeny(account, mark)
+	}
+	return tok
+}
+
+// copilotCLIKeychainService is the keychain item the CLI keeps its token
+// in; its account names the sign-in it is for.
+const copilotCLIKeychainService = "copilot-cli"
+
+// copilotKeychainRead is the CLI's token as the platform keeps it: macOS'
+// `security`, or the Secret Service. A prompt the user answers after a
+// while still reads, and one nobody answers is bounded (#3058). Tests put
+// a fake in it, so no test reaches the runner's own keychain.
+var copilotKeychainRead = func(account string) ([]byte, error) {
 	switch runtime.GOOS {
 	case "darwin":
-		out, _ = proc.Command("security", "find-generic-password", "-s", "copilot-cli", "-a", account, "-w").Output()
+		return securityKeychain{}.Find(copilotCLIKeychainService, account)
 	case "linux":
 		if p, err := exec.LookPath("secret-tool"); err == nil {
-			out = []byte(copilotSecretTool(p, account))
+			return []byte(copilotSecretTool(p, account)), nil
 		}
 	}
-	c.at[account], c.tok[account] = time.Now(), string(bytes.TrimSpace(out))
-	return c.tok[account]
+	return nil, fs.ErrNotExist
+}
+
+// copilotKeychainPath is where the user's refusal to read the item is
+// kept: a dialog answered Deny outlives the process, rather than asking
+// again every ten minutes and after every restart (#3058).
+func copilotKeychainPath() string {
+	return filepath.Join(filepath.Dir(Path()), "copilot-keychain.json")
+}
+
+// copilotCLISignInMark is the CLI's sign-in as the item was read for it.
+// `copilot login` and `copilot logout` write config.json, so a refusal for
+// the sign-in before that one no longer stands.
+func copilotCLISignInMark() string {
+	st, err := os.Stat(filepath.Join(copilotCLIHome(), "config.json"))
+	if err != nil {
+		return ""
+	}
+	return strconv.FormatInt(st.ModTime().UnixNano(), 10) + "-" + strconv.FormatInt(st.Size(), 10)
+}
+
+// copilotKeychainDenied says the user refused the item for account while
+// the CLI's sign-in was mark. A refusal for another sign-in is dropped:
+// signing in again is the user asking again.
+func copilotKeychainDenied(account, mark string) bool {
+	denied := copilotKeychainDenials()
+	m, ok := denied[account]
+	if !ok {
+		return false
+	}
+	if m == mark {
+		return true
+	}
+	delete(denied, account)
+	copilotKeychainWriteDenials(denied)
+	return false
+}
+
+// copilotKeychainDeny keeps the user's answer for the sign-in it was given
+// for.
+func copilotKeychainDeny(account, mark string) {
+	denied := copilotKeychainDenials()
+	denied[account] = mark
+	copilotKeychainWriteDenials(denied)
+}
+
+// copilotKeychainForgetDenied drops a refusal kept for account: the item
+// was read, so there is nothing left to keep.
+func copilotKeychainForgetDenied(account string) {
+	denied := copilotKeychainDenials()
+	if _, ok := denied[account]; !ok {
+		return
+	}
+	delete(denied, account)
+	copilotKeychainWriteDenials(denied)
+}
+
+// forgetCopilotKeychain has the item asked again, refusal or not: a
+// sign-in or out in magpie is the user asking.
+func forgetCopilotKeychain() {
+	copilotSecrets.Lock()
+	copilotSecrets.at, copilotSecrets.tok = map[string]time.Time{}, map[string]string{}
+	copilotSecrets.Unlock()
+	os.Remove(copilotKeychainPath())
+}
+
+// copilotKeychainDenials is the refusals kept, by account. A file that
+// can't be read or parsed is no refusal known, so the item is asked once
+// and the answer kept again: never a refusal the user didn't give.
+func copilotKeychainDenials() map[string]string {
+	var f struct {
+		Denied map[string]string `json:"denied"`
+	}
+	if b, err := readAccountFile(copilotKeychainPath()); err == nil {
+		json.Unmarshal(b, &f)
+	}
+	if f.Denied == nil {
+		f.Denied = map[string]string{}
+	}
+	return f.Denied
+}
+
+func copilotKeychainWriteDenials(denied map[string]string) {
+	if len(denied) == 0 {
+		os.Remove(copilotKeychainPath())
+		return
+	}
+	b, _ := json.Marshal(struct {
+		Denied map[string]string `json:"denied"`
+	}{denied})
+	// a refusal that can't be kept on disk still holds this run through
+	_ = writePrivate(copilotKeychainPath(), b)
 }
 
 // copilotSecretWait bounds one secret-tool lookup: a keyring that waits on

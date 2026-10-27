@@ -281,7 +281,13 @@ func addCopilotLogin(user, plan, token, host string) error {
 	if strings.EqualFold(own, name) && copilotEditorRefused(copilotConfigDir(), user, host) {
 		own = ""
 	}
-	return addSideLogin(savedLogin{Agent: "copilot", User: name, Plan: plan, Auth: auth}, own, func(savedLogin) {})
+	if err := addSideLogin(savedLogin{Agent: "copilot", User: name, Plan: plan, Auth: auth}, own, func(savedLogin) {}); err != nil {
+		return err
+	}
+	// signed in in magpie: the keychain's refusal for the sign-in before is
+	// no answer to this one
+	forgetCopilotKeychain()
+	return nil
 }
 
 // copilotEditorRefused says GitHub refused the editors' sign-in of user on
