@@ -102,6 +102,22 @@ func RunIn(m *testing.M, setup func(home string)) int {
 	return m.Run()
 }
 
+// userDirs are the folder variables a home settles, by the folder each names
+// inside it: Go's home and per-user folders and the agents' bases, on every
+// OS. A test that switches home takes all of them, or on Windows it keeps
+// reading the package's own %APPDATA% (#1841).
+func userDirs(home string) map[string]string {
+	return map[string]string{
+		"HOME": home, "USERPROFILE": home,
+		"XDG_CONFIG_HOME": filepath.Join(home, ".config"),
+		"XDG_CACHE_HOME":  filepath.Join(home, ".cache"),
+		"XDG_DATA_HOME":   filepath.Join(home, ".local", "share"),
+		"XDG_STATE_HOME":  filepath.Join(home, ".local", "state"),
+		"APPDATA":         filepath.Join(home, "AppData", "Roaming"),
+		"LOCALAPPDATA":    filepath.Join(home, "AppData", "Local"),
+	}
+}
+
 // Isolate points the home and the config, cache and data folders into a
 // new temporary folder, clears the agents' variables, puts the stand-ins
 // first on PATH and gives the folder. It fails when Go would still
@@ -111,16 +127,9 @@ func Isolate() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	for k, v := range map[string]string{
-		"HOME": home, "USERPROFILE": home,
-		"XDG_CONFIG_HOME": filepath.Join(home, ".config"),
-		"XDG_CACHE_HOME":  filepath.Join(home, ".cache"),
-		"XDG_DATA_HOME":   filepath.Join(home, ".local", "share"),
-		"XDG_STATE_HOME":  filepath.Join(home, ".local", "state"),
-		"APPDATA":         filepath.Join(home, "AppData", "Roaming"),
-		"LOCALAPPDATA":    filepath.Join(home, "AppData", "Local"),
-		Marker:            home,
-	} {
+	dirs := userDirs(home)
+	dirs[Marker] = home
+	for k, v := range dirs {
 		if err := os.Setenv(k, v); err != nil {
 			return "", err
 		}
@@ -178,11 +187,14 @@ func checkChild(home string) error {
 }
 
 // SetHome makes dir the home for one test, on every OS: HOME, and
-// USERPROFILE, which Go reads on Windows.
+// USERPROFILE, which Go reads on Windows, and every other per-user base
+// dir userDirs names, so that a test that switches home doesn't keep
+// reading the folder the package's own home left for another test.
 func SetHome(t testing.TB, dir string) {
 	t.Helper()
-	t.Setenv("HOME", dir)
-	t.Setenv("USERPROFILE", dir)
+	for k, v := range userDirs(dir) {
+		t.Setenv(k, v)
+	}
 }
 
 // tools are the programs a test must never reach for real: the system

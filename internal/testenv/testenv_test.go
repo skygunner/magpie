@@ -91,6 +91,42 @@ func TestCheckChild(t *testing.T) {
 	}
 }
 
+// A test that switches home takes every per-user base dir with it: the XDG
+// folders Go reads on Linux, and Windows' APPDATA and LOCALAPPDATA. Left at
+// the package's own home, one test reads the files another wrote there
+// (#1841).
+func TestSetHomePointsEveryUserBaseDirIntoTheTestHome(t *testing.T) {
+	pkg, dir := t.TempDir(), t.TempDir()
+	// the package's home, standing as testenv.Run leaves it
+	for k, v := range map[string]string{
+		"HOME": pkg, "USERPROFILE": pkg,
+		"XDG_CONFIG_HOME": filepath.Join(pkg, ".config"),
+		"XDG_CACHE_HOME":  filepath.Join(pkg, ".cache"),
+		"XDG_DATA_HOME":   filepath.Join(pkg, ".local", "share"),
+		"XDG_STATE_HOME":  filepath.Join(pkg, ".local", "state"),
+		"APPDATA":         filepath.Join(pkg, "AppData", "Roaming"),
+		"LOCALAPPDATA":    filepath.Join(pkg, "AppData", "Local"),
+	} {
+		t.Setenv(k, v)
+	}
+	SetHome(t, dir)
+	for _, f := range []struct {
+		name   string
+		folder func() (string, error)
+	}{
+		{"home", os.UserHomeDir}, {"config", os.UserConfigDir}, {"cache", os.UserCacheDir},
+	} {
+		if p, err := f.folder(); err != nil || !within(p, dir) {
+			t.Errorf("the %s folder %q (%v) is outside the test home %s", f.name, p, err, dir)
+		}
+	}
+	for _, k := range []string{"APPDATA", "LOCALAPPDATA", "XDG_CONFIG_HOME", "XDG_CACHE_HOME", "XDG_DATA_HOME", "XDG_STATE_HOME"} {
+		if v := os.Getenv(k); !within(v, dir) {
+			t.Errorf("%s is %q, outside the test home %s", k, v, dir)
+		}
+	}
+}
+
 func TestRemoveTouchesOnlyItsOwn(t *testing.T) {
 	dir := t.TempDir()
 	other := filepath.Join(dir, prefix+"x")
