@@ -52,8 +52,7 @@ func SetJSON(path string, kvs ...KV) error {
 		return err
 	}
 	if len(bytes.TrimSpace(raw)) == 0 {
-		// a new file is laid out over lines, so insertKey keeps to that style
-		raw = []byte("{\n}\n")
+		raw = []byte("{}\n")
 	}
 	orig := raw
 	for _, kv := range kvs {
@@ -179,9 +178,14 @@ func insertKey(raw, stripped []byte, from int, key string, value any) ([]byte, e
 		return nil, fmt.Errorf("cannot locate object for %q", key)
 	}
 	k, _ := json.Marshal(key)
-	// The target object's own span decides: an object the user keeps on one
-	// line is added to on that line, however the rest of the file is laid out.
-	pretty := bytes.IndexByte(raw[open:close+1], '\n') >= 0
+	// An object the user keeps on one line stays on that line when what
+	// magpie adds to it is an object of its own (#3814): the subtree is the
+	// unit the user laid out. A scalar goes on its own line in the file's
+	// style, as the file's other scalars are.
+	pretty := bytes.IndexByte(raw, '\n') >= 0
+	if _, isObj := value.(map[string]any); isObj && bytes.IndexByte(raw[open:close+1], '\n') < 0 {
+		pretty = false
+	}
 	empty := len(bytes.TrimSpace(raw[open+1:close])) == 0
 
 	if !pretty {
