@@ -2,7 +2,6 @@ package plugin
 
 import (
 	"net/http"
-	"os"
 	"strings"
 	"testing"
 
@@ -14,9 +13,7 @@ import (
 // models.dev catalog, so every host start fetched the real models.dev for
 // up to 30s, and on a runner where it didn't answer two starts spent a
 // test's whole minute (#1922).
-func TestMain(m *testing.M) {
-	os.Exit(testenv.RunIn(m, func(string) { testenv.Offline() }))
-}
+func TestMain(m *testing.M) { testenv.Main(m) }
 
 // A host start's models.dev fetch is refused at once, never sent: the
 // tests don't wait on a vendor's server (#1922).

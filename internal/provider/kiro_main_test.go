@@ -18,7 +18,6 @@ import (
 // key at a vendor's real address asks only what it serves on loopback.
 func TestMain(m *testing.M) {
 	os.Exit(testenv.RunIn(m, func(home string) {
-		testenv.Offline()
 		kiroCLIDB = func() string { return filepath.Join(home, "kiro-test", "kiro-cli", "data.sqlite3") }
 		kiroIDEDir = func() string { return filepath.Join(home, "kiro-test", "sso") }
 		askKiroIdentity = func(string, string) (string, string) { return "", "" }

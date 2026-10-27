@@ -75,8 +75,10 @@ func Run(m *testing.M) int {
 }
 
 // RunIn is Run with setup called on the temporary home before the tests,
-// for fixtures that live in it.
+// for fixtures that live in it. Every package's tests stay off the network
+// through it (Offline), so a package can't forget to install the guard.
 func RunIn(m *testing.M, setup func(home string)) int {
+	Offline()
 	if home := os.Getenv(Marker); home != "" {
 		// started again by one of the tests: keep what it set up
 		if err := checkChild(home); err != nil {

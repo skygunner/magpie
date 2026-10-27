@@ -2,7 +2,6 @@ package cli
 
 import (
 	"net/http"
-	"os"
 	"strings"
 	"testing"
 
@@ -13,9 +12,7 @@ import (
 // off the network (testenv.Offline): the plugin tests start plugin hosts,
 // and a host started in a home without a models.dev catalog fetched the
 // real one for up to 30s (#1922).
-func TestMain(m *testing.M) {
-	os.Exit(testenv.RunIn(m, func(string) { testenv.Offline() }))
-}
+func TestMain(m *testing.M) { testenv.Main(m) }
 
 // A host start's models.dev fetch is refused at once, never sent (#1922).
 func TestStaysOffTheNetwork(t *testing.T) {

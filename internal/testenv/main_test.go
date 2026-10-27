@@ -11,5 +11,6 @@ import (
 // models.dev through it.
 func TestMain(m *testing.M) {
 	ClearProxy()
+	Offline()
 	os.Exit(m.Run())
 }

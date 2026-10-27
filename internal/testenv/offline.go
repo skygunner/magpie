@@ -21,7 +21,9 @@ import (
 // catalog, fetched as each plugin host started), api.github.com,
 // chatgpt.com and Devin's server.codeium.com with made-up accounts, and a
 // plan key with a vendor's real base URL would have its windows read for
-// routing (#1016). A package calls it from its TestMain, before m.Run.
+// routing (#1016). testenv runs it for every package from Run, before
+// m.Run; a package that isolates itself in its own TestMain, as
+// internal/gateway does, calls it there too.
 func Offline() {
 	t, ok := http.DefaultTransport.(*http.Transport)
 	if !ok {
