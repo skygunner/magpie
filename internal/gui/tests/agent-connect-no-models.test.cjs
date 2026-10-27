@@ -11,10 +11,19 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const path = require("node:path");
-const { test } = require("node:test");
+const { after, test } = require("node:test");
 const { chromium, webkit } = require("playwright");
 
 const assets = path.resolve(__dirname, "../assets");
+
+// One browser for the file's cases: on a loaded machine a launch was most of a
+// case's time, and the runner gives each case 180s (#2629).
+const browsers = new Map();
+function browserFor(engine) {
+  if (!browsers.has(engine)) browsers.set(engine, engine === "webkit" ? webkit.launch() : chromium.launch({ channel: "chromium" }));
+  return browsers.get(engine);
+}
+after(async () => { for (const b of browsers.values()) await (await b).close(); });
 const options = [{ value: "gpt-5.4", label: "GPT-5.4" }, { value: "relay/m1", label: "m1", ref: "relay/m1", note: "Relay · via magpie" }];
 const state = { agents: [{ id: "codex", name: "Codex", icon: "generic", path: "/fixture/codex", fields: [{ key: "model", label: "model", value: "gpt-5.4", options }] }], profiles: [] };
 
@@ -67,21 +76,23 @@ const sw = '.row.agent[data-id="codex"] .ag-conn';
 for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"])) {
   for (const [code, { answer, said }] of Object.entries(cases)) for (const lang of Object.keys(said)) {
     test(`${engine} ${lang} ${code}: connecting with no models to give says what to do`, async (t) => {
-      const browser = await (engine === "webkit" ? webkit.launch() : chromium.launch({ channel: "chromium" }));
-      t.after(() => browser.close());
+      const browser = await browserFor(engine);
       const page = await (await browser.newContext({ viewport: { width: 980, height: 520 }, reducedMotion: "reduce" })).newPage();
       page.setDefaultTimeout(5000);
       const errors = [], posts = [], dialogs = [];
       page.on("pageerror", (e) => errors.push(e.message));
       page.on("dialog", (d) => { dialogs.push(d.message()); d.dismiss(); });
       await page.route("**/*", server(lang, posts, answer));
+      t.after(() => page.context().close());
       await page.goto("http://magpie.test/?view=agents");
       await page.locator(sw).waitFor();
       const tops = () => page.evaluate(() => [document.scrollingElement.scrollTop, document.querySelector("#view-agents")?.scrollTop]);
       const top = await tops();
 
       await page.locator(sw).click();
-      await page.waitForFunction((s) => document.querySelector("#status")?.textContent.includes(s), said[lang]);
+      // the toast is the connect answer: a loaded machine holds it past the 5s
+      // this file gives a drawn state
+      await page.waitForFunction((s) => document.querySelector("#status")?.textContent.includes(s), said[lang], { timeout: 30000 });
       assert.deepEqual(posts, ["/api/agents/connect/codex"]);
       assert.equal(await page.locator(sw).getAttribute("aria-checked"), "false", "the switch goes back off");
       assert.ok(!(await page.locator(sw).isDisabled()), "and can be tried again");

@@ -12,6 +12,11 @@ const names = {
   ja: ['エージェントを一括管理', '選択項目を非表示', '選択項目の非表示を解除', '検索結果をすべて選択', '検索結果の選択を反転', '未接続のエージェントを選択', '選択を解除'],
   de: ['Agents verwalten', 'Auswahl ausblenden', 'Auswahl einblenden', 'Suchergebnisse auswählen', 'Auswahl der Suchergebnisse umkehren', 'Nicht verbundene Agents auswählen', 'Auswahl aufheben'],
 };
+// a save's answer comes back through the gateway, so a loaded machine can hold
+// it past the 5s this file gives a drawn state, as in #2629: the wait for its
+// result keeps room on both sides
+const answered = (page, text) => page.waitForFunction((s) => document.querySelector('.ag-manage-result')?.textContent.includes(s), text, { timeout: 30000 });
+
 for (const engine of process.env.BROWSER ? [process.env.BROWSER] : ['chromium', 'webkit']) {
   for (const lang of Object.keys(names)) {
     test(`${engine} ${lang}: bulk visibility, retry and persistence`, async (t) => {
@@ -107,12 +112,12 @@ for (const engine of process.env.BROWSER ? [process.env.BROWSER] : ['chromium', 
       assert.equal(await dialog.getByRole('checkbox', {name:'Codex',exact:true}).isChecked(), false);
       reject = true;
       await button(hide).click();
-      await page.waitForFunction(() => document.querySelector('.ag-manage-result')?.textContent === 'Save refused');
+      await answered(page, 'Save refused');
       assert.deepEqual(state.settings.agentsHidden, ['Hidden']);
       assert.equal(await dialog.locator('input:checked').count(), 3, 'failed save keeps selection');
       reject = false;
       await button(hide).click();
-      await page.waitForFunction(() => document.querySelector('.ag-manage-result')?.textContent.includes('2'));
+      await answered(page, '2');
       assert.deepEqual(new Set(state.settings.agentsHidden), new Set(['Hidden', 'Pi', 'Zed']));
       assert.deepEqual(state.settings.agentOrder, ['Zed', 'Codex', 'Pi', 'Hidden']);
       assert.equal(posts.length, 2, 'one write per attempt');
@@ -123,7 +128,7 @@ for (const engine of process.env.BROWSER ? [process.env.BROWSER] : ['chromium', 
       await dialog.getByRole('checkbox', {name:'Zed',exact:true}).check();
       assert(await button(hide).isDisabled(), 'saved hidden state survives reload');
       await button(show).click();
-      await page.waitForFunction(() => document.querySelector('.ag-manage-result')?.textContent.includes('2'));
+      await answered(page, '2');
       assert.deepEqual(state.settings.agentsHidden, ['Hidden']);
       assert.equal(state.agents[0].wired, true);
       assert.equal(await dialog.locator('input:checked').count(), 0);
@@ -131,7 +136,7 @@ for (const engine of process.env.BROWSER ? [process.env.BROWSER] : ['chromium', 
       // Hiding every agent keeps the manager available; connected agents stay wired.
       await button(all).click();
       await button(hide).click();
-      await page.waitForFunction(() => document.querySelector('.ag-manage-result')?.textContent.includes('3'));
+      await answered(page, '3');
       assert.equal(state.settings.agentsHidden.length, 4);
       assert.equal(state.agents[0].wired, true);
       await page.keyboard.press('Escape');
@@ -139,7 +144,7 @@ for (const engine of process.env.BROWSER ? [process.env.BROWSER] : ['chromium', 
       await page.getByRole('button', {name:manage,exact:true}).click();
       await button(all).click();
       await button(show).click();
-      await page.waitForFunction(() => document.querySelector('.ag-manage-result')?.textContent.includes('4'));
+      await answered(page, '4');
       assert.deepEqual(state.settings.agentsHidden, []);
       assert.equal(posts.length, 5);
       if (process.env.BULK_SHOT && lang === 'zh') {
@@ -154,4 +159,50 @@ for (const engine of process.env.BROWSER ? [process.env.BROWSER] : ['chromium', 
       assert.deepEqual(errors, []);
     });
   }
+}
+
+// A loaded machine's write answers after the 5s this file gives a drawn state.
+// A save answered 6.5s late still reports what it did; a wait bounded by that
+// 5s gives up first.
+for (const engine of process.env.BROWSER ? [process.env.BROWSER] : ['chromium', 'webkit']) {
+  test(`${engine}: a save answered 6.5s late still reports what it hid`, async (t) => {
+    const browser = await (engine === 'webkit' ? webkit.launch() : chromium.launch({ channel: 'chromium' }));
+    t.after(() => browser.close());
+    const page = await browser.newPage({ viewport: { width: 1240, height: 760 }, reducedMotion: 'reduce' });
+    page.setDefaultTimeout(5000);
+    const agent = (id) => ({ id, name: id, icon: 'generic', wired: false, fields: [{ key: 'model', label: 'model', value: '', options: [] }] });
+    const state = { agents: [agent('Codex'), agent('Pi')], profiles: [], settings: { lang: 'en', theme: 'light', agentOrder: ['Codex', 'Pi'], agentsHidden: [], agentsShown: [] } };
+    const errors = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    await page.route('**/*', async (route) => {
+      const req = route.request(), url = new URL(req.url());
+      const json = (data) => route.fulfill({ json: data });
+      if (url.pathname === '/boot.js') return route.fulfill({ contentType: 'text/javascript', body: `window.bootPrefs = ${JSON.stringify({lang: 'en', theme: 'light', web: true})};` });
+      if (url.pathname === '/wails/runtime.js') return route.fulfill({ contentType: 'text/javascript', body: 'export const Window = {};' });
+      if (url.pathname === '/api/state') return json(state);
+      if (url.pathname === '/api/agents/arrange') {
+        await new Promise((r) => setTimeout(r, 6500));
+        const b = req.postDataJSON();
+        Object.assign(state.settings, { agentOrder: b.order, agentsHidden: b.hidden, agentsShown: b.shown });
+        return json(state.settings);
+      }
+      if (url.pathname === '/api/plugins') return json({ plugins: [] });
+      if (url.pathname === '/api/usage/quotas') return json([]);
+      if (url.pathname === '/api/groups') return json({ groups: [] });
+      if (url.pathname === '/api/agents/cli') return json({ agents: {}, pending: false });
+      if (url.pathname === '/api/providers') return json({ providers: [], presets: [], gateway: { running: true } });
+      if (url.pathname.startsWith('/api/')) return json({});
+      const file = path.join(assets, url.pathname === '/' ? 'index.html' : url.pathname);
+      try { return await route.fulfill({ body: await fs.readFile(file), contentType: {'.js':'text/javascript','.css':'text/css','.html':'text/html','.svg':'image/svg+xml'}[path.extname(file)] }); }
+      catch { return route.fulfill({ status: 404, body: '' }); }
+    });
+    await page.goto('http://magpie.test/');
+    await page.getByRole('button', { name: names.en[0], exact: true }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('checkbox', { name: 'Codex', exact: true }).check();
+    await dialog.getByRole('button', { name: names.en[1], exact: true }).click();
+    await answered(page, '1');
+    assert.deepEqual(state.settings.agentsHidden, ['Codex']);
+    assert.deepEqual(errors, []);
+  });
 }

@@ -7,16 +7,28 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const path = require("node:path");
-const { test } = require("node:test");
+const { after, test } = require("node:test");
 const { chromium, webkit } = require("playwright");
 
 const assets = path.resolve(__dirname, "../assets");
+
+// One browser for the file's cases: on a loaded machine a launch was most of a
+// case's time, and the runner gives each case 180s (#2629).
+const browsers = new Map();
+function browserFor(engine) {
+  if (!browsers.has(engine)) browsers.set(engine, engine === "webkit" ? webkit.launch() : chromium.launch({ channel: "chromium" }));
+  return browsers.get(engine);
+}
+after(async () => { for (const b of browsers.values()) await (await b).close(); });
 
 function fixture(lang, guide) {
   const list = ["grok-5", "grok-5-mini", "grok-code"].map((m) =>
     ({ id: "xai/" + m, name: m, group: "xAI", icon: "xai", context: 1e6, hidden: true }));
   const posts = [];
   let wired = false, connects = 0;
+  let savedResolve = null;
+  // the model list's save reaches the fake's POST: the test waits for that, not a sleep
+  const saved = () => new Promise((r) => (savedResolve = r));
   const count = () => ({ shown: list.filter((m) => !m.hidden).length, listed: list.length });
   const state = () => {
     const options = list.filter((m) => !m.hidden).map((m) => ({ value: m.id, label: m.name, ref: m.id }));
@@ -49,6 +61,8 @@ function fixture(lang, guide) {
       if (req.method() === "POST") {
         const { hidden } = req.postDataJSON();
         posts.push(hidden);
+        savedResolve?.();
+        savedResolve = null;
         for (const m of list) m.hidden = hidden.includes(m.id);
         return json({ models: list, count: count() });
       }
@@ -62,7 +76,7 @@ function fixture(lang, guide) {
     const contentType = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png" }[path.extname(file)];
     await route.fulfill({ body: await fs.readFile(file), contentType });
   }
-  return { serve, posts, connects: () => connects };
+  return { serve, posts, saved, connects: () => connects };
 }
 
 const W = {
@@ -74,8 +88,8 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
   for (const lang of ["en", "zh"]) {
     for (const [width, guide] of [[1000, false], [560, false], [1000, true]]) {
       test(`${engine} ${lang} ${width}${guide ? " Get started" : ""}: a switched-off agent with every model hidden opens its list to pick one`, async (t) => {
-        const browser = await (engine === "webkit" ? webkit.launch() : chromium.launch({ channel: "chromium" }));
-        const page = await browser.newPage({ viewport: { width, height: 700 } });
+        const browser = await browserFor(engine);
+        const page = await browser.newPage({ viewport: { width, height: 700 }, reducedMotion: "reduce" });
         page.setDefaultTimeout(5000);
         const errors = [];
         page.on("pageerror", (e) => errors.push(e.message));
@@ -86,7 +100,7 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
             await fs.mkdir(process.env.ARTIFACT_DIR, { recursive: true });
             await page.screenshot({ path: path.join(process.env.ARTIFACT_DIR, `${engine}-${lang}-${width}${guide ? "-guide" : ""}-connect-all-hidden.png`) });
           }
-          await browser.close();
+          await page.close();
         });
         await page.goto("http://magpie.test/");
         const row = page.locator('.row.agent[data-id="grok"]');
@@ -98,20 +112,23 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
 
         await connect.click();
         const pop = page.locator(".am-pop:not(.leaving)");
-        await pop.waitFor();
+        // the list opens from the connect answer: a loaded machine holds it past
+        // the 5s this file gives a drawn state
+        await pop.waitFor({ timeout: 30000 });
         assert.equal(fx.connects(), 1);
         assert.equal(await page.locator("#status").innerText(), W[lang].pick);
         assert.equal(await sw.getAttribute("aria-checked"), "false", "not connected");
 
         // one picked, the list closed: the switch connects
+        const picked = fx.saved();
         await pop.locator(".am-mr").first().click();
-        await page.waitForTimeout(150);
+        await picked;
         assert.deepEqual(fx.posts.at(-1), ["xai/grok-5-mini", "xai/grok-code"]);
         await page.keyboard.press("Escape");
         await pop.waitFor({ state: "detached" });
         await page.waitForTimeout(300);
         await (guide ? chip : row.locator(".ag-conn")).click();
-        await page.waitForFunction(() => document.querySelector('.row.agent[data-id="grok"] .ag-conn')?.getAttribute("aria-checked") === "true");
+        await page.waitForFunction(() => document.querySelector('.row.agent[data-id="grok"] .ag-conn')?.getAttribute("aria-checked") === "true", null, { timeout: 30000 });
         assert.equal(fx.connects(), 2);
         assert.deepEqual(errors, []);
       });
