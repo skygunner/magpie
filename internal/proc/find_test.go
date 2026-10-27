@@ -74,3 +74,22 @@ func TestSystemDirsLieInTheTestsHome(t *testing.T) {
 		t.Errorf("SystemDirs outside a test = %q", got)
 	}
 }
+
+// OpenCode's own installer puts opencode in ~/.opencode/bin (cloudusa,
+// #3828), a folder no shell profile adds: found there, as the folders a
+// user's tools are installed in are, and before the machine's own folders,
+// so the user's own install wins over a stale Homebrew one.
+func TestFindToolInOpenCodeBin(t *testing.T) {
+	if sandboxVar != testenv.Marker {
+		t.Fatalf("sandboxVar %q isn't testenv.Marker %q", sandboxVar, testenv.Marker)
+	}
+	home := os.Getenv(testenv.Marker)
+	t.Setenv("PATH", t.TempDir())
+	bin := filepath.Join(home, ".opencode", "bin")
+	os.MkdirAll(bin, 0o755)
+	want := filepath.Join(bin, "opencode")
+	os.WriteFile(want, nil, 0o755)
+	if got := FindTool("opencode"); got != want {
+		t.Fatalf("FindTool(opencode) = %q, want %q", got, want)
+	}
+}

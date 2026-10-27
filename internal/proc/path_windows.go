@@ -38,6 +38,7 @@ func UserBinDirs() []string {
 		mise = d
 	}
 	known := []string{
+		filepath.Join(home, ".opencode", "bin"),
 		filepath.Join(appdir.Getenv("APPDATA"), "npm"),
 		filepath.Join(home, ".local", "bin"),
 		filepath.Join(home, ".bun", "bin"),

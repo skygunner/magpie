@@ -128,16 +128,17 @@ func LoginEnv(k string) string {
 
 // UserBinDirs are the folders a user's command-line tools are installed in
 // that exist here — npm's prefixes, each Node version of nvm, fnm and mise,
-// bun, volta, pnpm, asdf, the standalone installers' ~/.local/bin,
-// Homebrew — for finding one PATH doesn't reach. A manager's Node versions
-// come in the order a terminal would reach them: its default first, then
+// bun, volta, pnpm, asdf, the standalone installers' ~/.local/bin and
+// ~/.opencode/bin/OpenCode's own installer, Homebrew — for finding one PATH
+// doesn't reach. A manager's Node versions come in the order a terminal
+// would reach them: its default first, then
 // the highest version (v22 before v9).
 func UserBinDirs() []string { return userDirs(true) }
 
 func userDirs(everyNode bool) []string {
 	home, _ := os.UserHomeDir()
 	var known []string
-	for _, d := range []string{".local/bin", ".npm-global/bin", ".npm/bin", ".bun/bin", ".volta/bin", ".asdf/shims", ".local/share/mise/shims", ".cargo/bin", ".deno/bin", "Library/pnpm"} {
+	for _, d := range []string{".opencode/bin", ".local/bin", ".npm-global/bin", ".npm/bin", ".bun/bin", ".volta/bin", ".asdf/shims", ".local/share/mise/shims", ".cargo/bin", ".deno/bin", "Library/pnpm"} {
 		known = append(known, filepath.Join(home, d))
 	}
 	// nvm's Node a terminal gets: its default, or with none usable the
