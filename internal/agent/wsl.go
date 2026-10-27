@@ -4,11 +4,13 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"slices"
@@ -1422,8 +1424,9 @@ var wslProbeScript = func() string {
 }()
 
 func wslProbe(name string) *distro {
-	b, err := wslRun(30*time.Second, "-d", name, "-e", "sh", "-lc", wslProbeScript)
+	b, err := wslRun(30*time.Second, "-d", name, "-e", "sh", "-c", wslrun.ProbeShell, "sh", wslProbeScript)
 	if err != nil {
+		log.Printf("WSL %s: the probe failed, so its agents aren't listed: %v", name, wslProbeWhy(err))
 		return nil
 	}
 	d := parseProbe(name, string(b))
@@ -1434,6 +1437,18 @@ func wslProbe(name string) *distro {
 		d.Root = wslRoot(name)
 	}
 	return d
+}
+
+// wslProbeWhy is a failed probe's error with the first line the distro's
+// own shell said: the exit status alone doesn't say a profile ended it.
+func wslProbeWhy(err error) string {
+	var exit *exec.ExitError
+	if errors.As(err, &exit) {
+		if line, _, _ := strings.Cut(strings.TrimSpace(string(exit.Stderr)), "\n"); line != "" {
+			return err.Error() + ": " + line
+		}
+	}
+	return err.Error()
 }
 
 // parseProbe reads wslProbeScript's output. A command on one of Windows'
