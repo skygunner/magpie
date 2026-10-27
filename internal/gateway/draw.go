@@ -378,10 +378,12 @@ type drawing struct {
 	Model, Prompt, Size, Quality, Background, Format string
 	// Want is the response_format the caller asked for: with "b64_json"
 	// an image a vendor gave only a URL for is fetched (inline)
-	Want   string
-	N      int
-	Images []picture // to edit, or draw from
-	Mask   *picture
+	Want string
+	// Session is the conversation's id, for extraBody's ${sessionId}
+	Session string
+	N       int
+	Images  []picture // to edit, or draw from
+	Mask    *picture
 }
 
 // drawn is what a vendor gave back.
@@ -411,6 +413,7 @@ func (s *Server) images(edit bool) http.HandlerFunc {
 			writeError(w, provider.Chat, 400, err.Error())
 			return
 		}
+		d.Session = sessionOf(r.Header)
 		if edit && len(d.Images) == 0 {
 			writeError(w, provider.Chat, 400, "an edit needs the image to edit")
 			return
@@ -1323,6 +1326,11 @@ func (s *Server) drawImages(ctx context.Context, p provider.Provider, model stri
 		mw.Close()
 		body, ct, url = buf.Bytes(), mw.FormDataContentType(), base+"/images/edits"
 	}
+	// an image request carries the user's own fields too (#3914); a
+	// multipart edit's fields are form data, not JSON, so it has none
+	if strings.HasPrefix(ct, "application/json") {
+		body = p.WithExtraBody(body, d.Session)
+	}
 	b, code, err := s.send(ctx, p, url, ct, body, true)
 	if err != nil {
 		return drawn{}, code, err
@@ -1359,6 +1367,7 @@ func (s *Server) drawOpenRouterImages(ctx context.Context, p provider.Provider, 
 		req["input_references"] = refs
 	}
 	body, _ := json.Marshal(req)
+	body = p.WithExtraBody(body, d.Session)
 	url := strings.TrimRight(p.Base(provider.Chat), "/") + "/images"
 	b, code, err := s.send(ctx, p, url, "application/json", body, true)
 	if err != nil {
@@ -1567,9 +1576,10 @@ func (s *Server) drawChat(ctx context.Context, p provider.Provider, model string
 		req["image_config"] = map[string]string{"aspect_ratio": r}
 	}
 	body, _ := json.Marshal(req)
+	body = p.Prepare(p.WithExtraBody(body, d.Session))
 	url := strings.TrimRight(p.Base(provider.Chat), "/") + "/chat/completions"
 	return s.eachDrawing(d.N, func() (drawn, int, error) {
-		b, code, err := s.send(ctx, p, url, "application/json", p.Prepare(body), true)
+		b, code, err := s.send(ctx, p, url, "application/json", body, true)
 		if err != nil {
 			return drawn{}, code, err
 		}
@@ -1665,6 +1675,7 @@ func (s *Server) drawGemini(ctx context.Context, p provider.Provider, model stri
 		cfg["imageConfig"] = map[string]string{"aspectRatio": r}
 	}
 	body, _ := json.Marshal(map[string]any{"contents": []map[string]any{{"role": "user", "parts": parts}}, "generationConfig": cfg})
+	body = p.WithExtraBody(body, d.Session)
 	base := strings.TrimSuffix(strings.TrimRight(p.Base(provider.Chat), "/"), "/openai")
 	url := base + "/models/" + model + ":generateContent"
 	return s.eachDrawing(d.N, func() (drawn, int, error) {

@@ -50,6 +50,7 @@ func (s *Server) drawModelScope(ctx context.Context, p provider.Provider, model 
 		req["image_url"] = urls
 	}
 	body, _ := json.Marshal(req)
+	body = p.WithExtraBody(body, d.Session)
 	q, _ := modelScopeQueues.LoadOrStore(p.ID+"\x00"+p.Key, &sync.Mutex{})
 	mu := q.(*sync.Mutex)
 	var out drawn

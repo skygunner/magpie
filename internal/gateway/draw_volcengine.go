@@ -110,6 +110,7 @@ func (s *Server) drawArk(ctx context.Context, p provider.Provider, model string,
 	if err != nil {
 		return drawn{}, http.StatusBadRequest, err
 	}
+	body = p.WithExtraBody(body, d.Session)
 	url := strings.TrimRight(p.Base(provider.Chat), "/")
 	if url == "" {
 		url = strings.TrimRight(p.Base(provider.Responses), "/")

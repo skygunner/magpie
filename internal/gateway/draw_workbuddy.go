@@ -264,6 +264,7 @@ func (s *Server) drawWorkBuddy(ctx context.Context, p provider.Provider, model s
 		url = strings.TrimRight(p.Base(provider.Chat), "/") + "/images/edits"
 	}
 	body, _ := json.Marshal(req)
+	body = p.WithExtraBody(body, d.Session)
 	b, code, err := s.send(ctx, p, url, "application/json", body, true)
 	if err != nil {
 		return drawn{}, code, err

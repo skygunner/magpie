@@ -24,8 +24,10 @@ package provider
 // The editor's Test and Detect send them too, on their own session
 // (tested), so a relay that turns a request away without them still
 // answers its Test. A request that only counts tokens gets none of them,
-// nor one to another API (embeddings, images, video, a decision API's):
-// the fields are for asking the model for a reply. Neither does a
+// nor one to another API (embeddings, video, a decision API's): the fields
+// are for asking the model for a reply. An image request takes them too
+// (#3914), except a multipart edit, whose fields are form data, not JSON.
+// Neither does a
 // signed-in account's: its body is the agent's own, as its headers are —
 // except a ChatGPT (Codex) account's, whose requests magpie builds as Codex
 // CLI would (codexBody), and which take fields Codex CLI adds by choice
