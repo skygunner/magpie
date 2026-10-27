@@ -207,6 +207,12 @@ func publicRoute(r gateway.Route, pub func(string) string) gateway.Route {
 // kind a provider or an agent has, is dropped.
 func mainView(q url.Values) string {
 	view := q.Get("view")
+	// the view is a page's name, nothing more: one that carries parameters
+	// or a control character in it (plugins%26q%3D…, a %0A) is dropped, so
+	// it cannot reach the window's address past the rules on q (#3846)
+	if !mainViewNamed(view) {
+		return ""
+	}
 	switch view {
 	case "routing":
 		if id, err := strconv.ParseInt(q.Get("req"), 10, 64); err == nil && id > 0 {
@@ -239,6 +245,23 @@ func mainView(q url.Values) string {
 
 // mainName is the id of a provider or an agent.
 var mainName = regexp.MustCompile(`^[A-Za-z0-9._@:/ -]{1,80}$`)
+
+// mainViews are the names the window's pages go by: index.html's nav,
+// Settings, and a plugin page's key (magpie.pages() on the page side).
+// mainView drops a view outside them.
+func mainViewNamed(view string) bool {
+	switch view {
+	case "agents", "gateway", "library", "masking", "plugins", "providers",
+		"routing", "sessions", "usage", "settings":
+		return true
+	}
+	for _, p := range pluginPages() {
+		if p.Key == view {
+			return true
+		}
+	}
+	return false
+}
 
 // mainURL is the window's page for a view as mainView gives it, the
 // request's id kept as its own parameter (the panel's link to one request,

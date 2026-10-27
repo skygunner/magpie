@@ -2,6 +2,7 @@ package gui
 
 import (
 	"net/url"
+	"strings"
 	"testing"
 )
 
@@ -47,5 +48,32 @@ func TestQuotaView(t *testing.T) {
 		if got := quotaView(c.id); got != c.want {
 			t.Errorf("quotaView(%q): %q, want %q", c.id, got, c.want)
 		}
+	}
+}
+
+// #3846 (JoeyWu-tech): mainView passed a view it didn't know on as it came,
+// and mainURL put it in the window's address unescaped, so the rule on q
+// could be stepped around through view: parameters past mainFind's 100, a
+// tab of the sender's choosing, a control character that makes the address
+// unparseable. A view outside the names the window's pages go by is
+// dropped now; a page's name still opens it.
+func TestMainViewDropsAViewThatCarriesParameters(t *testing.T) {
+	for _, v := range []string{
+		"plugins&q=" + strings.Repeat("x", 300),
+		"settings&tab=anything",
+		"providers\n",
+		"no-such-page",
+	} {
+		if got := mainView(url.Values{"view": {v}}); got != "" {
+			t.Fatalf("mainView kept %q: %q", v, got)
+		}
+	}
+	for _, v := range []string{"agents", "gateway", "library", "masking", "plugins", "providers", "routing", "sessions", "usage", "settings"} {
+		if got := mainView(url.Values{"view": {v}}); got != v {
+			t.Fatalf("mainView dropped %q: %q", v, got)
+		}
+	}
+	if got := mainView(url.Values{"view": {"routing"}, "req": {"42"}}); got != "routing&req=42" {
+		t.Fatalf("mainView: %q", got)
 	}
 }
