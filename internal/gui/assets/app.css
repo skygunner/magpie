@@ -2756,6 +2756,9 @@ body.window .ag-sk-icon { width: 22px; height: 22px; border-radius: 6px; }
 /* a sign-in under way, waiting on the browser */
 .signing { display: flex; align-items: flex-start; gap: 11px; padding: 11px 10px 11px 12px; font-size: 12.5px; background: var(--card-2); animation: fade-in .2s; }
 .sheet .signing { margin-top: 8px; border: 1px solid var(--line); border-radius: 10px; }
+.signing.risk { flex-wrap: wrap; row-gap: 8px; }
+.signing.risk .tt { flex: 1 1 320px; }
+.signing.risk .risk-acts { margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px; }
 .signing .tt { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; line-height: 1.35; }
 .signing .n { font-weight: 500; }
 .signing .s { color: var(--muted); font-size: 11.5px; overflow-wrap: anywhere; }
