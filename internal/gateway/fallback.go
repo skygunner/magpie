@@ -2713,7 +2713,8 @@ func (h *holdWriter) watch() func() {
 // comments only (keepAlive), none of the try, which another account may
 // still answer instead; passed, a comment goes between two lines of it.
 func (h *holdWriter) keepQuiet() {
-	if h.slow || h.relooped || h.ended || h.alive == nil || h.alive.proto == provider.Gemini || h.ctx != nil && h.ctx.Err() != nil {
+	// Non-streaming requests share the first-response watch, never its SSE keepalives.
+	if !h.streams || h.slow || h.relooped || h.ended || h.alive == nil || h.alive.proto == provider.Gemini || h.ctx != nil && h.ctx.Err() != nil {
 		return
 	}
 	if !h.heard.IsZero() && time.Since(h.heard) >= keepaliveLongest {

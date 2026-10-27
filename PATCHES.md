@@ -118,3 +118,52 @@ Checked again at v0.1.1670: still zero comments, still nothing upstream.
   on, every deployment is published there too.
 - `prod/0.1.1691-p1` — 2026-10-27. Rolling merge of v0.1.1691; no
   conflicts, none absorbed, same nine patches.
+
+## Non-streaming SSE regression follow-up (2026-10-28)
+
+The timeout extension in `dd670e6` also enabled `holdWriter.watch` for
+non-streaming requests. After 15 seconds without response headers, its
+`keepQuiet` path sent an SSE keepalive and committed HTTP 200. The eventual
+JSON answer (or HTTP error) was then emitted as SSE. Hindsight's non-streaming
+OpenAI SDK call received a string instead of a completion object and reported
+missing choices, even when the SSE contained an answer.
+
+`keepQuiet` now requires the caller to request streaming. First-response
+cancellation/fallback and the opt-in cooldown policy are unchanged. The
+existing streaming fixture explicitly sets `streams`; no new configuration,
+dependency or retry mechanism is introduced.
+
+Regression checks:
+
+- `TestNonstreamFirstResponseFallsBack`: silent and header-only candidates,
+  crossing the keepalive threshold, must fall back to valid JSON.
+- `TestNonstreamWaitKeepsStatusAndJSON`: Chat, Responses and Messages wait
+  20 virtual seconds and preserve JSON and both 200/503 statuses. Replacing
+  `fallback.go` with its pre-fix contents makes these checks fail with early
+  SSE, including 503 becoming 200.
+- The timeout/cooldown checks pass 20 repetitions under `-race` on both this
+  branch and an isolated integration checkout at `c70e0610` (v0.1.1767 plus
+  carried patches). The expanded streaming checks also pass.
+- Native/Linux/Windows vet and builds pass on the integration checkout.
+  Its compiled Linux binary, using a throwaway HOME and fake upstream over
+  real HTTP, returns JSON after a 20.011-second wait and after an
+  18.012-second first-candidate timeout/fallback. Neither sends early SSE.
+
+Full integration suite: `go test -p 2 -tags nogui ./... -count=1
+-timeout=10m` ran with Go 1.26.8 in an isolated Linux container. Gateway
+(410.021s), GUI, plugin and PII passed. The suite was not green:
+
+- Four agent write-refusal cases failed as root; all four passed when rerun
+  as an unprivileged user.
+- `TestKeyNote` expects host wording but detects the container (also reported
+  in upstream #3188); the unchanged code fails the same check.
+- Existing upstream failures: WSL/Hermes file reads (#3924), provider shared
+  model-list requests (#3854), and the TUI Codex picker (#3919).
+- `TestQuotaSpanCarriesEveryWindowField` needs `AmountUnknown: true` in its
+  all-fields fixture after the #3487 patch. Runtime `quotaReport` already
+  copies it. That one-line test repair is on the separate
+  `fix/3487-quota-span-fixture-1767` branch, for the new release's test.
+
+Deployment handoff: this follow-up is not deployed by this work. Cherry-pick
+only this follow-up onto the v0.1.1767 integration line that already carries
+`dd670e6`; do not merge the older release base into the deployment branch.
