@@ -366,9 +366,11 @@ type Result struct {
 	// SignIn is the subscriptions whose settings came with no account
 	// here: a backup carries no sign-in, so they are listed once one is
 	SignIn []string `json:",omitempty"`
-	// Plugins are the plugins installed for it, PluginErrors why the others
-	// couldn't be, by spec
+	// Plugins are the plugins installed for it, PluginsReplaced the plugin
+	// each took the place of (a package here under another source's spec),
+	// PluginErrors why the others couldn't be, by spec
 	Plugins         []string          `json:",omitempty"`
+	PluginsReplaced map[string]string `json:",omitempty"`
 	PluginErrors    map[string]string `json:",omitempty"`
 	Settings        bool
 	Profiles        int
@@ -416,7 +418,7 @@ func Restore(b Bundle, parts Parts) (Result, error) {
 			}
 		}
 		if b.Plugins != nil {
-			r.Plugins, r.PluginErrors = AddPlugins(*b.Plugins)
+			r.Plugins, r.PluginsReplaced, r.PluginErrors = AddPlugins(*b.Plugins)
 		}
 		r.SignIn = provider.NotSignedIn(b.Providers)
 		stored, err := provider.Stored()
@@ -530,11 +532,12 @@ var addPlugins = provider.AddPlugins
 
 // AddPlugins installs the plugins a backup or a sync carries that aren't
 // here (provider.AddPlugins), giving each its time: a first one downloads
-// Bun. It says why each it couldn't add wasn't, by spec.
-func AddPlugins(es []plugin.Entry) ([]string, map[string]string) {
+// Bun. It says why each it couldn't add wasn't, by spec, and which plugin
+// one that took another's place replaced.
+func AddPlugins(es []plugin.Entry) ([]string, map[string]string, map[string]string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
-	added, failed := addPlugins(ctx, es)
+	added, replaced, failed := addPlugins(ctx, es)
 	var errs map[string]string
 	for spec, err := range failed {
 		if errs == nil {
@@ -542,7 +545,7 @@ func AddPlugins(es []plugin.Entry) ([]string, map[string]string) {
 		}
 		errs[spec] = err.Error()
 	}
-	return added, errs
+	return added, replaced, errs
 }
 
 // profileKeys orders a profile's fields the way ApplyFields does: providers, then

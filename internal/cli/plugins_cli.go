@@ -55,11 +55,17 @@ func pluginCmd(args []string) error {
 		if !plugin.IsPath(rest[0]) && !plugin.HasBun() {
 			fmt.Println(muted.Render("Downloading Bun " + plugin.BunInUse() + ", which plugins run on…"))
 		}
-		e, err := provider.AddPlugin(ctx, rest[0])
+		e, replaced, err := provider.AddPlugin(ctx, rest[0])
 		if err != nil {
 			return err
 		}
 		fmt.Println(green.Render("✓"), "added", e.Spec)
+		// one package is one entry: a package from another source (another
+		// repository, or npm's where a repository's was) is the plugin now,
+		// and what it took the place of is said rather than left to the list
+		if replaced != "" {
+			fmt.Println(faint.Render("  replaced " + replaced))
+		}
 		// a community plugin's name (workbuddy, WorkBuddy) stood for it
 		if typed := strings.TrimSpace(rest[0]); !plugin.IsPath(typed) && !plugin.IsGit(typed) && !strings.HasPrefix(typed, "npm:") && plugin.Name(typed) != plugin.Name(e.Spec) {
 			fmt.Println(faint.Render("  " + strconv.Quote(plugin.Name(typed)) + " is magpie's community plugin " + plugin.Name(e.Spec)))

@@ -36,9 +36,9 @@ func TestPluginOpsOutliveRequest(t *testing.T) {
 			got = append(got, op+": going")
 		}
 	}
-	addPlugin = func(ctx context.Context, spec string) (plugin.Entry, error) {
+	addPlugin = func(ctx context.Context, spec string) (plugin.Entry, string, error) {
 		check("add", ctx)
-		return plugin.Entry{}, nil
+		return plugin.Entry{}, "", nil
 	}
 	removePlugin = func(ctx context.Context, spec string) error { check("remove", ctx); return nil }
 	updatePlugins = func(ctx context.Context) error { check("update", ctx); return nil }

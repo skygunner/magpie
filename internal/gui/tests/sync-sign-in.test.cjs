@@ -45,15 +45,15 @@ function serve(lang, sync, imported) {
 }
 
 const words = {
-  en: { sync: "Your synced settings use Claude, Cursor, which isn't signed in on this computer. Sync carries settings, not sign-ins", backup: "This backup's settings use Claude, Cursor, which isn't signed in on this computer. A backup carries settings, not sign-ins", added: "Plugins added: ", failed: "Couldn't add the plugin github:x/y: " },
-  zh: { sync: "同步过来的设置用到了 Claude, Cursor，但本机尚未登录。同步只带设置", backup: "这份备份的设置用到了 Claude, Cursor，但本机尚未登录。备份只带设置", added: "已添加插件：", failed: "无法添加插件 github:x/y：" },
-  "zh-TW": { sync: "同步過來的設定用到了 Claude, Cursor，但本機尚未登入。同步只帶設定", backup: "這份備份的設定用到了 Claude, Cursor，但本機尚未登入。備份只帶設定", added: null, failed: null },
-  ja: { sync: "同期した設定は Claude, Cursor を使っていますが、このコンピュータではまだサインインしていません。", backup: "このバックアップの設定は Claude, Cursor を使っていますが、このコンピュータではまだサインインしていません。", added: "追加したプラグイン：", failed: "プラグイン github:x/y を追加できませんでした：" },
-  de: { sync: "Deine synchronisierten Einstellungen nutzen Claude, Cursor, auf diesem Computer aber nicht angemeldet.", backup: "Die Einstellungen dieser Sicherung nutzen Claude, Cursor, auf diesem Computer aber nicht angemeldet.", added: "Hinzugefügte Erweiterungen: ", failed: "Die Erweiterung github:x/y konnte nicht hinzugefügt werden: " },
+  en: { sync: "Your synced settings use Claude, Cursor, which isn't signed in on this computer. Sync carries settings, not sign-ins", backup: "This backup's settings use Claude, Cursor, which isn't signed in on this computer. A backup carries settings, not sign-ins", added: "Plugins added: ", replaced: "Plugins replaced: github:other/grok-auth → @magpie-community/opencode-grok-auth@0.3.0", failed: "Couldn't add the plugin github:x/y: " },
+  zh: { sync: "同步过来的设置用到了 Claude, Cursor，但本机尚未登录。同步只带设置", backup: "这份备份的设置用到了 Claude, Cursor，但本机尚未登录。备份只带设置", added: "已添加插件：", replaced: "已替换插件：github:other/grok-auth → @magpie-community/opencode-grok-auth@0.3.0", failed: "无法添加插件 github:x/y：" },
+  "zh-TW": { sync: "同步過來的設定用到了 Claude, Cursor，但本機尚未登入。同步只帶設定", backup: "這份備份的設定用到了 Claude, Cursor，但本機尚未登入。備份只帶設定", added: null, replaced: null, failed: null },
+  ja: { sync: "同期した設定は Claude, Cursor を使っていますが、このコンピュータではまだサインインしていません。", backup: "このバックアップの設定は Claude, Cursor を使っていますが、このコンピュータではまだサインインしていません。", added: "追加したプラグイン：", replaced: "置き換えたプラグイン：github:other/grok-auth → @magpie-community/opencode-grok-auth@0.3.0", failed: "プラグイン github:x/y を追加できませんでした：" },
+  de: { sync: "Deine synchronisierten Einstellungen nutzen Claude, Cursor, auf diesem Computer aber nicht angemeldet.", backup: "Die Einstellungen dieser Sicherung nutzen Claude, Cursor, auf diesem Computer aber nicht angemeldet.", added: "Hinzugefügte Erweiterungen: ", replaced: "Ersetzte Erweiterungen: github:other/grok-auth → @magpie-community/opencode-grok-auth@0.3.0", failed: "Die Erweiterung github:x/y konnte nicht hinzugefügt werden: " },
 };
 
 const base = { on: true, kind: "webdav", url: "https://dav.example.invalid/dav/", user: "me", passwordSet: true, passphraseSet: true, keys: true, agents: true, library: true, usage: true, last: new Date(Date.now() - 60000).toISOString() };
-const imported = { Added: 3, Replaced: 0, Profiles: 0, Agents: 0, NeedKey: ["Acme"], SignIn: ["claude", "cursor"], Plugins: ["@magpie-community/opencode-cursor-auth"], PluginErrors: { "github:x/y": "no such repository" } };
+const imported = { Added: 3, Replaced: 0, Profiles: 0, Agents: 0, NeedKey: ["Acme"], SignIn: ["claude", "cursor"], Plugins: ["@magpie-community/opencode-cursor-auth"], PluginsReplaced: { "github:other/grok-auth": "@magpie-community/opencode-grok-auth@0.3.0" }, PluginErrors: { "github:x/y": "no such repository" } };
 
 for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"])) {
   for (const lang of Object.keys(words)) {
@@ -107,6 +107,9 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
           else assert.ok(lines.some((l) => l.endsWith("@magpie-community/opencode-cursor-auth")), lines.join(" | "));
           if (w.failed) assert.ok(lines.includes(w.failed + "no such repository"), lines.join(" | "));
           else assert.ok(lines.some((l) => l.endsWith("no such repository")), lines.join(" | "));
+          // the plugin that took another's place is named, with both specs
+          if (w.replaced) assert.ok(lines.includes(w.replaced), lines.join(" | "));
+          else assert.ok(lines.some((l) => l.includes("github:other/grok-auth") && l.includes("@magpie-community/opencode-grok-auth@0.3.0")), lines.join(" | "));
           assert.ok(!lines.some((l) => /: ,|：,|:\s*$/.test(l)), `no empty name: ${lines.join(" | ")}`);
           const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
           assert.ok(over <= 0, `no sideways scroll: ${over}`);

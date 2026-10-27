@@ -129,9 +129,40 @@ func takeBackLeft(spec string) error {
 }
 
 // AddPlugin installs the plugin spec, as plugin.Add does, and puts back
-// what was set aside of it when it was last removed.
-func AddPlugin(ctx context.Context, spec string) (plugin.Entry, error) {
-	return addPluginWith(ctx, spec, addPlugin)
+// what was set aside of it when it was last removed. replaced is the spec
+// of the plugin it took the place of, "" when it added one: one package
+// is one entry, so another source's package of the same name replaces the
+// one here (plugin.add).
+func AddPlugin(ctx context.Context, spec string) (e plugin.Entry, replaced string, err error) {
+	was := pluginPackageNames()
+	if e, err = addPluginWith(ctx, spec, addPlugin); err != nil {
+		return e, "", err
+	}
+	return e, replacedBy(was, e), nil
+}
+
+// pluginPackageNames is the package each plugin's spec names now, before
+// an install: a repository's spec names its package only while
+// plugins/package.json's dependency line belongs to it, and installing
+// that package from elsewhere rewrites the line (plugin.Name).
+func pluginPackageNames() map[string]string {
+	out := map[string]string{}
+	for _, e := range plugin.Load().Plugins {
+		out[e.Spec] = plugin.Name(e.Spec)
+	}
+	return out
+}
+
+// replacedBy is the spec among was (pluginPackageNames taken before the
+// install) that installing e took the place of, "" when e added one.
+func replacedBy(was map[string]string, e plugin.Entry) string {
+	name := plugin.Name(e.Spec)
+	for spec, n := range was {
+		if spec != e.Spec && n == name {
+			return spec
+		}
+	}
+	return ""
 }
 
 // addPluginWith is AddPlugin, installing with add: plugin.Add for a name

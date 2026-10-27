@@ -126,7 +126,7 @@ func TestRemovePluginSetsItsPicksAside(t *testing.T) {
 	oldAdd := addPlugin
 	t.Cleanup(func() { addPlugin = oldAdd })
 	addPlugin = func(_ context.Context, spec string) (plugin.Entry, error) { return plugin.Entry{Spec: spec}, nil }
-	if _, err := AddPlugin(context.Background(), foo); err != nil {
+	if _, _, err := AddPlugin(context.Background(), foo); err != nil {
 		t.Fatal(err)
 	}
 	if got, want := storedIDs(t), []string{"bar", "claude", "foo", "mine", "shared", "zap", "zap-plugin"}; !slices.Equal(got, want) {
@@ -176,7 +176,7 @@ func TestAddPluginLeavesTheUsersRecord(t *testing.T) {
 	oldAdd := addPlugin
 	t.Cleanup(func() { addPlugin = oldAdd })
 	addPlugin = func(_ context.Context, spec string) (plugin.Entry, error) { return plugin.Entry{Spec: spec}, nil }
-	if _, err := AddPlugin(context.Background(), foo); err != nil {
+	if _, _, err := AddPlugin(context.Background(), foo); err != nil {
 		t.Fatal(err)
 	}
 	ps := mustStored(t)

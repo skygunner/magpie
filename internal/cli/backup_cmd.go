@@ -125,6 +125,9 @@ func restoreCmd(args []string) error {
 	if len(r.Plugins) > 0 {
 		fmt.Println(muted.Render("Plugins added: " + strings.Join(r.Plugins, ", ")))
 	}
+	for _, spec := range slices.Sorted(maps.Keys(r.PluginsReplaced)) {
+		fmt.Println(muted.Render("Plugins replaced: " + spec + " → " + r.PluginsReplaced[spec]))
+	}
 	for _, spec := range slices.Sorted(maps.Keys(r.PluginErrors)) {
 		fmt.Println(muted.Render(fmt.Sprintf("Couldn't add the plugin %s: %s", spec, r.PluginErrors[spec])))
 	}

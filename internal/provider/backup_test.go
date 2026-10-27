@@ -141,9 +141,9 @@ func TestPluginsCarried(t *testing.T) {
 	}
 	handed := 0
 	handOver = func(context.Context, bool) map[string]error { handed++; return nil }
-	added, failed := AddPlugins(context.Background(), withKeys)
+	added, replaced, failed := AddPlugins(context.Background(), withKeys)
 	if len(failed) > 0 || !slices.Equal(added, []string{"@magpie-community/opencode-cursor-auth@0.3.0"}) ||
-		!slices.Equal(asked, added) {
+		!slices.Equal(asked, added) || len(replaced) > 0 {
 		t.Fatalf("added %v (asked %v, failed %v), want only the cursor plugin", added, asked, failed)
 	}
 	if handed != 1 {
@@ -157,7 +157,7 @@ func TestPluginsCarried(t *testing.T) {
 	// one turned off there comes off, with its options
 	write(`{"plugins":[]}`)
 	asked = nil
-	if _, failed := AddPlugins(context.Background(), keyless[1:]); len(failed) > 0 {
+	if _, _, failed := AddPlugins(context.Background(), keyless[1:]); len(failed) > 0 {
 		t.Fatal(failed)
 	}
 	if got := plugin.Load().Plugins; len(got) != 1 || !got[0].Off || got[0].Options["map"] == nil {
@@ -169,6 +169,60 @@ func TestPluginsCarried(t *testing.T) {
 	AddPlugins(context.Background(), keyless[1:])
 	if len(asked) != 0 || handed != 0 {
 		t.Fatalf("asked %v, handed over %d times, for plugins already here", asked, handed)
+	}
+}
+
+// Another computer's plugin of a package this one has from another source
+// takes its place — one package is one entry — and the restore says which
+// spec that was. A repository's spec is its own name until its package is
+// installed (plugin.Name), so the check for one already here missed it and
+// only "Plugins added" was said.
+func TestAddPluginsNamesThePluginItReplaced(t *testing.T) {
+	isolate(t)
+	h := t.TempDir()
+	t.Setenv("HOME", h)
+	t.Setenv("USERPROFILE", h)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(h, ".config"))
+	t.Setenv("XDG_CACHE_HOME", filepath.Join(h, ".cache"))
+	t.Setenv("PATH", h)
+	plugins := plugin.Dir()
+	write := func(f, body string) {
+		t.Helper()
+		if err := os.MkdirAll(filepath.Dir(f), 0o700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(f, []byte(body), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// this computer has npm's package, from a backup of its own
+	write(filepath.Join(filepath.Dir(plugins), "plugins.json"), `{"plugins":[{"spec":"@magpie-community/opencode-grok-auth@0.3.0"}]}`)
+	oldAdd, oldHand := addPluginExact, handOver
+	t.Cleanup(func() { addPluginExact, handOver = oldAdd, oldHand })
+	addPluginExact = func(_ context.Context, spec string) (plugin.Entry, error) {
+		// as bun installs a package from a repository: the name its own
+		// package.json gives (here grok's) takes the dependency line in
+		// package.json, and the entry that held that package
+		write(filepath.Join(plugins, "package.json"), `{"dependencies":{"@magpie-community/opencode-grok-auth":"github:other/grok-auth"}}`)
+		write(filepath.Join(plugins, "plugins.json"), `{"plugins":[{"spec":"github:other/grok-auth"}]}`)
+		return plugin.Entry{Spec: spec}, nil
+	}
+	handOver = func(context.Context, bool) map[string]error { return nil }
+	added, replaced, failed := AddPlugins(context.Background(), []plugin.Entry{{Spec: "github:other/grok-auth"}})
+	if len(failed) > 0 || !slices.Equal(added, []string{"github:other/grok-auth"}) {
+		t.Fatalf("added %v, failed %v, want the repository's plugin added", added, failed)
+	}
+	if len(replaced) != 1 || replaced["github:other/grok-auth"] != "@magpie-community/opencode-grok-auth@0.3.0" {
+		t.Fatalf("replaced %v, want npm's spec that the repository's package took the place of", replaced)
+	}
+	// the CLI's own add says it too, off what AddPlugin gives back
+	write(filepath.Join(filepath.Dir(plugins), "plugins.json"), `{"plugins":[{"spec":"@magpie-community/opencode-grok-auth@0.3.0"}]}`)
+	oldPlain := addPlugin
+	t.Cleanup(func() { addPlugin = oldPlain })
+	addPlugin = addPluginExact
+	e, old, err := AddPlugin(context.Background(), "github:other/grok-auth")
+	if err != nil || e.Spec != "github:other/grok-auth" || old != "@magpie-community/opencode-grok-auth@0.3.0" {
+		t.Fatalf("AddPlugin = %+v, replaced %q, %v, want the repository's plugin and npm's spec it took the place of", e, old, err)
 	}
 }
 

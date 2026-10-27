@@ -656,11 +656,11 @@ func TestSyncPluginsAndSignIn(t *testing.T) {
 	old := addPlugins
 	t.Cleanup(func() { addPlugins = old })
 	var asked []string
-	addPlugins = func(es []plugin.Entry) ([]string, map[string]string) {
+	addPlugins = func(es []plugin.Entry) ([]string, map[string]string, map[string]string) {
 		for _, e := range es {
 			asked = append(asked, e.Spec)
 		}
-		return nil, nil
+		return nil, nil, nil
 	}
 	a, b := newComputer(t), newComputer(t)
 	a.use(t)

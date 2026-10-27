@@ -20158,6 +20158,9 @@ function importForm() {
       // a backup carries a subscription's settings, never its sign-in
       if (r.SignIn?.length) lines.push(t("This backup's settings use {names}, which isn't signed in on this computer. A backup carries settings, not sign-ins: to use it here, sign in in Providers → Add a provider; if you don't, nothing needs doing.", { names: subNames(r.SignIn) }));
       if (r.Plugins?.length) lines.push(t("Plugins added: {names}", { names: r.Plugins.join(", ") }));
+      // a package from another source is one plugin either way, so it takes
+      // the one here's place: said, not left to the list
+      if (r.PluginsReplaced && Object.keys(r.PluginsReplaced).length) lines.push(t("Plugins replaced: {names}", { names: Object.entries(r.PluginsReplaced).map(([was, now]) => `${was} → ${now}`).join(", ") }));
       for (const [spec, error] of Object.entries(r.PluginErrors || {})) lines.push(t("Couldn't add the plugin {spec}: {error}", { spec, error }));
       if (r.Library) lines.push(t("Library brought in and written into the agents"));
       for (const p of r.LibraryProblems || []) lines.push(t("{agent} couldn't get {what}: {error}", { agent: p.agent, what: p.what, error: p.error }));

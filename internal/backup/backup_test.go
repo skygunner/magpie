@@ -468,11 +468,11 @@ func TestRestorePluginsAndSignIn(t *testing.T) {
 	old := addPlugins
 	t.Cleanup(func() { addPlugins = old })
 	var asked []string
-	addPlugins = func(_ context.Context, es []plugin.Entry) ([]string, map[string]error) {
+	addPlugins = func(_ context.Context, es []plugin.Entry) ([]string, map[string]string, map[string]error) {
 		for _, e := range es {
 			asked = append(asked, e.Spec)
 		}
-		return asked[:1], map[string]error{"github:x/y": errors.New("no such repository")}
+		return asked[:1], map[string]string{"github:z/z": "github:x/y"}, map[string]error{"github:x/y": errors.New("no such repository")}
 	}
 	got, err := Open(data, "correct horse")
 	if err != nil {
@@ -486,8 +486,9 @@ func TestRestorePluginsAndSignIn(t *testing.T) {
 		t.Fatalf("asked to install %v, want the npm plugin only", asked)
 	}
 	if !slices.Equal(r.SignIn, []string{"claude"}) || !slices.Equal(r.Plugins, asked) ||
+		r.PluginsReplaced["github:z/z"] != "github:x/y" ||
 		r.PluginErrors["github:x/y"] != "no such repository" || !slices.Equal(r.NeedKey, []string{"Acme"}) {
-		t.Fatalf("result: %+v, want claude to sign in to, the plugin added, the failure said, acme to key", r)
+		t.Fatalf("result: %+v, want claude to sign in to, the plugin added, the one it replaced, the failure said, acme to key", r)
 	}
 
 	// a backup from a magpie before plugins installs nothing

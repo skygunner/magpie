@@ -974,9 +974,15 @@ func bring(b backup.Bundle, part string) error {
 			return err
 		}
 		// the plugins the providers come from, added here; never taken
-		// away, and one that can't be added is said, not a failed sync
+		// away, and one that can't be added is said, not a failed sync. A
+		// package from another source is one plugin either way, so it takes
+		// the one here's place, and that is said too
 		if b.Plugins != nil {
-			if _, failed := addPlugins(*b.Plugins); len(failed) > 0 {
+			_, replaced, failed := addPlugins(*b.Plugins)
+			for spec, old := range replaced {
+				log.Printf("sync: plugin %s replaced %s", spec, old)
+			}
+			if len(failed) > 0 {
 				for spec, err := range failed {
 					log.Printf("sync: plugin %s: %s", spec, err)
 				}

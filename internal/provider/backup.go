@@ -171,8 +171,13 @@ func withoutSecretOptions(opts map[string]any) map[string]any {
 // aren't here, the way Settings → Plugins adds one, and hands each a
 // deprecated built-in it serves (HandOver). It never takes a plugin away
 // or changes one already here: a plugin removed on one computer stays on
-// the others. It returns the specs added and why the others couldn't be.
-func AddPlugins(ctx context.Context, es []plugin.Entry) (added []string, failed map[string]error) {
+// the others. One package is one entry whichever source it came from, so
+// a carried plugin of a package here under another spec (a repository's
+// where this has npm's) takes its place, as plugin.add does; that is not
+// left unsaid. It returns the specs added, the spec each plugin that took
+// another's place replaced (the new spec → the one it replaced), and why
+// the others couldn't be.
+func AddPlugins(ctx context.Context, es []plugin.Entry) (added []string, replaced map[string]string, failed map[string]error) {
 	here := map[string]bool{}
 	for _, e := range plugin.Load().Plugins {
 		here[plugin.Name(e.Spec)] = true
@@ -185,6 +190,7 @@ func AddPlugins(ctx context.Context, es []plugin.Entry) (added []string, failed 
 		// the package that computer installed, as it has it: never
 		// taken for a community plugin's name, or held while the
 		// community's list can't be read
+		was := pluginPackageNames()
 		got, err := addPluginWith(ctx, e.Spec, addPluginExact)
 		if err == nil && e.Off {
 			err = plugin.SetOff(got.Spec, true)
@@ -200,11 +206,17 @@ func AddPlugins(ctx context.Context, es []plugin.Entry) (added []string, failed 
 			continue
 		}
 		added = append(added, e.Spec)
+		if old := replacedBy(was, got); old != "" {
+			if replaced == nil {
+				replaced = map[string]string{}
+			}
+			replaced[got.Spec] = old
+		}
 	}
 	if len(added) > 0 {
 		handOver(ctx, false)
 	}
-	return added, failed
+	return added, replaced, failed
 }
 
 // NotSignedIn is the subscriptions among ps (as a backup or a sync brings

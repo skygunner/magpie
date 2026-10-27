@@ -672,7 +672,7 @@ func pluginRoutes(mux *http.ServeMux, w Windows) {
 		var err error
 		switch r.PathValue("op") {
 		case "add":
-			_, err = addPlugin(ctx, in.Spec)
+			_, _, err = addPlugin(ctx, in.Spec)
 		case "remove":
 			err = removePlugin(ctx, in.Spec)
 		case "update":
