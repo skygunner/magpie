@@ -7,7 +7,7 @@
 import { spawn } from "node:child_process"
 import { writeFileSync } from "node:fs"
 import { join } from "node:path"
-import { createAssistantMessageEventStream } from "@earendil-works/pi-ai"
+import { createAssistantMessageEventStream, createProvider } from "@earendil-works/pi-ai"
 import { readStoredCredential, type ExtensionAPI } from "@earendil-works/pi-coding-agent"
 import { Container, Input, SelectList, Text } from "@earendil-works/pi-tui"
 
@@ -218,4 +218,34 @@ export default function (pi: ExtensionAPI) {
     models: [{ ...models[1], id: "fk-1", name: "FK 1" }],
     streamSimple: stream,
   })
+
+  // as pi-aiwork-provider writes its key login (pi-ai's createProvider): the
+  // login asks as it goes, and returns the key and provider-scoped env its
+  // resolver reads, or only the marker bound to a local sign-in it reused
+  const ownKey = (id, model, keyed) =>
+    createProvider({
+      id,
+      name: keyed ? "FakePi Own Key" : "FakePi Own Env",
+      baseUrl: "https://fakepi.invalid",
+      api: { stream, streamSimple: stream },
+      models: [{ ...models[1], id: model, name: model, provider: id, api: id + "-api" }],
+      auth: {
+        apiKey: {
+          name: "Select demo workspace",
+          async login(interaction) {
+            const workspace = await interaction.prompt({ type: "select", message: "Choose a workspace", options: [{ id: "demo", label: "Demo workspace" }] })
+            interaction.signal.throwIfAborted()
+            if (workspace !== "demo") throw new Error("Login cancelled")
+            return keyed ? { type: "api_key", key: "fo-key", env: { FAKEPI_WORKSPACE: workspace } } : { type: "api_key", env: { FAKEPI_WORKSPACE: workspace } }
+          },
+          async resolve({ credential }) {
+            if (credential?.env?.FAKEPI_WORKSPACE !== "demo" || (credential.key !== undefined && credential.key !== "fo-key")) return undefined
+            return { auth: { apiKey: credential.key ?? "fo-env" }, env: credential.env, source: "Demo workspace" }
+          },
+        },
+      },
+    })
+  pi.registerProvider(ownKey("fakepi-own-key", "fo-1", true))
+  // the marker alone, as aiwork's login keeps it
+  pi.registerProvider(ownKey("fakepi-own-env", "fo-2", false))
 }

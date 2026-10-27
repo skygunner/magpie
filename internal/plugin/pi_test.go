@@ -146,7 +146,7 @@ func TestPiPackage(t *testing.T) {
 		byID[p.ID] = p
 	}
 	fp, fk := byID["fakepi"], byID["fakepi-key"]
-	if len(ps) != 2 || fp.Name != "FakePi" || fk.Name != "FakePi Key" {
+	if len(ps) != 4 || fp.Name != "FakePi" || fk.Name != "FakePi Key" {
 		t.Fatalf("Providers = %+v", ps)
 	}
 	if len(fp.Methods) != 1 || fp.Methods[0].Type != "oauth" || fp.Methods[0].Label != "Sign in with FakePi Account" {
@@ -359,6 +359,83 @@ func TestPiPackage(t *testing.T) {
 	json.Unmarshal(b, &saved)
 	if a := saved["fakepi"]; a["access"] != "renewed-r-blue" || a["team"] != "blue" || a["type"] != "oauth" {
 		t.Fatalf("the renewal kept %v", a)
+	}
+}
+
+// A pi package's own api-key login (pi-ai's createProvider, auth.apiKey.login)
+// runs as pi runs it (#1682): it asks its questions, and the key and
+// provider-scoped env it returns are the account its resolver reads, after a
+// restart too, or the marker alone when the login makes no key. A provider
+// that wrote no login still asks for the key here.
+func TestPiProviderOwnKeyLogin(t *testing.T) {
+	sandbox(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Minute)
+	defer cancel()
+
+	installPinnedPi(t, ctx)
+	abs, _ := filepath.Abs("testdata/pi")
+	if _, err := Add(ctx, abs); err != nil {
+		t.Fatal(err)
+	}
+	ps, err := Providers(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	byID := map[string]Provider{}
+	for _, p := range ps {
+		byID[p.ID] = p
+	}
+	// the package's login is the whole way to sign in; no key is asked for
+	for _, id := range []string{"fakepi-own-key", "fakepi-own-env"} {
+		if m := byID[id].Methods; len(m) != 1 || m[0] != (Method{Type: "api", Label: "Select demo workspace", Keyless: true}) {
+			t.Fatalf("%s's methods = %+v", id, m)
+		}
+	}
+	// a provider that wrote no login of its own still asks for its key
+	if m := byID["fakepi-key"].Methods; len(m) != 1 || m[0] != (Method{Type: "api", Label: "API key"}) {
+		t.Fatalf("fakepi-key's methods = %+v", m)
+	}
+	signIn := func(id string) {
+		t.Helper()
+		p, err := NextPrompt(ctx, id, 0, map[string]string{})
+		if err != nil || p == nil || p.Type != "select" || p.Message != "Choose a workspace" || len(p.Options) != 1 || p.Options[0].Value != "demo" {
+			t.Fatalf("%s's question = %+v, %v", id, p, err)
+		}
+		in := map[string]string{p.Key: "demo"}
+		if p, err := NextPrompt(ctx, id, 0, in); err != nil || p != nil {
+			t.Fatalf("%s asked after the workspace: %+v, %v", id, p, err)
+		}
+		// no key typed: the login made the credential
+		if got, err := APIKey(ctx, id, 0, in, "", NewAccount); err != nil || got != (Saved{id, id}) {
+			t.Fatalf("%s APIKey = %+v, %v", id, got, err)
+		}
+	}
+	signIn("fakepi-own-key")
+	signIn("fakepi-own-env")
+	var saved map[string]map[string]any
+	b, _ := os.ReadFile(AuthPath())
+	json.Unmarshal(b, &saved)
+	for id, key := range map[string]string{"fakepi-own-key": "fo-key", "fakepi-own-env": ""} {
+		a := saved[id]
+		meta, _ := a["metadata"].(map[string]any)
+		env, _ := meta["env"].(map[string]any)
+		if a["type"] != "api" || a["key"] != key || env["FAKEPI_WORKSPACE"] != "demo" {
+			t.Fatalf("%s's account = %v", id, a)
+		}
+	}
+	// each resolver wants the env the login made, so a request answered has
+	// it: now, and once the host has started again
+	for _, now := range []string{"signed in", "after a restart"} {
+		for _, c := range []struct{ id, model, key string }{{"fakepi-own-key", "fo-1", "fo-key"}, {"fakepi-own-env", "fo-2", "fo-env"}} {
+			r := piAsk(t, ctx, c.id, c.model, map[string]any{"max_tokens": 100, "messages": []map[string]any{{"role": "user", "content": "hi"}}})
+			if r.status != 200 {
+				t.Fatalf("%s %s: %d %v", now, c.id, r.status, r.body)
+			}
+			if s := r.seen(t); s["apiKey"] != c.key {
+				t.Fatalf("%s %s was handed %v", now, c.id, s)
+			}
+		}
+		Restart()
 	}
 }
 

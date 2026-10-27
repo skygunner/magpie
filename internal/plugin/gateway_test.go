@@ -329,7 +329,7 @@ func TestGatewayHookMixedPiPackage(t *testing.T) {
 		t.Fatal(err)
 	}
 	providers, err := Providers(ctx)
-	if err != nil || len(providers) != 2 {
+	if err != nil || len(providers) != 4 {
 		t.Fatalf("mixed package lost Pi providers: %+v %v", providers, err)
 	}
 	out := gatewayRequest(t.Context(), []byte(`{"note":"original"}`), GatewayContext{})

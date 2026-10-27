@@ -76,7 +76,11 @@ function resolve(name, dirs) {
 function toPi(a) {
   if (!a || typeof a !== "object") return undefined
   if (a.type === "oauth") return { ...a, type: "oauth" }
-  if (a.type === "api" && typeof a.key === "string") return { type: "api_key", key: a.key, ...(a.metadata?.env ? { env: a.metadata.env } : {}) }
+  if (a.type === "api" && typeof a.key === "string") {
+    // magpie keeps an account the login made no key for as "": pi has no
+    // key to read there, only the env
+    return { type: "api_key", ...(a.key ? { key: a.key } : {}), ...(a.metadata?.env ? { env: a.metadata.env } : {}) }
+  }
   return undefined
 }
 
@@ -618,9 +622,12 @@ export async function load(h, list) {
       if (r.errors?.length && !r.extensions?.length) throw new Error(r.errors.map((e) => e.error).join("; "))
       for (const e of r.errors ?? []) h.send({ event: "log", level: "error", message: `${p.spec}: ${e.error}` })
       if (!ids.length && !r.extensions?.length) throw new Error("has no pi extension")
+      // a key login the package registered itself (pi-ai's createProvider),
+      // which pi hands the provider as it wrote it
+      const own = new Map((r.runtime?.pendingNativeProviderRegistrations ?? []).map((x) => [x.provider.id, x.provider.auth?.apiKey]))
       const runner = bind(pi, r, mr, none, h, p.spec)
       for (const id of ids) runners.set(id, runner)
-      const hooks = [...new Set(ids)].map((id) => ({ spec: p.spec, target: p.target, hooks: hooksOf(hp, mr, ai, id) }))
+      const hooks = [...new Set(ids)].map((id) => ({ spec: p.spec, target: p.target, hooks: hooksOf(hp, mr, ai, id, own.get(id)) }))
       out.push({ spec: p.spec, hooks })
     } catch (e) {
       out.push({ spec: p.spec, error: String(e?.stack ?? e) })
@@ -861,7 +868,7 @@ function loopbackRedirect(url) {
 
 // a sign-in under way: pi's login runs, and what it asks or shows comes
 // out as events, one at a time
-function startLogin(oauth) {
+function startLogin(login) {
   const ctl = new AbortController()
   const timer = setTimeout(() => ctl.abort(new Error("the sign-in timed out")), LOGIN_WAIT)
   const run = { ctl, n: 0, asked: null, url: null, shown: [], waiters: [], result: null, done: false }
@@ -886,7 +893,7 @@ function startLogin(oauth) {
     },
   }
   run.promise = Promise.resolve()
-    .then(() => asking.run(interaction, () => oauth.login(interaction)))
+    .then(() => asking.run(interaction, () => login(interaction)))
     .then(
       (c) => (run.result = { ...c, type: "success" }),
       (e) => (run.result = { type: "failed", error: String(e?.message ?? e) }),
@@ -903,7 +910,8 @@ function promptOf(run) {
   const { q, key } = run.asked
   const select = q.type === "select" && Array.isArray(q.options) && q.options.length
   return {
-    type: select ? "select" : "text",
+    // a secret is typed unseen, as an API key is (#1982)
+    type: select ? "select" : q.type === "secret" ? "password" : "text",
     key,
     message: q.message ?? "",
     placeholder: q.placeholder ?? "",
@@ -913,9 +921,36 @@ function promptOf(run) {
   }
 }
 
-function hooksOf(h, mr, ai, id) {
+// keyAuth is the api-key auth the package itself registered (pi-ai's
+// createProvider), whose login makes the credential; pi gives every key
+// provider a generic login when the package wrote none, which magpie's own
+// key field answers better.
+function hooksOf(h, mr, ai, id, keyAuth) {
   const prov = () => mr.getProvider(id)
   const runs = new Map() // method index → its sign-in under way
+
+  // a login's questions, asked one at a time as magpie asks a method's
+  // prompts (magpie's own hook); page is whether the login shows a page
+  // apart from its questions, which a pi OAuth sign-in does
+  function asker(index, login, page) {
+    return async (inputs = {}) => {
+      let run = runs.get(index)
+      const answered = !!run?.asked && run.asked.key in inputs
+      // asked with nothing answered: a sign-in begun afresh
+      if (!run || run.done || (!answered && !Object.keys(inputs).length)) {
+        run?.ctl.abort(new Error("Login cancelled"))
+        run = startLogin(login)
+        runs.set(index, run)
+      }
+      if (answered) {
+        const { ok, key } = run.asked
+        run.asked = null
+        ok(String(inputs[key] ?? ""))
+      }
+      await run.next()
+      return run.asked && !(page && run.url) ? promptOf(run) : null
+    }
+  }
 
   function methods() {
     const a = prov()?.auth ?? {}
@@ -926,29 +961,13 @@ function hooksOf(h, mr, ai, id) {
         label: a.oauth.loginLabel ?? `Sign in with ${a.oauth.name ?? prov()?.name ?? id}`,
       }
       const index = out.length
-      // what the login asks before it shows its page, asked one at a time
-      // as magpie asks a method's prompts (magpie's own hook)
-      m.ask = async (inputs = {}) => {
-        let run = runs.get(index)
-        const answered = !!run?.asked && run.asked.key in inputs
-        // asked with nothing answered: a sign-in begun afresh
-        if (!run || run.done || (!answered && !Object.keys(inputs).length)) {
-          run?.ctl.abort(new Error("Login cancelled"))
-          run = startLogin(a.oauth)
-          runs.set(index, run)
-        }
-        if (answered) {
-          const { ok, key } = run.asked
-          run.asked = null
-          ok(String(inputs[key] ?? ""))
-        }
-        await run.next()
-        return run.asked && !run.url ? promptOf(run) : null
-      }
+      const login = (i) => a.oauth.login(i)
+      // what the login asks before it shows its page
+      m.ask = asker(index, login, true)
       m.authorize = async () => {
         let run = runs.get(index)
         if (!run || (run.done && run.result?.type !== "success" && !run.url)) {
-          run = startLogin(a.oauth)
+          run = startLogin(login)
           runs.set(index, run)
         }
         while (!run.url && !run.done) {
@@ -988,7 +1007,32 @@ function hooksOf(h, mr, ai, id) {
       }
       out.push(m)
     }
-    if (a.apiKey || !a.oauth) out.push({ type: "api", label: "API key" })
+    if (a.apiKey || !a.oauth) {
+      const index = out.length
+      const login = keyAuth?.login
+      // the package's own key login runs as pi runs it, and makes the whole
+      // credential; without one the key is typed here, as OpenCode's "api"
+      // method has it. keyless is magpie's own field for a method whose
+      // authorize gives the credential, which GUI and CLI then don't ask a
+      // key for
+      const m = { type: "api", label: typeof keyAuth?.name === "string" && keyAuth.name.trim() ? keyAuth.name.trim() : "API key", ...(login ? { keyless: true } : {}) }
+      if (login) {
+        m.ask = asker(index, (i) => login(i), false)
+        m.authorize = async () => {
+          const run = runs.get(index) ?? startLogin((i) => login(i))
+          runs.set(index, run)
+          await run.promise
+          runs.delete(index)
+          const r = run.result
+          if (r?.type !== "success") return r
+          // the key, left in even when the login makes none so magpie keeps
+          // the account, and the env its resolver reads
+          const { key, env } = r
+          return { type: "success", key, ...(env ? { metadata: { env } } : {}) }
+        }
+      }
+      out.push(m)
+    }
     return out
   }
 

@@ -257,3 +257,15 @@ personal-key entry for it; ordinary API methods still require a key.
 its account slot and the account action says Sign in again. Existing records
 are not deleted. Other plugins keep multiple accounts. OpenCode ignores
 these optional fields; no provider id is special-cased in magpie.
+
+A pi package's own key login is carried the same way. A provider a package
+registers with pi-ai's `createProvider` and an `auth.apiKey.login` that asks
+as it goes is offered as one keyless `api` method, labelled with that auth's
+`name`: its `ask` runs the login's questions, and its `authorize` finishes the
+login and keeps the `ApiKeyCredential`'s `key` and provider-scoped `env` as
+the account's key and `metadata.env` (`hooksOf` in
+[`pi.js`](../../internal/plugin/pi.js), `TestPiProviderOwnKeyLogin` in
+[`pi_test.go`](../../internal/plugin/pi_test.go)). `toPi` gives pi that `env`
+back, and no `key` for an account a login made none for. pi's own generic
+login, which it makes for a provider that wrote none, is not run: such a
+provider keeps magpie's key field, as before.
