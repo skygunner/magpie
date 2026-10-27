@@ -19,9 +19,10 @@ import (
 // windows show everything whatever it says.
 //
 // Settings' choice (settings.GatewayMode, "on" or "off") wins; with none,
-// `magpie web --gateway` turns it on, and so does a magpie web with no
-// agent on its machine (a container, a NAS). Settings › General turns it
-// off again, which brings the pages back.
+// `magpie web --gateway` turns it on, and so does a magpie web in a container
+// or on a machine with no agent on it (a NAS): neither is where anyone sets
+// an agent up. Settings › General turns it off again, which brings the pages
+// back.
 
 // WebGateway is `magpie web --gateway`'s.
 var WebGateway atomic.Bool
@@ -31,8 +32,9 @@ var WebGateway atomic.Bool
 var webPage atomic.Bool
 
 // gatewayMode says whether the page is in gateway mode, and why: "on" or
-// "off" (Settings' choice), "flag" (magpie web --gateway), "no-agents", or
-// "" (the app's windows, or magpie web on a machine with agents).
+// "off" (Settings' choice), "flag" (magpie web --gateway), "container"
+// (magpie runs in a container), "no-agents", or "" (the app's windows, or
+// magpie web on a machine with agents).
 func gatewayMode(web bool) (bool, string) {
 	if !web {
 		return false, ""
@@ -43,6 +45,9 @@ func gatewayMode(web bool) (bool, string) {
 	}
 	if WebGateway.Load() {
 		return true, "flag"
+	}
+	if inContainer() {
+		return true, "container"
 	}
 	if !agentsHere() {
 		return true, "no-agents"

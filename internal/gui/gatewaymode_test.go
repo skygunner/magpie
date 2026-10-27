@@ -23,9 +23,10 @@ func TestGatewayMode(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(h, ".config"))
 	t.Setenv("XDG_CACHE_HOME", filepath.Join(h, ".cache"))
 	here := false
-	was := agentsHere
+	was, wasIn := agentsHere, inContainer
 	agentsHere = func() bool { return here }
-	t.Cleanup(func() { agentsHere = was; WebGateway.Store(false); webPage.Store(false) })
+	inContainer = func() bool { return false }
+	t.Cleanup(func() { agentsHere, inContainer = was, wasIn; WebGateway.Store(false); webPage.Store(false) })
 
 	srv := Handler(webHost{func() {}}, nil)
 	do := func(method, path, body string) *httptest.ResponseRecorder {
@@ -100,5 +101,63 @@ func TestGatewayMode(t *testing.T) {
 	in.KeepOwn(settings.Settings{GatewayMode: "on"})
 	if in.GatewayMode != "on" {
 		t.Fatalf("KeepOwn: %q", in.GatewayMode)
+	}
+}
+
+// A container is only the gateway for other computers' agents (yetone,
+// 2026-10-14): its page leaves out Agents and Library whatever agents its
+// image has, since none of them runs there. Settings' On or Off still wins,
+// and the app's windows are never in it.
+func TestAContainerIsAGatewayWithAgentsHere(t *testing.T) {
+	h := t.TempDir()
+	t.Setenv("HOME", h)
+	t.Setenv("USERPROFILE", h)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(h, ".config"))
+	t.Setenv("XDG_CACHE_HOME", filepath.Join(h, ".cache"))
+	was, wasIn := agentsHere, inContainer
+	agentsHere = func() bool { return true } // a CLI the image installed at a sign-in
+	inContainer = func() bool { return true }
+	t.Cleanup(func() { agentsHere, inContainer = was, wasIn; WebGateway.Store(false); webPage.Store(false) })
+
+	srv := Handler(webHost{func() {}}, nil)
+	do := func(method, path, body string) *httptest.ResponseRecorder {
+		rec := httptest.NewRecorder()
+		srv.ServeHTTP(rec, httptest.NewRequest(method, path, strings.NewReader(body)))
+		return rec
+	}
+	check := func(when string, on bool, why string) {
+		t.Helper()
+		var s struct {
+			GatewayOn  bool
+			GatewayWhy string
+		}
+		if rec := do("GET", "/api/settings", ""); rec.Code != http.StatusOK || json.Unmarshal(rec.Body.Bytes(), &s) != nil {
+			t.Fatalf("%s: settings %d %s", when, rec.Code, rec.Body)
+		}
+		if s.GatewayOn != on || s.GatewayWhy != why {
+			t.Fatalf("%s: settings say %+v, want on=%v why=%q", when, s, on, why)
+		}
+		if boot := do("GET", "/boot.js", "").Body.String(); strings.Contains(boot, `"gateway":true`) != on {
+			t.Fatalf("%s: boot.js %s", when, boot)
+		}
+	}
+	set := func(mode string) {
+		t.Helper()
+		if rec := do("POST", "/api/settings/gateway-mode", `{"mode":"`+mode+`"}`); rec.Code != http.StatusOK {
+			t.Fatalf("set %q: %d %s", mode, rec.Code, rec.Body)
+		}
+	}
+
+	check("a container with an agent installed", true, "container")
+	set("off")
+	check("a container the user turned off", false, "off")
+	set("")
+	check("automatic again", true, "container")
+
+	// the app's windows: never, whatever the machine is
+	rec := httptest.NewRecorder()
+	Handler(&zoomWindows{}, nil).ServeHTTP(rec, httptest.NewRequest("GET", "/boot.js", nil))
+	if strings.Contains(rec.Body.String(), `"gateway":true`) {
+		t.Fatalf("the app's window was told gateway mode: %s", rec.Body)
 	}
 }

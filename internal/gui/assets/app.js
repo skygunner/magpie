@@ -19644,8 +19644,8 @@ function renderSettings() {
 }
 
 // Gateway mode's switch, in magpie web alone (gatewaymode.go): Automatic
-// (on with --gateway or no agents here), On or Off. Turned, the tabs follow
-// at once.
+// (on with --gateway, in a container, or with no agents here), On or Off.
+// Turned, the tabs follow at once.
 function renderGatewayMode(s) {
   $("#gatewayModeRow").hidden = !web;
   if (!web) return;
@@ -19657,6 +19657,7 @@ function renderGatewayMode(s) {
     }).catch((e) => { status(t(e.message), "err"); renderSettings(); })));
   const now = s.gatewayMode ? "" : {
     flag: t("Now on: magpie web was started with --gateway"),
+    container: t("Now on: magpie runs in a container"),
     "no-agents": t("Now on: no agents on this computer"),
   }[s.gatewayWhy] || t("Now off: agents found on this computer");
   $("#gatewayModeSub").textContent = [t("Only what a gateway for other computers needs: no Agents or Library, nor this computer's agents' settings"), now].filter(Boolean).join(" · ");

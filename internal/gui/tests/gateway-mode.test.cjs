@@ -34,12 +34,12 @@ function settingsPayload(over) {
   };
 }
 
-// agents says whether magpie found agents here: Automatic is on without
-// notice is the warning on Codex's subagents row, when the answer
-// carries one
-function server(lang, posts, { web = true, gateway = true, agents = false, notice } = {}) {
-  const why = (mode) => (mode === "on" || mode === "off" ? mode : agents ? "" : "no-agents");
-  const on = (mode) => web && (mode === "on" || (mode !== "off" && !agents));
+// agents says whether magpie found agents here, container whether magpie
+// runs in one (a container is a gateway's page whatever agents its image
+// has): Automatic is on without either
+function server(lang, posts, { web = true, gateway = true, agents = false, container = false, notice } = {}) {
+  const why = (mode) => (mode === "on" || mode === "off" ? mode : container ? "container" : agents ? "" : "no-agents");
+  const on = (mode) => web && (mode === "on" || (mode !== "off" && (container || !agents)));
   let cur = settingsPayload({ lang, web, gatewayMode: "", gatewayOn: web && gateway, gatewayWhy: web && gateway ? why("") : "", ...(notice ? { notice, codexAgentsV1: true } : {}) });
   return async (route) => {
     const req = route.request(), url = new URL(req.url());
@@ -78,9 +78,17 @@ function server(lang, posts, { web = true, gateway = true, agents = false, notic
   };
 }
 
+// the Settings line that says why Automatic is on, in each language
+const WHY = {
+  en: { noAgents: "Now on: no agents on this computer", container: "Now on: magpie runs in a container" },
+  zh: { noAgents: "当前开启：本机没有 Agent", container: "当前开启：magpie 运行在容器中" },
+  "zh-TW": { container: "目前開啟：magpie 在容器中執行" },
+  ja: { container: "現在オン：magpie はコンテナで実行されています" },
+  de: { container: "Jetzt an: magpie läuft in einem Container" },
+};
 const L = {
-  en: { mode: "Gateway mode", noAgents: "Now on: no agents on this computer", off: "Now off: agents found on this computer" },
-  zh: { mode: "网关模式", noAgents: "当前开启：本机没有 Agent", off: "当前关闭：本机找到了 Agent" },
+  en: { mode: "Gateway mode", noAgents: WHY.en.noAgents, off: "Now off: agents found on this computer" },
+  zh: { mode: "网关模式", noAgents: WHY.zh.noAgents, off: "当前关闭：本机找到了 Agent" },
 };
 const HIDDEN = ["agents", "library"];
 // in the order the pages are grouped in (work, models, insights, extend)
@@ -116,6 +124,32 @@ async function clickStill(page, at, where) {
 }
 
 for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"])) {
+  // A container's page (yetone, #2117): gateway mode is on whatever agent its
+  // image has installed, since none of them runs there, and General says so
+  // in the page's language at 1100 and 420 without pushing the page sideways.
+  test(`${engine}: a container's page leaves out Agents and Library, and says why`, async (t) => {
+    const browser = await (engine === "webkit" ? webkit.launch() : chromium.launch({ channel: "chromium" }));
+    t.after(() => browser.close());
+    for (const lang of ["en", "zh", "zh-TW", "ja", "de"]) {
+      for (const width of [1100, 420]) {
+        const where = `${engine} ${lang} ${width}`;
+        const context = await browser.newContext({ viewport: { width, height: 720 }, reducedMotion: "reduce" });
+        const page = await context.newPage();
+        page.setDefaultTimeout(5000);
+        const errors = [];
+        page.on("pageerror", (e) => errors.push(e.message));
+        await page.route("**/*", server(lang, [], { container: true, agents: true }));
+        await page.goto("http://magpie.test/?view=settings&tab=general");
+        await page.waitForSelector("#gatewayModeSegs .opt");
+        assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll("#nav button[data-view]")].filter((b) => b.hidden).map((b) => b.dataset.view)), HIDDEN, `${where}: the tabs`);
+        assert.match(await page.locator("#gatewayModeSub").textContent(), new RegExp(WHY[lang].container), where);
+        assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), `${where}: the page scrolls sideways`);
+        assert.deepEqual(errors, [], where);
+        await context.close();
+      }
+    }
+  });
+
   test(`${engine}: gateway mode`, async (t) => {
     const browser = await (engine === "webkit" ? webkit.launch() : chromium.launch({ channel: "chromium" }));
     t.after(() => browser.close());

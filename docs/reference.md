@@ -2643,10 +2643,11 @@ Settings leaves out what is written into this machine's agents (provider in
 model names) and the desktop's alerts and tray. Codex's and Claude Code's own
 settings (Codex subagents, long conversations, Codex thread titles and the
 rest) are on the Agents page, in the agent's opened row, so a gateway has
-none of them. `magpie web` is in it by itself when it finds
-no agents on its machine, as in the container, and with
-`magpie web --gateway`. *Settings › General › Gateway mode* picks Automatic,
-On or Off for this machine (it wins over both); Off brings every page back.
+none of them. `magpie web` is in it by itself in a container, which is
+only the gateway whatever CLIs a sign-in installed there, on a machine
+where it finds no agents, and with `magpie web --gateway`. *Settings ›
+General › Gateway mode* picks Automatic, On or Off for this machine (it
+wins over both); Off brings every page back.
 The app's own window is never in gateway mode.
 
 For a bind-mounted configuration directory, the directory must be writable by
