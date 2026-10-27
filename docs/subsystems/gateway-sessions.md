@@ -62,6 +62,18 @@ subagent whose session file is in a temp folder). Verification:
 models, token totals, start/last timestamps and effective prices come from the
 same usage records used by Usage and stats endpoints.
 
+Claude Desktop's Code tab and its 3p gateway mode run Claude Code and write
+its logs under `~/.claude/projects`, with `entrypoint` `claude-desktop` or
+`claude-desktop-3p` (`ccDesktopEntrypoint` in
+[`claude.go`](../../internal/sessions/claude.go)). Such a session is Claude
+Desktop's, whatever folder keeps its file: `classifyDesktop` in
+[`sessions.go`](../../internal/sessions/sessions.go) gives its files that
+agent, so it is one identity with the gateway's records, and its folder,
+subagents, conversation and `claude --resume` command are the ones its Claude
+Code log has (`Session.LogAgent`, `s.logAgent`). A Claude Code CLI session
+beside it stays Claude Code's. Verification:
+`TestClaudeDesktop3pSessionsListedOnceAsDesktop`.
+
 A model the user counts under another id (`usageAliases` in settings.json,
 `magpie model alias`; [`provider.UsageAlias`](../../internal/provider/usagealias.go))
 is merged after pricing, never before: `buildGatewaySessions` prices each

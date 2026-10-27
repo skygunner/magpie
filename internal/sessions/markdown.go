@@ -19,7 +19,7 @@ import (
 // folded (<details>); a tool's call is its name and arguments. name is the
 // agent as the reader knows it. The file is only read.
 func WriteMarkdown(w io.Writer, s Session, name string) error {
-	if !HasTranscript(s.Agent) || s.Path == "" {
+	if !HasTranscript(s.logAgent()) || s.Path == "" {
 		return ErrNoTranscript
 	}
 	return writeMarkdown(w, s, name, "File", s.Path, false, func(each func(Part) bool) error {

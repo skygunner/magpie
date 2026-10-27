@@ -148,7 +148,7 @@ func CarryOver(s Session, to string) (CarryResult, error) {
 		}
 	}
 	var items []carryItem
-	switch s.Agent {
+	switch s.logAgent() {
 	case "claude":
 		items, err = claudeCarryItems(s.Path)
 	case "codex":
@@ -651,7 +651,7 @@ func randHex(n int) string {
 // with, which a file written for it says too ("" when none says).
 func agentVersion(agent string) string {
 	for _, s := range listSessions(0) {
-		if s.Agent != agent || s.Path == "" || s.WSL != "" {
+		if s.logAgent() != agent || s.Path == "" || s.WSL != "" {
 			continue
 		}
 		v := ""

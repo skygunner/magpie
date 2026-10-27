@@ -1,6 +1,7 @@
 package sessions
 
 import (
+	"cmp"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -91,15 +92,17 @@ func Agents() []AgentCount {
 
 func agentCounts(all []file) []AgentCount {
 	n := map[string]map[string]bool{}
+	del := map[string]bool{}
 	for _, f := range all {
 		if n[f.agent] == nil {
 			n[f.agent] = map[string]bool{}
 		}
 		n[f.agent][f.key] = true
+		del[f.agent] = del[f.agent] || Deletable(cmp.Or(f.layout, f.agent))
 	}
 	out := []AgentCount{}
 	for a, keys := range n {
-		out = append(out, AgentCount{Agent: a, Count: len(keys), Deletable: Deletable(a)})
+		out = append(out, AgentCount{Agent: a, Count: len(keys), Deletable: del[a]})
 	}
 	sort.Slice(out, func(i, j int) bool {
 		if out[i].Count != out[j].Count {
@@ -224,7 +227,7 @@ func listAgent(agent string, all []file) []Managed {
 		setSessionCodexTaskTitle(&s, taskTitles)
 		listed(&s)
 		// a WSL distro's too (TJHHHH): moved out over \\wsl.localhost
-		m := Managed{Session: s, Files: len(fs), Deletable: Deletable(agent) && !s.ReadOnly}
+		m := Managed{Session: s, Files: len(fs), Deletable: Deletable(s.logAgent()) && !s.ReadOnly}
 		for _, f := range fs {
 			m.Size += f.size
 			if st := cache[f.path]; st != nil && f.main {
@@ -252,7 +255,7 @@ func listAgent(agent string, all []file) []Managed {
 // whether its conversation can be read.
 func listed(s *Session) {
 	if s.Resume == "" && !s.ReadOnly {
-		s.Resume = resumeCommand(s.WSL, s.Agent, s.ID, s.Cwd, s.Path)
+		s.Resume = resumeCommand(s.WSL, s.logAgent(), s.ID, s.Cwd, s.Path)
 	}
 	if s.Carry == nil {
 		s.Carry = carries(*s)
@@ -298,9 +301,6 @@ const manifest = "session.json"
 // \\wsl.localhost the same way, its Claude Code files from the distro's
 // ~/.claude, and Restore puts it back there.
 func Delete(agent, id string) (Trashed, error) {
-	if !Deletable(agent) {
-		return Trashed{}, fmt.Errorf("magpie can't delete %s sessions", agent)
-	}
 	if !safeID.MatchString(id) {
 		return Trashed{}, errors.New("no such session")
 	}
@@ -332,10 +332,15 @@ func Delete(agent, id string) (Trashed, error) {
 	if len(fs) == 0 {
 		return Trashed{}, errors.New("no such session")
 	}
+	// what can be deleted is the agent whose files these are: Claude
+	// Desktop's 3p session is Claude Code's file (#2705)
+	if !Deletable(s.logAgent()) {
+		return Trashed{}, fmt.Errorf("magpie can't delete %s sessions", agent)
+	}
 	if s.ReadOnly {
 		return Trashed{}, errors.New("this session is read only")
 	}
-	paths := sessionPaths(agent, id, fs)
+	paths := sessionPaths(s.logAgent(), id, fs)
 	if len(paths) == 0 {
 		// a stopped distro's listing, of files since gone
 		wslForget(fs)

@@ -45,14 +45,14 @@ func carries(s Session) []Carry {
 	if s.ReadOnly || s.WSL != "" || s.Path == "" || s.Cwd == "" {
 		return nil
 	}
-	switch s.Agent {
+	switch s.logAgent() {
 	case "pi":
 		if !ompThere() {
 			return nil
 		}
 		return []Carry{{Agent: "omp", Command: inFolder(s.Cwd, "omp --fork "+argQuote(s.Path))}}
 	}
-	if to := convertsTo[s.Agent]; to != "" && agentThere(to) {
+	if to := convertsTo[s.logAgent()]; to != "" && agentThere(to) {
 		return []Carry{{Agent: to, Convert: true}}
 	}
 	return nil

@@ -119,8 +119,13 @@ type Session struct {
 	ReadOnly bool `json:"read_only,omitempty"`
 	// Gateway: seen only through magpie's gateway, with no file of the
 	// agent's on this computer (external.go)
-	Gateway       bool          `json:"gateway,omitempty"`
-	Agent         string        `json:"agent"` // magpie agent id: claude, codex, opencode, pi, omp, zcode, dsh, cline, qoder, qoder-cn, grok, workbuddy, codebuddy, droid, cursor, hermes, alma, kimi, agy
+	Gateway bool   `json:"gateway,omitempty"`
+	Agent   string `json:"agent"` // magpie agent id: claude, codex, opencode, pi, omp, zcode, dsh, cline, qoder, qoder-cn, grok, workbuddy, codebuddy, droid, cursor, hermes, alma, kimi, agy
+	// LogAgent is the agent whose logs the session's files are, when that
+	// isn't Agent's: Claude Desktop's 3p mode writes Claude Code's, so the
+	// session is Desktop's and its conversation, subagents and resume
+	// command are Claude Code's (#2705).
+	LogAgent      string        `json:"-"`
 	ID            string        `json:"id"`
 	Cwd           string        `json:"cwd"`
 	Title         string        `json:"title"` // the name it was given, else the agent's own title, else the first prompt
@@ -152,6 +157,10 @@ type Session struct {
 	// when they carry no session id of their own (dshConvs)
 	Convs []string `json:"-"`
 }
+
+// logAgent is the agent whose logs the session's files are: its own, but
+// Claude Desktop's 3p mode writes Claude Code's (#2705).
+func (s Session) logAgent() string { return cmp.Or(s.LogAgent, s.Agent) }
 
 // PriceOf is the effective price of a model as a session names it, at the
 // settings given. Tests swap it; the settings are the ones the listing read,
@@ -202,6 +211,9 @@ type state struct {
 	// Days is Models again, split by the local date each message was
 	// written on: a session that runs past midnight counts on both days.
 	Days named[*day] `json:"days,omitempty"`
+	// Desktop: Claude Desktop wrote this Claude Code log, through its Code
+	// tab or its 3p mode (#2705)
+	Desktop bool `json:"desktop,omitempty"`
 	// Claude Code: the message last counted, whose later lines repeat it,
 	// and the day it was counted on
 	Msg      string `json:"msg,omitempty"`
@@ -376,7 +388,11 @@ type file struct {
 	// cold: the WSL distro the file is in isn't running, and the file, as
 	// last listed, is not to be opened (that would start the distro)
 	cold bool
-	more *fileMore // nil for a file with none of it; shared by copies
+	// layout: the agent whose logs the file is, when the session it holds
+	// is another agent's (Claude Desktop's 3p mode writes Claude Code's,
+	// #2705)
+	layout string
+	more   *fileMore // nil for a file with none of it; shared by copies
 }
 
 // fileMore is what a file of some agents has besides.
@@ -614,7 +630,35 @@ func allFiles() []file {
 		grokFiles(), workbuddyFiles(), codebuddyFiles(), droidFiles(), ompFiles(), cursorFiles(), hermesFiles(), almaFiles(), kimiFiles(), agyFiles()} {
 		out = append(out, fs...)
 	}
-	return distinctPaths(out)
+	out = distinctPaths(out)
+	classifyDesktop(out)
+	return out
+}
+
+// classifyDesktop gives the sessions Claude Desktop's 3p mode writes in
+// Claude Code's own folder to Claude Desktop, the agent the gateway records
+// their calls as, so the local and gateway records of one session are one
+// session (#2705). The session's own file decides for its subagents' too; a
+// file not yet read stays Claude Code's until it is.
+func classifyDesktop(files []file) {
+	desktop := map[string]bool{}
+	for _, f := range files {
+		if f.agent == "claude" && f.main {
+			if st := cache[f.path]; st != nil && st.Desktop {
+				desktop[strings.TrimPrefix(f.key, "claude:")] = true
+			}
+		}
+	}
+	if len(desktop) == 0 {
+		return
+	}
+	for i := range files {
+		f := &files[i]
+		id := strings.TrimPrefix(f.key, "claude:")
+		if f.agent == "claude" && desktop[id] {
+			f.agent, f.key, f.layout = "claude-desktop", "claude-desktop:"+id, "claude"
+		}
+	}
 }
 
 // distinctPaths is fs with each path kept once, the first time it is
@@ -922,7 +966,8 @@ func CachePath() string { return filepath.Join(filepath.Dir(catalog.CachePath())
 // 20: Codex's source and direct parent thread identity.
 // 21: Codex subagent nicknames and parent spawn task names.
 // 22: dsh's gateway conversation ids (Convs).
-const cacheVersion = 22
+// 23: Claude Desktop's entrypoint in a Claude Code log (#2705).
+const cacheVersion = 23
 
 type cacheFile struct {
 	Version int               `json:"version"`
@@ -1400,6 +1445,11 @@ func listSessions(limit int) []Session {
 
 	defer useDBs()()
 	files := allFiles()
+	// every changed file, not just the latest sessions': the first read
+	// indexes them all in one run the page can show, and the stats read
+	// after it has nothing left to do
+	refresh(files, files)
+	classifyDesktop(files) // whose the session is, from the parse just made
 	groups := byKey(files, nil)
 	latest := map[string]time.Time{}
 	for _, f := range files {
@@ -1420,10 +1470,6 @@ func listSessions(limit int) []Session {
 	// the keys are not truncated yet: assemble below drops an empty
 	// session, and a nonempty one must take its place rather than the
 	// page going short - an empty file is not a session (#1320)
-	// every changed file, not just the latest sessions': the first read
-	// indexes them all in one run the page can show, and the stats read
-	// after it has nothing left to do
-	refresh(files, files)
 	identities := codexIdentitySnapshot(files)
 	taskTitles := codexSubagentTaskTitles(files)
 
@@ -1474,7 +1520,7 @@ func assemble(fs []file, price func(string) *catalog.Price, codexTitle func(stri
 		return s, false
 	}
 	if !s.ReadOnly {
-		s.Resume = resumeCommand(s.WSL, s.Agent, s.ID, s.Cwd, s.Path)
+		s.Resume = resumeCommand(s.WSL, s.logAgent(), s.ID, s.Cwd, s.Path)
 	}
 	s.Carry, s.Transcript = carries(s), readable(s)
 	if s.Transcript {
@@ -1490,7 +1536,7 @@ func assemble(fs []file, price func(string) *catalog.Price, codexTitle func(stri
 // subagent's file again (3.5 GB of a live magpie's 6.3 GB of scans).
 func assembleListed(fs []file, price func(string) *catalog.Price, codexTitle func(string) string) (Session, bool) {
 	sortSessionFiles(fs)
-	s := Session{Agent: fs[0].agent, Path: fs[0].path, Models: []Model{}, WSL: fs[0].m().wsl}
+	s := Session{Agent: fs[0].agent, LogAgent: fs[0].layout, Path: fs[0].path, Models: []Model{}, WSL: fs[0].m().wsl}
 	for _, f := range fs {
 		s.ReadOnly = s.ReadOnly || f.readOnly
 	}

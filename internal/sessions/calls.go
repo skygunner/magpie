@@ -762,7 +762,7 @@ func claudeCallLine(st *callFile, b []byte) {
 	if c.Session == "" {
 		c.Session = st.Session
 	}
-	if st.Agent == "claude" && l.Entrypoint == "claude-desktop" {
+	if st.Agent == "claude" && ccDesktopEntrypoint(string(l.Entrypoint)) {
 		c.Agent = "claude-desktop"
 	}
 	if l.APIError {

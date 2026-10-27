@@ -46,7 +46,7 @@ func subagentsOf(s Session, fs []file) []Subagent {
 			continue
 		}
 		sa := Subagent{Start: st.Start, Last: st.Last, Path: f.path}
-		switch s.Agent {
+		switch s.logAgent() {
 		case "claude", "qoder", "qoder-cn":
 			sa.ID = SubagentOf(f.path)
 			// a compaction's own run (agent-acompact-<id>.jsonl) is no
@@ -307,7 +307,7 @@ func SubagentTranscript(s Session, sub string) (Transcript, error) {
 		if sa.ID != sub {
 			continue
 		}
-		c := Session{Agent: s.Agent, ID: sa.ID, Path: sa.Path}
+		c := Session{Agent: s.logAgent(), ID: sa.ID, Path: sa.Path}
 		return TranscriptOf(c)
 	}
 	return Transcript{Parts: []Part{}}, ErrNoSubagent

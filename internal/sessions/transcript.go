@@ -40,7 +40,8 @@ func HasTranscript(agent string) bool {
 // can, and its file is the one they are read from (an agy conversation
 // listed from its row alone has none).
 func readable(s Session) bool {
-	return HasTranscript(s.Agent) && !(s.Agent == "agy" && agyRowOnly(s.Path))
+	a := s.logAgent()
+	return HasTranscript(a) && !(a == "agy" && agyRowOnly(s.Path))
 }
 
 func (t *Transcript) add(_ bool, p Part) bool {
@@ -61,7 +62,7 @@ func (t *Transcript) add(_ bool, p Part) bool {
 // TranscriptOf reads a session's conversation from its (main) file.
 func TranscriptOf(s Session) (Transcript, error) {
 	out := Transcript{Parts: []Part{}}
-	if !HasTranscript(s.Agent) || s.Path == "" {
+	if !HasTranscript(s.logAgent()) || s.Path == "" {
 		return out, ErrNoTranscript
 	}
 	return out, readTranscript(s, out.add)
@@ -77,8 +78,9 @@ func readTranscript(s Session, add func(bool, Part) bool) error {
 // to, where a line stands alone (Claude's, Codex's, Kimi's); Pi's lines are a tree,
 // read whole.
 func readTranscriptOf(s Session, keep func([]byte) bool, add func(bool, Part) bool) error {
-	whole := Call{Agent: s.Agent, File: s.Path, To: math.MaxInt64}
-	switch s.Agent {
+	agent := s.logAgent()
+	whole := Call{Agent: agent, File: s.Path, To: math.MaxInt64}
+	switch agent {
 	case "opencode":
 		return openCodeTranscript(s, add)
 	case "cursor":

@@ -271,9 +271,10 @@ func sessionManageRoutes(mux *http.ServeMux, w Windows) {
 			var err error
 			if g, ok := listed[id]; ok {
 				_, err = sessions.DeleteGateway(g.Agent, g.ID, g.ID, g.Last)
-			} else if !sessions.Deletable(in.Agent) {
-				err = errors.New("magpie can't delete this agent's sessions")
 			} else {
+				// whether this agent's sessions can be deleted is the
+				// session's own to say: Claude Desktop's 3p one is Claude
+				// Code's file (#2705)
 				_, err = sessions.Delete(in.Agent, id)
 			}
 			if err != nil {

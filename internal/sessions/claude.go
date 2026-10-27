@@ -24,6 +24,7 @@ type ccLine struct {
 	AITitle     string `json:"aiTitle"`
 	CustomTitle string `json:"customTitle"`
 	Summary     string `json:"summary"`
+	Entrypoint  string `json:"entrypoint"`
 	Message     struct {
 		ID      string          `json:"id"`
 		Model   string          `json:"model"`
@@ -56,13 +57,26 @@ var (
 	ccUsage   = []byte(`"usage":{`)
 	ccSession = []byte(`"sessionId":"`)
 	ccTop     = []byte(`{"type":"`)
+	// ccEntrypoint is where Claude Desktop's own entrypoints start, and
+	// ccEntrypointAt the key whose value it is
+	ccEntrypoint   = []byte(`"entrypoint":"claude-desktop`)
+	ccEntrypointAt = []byte(`"entrypoint":"`)
 )
+
+// ccDesktopEntrypoint says an entrypoint is Claude Desktop's: its Code tab's
+// (claude-desktop) and its 3p gateway mode's (claude-desktop-3p, #2705).
+func ccDesktopEntrypoint(e string) bool {
+	return e == "claude-desktop" || strings.HasPrefix(e, "claude-desktop-")
+}
 
 // claudeLine reads a line, telling from its first bytes what it is: most of
 // a long session is tool results and attachments, read for their time
 // alone, and a reply's usage is decoded without its content.
 func claudeLine(s *state, b []byte, main bool) {
 	h := b[:min(len(b), 1024)]
+	if !s.Desktop && bytes.Contains(h, ccEntrypoint) && ccDesktopEntrypoint(strAt(b, ccEntrypointAt)) {
+		s.Desktop = true
+	}
 	if bytes.HasPrefix(h, ccTop) {
 		// a line of Claude Code's own: a title, a summary, a mode…
 		switch typeAfter(h, ccTop) {
@@ -272,6 +286,9 @@ func claudeFull(s *state, b []byte, main bool) {
 	}
 	if s.ID == "" && l.SessionID != "" {
 		s.ID = l.SessionID
+	}
+	if ccDesktopEntrypoint(l.Entrypoint) {
+		s.Desktop = true
 	}
 	switch l.Type {
 	case "ai-title":

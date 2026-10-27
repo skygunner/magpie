@@ -223,7 +223,7 @@ func equalFoldASCII(a, lower []byte) bool {
 // from its agent's own file; ErrNoTranscript for an agent whose
 // conversations aren't read.
 func SearchSession(ctx context.Context, s Session, needle string) (Hit, bool, error) {
-	if !HasTranscript(s.Agent) || s.Path == "" {
+	if !HasTranscript(s.logAgent()) || s.Path == "" {
 		return Hit{}, false, ErrNoTranscript
 	}
 	raw := rawNeedle(needle)

@@ -187,6 +187,7 @@ func statsRead(days int, now time.Time, native map[string]bool) Stats {
 	// every changed file, whatever the range, so a wider range picked later
 	// finds them read rather than starting another run
 	refresh(files, files)
+	classifyDesktop(files) // whose the session is, from the parse just made
 	identities := codexIdentitySnapshot(files)
 	taskTitles := codexSubagentTaskTitles(files)
 	if native != nil {
