@@ -421,19 +421,21 @@ function lanIP(s) {
 
 // onLAN is netproxy.onLAN: whether host is on the user's own network — an
 // address lanIP takes, a .local name, or a name every address of which is
-// one of those. A name that doesn't resolve here (in lanWait) is not: the
-// proxy is what reaches it.
+// one of those, unless every address is this computer: a hosts file line
+// or a proxy tool's DNS takeover answers such a name with a loopback
+// address (#1139). A name that doesn't resolve here (in lanWait) is not:
+// the proxy is what reaches it.
 function onLAN(host) {
   host = host.toLowerCase().replace(/\.$/, "")
   if (!host) return Promise.resolve(false)
   if (net.isIP(host)) return Promise.resolve(lanIP(host))
-  if (host.endsWith(".local")) return Promise.resolve(true)
+  if (host === "localhost" || host.endsWith(".local")) return Promise.resolve(true)
   const seen = lanSeen.get(host)
   if (seen && Date.now() - seen.at < lanKeep) return seen.lan
   let timer
   const lan = Promise.race([
     dns.promises.lookup(host, { all: true, verbatim: true }).then(
-      (as) => as.length > 0 && as.every((a) => lanIP(a.address)),
+      (as) => as.length > 0 && as.every((a) => lanIP(a.address)) && as.some((a) => !loopback(a.address)),
       () => false,
     ),
     new Promise((r) => (timer = setTimeout(() => r(false), lanWait))),

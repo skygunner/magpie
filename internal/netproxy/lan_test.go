@@ -54,6 +54,54 @@ func TestLANGoesAroundTheProxy(t *testing.T) {
 	}
 }
 
+// #1139: a relay's name that resolves to a loopback address — a hosts
+// file line or a proxy tool's DNS takeover on this computer — is not on
+// the user's own network, so the system proxy the user follows still
+// carries it, instead of a direct dial to 127.x that times out.
+func TestLoopbackResolvedNameGoesThroughTheProxy(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	settings.Save(settings.Settings{Proxy: "127.0.0.1:7890"})
+	old := lanLookup
+	lanLookup = func(_ context.Context, host string) ([]net.IPAddr, error) {
+		seen := map[string][]string{
+			"relay.example":         {"127.115.2.250"},
+			"relay6.example":        {"::1"},
+			"relay-and-nas.example": {"127.0.0.1", "192.168.131.20"},
+			"localhost":             {"127.0.0.1", "::1"},
+			"server.lan":            {"192.168.131.20"},
+		}[host]
+		if seen == nil {
+			return nil, errors.New("no such host")
+		}
+		addrs := make([]net.IPAddr, 0, len(seen))
+		for _, s := range seen {
+			addrs = append(addrs, net.IPAddr{IP: net.ParseIP(s)})
+		}
+		return addrs, nil
+	}
+	clear(lanCache.m)
+	t.Cleanup(func() { lanLookup = old; clear(lanCache.m) })
+	req := func(host string) *http.Request {
+		return (&http.Request{URL: &url.URL{Scheme: "http", Host: host}}).WithContext(context.Background())
+	}
+	for _, h := range []string{"relay.example:443", "relay6.example:443"} {
+		if p, err := Func(req(h)); p == nil || p.Host != "127.0.0.1:7890" {
+			t.Errorf("%s: through %v (%v), want the system proxy", h, p, err)
+		}
+	}
+	// a loopback address beside one on the network still dials directly:
+	// the dial moves on to the address that answers
+	if p, err := Func(req("relay-and-nas.example:443")); p != nil || err != nil {
+		t.Errorf("relay-and-nas.example: through %v (%v), want direct", p, err)
+	}
+	// localhost, a .local name and an address written out are untouched
+	for _, h := range []string{"localhost:3425", "server.lan:3425", "192.168.131.20:3425", "127.0.0.1:3425", "[::1]:3425", "mac-mini.local:3425"} {
+		if p, err := Func(req(h)); p != nil || err != nil {
+			t.Errorf("%s: through %v (%v), want direct", h, p, err)
+		}
+	}
+}
+
 // The reporter's case end to end: a proxy that answers 502 Bad Gateway to
 // whatever it is asked (as Clash does for a host it can't reach), set in
 // magpie, and another magpie at this computer's LAN address. The list

@@ -45,7 +45,10 @@ type lanSeen struct {
 // onLAN reports whether host is on the user's own network: a private,
 // link-local or carrier-grade NAT (Tailscale's 100.64/10) address, a
 // .local name, or a name every address of which is one of those. A name
-// that doesn't resolve is not.
+// that doesn't resolve is not, and neither is one every address of which
+// is this computer: a hosts file line or a proxy tool's DNS takeover
+// answers such a name with a loopback address, which says nothing about
+// where it is (#1139).
 func onLAN(host string) bool {
 	host = strings.ToLower(strings.TrimSuffix(host, "."))
 	if host == "" {
@@ -54,7 +57,7 @@ func onLAN(host string) bool {
 	if ip := net.ParseIP(host); ip != nil {
 		return lanIP(ip)
 	}
-	if strings.HasSuffix(host, ".local") {
+	if host == "localhost" || strings.HasSuffix(host, ".local") {
 		return true
 	}
 	lanCache.Lock()
@@ -66,12 +69,16 @@ func onLAN(host string) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), lanWait)
 	addrs, err := lanLookup(ctx, host)
 	cancel()
-	lan := err == nil && len(addrs) > 0
+	lan, onNet := err == nil && len(addrs) > 0, false
 	for _, a := range addrs {
 		if !lanIP(a.IP) {
 			lan = false
 		}
+		if !a.IP.IsLoopback() {
+			onNet = true
+		}
 	}
+	lan = lan && onNet
 	lanCache.Lock()
 	if len(lanCache.m) >= 256 {
 		clear(lanCache.m)
