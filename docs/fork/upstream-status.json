@@ -135,7 +135,7 @@
    ],
    "category": "product",
    "title": "library: ignore file manager metadata throughout skill copies (#1072)",
-   "coverage": "Delivered scope per commit body and issue thread.",
+   "coverage": "Delivered scope per commit body and issue thread. | 2026-10-27 follow-up: port rebased onto upstream/main 3a89dd53 as 0a1ab9f7 (511 commits behind -> 0); both of the maintainer's blockers from the 2026-10-13 review are still addressed (SkipInSkill in hashWalk/treeOf so stamp and hash skip the same files; recorded Hash still accepted against the old formula via TestSkillKeepsRecordedMetadataHashes); red re-proved on current main (TestSkillIgnoresFileManagerMetadata fails there with the port's test alone), 425/425 green on the head; port branch force-pushed to 0a1ab9f7.",
    "commits": [
     "f42f29c48c2e05cf9484f94f122f270e901758bf"
    ],
@@ -150,7 +150,8 @@
    "base": "see delivery: historical; base recorded in the unit branch map",
    "comments": {
     "1072": [
-     "https://github.com/yetone/magpie/pull/1072#issuecomment-6348636702"
+     "https://github.com/yetone/magpie/pull/1072#issuecomment-6348636702",
+     "https://github.com/yetone/magpie/pull/1072#issuecomment-6434989469"
     ]
    },
    "sources": {
@@ -179,7 +180,7 @@
    ],
    "category": "product",
    "title": "gui: reject new settings model picks that are not served (#1073)",
-   "coverage": "Delivered scope per commit body and issue thread.",
+   "coverage": "Delivered scope per commit body and issue thread. | 2026-10-27 follow-up: port rebased onto upstream/main 3a89dd53 as 3acb51e6 (511 commits behind -> 0); all three of the maintainer's blockers from the 2026-10-14 review are still addressed (doc wording fixed so a re-sent saved pick is kept; VendorPicks kept in imageGens(); codex-descriptions and codex-predictions now use modelServed); red re-proved on current main (TestSettingsModelsMustBeServed fails there with the port's test alone for descriptions/predictions), 9/9 green on the head; port branch force-pushed to 3acb51e6.",
    "commits": [
     "7ccf8d5d406c024ac2245222ba374bad629f04ec"
    ],
@@ -194,7 +195,8 @@
    "base": "see delivery: historical; base recorded in the unit branch map",
    "comments": {
     "1073": [
-     "https://github.com/yetone/magpie/pull/1073#issuecomment-6348635950"
+     "https://github.com/yetone/magpie/pull/1073#issuecomment-6348635950",
+     "https://github.com/yetone/magpie/pull/1073#issuecomment-6434994645"
     ]
    },
    "sources": {
@@ -2715,7 +2717,7 @@
    ],
    "category": "product",
    "title": "redact: a placeholder URL's password and version and repository values are not secrets to learn (#3365, Ethereal49)",
-   "coverage": "R1 (a0b2faa8): field-aware exceptions via fieldNameWords; R1-followup (bbd6e228): strongCredential reads the whole name the assignment rules read — compact apikey/APIKey and suffixed api_key_v2/password_primary no longer take the exceptions. R2 (fde6695f): placeholder passwords learn when met as real credentials; reindexKnown rebuilds only learned values. Remaining: none known on the reported shapes. | 2026-10-27: wh5938316's verifier sample answered with probe evidence on upstream main 19253f67 — a bare unlearned 'verifier' never rule-matches (MaskJSON 0 hits, with/without signature); replacement happens only via known propagation after the same request carries 'verifier' as a credential value (URL password slot, assignment RHS); decisive earlier-occurrence check requested from the reporter.",
+   "coverage": "R1 (a0b2faa8): field-aware exceptions via fieldNameWords; R1-followup (bbd6e228): strongCredential reads the whole name the assignment rules read — compact apikey/APIKey and suffixed api_key_v2/password_primary no longer take the exceptions. R2 (fde6695f): placeholder passwords learn when met as real credentials; reindexKnown rebuilds only learned values. Remaining: none known on the reported shapes. | 2026-10-27: wh5938316's verifier sample answered with probe evidence on upstream main 19253f67 — a bare unlearned 'verifier' never rule-matches (MaskJSON 0 hits, with/without signature); replacement happens only via known propagation after the same request carries 'verifier' as a credential value (URL password slot, assignment RHS); decisive earlier-occurrence check requested from the reporter. | 2026-10-27 follow-up: wh5938316 confirmed the known-propagation shape (postgresql://verifier:...@127.0.0.1:5432/verifier); upstream main still lacks the nolearn spot. Their three UI asks checked against main: (1) rule vs known is already shown in the compare view's tooltip (maskrec.Value.By + MASK_BY 'Seen before'), (2) no known-values list, (3) allowlist exists as RedactAllow but is not reachable from a record. Replied with those facts.",
    "commits": [
     "4b6d93d9abe29038f9e8662890bf8190fc3a9f23"
    ],
@@ -2731,7 +2733,8 @@
    "comments": {
     "3365": [
      "https://github.com/yetone/magpie/issues/3365#issuecomment-6364536473",
-     "https://github.com/yetone/magpie/issues/3365#issuecomment-6423389640"
+     "https://github.com/yetone/magpie/issues/3365#issuecomment-6423389640",
+     "https://github.com/yetone/magpie/issues/3365#issuecomment-6434881793"
     ]
    },
    "sources": {
@@ -3826,7 +3829,7 @@
    ],
    "category": "product",
    "title": "pii: the privacy model's downloads follow Settings' Proxy (#3561, yuancjun)",
-   "coverage": "reporter's diagnosis and proxied() shape, credited: transport asks netproxy.Func via netproxy.Dispatch; behavior red->green with a fake release host whose only route is the counting proxy; http hop stands in for socks5h. Branch note: committed in #2741's worktree by slip, split to its own branch; remote #2741 branch stayed single-commit 741237cf; files disjoint, each cherry-picks alone (disclosed in the comment).",
+   "coverage": "reporter's diagnosis and proxied() shape, credited: transport asks netproxy.Func via netproxy.Dispatch; behavior red->green with a fake release host whose only route is the counting proxy; http hop stands in for socks5h. Branch note: committed in #2741's worktree by slip, split to its own branch; remote #2741 branch stayed single-commit 741237cf; files disjoint, each cherry-picks alone (disclosed in the comment). | 2026-10-27 follow-up: upstream landed the same defect independently in 3a89dd53 (yetone, credited hh0592821 on Discord), tagged v0.1.1686; the newest published release is v0.1.1685 which does NOT contain it, so the reporter's v0.1.1672 predates it. Our fork branch fix/pii-download-proxy (55dfe0a5) is the same fix on the proxy half, without the hf-mirror fallback, and is now superseded; recorded as independent_alternative.",
    "commits": [
     "55dfe0a52959fa85726efbcf84f5a3f702a897cd"
    ],
@@ -3841,7 +3844,8 @@
    "base": "1b039a3c7247d0221fb0b8ed8ef89a35ffd8e9d6",
    "comments": {
     "3561": [
-     "https://github.com/yetone/magpie/issues/3561#issuecomment-6394265586"
+     "https://github.com/yetone/magpie/issues/3561#issuecomment-6394265586",
+     "https://github.com/yetone/magpie/issues/3561#issuecomment-6434876152"
     ]
    },
    "sources": {
@@ -3855,7 +3859,9 @@
     "head": "55dfe0a52959fa85726efbcf84f5a3f702a897cd"
    },
    "upstream": {
-    "status": "unconfirmed"
+    "status": "independent_alternative",
+    "commit": "3a89dd53c06e5fe70ad729df72073fd6814c7af4",
+    "release": "v0.1.1686 (tag exists, no published release yet; latest published v0.1.1685)"
    },
    "archive": {
     "candidate": false
@@ -4747,7 +4753,7 @@
    ],
    "category": "product",
    "title": "routing: a live route names the group's models as the group has them now (#3156)",
-   "coverage": "Delivered scope per commit body and issue thread.",
+   "coverage": "Delivered scope per commit body and issue thread. | 2026-10-27 follow-up: LIghtJUNction (v0.1.1638) asked whether routing groups auto-refresh and whether the live route is a historical snapshot; answered: the branch covers the story sentence (current members, redraws on save); main already re-renders the group list and re-reads the pickers on save (groupAction -> renderGroups + load); the remaining question — whether a pinned historical request should name current vs planned members — is a design call for the maintainer; the branch as delivered names current members for pinned requests too.",
    "commits": [
     "f816c358110a6637bc0fb816aa2b61a065b3fef3"
    ],
@@ -4762,7 +4768,8 @@
    "base": "01468003348ede896c5126e9fd81057e1e58765c",
    "comments": {
     "3156": [
-     "https://github.com/yetone/magpie/issues/3156#issuecomment-6403710605"
+     "https://github.com/yetone/magpie/issues/3156#issuecomment-6403710605",
+     "https://github.com/yetone/magpie/issues/3156#issuecomment-6434934970"
     ]
    },
    "verify": {
@@ -6024,9 +6031,10 @@
    ],
    "category": "product",
    "title": "gateway: ClinePass's canonicalSlug is recorded with the route (#3713)",
-   "coverage": "The `upstreamOf` parse widened to (provider, slug); the slug rides beside `Upstream` through `gateway.Usage`, `gateway.Trace` and `usage.Record` at every existing assignment, and `rowText` carries it for cached pages. `TestClinePassSlugRecorded` red then green, negatives for `providerAttempts`/`modelAttempts`; `internal/usage` 552 tests pass. No GUI column (out of scope).",
+   "coverage": "The `upstreamOf` parse widened to (provider, slug); the slug rides beside `Upstream` through `gateway.Usage`, `gateway.Trace` and `usage.Record` at every existing assignment, and `rowText` carries it for cached pages. `TestClinePassSlugRecorded` red then green, negatives for `providerAttempts`/`modelAttempts`; `internal/usage` 552 tests pass. No GUI column (out of scope). | 2026-10-27 follow-up: rebased onto upstream/main 3a89dd53 as 8ecb86f8 (xdeers2 asked for a git apply-able diff pasted in the thread and warned the 6afbe3f3 base had drifted); red re-proved on the new base with an independent JSON-only test (TestRedProofSlugOnEveryRecord, 4 records red at 3a89dd53), green at the head; the patch tests themselves cannot compile on the base (upstreamOf changed to two returns), so the red proof is that separate test.",
    "commits": [
-    "129d94aeefb77b39a2eefb22eb463b23987a193e"
+    "129d94aeefb77b39a2eefb22eb463b23987a193e",
+    "8ecb86f8c2c886ca1117d82be201b2debc7ea1e0"
    ],
    "commit_details": [
     {
@@ -6036,10 +6044,11 @@
     }
    ],
    "branch": "fix/3713-canonical-slug",
-   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "base": "3a89dd53c06e5fe70ad729df72073fd6814c7af4",
    "comments": {
     "3713": [
-     "https://github.com/yetone/magpie/issues/3713#issuecomment-6429776643"
+     "https://github.com/yetone/magpie/issues/3713#issuecomment-6429776643",
+     "https://github.com/yetone/magpie/issues/3713#issuecomment-6434833100"
     ]
    },
    "sources": {
@@ -9006,9 +9015,9 @@
   },
   {
    "branch": "fix/3713-canonical-slug",
-   "head": "129d94aeefb77b39a2eefb22eb463b23987a193e",
+   "head": "8ecb86f8c2c886ca1117d82be201b2debc7ea1e0",
    "kind": "product",
-   "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
+   "base": "3a89dd53c06e5fe70ad729df72073fd6814c7af4",
    "fix_ids": [
     "u-gateway-clinepass-s-canonicalslug-is-recorded-with-the-route-3713-129d94ae"
    ],
@@ -10285,6 +10294,103 @@
    "body_sha256": "f6f948a4d8e6e837f126bdb2ecbf39035c0b5f12eb0a6360ec301bf26e8190e1",
    "evidence": "docs/fork/evidence/round23/3528/comment-readback.json",
    "body_updated_at": "2026-10-25T22:00:29Z"
+  },
+  {
+   "issue": 3713,
+   "fix_id": "u-gateway-clinepass-s-canonicalslug-is-recorded-with-the-route-3713-129d94ae",
+   "comment_id": 6434833100,
+   "url": "https://github.com/yetone/magpie/issues/3713#issuecomment-6434833100",
+   "role": "followup",
+   "author": "skygunner",
+   "language": "zh",
+   "status": "published_verified",
+   "published_at": "2026-10-27T16:35:00Z",
+   "verified_at": "2026-10-27T16:35:00Z",
+   "delivery": "fix/3713-canonical-slug",
+   "delivery_head": "8ecb86f8c2c886ca1117d82be201b2debc7ea1e0",
+   "body_sha256": "d193cdbc1f02c1fbddd830f10e5db19d9908ad17a78e3ce039e18652c4dac478",
+   "evidence": "docs/fork/evidence/round23/3713-followup/",
+   "body_updated_at": "2026-10-27T16:35:00Z"
+  },
+  {
+   "issue": 3561,
+   "fix_id": "u-pii-the-privacy-models-downloads-follow-settings-proxy-3561-55dfe0a5",
+   "comment_id": 6434876152,
+   "url": "https://github.com/yetone/magpie/issues/3561#issuecomment-6434876152",
+   "role": "followup",
+   "author": "skygunner",
+   "language": "zh",
+   "status": "published_verified",
+   "published_at": "2026-10-27T05:53:42Z",
+   "verified_at": "2026-10-27T05:53:42Z",
+   "delivery_head": null,
+   "body_sha256": "875032b0e1de47cf9a372fb73230df84011feccff92bc8367a450d58c3dc41d6",
+   "evidence": "docs/fork/evidence/round23/3561-followup/comment-readback.json",
+   "body_updated_at": "2026-10-27T05:53:42Z"
+  },
+  {
+   "issue": 3365,
+   "fix_id": "u-redact-a-placeholder-url-s-password-and-version--4b6d93d9",
+   "comment_id": 6434881793,
+   "url": "https://github.com/yetone/magpie/issues/3365#issuecomment-6434881793",
+   "role": "followup",
+   "author": "skygunner",
+   "language": "zh",
+   "status": "published_verified",
+   "published_at": "2026-10-27T05:54:06Z",
+   "verified_at": "2026-10-27T05:54:06Z",
+   "delivery_head": null,
+   "body_sha256": "fe478c997ca1ad3ac34d86716966135576c1de93910c9a051330cafdedd60ba2",
+   "evidence": "docs/fork/evidence/round23/3365-followup/comment-readback.json",
+   "body_updated_at": "2026-10-27T05:54:06Z"
+  },
+  {
+   "issue": 3156,
+   "fix_id": "u-issue-3156-routing-group-members-live-f816c358",
+   "comment_id": 6434934970,
+   "url": "https://github.com/yetone/magpie/issues/3156#issuecomment-6434934970",
+   "role": "followup",
+   "author": "skygunner",
+   "language": "zh",
+   "status": "published_verified",
+   "published_at": "2026-10-27T05:58:00Z",
+   "verified_at": "2026-10-27T05:58:00Z",
+   "delivery_head": null,
+   "body_sha256": "b1eadefae05d4ba57a0897bc78841209ce4be485849e357222c991154b2f2e89",
+   "evidence": "docs/fork/evidence/round23/3156-followup/comment-readback.json",
+   "body_updated_at": "2026-10-27T05:58:00Z"
+  },
+  {
+   "issue": 1072,
+   "fix_id": "u-library-ignore-file-manager-metadata-throughout--f42f29c4",
+   "comment_id": 6434989469,
+   "url": "https://github.com/yetone/magpie/pull/1072#issuecomment-6434989469",
+   "role": "followup",
+   "author": "skygunner",
+   "language": "zh",
+   "status": "published_verified",
+   "published_at": "2026-10-27T06:01:51Z",
+   "verified_at": "2026-10-27T06:01:51Z",
+   "delivery_head": null,
+   "body_sha256": "96c45fa16c5091e67ef4e9ec82fb0378db3c68d29cc4eec52bc44560cc3d3ac0",
+   "evidence": "docs/fork/evidence/round23/1072-followup/comment-readback.json",
+   "body_updated_at": "2026-10-27T06:01:51Z"
+  },
+  {
+   "issue": 1073,
+   "fix_id": "u-gui-reject-new-settings-model-picks-that-are-not-7ccf8d5d",
+   "comment_id": 6434994645,
+   "url": "https://github.com/yetone/magpie/pull/1073#issuecomment-6434994645",
+   "role": "followup",
+   "author": "skygunner",
+   "language": "zh",
+   "status": "published_verified",
+   "published_at": "2026-10-27T06:02:12Z",
+   "verified_at": "2026-10-27T06:02:12Z",
+   "delivery_head": null,
+   "body_sha256": "638aea6daec13ecafd00e3548e44202b5c3a96d8daeb781e26dbcf4fcf3ba424",
+   "evidence": "docs/fork/evidence/round23/1073-followup/comment-readback.json",
+   "body_updated_at": "2026-10-27T06:02:12Z"
   }
  ],
  "deliveries": {
