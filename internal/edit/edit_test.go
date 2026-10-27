@@ -131,6 +131,26 @@ func TestJSONCompact(t *testing.T) {
 	}
 }
 
+// TestJSONInlineObjectRoundTrips is #3814: magpie adds and then removes its
+// entry in an object the user keeps on one line, and the file must come back
+// byte for byte, not with the inline object spread over lines.
+func TestJSONInlineObjectRoundTrips(t *testing.T) {
+	in := "{\n  \"$schema\": \"https://app.kilo.ai/config.json\",\n  \"provider\": { \"anthropic\": {} }\n}\n"
+	p := tmpFile(t, "kilo.jsonc", in)
+	if err := SetJSON(p, KV{Path: "provider.magpie", Value: map[string]any{"shortcuts": true}}); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := read(t, p), "{\n  \"$schema\": \"https://app.kilo.ai/config.json\",\n  \"provider\": {\"magpie\":{\"shortcuts\":true}, \"anthropic\": {} }\n}\n"; got != want {
+		t.Fatalf("after set:\n%s\nwant:\n%s", got, want)
+	}
+	if err := DelJSON(p, "provider.magpie"); err != nil {
+		t.Fatal(err)
+	}
+	if got := read(t, p); got != in {
+		t.Fatalf("after del:\n%s\nwant:\n%s", got, in)
+	}
+}
+
 func TestJSONBracesInStrings(t *testing.T) {
 	in := "{\n  \"cmd\": \"echo {\\\"x\\\": 1}\"\n}\n"
 	p := tmpFile(t, "s.json", in)

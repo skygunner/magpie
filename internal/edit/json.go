@@ -52,7 +52,8 @@ func SetJSON(path string, kvs ...KV) error {
 		return err
 	}
 	if len(bytes.TrimSpace(raw)) == 0 {
-		raw = []byte("{}\n")
+		// a new file is laid out over lines, so insertKey keeps to that style
+		raw = []byte("{\n}\n")
 	}
 	orig := raw
 	for _, kv := range kvs {
@@ -178,7 +179,9 @@ func insertKey(raw, stripped []byte, from int, key string, value any) ([]byte, e
 		return nil, fmt.Errorf("cannot locate object for %q", key)
 	}
 	k, _ := json.Marshal(key)
-	pretty := bytes.IndexByte(raw, '\n') >= 0
+	// The target object's own span decides: an object the user keeps on one
+	// line is added to on that line, however the rest of the file is laid out.
+	pretty := bytes.IndexByte(raw[open:close+1], '\n') >= 0
 	empty := len(bytes.TrimSpace(raw[open+1:close])) == 0
 
 	if !pretty {
