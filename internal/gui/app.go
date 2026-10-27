@@ -425,9 +425,12 @@ func Run(version string, showMain bool, link string) error {
 		help.Add("Learn More").OnClick(func(*application.Context) { _ = h.OpenURL("https://usemagpie.ai") })
 		h.app.Menu.Set(appMenu)
 	}
-	if Started != nil {
-		h.app.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(*application.ApplicationEvent) { Started() })
-	}
+	h.app.Event.OnApplicationEvent(events.Common.ApplicationStarted, func(*application.ApplicationEvent) {
+		mainUpOnce.Do(func() { close(mainUp) })
+		if Started != nil {
+			Started()
+		}
+	})
 
 	onDock = func(s settings.Settings) { h.dock(s, h.MainShown()) }
 	dockOnFullscreen()
@@ -483,17 +486,18 @@ func Run(version string, showMain bool, link string) error {
 		quit.SetLabel(l.quit)
 		menu.Update()
 	}
-	onLang = func() { application.InvokeSync(relabel) }
+	onLang = func() { onMain(relabel) }
 	updates.onReady = func(v string) {
-		application.InvokeSync(func() {
+		onMain(func() {
 			ready = v
 			restart.SetHidden(false)
 			relabel()
 		})
 	}
-	updates.onWait = func() { application.InvokeSync(relabel) }
+	updates.onWait = func() { onMain(relabel) }
 	// Settings' AutoRestart: the window comes back only if it was up (#2096)
 	updates.autoRestart = func() bool {
+		<-mainUp // the restart asks the main thread; wait for it (#3108)
 		if restartInto(false, h.MainShown(), "", true) {
 			leave(h.app.Quit)
 			return true

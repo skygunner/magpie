@@ -13,10 +13,30 @@ import (
 	"sync"
 	"time"
 
+	"github.com/wailsapp/wails/v3/pkg/application"
+
 	"github.com/yetone/magpie/internal/gateway"
 	"github.com/yetone/magpie/internal/settings"
 	"github.com/yetone/magpie/internal/update"
 )
+
+// The app's main thread. InvokeSync on an app whose thread isn't up yet
+// panics on the nil impl (#3108: autostarted at login, the first clock
+// check can come back first), so the updater's callbacks wait on mainUp.
+// Run closes mainUp once Wails has started the app.
+var (
+	mainUp     = make(chan struct{})
+	mainUpOnce sync.Once
+)
+
+// invokeSync is application.InvokeSync; tests stand in for it.
+var invokeSync = application.InvokeSync
+
+// onMain waits for the app's main thread, then runs fn on it.
+func onMain(fn func()) {
+	<-mainUp
+	invokeSync(fn)
+}
 
 // updater keeps the app current. It asks the feed at start-up and every six
 // hours, or as often as Settings says, or only when asked (#472); when a newer release is out and the app may replace itself — the
