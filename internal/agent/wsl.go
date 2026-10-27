@@ -671,8 +671,20 @@ func wslFound(d distro) bool {
 }
 
 // wslKept is whether magpie keeps a distro it probed: one of wslKinds is
-// there, or the Copilot CLI's folder, whose sign-in it reads (#723).
-func wslKept(d distro) bool { return wslFound(d) || d.Has["dir:"+wslCopilotDir] }
+// there, the Copilot CLI's folder, whose sign-in it reads (#723), or a VS
+// Code server's, whose window's chat sends from there (vscodeWSL, #2768).
+func wslKept(d distro) bool {
+	return wslFound(d) || d.Has["dir:"+wslCopilotDir] || wslVSCodeServer(d)
+}
+
+// wslVSCodeDirs are the folders VS Code's Remote server keeps in a distro's
+// home, Stable's and Insiders'.
+var wslVSCodeDirs = []string{vscodeStable.server, vscodeInsiders.server}
+
+// wslVSCodeServer reports whether d keeps one of them in its home.
+func wslVSCodeServer(d distro) bool {
+	return slices.ContainsFunc(wslVSCodeDirs, func(dir string) bool { return d.Has["dir:"+dir] })
+}
 
 // ListsFor is whose model lists an agent's are (provider.CatalogFor): its
 // own id's, or, for one in a WSL distro, its Windows twin's (claude for
@@ -1410,7 +1422,9 @@ var wslProbeScript = func() string {
 			s += `; `
 		}
 	}
-	s += `[ -d "$HOME/` + wslCopilotDir + `" ] && echo dir:` + wslCopilotDir + `; `
+	for _, dir := range append([]string{wslCopilotDir}, wslVSCodeDirs...) {
+		s += `[ -d "$HOME/` + dir + `" ] && echo dir:` + dir + `; `
+	}
 	// a drive's source in /proc/mounts is C:\ (written C:\134), under any automount root
 	s += `awk '$1 ~ /^[A-Za-z]:/ {print "win:" $2}' /proc/mounts 2>/dev/null; `
 	// named omp profiles: the probe runs only in a distro that is running,

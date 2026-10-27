@@ -39,6 +39,7 @@ import (
 	"github.com/tidwall/gjson"
 	"github.com/yetone/magpie/internal/appdir"
 	"github.com/yetone/magpie/internal/edit"
+	"github.com/yetone/magpie/internal/gateway"
 	"github.com/yetone/magpie/internal/proc"
 )
 
@@ -96,21 +97,55 @@ type vscodeKind struct {
 	// in home its extensions are installed in; extDir is where that is
 	// (vscodeOf), "" for a build whose chat is built in.
 	exts, extDir string
+	// server is the folder its Remote - WSL server keeps in a distro's home:
+	// the VS Code there is the one a Remote - WSL window's chat runs in
+	// (vscodeWSL), "" for one without.
+	server string
 }
 
 var (
-	vscodeStable   = vscodeKind{id: "vscode", name: "VS Code", folder: "Code", bin: "code", aliases: []string{"vs-code", "copilot-chat", "vscode-chat"}, ua: []string{vscodeUA}}
-	vscodeInsiders = vscodeKind{id: "vscode-insiders", name: "VS Code Insiders", folder: "Code - Insiders", bin: "code-insiders", aliases: []string{"vs-code-insiders", "code-insiders"}}
+	vscodeStable   = vscodeKind{id: "vscode", name: "VS Code", folder: "Code", bin: "code", aliases: []string{"vs-code", "copilot-chat", "vscode-chat"}, ua: []string{vscodeUA}, server: ".vscode-server"}
+	vscodeInsiders = vscodeKind{id: "vscode-insiders", name: "VS Code Insiders", folder: "Code - Insiders", bin: "code-insiders", aliases: []string{"vs-code-insiders", "code-insiders"}, server: ".vscode-server-insiders"}
 	vscodiumKind   = vscodeKind{id: "vscodium", name: "VSCodium", folder: "VSCodium", bin: "codium", aliases: []string{"codium", "vscodium-chat"}, exts: ".vscode-oss"}
 )
 
+// vscodeWSL is the distro a Remote - WSL window's chat of k asks the gateway
+// from: a running one whose home holds k's VS Code server, which magpie keeps
+// for that alone (wslVSCodeServer). None where no WSL is looked at.
+func vscodeWSL(k vscodeKind) (distro, bool) {
+	if k.server == "" || !wslOn {
+		return distro{}, false
+	}
+	for _, d := range wslDistros() {
+		if d.Running && d.Has["dir:"+k.server] {
+			return d, true
+		}
+	}
+	return distro{}, false
+}
+
+// base is where the chat of k asks the gateway: a Remote - WSL window's chat
+// runs in the extension host inside the distro, so it asks Windows as that
+// distro reaches it (place's, d.base), whose 127.0.0.1 is Windows' only in
+// mirrored networking.
+func (k vscodeKind) base() string {
+	if d, ok := vscodeWSL(k); ok {
+		return d.base()
+	}
+	return gateway.URL()
+}
+
+// url is the Chat Completions URL magpie's group names for k.
+func (k vscodeKind) url() string { return k.base() + "/v1/chat/completions" }
+
 // token is the bearer token its models send: Stable's the gateway's own,
-// as it always was.
+// as it always was, or the key the gateway takes from the distro that asks
+// it (keyAt).
 func (k vscodeKind) token() string {
 	if k.ua != nil {
-		return hereKey()
+		return keyAt(k.base())
 	}
-	return agentKey(k.id)
+	return agentKeyAt(k.id, k.base())
 }
 
 // VS Code keeps its User folder under Application Support on macOS, Roaming
@@ -283,7 +318,7 @@ func vscodeKindAt(k vscodeKind, dir string) *Agent {
 			return wiringOff(k.name, models, func(k string) (string, bool) {
 				r := gjson.Get(g, "models.0."+k)
 				return r.String(), r.Exists()
-			}, "url", vscodeURL(), header, want)
+			}, "url", k.url(), header, want)
 		},
 		Fields: []Field{{
 			Key: "model", Label: "model", Get: model,
@@ -410,7 +445,8 @@ func vscodeProfiles(dir string) (settings, models []string) {
 }
 
 // vscodeURL is the gateway's Chat Completions URL: a Custom Endpoint model's
-// url that ends in /chat/completions is asked as it is.
+// url that ends in /chat/completions is asked as it is. It is the URL for a
+// chat on this machine; one in a Remote - WSL window asks k.url.
 func vscodeURL() string { return gatewayV1() + "/chat/completions" }
 
 // vscodeGroupJSON is magpie's group in chatLanguageModels.json for a
@@ -432,7 +468,7 @@ func vscodeGroupJSON(k vscodeKind, vendor string) map[string]any {
 		}
 		output = outputOr(m, min(output, context/4))
 		entry := map[string]any{
-			"id": m.ID, "name": m.Name, "url": vscodeURL(),
+			"id": m.ID, "name": m.Name, "url": k.url(),
 			"toolCalling": true, "vision": m.Images,
 			"contextWindow": context, "maxOutputTokens": output,
 			"requestHeaders": map[string]string{"Authorization": "Bearer " + k.token()},
