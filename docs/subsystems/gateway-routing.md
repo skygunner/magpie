@@ -421,6 +421,17 @@ refused one resting. Before, every call went to its first key, whatever the
 others' state. A gateway key held to some accounts is asked only on those
 (`allowedCandidates`), and refused 403 when none of them serves the model.
 `TestDecisionProviderKeysFailOver`.
+`POST /v1/systemone` takes the same privacy policy as a conversation:
+`serveSystemOne` masks its JSON body with `redactedHits` once, after the
+disabled-model check and before either branch, so the single model's retries
+and each member of a decision group get the masked body, and the answer's
+placeholders come back through the same writer. What was masked is recorded
+under `decide`, as the classifier's own requests are (#2389). A blocked
+value returns 400, and required masking that can't run returns 503, neither
+asking a provider. `unredactedRoute` still sends the original body where the
+user set requests to go unmasked: a single provider and its fallbacks, or
+every member of the group (a mixed group stays masked).
+`TestSystemOneMasksStateBeforeUpstream`.
 [`embeddings.go`](../../internal/gateway/embeddings.go) relays retrieval
 bodies and options (`serveRetrieval`), and
 [`transcribe.go`](../../internal/gateway/transcribe.go) speech-to-text's

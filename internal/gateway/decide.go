@@ -524,12 +524,30 @@ func (s *Server) serveSystemOne(w http.ResponseWriter, r *http.Request) {
 	if refuseOff(w, provider.Chat, q.Model) {
 		return
 	}
+	// secrets go as placeholders and come back as they were, as on a
+	// conversation's route: System One is a route of its own (#2389).
+	// plain is the body as the client wrote it, for a route the user set
+	// to go unmasked (unredactedRoute)
+	plain := body
+	var masked []byte // the masked body, when plain goes instead
+	w, body, unmask, hits, err := redactedHits(r.Context(), w, body)
+	defer unmask()
+	if err != nil { // fails closed: never sent unmasked
+		writeError(w, provider.Chat, maskStatus(err), err.Error())
+		return
+	}
 	// a routing group of decision models: each of them in turn
 	// (decide_group.go)
 	if g, ms, ok, status, err := decisionGroupOf(q.Model); err != nil {
 		writeError(w, provider.Chat, status, err.Error())
 		return
 	} else if ok {
+		if unredactedRoute(provider.Provider{}, true, ms) {
+			masked, body = body, plain
+		}
+		if masked == nil {
+			noteMasked(r, "decide", hits, string(body), 0, "", q.Model)
+		}
 		s.serveDecisionGroup(w, r, body, q.Model, g, ms)
 		return
 	}
@@ -537,6 +555,9 @@ func (s *Server) serveSystemOne(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeError(w, provider.Chat, provider.DecideRouteStatus(err), err.Error())
 		return
+	}
+	if unredactedRoute(p, false, nil) {
+		masked, body = body, plain
 	}
 	body = withModel(body, model)
 	start := time.Now()
@@ -582,6 +603,9 @@ func (s *Server) serveSystemOne(w http.ResponseWriter, r *http.Request) {
 	if len(cs) == 0 {
 		writeError(w, provider.Chat, http.StatusServiceUnavailable, fmt.Sprintf("no key or account of %s may be asked %s now", p.Name, model))
 		return
+	}
+	if masked == nil {
+		noteMasked(r, "decide", hits, string(body), 0, p.ID, model)
 	}
 	s.serveDecideTries(w, r, body, asked, start, cs, pl, nil)
 }
