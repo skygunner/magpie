@@ -20,9 +20,11 @@ import (
 // the start.
 
 // customToolRefusal is an upstream turning a custom tool away: DeepSeek's
-// "Unsupported custom tool: 'exec'", or the type named unsupported. A
-// refusal of anything else about a tool doesn't match.
-var customToolRefusal = regexp.MustCompile(`(?i)unsupported custom tool|custom tools? (?:is |are )?not (?:supported|allowed)|(?:unsupported|unknown|invalid) tool type[^\n{}]{0,20}?['"\x60]custom['"\x60]|tool type ['"\x60]custom['"\x60] (?:is )?(?:not supported|unsupported)`)
+// "Unsupported custom tool: 'exec'", or the type named unsupported, or an
+// input item type refusal (vLLM's "Unsupported input item type:
+// custom_tool_call", #3849). A refusal of anything else about a tool
+// doesn't match.
+var customToolRefusal = regexp.MustCompile(`(?i)unsupported custom tool|custom tools? (?:is |are )?not (?:supported|allowed)|(?:unsupported|unknown|invalid) tool type[^\n{}]{0,20}?['"\x60]custom['"\x60]|tool type ['"\x60]custom['"\x60] (?:is )?(?:not supported|unsupported)|(?:unsupported|invalid|unknown) (?:input )?item type[^\n{}]{0,30}?custom_tool_call`)
 
 // customToolRefused is how unfit remembers model turning custom tools
 // away.
@@ -30,9 +32,11 @@ func customToolRefused(model string) string { return "custom tools\x00" + model 
 
 // hasCustomTool reports whether a Responses body offers a custom tool:
 // among its tools, in a namespace there, or in an input item that carries
-// tools (Responses Lite's additional_tools, a tool search's output).
+// tools (Responses Lite's additional_tools, a tool search's output), or
+// in an input item that is a custom tool call/output itself
+// (custom_tool_call / custom_tool_call_output, #3849).
 func hasCustomTool(body []byte) bool {
-	if !bytes.Contains(body, []byte(`"custom"`)) {
+	if !bytes.Contains(body, []byte("custom")) {
 		return false
 	}
 	var m map[string]any
@@ -44,8 +48,15 @@ func hasCustomTool(body []byte) bool {
 	}
 	items, _ := m["input"].([]any)
 	for _, it := range items {
-		if im, _ := it.(map[string]any); im != nil && customIn(im["tools"]) {
-			return true
+		if im, _ := it.(map[string]any); im != nil {
+			if customIn(im["tools"]) {
+				return true
+			}
+			// a custom tool call/output item itself (#3849)
+			typ, _ := im["type"].(string)
+			if typ == "custom_tool_call" || typ == "custom_tool_call_output" {
+				return true
+			}
 		}
 	}
 	return false
