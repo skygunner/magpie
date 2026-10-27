@@ -24,7 +24,9 @@ import (
 // package.json is word-guard's own, a middleware alone; someone/agent-aider,
 // magpie-community's agent-aider package.json and module, an agent alone;
 // someone/page-glance, a page alone (internal/gui/testdata/page-plugin's
-// package.json), and someone/page-gone, whose page file isn't there; alfaoz's
+// package.json), and someone/page-gone, whose page file isn't there;
+// someone/hooks-only, a gateway request hook alone, magpie.hooks and no
+// index.js (#3821); alfaoz's
 // opencode-see-image (real), whose main is a dist the repository hasn't;
 // and someone/flaky-entry, whose main GitHub doesn't answer for.
 // reads counts what fakeGitHub answered other than searches: package.json,
@@ -69,6 +71,7 @@ func fakeGitHub(t *testing.T, up *atomic.Bool, asked *atomic.Int32) {
 		like("someone/agent-aider", nil),
 		like("someone/page-glance", nil),
 		like("someone/page-gone", nil),
+		like("someone/hooks-only", nil),
 		like("alfaoz/opencode-see-image", nil),
 		like("someone/flaky-entry", map[string]any{"license": map[string]any{"key": "other", "spdx_id": "NOASSERTION"}}),
 		like("cyberElar/magpie-x-search", nil),
@@ -166,11 +169,11 @@ func TestTaggedReposEveryPage(t *testing.T) {
 	for _, x := range taggedList(context.Background()) {
 		repos = append(repos, x.Repo)
 	}
-	want := "rynfar/meridian griffinmartin/opencode-claude-auth slkiser/opencode-quota someone/word-guard someone/agent-aider someone/page-glance someone/flaky-entry"
+	want := "rynfar/meridian griffinmartin/opencode-claude-auth slkiser/opencode-quota someone/word-guard someone/agent-aider someone/page-glance someone/hooks-only someone/flaky-entry"
 	if strings.Join(repos, " ") != want {
 		t.Fatalf("repos %v\nwant %s", repos, want)
 	}
-	// 15 items, four to a page
+	// 16 items, four to a page
 	if n := asked.Load(); n != 4 {
 		t.Fatalf("asked %d pages, want 4", n)
 	}
@@ -192,8 +195,10 @@ func TestTaggedRepos(t *testing.T) {
 	// index.js to load, nor see-image its dist: installed from GitHub,
 	// none would load. magpie-x-search (real, #1327) is on npm from its
 	// repository, but a command alone, an MCP server: npm's copy names no
-	// file to load, and it has no index.js
-	want := "rynfar/meridian griffinmartin/opencode-claude-auth slkiser/opencode-quota someone/word-guard someone/agent-aider someone/page-glance someone/flaky-entry"
+	// file to load, and it has no index.js. hooks-only (#3821) has no
+	// index.js either, but magpie.hooks: a gateway request hook alone,
+	// and is listed with the middleware kind
+	want := "rynfar/meridian griffinmartin/opencode-claude-auth slkiser/opencode-quota someone/word-guard someone/agent-aider someone/page-glance someone/hooks-only someone/flaky-entry"
 	if strings.Join(repos, " ") != want {
 		t.Fatalf("repos %v\nwant %s", repos, want)
 	}
@@ -228,6 +233,12 @@ func TestTaggedRepos(t *testing.T) {
 	if x := byRepo["someone/word-guard"]; x.Kind != "middleware" || x.Package != "@magpie-community/middleware-word-guard" || x.License != "" {
 		t.Fatalf("a middleware alone: %+v", x)
 	}
+	// a gateway request hook alone (#3821): no main, exports or index.js,
+	// magpie.hooks only, so there is no entry file to look for; it is
+	// listed, and kinded as the other gateway plugins are
+	if x := byRepo["someone/hooks-only"]; x.Kind != "middleware" || x.Spec != "github:someone/hooks-only" {
+		t.Fatalf("a gateway hook alone: %+v", x)
+	}
 	// npm's copy when npm has it from this very repository (its build is
 	// on npm only); else the repository: not on npm, or npm's is another's
 	for repo, spec := range map[string]string{
@@ -254,7 +265,7 @@ func TestTaggedRepos(t *testing.T) {
 	taggedAt = time.Now().Add(-taggedTTL - time.Second)
 	taggedMu.Unlock()
 	before := reads.Load()
-	if l := taggedList(ctx); len(l) != 7 || asked.Load() != 2 {
+	if l := taggedList(ctx); len(l) != 8 || asked.Load() != 2 {
 		t.Fatalf("ten minutes on: asked %d times, %d repos", asked.Load(), len(l))
 	}
 	if n := reads.Load() - before; n != 3 {
@@ -269,7 +280,7 @@ func TestTaggedRepos(t *testing.T) {
 	if err := os.Chtimes(taggedCache(), time.Now(), time.Now()); err != nil {
 		t.Fatal(err)
 	}
-	if l := taggedList(ctx); len(l) != 7 || asked.Load() != 1 {
+	if l := taggedList(ctx); len(l) != 8 || asked.Load() != 1 {
 		t.Fatalf("restarted: asked %d times, %d repos", asked.Load(), len(l))
 	}
 
@@ -281,7 +292,7 @@ func TestTaggedRepos(t *testing.T) {
 	up.Store(false)
 	forget()
 	// what GitHub said before, and that it couldn't be asked now
-	if l, err := TaggedRepos(ctx); len(l) != 7 || l[1].Package != "opencode-claude-auth" || asked.Load() != 1 || err == nil || !strings.Contains(err.Error(), "503") {
+	if l, err := TaggedRepos(ctx); len(l) != 8 || l[1].Package != "opencode-claude-auth" || asked.Load() != 1 || err == nil || !strings.Contains(err.Error(), "503") {
 		t.Fatalf("down: %v %+v", err, l)
 	}
 	// the minute it is held, still said
@@ -302,7 +313,7 @@ func TestTaggedRepos(t *testing.T) {
 	// Try again asks GitHub at once, up again: its answer, no error
 	up.Store(true)
 	TaggedAskAgain()
-	if l, err := TaggedRepos(ctx); len(l) != 7 || err != nil {
+	if l, err := TaggedRepos(ctx); len(l) != 8 || err != nil {
 		t.Fatalf("again: %v, %d repos", err, len(l))
 	}
 	// a whole answer stands its ten minutes: Try again doesn't ask
@@ -334,7 +345,7 @@ func TestTaggedReposSlowRead(t *testing.T) {
 	up.Store(true)
 	fakeGitHub(t, &up, &asked)
 	ctx := context.Background()
-	if l := taggedList(ctx); len(l) != 7 {
+	if l := taggedList(ctx); len(l) != 8 {
 		t.Fatalf("%d repos", len(l))
 	}
 
@@ -368,7 +379,7 @@ func TestTaggedReposSlowRead(t *testing.T) {
 	cutAsked := time.Now()
 	l := taggedList(ctx)
 	cutDone := time.Now()
-	if x := has(l, "someone/word-guard"); len(l) != 7 || x == nil || x.Kind != "middleware" {
+	if x := has(l, "someone/word-guard"); len(l) != 8 || x == nil || x.Kind != "middleware" {
 		t.Fatalf("slow package.json: %d repos, word-guard %+v", len(l), x)
 	}
 	if n := asked.Load(); n != 2 {
@@ -428,7 +439,7 @@ func TestTaggedReposSlowRead(t *testing.T) {
 	if n := asked.Load(); n != 3 {
 		t.Fatalf("a list cut short kept: asked %d times", n)
 	}
-	if x := has(l, "someone/word-guard"); len(l) != 7 || x == nil || x.Package != "@magpie-community/middleware-word-guard" {
+	if x := has(l, "someone/word-guard"); len(l) != 8 || x == nil || x.Package != "@magpie-community/middleware-word-guard" {
 		t.Fatalf("asked again: %d repos, word-guard %+v", len(l), x)
 	}
 	// flaky-entry's package.json, npm and entry, as ten minutes on
@@ -507,7 +518,7 @@ func TestTaggedReposStaleEnvTokenDropped(t *testing.T) {
 	t.Setenv("GITHUB_TOKEN", staleToken)
 	t.Setenv("GH_TOKEN", "")
 	l, err := TaggedRepos(context.Background())
-	if err != nil || len(l) != 7 {
+	if err != nil || len(l) != 8 {
 		t.Fatalf("with a stale GITHUB_TOKEN: %v, %d repos", err, len(l))
 	}
 }
@@ -523,16 +534,16 @@ func TestTaggedReposUnreadable(t *testing.T) {
 	t.Cleanup(func() { githubRaw = rawWas })
 	l, err := TaggedRepos(ctx)
 	var m *TaggedMissing
-	if len(l) != 0 || !errors.As(err, &m) || m.Missing != 12 || !strings.Contains(m.Why.Error(), "127.0.0.1:1") {
+	if len(l) != 0 || !errors.As(err, &m) || m.Missing != 13 || !strings.Contains(m.Why.Error(), "127.0.0.1:1") {
 		t.Fatalf("raw unreachable: %v (%+v), %d repos", err, m, len(l))
 	}
 	// Try again, raw back: the list, no error
 	githubRaw = rawWas
 	TaggedAskAgain()
-	if l, err := TaggedRepos(ctx); len(l) != 7 || err != nil {
+	if l, err := TaggedRepos(ctx); len(l) != 8 || err != nil {
 		t.Fatalf("again: %v, %d repos", err, len(l))
 	}
-	// asked again, raw gone again: the seven read before are as they were,
+	// asked again, raw gone again: the eight read before are as they were,
 	// and only what was never read counts as missing
 	taggedMu.Lock()
 	taggedAt = time.Time{}
@@ -542,7 +553,7 @@ func TestTaggedReposUnreadable(t *testing.T) {
 	readMu.Unlock()
 	githubRaw = "http://127.0.0.1:1/raw"
 	l, err = TaggedRepos(ctx)
-	if len(l) != 7 || !errors.As(err, &m) || m.Missing != 5 {
-		t.Fatalf("raw gone, seven kept: %v (%+v), %d repos", err, m, len(l))
+	if len(l) != 8 || !errors.As(err, &m) || m.Missing != 5 {
+		t.Fatalf("raw gone, eight kept: %v (%+v), %d repos", err, m, len(l))
 	}
 }

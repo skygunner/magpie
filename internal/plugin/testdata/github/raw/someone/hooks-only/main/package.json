@@ -1,0 +1,1 @@
+{"name": "magpie-openviking", "version": "0.1.0", "description": "a gateway request hook alone: no main, no exports, and no index.js to load", "type": "module", "magpie": {"hooks": "./hooks.mjs"}}

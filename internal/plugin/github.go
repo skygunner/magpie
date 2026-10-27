@@ -390,6 +390,7 @@ func readTagged(pc context.Context, t Tagged, branch string) (Tagged, bool, bool
 		Exports json.RawMessage `json:"exports"`
 		Magpie  struct {
 			Middleware string `json:"middleware"`
+			Hooks      string `json:"hooks"`
 			Agent      string `json:"agent"`
 			Icon       string `json:"icon"`
 			Page       struct {
@@ -412,6 +413,12 @@ func readTagged(pc context.Context, t Tagged, branch string) (Tagged, bool, bool
 			t.Kind = "agent"
 		case strings.TrimSpace(pj.Magpie.Page.File) != "":
 			t.Kind = "page"
+		// a gateway request hook alone (magpie.hooks, as gateway.go's
+		// Gateway takes it) has no entry file to load either: without
+		// this it falls through to index.js, which it hasn't, and is
+		// dropped from the list (#3821)
+		case strings.TrimSpace(pj.Magpie.Hooks) != "":
+			t.Kind = "middleware"
 		}
 	}
 	// published to npm from this repository: npm's copy is the one
