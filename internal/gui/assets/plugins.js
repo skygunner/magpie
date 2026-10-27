@@ -471,10 +471,14 @@
       b.onclick = (ev) => { ev.stopPropagation(); act(pkg, "off", { spec: e.spec, off: false }); };
       return b;
     }
-    const subs = subsOf(pkg);
+    // the sign-ins and the movable built-ins are named by the installed
+    // entry's own spec, not the card's: one installed by its repository's
+    // URL (or a git+ URL) reports its provider under that spec (#3930)
+    const ipkg = name(e.spec);
+    const subs = subsOf(ipkg);
     const out = subs.find((x) => !x.signedIn);
     // signed in to nothing yet, with a built-in's accounts to bring
-    const c = !subs.some((x) => x.signedIn) && movableOf(pkg)[0];
+    const c = !subs.some((x) => x.signedIn) && movableOf(ipkg)[0];
     if (c) return moveButton(b, c, true);
     // one of its subscriptions signed in (Qoder, beside Qoder CN; #556): the
     // card says it is, rather than a Sign in that reads as signed out; the
