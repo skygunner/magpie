@@ -250,6 +250,25 @@ func TestZCodeOutputAndReasoning(t *testing.T) {
 	}
 }
 
+// #3826: the levels magpie writes into ZCode's generated file are the only
+// order the user's picker ever shows, so they go out in rank order — the
+// catalog's arrival order (GLM-4.6's before the fix) was a jumble.
+func TestZCodeLevelsAreWrittenInRankOrder(t *testing.T) {
+	for _, c := range []struct{ in, want []string }{
+		{[]string{"none", "low", "high", "max"}, []string{"disabled", "low", "high", "max"}},
+		{[]string{"xhigh", "minimal", "low", "medium", "high"}, []string{"minimal", "low", "medium", "high", "xhigh"}},
+		// a level magpie doesn't know keeps its arrival place after the
+		// known ones
+		{[]string{"deep", "high", "none", "low"}, []string{"disabled", "low", "high", "deep"}},
+		{[]string{"deep", "shallow"}, []string{"deep", "shallow"}},
+	} {
+		got := zcodeLevels(c.in)
+		if !slices.Equal(got, c.want) {
+			t.Errorf("zcodeLevels(%v) = %v, want %v", c.in, got, c.want)
+		}
+	}
+}
+
 func TestZCodeDefaultLevel(t *testing.T) {
 	for _, c := range []struct {
 		in   []string
