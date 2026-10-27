@@ -161,6 +161,23 @@ func TestCodexKeychainAccountIsCodexs(t *testing.T) {
 	}
 }
 
+// A test's fake keychain is the keychain on every system: Codex's
+// default for [features] secret_auth_storage is off in a test, as on
+// macOS, so a config.toml naming "keyring" with no [features] is the
+// item the fake stands in for. On Windows the default (on there) read
+// it as Codex's encrypted storage, and the keychain tests here couldn't
+// see their item (#2808).
+func TestCodexKeychainInTestsIgnoresCodexsDefault(t *testing.T) {
+	was := secretAuthStorageDefault
+	t.Cleanup(func() { secretAuthStorageDefault = was })
+	secretAuthStorageDefault = true // as Codex's default is on Windows
+	home := signIn(t)
+	codexInKeychain(t, home, "keyring")
+	if b, _, err := readCodexLogin(filepath.Join(home, ".codex"), false); err != nil || len(b) == 0 {
+		t.Fatalf("a test's keyring isn't the fake keychain: %v", err)
+	}
+}
+
 // #2367 (Dony2050): Codex set to keep its sign-in in the keychain has no
 // auth.json. Its account is found there all the same: the provider, its
 // saved login, the session identity and the agent's wiring all go by it.

@@ -696,13 +696,15 @@ func CodexSignInKnown(dir string) (b []byte, ok, known bool) {
 }
 
 // CodexKeychainForTest has Codex's keychain item read through find (no
-// item: fs.ErrNotExist) on every system, until restore.
+// item: fs.ErrNotExist) on every system, until restore: Codex's default
+// for [features] secret_auth_storage is off meanwhile, as on macOS, so
+// "keyring" with no [features] is that item, even on Windows (#2808).
 func CodexKeychainForTest(find func(service, account string) ([]byte, error)) (restore func()) {
-	old, oldHere := codexKeychain, codexKeychainHere
-	codexKeychain, codexKeychainHere = findOnly(find), true
+	old, oldHere, oldSecrets := codexKeychain, codexKeychainHere, secretAuthStorageDefault
+	codexKeychain, codexKeychainHere, secretAuthStorageDefault = findOnly(find), true, false
 	resetCodexKeychain()
 	return func() {
-		codexKeychain, codexKeychainHere = old, oldHere
+		codexKeychain, codexKeychainHere, secretAuthStorageDefault = old, oldHere, oldSecrets
 		resetCodexKeychain()
 	}
 }

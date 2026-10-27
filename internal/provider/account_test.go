@@ -85,6 +85,12 @@ func isolate(t testing.TB) {
 	oldCodexKeychain, oldCodexHere := codexKeychain, codexKeychainHere
 	codexKeychain = &fakeKeychain{}
 	resetCodexKeychain()
+	// a test's keychain is the keychain on every system: Codex's default
+	// for [features] secret_auth_storage is off here, as on macOS, so
+	// "keyring" with no [features] is the item the fake stands in for,
+	// even where the system's default is on (Windows, #2808)
+	oldSecrets := secretAuthStorageDefault
+	secretAuthStorageDefault = false
 	// a test's keychain answers at once: however loaded the machine, a
 	// read isn't taken for one waiting on a prompt
 	oldHold := keychainHold
@@ -106,6 +112,7 @@ func isolate(t testing.TB) {
 		claudeKeychain, claudeBase, claudeExecutable = oldKeychain, oldBase, oldExe
 		DevinExecutable = oldDevin
 		codexKeychain, codexKeychainHere = oldCodexKeychain, oldCodexHere
+		secretAuthStorageDefault = oldSecrets
 		keychainHold = oldHold
 		resetCodexKeychain()
 		forgetClaudeCredential()
