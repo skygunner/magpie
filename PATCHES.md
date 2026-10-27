@@ -47,9 +47,10 @@ Each round:
 6. Accept: healthy, 401/200 auth pair, model count equal before/after, a
    real `group/fast-cheap` request 200. Push `prod` and the tag.
 
-## Carried patches (as of v0.1.1670-p1, 2026-10-27)
+## Carried patches (as of v0.1.1691-p1, 2026-10-27)
 
-Checked against v0.1.1670: none absorbed yet. Integration notes: at
+Checked against v0.1.1691 (2026-10-27): none absorbed yet; all nine
+issues still open. The v0.1.1691 merge needed no conflict resolution. Integration notes: at
 v0.1.1612 upstream made a plugin window's `Used` a pointer (#3650), kept
 beside #3487's pointer `Amount`; at v0.1.1670 upstream added runs-out
 spans (#3762) whose new test wrote a bare `Amount` — adapted to the
@@ -92,3 +93,5 @@ Checked again at v0.1.1670: still zero comments, still nothing upstream.
   from PR #366 `bdc302a`. Published to Docker Hub as
   `bigshort/magpie-patched:0.1.1670-p1` and `:latest` — from this round
   on, every deployment is published there too.
+- `prod/0.1.1691-p1` — 2026-10-27. Rolling merge of v0.1.1691; no
+  conflicts, none absorbed, same nine patches.
