@@ -95,6 +95,100 @@ func dsmlMark(s string, closing bool) (n int, more bool) {
 	return i, false
 }
 
+const (
+	// DeepSeek's own special-token markup (#1848, yetone: over DeepSeek's
+	// own API, deepseek-flash, a call came as text in it): a calls
+	// wrapper, then each call's open, its name, its separation and its
+	// arguments, then the call's close and the wrapper's close. The
+	// token's space is ▁, which a model also writes as _.
+	nativeCallsBegin = "tool▁calls▁begin"
+	nativeCallBegin  = "tool▁call▁begin"
+	nativeCallEnd    = "tool▁call▁end"
+	nativeCallsEnd   = "tool▁calls▁end"
+	nativeSep        = "tool▁sep"
+	// the invoke the issue's second shape writes without its DSML word
+	pipedInvoke = "invoke"
+)
+
+// deepSeekTag is the tag naming word as that markup spells it: <, a run of
+// pipes and spaces, the word (▁ either way), another run, then >.
+func deepSeekTag(word string) *regexp.Regexp {
+	return regexp.MustCompile(`<\s*[|｜][\s|｜]*` + strings.ReplaceAll(word, "▁", "[▁_]") + `[\s|｜]*>`)
+}
+
+var (
+	nativeBegin  = deepSeekTag(nativeCallsBegin)
+	nativeOpen   = deepSeekTag(nativeCallBegin)
+	nativeEnd    = deepSeekTag(nativeCallEnd)
+	nativeClose  = deepSeekTag(nativeCallsEnd)
+	nativeSepTag = deepSeekTag(nativeSep)
+	// nativeTags are those, nativeWords what a tag cut short may be the
+	// start of
+	nativeTags  = []*regexp.Regexp{nativeBegin, nativeOpen, nativeEnd, nativeClose, nativeSepTag}
+	nativeWords = []string{nativeCallsBegin, nativeCallBegin, nativeCallEnd, nativeCallsEnd, nativeSep}
+)
+
+// nativeAt is where in s the first of those tags is, -1 for nowhere.
+func nativeAt(s string) int {
+	at := -1
+	for _, re := range nativeTags {
+		if m := re.FindStringIndex(s); m != nil && (at < 0 || m[0] < at) {
+			at = m[0]
+		}
+	}
+	return at
+}
+
+// nativeMarkAt is the length of the tag that begins s, 0 when none does.
+func nativeMarkAt(s string) int {
+	for _, re := range nativeTags {
+		if m := re.FindStringIndex(s); m != nil && m[0] == 0 {
+			return m[1]
+		}
+	}
+	return 0
+}
+
+// nativeShort tells whether s is one of those tags' beginning: its <, its
+// pipes and its word there, not their end.
+func nativeShort(s string) bool {
+	if !strings.HasPrefix(s, "<") {
+		return false
+	}
+	rest, more := tagRest(s)
+	if more || rest == "" {
+		return true // through the pipes; the word may still come
+	}
+	for _, w := range nativeWords {
+		for _, word := range []string{w, strings.ReplaceAll(w, "▁", "_")} {
+			if strings.HasPrefix(word, rest) {
+				return true
+			}
+			if r, ok := strings.CutPrefix(rest, word); ok {
+				return strings.HasPrefix(">", strings.TrimLeft(r, " \t|｜"))
+			}
+		}
+	}
+	return false
+}
+
+// tagRest steps over a tag's <, its spaces and its first pipe, and gives
+// what follows; more is whether s ends inside those, a full-width pipe's
+// first bytes too.
+func tagRest(s string) (rest string, more bool) {
+	if !strings.HasPrefix(s, "<") {
+		return "", false
+	}
+	s = strings.TrimLeft(s[1:], " \t")
+	switch {
+	case strings.HasPrefix(s, "|"):
+		return s[1:], false
+	case strings.HasPrefix(s, "｜"):
+		return s[len("｜"):], false
+	}
+	return "", strings.HasPrefix("｜", s)
+}
+
 // writtenCall is one call read out of the text.
 type writtenCall struct {
 	Name string
@@ -109,7 +203,7 @@ var (
 	dsmlString = regexp.MustCompile(`string\s*=\s*"true"`)
 	// what is left of the tags once the calls are read out, and the
 	// braces, quotes or > GLM leaves before a close (#1945)
-	textCallJunk = regexp.MustCompile(dsmlTag + `[^<>]*>?|[}\]"'>]*\s*</tool_calls?>|<tool_calls?>`)
+	textCallJunk = regexp.MustCompile(dsmlTag + `[^<>]*>?|<\s*/?\s*[|｜][\s|｜]*[A-Za-z_▁][^<>]*>|[}\]"'>]*\s*</tool_calls?>|<tool_calls?>`)
 )
 
 // textCallNames are the tools a request offers, by name.
@@ -165,11 +259,16 @@ func textCallAt(s string) (at, tail int) {
 	}
 	for i := strings.IndexByte(s, '<'); i >= 0 && (at < 0 || i < at); {
 		n, more := dsmlMark(s[i:], true)
+		if n == 0 {
+			if n = nativeMarkAt(s[i:]); n == 0 {
+				n = pipedMarkAt(s[i:])
+			}
+		}
 		if n > 0 {
 			at = i
 			break
 		}
-		if more && tail == 0 {
+		if more = more || nativeShort(s[i:]) || pipedShort(s[i:]); more && tail == 0 {
 			tail = len(s) - i
 		}
 		j := strings.IndexByte(s[i+1:], '<')
@@ -198,39 +297,71 @@ func textCallAt(s string) (at, tail int) {
 func parseTextCalls(s string, names map[string]bool) (calls []writtenCall, rest string, ok bool) {
 	var left strings.Builder
 	for s != "" {
-		h := strings.Index(s, "<tool_call>")
-		d := dsmlInvoke.FindStringSubmatchIndex(s)
-		switch {
-		case h >= 0 && (d == nil || h < d[0]):
-			left.WriteString(s[:h])
-			if t := strings.TrimLeft(s[h+len("<tool_call>"):], " \t\r\n"); t == "" || strings.HasPrefix(t, "<") {
+		// at is where the first of the four marks a call opens with is,
+		// kind which it is: 1 Hermes', 2 DSML's, 3 DeepSeek's own (#1848),
+		// 4 its invoke without the DSML word
+		at, kind := -1, 0
+		take := func(i, k int) {
+			if i >= 0 && (at < 0 || i < at) {
+				at, kind = i, k
+			}
+		}
+		take(strings.Index(s, "<tool_call>"), 1)
+		if d := dsmlInvoke.FindStringSubmatchIndex(s); d != nil {
+			take(d[0], 2)
+		}
+		take(nativeAt(s), 3)
+		if p := pipedInvokeTag.FindStringIndex(s); p != nil {
+			take(p[0], 4)
+		}
+		switch kind {
+		case 1: // Hermes' block, or DeepSeek's half of it
+			left.WriteString(s[:at])
+			if t := strings.TrimLeft(s[at+len("<tool_call>"):], " \t\r\n"); t == "" || strings.HasPrefix(t, "<") {
 				// no JSON after it: DeepSeek's own tags, an invoke or the
 				// closes of one (#823), or nothing; the opener is dropped
 				// and what follows read as it is
 				s = t
 				continue
 			}
-			c, n, good := paramCall(s[h+len("<tool_call>"):], names)
+			c, n, good := paramCall(s[at+len("<tool_call>"):], names)
 			if !good {
-				c, n, good = hermesCall(s[h+len("<tool_call>"):], names)
+				c, n, good = hermesCall(s[at+len("<tool_call>"):], names)
 			}
-			if !good && !strings.HasPrefix(strings.TrimLeft(s[h+len("<tool_call>"):], " \t\r\n"), "{") {
+			if !good && !strings.HasPrefix(strings.TrimLeft(s[at+len("<tool_call>"):], " \t\r\n"), "{") {
 				// GLM's own: the name, then its arguments in pairs (#906)
-				c, n, good = glmCall(s[h+len("<tool_call>"):], names)
+				c, n, good = glmCall(s[at+len("<tool_call>"):], names)
 			}
 			if !good {
 				return nil, "", false
 			}
 			calls = append(calls, c)
-			s = s[h+len("<tool_call>")+n:]
-		case d != nil:
-			left.WriteString(s[:d[0]])
-			c, n, good := dsmlCall(s[d[0]:], s[d[2]:d[3]], d[1]-d[0], names)
+			s = s[at+len("<tool_call>")+n:]
+		case 2: // DeepSeek's DSML
+			d := dsmlInvoke.FindStringSubmatchIndex(s)
+			left.WriteString(s[:at])
+			c, n, good := dsmlCall(s[at:], s[d[2]:d[3]], d[1]-d[0], names)
 			if !good {
 				return nil, "", false
 			}
 			calls = append(calls, c)
-			s = s[d[0]+n:]
+			s = s[at+n:]
+		case 3: // DeepSeek's own markup (#1848)
+			left.WriteString(s[:at])
+			c, n, good := deepSeekCalls(s[at:], names)
+			if !good {
+				return nil, "", false
+			}
+			calls = append(calls, c...)
+			s = s[at+n:]
+		case 4: // its invoke without the DSML word (#1848)
+			left.WriteString(s[:at])
+			c, n, good := pipedCall(s[at:], names)
+			if !good {
+				return nil, "", false
+			}
+			calls = append(calls, c)
+			s = s[at+n:]
 		default:
 			left.WriteString(s)
 			s = ""
@@ -293,6 +424,12 @@ func cutMark(s string) string {
 	// begun its pipes (a full-width one's first bytes too): "x < " is text
 	if i := strings.LastIndexByte(s, '<'); i >= 0 && strings.IndexAny(s[i:], "|｜\xef") >= 0 {
 		if _, more := dsmlMark(s[i:], true); more {
+			return s[i:]
+		}
+		if nativeShort(s[i:]) {
+			return s[i:]
+		}
+		if pipedShort(s[i:]) {
 			return s[i:]
 		}
 	}
@@ -490,6 +627,179 @@ func dsmlCall(s, name string, open int, names map[string]bool) (writtenCall, int
 		} else {
 			args[p[1]] = val
 		}
+	}
+	b, err := json.Marshal(args)
+	if err != nil {
+		return writtenCall{}, 0, false
+	}
+	return writtenCall{Name: name, Args: b}, end, true
+}
+
+// deepSeekCalls reads the calls DeepSeek wrote in its own markup (#1848),
+// s beginning with the calls wrapper or a call's open: each call's name,
+// its separation and its arguments, the wrapper's close and each call's
+// close taken with them. n is how much of s they took. A call of a name
+// the request didn't offer or with arguments that can't be read, and a
+// wrapper with no call that can be read, mean the text goes on as it came.
+func deepSeekCalls(s string, names map[string]bool) (calls []writtenCall, n int, ok bool) {
+	// a close left over with nothing before it goes, as DSML's does
+	for _, re := range []*regexp.Regexp{nativeClose, nativeEnd} {
+		if m := re.FindStringIndex(s); m != nil && m[0] == 0 {
+			return nil, m[1], true
+		}
+	}
+	if m := nativeBegin.FindStringIndex(s); m != nil && m[0] == 0 {
+		n = m[1]
+	}
+	for {
+		t := strings.TrimLeft(s[n:], " \t\r\n")
+		n += len(s[n:]) - len(t)
+		if m := nativeClose.FindStringIndex(s[n:]); m != nil && m[0] == 0 {
+			n += m[1]
+			break
+		}
+		m := nativeOpen.FindStringIndex(s[n:])
+		if m == nil || m[0] != 0 {
+			break
+		}
+		rest := s[n+m[1]:]
+		end := len(rest)
+		for _, re := range []*regexp.Regexp{nativeEnd, nativeOpen, nativeClose} {
+			if e := re.FindStringIndex(rest); e != nil && e[0] < end {
+				end = e[0]
+			}
+		}
+		c, good := nativeCall(rest[:end], names)
+		if !good {
+			return nil, 0, false
+		}
+		calls = append(calls, c)
+		n += m[1] + end
+		if e := nativeEnd.FindStringIndex(s[n:]); e != nil && e[0] == 0 {
+			n += e[1]
+			continue
+		}
+		if e := nativeClose.FindStringIndex(s[n:]); e != nil && e[0] == 0 {
+			n += e[1]
+			break
+		}
+		if e := nativeOpen.FindStringIndex(s[n:]); e == nil || e[0] != 0 {
+			break // cut short, or text the call's close never came before
+		}
+	}
+	if len(calls) == 0 && n == 0 {
+		return nil, 0, false
+	}
+	return calls, n, true
+}
+
+// nativeCall reads one call of that markup (#1848): its name, nativeSep,
+// then its arguments as JSON. V3 wrote function before the name and fenced
+// the JSON, V3.1 the name alone, and both are read.
+func nativeCall(body string, names map[string]bool) (writtenCall, bool) {
+	name, args := strings.TrimSpace(body), ""
+	if m := nativeSepTag.FindStringIndex(body); m != nil {
+		name, args = strings.TrimSpace(body[:m[0]]), body[m[1]:]
+		if name == "function" {
+			// V3 wrote function, its separation, then the name and the
+			// arguments: the name ends at the line's end or at the JSON
+			cut := len(args)
+			for _, s := range []string{"\n", "\r", "{", "```"} {
+				if i := strings.Index(args, s); i >= 0 && i < cut {
+					cut = i
+				}
+			}
+			name, args = strings.TrimSpace(args[:cut]), args[cut:]
+		}
+	}
+	if !names[name] {
+		return writtenCall{}, false
+	}
+	args = strings.TrimSpace(args)
+	if rest, fenced := strings.CutPrefix(args, "```"); fenced {
+		if i := strings.IndexByte(rest, '\n'); i >= 0 && strings.TrimSpace(rest[:i]) == "json" {
+			rest = rest[i+1:]
+		}
+		args = strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(rest), "```"))
+	}
+	b, ok := callArgs([]byte(args))
+	if !ok {
+		return writtenCall{}, false
+	}
+	return writtenCall{Name: name, Args: b}, true
+}
+
+// The issue's second shape (#1848): the invoke of DeepSeek's own DSML
+// template with its DSML word gone, and its parameters. The report holds
+// the opening tag alone, so they are read as that template writes them,
+// and a body that is the JSON its other calls carry is read too.
+var (
+	pipedInvokeTag = regexp.MustCompile(`<\s*[|｜][\s|｜]*invoke\s+name\s*=\s*"([^"]+)"[\s|｜]*>`)
+	pipedParamTag  = regexp.MustCompile(`(?s)<\s*[|｜][\s|｜]*parameter\s+name\s*=\s*"([^"]+)"([^<>]*)[\s|｜]*>(.*?)<\s*/\s*[|｜][\s|｜]*parameter[\s|｜]*>`)
+	pipedCloseTag  = regexp.MustCompile(`<\s*/\s*[|｜][\s|｜]*invoke[\s|｜]*>`)
+)
+
+// pipedMarkAt is the length of that invoke's open at the start of s, 0 when
+// it isn't there; pipedShort tells whether s is one's beginning.
+func pipedMarkAt(s string) int {
+	if m := pipedInvokeTag.FindStringIndex(s); m != nil && m[0] == 0 {
+		return m[1]
+	}
+	return 0
+}
+
+func pipedShort(s string) bool {
+	if !strings.HasPrefix(s, "<") {
+		return false
+	}
+	rest, more := tagRest(s)
+	if more || rest == "" {
+		return true
+	}
+	if r, ok := strings.CutPrefix(rest, pipedInvoke); ok {
+		// the word is there: its name's attribute and its close may still
+		// be on the way
+		r = strings.TrimLeft(r, " \t")
+		return strings.HasPrefix(r, `name="`) || strings.HasPrefix(`name="`, r)
+	}
+	return strings.HasPrefix(pipedInvoke, rest)
+}
+
+// pipedCall reads a call of the issue's second shape: its name, its
+// parameters and its close, up to that close or the end of s.
+func pipedCall(s string, names map[string]bool) (writtenCall, int, bool) {
+	m := pipedInvokeTag.FindStringSubmatchIndex(s)
+	if m == nil || m[0] != 0 || !names[s[m[2]:m[3]]] {
+		return writtenCall{}, 0, false
+	}
+	name, open := s[m[2]:m[3]], m[1]
+	end := len(s)
+	if i := pipedCloseTag.FindStringIndex(s[open:]); i != nil {
+		end = open + i[1]
+	}
+	if i := pipedInvokeTag.FindStringIndex(s[open:]); i != nil && open+i[0] < end {
+		end = open + i[0]
+	}
+	args := map[string]any{}
+	for _, p := range pipedParamTag.FindAllStringSubmatch(s[open:end], -1) {
+		val := p[3]
+		if dsmlString.MatchString(p[2]) {
+			args[p[1]] = val
+			continue
+		}
+		var v any
+		if decodeJSON([]byte(strings.TrimSpace(val)), &v) == nil {
+			args[p[1]] = v
+		} else {
+			args[p[1]] = val
+		}
+	}
+	if body := strings.TrimSpace(s[open:end]); len(args) == 0 && body != "" {
+		b, ok := callArgs([]byte(body))
+		if !ok {
+			return writtenCall{}, 0, false // arguments that can't be read
+		}
+		return writtenCall{Name: name, Args: b}, end, true
 	}
 	b, err := json.Marshal(args)
 	if err != nil {
@@ -794,9 +1104,12 @@ func (t *textCallTidy) line(line []byte) []byte {
 
 // mayWriteCalls tells whether a whole Chat reply b could carry a call
 // written into its text, for a request that offered names: one of
-// textCallMarks' words is in it, however its JSON escapes the brackets.
+// textCallMarks' words is in it, however its JSON escapes the brackets,
+// or DeepSeek's own markup (#1848), whose ▁ a relay may escape as \u2581,
+// or the invoke it writes without its DSML word.
 func mayWriteCalls(b []byte, names map[string]bool) bool {
-	return names != nil && (bytes.Contains(b, []byte("tool_call")) || bytes.Contains(b, []byte("DSML")))
+	return names != nil && (bytes.Contains(b, []byte("tool_call")) || bytes.Contains(b, []byte("DSML")) ||
+		bytes.Contains(b, []byte("▁")) || bytes.Contains(b, []byte(`\u2581`)) || bytes.Contains(b, []byte("invoke")))
 }
 
 // wholeTextCalls reads the calls written into the content of a whole Chat
