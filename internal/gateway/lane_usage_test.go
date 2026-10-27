@@ -24,7 +24,7 @@ func TestQueueRefusalIsInTheUsageLedger(t *testing.T) {
 	v, up := slowUp(t)
 	one := 1
 	if err := provider.Save(provider.Provider{ID: "slow", Name: "Slow", Key: "k", Models: []string{"m"}, Chat: up + "/v1", Anthropic: up,
-		MaxConcurrency: &one, QueueLimit: 1, QueueWait: 1}); err != nil {
+		MaxConcurrency: &one, QueueLimit: 1, QueueWait: provider.MaxQueueWait}); err != nil {
 		t.Fatal(err)
 	}
 	g := newLaneRig(t)
