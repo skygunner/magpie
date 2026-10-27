@@ -4,12 +4,16 @@ import (
 	"bytes"
 	"cmp"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"strings"
@@ -19,10 +23,12 @@ import (
 	"github.com/tidwall/gjson"
 
 	"github.com/yetone/magpie/internal/access"
+	"github.com/yetone/magpie/internal/appdir"
 	"github.com/yetone/magpie/internal/catalog"
 	"github.com/yetone/magpie/internal/claudeseal"
 	"github.com/yetone/magpie/internal/codexcat"
 	"github.com/yetone/magpie/internal/codexsummary"
+	"github.com/yetone/magpie/internal/filememo"
 	"github.com/yetone/magpie/internal/provider"
 	"github.com/yetone/magpie/internal/settings"
 	"github.com/yetone/magpie/internal/usage"
@@ -1800,6 +1806,75 @@ func codexListKey(r *http.Request) string {
 	return provider.CodexBase + "\x00" + who + "\x00" + r.URL.RawQuery
 }
 
+// codexListModels is a backend list's entries as each caller's own copy:
+// what follows writes into them.
+func codexListModels(body []byte) []any {
+	var list struct {
+		Models []any `json:"models"`
+	}
+	if json.Unmarshal(body, &list) != nil {
+		return nil
+	}
+	return list.Models
+}
+
+// codexKept is the backend's last list for one sign-in, kept on disk
+// between magpie's runs: a backend that doesn't answer at all leaves Codex
+// the list and window it gave before, not the older one the provider saved
+// (#1955).
+type codexKept struct {
+	ETag string `json:"etag,omitempty"`
+	Body []byte `json:"body"`
+}
+
+// codexKeptPath is where the backend's last list for one sign-in is kept;
+// the name is a hash of the key, so no token or account is readable in it.
+func codexKeptPath(key string) string {
+	sum := sha256.Sum256([]byte(key))
+	return filepath.Join(appdir.Cache(), "codex-models", hex.EncodeToString(sum[:8])+".json")
+}
+
+// keepCodexList saves what the backend answered for one sign-in, written
+// aside and renamed, so a half-written file is never read as a list.
+func keepCodexList(key string, body []byte, etag string) {
+	p := codexKeptPath(key)
+	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+		return
+	}
+	b, err := json.Marshal(codexKept{ETag: etag, Body: body})
+	if err != nil {
+		return
+	}
+	f, err := os.CreateTemp(filepath.Dir(p), ".list-*")
+	if err != nil {
+		return
+	}
+	_, err = f.Write(b)
+	if cerr := f.Close(); err == nil {
+		err = cerr
+	}
+	if err == nil {
+		err = os.Rename(f.Name(), p)
+	}
+	if err != nil {
+		os.Remove(f.Name())
+	}
+}
+
+// codexKeptList is the backend's last list kept for one sign-in, with the
+// ETag it came with; ok is false where none was kept, or it can't be read.
+func codexKeptList(key string) (body []byte, etag string, ok bool) {
+	k, err := filememo.Read("codex kept list", codexKeptPath(key), func(b []byte) (codexKept, error) {
+		var k codexKept
+		err := json.Unmarshal(b, &k)
+		return k, err
+	})
+	if err != nil || len(k.Body) == 0 {
+		return nil, "", false
+	}
+	return k.Body, k.ETag, true
+}
+
 // codexBackendList is the backend's model list for r's sign-in: the last
 // one asked when it is fresh, or at once while it is asked again; else
 // what an ask brings within codexModelsWait. One ask at a time for each
@@ -1821,7 +1896,7 @@ func (s *Server) codexBackendList(r *http.Request) (body []byte, etag string, de
 		// a refusal an ask before had is no answer for this one
 		e.asked, e.deny, e.denyBody = make(chan struct{}), nil, nil
 		codexLists.asking.Add(1)
-		go s.askCodexList(r.Context(), r.Header.Clone(), r.URL.RawQuery, e, e.asked)
+		go s.askCodexList(r.Context(), key, r.Header.Clone(), r.URL.RawQuery, e, e.asked)
 	}
 	asked, stale := e.asked, e.body != nil
 	codexLists.Unlock()
@@ -1841,7 +1916,7 @@ func (s *Server) codexBackendList(r *http.Request) (body []byte, etag string, de
 
 // askCodexList asks the backend for its list into e, past the request
 // that started it, and closes done.
-func (s *Server) askCodexList(rctx context.Context, h http.Header, query string, e *codexListed, done chan struct{}) {
+func (s *Server) askCodexList(rctx context.Context, key string, h http.Header, query string, e *codexListed, done chan struct{}) {
 	defer codexLists.asking.Done()
 	var body, denyBody []byte
 	var etag string
@@ -1857,6 +1932,9 @@ func (s *Server) askCodexList(rctx context.Context, h http.Header, query string,
 		}
 		e.asked = nil
 		codexLists.Unlock()
+		if body != nil {
+			keepCodexList(key, body, etag)
+		}
 		close(done)
 	}()
 	u := provider.CodexBase + "/models"
@@ -1895,7 +1973,8 @@ func (s *Server) askCodexList(rctx context.Context, h http.Header, query string,
 
 // codexModels is the ChatGPT backend's model list for this sign-in, with
 // magpie's models after it. Should the backend not answer, or not in
-// time, Codex's last list of its own stands in.
+// time, the list it gave last, kept between magpie's runs, stands in; one
+// never asked, Codex's last list of its own.
 func (s *Server) codexModels(w http.ResponseWriter, r *http.Request) {
 	var own []any
 	body, etag, deny, denyBody := s.codexBackendList(r)
@@ -1907,12 +1986,7 @@ func (s *Server) codexModels(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if body != nil {
-		// each caller's own copy: what follows writes into the entries
-		var list struct {
-			Models []any `json:"models"`
-		}
-		json.Unmarshal(body, &list)
-		own = list.Models
+		own = codexListModels(body)
 	}
 	// what follows reads the providers seven times over (the catalog, the
 	// codex provider's picks and windows, the list's tag): held, they are
@@ -1920,6 +1994,16 @@ func (s *Server) codexModels(w http.ResponseWriter, r *http.Request) {
 	// items among them, and together held the answer past Codex's 5 s (#746)
 	defer provider.Hold()()
 	cached := own == nil
+	if cached {
+		// the backend's own last list, not Codex's cache beside it: the
+		// window it gave an hour ago stands, where the provider's saved
+		// list may be a day old and smaller (#1955)
+		if b, tag, ok := codexKeptList(codexListKey(r)); ok {
+			if ms := codexListModels(b); ms != nil {
+				own, etag, cached = ms, tag, false
+			}
+		}
+	}
 	if cached {
 		for _, e := range codexcat.CacheEntries() {
 			own = append(own, e)
