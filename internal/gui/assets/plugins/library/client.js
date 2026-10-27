@@ -4504,9 +4504,10 @@ magpie.plugin("library", (ctx) => {
     inp.autocomplete = "off";
     inp.value = probe?.source || "";
     const go = button(probing ? t("Looking…") : t("Find skills"), "action", () => find());
-    go.disabled = probing;
+    go.disabled = probing || !inp.value.trim();
     if (probing) go.classList.add("busy");
-    inp.onkeydown = (e) => { e.stopPropagation(); if (e.key === "Enter") find(); else if (e.key === "Escape" && probe) { probe = null; render(); } };
+    inp.onkeydown = (e) => { e.stopPropagation(); if (e.key === "Enter") find(); else if (e.key === "Escape" && probe) { probe = { source: probe.source }; render(); } };
+    inp.oninput = () => { go.disabled = probing || !inp.value.trim(); };
     const g = glyph(GLYPH.search, "lib-mini");
     line.append(g, inp, go);
     card.append(line);
@@ -4585,7 +4586,7 @@ magpie.plugin("library", (ctx) => {
     const drawAgents = () => agentsBox.replaceChildren(agentChips(skillAgents(), p.agents, (n) => { p.agents = n; drawAgents(); }, { names: false, all: true }));
     drawAgents();
     foot.append(el("span", "note", t("for")), agentsBox, el("span", "grow"));
-    foot.append(button(t("Cancel"), "", () => { probe = null; render(); }));
+    foot.append(button(t("Cancel"), "", () => { probe = { source: p.source }; render(); }));
     const go = button("", "primary", async () => {
       go.disabled = true;
       go.textContent = t("Installing…");
