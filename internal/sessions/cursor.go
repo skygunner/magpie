@@ -179,18 +179,20 @@ func cursorParentOf(f file) string {
 // in -shm when they are; both would change the folder and make the chat
 // look written to a moment ago. A store with no log to replay is opened
 // immutable, which touches nothing; one with a log is read from a copy of
-// the two files, in a folder of magpie's own that close removes; a large
-// store's copy is shared while it is unchanged (cursor_snapshot.go).
+// the two files, in a folder of magpie's own that close removes, while a
+// large one is read in place (OpenUntouched).
 func openCursorStore(path string) (db *sql.DB, closeDB func(), err error) {
 	return OpenUntouched(path)
 }
 
 // OpenUntouched opens another app's SQLite database at path to read it,
 // as openCursorStore does, without writing a byte beside it: immutable
-// with no log to replay, from a copy of it and its log with one. A
-// database in WAL mode can't be opened read-only while its app is closed
-// (SQLite would make its -shm file), so a reader that needs it read
-// whether the app runs or not opens it this way. closeDB removes the copy.
+// with no log to replay, from a copy of it and its log with one, or in
+// place read-only when it is large enough that a copy costs real disk
+// (cursorSnapMin). A database in WAL mode can't be opened read-only while
+// its app is closed (SQLite would make its -shm file), so a reader that
+// needs it read whether the app runs or not opens it this way. closeDB
+// removes a copy.
 func OpenUntouched(path string) (db *sql.DB, closeDB func(), err error) {
 	open := func(p, query string) (*sql.DB, error) {
 		u := url.URL{Scheme: "file", Path: filepath.ToSlash(p), RawQuery: query}
@@ -214,7 +216,17 @@ func OpenUntouched(path string) (db *sql.DB, closeDB func(), err error) {
 		}
 		return db, func() { db.Close() }, nil
 	}
+	// A copy of a store this large is free only where the file system
+	// clones it. Elsewhere it is written out in full on every change, and
+	// Cursor writes its state all day: on NTFS one 8.7 GB state.vscdb cost
+	// hundreds of GB of writes a day and froze the machine (#3228). Such a
+	// store is read in place, read-only, which writes only SQLite's read
+	// marks into its -shm, a page or two; a copy is still made when the
+	// store can't be opened in place.
 	if stamp, size, ok := cursorStamp(path); ok && size >= cursorSnapMin {
+		if db, err := open(path, "mode=ro&_pragma=busy_timeout(3000)"); err == nil {
+			return db, func() { db.Close() }, nil
+		}
 		return sharedCursorStore(path, stamp, open)
 	}
 	db, tmp, err := snapshotCursorStore(path, open)

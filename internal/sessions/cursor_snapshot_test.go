@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"testing"
@@ -17,27 +18,17 @@ func cursorTempCopies(t *testing.T) []string {
 	return d
 }
 
-// #1988: Cursor's state.vscdb is often several GB. Every listing, count,
-// transcript and search read it from a fresh copy in the temp folder, so a
-// visit to Sessions wrote it out again and again. Reads of an unchanged
-// store share one copy, a change makes one new copy, and nothing is left.
-func TestCursorEditorCopiedOncePerChange(t *testing.T) {
+// #3228: Cursor's state.vscdb is often several GB. A copy of it is written
+// out in full on every change where the file system can't clone it, which on
+// NTFS cost hundreds of GB of writes a day. A large store with a live log is
+// read in place instead, read-only: no copy is made, and its newest chats,
+// which only the log has yet, are still read.
+func TestCursorLargeStoreIsReadInPlace(t *testing.T) {
 	cursorSetup(t)
 	t.Setenv("TMPDIR", t.TempDir())
-	// The copy lingers past any pause a loaded runner makes between two
-	// reads while copies are counted (a 100ms linger let a slow runner drop
-	// it between List and the next visit, and count a third copy); it is
-	// cut short only to see the last one removed. The timers read the
-	// linger under cursorSnaps' lock, so it is set under it.
-	linger := func(d time.Duration) {
-		cursorSnaps.Lock()
-		cursorSnapLinger = d
-		cursorSnaps.Unlock()
-	}
-	minWas, lingerWas := cursorSnapMin, cursorSnapLinger
+	minWas := cursorSnapMin
 	cursorSnapMin = 0
-	linger(time.Hour)
-	t.Cleanup(func() { cursorSnapMin = minWas; linger(lingerWas) })
+	t.Cleanup(func() { cursorSnapMin = minWas })
 
 	config, err := os.UserConfigDir()
 	if err != nil {
@@ -73,6 +64,9 @@ func TestCursorEditorCopiedOncePerChange(t *testing.T) {
 		put("bubbleId:"+id+":u", map[string]any{"type": 1, "text": "question " + id, "createdAt": at.Format(time.RFC3339Nano)})
 		put("bubbleId:"+id+":a", map[string]any{"type": 2, "text": "answer", "createdAt": at.Add(time.Minute).Format(time.RFC3339Nano)})
 	}
+	// the writer is still open and its log is not checkpointed: every row,
+	// the schema's included, is in the -wal, so a read that ignores the log
+	// finds no chats at all
 	if fi, err := os.Stat(p + "-wal"); err != nil || fi.Size() == 0 {
 		t.Fatalf("fixture has no live -wal: %v", err)
 	}
@@ -97,8 +91,11 @@ func TestCursorEditorCopiedOncePerChange(t *testing.T) {
 	before := cursorCopies.Load()
 	visit()
 	visit()
-	if n := cursorCopies.Load() - before; n != 1 {
-		t.Fatalf("an unchanged state.vscdb was copied %d times, want 1", n)
+	if n := cursorCopies.Load() - before; n != 0 {
+		t.Fatalf("a live state.vscdb was copied %d times, want 0", n)
+	}
+	if d := cursorTempCopies(t); len(d) != 0 {
+		t.Fatalf("copies in the temp folder: %v", d)
 	}
 
 	put("composerData:"+ids[0], map[string]any{"composerId": ids[0], "name": "Renamed", "createdAt": at.UnixMilli(), "lastUpdatedAt": at.Add(2 * time.Minute).UnixMilli(), "fullConversationHeadersOnly": []any{map[string]any{"bubbleId": "u"}, map[string]any{"bubbleId": "a"}}})
@@ -106,20 +103,40 @@ func TestCursorEditorCopiedOncePerChange(t *testing.T) {
 		t.Fatalf("a change to the store wasn't read: %q", s.Title)
 	}
 	visit()
-	if n := cursorCopies.Load() - before; n != 2 {
-		t.Fatalf("copies after one change: %d, want 2", n)
+	if n := cursorCopies.Load() - before; n != 0 {
+		t.Fatalf("copies after one change: %d, want 0", n)
 	}
+	if d := cursorTempCopies(t); len(d) != 0 {
+		t.Fatalf("copies in the temp folder: %v", d)
+	}
+}
 
-	// one more read lets the copy go with a short linger
-	linger(100 * time.Millisecond)
-	List(All)
-
-	deadline := time.Now().Add(5 * time.Second)
-	for len(cursorTempCopies(t)) > 0 {
-		if time.Now().After(deadline) {
-			t.Fatalf("copies left in the temp folder: %v", cursorTempCopies(t))
-		}
-		time.Sleep(20 * time.Millisecond)
+// A store too small for a copy to cost real disk is still read from a copy
+// of it and its log, so Cursor's folder keeps its files and times untouched,
+// and the copy is gone when the read is done.
+func TestCursorSmallStoreCopiedAndRemoved(t *testing.T) {
+	dir := cursorSetup(t)
+	t.Setenv("TMPDIR", t.TempDir())
+	_, _, live, _ := makeCursorChats(t, dir)
+	before := snapshot(dir)
+	copies := cursorCopies.Load()
+	db, done, err := openCursorStore(filepath.Join(live, "store.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var n int
+	if err := db.QueryRow("SELECT count(*) FROM blobs").Scan(&n); err != nil || n == 0 {
+		t.Fatalf("the copy of a chat's store: %d rows, %v", n, err)
+	}
+	done()
+	if n := cursorCopies.Load() - copies; n != 1 {
+		t.Fatalf("a small store was copied %d times, want 1", n)
+	}
+	if after := snapshot(dir); !maps.Equal(before, after) {
+		t.Fatalf("Cursor's folder changed:\n%v\n%v", before, after)
+	}
+	if left := cursorTempCopies(t); len(left) != 0 {
+		t.Fatalf("copies left in the temp folder: %v", left)
 	}
 }
 

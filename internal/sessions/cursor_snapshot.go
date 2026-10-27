@@ -10,16 +10,18 @@ import (
 	"time"
 )
 
-// A Cursor store with a live -wal is read from a copy (see openCursorStore).
-// Cursor's editor keeps every chat in one state.vscdb, often several GB, and
-// a listing, the stats, the manage page, a transcript and a search over its
-// chats each opened it again, so one visit to Sessions wrote the whole file
-// to the temp folder five or more times (#1988). A copy of a large store is
-// now kept while the store and its -wal are unchanged and shared by every
-// reader, and is removed cursorSnapLinger after its last reader lets go.
+// A Cursor store with a live -wal is read from a copy (see openCursorStore),
+// unless it is large enough to read in place. Cursor's editor keeps every
+// chat in one state.vscdb, often several GB, and a listing, the stats, the
+// manage page, a transcript and a search over its chats each opened it
+// again, so one visit to Sessions wrote the whole file to the temp folder
+// five or more times (#1988). A copy of such a store is kept while the store
+// and its -wal are unchanged and shared by every reader, and is removed
+// cursorSnapLinger after its last reader lets go.
 var (
-	cursorSnapLinger       = 30 * time.Second
-	cursorSnapMin    int64 = 16 << 20
+	cursorSnapLinger = 30 * time.Second
+	// a store at least this large is read in place rather than copied per read
+	cursorSnapMin int64 = 16 << 20
 	// a magpie-cursor-* folder older than this is a copy a killed magpie
 	// left behind; a shared copy in use is touched on every reuse
 	cursorSnapStale = time.Hour
