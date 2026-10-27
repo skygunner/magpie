@@ -1,0 +1,206 @@
+From ceb41d4402724743288e8737f57ff6b9c9ca1202 Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 17:06:46 +1000
+Subject: [PATCH 1/3] edit: an inline object keeps its line when magpie's entry
+ comes and goes (#3814, yetone)
+
+Root cause: insertKey decided between one-line and indented output with
+`bytes.IndexByte(raw, '\n') >= 0`, so any file with a line break anywhere got
+the pretty path even when the object being added to sat on one line. A user's
+kilo.jsonc holding `"provider": { "anthropic": {} }` therefore had that object
+spread over lines as soon as magpie added `provider.magpie`, and the spread
+stayed after the entry was deleted.
+
+The judgement is now the target object's own span (open..close, which
+insertKey already computes): an object with no line break inside it is added
+to on its line. A new file's placeholder is now "{\n}\n" so a file magpie
+creates is still laid out over lines, as hooks.go already expects from
+PatchJSON.
+
+Verified: TestJSONInlineObjectRoundTrips writes the reporter's shape, sets
+provider.magpie, deletes it again and compares the bytes with the original.
+
+Red (unmodified code, test at edit_test.go:144):
+  go test -tags nogui ./internal/edit/ -count=1 -run TestJSONInlineObjectRoundTrips
+  --- FAIL: TestJSONInlineObjectRoundTrips; edit_test.go:144: after set:
+      "provider": {
+        "magpie": {
+          "shortcuts": true
+        }, "anthropic": {} }
+  (the inline object was spread over lines)
+
+Green: same command passes. Whole package: TestWriteAtomicReadOnlyHardLink
+fails at this base too (hardlink mode assertion in this sandbox), untouched by
+this change; every other test in ./internal/edit/ passes.
+---
+ internal/edit/edit_test.go | 20 ++++++++++++++++++++
+ internal/edit/json.go      |  7 +++++--
+ 2 files changed, 25 insertions(+), 2 deletions(-)
+
+diff --git a/internal/edit/edit_test.go b/internal/edit/edit_test.go
+index c542171a..44064f99 100644
+--- a/internal/edit/edit_test.go
++++ b/internal/edit/edit_test.go
+@@ -131,6 +131,26 @@ func TestJSONCompact(t *testing.T) {
+ 	}
+ }
+ 
++// TestJSONInlineObjectRoundTrips is #3814: magpie adds and then removes its
++// entry in an object the user keeps on one line, and the file must come back
++// byte for byte, not with the inline object spread over lines.
++func TestJSONInlineObjectRoundTrips(t *testing.T) {
++	in := "{\n  \"$schema\": \"https://app.kilo.ai/config.json\",\n  \"provider\": { \"anthropic\": {} }\n}\n"
++	p := tmpFile(t, "kilo.jsonc", in)
++	if err := SetJSON(p, KV{Path: "provider.magpie", Value: map[string]any{"shortcuts": true}}); err != nil {
++		t.Fatal(err)
++	}
++	if got, want := read(t, p), "{\n  \"$schema\": \"https://app.kilo.ai/config.json\",\n  \"provider\": {\"magpie\":{\"shortcuts\":true}, \"anthropic\": {} }\n}\n"; got != want {
++		t.Fatalf("after set:\n%s\nwant:\n%s", got, want)
++	}
++	if err := DelJSON(p, "provider.magpie"); err != nil {
++		t.Fatal(err)
++	}
++	if got := read(t, p); got != in {
++		t.Fatalf("after del:\n%s\nwant:\n%s", got, in)
++	}
++}
++
+ func TestJSONBracesInStrings(t *testing.T) {
+ 	in := "{\n  \"cmd\": \"echo {\\\"x\\\": 1}\"\n}\n"
+ 	p := tmpFile(t, "s.json", in)
+diff --git a/internal/edit/json.go b/internal/edit/json.go
+index 79a71d5f..8252fbc1 100644
+--- a/internal/edit/json.go
++++ b/internal/edit/json.go
+@@ -52,7 +52,8 @@ func SetJSON(path string, kvs ...KV) error {
+ 		return err
+ 	}
+ 	if len(bytes.TrimSpace(raw)) == 0 {
+-		raw = []byte("{}\n")
++		// a new file is laid out over lines, so insertKey keeps to that style
++		raw = []byte("{\n}\n")
+ 	}
+ 	orig := raw
+ 	for _, kv := range kvs {
+@@ -178,7 +179,9 @@ func insertKey(raw, stripped []byte, from int, key string, value any) ([]byte, e
+ 		return nil, fmt.Errorf("cannot locate object for %q", key)
+ 	}
+ 	k, _ := json.Marshal(key)
+-	pretty := bytes.IndexByte(raw, '\n') >= 0
++	// The target object's own span decides: an object the user keeps on one
++	// line is added to on that line, however the rest of the file is laid out.
++	pretty := bytes.IndexByte(raw[open:close+1], '\n') >= 0
+ 	empty := len(bytes.TrimSpace(raw[open+1:close])) == 0
+ 
+ 	if !pretty {
+-- 
+2.56.0
+
+
+From 0bbb64eea0e83cac927480fd4e6cddf1cb39a753 Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 19:44:40 +1000
+Subject: [PATCH 2/3] edit: an inline object stays inline only for an object
+ magpie adds (#3814)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The span rule as committed also compacted scalars added to an inline
+object, which took the spacing the user's file had away from the keys
+magpie puts back on disconnect (TestAgentModelDefaultKeepsTheEndpointBefore
+caught it). An object the user keeps on one line stays on that line when
+what magpie adds there is an object of its own — the subtree is the unit
+the user laid out; a scalar goes on its own line in the file's style.
+---
+ internal/edit/json.go | 14 +++++++++-----
+ 1 file changed, 9 insertions(+), 5 deletions(-)
+
+diff --git a/internal/edit/json.go b/internal/edit/json.go
+index 8252fbc1..f1a31781 100644
+--- a/internal/edit/json.go
++++ b/internal/edit/json.go
+@@ -52,8 +52,7 @@ func SetJSON(path string, kvs ...KV) error {
+ 		return err
+ 	}
+ 	if len(bytes.TrimSpace(raw)) == 0 {
+-		// a new file is laid out over lines, so insertKey keeps to that style
+-		raw = []byte("{\n}\n")
++		raw = []byte("{}\n")
+ 	}
+ 	orig := raw
+ 	for _, kv := range kvs {
+@@ -179,9 +178,14 @@ func insertKey(raw, stripped []byte, from int, key string, value any) ([]byte, e
+ 		return nil, fmt.Errorf("cannot locate object for %q", key)
+ 	}
+ 	k, _ := json.Marshal(key)
+-	// The target object's own span decides: an object the user keeps on one
+-	// line is added to on that line, however the rest of the file is laid out.
+-	pretty := bytes.IndexByte(raw[open:close+1], '\n') >= 0
++	// An object the user keeps on one line stays on that line when what
++	// magpie adds to it is an object of its own (#3814): the subtree is the
++	// unit the user laid out. A scalar goes on its own line in the file's
++	// style, as the file's other scalars are.
++	pretty := bytes.IndexByte(raw, '\n') >= 0
++	if _, isObj := value.(map[string]any); isObj && bytes.IndexByte(raw[open:close+1], '\n') < 0 {
++		pretty = false
++	}
+ 	empty := len(bytes.TrimSpace(raw[open+1:close])) == 0
+ 
+ 	if !pretty {
+-- 
+2.56.0
+
+
+From 6276ec7d5017a5e69b26f980ec9f5271ab36982a Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 20:18:55 +1000
+Subject: [PATCH 3/3] edit: the file's root keeps the file's style, inline or
+ not (#3814)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The object-kind rule also took the root of a fresh file for the span
+rule, so a config magpie writes from nothing came out on one line
+(TestZCodeKeepsRemoteAddress, TestRemoveServers). The root is the
+exception: its style is the file's, as it was — an empty file's
+placeholder has a newline, so the first write is laid out over lines
+the way every writer of these configs did. The span rule now holds
+only for an object magpie adds inside another object.
+---
+ internal/edit/json.go | 17 ++++++++++++++---
+ 1 file changed, 14 insertions(+), 3 deletions(-)
+
+diff --git a/internal/edit/json.go b/internal/edit/json.go
+index f1a31781..1f679f3b 100644
+--- a/internal/edit/json.go
++++ b/internal/edit/json.go
+@@ -180,10 +180,21 @@ func insertKey(raw, stripped []byte, from int, key string, value any) ([]byte, e
+ 	k, _ := json.Marshal(key)
+ 	// An object the user keeps on one line stays on that line when what
+ 	// magpie adds to it is an object of its own (#3814): the subtree is the
+-	// unit the user laid out. A scalar goes on its own line in the file's
+-	// style, as the file's other scalars are.
++	// unit the user laid out. The file's root is the exception — its style
++	// is the file's, as it was, so a fresh file's first write is laid out
++	// over lines the way every writer of these configs did. A scalar goes
++	// on its own line in the file's style, as the file's other scalars are.
++	at := open
++	for at > 0 && strings.ContainsRune(" \t\r\n", rune(raw[at-1])) {
++		at--
++	}
++	end := close + 1
++	for end < len(raw) && strings.ContainsRune(" \t\r\n", rune(raw[end])) {
++		end++
++	}
+ 	pretty := bytes.IndexByte(raw, '\n') >= 0
+-	if _, isObj := value.(map[string]any); isObj && bytes.IndexByte(raw[open:close+1], '\n') < 0 {
++	if _, isObj := value.(map[string]any); isObj && (at > 0 || end < len(raw)) &&
++		bytes.IndexByte(raw[open:close+1], '\n') < 0 {
+ 		pretty = false
+ 	}
+ 	empty := len(bytes.TrimSpace(raw[open+1:close])) == 0
+-- 
+2.56.0
+

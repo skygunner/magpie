@@ -1,0 +1,94 @@
+From 127fee620b0b2c60ed553665d4f2438fb42f3236 Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 17:28:07 +1000
+Subject: [PATCH] proc: OpenCode's own installer's opencode is the one found
+ (#3828, cloudusa)
+
+UserBinDirs knew ~/.local/bin and the rest of where command-line tools
+are put, and FindTool then asked the machine's own folders; OpenCode's
+own installer puts opencode in ~/.opencode/bin, a folder in neither, so
+with a Homebrew copy still installed FindTool found that one (1.17.18)
+and magpie kept working against it while the terminal ran v2.1.4 from
+~/.opencode/bin. The same folder is added to the Windows list.
+
+Verified: TestFindToolInOpenCodeBin, written in the way
+TestSystemDirsLieInTheTestsHome runs (isolated home, PATH emptied),
+fails on the base with FindTool(opencode) = "" and passes with the fix;
+the whole proc package passes.
+
+Without the fix: go test -tags nogui ./internal/proc/ -run TestFindToolInOpenCodeBin
+fails at find_test.go:93.
+---
+ internal/proc/find_test.go    | 19 +++++++++++++++++++
+ internal/proc/path_other.go   |  9 +++++----
+ internal/proc/path_windows.go |  1 +
+ 3 files changed, 25 insertions(+), 4 deletions(-)
+
+diff --git a/internal/proc/find_test.go b/internal/proc/find_test.go
+index 7b630b9a..c5ffcbcb 100644
+--- a/internal/proc/find_test.go
++++ b/internal/proc/find_test.go
+@@ -74,3 +74,22 @@ func TestSystemDirsLieInTheTestsHome(t *testing.T) {
+ 		t.Errorf("SystemDirs outside a test = %q", got)
+ 	}
+ }
++
++// OpenCode's own installer puts opencode in ~/.opencode/bin (cloudusa,
++// #3828), a folder no shell profile adds: found there, as the folders a
++// user's tools are installed in are, and before the machine's own folders,
++// so the user's own install wins over a stale Homebrew one.
++func TestFindToolInOpenCodeBin(t *testing.T) {
++	if sandboxVar != testenv.Marker {
++		t.Fatalf("sandboxVar %q isn't testenv.Marker %q", sandboxVar, testenv.Marker)
++	}
++	home := os.Getenv(testenv.Marker)
++	t.Setenv("PATH", t.TempDir())
++	bin := filepath.Join(home, ".opencode", "bin")
++	os.MkdirAll(bin, 0o755)
++	want := filepath.Join(bin, "opencode")
++	os.WriteFile(want, nil, 0o755)
++	if got := FindTool("opencode"); got != want {
++		t.Fatalf("FindTool(opencode) = %q, want %q", got, want)
++	}
++}
+diff --git a/internal/proc/path_other.go b/internal/proc/path_other.go
+index 2839f6ef..ee5796f0 100644
+--- a/internal/proc/path_other.go
++++ b/internal/proc/path_other.go
+@@ -128,16 +128,17 @@ func LoginEnv(k string) string {
+ 
+ // UserBinDirs are the folders a user's command-line tools are installed in
+ // that exist here — npm's prefixes, each Node version of nvm, fnm and mise,
+-// bun, volta, pnpm, asdf, the standalone installers' ~/.local/bin,
+-// Homebrew — for finding one PATH doesn't reach. A manager's Node versions
+-// come in the order a terminal would reach them: its default first, then
++// bun, volta, pnpm, asdf, the standalone installers' ~/.local/bin and
++// ~/.opencode/bin/OpenCode's own installer, Homebrew — for finding one PATH
++// doesn't reach. A manager's Node versions come in the order a terminal
++// would reach them: its default first, then
+ // the highest version (v22 before v9).
+ func UserBinDirs() []string { return userDirs(true) }
+ 
+ func userDirs(everyNode bool) []string {
+ 	home, _ := os.UserHomeDir()
+ 	var known []string
+-	for _, d := range []string{".local/bin", ".npm-global/bin", ".npm/bin", ".bun/bin", ".volta/bin", ".asdf/shims", ".local/share/mise/shims", ".cargo/bin", ".deno/bin", "Library/pnpm"} {
++	for _, d := range []string{".opencode/bin", ".local/bin", ".npm-global/bin", ".npm/bin", ".bun/bin", ".volta/bin", ".asdf/shims", ".local/share/mise/shims", ".cargo/bin", ".deno/bin", "Library/pnpm"} {
+ 		known = append(known, filepath.Join(home, d))
+ 	}
+ 	// nvm's Node a terminal gets: its default, or with none usable the
+diff --git a/internal/proc/path_windows.go b/internal/proc/path_windows.go
+index 6fd54109..fad82997 100644
+--- a/internal/proc/path_windows.go
++++ b/internal/proc/path_windows.go
+@@ -38,6 +38,7 @@ func UserBinDirs() []string {
+ 		mise = d
+ 	}
+ 	known := []string{
++		filepath.Join(home, ".opencode", "bin"),
+ 		filepath.Join(appdir.Getenv("APPDATA"), "npm"),
+ 		filepath.Join(home, ".local", "bin"),
+ 		filepath.Join(home, ".bun", "bin"),
+-- 
+2.56.0
+

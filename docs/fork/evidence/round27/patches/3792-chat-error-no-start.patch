@@ -1,0 +1,119 @@
+From b16a0651ededfa3f391e28e87100c10a0507ab9b Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 17:41:01 +1000
+Subject: [PATCH] gateway: an error after a reply began is said alone, not as a
+ second message (#3792, JoeyWu-tech)
+
+A reply cut by the loop guard (cutLoop) ends with streamError, which
+builds a fresh encoder from an empty Request. That encoder's auto-start
+guard (event, every protocol) took a KError for the reply's beginning and
+opened a new message first: a Chat client that already had the reply
+started saw a second "id":"chatcmpl-" chunk with a role delta, and the
+error inside a message of its own. A KError now never auto-starts, so
+only the error event goes out, as the passthrough path already said it;
+the guard's other starts (KStart, and keepalive's own, which begins with
+the request's model as #3728 pinned) are untouched.
+
+Red: go test -tags nogui ./internal/gateway -count=1 -run
+TestLoopEndsTheReplyOnEveryProtocol fails at the new chat assertion in
+loop_guard_test.go (chatcmpl- found in the reply). Green: the same
+command passes, and the full package keeps only the five failures that
+fail at this base too (TestClaudeClientCacheAbsentUnchanged,
+TestCodexFittedImagesPastTheBudget, TestMarshalRawIsEncodingJSON,
+FuzzMarshalRaw, TestServeWSLListensBesideLoopback).
+---
+ internal/gateway/anthropic.go       |  3 ++-
+ internal/gateway/chat.go            |  6 +++++-
+ internal/gateway/gemini.go          |  3 ++-
+ internal/gateway/loop_guard_test.go | 15 ++++++++++++++-
+ internal/gateway/responses.go       |  3 ++-
+ 5 files changed, 25 insertions(+), 5 deletions(-)
+
+diff --git a/internal/gateway/anthropic.go b/internal/gateway/anthropic.go
+index 249a417f..012ffd2e 100644
+--- a/internal/gateway/anthropic.go
++++ b/internal/gateway/anthropic.go
+@@ -1566,7 +1566,8 @@ func (e *anthropicEncoder) sayCited(text string, cites []map[string]any, tail bo
+ }
+ 
+ func (e *anthropicEncoder) event(ev Event) {
+-	if ev.Kind != KStart && !e.started {
++	// as chat's event: an error after the reply began is said alone (#3792)
++	if ev.Kind != KStart && ev.Kind != KError && !e.started {
+ 		e.start(Event{})
+ 	}
+ 	switch ev.Kind {
+diff --git a/internal/gateway/chat.go b/internal/gateway/chat.go
+index da6dfe7b..32a2f70c 100644
+--- a/internal/gateway/chat.go
++++ b/internal/gateway/chat.go
+@@ -1550,7 +1550,11 @@ func (e *chatEncoder) start(ev Event) {
+ }
+ 
+ func (e *chatEncoder) event(ev Event) {
+-	if ev.Kind != KStart && !e.started {
++	// An error is not the reply's beginning: one said after the reply began
++	// (streamError, cutLoop) goes out alone, where auto-starting would open
++	// a second completion a client that already has one reads as another
++	// reply (#3792).
++	if ev.Kind != KStart && ev.Kind != KError && !e.started {
+ 		e.start(Event{})
+ 	}
+ 	switch ev.Kind {
+diff --git a/internal/gateway/gemini.go b/internal/gateway/gemini.go
+index b52fd9f4..4a9797b2 100644
+--- a/internal/gateway/gemini.go
++++ b/internal/gateway/gemini.go
+@@ -657,7 +657,8 @@ func (e *geminiEncoder) flushTool() {
+ }
+ 
+ func (e *geminiEncoder) event(ev Event) {
+-	if ev.Kind != KStart && !e.started {
++	// as chat's event: an error after the reply began is said alone (#3792)
++	if ev.Kind != KStart && ev.Kind != KError && !e.started {
+ 		e.start(Event{})
+ 	}
+ 	switch ev.Kind {
+diff --git a/internal/gateway/loop_guard_test.go b/internal/gateway/loop_guard_test.go
+index 9a34bb6e..e21cc675 100644
+--- a/internal/gateway/loop_guard_test.go
++++ b/internal/gateway/loop_guard_test.go
+@@ -446,7 +446,20 @@ func TestLoopEndsTheReplyOnEveryProtocol(t *testing.T) {
+ 		t.Run(x.name, func(t *testing.T) {
+ 			v := &loopingVendor{letGo: make(chan bool, 4)}
+ 			gw := deepseekOn(t, v)
+-			loopCut(t, v, askStream(t, gw+x.path, x.body), x.done, x.failed, "ds", x.asks)
++			got := askStream(t, gw+x.path, x.body)
++			loopCut(t, v, got, x.done, x.failed, "ds", x.asks)
++			if x.name == "chat" {
++				// the reply is a Chat stream passed through as it comes, so
++				// the only completion id it can carry is one the error began:
++				// an error after the reply is said alone, not as a second
++				// message with a role delta (#3792)
++				if strings.Contains(got, "chatcmpl-") {
++					t.Fatalf("the loop's error began a completion of its own:\n%s", got[max(len(got)-800, 0):])
++				}
++				if n := strings.Count(got, `"role":"assistant"`); n != x.asks {
++					t.Fatalf("the reply has %d role deltas, want one per try (%d):\n%s", n, x.asks, got[max(len(got)-800, 0):])
++				}
++			}
+ 		})
+ 	}
+ }
+diff --git a/internal/gateway/responses.go b/internal/gateway/responses.go
+index ccc7880f..6f09abc5 100644
+--- a/internal/gateway/responses.go
++++ b/internal/gateway/responses.go
+@@ -1912,7 +1912,8 @@ func (e *responsesEncoder) openItem(k Kind, prefix string, item map[string]any)
+ }
+ 
+ func (e *responsesEncoder) event(ev Event) {
+-	if ev.Kind != KStart && !e.started {
++	// as chat's event: an error after the reply began is said alone (#3792)
++	if ev.Kind != KStart && ev.Kind != KError && !e.started {
+ 		e.start(Event{})
+ 	}
+ 	switch ev.Kind {
+-- 
+2.56.0
+

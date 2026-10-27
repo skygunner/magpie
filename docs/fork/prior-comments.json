@@ -1530,5 +1530,185 @@
   "type": "issue",
   "url": "https://github.com/yetone/magpie/issues/3776",
   "title": "redact: a Japanese mobile in a CSV is masked (#3776)"
+ },
+ "1903": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/1903#issuecomment-6438165549"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/1903",
+  "title": "library: a skill left half-emptied on a stuck set-aside says where the whole copy is (#1903)"
+ },
+ "2099": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/2099#issuecomment-6438166156"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/2099",
+  "title": "gui: the sign-in risk step keeps its warning readable and its buttons inside the card (#2099)"
+ },
+ "2541": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/2541#issuecomment-6438166795"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/2541",
+  "title": "gateway tests: the queue-refusal ledger test asks with production's queue budget (#2541)"
+ },
+ "2746": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/2746#issuecomment-6438167437"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/2746",
+  "title": "gui: the model picker names the group that unlists it, not the provider (#2746)"
+ },
+ "2755": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/2755#issuecomment-6438168091"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/2755",
+  "title": "gui: the tokens trend's tooltip says tokens the page's way (#2755)"
+ },
+ "2761": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/2761#issuecomment-6438168723"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/2761",
+  "title": "filememo: the stamp's age is read by a clock a test can hold (#2761)"
+ },
+ "2789": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/2789#issuecomment-6438169361"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/2789",
+  "title": "gateway: DeepSeek's tool calls written as <call:tool>/<tool_call name=…> are rescued (#2789)"
+ },
+ "3137": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3137#issuecomment-6438169999"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3137",
+  "title": "agent: the proxy warning's fix advice names the gateway Codex really sends to (#3137)"
+ },
+ "3278": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3278#issuecomment-6438170609"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3278",
+  "title": "gui tests: the day-window test's scroll is bounded by the list it walks (#3278)"
+ },
+ "3738": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3738#issuecomment-6438171195"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3738",
+  "title": "gateway: free models rest only themselves, not the account (#3738)"
+ },
+ "3785": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3785#issuecomment-6438171807"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3785",
+  "title": "gui: a pool's account-list tooltip no longer covers its Routing and Stays buttons (#3785)"
+ },
+ "3792": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3792#issuecomment-6438172447"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3792",
+  "title": "gateway: an error after a reply began is said alone, not as a second message (#3792)"
+ },
+ "3793": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3793#issuecomment-6438173089"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3793",
+  "title": "gateway: keep spawn_agent widening off when codex=as-sent (#3793)"
+ },
+ "3805": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3805#issuecomment-6438173724"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3805",
+  "title": "gui: the routing editor's skipped verdict asks the same ready the gateway routes by (#3805)"
+ },
+ "3812": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3812#issuecomment-6438174287"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3812",
+  "title": "gateway: a non-enterable working directory falls back to magpie's (#3812)"
+ },
+ "3814": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3814#issuecomment-6438174941"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3814",
+  "title": "edit: an inline object stays inline when what magpie adds there is an object of its own (#3814)"
+ },
+ "3816": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3816#issuecomment-6438175575"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3816",
+  "title": "provider: a plan card read just now says when it was read (#3816)"
+ },
+ "3821": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3821#issuecomment-6438176207"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3821",
+  "title": "plugin: a gateway request hook alone shows in discovery (#3821)"
+ },
+ "3826": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3826#issuecomment-6438176803"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3826",
+  "title": "agent: ZCode variants are written in rank order (#3826)"
+ },
+ "3828": {
+  "urls": [
+   "https://github.com/yetone/magpie/issues/3828#issuecomment-6438177401"
+  ],
+  "category": "product",
+  "type": "issue",
+  "url": "https://github.com/yetone/magpie/issues/3828",
+  "title": "proc: OpenCode's own installer's opencode is the one found (#3828)"
  }
 }

@@ -1,0 +1,162 @@
+From 68bbfcf5dcc7508a263483b3a5af6f2c23b5dbf3 Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 17:56:40 +1000
+Subject: [PATCH] gui: sign-in risk step keeps warning readable and buttons
+ inside the card (#2099, yetone; #2824, oxsean)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The risk step's warning and buttons were laid out in one flex row, so at
+360–420px the warning column collapsed to a few characters and the
+German button text ran past the card. The row now adds a .signing.risk
+variant: the box gets class risk, the buttons are wrapped in a .risk-acts
+element like the other states, and the warning column has a sensible
+flex-basis (1 1 320px). CSS makes .signing.risk wrap with a row gap,
+so the buttons move to their own row when they no longer fit. The shared
+.signing rules are untouched, so signin-closes-sheet.test.cjs stays green.
+
+Verified: internal/gui/tests/risk-wrap.test.cjs (new) opens the add sheet,
+clicks Claude (risk), and asserts at 360, 420 and 1100 in Chromium and
+WebKit, en/zh/de, that the warning stays ≥160px wide, ≤5 lines, and no
+button's right edge passes the card. Before the fix the 360/420 cases fail
+with warning width ≈ 45–142px (18 failures); after the fix the 18 tests
+pass. Tests around the sign-in UI
+(signin-closes-sheet.test.cjs, claude-risk.test.cjs, commandcode-risk.test.cjs)
+remain green. Core budget and go build -tags nogui succeed.
+---
+ internal/gui/assets/app.css           |  3 ++
+ internal/gui/assets/app.js            |  7 ++-
+ internal/gui/tests/risk-wrap.test.cjs | 77 +++++++++++++++++++++++++++
+ 3 files changed, 85 insertions(+), 2 deletions(-)
+ create mode 100644 internal/gui/tests/risk-wrap.test.cjs
+
+diff --git a/internal/gui/assets/app.css b/internal/gui/assets/app.css
+index 60946bf7..8bab2d9a 100644
+--- a/internal/gui/assets/app.css
++++ b/internal/gui/assets/app.css
+@@ -2756,6 +2756,9 @@ body.window .ag-sk-icon { width: 22px; height: 22px; border-radius: 6px; }
+ /* a sign-in under way, waiting on the browser */
+ .signing { display: flex; align-items: flex-start; gap: 11px; padding: 11px 10px 11px 12px; font-size: 12.5px; background: var(--card-2); animation: fade-in .2s; }
+ .sheet .signing { margin-top: 8px; border: 1px solid var(--line); border-radius: 10px; }
++.signing.risk { flex-wrap: wrap; row-gap: 8px; }
++.signing.risk .tt { flex: 1 1 320px; }
++.signing.risk .risk-acts { margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px; }
+ .signing .tt { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; line-height: 1.35; }
+ .signing .n { font-weight: 500; }
+ .signing .s { color: var(--muted); font-size: 11.5px; overflow-wrap: anywhere; }
+diff --git a/internal/gui/assets/app.js b/internal/gui/assets/app.js
+index e320d033..7119ffc8 100644
+--- a/internal/gui/assets/app.js
++++ b/internal/gui/assets/app.js
+@@ -12467,6 +12467,7 @@ function renderSigning(sub) {
+   const box = el("div", "signing" + (signing.state === "failed" ? " failed" : ""));
+   const tt = el("span", "tt");
+   if (signing.state === "risk") {
++    box.classList.add("risk");
+     box.append(el("span", "mark", "!"));
+     tt.append(el("span", "n", t("{name} accounts can be suspended", { name: sub.name })));
+     if (sub.hint) tt.append(el("span", "s", t(sub.hint)));
+@@ -12477,12 +12478,14 @@ function renderSigning(sub) {
+     go.onclick = () => startSignIn(sub.agent, true, undefined, o);
+     const close = el("button", "text", t("Cancel"));
+     close.onclick = cancelSignIn;
++    const acts = el("div", "risk-acts");
+     if (sub.importable) {
+       const imp = el("button", "text", importSay(sub.agent).instead || t("Import instead…"));
+       imp.title = importSay(sub.agent).from;
+       imp.onclick = () => startImport(sub.agent);
+-      box.append(close, imp, go);
+-    } else box.append(close, go);
++      acts.append(close, imp, go);
++    } else acts.append(close, go);
++    box.append(acts);
+     return box;
+   }
+   if (signing.state === "site") {
+diff --git a/internal/gui/tests/risk-wrap.test.cjs b/internal/gui/tests/risk-wrap.test.cjs
+new file mode 100644
+index 00000000..9ad17505
+--- /dev/null
++++ b/internal/gui/tests/risk-wrap.test.cjs
+@@ -0,0 +1,77 @@
++// Run with Node's test runner and Playwright on the module path; see README.md.
++// A sign-in's risk step keeps its warning readable and its buttons inside the
++// card at 360 and 420 wide, German "Trotzdem anmelden" included (#2099,
++// yetone; covers #2824, oxsean). The API is faked here.
++const assert = require("node:assert/strict");
++const fs = require("node:fs/promises");
++const path = require("node:path");
++const { test } = require("node:test");
++const { chromium, webkit } = require("playwright");
++
++const assets = path.resolve(__dirname, "../assets");
++
++function serve(lang) {
++  return async (r) => {
++    const url = new URL(r.request().url());
++    const json = (data) => r.fulfill({ json: data });
++    if (url.pathname === "/boot.js") return r.fulfill({ contentType: "text/javascript", body: `window.bootPrefs = {lang:"${lang}",theme:"light",web:false};` });
++    if (url.pathname === "/wails/runtime.js") return r.fulfill({ contentType: "text/javascript", body: "export const Window = {};" });
++    if (url.pathname === "/api/state") return json({ agents: [], profiles: [], settings: { lang, theme: "light" } });
++    if (url.pathname === "/api/providers") return json({ providers: [{ id: "openai", name: "OpenAI", icon: "openai", preset: "openai", models: [], agents: [], key: { set: true, masked: "sk-…ab12" } }], presets: [], excluded: [], gateway: { running: true, window: true } });
++    if (url.pathname === "/api/groups") return json({ groups: [], pools: [] });
++    if (url.pathname === "/api/gateway/trace") return json({ routes: [] });
++    if (url.pathname.startsWith("/api/signin")) return json({ id: "s1", agent: "claude", state: "waiting", url: "https://claude.ai/oauth/authorize" });
++    if (url.pathname.startsWith("/api/")) return json({});
++    const file = path.join(assets, url.pathname === "/" ? "index.html" : url.pathname);
++    const contentType = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".svg": "image/svg+xml", ".png": "image/png" }[path.extname(file)];
++    try { await r.fulfill({ body: await fs.readFile(file), contentType }); } catch { await r.fulfill({ status: 404, body: "" }); }
++  };
++}
++
++const L = {
++  en: { title: "Claude accounts can be suspended", anyway: "Sign in anyway", cancel: "Cancel" },
++  zh: { title: "Claude 账号可能被封禁", anyway: "仍然登录", cancel: "取消" },
++};
++
++for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"])) {
++  for (const lang of ["en", "zh", "de"]) {
++    for (const width of [360, 420, 1100]) {
++      test(`${engine} ${lang} ${width}: the risk warning and its buttons stay inside the card`, async (t) => {
++        const browser = await (engine === "webkit" ? webkit.launch() : chromium.launch({ channel: "chromium" }));
++        t.after(() => browser.close());
++        const page = await (await browser.newContext({ viewport: { width: Math.max(width, 500), height: 900 } })).newPage();
++        page.setDefaultTimeout(5000);
++        const errors = [];
++        page.on("pageerror", (e) => errors.push(e.message));
++        await page.route("**/*", serve(lang));
++        await page.goto("http://magpie.test/?view=providers");
++        await page.locator("#addProvider").click();
++        const sheet = page.locator("#addSheet");
++        const row = sheet.locator('.tile[data-pick="Claude"]');
++        await row.waitFor();
++        await row.click();
++        const box = sheet.locator(".signing");
++        await box.waitFor();
++        assert.equal(await box.locator(".mark").textContent(), "!", "the risk step is up");
++        const say = (key) => page.evaluate(([lang, key]) => {
++          const s = (lang !== "en" && I18N[lang]?.[key]) || key;
++          return s;
++        }, [lang, key]);
++        if (lang === "de") assert.ok((await box.locator(".n").textContent()).length > 0);
++        const m = await box.evaluate((b) => {
++          const cb = b.getBoundingClientRect();
++          const wb = b.querySelector(".tt").getBoundingClientRect();
++          const lh = parseFloat(getComputedStyle(b.querySelector(".tt")).lineHeight);
++          return {
++            cardRight: cb.right, warnW: wb.width, lines: Math.ceil(wb.height / lh),
++            over: [...b.querySelectorAll("button")].map((x) => x.getBoundingClientRect().right).filter((r) => r > cb.right + 1),
++          };
++        });
++        assert.ok(m.warnW >= 160, `warning is wide enough (${m.warnW}px)`);
++        assert.ok(m.lines <= 5, "the warning stays to a few lines");
++        assert.deepEqual(m.over, [], "no button past the card's right edge");
++        assert.deepEqual(errors, []);
++      });
++    }
++  }
++}
+-- 
+2.56.0
+

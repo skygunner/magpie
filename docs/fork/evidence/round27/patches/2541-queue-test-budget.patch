@@ -1,0 +1,34 @@
+From 7a3272084a159021057a0fd90ee36c18ef2df0c6 Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 17:58:57 +1000
+Subject: [PATCH] gateway tests: ask with production's queue budget so the
+ test's own wait can't fire (#2541, yetone)
+
+TestQueueRefusalIsInTheUsageLedger used QueueWait 1 second, far below the
+500 ms it sleeps for the ledger write, so under load b's queue timeout
+fired and counted as a second 429, which is the correct product behaviour
+rather than a bug. It now asks with provider.MaxQueueWait, so b cannot
+time out while the test waits for the ledger write; -count=5 passes.
+
+Only the flaky fixture changes: TestQueueFullAndWaitedOut keeps QueueWait 1
+because its purpose is to exercise the waited-out 429.
+---
+ internal/gateway/lane_usage_test.go | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/internal/gateway/lane_usage_test.go b/internal/gateway/lane_usage_test.go
+index 3616c799..020d6ac7 100644
+--- a/internal/gateway/lane_usage_test.go
++++ b/internal/gateway/lane_usage_test.go
+@@ -24,7 +24,7 @@ func TestQueueRefusalIsInTheUsageLedger(t *testing.T) {
+ 	v, up := slowUp(t)
+ 	one := 1
+ 	if err := provider.Save(provider.Provider{ID: "slow", Name: "Slow", Key: "k", Models: []string{"m"}, Chat: up + "/v1", Anthropic: up,
+-		MaxConcurrency: &one, QueueLimit: 1, QueueWait: 1}); err != nil {
++		MaxConcurrency: &one, QueueLimit: 1, QueueWait: provider.MaxQueueWait}); err != nil {
+ 		t.Fatal(err)
+ 	}
+ 	g := newLaneRig(t)
+-- 
+2.56.0
+

@@ -1,0 +1,97 @@
+From a97b86a25b6b70777459b260acdf21457dae6162 Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 17:57:09 +1000
+Subject: [PATCH 1/2] gateway: free models rest only themselves, not the
+ account (#3738, hheei)
+
+A free model sharing an account-wide free quota inherits the account's
+window on a quota failure, so a 429/502 on it rested the key and benched
+sibling models until the window renewed; candidate.full used the account's
+allowance for the free model too. A free model now has no window of its own:
+candidate.full returns nothing, and a quota/credit failure on it rests the
+model (restID) instead of the account (restKey). Paid-beside-free and
+remote blocks remain unchanged.
+
+Red: a provider allowance at 99% and a free model answering 502 would
+rest the key with By="window"; with the fix the rest is restID and
+By != "window", and a sibling model on the same account is still asked.
+Green: TestClineFreeLimitRestsTheModel passes, and the five pre-existing
+failures remain the only failures.
+---
+ internal/gateway/routing.go | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/internal/gateway/routing.go b/internal/gateway/routing.go
+index 7e3e05fd..44e7bb68 100644
+--- a/internal/gateway/routing.go
++++ b/internal/gateway/routing.go
+@@ -1187,6 +1187,12 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
+ 	if why == failQuota && zcodeTrialRefused(c, status, body) {
+ 		id = c.restID()
+ 	}
++	// a free model fails only on its own, not on the account's window:
++	// its failure is not inherited by the account and vice-versa
++	// (#3738: a 429/502 on a free model rests the model, not the account).
++	if (why == failQuota || why == failCredit) && c.p.FreeModel(c.model) {
++		id = c.restID()
++	}
+ 	// out of credit, or of a quota, on a model that costs credits where
+ 	// the subscription serves other models free is that model's: the free
+ 	// ones draw on no credits, and the account still serves them (Creat.wu
+@@ -1365,6 +1371,12 @@ func (c candidate) full(now time.Time) time.Time {
+ 	if spendsCredits(c.p, a) {
+ 		return time.Time{}
+ 	}
++	// a free model shares an account-wide free quota only, so its own
++	// failure does not ride the account's window: a free model's
++	// allowance used up rests the model, not the account (#3738).
++	if c.p.FreeModel(c.model) {
++		return time.Time{}
++	}
+ 	return a.Full(c.model, provider.SpentShareOf(c.p.Routing), now)
+ }
+ 
+-- 
+2.56.0
+
+
+From 499f0249ac8820b9c032264005a233d7dc9d3351 Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 19:47:16 +1000
+Subject: [PATCH 2/2] gateway: FreeModel is asked only when there is a window
+ to override (#3738)
+
+candidate.full is on the searcher's model-pick path, where its allocation
+test counts: FreeModel walks the provider's list and asks its price, and
+asking it for every candidate whether or not there was a window to
+override pushed TestAutoVisionDoesNotBuildListsAgain over its count.
+The rest is the same: a free model's own window is zero either way.
+---
+ internal/gateway/routing.go | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/internal/gateway/routing.go b/internal/gateway/routing.go
+index 44e7bb68..104ca86a 100644
+--- a/internal/gateway/routing.go
++++ b/internal/gateway/routing.go
+@@ -1373,11 +1373,14 @@ func (c candidate) full(now time.Time) time.Time {
+ 	}
+ 	// a free model shares an account-wide free quota only, so its own
+ 	// failure does not ride the account's window: a free model's
+-	// allowance used up rests the model, not the account (#3738).
+-	if c.p.FreeModel(c.model) {
++	// allowance used up rests the model, not the account (#3738). FreeModel
++	// is asked only when there is a window to override: the searcher's
++	// model pick calls this per candidate, and its allocation test counts.
++	full := a.Full(c.model, provider.SpentShareOf(c.p.Routing), now)
++	if !full.IsZero() && c.p.FreeModel(c.model) {
+ 		return time.Time{}
+ 	}
+-	return a.Full(c.model, provider.SpentShareOf(c.p.Routing), now)
++	return full
+ }
+ 
+ // onCredits: c is a Codex account that goes on past its allowance on its
+-- 
+2.56.0
+

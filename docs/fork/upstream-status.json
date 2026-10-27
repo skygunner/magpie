@@ -16,7 +16,7 @@
    "evidence": "docs/fork/evidence/upstream-sync-2026-10-24/comments.json",
    "note": "Only the specified existing comments were updated. This does not change upstream-adoption or product-verification status."
   },
-  "checked_at": "2026-10-26T23:30:28Z",
+  "checked_at": "2026-10-27T10:39:09Z",
   "last_checked_upstream_sha": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
   "review_refs": {
    "batch": "95537ceb898a4f947f056af8f832663cc015c83c",
@@ -47,15 +47,15 @@
    "batch_chain_note": "batch is a forward-append chain: the v2 base fa22bc64 carries 15 commits (34dcacff…95537ceb), rebased onto b437e4ad, then bbd6e228 and 4e136a4b this round; see deliveries.r3-batch"
   },
   "totals": {
-   "entries": 160,
-   "issues": 157,
+   "entries": 180,
+   "issues": 177,
    "prs": 3,
-   "product": 141,
+   "product": 161,
    "tests_ci": 11,
    "upstream_existing": 6,
    "other": 2,
-   "code_entries": 152,
-   "units": 149
+   "code_entries": 172,
+   "units": 169
   },
   "counts_note": "Generated from the JSON by docs/fork/generate.py; not hand-written. 64 code-linked entries are not 64 independent fixes: units are grouped by first primary fix commit (60 groups).",
   "fork": "skygunner/magpie",
@@ -125,6 +125,35 @@
    ],
    "note": "Round 26: 20 issues filed by others, each one branch off upstream 6afbe3f3, one commit, one comment in the issue's own language. #3511 was dropped (a working patch is already in its thread) and #3323 was not attempted: its bucket is computed at parse time and fixing it means a per-zone cache and a new state format, which is not a one-branch change.",
    "evidence": "docs/fork/evidence/round26/"
+  },
+  "round27": {
+   "date": "2026-10-27T10:39:09Z",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "units": 20,
+   "issues": [
+    1903,
+    2099,
+    2541,
+    2746,
+    2755,
+    2761,
+    2789,
+    3137,
+    3278,
+    3738,
+    3785,
+    3792,
+    3793,
+    3805,
+    3812,
+    3814,
+    3816,
+    3821,
+    3826,
+    3828
+   ],
+   "note": "Round 27: 20 issues filed by others, each one branch off upstream 6eb510f7, one comment in the issue's own language. #3814 carries three commits and #3738 two: the first version's own red caught a regression each time, and the follow-up is on the branch. #3808 was dropped (a branch is already posted in its thread), #3810 and #3464 fixed upstream (3ec3cb70, 3a47e377); #3834 and #3835 need designs of their own; #3820, #3760, #3822, #3206, #3166, #2585, #2282, #2101, #2665, #2945, #3449 are product calls.",
+   "evidence": "docs/fork/evidence/round27/"
   }
  },
  "units": [
@@ -6345,6 +6374,824 @@
    "archive": {
     "candidate": false
    }
+  },
+  {
+   "id": "u-library-a-skill-left-half-emptied-on-a-stuck-set-aside-says-1903-76dc5c2e",
+   "issues": [
+    1903
+   ],
+   "category": "product",
+   "title": "library: a skill left half-emptied on a stuck set-aside says where the whole copy is (#1903)",
+   "coverage": "`setAside` returns the backup path and names it in the error when the move came back `leftBehind`. `TestSetAsideLeftBehindSaysWhereTheCopyIs` red then green; the package's tests pass.",
+   "commits": [
+    "76dc5c2e38a5c209957f090f0df586e8f7254999"
+   ],
+   "commit_details": [
+    {
+     "sha": "76dc5c2e38a5c209957f090f0df586e8f7254999",
+     "title": "library: a skill left half-emptied on a stuck set-aside says where the whole copy is (#1903, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/76dc5c2e38a5c209957f090f0df586e8f7254999"
+    }
+   ],
+   "branch": "fix/1903-setaside-leftbehind",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "comments": {
+    "1903": [
+     "https://github.com/yetone/magpie/issues/1903#issuecomment-6438165549"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit bodies; targeted suites re-run at the pushed head (76dc5c2e); comment read back 2026-10-27T09:22:33Z (body SHA256 55c362fd59f6f2da). Full `go test -tags nogui ./... -count=1 -timeout 45m` at the round's merge (suite-r27-merged, head f8ed0033): 69 packages ok, 6 red — internal/agent `TestAgyShell`, internal/edit `TestWriteAtomicReadOnlyHardLink`, internal/gateway `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`, `TestMarshalRawIsEncodingJSON`, `TestServeWSLListensBesideLoopback`, `FuzzMarshalRaw`, internal/plugin `TestPluginSOCKSProxy`, internal/provider `TestUnreadLoginsWriteErrorsKeepCredentials` (synctest fatal), internal/testenv `TestProgram`; every one reproduces identically at base 6eb510f7 on this machine (umask 0027), so none is from this round. `internal/gui` is green.",
+    "head": "76dc5c2e38a5c209957f090f0df586e8f7254999"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gui-the-sign-in-risk-step-keeps-its-warning-readable-and-its-2099-68bbfcf5",
+   "issues": [
+    2099
+   ],
+   "category": "product",
+   "title": "gui: the sign-in risk step keeps its warning readable and its buttons inside the card (#2099)",
+   "coverage": "The risk branch's buttons move into their own `.risk-acts` row and the box wraps, the way the other signing states already do; the shared `.signing` rule is untouched. `risk-wrap.test.cjs` (new) red (the warning 45px in German at 360) then green 18/18 across engines, languages and widths; `signin-closes-sheet`, `claude-risk`, `commandcode-risk` still pass; `TestCoreScriptBudget` unchanged. The same defect as #2824 (oxsean), whose fork measured it — the wrap follows that shape.",
+   "commits": [
+    "68bbfcf5dcc7508a263483b3a5af6f2c23b5dbf3"
+   ],
+   "commit_details": [
+    {
+     "sha": "68bbfcf5dcc7508a263483b3a5af6f2c23b5dbf3",
+     "title": "gui: sign-in risk step keeps warning readable and buttons inside the card (#2099, yetone; #2824, oxsean)",
+     "url": "https://github.com/skygunner/magpie/commit/68bbfcf5dcc7508a263483b3a5af6f2c23b5dbf3"
+    }
+   ],
+   "branch": "fix/2099-risk-wrap",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "comments": {
+    "2099": [
+     "https://github.com/yetone/magpie/issues/2099#issuecomment-6438166156"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit bodies; targeted suites re-run at the pushed head (68bbfcf5); comment read back 2026-10-27T09:22:35Z (body SHA256 d152d6c47c1aad91). Full `go test -tags nogui ./... -count=1 -timeout 45m` at the round's merge (suite-r27-merged, head f8ed0033): 69 packages ok, 6 red — internal/agent `TestAgyShell`, internal/edit `TestWriteAtomicReadOnlyHardLink`, internal/gateway `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`, `TestMarshalRawIsEncodingJSON`, `TestServeWSLListensBesideLoopback`, `FuzzMarshalRaw`, internal/plugin `TestPluginSOCKSProxy`, internal/provider `TestUnreadLoginsWriteErrorsKeepCredentials` (synctest fatal), internal/testenv `TestProgram`; every one reproduces identically at base 6eb510f7 on this machine (umask 0027), so none is from this round. `internal/gui` is green.",
+    "head": "68bbfcf5dcc7508a263483b3a5af6f2c23b5dbf3"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gateway-tests-the-queue-refusal-ledger-test-asks-with-produc-2541-7a327208",
+   "issues": [
+    2541
+   ],
+   "category": "product",
+   "title": "gateway tests: the queue-refusal ledger test asks with production's queue budget (#2541)",
+   "coverage": "The fixture's `QueueWait: 1` let b's own waiting period fire inside the ledger-write window and read as a second 429. `TestQueueRefusalIsInTheUsageLedger` red with a 1.5s sleep, green with the fix and `-count=5`.",
+   "commits": [
+    "7a3272084a159021057a0fd90ee36c18ef2df0c6"
+   ],
+   "commit_details": [
+    {
+     "sha": "7a3272084a159021057a0fd90ee36c18ef2df0c6",
+     "title": "gateway tests: ask with production's queue budget so the test's own wait can't fire (#2541, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/7a3272084a159021057a0fd90ee36c18ef2df0c6"
+    }
+   ],
+   "branch": "fix/2541-queue-test-budget",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "comments": {
+    "2541": [
+     "https://github.com/yetone/magpie/issues/2541#issuecomment-6438166795"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit bodies; targeted suites re-run at the pushed head (7a327208); comment read back 2026-10-27T09:22:38Z (body SHA256 a6469d468f590122). Full `go test -tags nogui ./... -count=1 -timeout 45m` at the round's merge (suite-r27-merged, head f8ed0033): 69 packages ok, 6 red — internal/agent `TestAgyShell`, internal/edit `TestWriteAtomicReadOnlyHardLink`, internal/gateway `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`, `TestMarshalRawIsEncodingJSON`, `TestServeWSLListensBesideLoopback`, `FuzzMarshalRaw`, internal/plugin `TestPluginSOCKSProxy`, internal/provider `TestUnreadLoginsWriteErrorsKeepCredentials` (synctest fatal), internal/testenv `TestProgram`; every one reproduces identically at base 6eb510f7 on this machine (umask 0027), so none is from this round. `internal/gui` is green.",
+    "head": "7a3272084a159021057a0fd90ee36c18ef2df0c6"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gui-the-model-picker-names-the-group-that-unlists-it-not-the-2746-e678dbc5",
+   "issues": [
+    2746
+   ],
+   "category": "product",
+   "title": "gui: the model picker names the group that unlists it, not the provider (#2746)",
+   "coverage": "`unlistedJSON` gains `ByGroup`; the picker matches groups by `ROUTING_GROUPS` and, when the culprit is the group, names it and drops the provider sentence and \"The group alone\"; the two provider sentences are byte-identical and the new wording is in all five languages. `unlisted-models.test.cjs` red (the note blamed the provider) then green 4/4; the i18n-keys check green; `TestCoreScriptBudget` unchanged.",
+   "commits": [
+    "e678dbc528a08e333318a268dbe2ce121bc93358"
+   ],
+   "commit_details": [
+    {
+     "sha": "e678dbc528a08e333318a268dbe2ce121bc93358",
+     "title": "gui: model picker names the group that unlists it, not the provider (#2746, kudi68)",
+     "url": "https://github.com/skygunner/magpie/commit/e678dbc528a08e333318a268dbe2ce121bc93358"
+    }
+   ],
+   "branch": "fix/2746-unlisted-by-group",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "comments": {
+    "2746": [
+     "https://github.com/yetone/magpie/issues/2746#issuecomment-6438167437"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit bodies; targeted suites re-run at the pushed head (e678dbc5); comment read back 2026-10-27T09:22:40Z (body SHA256 ee4f848b5f28000d). Full `go test -tags nogui ./... -count=1 -timeout 45m` at the round's merge (suite-r27-merged, head f8ed0033): 69 packages ok, 6 red — internal/agent `TestAgyShell`, internal/edit `TestWriteAtomicReadOnlyHardLink`, internal/gateway `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`, `TestMarshalRawIsEncodingJSON`, `TestServeWSLListensBesideLoopback`, `FuzzMarshalRaw`, internal/plugin `TestPluginSOCKSProxy`, internal/provider `TestUnreadLoginsWriteErrorsKeepCredentials` (synctest fatal), internal/testenv `TestProgram`; every one reproduces identically at base 6eb510f7 on this machine (umask 0027), so none is from this round. `internal/gui` is green.",
+    "head": "e678dbc528a08e333318a268dbe2ce121bc93358"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gui-the-tokens-trend-s-tooltip-says-tokens-the-page-s-way-27-2755-b20f17d5",
+   "issues": [
+    2755
+   ],
+   "category": "product",
+   "title": "gui: the tokens trend's tooltip says tokens the page's way (#2755)",
+   "coverage": "`ledFormatLong`'s token branch goes through `fmtN` (`15.5K`, or `1.6 万` with Settings' 万/亿 units on) instead of `ledNum` (`15,522`). The new case in `usage-ttft-rounding.test.cjs` (playwright 1.62.1 in a docker1 container) red on base assets, green on the branch 8/8; `TestCoreScriptBudget` unchanged.",
+   "commits": [
+    "b20f17d51b02a1a2f52083b9c7e2f4dfde0af1ce"
+   ],
+   "commit_details": [
+    {
+     "sha": "b20f17d51b02a1a2f52083b9c7e2f4dfde0af1ce",
+     "title": "gui: the tokens trend's tooltip says tokens the page's way (#2755, tianxia3111)",
+     "url": "https://github.com/skygunner/magpie/commit/b20f17d51b02a1a2f52083b9c7e2f4dfde0af1ce"
+    }
+   ],
+   "branch": "fix/2755-led-format-tokens",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "comments": {
+    "2755": [
+     "https://github.com/yetone/magpie/issues/2755#issuecomment-6438168091"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit bodies; targeted suites re-run at the pushed head (b20f17d5); comment read back 2026-10-27T09:22:42Z (body SHA256 478da1650541d1d2). Full `go test -tags nogui ./... -count=1 -timeout 45m` at the round's merge (suite-r27-merged, head f8ed0033): 69 packages ok, 6 red — internal/agent `TestAgyShell`, internal/edit `TestWriteAtomicReadOnlyHardLink`, internal/gateway `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`, `TestMarshalRawIsEncodingJSON`, `TestServeWSLListensBesideLoopback`, `FuzzMarshalRaw`, internal/plugin `TestPluginSOCKSProxy`, internal/provider `TestUnreadLoginsWriteErrorsKeepCredentials` (synctest fatal), internal/testenv `TestProgram`; every one reproduces identically at base 6eb510f7 on this machine (umask 0027), so none is from this round. `internal/gui` is green.",
+    "head": "b20f17d51b02a1a2f52083b9c7e2f4dfde0af1ce"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-filememo-the-stamp-s-age-is-read-by-a-clock-a-test-can-hold-2761-de2c6563",
+   "issues": [
+    2761
+   ],
+   "category": "product",
+   "title": "filememo: the stamp's age is read by a clock a test can hold (#2761)",
+   "coverage": "The settle and held guards read a package clock (`filememo.Now`), and the test pins it, so a loaded machine cannot push the two reads past settle between them. Red: a temporary 2.5s sleep between the two reads on base failed `TestSummaryInvalidatesSameStampPrice` (`direct failed coarse-stamp guard`); green: the same sleep with the seam. The sleep is not committed.",
+   "commits": [
+    "de2c656345d577ee2d346e49439e8b2e86db0911"
+   ],
+   "commit_details": [
+    {
+     "sha": "de2c656345d577ee2d346e49439e8b2e86db0911",
+     "title": "filememo: the stamp's age is read by a clock a test can hold (#2761, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/de2c656345d577ee2d346e49439e8b2e86db0911"
+    }
+   ],
+   "branch": "fix/2761-filememo-clock-seam",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "comments": {
+    "2761": [
+     "https://github.com/yetone/magpie/issues/2761#issuecomment-6438168723"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit bodies; targeted suites re-run at the pushed head (de2c6563); comment read back 2026-10-27T09:22:44Z (body SHA256 9442cac01515ff7d). Full `go test -tags nogui ./... -count=1 -timeout 45m` at the round's merge (suite-r27-merged, head f8ed0033): 69 packages ok, 6 red — internal/agent `TestAgyShell`, internal/edit `TestWriteAtomicReadOnlyHardLink`, internal/gateway `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`, `TestMarshalRawIsEncodingJSON`, `TestServeWSLListensBesideLoopback`, `FuzzMarshalRaw`, internal/plugin `TestPluginSOCKSProxy`, internal/provider `TestUnreadLoginsWriteErrorsKeepCredentials` (synctest fatal), internal/testenv `TestProgram`; every one reproduces identically at base 6eb510f7 on this machine (umask 0027), so none is from this round. `internal/gui` is green.",
+    "head": "de2c656345d577ee2d346e49439e8b2e86db0911"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gateway-deepseek-s-tool-calls-written-as-call-tool-tool-call-2789-1734b21d",
+   "issues": [
+    2789
+   ],
+   "category": "product",
+   "title": "gateway: DeepSeek's tool calls written as <call:tool>/<tool_call name=…> are rescued (#2789)",
+   "coverage": "`textCallMarks` opens on `<tool_call` and `<call:tool` as well, matched only when a `>` or whitespace follows, with the matched mark's own length used; a new reader takes the tool name from the opener's `name=\"…\"` and reads `<parameter>`/`<command>` children; `callArgs` peels one level of `arguments`. Item 4 (a 502 on unreadable callish blocks) is left out, as the commit body records. `TestTextCallXMLSpellingsRelayed` red (the whole call stayed text) then green; `TestTextWrittenParamCallRelayed` green.",
+   "commits": [
+    "1734b21d9daf1f82dace6368256a390f9c46658e"
+   ],
+   "commit_details": [
+    {
+     "sha": "1734b21d9daf1f82dace6368256a390f9c46658e",
+     "title": "gateway: DeepSeek's tool calls written as <call:tool>/<tool_call name=…> are rescued (#2789, turtle4512)",
+     "url": "https://github.com/skygunner/magpie/commit/1734b21d9daf1f82dace6368256a390f9c46658e"
+    }
+   ],
+   "branch": "fix/2789-textcall-xml",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "comments": {
+    "2789": [
+     "https://github.com/yetone/magpie/issues/2789#issuecomment-6438169361"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit bodies; targeted suites re-run at the pushed head (1734b21d); comment read back 2026-10-27T09:22:46Z (body SHA256 472f82e2f25476cb). Full `go test -tags nogui ./... -count=1 -timeout 45m` at the round's merge (suite-r27-merged, head f8ed0033): 69 packages ok, 6 red — internal/agent `TestAgyShell`, internal/edit `TestWriteAtomicReadOnlyHardLink`, internal/gateway `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`, `TestMarshalRawIsEncodingJSON`, `TestServeWSLListensBesideLoopback`, `FuzzMarshalRaw`, internal/plugin `TestPluginSOCKSProxy`, internal/provider `TestUnreadLoginsWriteErrorsKeepCredentials` (synctest fatal), internal/testenv `TestProgram`; every one reproduces identically at base 6eb510f7 on this machine (umask 0027), so none is from this round. `internal/gui` is green.",
+    "head": "1734b21d9daf1f82dace6368256a390f9c46658e"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-agent-the-proxy-warning-s-fix-advice-names-the-gateway-codex-3137-a9213cae",
+   "issues": [
+    3137
+   ],
+   "category": "product",
+   "title": "agent: the proxy warning's fix advice names the gateway Codex really sends to (#3137)",
+   "coverage": "The three remedy strings take the hostname from `base`, keeping `127.0.0.1` only when the host really is loopback. `TestCodexProxiedDetailNamesTheGatewayAddress` red then green. The false-positive half (the login shell's env vs the WSL app server's) is left alone, as the commit body records.",
+   "commits": [
+    "a9213cae7441cc467c2cd696550d17bc4526962b"
+   ],
+   "commit_details": [
+    {
+     "sha": "a9213cae7441cc467c2cd696550d17bc4526962b",
+     "title": "agent: the proxy warning's fix advice names the gateway Codex really sends to (#3137, cjyrainbow)",
+     "url": "https://github.com/skygunner/magpie/commit/a9213cae7441cc467c2cd696550d17bc4526962b"
+    }
+   ],
+   "branch": "fix/3137-proxy-advice-address",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "comments": {
+    "3137": [
+     "https://github.com/yetone/magpie/issues/3137#issuecomment-6438169999"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit bodies; targeted suites re-run at the pushed head (a9213cae); comment read back 2026-10-27T09:22:48Z (body SHA256 feeb20dabab00e1a). Full `go test -tags nogui ./... -count=1 -timeout 45m` at the round's merge (suite-r27-merged, head f8ed0033): 69 packages ok, 6 red — internal/agent `TestAgyShell`, internal/edit `TestWriteAtomicReadOnlyHardLink`, internal/gateway `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`, `TestMarshalRawIsEncodingJSON`, `TestServeWSLListensBesideLoopback`, `FuzzMarshalRaw`, internal/plugin `TestPluginSOCKSProxy`, internal/provider `TestUnreadLoginsWriteErrorsKeepCredentials` (synctest fatal), internal/testenv `TestProgram`; every one reproduces identically at base 6eb510f7 on this machine (umask 0027), so none is from this round. `internal/gui` is green.",
+    "head": "a9213cae7441cc467c2cd696550d17bc4526962b"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gui-tests-the-day-window-test-s-scroll-is-bounded-by-the-lis-3278-1386690f",
+   "issues": [
+    3278
+   ],
+   "category": "product",
+   "title": "gui tests: the day-window test's scroll is bounded by the list it walks (#3278)",
+   "coverage": "The loop's fixed 60-step budget could not span a virtual list whose real height outgrew the stale estimate; it is now bounded by the list, and a genuinely stuck list fails at the assertion. Red with `.rt-req{min-height:66px}` injected (the mixed state load produced), green 30/30 without it.",
+   "commits": [
+    "1386690f0c877035eee513a717081574bd82645a"
+   ],
+   "commit_details": [
+    {
+     "sha": "1386690f0c877035eee513a717081574bd82645a",
+     "title": "routing-day-window: bound scroll loop by the list height, not a fixed step budget (#3278, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/1386690f0c877035eee513a717081574bd82645a"
+    }
+   ],
+   "branch": "fix/3278-day-window-budget",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "comments": {
+    "3278": [
+     "https://github.com/yetone/magpie/issues/3278#issuecomment-6438170609"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit bodies; targeted suites re-run at the pushed head (1386690f); comment read back 2026-10-27T09:22:50Z (body SHA256 ada004f688c83615). Full `go test -tags nogui ./... -count=1 -timeout 45m` at the round's merge (suite-r27-merged, head f8ed0033): 69 packages ok, 6 red — internal/agent `TestAgyShell`, internal/edit `TestWriteAtomicReadOnlyHardLink`, internal/gateway `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`, `TestMarshalRawIsEncodingJSON`, `TestServeWSLListensBesideLoopback`, `FuzzMarshalRaw`, internal/plugin `TestPluginSOCKSProxy`, internal/provider `TestUnreadLoginsWriteErrorsKeepCredentials` (synctest fatal), internal/testenv `TestProgram`; every one reproduces identically at base 6eb510f7 on this machine (umask 0027), so none is from this round. `internal/gui` is green.",
+    "head": "1386690f0c877035eee513a717081574bd82645a"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gateway-free-models-rest-only-themselves-not-the-account-373-3738-499f0249",
+   "issues": [
+    3738
+   ],
+   "category": "product",
+   "title": "gateway: free models rest only themselves, not the account (#3738)",
+   "coverage": "`restAfterMarked` rests `c.restID()` for a free model's quota/credit failure, and `candidate.full` gives a free model no window of its own — `FreeModel` is asked only when there is a window to override, because the searcher's model pick calls this per candidate and its allocation test counts. `TestClineFreeLimitRestsTheModel` red then green; `TestAutoVisionDoesNotBuildListsAgain` red on the first version, green with the reorder.",
+   "commits": [
+    "a97b86a25b6b70777459b260acdf21457dae6162",
+    "499f0249ac8820b9c032264005a233d7dc9d3351"
+   ],
+   "commit_details": [
+    {
+     "sha": "a97b86a25b6b70777459b260acdf21457dae6162",
+     "title": "gateway: free models rest only themselves, not the account (#3738, hheei)",
+     "url": "https://github.com/skygunner/magpie/commit/a97b86a25b6b70777459b260acdf21457dae6162"
+    },
+    {
+     "sha": "499f0249ac8820b9c032264005a233d7dc9d3351",
+     "title": "gateway: FreeModel is asked only when there is a window to override (#3738)",
+     "url": "https://github.com/skygunner/magpie/commit/499f0249ac8820b9c032264005a233d7dc9d3351"
+    }
+   ],
+   "branch": "fix/3738-free-model-rest-id",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "comments": {
+    "3738": [
+     "https://github.com/yetone/magpie/issues/3738#issuecomment-6438171195"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit bodies; targeted suites re-run at the pushed head (499f0249); comment read back 2026-10-27T09:22:52Z (body SHA256 277a494e8ae1ff20). Full `go test -tags nogui ./... -count=1 -timeout 45m` at the round's merge (suite-r27-merged, head f8ed0033): 69 packages ok, 6 red — internal/agent `TestAgyShell`, internal/edit `TestWriteAtomicReadOnlyHardLink`, internal/gateway `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`, `TestMarshalRawIsEncodingJSON`, `TestServeWSLListensBesideLoopback`, `FuzzMarshalRaw`, internal/plugin `TestPluginSOCKSProxy`, internal/provider `TestUnreadLoginsWriteErrorsKeepCredentials` (synctest fatal), internal/testenv `TestProgram`; every one reproduces identically at base 6eb510f7 on this machine (umask 0027), so none is from this round. `internal/gui` is green.",
+    "head": "499f0249ac8820b9c032264005a233d7dc9d3351"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gui-a-pool-s-account-list-tooltip-no-longer-covers-its-routi-3785-a5f315a3",
+   "issues": [
+    3785
+   ],
+   "category": "product",
+   "title": "gui: a pool's account-list tooltip no longer covers its Routing and Stays buttons (#3785)",
+   "coverage": "The tooltip moved from the whole row to the element that lists the accounts. `routing-pool-tooltip.test.cjs` (new) red then green 4/4; the neighbouring routing tests still pass; `TestCoreScriptBudget` unchanged.",
+   "commits": [
+    "a5f315a3b60838903a2dd25a9c38f4ed840816df"
+   ],
+   "commit_details": [
+    {
+     "sha": "a5f315a3b60838903a2dd25a9c38f4ed840816df",
+     "title": "routing: a pool's account-list tooltip no longer covers its Routing and Stays buttons (#3785, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/a5f315a3b60838903a2dd25a9c38f4ed840816df"
+    }
+   ],
+   "branch": "fix/3785-pool-tooltip",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "comments": {
+    "3785": [
+     "https://github.com/yetone/magpie/issues/3785#issuecomment-6438171807"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit bodies; targeted suites re-run at the pushed head (a5f315a3); comment read back 2026-10-27T09:22:54Z (body SHA256 770654575bb1218b). Full `go test -tags nogui ./... -count=1 -timeout 45m` at the round's merge (suite-r27-merged, head f8ed0033): 69 packages ok, 6 red — internal/agent `TestAgyShell`, internal/edit `TestWriteAtomicReadOnlyHardLink`, internal/gateway `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`, `TestMarshalRawIsEncodingJSON`, `TestServeWSLListensBesideLoopback`, `FuzzMarshalRaw`, internal/plugin `TestPluginSOCKSProxy`, internal/provider `TestUnreadLoginsWriteErrorsKeepCredentials` (synctest fatal), internal/testenv `TestProgram`; every one reproduces identically at base 6eb510f7 on this machine (umask 0027), so none is from this round. `internal/gui` is green.",
+    "head": "a5f315a3b60838903a2dd25a9c38f4ed840816df"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gateway-an-error-after-a-reply-began-is-said-alone-not-as-a-3792-b16a0651",
+   "issues": [
+    3792
+   ],
+   "category": "product",
+   "title": "gateway: an error after a reply began is said alone, not as a second message (#3792)",
+   "coverage": "A `KError` never auto-starts the encoder (chat, anthropic, responses, gemini), so `streamError`'s error goes out on the reply the client already has instead of opening a second one; #3728's keepalive start is untouched. `TestLoopEndsTheReplyOnEveryProtocol` red (a second `chatcmpl-` and a role delta) then green.",
+   "commits": [
+    "b16a0651ededfa3f391e28e87100c10a0507ab9b"
+   ],
+   "commit_details": [
+    {
+     "sha": "b16a0651ededfa3f391e28e87100c10a0507ab9b",
+     "title": "gateway: an error after a reply began is said alone, not as a second message (#3792, JoeyWu-tech)",
+     "url": "https://github.com/skygunner/magpie/commit/b16a0651ededfa3f391e28e87100c10a0507ab9b"
+    }
+   ],
+   "branch": "fix/3792-chat-error-no-start",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "comments": {
+    "3792": [
+     "https://github.com/yetone/magpie/issues/3792#issuecomment-6438172447"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit bodies; targeted suites re-run at the pushed head (b16a0651); comment read back 2026-10-27T09:22:56Z (body SHA256 ce71edff97720e10). Full `go test -tags nogui ./... -count=1 -timeout 45m` at the round's merge (suite-r27-merged, head f8ed0033): 69 packages ok, 6 red — internal/agent `TestAgyShell`, internal/edit `TestWriteAtomicReadOnlyHardLink`, internal/gateway `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`, `TestMarshalRawIsEncodingJSON`, `TestServeWSLListensBesideLoopback`, `FuzzMarshalRaw`, internal/plugin `TestPluginSOCKSProxy`, internal/provider `TestUnreadLoginsWriteErrorsKeepCredentials` (synctest fatal), internal/testenv `TestProgram`; every one reproduces identically at base 6eb510f7 on this machine (umask 0027), so none is from this round. `internal/gui` is green.",
+    "head": "b16a0651ededfa3f391e28e87100c10a0507ab9b"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gateway-keep-spawn-agent-widening-off-when-codex-as-sent-379-3793-f0d7a9cd",
+   "issues": [
+    3793
+   ],
+   "category": "product",
+   "title": "gateway: keep spawn_agent widening off when codex=as-sent (#3793)",
+   "coverage": "The widening moved into `serve`, after the provider is chosen, gated on `!codexAsSent(c.p, r.Header)` for the Codex Responses path. `TestCodexAsSentWebSearch` red (the widened body reached the upstream) then green with the tool kept in the fixture; `TestSpawnAgentModelsLeavesTheRestAsSent` (the default path) green.",
+   "commits": [
+    "f0d7a9cd6e61bbeb9ac2bd4e877818321c136ede"
+   ],
+   "commit_details": [
+    {
+     "sha": "f0d7a9cd6e61bbeb9ac2bd4e877818321c136ede",
+     "title": "gateway: keep spawn_agent widening off when codex=as-sent (#3793, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/f0d7a9cd6e61bbeb9ac2bd4e877818321c136ede"
+    }
+   ],
+   "branch": "fix/3793-as-sent-spawn-agent",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "comments": {
+    "3793": [
+     "https://github.com/yetone/magpie/issues/3793#issuecomment-6438173089"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit bodies; targeted suites re-run at the pushed head (f0d7a9cd); comment read back 2026-10-27T09:22:58Z (body SHA256 39063423e979fa39). Full `go test -tags nogui ./... -count=1 -timeout 45m` at the round's merge (suite-r27-merged, head f8ed0033): 69 packages ok, 6 red — internal/agent `TestAgyShell`, internal/edit `TestWriteAtomicReadOnlyHardLink`, internal/gateway `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`, `TestMarshalRawIsEncodingJSON`, `TestServeWSLListensBesideLoopback`, `FuzzMarshalRaw`, internal/plugin `TestPluginSOCKSProxy`, internal/provider `TestUnreadLoginsWriteErrorsKeepCredentials` (synctest fatal), internal/testenv `TestProgram`; every one reproduces identically at base 6eb510f7 on this machine (umask 0027), so none is from this round. `internal/gui` is green.",
+    "head": "f0d7a9cd6e61bbeb9ac2bd4e877818321c136ede"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gui-the-routing-editor-s-skipped-verdict-asks-the-same-ready-3805-848a87ef",
+   "issues": [
+    3805
+   ],
+   "category": "product",
+   "title": "gui: the routing editor's skipped verdict asks the same ready the gateway routes by (#3805)",
+   "coverage": "The editor greyed a member \"no provider serves it\" from `modelOf(id)` missing `groups.models`; it now asks `info.ready`, the flag the gateway routes by. `routing-provider-off.test.cjs` red (a ready member greyed) then green 20/20 across engines, languages and widths; `TestCoreScriptBudget` unchanged.",
+   "commits": [
+    "848a87efb8aa73c169b23d789c45ccb702dad476"
+   ],
+   "commit_details": [
+    {
+     "sha": "848a87efb8aa73c169b23d789c45ccb702dad476",
+     "title": "routing: a member the gateway routes is not said unserved when the served list lacks it (#3805, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/848a87efb8aa73c169b23d789c45ccb702dad476"
+    }
+   ],
+   "branch": "fix/3805-ready-not-models",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "comments": {
+    "3805": [
+     "https://github.com/yetone/magpie/issues/3805#issuecomment-6438173724"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit bodies; targeted suites re-run at the pushed head (848a87ef); comment read back 2026-10-27T09:22:59Z (body SHA256 3e63fec81d736853). Full `go test -tags nogui ./... -count=1 -timeout 45m` at the round's merge (suite-r27-merged, head f8ed0033): 69 packages ok, 6 red — internal/agent `TestAgyShell`, internal/edit `TestWriteAtomicReadOnlyHardLink`, internal/gateway `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`, `TestMarshalRawIsEncodingJSON`, `TestServeWSLListensBesideLoopback`, `FuzzMarshalRaw`, internal/plugin `TestPluginSOCKSProxy`, internal/provider `TestUnreadLoginsWriteErrorsKeepCredentials` (synctest fatal), internal/testenv `TestProgram`; every one reproduces identically at base 6eb510f7 on this machine (umask 0027), so none is from this round. `internal/gui` is green.",
+    "head": "848a87efb8aa73c169b23d789c45ccb702dad476"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-gateway-a-non-enterable-working-directory-falls-back-to-magp-3812-e2958536",
+   "issues": [
+    3812
+   ],
+   "category": "product",
+   "title": "gateway: a non-enterable working directory falls back to magpie's (#3812)",
+   "coverage": "`clientWorkDir` probes `dir/.` (search permission required) instead of `dir`, and falls back when it fails. The chmod-0644 case red (502 permission denied) then green (200 in magpie's work dir), skipped as root.",
+   "commits": [
+    "e29585369bffeec7ad8968eb52cdb9888cad0613"
+   ],
+   "commit_details": [
+    {
+     "sha": "e29585369bffeec7ad8968eb52cdb9888cad0613",
+     "title": "gateway: a non-enterable working directory falls back to magpie's (#3812, zx3332352)",
+     "url": "https://github.com/skygunner/magpie/commit/e29585369bffeec7ad8968eb52cdb9888cad0613"
+    }
+   ],
+   "branch": "fix/3812-workdir-enterable",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "comments": {
+    "3812": [
+     "https://github.com/yetone/magpie/issues/3812#issuecomment-6438174287"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit bodies; targeted suites re-run at the pushed head (e2958536); comment read back 2026-10-27T09:23:01Z (body SHA256 e6c0bf8e5de0e92e). Full `go test -tags nogui ./... -count=1 -timeout 45m` at the round's merge (suite-r27-merged, head f8ed0033): 69 packages ok, 6 red — internal/agent `TestAgyShell`, internal/edit `TestWriteAtomicReadOnlyHardLink`, internal/gateway `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`, `TestMarshalRawIsEncodingJSON`, `TestServeWSLListensBesideLoopback`, `FuzzMarshalRaw`, internal/plugin `TestPluginSOCKSProxy`, internal/provider `TestUnreadLoginsWriteErrorsKeepCredentials` (synctest fatal), internal/testenv `TestProgram`; every one reproduces identically at base 6eb510f7 on this machine (umask 0027), so none is from this round. `internal/gui` is green.",
+    "head": "e29585369bffeec7ad8968eb52cdb9888cad0613"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-edit-an-inline-object-stays-inline-when-what-magpie-adds-the-3814-6276ec7d",
+   "issues": [
+    3814
+   ],
+   "category": "product",
+   "title": "edit: an inline object stays inline when what magpie adds there is an object of its own (#3814)",
+   "coverage": "`insertKey`'s `pretty` rule: an object the user keeps on one line is filled on that line when what magpie adds there is an object of its own (`provider.magpie`), so the disconnect round-trips byte for byte; the file's root keeps the file's style (a fresh config is still laid out over lines), and a scalar goes on its own line in the file's style. `TestJSONInlineObjectRoundTrips` red on the reported kilo.jsonc shape then green; `TestAgentModelDefaultKeepsTheEndpointBefore` green (caught the first span rule compacting the restored keys), and the root exception after the object-kind rule compacted fresh-file writes (`TestZCodeKeepsRemoteAddress`, `TestRemoveServers`).",
+   "commits": [
+    "ceb41d4402724743288e8737f57ff6b9c9ca1202",
+    "0bbb64eea0e83cac927480fd4e6cddf1cb39a753",
+    "6276ec7d5017a5e69b26f980ec9f5271ab36982a"
+   ],
+   "commit_details": [
+    {
+     "sha": "ceb41d4402724743288e8737f57ff6b9c9ca1202",
+     "title": "edit: an inline object keeps its line when magpie's entry comes and goes (#3814, yetone)",
+     "url": "https://github.com/skygunner/magpie/commit/ceb41d4402724743288e8737f57ff6b9c9ca1202"
+    },
+    {
+     "sha": "0bbb64eea0e83cac927480fd4e6cddf1cb39a753",
+     "title": "edit: an inline object stays inline only for an object magpie adds (#3814)",
+     "url": "https://github.com/skygunner/magpie/commit/0bbb64eea0e83cac927480fd4e6cddf1cb39a753"
+    },
+    {
+     "sha": "6276ec7d5017a5e69b26f980ec9f5271ab36982a",
+     "title": "edit: the file's root keeps the file's style, inline or not (#3814)",
+     "url": "https://github.com/skygunner/magpie/commit/6276ec7d5017a5e69b26f980ec9f5271ab36982a"
+    }
+   ],
+   "branch": "fix/3814-inline-object-bytes",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "comments": {
+    "3814": [
+     "https://github.com/yetone/magpie/issues/3814#issuecomment-6438174941"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit bodies; targeted suites re-run at the pushed head (6276ec7d); comment read back 2026-10-27T09:23:03Z (body SHA256 90a349f12bab6151). Full `go test -tags nogui ./... -count=1 -timeout 45m` at the round's merge (suite-r27-merged, head f8ed0033): 69 packages ok, 6 red — internal/agent `TestAgyShell`, internal/edit `TestWriteAtomicReadOnlyHardLink`, internal/gateway `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`, `TestMarshalRawIsEncodingJSON`, `TestServeWSLListensBesideLoopback`, `FuzzMarshalRaw`, internal/plugin `TestPluginSOCKSProxy`, internal/provider `TestUnreadLoginsWriteErrorsKeepCredentials` (synctest fatal), internal/testenv `TestProgram`; every one reproduces identically at base 6eb510f7 on this machine (umask 0027), so none is from this round. `internal/gui` is green.",
+    "head": "6276ec7d5017a5e69b26f980ec9f5271ab36982a"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-provider-a-plan-card-read-just-now-says-when-it-was-read-381-3816-3c7725cb",
+   "issues": [
+    3816
+   ],
+   "category": "product",
+   "title": "provider: a plan card read just now says when it was read (#3816)",
+   "coverage": "`readNow` is applied after a successful `PlanQuotas` read (and `stepPlanQuota`'s own return, and the tencent/volcengine keeps) when `ReadAt` is still nil. `TestPlanQuotas` red (`ReadAt:<nil>`) then green; `TestClaudeKeptReadingKeepsItsTime` green.",
+   "commits": [
+    "3c7725cba5d1d2511a197c54061124603bad364a"
+   ],
+   "commit_details": [
+    {
+     "sha": "3c7725cba5d1d2511a197c54061124603bad364a",
+     "title": "plan quotas: a plan card read just now says when it was read (#3816, kudi68)",
+     "url": "https://github.com/skygunner/magpie/commit/3c7725cba5d1d2511a197c54061124603bad364a"
+    }
+   ],
+   "branch": "fix/3816-plan-quota-readat",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "comments": {
+    "3816": [
+     "https://github.com/yetone/magpie/issues/3816#issuecomment-6438175575"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit bodies; targeted suites re-run at the pushed head (3c7725cb); comment read back 2026-10-27T09:23:06Z (body SHA256 e200582c6bbe152c). Full `go test -tags nogui ./... -count=1 -timeout 45m` at the round's merge (suite-r27-merged, head f8ed0033): 69 packages ok, 6 red — internal/agent `TestAgyShell`, internal/edit `TestWriteAtomicReadOnlyHardLink`, internal/gateway `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`, `TestMarshalRawIsEncodingJSON`, `TestServeWSLListensBesideLoopback`, `FuzzMarshalRaw`, internal/plugin `TestPluginSOCKSProxy`, internal/provider `TestUnreadLoginsWriteErrorsKeepCredentials` (synctest fatal), internal/testenv `TestProgram`; every one reproduces identically at base 6eb510f7 on this machine (umask 0027), so none is from this round. `internal/gui` is green.",
+    "head": "3c7725cba5d1d2511a197c54061124603bad364a"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-plugin-a-gateway-request-hook-alone-shows-in-discovery-3821-3821-38b8f9b9",
+   "issues": [
+    3821
+   ],
+   "category": "product",
+   "title": "plugin: a gateway request hook alone shows in discovery (#3821)",
+   "coverage": "`readTagged` reads `magpie.hooks` and kinds a repo with nothing else as the gateway-middleware kind. `TestTaggedRepos` red (the hooks-only repo was dropped) then green; the package's tests green.",
+   "commits": [
+    "38b8f9b979ad2916f5a81a23c219a4dc067817ac"
+   ],
+   "commit_details": [
+    {
+     "sha": "38b8f9b979ad2916f5a81a23c219a4dc067817ac",
+     "title": "plugin: a gateway request hook alone shows in discovery (#3821, MengXiangxi)",
+     "url": "https://github.com/skygunner/magpie/commit/38b8f9b979ad2916f5a81a23c219a4dc067817ac"
+    }
+   ],
+   "branch": "fix/3821-hooks-discover",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "comments": {
+    "3821": [
+     "https://github.com/yetone/magpie/issues/3821#issuecomment-6438176207"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit bodies; targeted suites re-run at the pushed head (38b8f9b9); comment read back 2026-10-27T09:23:08Z (body SHA256 fc4d4456acd1e9b9). Full `go test -tags nogui ./... -count=1 -timeout 45m` at the round's merge (suite-r27-merged, head f8ed0033): 69 packages ok, 6 red — internal/agent `TestAgyShell`, internal/edit `TestWriteAtomicReadOnlyHardLink`, internal/gateway `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`, `TestMarshalRawIsEncodingJSON`, `TestServeWSLListensBesideLoopback`, `FuzzMarshalRaw`, internal/plugin `TestPluginSOCKSProxy`, internal/provider `TestUnreadLoginsWriteErrorsKeepCredentials` (synctest fatal), internal/testenv `TestProgram`; every one reproduces identically at base 6eb510f7 on this machine (umask 0027), so none is from this round. `internal/gui` is green.",
+    "head": "38b8f9b979ad2916f5a81a23c219a4dc067817ac"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-agent-zcode-variants-are-written-in-rank-order-3826-3826-f26769d7",
+   "issues": [
+    3826
+   ],
+   "category": "product",
+   "title": "agent: ZCode variants are written in rank order (#3826)",
+   "coverage": "`zcodeLevels` sorts by a rank of the known levels, unknown ones keeping arrival order after them. `TestZCodeLevelsAreWrittenInRankOrder` red then green; the existing GLM case and the package's tests green.",
+   "commits": [
+    "f26769d7e93bd636c8e6fc4d11969c58fd2afaad"
+   ],
+   "commit_details": [
+    {
+     "sha": "f26769d7e93bd636c8e6fc4d11969c58fd2afaad",
+     "title": "agent: ZCode variants are written in rank order (#3826, royluoh)",
+     "url": "https://github.com/skygunner/magpie/commit/f26769d7e93bd636c8e6fc4d11969c58fd2afaad"
+    }
+   ],
+   "branch": "fix/3826-zcode-levels-order",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "comments": {
+    "3826": [
+     "https://github.com/yetone/magpie/issues/3826#issuecomment-6438176803"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit bodies; targeted suites re-run at the pushed head (f26769d7); comment read back 2026-10-27T09:23:10Z (body SHA256 1d90246298e8e029). Full `go test -tags nogui ./... -count=1 -timeout 45m` at the round's merge (suite-r27-merged, head f8ed0033): 69 packages ok, 6 red — internal/agent `TestAgyShell`, internal/edit `TestWriteAtomicReadOnlyHardLink`, internal/gateway `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`, `TestMarshalRawIsEncodingJSON`, `TestServeWSLListensBesideLoopback`, `FuzzMarshalRaw`, internal/plugin `TestPluginSOCKSProxy`, internal/provider `TestUnreadLoginsWriteErrorsKeepCredentials` (synctest fatal), internal/testenv `TestProgram`; every one reproduces identically at base 6eb510f7 on this machine (umask 0027), so none is from this round. `internal/gui` is green.",
+    "head": "f26769d7e93bd636c8e6fc4d11969c58fd2afaad"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
+  },
+  {
+   "id": "u-proc-opencode-s-own-installer-s-opencode-is-the-one-found-38-3828-127fee62",
+   "issues": [
+    3828
+   ],
+   "category": "product",
+   "title": "proc: OpenCode's own installer's opencode is the one found (#3828)",
+   "coverage": "`.opencode/bin` added to the known user-bin lists on both platforms, before `SystemDirs`. The `FindTool` case red (the homebrew path) then green. The issue's second half (OpenCode 2's config paths) is out of scope, as the commit body records.",
+   "commits": [
+    "127fee620b0b2c60ed553665d4f2438fb42f3236"
+   ],
+   "commit_details": [
+    {
+     "sha": "127fee620b0b2c60ed553665d4f2438fb42f3236",
+     "title": "proc: OpenCode's own installer's opencode is the one found (#3828, cloudusa)",
+     "url": "https://github.com/skygunner/magpie/commit/127fee620b0b2c60ed553665d4f2438fb42f3236"
+    }
+   ],
+   "branch": "fix/3828-opencode-bin-path",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "comments": {
+    "3828": [
+     "https://github.com/yetone/magpie/issues/3828#issuecomment-6438177401"
+    ]
+   },
+   "sources": {
+    "third_party_adaptation": false
+   },
+   "verify": {
+    "state": "pass",
+    "evidence": "Red-green recorded in the commit bodies; targeted suites re-run at the pushed head (127fee62); comment read back 2026-10-27T09:23:12Z (body SHA256 c7aa99fedf69b1c4). Full `go test -tags nogui ./... -count=1 -timeout 45m` at the round's merge (suite-r27-merged, head f8ed0033): 69 packages ok, 6 red — internal/agent `TestAgyShell`, internal/edit `TestWriteAtomicReadOnlyHardLink`, internal/gateway `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`, `TestMarshalRawIsEncodingJSON`, `TestServeWSLListensBesideLoopback`, `FuzzMarshalRaw`, internal/plugin `TestPluginSOCKSProxy`, internal/provider `TestUnreadLoginsWriteErrorsKeepCredentials` (synctest fatal), internal/testenv `TestProgram`; every one reproduces identically at base 6eb510f7 on this machine (umask 0027), so none is from this round. `internal/gui` is green.",
+    "head": "127fee620b0b2c60ed553665d4f2438fb42f3236"
+   },
+   "upstream": {
+    "status": "reported"
+   },
+   "archive": {
+    "candidate": false
+   }
   }
  ],
  "pointed_elsewhere": [
@@ -9107,6 +9954,246 @@
    ],
    "replaced_by": "",
    "note": "round-26",
+   "category": "product"
+  },
+  {
+   "branch": "fix/1903-setaside-leftbehind",
+   "head": "76dc5c2e38a5c209957f090f0df586e8f7254999",
+   "kind": "product",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "fix_ids": [
+    "u-library-a-skill-left-half-emptied-on-a-stuck-set-aside-says-1903-76dc5c2e"
+   ],
+   "replaced_by": "",
+   "note": "round-27",
+   "category": "product"
+  },
+  {
+   "branch": "fix/2099-risk-wrap",
+   "head": "68bbfcf5dcc7508a263483b3a5af6f2c23b5dbf3",
+   "kind": "product",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "fix_ids": [
+    "u-gui-the-sign-in-risk-step-keeps-its-warning-readable-and-its-2099-68bbfcf5"
+   ],
+   "replaced_by": "",
+   "note": "round-27",
+   "category": "product"
+  },
+  {
+   "branch": "fix/2541-queue-test-budget",
+   "head": "7a3272084a159021057a0fd90ee36c18ef2df0c6",
+   "kind": "product",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "fix_ids": [
+    "u-gateway-tests-the-queue-refusal-ledger-test-asks-with-produc-2541-7a327208"
+   ],
+   "replaced_by": "",
+   "note": "round-27",
+   "category": "product"
+  },
+  {
+   "branch": "fix/2746-unlisted-by-group",
+   "head": "e678dbc528a08e333318a268dbe2ce121bc93358",
+   "kind": "product",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "fix_ids": [
+    "u-gui-the-model-picker-names-the-group-that-unlists-it-not-the-2746-e678dbc5"
+   ],
+   "replaced_by": "",
+   "note": "round-27",
+   "category": "product"
+  },
+  {
+   "branch": "fix/2755-led-format-tokens",
+   "head": "b20f17d51b02a1a2f52083b9c7e2f4dfde0af1ce",
+   "kind": "product",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "fix_ids": [
+    "u-gui-the-tokens-trend-s-tooltip-says-tokens-the-page-s-way-27-2755-b20f17d5"
+   ],
+   "replaced_by": "",
+   "note": "round-27",
+   "category": "product"
+  },
+  {
+   "branch": "fix/2761-filememo-clock-seam",
+   "head": "de2c656345d577ee2d346e49439e8b2e86db0911",
+   "kind": "product",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "fix_ids": [
+    "u-filememo-the-stamp-s-age-is-read-by-a-clock-a-test-can-hold-2761-de2c6563"
+   ],
+   "replaced_by": "",
+   "note": "round-27",
+   "category": "product"
+  },
+  {
+   "branch": "fix/2789-textcall-xml",
+   "head": "1734b21d9daf1f82dace6368256a390f9c46658e",
+   "kind": "product",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "fix_ids": [
+    "u-gateway-deepseek-s-tool-calls-written-as-call-tool-tool-call-2789-1734b21d"
+   ],
+   "replaced_by": "",
+   "note": "round-27",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3137-proxy-advice-address",
+   "head": "a9213cae7441cc467c2cd696550d17bc4526962b",
+   "kind": "product",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "fix_ids": [
+    "u-agent-the-proxy-warning-s-fix-advice-names-the-gateway-codex-3137-a9213cae"
+   ],
+   "replaced_by": "",
+   "note": "round-27",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3278-day-window-budget",
+   "head": "1386690f0c877035eee513a717081574bd82645a",
+   "kind": "product",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "fix_ids": [
+    "u-gui-tests-the-day-window-test-s-scroll-is-bounded-by-the-lis-3278-1386690f"
+   ],
+   "replaced_by": "",
+   "note": "round-27",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3738-free-model-rest-id",
+   "head": "499f0249ac8820b9c032264005a233d7dc9d3351",
+   "kind": "product",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "fix_ids": [
+    "u-gateway-free-models-rest-only-themselves-not-the-account-373-3738-499f0249"
+   ],
+   "replaced_by": "",
+   "note": "round-27",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3785-pool-tooltip",
+   "head": "a5f315a3b60838903a2dd25a9c38f4ed840816df",
+   "kind": "product",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "fix_ids": [
+    "u-gui-a-pool-s-account-list-tooltip-no-longer-covers-its-routi-3785-a5f315a3"
+   ],
+   "replaced_by": "",
+   "note": "round-27",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3792-chat-error-no-start",
+   "head": "b16a0651ededfa3f391e28e87100c10a0507ab9b",
+   "kind": "product",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "fix_ids": [
+    "u-gateway-an-error-after-a-reply-began-is-said-alone-not-as-a-3792-b16a0651"
+   ],
+   "replaced_by": "",
+   "note": "round-27",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3793-as-sent-spawn-agent",
+   "head": "f0d7a9cd6e61bbeb9ac2bd4e877818321c136ede",
+   "kind": "product",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "fix_ids": [
+    "u-gateway-keep-spawn-agent-widening-off-when-codex-as-sent-379-3793-f0d7a9cd"
+   ],
+   "replaced_by": "",
+   "note": "round-27",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3805-ready-not-models",
+   "head": "848a87efb8aa73c169b23d789c45ccb702dad476",
+   "kind": "product",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "fix_ids": [
+    "u-gui-the-routing-editor-s-skipped-verdict-asks-the-same-ready-3805-848a87ef"
+   ],
+   "replaced_by": "",
+   "note": "round-27",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3812-workdir-enterable",
+   "head": "e29585369bffeec7ad8968eb52cdb9888cad0613",
+   "kind": "product",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "fix_ids": [
+    "u-gateway-a-non-enterable-working-directory-falls-back-to-magp-3812-e2958536"
+   ],
+   "replaced_by": "",
+   "note": "round-27",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3814-inline-object-bytes",
+   "head": "6276ec7d5017a5e69b26f980ec9f5271ab36982a",
+   "kind": "product",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "fix_ids": [
+    "u-edit-an-inline-object-stays-inline-when-what-magpie-adds-the-3814-6276ec7d"
+   ],
+   "replaced_by": "",
+   "note": "round-27",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3816-plan-quota-readat",
+   "head": "3c7725cba5d1d2511a197c54061124603bad364a",
+   "kind": "product",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "fix_ids": [
+    "u-provider-a-plan-card-read-just-now-says-when-it-was-read-381-3816-3c7725cb"
+   ],
+   "replaced_by": "",
+   "note": "round-27",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3821-hooks-discover",
+   "head": "38b8f9b979ad2916f5a81a23c219a4dc067817ac",
+   "kind": "product",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "fix_ids": [
+    "u-plugin-a-gateway-request-hook-alone-shows-in-discovery-3821-3821-38b8f9b9"
+   ],
+   "replaced_by": "",
+   "note": "round-27",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3826-zcode-levels-order",
+   "head": "f26769d7e93bd636c8e6fc4d11969c58fd2afaad",
+   "kind": "product",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "fix_ids": [
+    "u-agent-zcode-variants-are-written-in-rank-order-3826-3826-f26769d7"
+   ],
+   "replaced_by": "",
+   "note": "round-27",
+   "category": "product"
+  },
+  {
+   "branch": "fix/3828-opencode-bin-path",
+   "head": "127fee620b0b2c60ed553665d4f2438fb42f3236",
+   "kind": "product",
+   "base": "6eb510f7888f8bc091657de8ddebe5cb071a960e",
+   "fix_ids": [
+    "u-proc-opencode-s-own-installer-s-opencode-is-the-one-found-38-3828-127fee62"
+   ],
+   "replaced_by": "",
+   "note": "round-27",
    "category": "product"
   }
  ],

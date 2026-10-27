@@ -1,0 +1,132 @@
+From de2c656345d577ee2d346e49439e8b2e86db0911 Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 18:50:32 +1000
+Subject: [PATCH] filememo: the stamp's age is read by a clock a test can hold
+ (#2761, yetone)
+
+The settle and held guards compared time.Since against the machine's clock,
+so a run that takes longer than the 2s window between two reads of one file
+trusted the coarse stamp and served the parse from before the write. Now is
+the clock they read: a test pins it, and the file's real mtime stops being
+the thing that decides.
+
+Red-green: with a temporary 2.5s sleep between the two reads (not committed),
+TestSummaryInvalidatesSameStampPrice failed at 'direct failed coarse-stamp
+guard' on base and passes with the seam; the committed test pins the clock so
+the run no longer depends on how loaded the machine is.
+---
+ internal/filememo/filememo.go        | 19 ++++++++++++-------
+ internal/usage/summary_cache_test.go | 13 +++++++++++++
+ 2 files changed, 25 insertions(+), 7 deletions(-)
+
+diff --git a/internal/filememo/filememo.go b/internal/filememo/filememo.go
+index 94531e46..aa41f463 100644
+--- a/internal/filememo/filememo.go
++++ b/internal/filememo/filememo.go
+@@ -71,6 +71,11 @@ const heldFor = time.Second
+ // state looked at each agent's files hundreds of times over, a few
+ // thousand looks at the disk that a slow one (a Mac's antivirus looking
+ // at each) made seconds. A write meanwhile (Forget) has them looked at.
++// Now is the clock filememo reads its files' ages by; a test holds it so a
++// file written within settle cannot be mistaken for an old one, however the
++// machine's own clock runs (#2761).
++var Now = time.Now
++
+ func Hold() (release func()) {
+ 	mu.Lock()
+ 	holds++
+@@ -149,11 +154,11 @@ func Read[T any](kind, path string, parse func([]byte) (T, error)) (T, error) {
+ 	key := kind + "\x00" + path
+ 	mu.Lock()
+ 	e, ok := seen[key]
+-	if ok && holds > 0 && e.raw == nil && e.gen == gen && time.Since(e.checked) < heldFor {
++	if ok && holds > 0 && e.raw == nil && e.gen == gen && Now().Sub(e.checked) < heldFor {
+ 		mu.Unlock()
+ 		return e.v.(T), nil
+ 	}
+-	if m, ok := missing[path]; ok && holds > 0 && m.gen == gen && time.Since(m.checked) < heldFor {
++	if m, ok := missing[path]; ok && holds > 0 && m.gen == gen && Now().Sub(m.checked) < heldFor {
+ 		mu.Unlock()
+ 		return zero, m.err
+ 	}
+@@ -164,7 +169,7 @@ func Read[T any](kind, path string, parse func([]byte) (T, error)) (T, error) {
+ 		if errors.Is(err, fs.ErrNotExist) {
+ 			mu.Lock()
+ 			if holds > 0 && g == gen {
+-				missing[path] = missingFile{err, time.Now(), g}
++				missing[path] = missingFile{err, Now(), g}
+ 			}
+ 			mu.Unlock()
+ 		}
+@@ -173,7 +178,7 @@ func Read[T any](kind, path string, parse func([]byte) (T, error)) (T, error) {
+ 	if ok && e.mod.Equal(fi.ModTime()) && e.size == fi.Size() && e.raw == nil {
+ 		mu.Lock()
+ 		if holds > 0 && g == gen {
+-			e.checked, e.gen = time.Now(), g
++			e.checked, e.gen = Now(), g
+ 			seen[key] = e
+ 		}
+ 		mu.Unlock()
+@@ -184,7 +189,7 @@ func Read[T any](kind, path string, parse func([]byte) (T, error)) (T, error) {
+ 		return zero, err
+ 	}
+ 	if ok && e.mod.Equal(fi.ModTime()) && bytes.Equal(b, e.raw) {
+-		if time.Since(e.mod) > settled {
++		if Now().Sub(e.mod) > settled {
+ 			mu.Lock()
+ 			e.raw = nil
+ 			seen[key] = e
+@@ -198,10 +203,10 @@ func Read[T any](kind, path string, parse func([]byte) (T, error)) (T, error) {
+ 	}
+ 	mu.Lock()
+ 	e = entry{mod: fi.ModTime(), size: fi.Size(), v: v}
+-	if time.Since(e.mod) <= settled {
++	if Now().Sub(e.mod) <= settled {
+ 		e.raw = b
+ 	} else if holds > 0 && g == gen {
+-		e.checked, e.gen = time.Now(), g
++		e.checked, e.gen = Now(), g
+ 	}
+ 	seen[key] = e
+ 	mu.Unlock()
+diff --git a/internal/usage/summary_cache_test.go b/internal/usage/summary_cache_test.go
+index 7fc6fd47..936daacf 100644
+--- a/internal/usage/summary_cache_test.go
++++ b/internal/usage/summary_cache_test.go
+@@ -2,6 +2,7 @@ package usage
+ 
+ import (
+ 	"github.com/yetone/magpie/internal/catalog"
++	"github.com/yetone/magpie/internal/filememo"
+ 	"github.com/yetone/magpie/internal/provider"
+ 	"github.com/yetone/magpie/internal/settings"
+ 	"os"
+@@ -9,6 +10,17 @@ import (
+ 	"time"
+ )
+ 
++// holdFilememoClock pins filememo's own clock (its stamp/settle decisions
++// read it, not the machine's): a file's real mtime is beside the point once
++// the test says what now is, so a loaded machine cannot push the two reads
++// of TestSummaryInvalidatesSameStampPrice past settle between them (#2761).
++func holdFilememoClock(t *testing.T, at time.Time) {
++	t.Helper()
++	old := filememo.Now
++	filememo.Now = func() time.Time { return at }
++	t.Cleanup(func() { filememo.Now = old })
++}
++
+ func TestSummaryInvalidatesLiveFreePrice(t *testing.T) {
+ 	pageHome(t)
+ 	now := holdClock(t, time.Date(2026, 9, 30, 12, 0, 0, 0, time.Local))
+@@ -38,6 +50,7 @@ func TestSummaryInvalidatesLiveFreePrice(t *testing.T) {
+ func TestSummaryInvalidatesSameStampPrice(t *testing.T) {
+ 	pageHome(t)
+ 	now := holdClock(t, time.Date(2026, 9, 30, 12, 0, 0, 0, time.Local))
++	holdFilememoClock(t, now)
+ 	s := settings.Load()
+ 	s.ModelPrices = map[string]settings.ModelPrice{"*/m": {Input: new(2.0), Output: new(8.0), CacheRead: new(0.0), CacheWrite: new(0.0)}}
+ 	if err := settings.Save(s); err != nil {
+-- 
+2.56.0
+

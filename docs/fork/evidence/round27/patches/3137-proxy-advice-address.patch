@@ -1,0 +1,136 @@
+From a9213cae7441cc467c2cd696550d17bc4526962b Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 17:32:59 +1000
+Subject: [PATCH] agent: the proxy warning's fix advice names the gateway Codex
+ really sends to (#3137, cjyrainbow)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Root cause (the advice half): codexProxiedDetail hardcoded 127.0.0.1 in all
+three remedies — the DIRECT rule to give the proxy, the NO_PROXY value, and
+Windows' bypass-list entry — while its own message names the real gateway
+address. With Codex Desktop in WSL (NAT) the gateway is the Windows host's
+address, e.g. 172.20.240.1, so the advice exempted an address Codex never
+sends to and left every turn failing through the proxy.
+
+The remedies now take the host from the base URL (urlHost), keeping the
+127.0.0.1 wording only when that host really is loopback (net.ParseIP's
+IsLoopback): the DIRECT rule stays 127.0.0.0/8, and Windows' "127.* there is
+not enough for Codex" aside keeps to the loopback shape where it applies.
+
+The false-positive half of the report — reading the login shell's
+environment rather than the WSL app server's, so magpie may warn about a
+proxy Codex in WSL doesn't see — is left as it is: a separate fix.
+
+Verified: TestCodexProxiedDetailNamesTheGatewayAddress asks for the detail
+of base http://172.20.240.1:3425/v1 through a 127.0.0.1 proxy and requires
+172.20.240.1 in each remedy and no 127.0.0.1 exemption; TestCodexProxyFor and
+TestCodexProxyNamesItsVariable keep the loopback wording byte for byte.
+
+Red (unmodified code, test at codex_proxy_test.go:167):
+  go test -tags nogui ./internal/agent/ -count=1 -run TestCodexProxiedDetailNamesTheGatewayAddress
+  --- FAIL: codex_proxy_test.go:167: the direct rule names another address:
+      ... Have the proxy send 127.0.0.1 direct (a DIRECT rule for 127.0.0.0/8 ...
+
+Green: same command passes. Whole package: TestAgyShell fails at this base
+too (its shell-script fixture), untouched by this change; every other test
+in ./internal/agent/ passes.
+---
+ internal/agent/codex_proxy.go      | 30 +++++++++++++++++++++++----
+ internal/agent/codex_proxy_test.go | 33 ++++++++++++++++++++++++++++++
+ 2 files changed, 59 insertions(+), 4 deletions(-)
+
+diff --git a/internal/agent/codex_proxy.go b/internal/agent/codex_proxy.go
+index e1a789bc..af624b0b 100644
+--- a/internal/agent/codex_proxy.go
++++ b/internal/agent/codex_proxy.go
+@@ -256,15 +256,37 @@ func codexProxyOK(cfg, base string) bool {
+ // how to get it there.
+ func codexProxiedDetail(base, proxy, from string) string {
+ 	host := strings.TrimPrefix(base, "http://")
++	// the gateway is not always 127.0.0.1: Codex Desktop in WSL reaches it
++	// at the Windows host's address (#3137), and the remedies must exempt
++	// the address Codex really sends to
++	gw := urlHost(base)
++	direct := gw
++	if ip := net.ParseIP(gw); ip != nil && ip.IsLoopback() {
++		direct = "127.0.0.0/8"
++	}
+ 	d := "Codex sends its requests for magpie (" + host + ") through the proxy at " + netproxy.Redact(proxy) + ", set in " + from + ", and that proxy doesn't pass them on to magpie: every turn fails, with 502 Bad Gateway, whichever model it is on. " +
+-		"Have the proxy send 127.0.0.1 direct (a DIRECT rule for 127.0.0.0/8, or rule mode rather than global), "
++		"Have the proxy send " + gw + " direct (a DIRECT rule for " + direct + ", or rule mode rather than global), "
+ 	switch {
+ 	case strings.Contains(strings.ToUpper(from), "_PROXY"):
+-		d += "or add 127.0.0.1 to NO_PROXY where " + from + " is set (your shell profile, such as ~/.zshrc, if it's there), "
++		d += "or add " + gw + " to NO_PROXY where " + from + " is set (your shell profile, such as ~/.zshrc, if it's there), "
+ 	case codexProxyOS == "windows":
+-		d += "or add 127.0.0.1 to \"Don't use the proxy server for addresses beginning with\" in Windows' proxy settings (127.* there is not enough for Codex), "
++		d += "or add " + gw + " to \"Don't use the proxy server for addresses beginning with\" in Windows' proxy settings"
++		if ip := net.ParseIP(gw); ip != nil && ip.IsLoopback() {
++			d += " (127.* there is not enough for Codex)"
++		}
++		d += ", "
+ 	default:
+-		d += "or add export NO_PROXY=127.0.0.1 to your shell profile (~/.zshrc): Codex in a terminal and the ChatGPT app's Codex both read it, "
++		d += "or add export NO_PROXY=" + gw + " to your shell profile (~/.zshrc): Codex in a terminal and the ChatGPT app's Codex both read it, "
+ 	}
+ 	return d + "then quit and reopen Codex. Until then, Disconnect from magpie puts Codex's config back as it was."
+ }
++
++// urlHost is the host name of a gateway's base URL, 127.0.0.1 as it was
++// when the URL doesn't parse.
++func urlHost(base string) string {
++	u, err := url.Parse(base)
++	if err != nil || u.Hostname() == "" {
++		return "127.0.0.1"
++	}
++	return u.Hostname()
++}
+diff --git a/internal/agent/codex_proxy_test.go b/internal/agent/codex_proxy_test.go
+index f55ffb6a..717d9022 100644
+--- a/internal/agent/codex_proxy_test.go
++++ b/internal/agent/codex_proxy_test.go
+@@ -144,6 +144,39 @@ func TestCodexProxyNamesItsVariable(t *testing.T) {
+ 	}
+ }
+ 
++// #3137 (cjyrainbow): with Codex Desktop in WSL the gateway is the Windows
++// host's address, not 127.0.0.1, and every remedy named 127.0.0.1 — advice
++// that exempts an address Codex never sends to.
++func TestCodexProxiedDetailNamesTheGatewayAddress(t *testing.T) {
++	const base = "http://172.20.240.1:3425/v1"
++	cases := []struct {
++		name string
++		goos string
++		from string
++		want string
++	}{
++		{"a variable", "darwin", "HTTP_PROXY", "add 172.20.240.1 to NO_PROXY where HTTP_PROXY is set"},
++		{"Windows' list", "windows", "Windows' proxy settings", `add 172.20.240.1 to "Don't use the proxy server for addresses beginning with"`},
++	}
++	for _, c := range cases {
++		t.Run(c.name, func(t *testing.T) {
++			was := codexProxyOS
++			codexProxyOS = c.goos
++			t.Cleanup(func() { codexProxyOS = was })
++			d := codexProxiedDetail(base, "http://127.0.0.1:7897", c.from)
++			if !strings.Contains(d, "send 172.20.240.1 direct") || !strings.Contains(d, "DIRECT rule for 172.20.240.1") {
++				t.Fatalf("the direct rule names another address: %s", d)
++			}
++			if !strings.Contains(d, c.want) {
++				t.Fatalf("want %q in: %s", c.want, d)
++			}
++			if strings.Contains(d, "127.0.0.1 to NO_PROXY") || strings.Contains(d, "127.0.0.0/8") {
++				t.Fatalf("the gateway's address isn't 127.0.0.1: %s", d)
++			}
++		})
++	}
++}
++
+ // liu_dyj on X: magpie opened from the Dock lacks the NO_PROXY a shell
+ // profile sets, which the Codex a terminal or the ChatGPT app runs has.
+ // The login shell's value is Codex's; magpie's own only where the shell
+-- 
+2.56.0
+

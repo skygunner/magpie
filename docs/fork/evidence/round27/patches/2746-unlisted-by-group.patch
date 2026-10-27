@@ -1,0 +1,205 @@
+From e678dbc528a08e333318a268dbe2ce121bc93358 Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 17:40:50 +1000
+Subject: [PATCH] gui: model picker names the group that unlists it, not the
+ provider (#2746, kudi68)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Unlisted kept a model out of the agents' pickers for two reasons: its
+provider is kept “Only through routing groups”, and a routing group
+has Unlists on. Before, the page said “{provider} is used only through
+routing groups …” for both reasons, and because the picker promotes the
+current value's option to group:"" home:"Routing groups", it missed the
+group via o.home === ROUTING_GROUPS, so a promoted group row reported
+via empty and the note blamed the provider. The code now checks both o.group
+and o.home when finding the via option, and the backend flags an
+unlisted entry with ByGroup when the provider isn't the keeper
+(!e.Provider.Unlisted). Front-end keptNote uses m.byGroup to choose the
+new wording: “A routing group keeps {model} out of the lists: agents
+reach it by picking {group}.” which names the group and drops the
+provider sentence and “The group alone”. The two provider sentences
+stay byte-identical, and translations for the new string are added in
+all five languages with identical placeholders.
+
+Verified: internal/gui/tests/unlisted-models.test.cjs gains a codex/
+gpt-6.1-sol unlisted entry with ByGroup and groups ["group/night-shift"],
+two groups with unlists:true, and a check that with the agent's field
+set to magpie/group/night-shift the filter finds the kept row whose
+note equals “A routing group keeps gpt-6.1-sol out of the lists: agents
+reach it by picking night-shift.” and contains no “Codex”. Before the
+fix, that note blamed Codex and the test fails at the note-assertion
+(4/4 red); after it the four tests (chromium/webkit, en/zh) pass. i18n-
+keys passes, core budget passes, go build -tags nogui ./... succeeds.
+---
+ internal/gui/api.go                         |  6 ++++-
+ internal/gui/assets/app.js                  | 12 ++++++---
+ internal/gui/assets/i18n.js                 |  4 +++
+ internal/gui/tests/unlisted-models.test.cjs | 30 ++++++++++++++++++++-
+ 4 files changed, 47 insertions(+), 5 deletions(-)
+
+diff --git a/internal/gui/api.go b/internal/gui/api.go
+index c6700627..04a1c8c8 100644
+--- a/internal/gui/api.go
++++ b/internal/gui/api.go
+@@ -306,6 +306,10 @@ type unlistedJSON struct {
+ 	Provider string   `json:"provider"`
+ 	Icon     string   `json:"icon,omitempty"`
+ 	Groups   []string `json:"groups"`
++	// ByGroup: the provider isn't the one kept for routing groups — one of
++	// the groups above keeps this model out of the lists (Group.Unlists),
++	// so the page names that group instead of blaming the provider
++	ByGroup bool `json:"byGroup,omitempty"`
+ }
+ 
+ // unlistedModels lists provider.Unlisted for the page.
+@@ -321,7 +325,7 @@ func unlistedModels() []unlistedJSON {
+ 		if gs == nil {
+ 			gs = []string{}
+ 		}
+-		out = append(out, unlistedJSON{ID: e.ID, Name: e.Name, Provider: e.Provider.Name, Icon: e.Provider.Icon, Groups: gs})
++		out = append(out, unlistedJSON{ID: e.ID, Name: e.Name, Provider: e.Provider.Name, Icon: e.Provider.Icon, Groups: gs, ByGroup: !e.Provider.Unlisted})
+ 	}
+ 	return out
+ }
+diff --git a/internal/gui/assets/app.js b/internal/gui/assets/app.js
+index e320d033..5ac6fe62 100644
+--- a/internal/gui/assets/app.js
++++ b/internal/gui/assets/app.js
+@@ -5519,14 +5519,20 @@ function keptNote(m) {
+   const words = el("span", "kept-words");
+   const model = m.name || m.id;
+   words.append(el("b", "", model));
+-  const via = m.groups.map((g) => pick.options.find((o) => o.ref === g && o.group === ROUTING_GROUPS)).filter(Boolean);
++  const via = m.groups.map((g) => pick.options.find((o) => o.ref === g && (o.group === ROUTING_GROUPS || o.home === ROUTING_GROUPS))).filter(Boolean);
+   const act = el("button", "text action");
+   if (via.length) {
+-    words.append(el("span", "", t("{provider} is used only through routing groups: agents reach {model} by picking {group}.", { provider: m.provider, model, group: via.map((o) => o.label || o.value).join(", ") })));
++    words.append(el("span", "", m.byGroup
++      // one of the groups keeps it out of the lists (Group.Unlists): name
++      // that group, not the provider (#2746)
++      ? t("A routing group keeps {model} out of the lists: agents reach it by picking {group}.", { model, group: via.map((o) => o.label || o.value).join(", ") })
++      : t("{provider} is used only through routing groups: agents reach {model} by picking {group}.", { provider: m.provider, model, group: via.map((o) => o.label || o.value).join(", ") })));
+     act.textContent = t("Pick {group}", { group: via[0].label || via[0].value });
+     act.onclick = (ev) => { ev.stopPropagation(); commit(via[0].value); };
+   } else {
+-    words.append(el("span", "", t("{provider} is used only through routing groups, and {model} is in none, so no agent can use it. Make a group of it, or untick “Only through routing groups” in {provider}'s models.", { provider: m.provider, model })));
++    words.append(el("span", "", m.byGroup
++      ? t("A routing group keeps {model} out of the lists: agents reach it by picking {group}.", { model, group: m.groups.map((g) => g.replace("group/", "")).join(", ") })
++      : t("{provider} is used only through routing groups, and {model} is in none, so no agent can use it. Make a group of it, or untick “Only through routing groups” in {provider}'s models.", { provider: m.provider, model })));
+     act.textContent = t("Make a routing group of it");
+     act.dataset.feature = "routing"; // made on the Routing page
+     act.onclick = (ev) => {
+diff --git a/internal/gui/assets/i18n.js b/internal/gui/assets/i18n.js
+index e350f6ea..5062c6cd 100644
+--- a/internal/gui/assets/i18n.js
++++ b/internal/gui/assets/i18n.js
+@@ -3522,6 +3522,7 @@ const I18N = {
+     "Make a routing group of it": "用它建路由分组",
+     "Pick {group}": "选 {group}",
+     "{provider} is used only through routing groups: agents reach {model} by picking {group}.": "{provider} 设为只通过路由分组使用：选 {group} 即可用到 {model}。",
++    "A routing group keeps {model} out of the lists: agents reach it by picking {group}.": "{model} 被一个路由分组移出了列表：选 {group} 即可用到它。",
+     "{provider} is used only through routing groups, and {model} is in none, so no agent can use it. Make a group of it, or untick “Only through routing groups” in {provider}'s models.": "{provider} 设为只通过路由分组使用，而 {model} 不在任何分组中，没有 Agent 能用它。可为它建分组，或在 {provider} 的模型中取消勾选「只通过路由分组使用」。",
+     "None selected: no agent or routing group uses its models. Its balance and usage still show. Click a model to pick it.": "全不选：Agent 和路由分组都不使用它的模型，余额和用量照常显示。点击模型可勾选。",
+     "Routing groups use it: none are picked, so the vendor's list is used": "路由分组会用到它：没有勾选任何模型时，用的是供应商的列表",
+@@ -7503,6 +7504,7 @@ const I18N = {
+     "Make a routing group of it": "用它建路由分組",
+     "Pick {group}": "選 {group}",
+     "{provider} is used only through routing groups: agents reach {model} by picking {group}.": "{provider} 設為只透過路由分組使用：選 {group} 即可用到 {model}。",
++    "A routing group keeps {model} out of the lists: agents reach it by picking {group}.": "{model} 被一個路由群組移出了清單：選 {group} 即可用到它。",
+     "{provider} is used only through routing groups, and {model} is in none, so no agent can use it. Make a group of it, or untick “Only through routing groups” in {provider}'s models.": "{provider} 設為只透過路由分組使用，而 {model} 不在任何分組中，沒有 Agent 能用它。可為它建分組，或在 {provider} 的模型中取消勾選「只透過路由分組使用」。",
+     "None selected: no agent or routing group uses its models. Its balance and usage still show. Click a model to pick it.": "全不選：Agent 和路由分組都不使用它的模型，餘額和用量照常顯示。點選模型可勾選。",
+     "Routing groups use it: none are picked, so the vendor's list is used": "路由分組會用到它：沒有勾選任何模型時，用的是供應商的列表",
+@@ -11501,6 +11503,7 @@ const I18N = {
+     "Make a routing group of it": "これでルーティンググループを作成",
+     "Pick {group}": "{group} を選択",
+     "{provider} is used only through routing groups: agents reach {model} by picking {group}.": "{provider} はルーティンググループ経由でのみ使われます：{group} を選ぶとエージェントは {model} を使えます。",
++    "A routing group keeps {model} out of the lists: agents reach it by picking {group}.": "{model} はルーティンググループがリストから外しています：{group} を選ぶとエージェントは使えます。",
+     "{provider} is used only through routing groups, and {model} is in none, so no agent can use it. Make a group of it, or untick “Only through routing groups” in {provider}'s models.": "{provider} はルーティンググループ経由でのみ使われ、{model} はどのグループにも入っていないため、どのエージェントも使えません。これでグループを作成するか、{provider} のモデルで「ルーティンググループ経由のみ」のチェックを外してください。",
+     "None selected: no agent or routing group uses its models. Its balance and usage still show. Click a model to pick it.": "選択なし：エージェントもルーティンググループもこのモデルを使いません。残高と使用量は引き続き表示されます。モデルをクリックすると選択します。",
+     "Routing groups use it: none are picked, so the vendor's list is used": "ルーティンググループが使います：何も選択されていないため、ベンダーのリストが使われます",
+@@ -15513,6 +15516,7 @@ const I18N = {
+     "Make a routing group of it": "Weiterleitungsgruppe daraus erstellen",
+     "Pick {group}": "{group} wählen",
+     "{provider} is used only through routing groups: agents reach {model} by picking {group}.": "{provider} wird nur über Weiterleitungsgruppen genutzt: Agenten erreichen {model}, indem sie {group} wählen.",
++    "A routing group keeps {model} out of the lists: agents reach it by picking {group}.": "Eine Weiterleitungsgruppe hält {model} aus den Listen fern: Agenten erreichen es, indem sie {group} wählen.",
+     "{provider} is used only through routing groups, and {model} is in none, so no agent can use it. Make a group of it, or untick “Only through routing groups” in {provider}'s models.": "{provider} wird nur über Weiterleitungsgruppen genutzt, und {model} ist in keiner, daher kann es kein Agent nutzen. Erstellen Sie eine Gruppe daraus oder entfernen Sie den Haken bei „Nur über Weiterleitungsgruppen“ in den Modellen von {provider}.",
+     "None selected: no agent or routing group uses its models. Its balance and usage still show. Click a model to pick it.": "Keine ausgewählt: Weder Agenten noch Weiterleitungsgruppen nutzen seine Modelle. Guthaben und Nutzung werden weiter angezeigt. Klicken Sie auf ein Modell, um es zu wählen.",
+     "Routing groups use it: none are picked, so the vendor's list is used": "Weiterleitungsgruppen nutzen es: Nichts ist gewählt, daher gilt die Liste des Anbieters",
+diff --git a/internal/gui/tests/unlisted-models.test.cjs b/internal/gui/tests/unlisted-models.test.cjs
+index a0b2db1b..d1a14931 100644
+--- a/internal/gui/tests/unlisted-models.test.cjs
++++ b/internal/gui/tests/unlisted-models.test.cjs
+@@ -18,11 +18,15 @@ const { chromium, webkit } = require("playwright");
+ const assets = path.resolve(__dirname, "../assets");
+ const options = [
+   { value: "magpie/group/mine", label: "Mine", note: "routing group · via magpie", group: "Routing groups", ref: "group/mine", icon: "generic" },
++  { value: "magpie/group/night-shift", label: "night-shift", note: "routing group · via magpie", group: "Routing groups", ref: "group/night-shift", icon: "generic" },
+   { value: "magpie/other/m1", label: "m1", note: "Other · via magpie", group: "Other", ref: "other/m1", icon: "generic" },
+ ];
+ const unlisted = [
+   { id: "hunyuan/hy4", name: "hy4", provider: "Hunyuan", icon: "generic", groups: [] },
+   { id: "hunyuan/hy3", name: "hy3", provider: "Hunyuan", icon: "generic", groups: ["group/mine"] },
++  // kept out of the lists by a group's unlists, not by its provider: the
++  // note names the group, not Codex (#2746, kudi68)
++  { id: "codex/gpt-6.1-sol", name: "gpt-6.1-sol", provider: "Codex", icon: "generic", groups: ["group/night-shift"], byGroup: true },
+ ];
+ const hunyuan = {
+   id: "hunyuan", name: "Hunyuan", icon: "generic", chat: "https://hy.example.com/v1", responses: "", anthropic: "", catalog: "",
+@@ -35,12 +39,14 @@ const words = {
+   en: {
+     none: "Hunyuan is used only through routing groups, and hy4 is in none, so no agent can use it. Make a group of it, or untick “Only through routing groups” in Hunyuan's models.",
+     via: "Hunyuan is used only through routing groups: agents reach hy3 by picking Mine.",
++    byGroup: "A routing group keeps gpt-6.1-sol out of the lists: agents reach it by picking night-shift.",
+     make: "Make a routing group of it", pick: "Pick Mine", save: "Add",
+     lost: "In no routing group, so no agent can use them now: hy4.", makeOf: "Make a routing group of hy4",
+   },
+   zh: {
+     none: "Hunyuan 设为只通过路由分组使用，而 hy4 不在任何分组中，没有 Agent 能用它。可为它建分组，或在 Hunyuan 的模型中取消勾选「只通过路由分组使用」。",
+     via: "Hunyuan 设为只通过路由分组使用：选 Mine 即可用到 hy3。",
++    byGroup: "gpt-6.1-sol 被一个路由分组移出了列表：选 night-shift 即可用到它。",
+     make: "用它建路由分组", pick: "选 Mine", save: "添加",
+     lost: "不在任何路由分组中，暂无 Agent 能用：hy4。", makeOf: "用 hy4 建路由分组",
+   },
+@@ -49,7 +55,10 @@ const words = {
+ function serve(lang, posts) {
+   const state = () => ({ agents: [{ id: "claude", name: "Claude Code", path: "/test/claude", wired: true, fields: [{ key: "model", label: "model", value: "magpie/other/m1", options }] }],
+     profiles: [], unlisted, settings: { lang, theme: "light" } });
+-  const groups = { groups: [], pools: [], deciders: [], models: [{ id: "hunyuan/hy4", name: "hy4", provider: "hunyuan", providerName: "Hunyuan", icon: "generic" }] };
++  const groups = { groups: [
++    { id: "night-shift", name: "night-shift", members: ["codex/gpt-6.1-sol"], unlists: true },
++    { id: "day-shift", name: "day-shift", members: ["codex/gpt-6.1-sol"], unlists: true },
++  ], pools: [], deciders: [], models: [{ id: "hunyuan/hy4", name: "hy4", provider: "hunyuan", providerName: "Hunyuan", icon: "generic" }] };
+   return async (r) => {
+     const req = r.request(), url = new URL(req.url());
+     const json = (data) => r.fulfill({ json: data });
+@@ -167,6 +176,25 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
+       for (let i = 0; i < 40 && !posts.some((p) => p.path.startsWith("/api/window/main")); i++) await page.waitForTimeout(50);
+       assert.equal(posts.find((p) => p.path.startsWith("/api/window/main"))?.path, "/api/window/main?view=routing&newgroup=hunyuan%2Fhy4");
+ 
++      // kept out of the lists by a group's unlists: the note names the group
++      // and doesn't blame the provider (#2746, kudi68); via is empty for a
++      // promoted group row, so o.home === ROUTING_GROUPS must be checked
++      // (and byGroup selects the by-group wording)
++      posts = [];
++      page = await open("http://magpie.test/", posts);
++      const field2 = page.locator(`${row} > .field.ag-start[data-key="model"]`);
++      await field2.waitFor();
++      // the field is set to the group, which the picker promotes: its option
++      // will have group:"", home:"Routing groups", so via finds it via home
++      await field2.evaluate((el) => el.value = "magpie/group/night-shift");
++      await filterFor(page, field2, "gpt-6.1-sol");
++      const kept2 = page.locator("#list li.kept");
++      await kept2.waitFor();
++      assert.equal(await kept2.locator(".kept-words b").textContent(), "gpt-6.1-sol");
++      const note2 = await kept2.locator(".kept-words span").textContent();
++      assert.equal(note2, w.byGroup);
++      assert.ok(!note2.includes("Codex"), "doesn't blame the provider");
++
+       const missing = await page.evaluate((ks) => ks.filter((k) => !I18N.zh[k]), [
+         "In no routing group, so no agent can use them now: {models}.", "Once saved, make a group of them in Routing.",
+         "Make a routing group of {model}", "Make a routing group of it", "Pick {group}",
+-- 
+2.56.0
+

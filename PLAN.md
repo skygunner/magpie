@@ -1,3 +1,41 @@
+## 2026-10-27 第二十七轮：#1903、#2099、#2541、#2746、#2755、#2761、#2789、#3137、#3278、#3738、#3785、#3792、#3793、#3805、#3812、#3814、#3816、#3821、#3826、#3828
+
+本轮二十题同样全部是**别人报的、上游未修、帖里没有可用补丁**的：选题前先与台账既有 issue 做差集，
+再逐条对 `upstream/main` 源码复核（#3810、#3464 复核时发现上游已修，直接弃做）。
+一题一分支，全部基于 `6eb510f7`；推送后远端 SHA 读回一致；二十条回帖按原帖语言（16 en / 4 zh）发布并逐条 API 读回
+（author/issue/created_at/UTF-8 body SHA256 入 `evidence/round27/comment-readback.json`）。
+
+| # | 目标 | 修改范围 | 验收 | 状态 |
+|---|---|---|---|---|
+| M1 | #3814 内联对象被 magpie 写成多行 | internal/edit/json.go `insertKey` 的 pretty 规则：magpie 加进去的是对象本身才保内联；文件根保留文件风格 | 报告者 kilo.jsonc 形状红→绿 | 完成 6276ec7d（en，3 commits） |
+| M2 | #3816 计划额度卡片没有"读取于"时间 | provider plan quota 成功读取后补 `ReadAt`（含 tencent/volcengine 保留分支） | `ReadAt:<nil>` 红→绿 | 完成 3c7725cb（en） |
+| M3 | #1903 set-aside 半途失败不知整份副本在哪 | library `setAside` 回传备份路径并写进 leftBehind 错误 | leftBehind 红→绿 | 完成 76dc5c2e（en） |
+| M4 | #3137 代理告警的修复建议给错地址 | agent 三条建议取真正 gateway 主机名，仅真回环才用 127.0.0.1 | 红→绿；误报半边留作独立一题 | 完成 a9213cae（zh） |
+| M5 | #3826 ZCode 变体不按等级排序 | agent `zcodeLevels` 按已知等级排名排序，未知等级仍按到达序 | 红→绿，GLM 既有例仍过 | 完成 f26769d7（zh） |
+| M6 | #3792 回复已开始后出错又开一条消息 | gateway `KError` 不再自动起 encoder（chat/anthropic/responses/gemini） | 第二个 chatcmpl 与 role delta 红→绿 | 完成 b16a0651（en） |
+| M7 | #3793 codex=as-sent 时仍扩 spawn_agent | gateway 扩宽移到 `serve` 选完 provider 之后并按 `codexAsSent` 把关 | 上游收到扩宽体红→绿 | 完成 f0d7a9cd（en） |
+| M8 | #3738 免费模型限额把整把 key 一起 rest | gateway `restAfterMarked` 用 `restID()`；`FreeModel` 仅在有窗口时问 | 红→绿；首版 reorder 回归已修（见 499f0249） | 完成 499f0249（en，2 commits） |
+| M9 | #2541 队列拒绝台账测试自己超时被读成第二个 429 | gateway 测试 fixture 用生产的 `QueueWait` | 红（1.5s 睡眠）→绿，`-count=5` | 完成 7a327208（en） |
+| M10 | #3812 工作目录不可进入时起不来 | gateway `clientWorkDir` 用 `dir/.` 探测（需搜索权限）并回落到 magpie 目录 | chmod 0644 红（502）→绿（200） | 完成 e2958536（en） |
+| M11 | #3821 只有 gateway request hook 的仓库不被发现 | plugin `readTagged` 读 `magpie.hooks` 并归类为该类 | hooks-only 仓库被丢红→绿 | 完成 38b8f9b9（zh） |
+| M12 | #3828 找不到 OpenCode 自己装的 opencode | proc 用户 bin 列表加 `.opencode/bin`（两平台，排在 SystemDirs 前） | homebrew 路径红→绿 | 完成 127fee62（en） |
+| M13 | #2789 `<call:tool>`/`<tool_call name=…>` 工具调用留在正文 | gateway `textCallMarks` 扩标记 + 按 `name=`/`<parameter>`/`<command>` 的新读取器 | XML 拼法整段留正文红→绿 | 完成 1734b21d（zh） |
+| M14 | #2761 时间戳年龄读取没有测试缝，机器忙时抖动 | filememo 包级时钟 `filememo.Now`，测试可钉住 | 两次读之间插 2.5s 睡眠红→绿（睡眠不入库） | 完成 de2c6563（en） |
+| M15 | #2755 tokens 趋势 tooltip 数字格式与页面不一致 | gui `ledFormatLong` 走 `fmtN`（跟随设置里的万/亿） | 容器 playwright 8/8，基线红 | 完成 b20f17d5（en） |
+| M16 | #3805 routing 编辑器把可用成员灰成"无 provider" | gui 改问 `info.ready`，与网关路由同源 | 20/20（引擎/语言/宽度） | 完成 848a87ef（en） |
+| M17 | #3785 pool 的账号列表 tooltip 盖住 Routing/Stays | gui tooltip 从整行移到账号列表元素 | 4/4，相邻 routing 测试仍过 | 完成 a5f315a3（en） |
+| M18 | #2746 选择器把 unlisted 归因给 provider | gui `unlistedJSON` 加 `ByGroup` + 五语言措辞 | 4/4，i18n keys 检查过 | 完成 e678dbc5（en） |
+| M19 | #2099 风险步骤在窄屏/德语下按钮压出卡片 | gui risk 分支按钮独立 `.risk-acts` 行并允许换行 | 360 宽德语基线溢出 45px 红→绿 18/18 | 完成 68bbfcf5（en） |
+| M20 | #3278 日窗口 GUI 测试滚动步数上限不足 | gui 测试循环按被走动的列表本身约束，卡死仍断言失败 | 注入 `min-height` 红→绿 30/30 | 完成 1386690f（en） |
+
+收口：二十支普通推送、远端读回一致；`suite-r27-merged` 合并后全量 nogui **69 ok / 6 包红**
+（agent AgyShell、edit hardlink、gateway 五个、plugin SOCKS、provider synctest、testenv program），六个包在同一 worktree 的基线 `6eb510f7`、本机 umask 0027 下同名同红（`evidence/round27/base-small.log`、`base-gateway.log`）；
+`internal/gui` 绿。六道 GUI 题在 docker1 一次性 playwright 1.62.1 容器里跑（基线与分支各一遍），容器与临时目录已删。
+台账 +20 units（169 总）、+20 分支记录（190 行）、prior-comments 180、REQUIRED_SET +20；`generate.py --write/--selftest` 过（173 个 issue 被 unit 覆盖）。
+两题各留了一个后续 commit（#3814 三、#3738 二）：首版自己的红先抓出它引入的回归，后续 commit 在同一分支上，评论里的 head 已同步更新。
+**#3808 未做**（帖里已有可用分支）、**#3810/#3464 弃做**（上游已修 3ec3cb70/3a47e377）；#3834/#3835 需要自己的设计，
+#3820、#3760、#3822、#3206、#3166、#2585、#2282、#2101、#2665、#2945、#3449 属产品取舍，均只记在 `evidence/round27/README.md`，未回帖。
+
 ## 2026-10-27 第二十六轮：#3188、#3308、#3320、#3324、#3399、#3555、#3669、#3690、#3698、#3701、#3705、#3708、#3713、#3716、#3721、#3723、#3742、#3751、#3775、#3776
 
 本轮二十题全部是**别人报的、上游未修、帖里没有可用补丁**的：选题前先用台账 132 个既有 issue 做差集，

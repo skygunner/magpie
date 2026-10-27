@@ -1,0 +1,106 @@
+From f0d7a9cd6e61bbeb9ac2bd4e877818321c136ede Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 17:50:35 +1000
+Subject: [PATCH] gateway: keep spawn_agent widening off when codex=as-sent
+ (#3793, yetone)
+
+spawnAgentModels widens spawn_agent's description (and tool_search_output)
+while the request is handled, before the provider is chosen: a relay set
+codex=as-sent checks that the request as Codex sent it goes upstream,
+so the widening changes the body and the relay's body is no longer the
+one Codex sent. The widening now lives in serve after the provider is
+chosen, gated by !codexAsSent(p, r.Header), so only the Codex Responses
+path that is allowed to widen receives it; a codex=as-sent relay is left
+as Codex wrote it, model name alone swapped, a Catalogue line kept
+out (#1758 redesign).
+
+Red: TestCodexAsSentWebSearch with spawn_agent kept in the fixture
+fails on byte-for-byte mismatch; with the test edited to keep the tool,
+the test records the widening as a difference. Green: after moving the
+widening into serve with the gate, the test passes; the default path still
+widens (TestSpawnAgentNamesEveryModel) and TestSpawnAgentModelsLeavesTheRestAsSent
+remains green.
+
+go vet and go build -tags nogui ./... clean.
+---
+ internal/gateway/codex_as_sent_test.go | 23 ++++++-----------------
+ internal/gateway/gateway.go            | 14 ++++++++------
+ 2 files changed, 14 insertions(+), 23 deletions(-)
+
+diff --git a/internal/gateway/codex_as_sent_test.go b/internal/gateway/codex_as_sent_test.go
+index 3a6399c2..00bcfef0 100644
+--- a/internal/gateway/codex_as_sent_test.go
++++ b/internal/gateway/codex_as_sent_test.go
+@@ -6,7 +6,6 @@ import (
+ 	"net/http/httptest"
+ 	"os"
+ 	"reflect"
+-	"slices"
+ 	"strings"
+ 	"testing"
+ 
+@@ -88,23 +87,13 @@ func TestCodexAsSentWebSearch(t *testing.T) {
+ 	if err != nil {
+ 		t.Fatal(err)
+ 	}
+-	if !bytes.Contains(codex, []byte(`{"type":"web_search"`)) || !bytes.Contains(codex, []byte(`"role":"developer"`)) {
+-		t.Fatal("the fixture is no longer a Codex turn offering web_search")
++	if !bytes.Contains(codex, []byte(`{"type":"web_search"`)) || !bytes.Contains(codex, []byte(`"role":"developer"`)) ||
++		!bytes.Contains(codex, []byte(`"spawn_agent"`)) || !bytes.Contains(codex, []byte("Available model overrides")) {
++		t.Fatal("the fixture is no longer a Codex turn offering web_search and spawn_agent")
+ 	}
+-	// spawn_agent's description is widened with the catalog's models on
+-	// every Codex turn, as sent or not (spawnAgentModels), so the turn
+-	// goes without the multi-agent tools: each other tool is Codex's bytes
+-	tools, _, _ := topMember(codex, "tools")
+-	var each []json.RawMessage
+-	if err := json.Unmarshal(tools, &each); err != nil {
+-		t.Fatal(err)
+-	}
+-	each = slices.DeleteFunc(each, func(m json.RawMessage) bool { return bytes.Contains(m, []byte(`"spawn_agent"`)) })
+-	kept, err := json.Marshal(each)
+-	if err != nil {
+-		t.Fatal(err)
+-	}
+-	codex = withMembers(codex, map[string][]byte{"tools": kept})
++	// spawn_agent stays in the turn as Codex sent it: with codex=as-sent
++	// the relay is checked against the body Codex wrote, so its description
++	// reaches it unwidened, with no catalogue of models added (#1758, #3793)
+ 	asked := bytes.Replace(codex, []byte(`"model":"gpt-5"`), []byte(`"model":"fake/m1"`), 1)
+ 	want := bytes.Replace(codex, []byte(`"model":"gpt-5"`), []byte(`"model":"m1"`), 1)
+ 	f := &fake{t: t, reply: sse(
+diff --git a/internal/gateway/gateway.go b/internal/gateway/gateway.go
+index d17c50d1..7c1acdaf 100644
+--- a/internal/gateway/gateway.go
++++ b/internal/gateway/gateway.go
+@@ -1509,12 +1509,6 @@ func (s *Server) handle(from provider.Protocol) http.HandlerFunc {
+ 			return
+ 		}
+ 		noteAsked(r.Context(), model)
+-		// Codex with magpie as its provider: spawn_agent names every
+-		// model a subagent may be put on, not only Codex's first five
+-		// (Gearclickist on Discord)
+-		if from == provider.Responses && (fromCodex(r.Header) || agentOf(r) == "codex") {
+-			body = spawnAgentModels(r, body, model, false)
+-		}
+ 		if from == provider.Chat {
+ 			body = thinkingEffort(body)
+ 			// a tool Pi adds during a conversation, in a message of its
+@@ -1902,6 +1896,14 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
+ 	if unredactedRoute(p, isGroup, ms) {
+ 		masked, body = body, plain
+ 	}
++	// Codex with magpie as its provider: spawn_agent names every model a
++	// subagent may be put on, not only Codex's first five (Gearclickist on
++	// Discord). The widening waits for the provider here rather than in
++	// handle: a relay set codex=as-sent is checked against the body Codex
++	// wrote (#1758), so its request goes as sent, unwidened (#3793).
++	if from == provider.Responses && (fromCodex(r.Header) || agentOf(r) == "codex") && !codexAsSent(p, r.Header) {
++		body = spawnAgentModels(r, body, asked, false)
++	}
+ 	// a gateway key held to some models (#882) is refused another, or a
+ 	// group it doesn't name with one it may not use in it
+ 	keyWho, keyHeld := keyHolds(r)
+-- 
+2.56.0
+

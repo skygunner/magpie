@@ -1,0 +1,125 @@
+From 76dc5c2e38a5c209957f090f0df586e8f7254999 Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 17:29:43 +1000
+Subject: [PATCH] library: a skill left half-emptied on a stuck set-aside says
+ where the whole copy is (#1903, yetone)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Root cause: move had copied everything to the backup and then failed to
+remove all of the source (a rename across disks fell back to copy, and a
+folder the removal can't unlink inside stopped it), returning a *leftBehind;
+setAside threw the destination away and returned ("", err), so every one of
+its five callers told the user the set-aside failed with no word that the
+whole skill is safe in the backups.
+
+setAside now recognises the *leftBehind and returns the backup path with an
+error that says the removal stopped partway and where the whole copy is.
+Nothing is put back — that is a separate design; the message is the fix.
+
+Verified with the reporter's stuck-file shape: a skill folder whose refs
+subfolder is mode 0555 (RemoveAll can't unlink inside it) on /dev/shm, so
+rename refuses with EXDEV and the copy-and-remove path runs (copyDir runs
+before the removal in move). Skipped as root, which unlinks inside a
+read-only folder all the same; skipped when TempDir and /dev/shm share a
+filesystem, as TestMoveCrossDevice does in internal/sessions.
+
+Red (unmodified code, test at setaside_leftbehind_test.go:46):
+  go test -tags nogui ./internal/library/ -count=1 -run TestSetAsideLeftBehindSaysWhereTheCopyIs
+  --- FAIL: setaside_leftbehind_test.go:46: no path named for where the whole copy went
+
+Green: same command passes. Whole package ./internal/library/: ok.
+---
+ internal/library/setaside_leftbehind_test.go | 61 ++++++++++++++++++++
+ internal/library/skills.go                   |  6 ++
+ 2 files changed, 67 insertions(+)
+ create mode 100644 internal/library/setaside_leftbehind_test.go
+
+diff --git a/internal/library/setaside_leftbehind_test.go b/internal/library/setaside_leftbehind_test.go
+new file mode 100644
+index 00000000..2ba037aa
+--- /dev/null
++++ b/internal/library/setaside_leftbehind_test.go
+@@ -0,0 +1,61 @@
++package library
++
++import (
++	"errors"
++	"os"
++	"path/filepath"
++	"strings"
++	"syscall"
++	"testing"
++)
++
++// #1903: a skill set aside across disks (rename can't cross) whose removal
++// stops partway (a folder it can't unlink inside, a file held open) is left
++// half-emptied where it was, and setAside must still say where the whole
++// copy it made first is kept — not return no path at all.
++func TestSetAsideLeftBehindSaysWhereTheCopyIs(t *testing.T) {
++	if os.Geteuid() == 0 {
++		t.Skip("root unlinks inside a read-only folder all the same")
++	}
++	sandbox(t)
++	at, err := os.MkdirTemp("/dev/shm", "magpie-skill-")
++	if err != nil {
++		t.Skip("no writable shared-memory filesystem:", err)
++	}
++	t.Cleanup(func() { os.Chmod(at, 0o755); os.RemoveAll(at) })
++	write(t, filepath.Join(at, "SKILL.md"), "mine")
++	write(t, filepath.Join(at, "refs/deep/note.md"), "kept")
++	stuck := filepath.Join(at, "refs")
++	if err := os.Chmod(stuck, 0o555); err != nil {
++		t.Fatal(err)
++	}
++	// the move must reach its copy-and-remove path: rename across the two
++	// filesystems refuses
++	probe := filepath.Join(t.TempDir(), "probe")
++	if err := os.Rename(at, probe); err == nil {
++		t.Skip("temporary folders are on the same filesystem")
++	} else if !errors.Is(err, syscall.EXDEV) {
++		t.Fatalf("probe rename: %v", err)
++	}
++
++	dst, err := setAside("claude", at)
++	if err == nil {
++		t.Fatal("a move that couldn't take the skill away whole, and no error")
++	}
++	if dst == "" {
++		t.Fatal("no path named for where the whole copy went")
++	}
++	if !strings.Contains(err.Error(), dst) {
++		t.Fatalf("the error doesn't say the copy is at %s: %v", dst, err)
++	}
++	if _, err := os.Lstat(at); err != nil {
++		t.Fatalf("what couldn't be taken away is gone anyway: %v", err)
++	}
++	for _, f := range []string{"SKILL.md", "refs/deep/note.md"} {
++		if b, err := os.ReadFile(filepath.Join(dst, f)); err != nil {
++			t.Errorf("the copy at %s isn't whole: %v", dst, err)
++		} else if f == "SKILL.md" && string(b) != "mine" || f != "SKILL.md" && string(b) != "kept" {
++			t.Errorf("%s in the copy reads %q", f, b)
++		}
++	}
++}
+diff --git a/internal/library/skills.go b/internal/library/skills.go
+index 3c8345e0..532824bc 100644
+--- a/internal/library/skills.go
++++ b/internal/library/skills.go
+@@ -2263,6 +2263,12 @@ func setAside(agent, p string) (string, error) {
+ 		return "", err
+ 	}
+ 	if err := move(p, dst); err != nil {
++		// the copy is whole even when the removal stopped partway (#1903):
++		// say where it is, so what is left behind can be finished by hand
++		var left *leftBehind
++		if errors.As(err, &left) {
++			return dst, fmt.Errorf("%s couldn't be taken out of the way whole: what remains of it stands as it was, and the whole of it is kept at %s: %w", p, dst, left)
++		}
+ 		return "", err
+ 	}
+ 	return dst, nil
+-- 
+2.56.0
+

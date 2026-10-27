@@ -1,0 +1,111 @@
+From 848a87efb8aa73c169b23d789c45ccb702dad476 Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 17:15:59 +1000
+Subject: [PATCH] routing: a member the gateway routes is not said unserved
+ when the served list lacks it (#3805, yetone)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The group editor greyed a member as "No provider serves {id} now; it is
+skipped" whenever its id was absent from groups.models — the models the
+catalog lists now. The gateway routes by the member's ready flag instead
+(internal/gui/groups.go sets it through provider.Resolve, which answers
+for more than the served list), so a member of a configured provider
+magpie just doesn't list was both declared skipped and in fact asked.
+The editor now goes by the ready flag it already receives from
+/api/groups, the same shape the manual group's pick row beside it had,
+so the two say the same: a ready member is drawn like any other, and
+only one the gateway itself won't route keeps the skip notice. A member
+nothing is known of (no memberInfo at all) still does.
+
+Verified: internal/gui/tests/routing-provider-off.test.cjs gains a
+member d/sol (ready, provider d, absent from models); without the fix
+every engine/language/width run fails at the test's line 106,
+"a ready member's editor row is not greyed", true !== false (20/20 red);
+with it the whole test passes 20/20 in Chromium and WebKit, en/zh/zh-TW/
+ja/de, 1100 and 420 wide. The ready:false c/sol member keeps its grey
+row and "No provider serves c/sol" title, and the providerOff b/sol
+member keeps its "switched off" wording. go build -tags nogui ./... and
+TestCoreScriptBudget pass (client.js is a plugin script, outside the
+core budget).
+---
+ internal/gui/assets/plugins/routing/client.js |  5 +++-
+ .../gui/tests/routing-provider-off.test.cjs   | 23 +++++++++++++++++--
+ 2 files changed, 25 insertions(+), 3 deletions(-)
+
+diff --git a/internal/gui/assets/plugins/routing/client.js b/internal/gui/assets/plugins/routing/client.js
+index 0018ff34..07436d56 100644
+--- a/internal/gui/assets/plugins/routing/client.js
++++ b/internal/gui/assets/plugins/routing/client.js
+@@ -5721,7 +5721,10 @@ function routingPage(part) {
+         // or leaving it keeps it, Escape puts it back
+         if (d.routing === "weight") row.append(memberWeight(id, off));
+         if (s) row.title = s.members.map((x) => memberLabel(s, x)).join(s.routing === "order" ? " → " : " · ");
+-        if (!m && !s) { row.classList.add("off"); row.title = info?.providerOff ? offWords(info) : t("No provider serves {id} now; it is skipped", { id }); }
++        // what the gateway goes by, not the served models list: a member
++        // of a provider it resolves but doesn't list is routed all the
++        // same, so it is not said unserved (#3805)
++        if (!m && !s && !info?.ready) { row.classList.add("off"); row.title = info?.providerOff ? offWords(info) : t("No provider serves {id} now; it is skipped", { id }); }
+         if (matched) {
+           // a pattern's: it follows the catalog, so it is switched off
+           // rather than taken out — the pattern would find it again
+diff --git a/internal/gui/tests/routing-provider-off.test.cjs b/internal/gui/tests/routing-provider-off.test.cjs
+index 77c3251b..44df358e 100644
+--- a/internal/gui/tests/routing-provider-off.test.cjs
++++ b/internal/gui/tests/routing-provider-off.test.cjs
+@@ -19,8 +19,12 @@ const info = [
+   { id: "a/sol", ready: true, provider: "a", name: "A Cloud", model: "sol", on: 1 },
+   { id: "b/sol", ready: false, providerOff: true, provider: "b", name: "B Cloud", icon: "generic", model: "sol", on: 0 },
+   { id: "c/sol", ready: false, on: 0 },
++  // ready but absent from models: the gateway routes it (groups.go sets
++  // ready through provider.Resolve, which reads more than the served
++  // list), so the editor may not grey it as unserved (#3805)
++  { id: "d/sol", ready: true, provider: "d", name: "D Cloud", model: "sol", on: 1 },
+ ];
+-const base = { members: ["a/sol", "b/sol", "c/sol"], ready: true, memberInfo: info, offers: [], shared: [] };
++const base = { members: ["a/sol", "b/sol", "c/sol", "d/sol"], ready: true, memberInfo: info, offers: [], shared: [] };
+ const groups = { models, pools: [], groups: [
+   { ...base, id: "auto-sol", name: "Sol", routing: "order" },
+   { ...base, id: "hand", name: "Hand", routing: "manual", pick: "a/sol", picked: "a/sol" },
+@@ -70,7 +74,7 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
+ 
+         const card = page.locator(".rt-group", { hasText: "Sol" }).first();
+         await card.waitFor();
+-        assert.equal(await card.locator(".mem").first().textContent(), `A Cloud · sol → B Cloud · sol (${off}) → c/sol`);
++        assert.equal(await card.locator(".mem").first().textContent(), `A Cloud · sol → B Cloud · sol (${off}) → c/sol → D Cloud · sol`);
+         // a manual group's pick says why it is skipped
+         const hand = page.locator(".rt-group", { hasText: "Hand" });
+         const pick = hand.locator('.rt-pick[data-member="b/sol"]');
+@@ -79,6 +83,11 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
+         assert.equal(await pick.getAttribute("title"), why);
+         assert.equal(await pick.evaluate((b) => b.classList.contains("off")), true);
+         assert.equal(await hand.locator('.rt-pick[data-member="c/sol"]').getAttribute("title"), await say("No provider serves {id} now; it is skipped", { id: "c/sol" }));
++        // one the gateway routes (ready) is picked like any other, though
++        // the served models list lacks it (#3805)
++        const pickD = hand.locator('.rt-pick[data-member="d/sol"]');
++        assert.equal(await pickD.evaluate((b) => b.classList.contains("off")), false, "a ready member's pick is not greyed");
++        assert.equal(await pickD.getAttribute("title"), await say("Send every request to {name}", { name: "D Cloud · sol" }));
+ 
+         // the editor: its row muted, saying why
+         // the page puts back a scroll the reader didn't make, so at 420 the
+@@ -90,6 +99,16 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
+         assert.equal(await row.getAttribute("title"), why);
+         assert.equal(await row.evaluate((r) => r.classList.contains("off")), true);
+         assert.equal(await row.locator(".n > span").first().textContent(), "sol");
++        // a member the gateway routes (ready) is not greyed in the editor
++        // either, though the served models list lacks it (#3805)
++        const rowD = ed.locator(".fbrow", { has: page.locator(".n", { hasText: "d/sol" }) });
++        assert.equal(await rowD.count(), 1);
++        assert.equal(await rowD.evaluate((r) => r.classList.contains("off")), false, "a ready member's editor row is not greyed");
++        assert.equal(await rowD.getAttribute("title"), null, "nor said unserved");
++        // one nothing is known of is still said unserved
++        const rowC = ed.locator(".fbrow", { has: page.locator(".n", { hasText: "c/sol" }) });
++        assert.equal(await rowC.evaluate((r) => r.classList.contains("off")), true);
++        assert.equal(await rowC.getAttribute("title"), await say("No provider serves {id} now; it is skipped", { id: "c/sol" }));
+         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), true, "nothing spills");
+         assert.deepEqual(errors, []);
+       });
+-- 
+2.56.0
+

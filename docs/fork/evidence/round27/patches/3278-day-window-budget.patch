@@ -1,0 +1,50 @@
+From 1386690f0c877035eee513a717081574bd82645a Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 18:09:26 +1000
+Subject: [PATCH] routing-day-window: bound scroll loop by the list height, not
+ a fixed step budget (#3278, yetone)
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The virtualized request list estimates undrawn row height at est = winAvg || 31
+(routing/client.js). At 420px with 3-line rows, drawn rows measure ~66px while
+undrawn rows retain the 31px estimate. For a 2,000-row list, a stale total
+height estimate (~62,000px vs real ~120,000px) causes a fixed 60-iteration
+scroll loop starting at 80% of estimated height to exit before reaching the
+wide model row near the actual foot. The test loop is now bound by the list
+itself: for (let i = 0; i < 400 && at.top + at.view < at.height - 2; i++).
+The app assets remain unchanged. The sibling tests using the same idiom
+(routing-days-fit.test.cjs, routing-day-window.test.cjs's other cases) walk
+lists small enough (≤30 rows) that 60 steps easily reach the end.
+
+Verified: simulating the mixed state under load by setting
+.rt-req{min-height:66px} causes the original 60-step loop to fail at line
+152 ("the wide model's row was never drawn", red on chromium/webkit ja 420);
+with the height-bounded loop the suite passes 30/30 across all engines,
+languages (en, ja) and widths (1100, 420).
+---
+ internal/gui/tests/routing-day-window.test.cjs | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/internal/gui/tests/routing-day-window.test.cjs b/internal/gui/tests/routing-day-window.test.cjs
+index 8f14d1e0..44ffc310 100644
+--- a/internal/gui/tests/routing-day-window.test.cjs
++++ b/internal/gui/tests/routing-day-window.test.cjs
+@@ -143,7 +143,12 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
+         // (the 301st request of the day is about 85% of the way down; from
+         // there, a list's height at a time, each drawn before the next)
+         await scrollTo(page, Math.round(at.height * 0.8));
+-        for (let i = 0; i < 60; i++) {
++        // the list is virtual, heights.get(id) ?? est (client.js): rows
++        // drawn measure truly, undrawn ones the stale estimate, so under
++        // load the estimate is short and a fixed 60-step loop ends far
++        // above the wide row (#3278, chromium ja 420). Walk the list
++        // itself: stop at its foot, not after a count.
++        for (let i = 0; i < 400 && at.top + at.view < at.height - 2; i++) {
+           at = await look(page);
+           if (at.models.includes(WIDE_MODEL)) break;
+           await scrollTo(page, at.top + at.view);
+-- 
+2.56.0
+

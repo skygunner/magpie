@@ -1,0 +1,124 @@
+From 3c7725cba5d1d2511a197c54061124603bad364a Mon Sep 17 00:00:00 2001
+From: vincent <vincent@users.noreply.github.com>
+Date: Tue, 27 Oct 2026 17:26:23 +1000
+Subject: [PATCH] plan quotas: a plan card read just now says when it was read
+ (#3816, kudi68)
+
+Root cause: a live PlanQuotas success was stored after keepReading without
+stamping ReadAt, so the Usage page's timer and anything that goes by ReadAt
+saw a card read at no time. readNow already refuses to stamp a failed card,
+one the vendor dated (AsOf), or one with a time of its own, so the fix only
+has to reach every plan reader through it:
+
+- planquota.go: after keepReading, a card with windows and no ReadAt goes
+  through readNow; a time keepReading restored is not overwritten
+- stepfun_plan.go: stepPlanQuota keeps no last reading, so it stamps at its
+  return (readNow leaves an error or empty card alone)
+- tencent_usage.go, volcengine_usage.go: same guard after keepReading
+
+readNow's own guards and the readAt,omitempty JSON shape are untouched.
+
+Verified: TestPlanQuotas now requires got["go/"] to have a ReadAt within a
+minute; TestClaudeKeptReadingKeepsItsTime keeps its time.
+
+Red (unmodified code, test at planquota_test.go:386):
+  go test -tags nogui ./internal/provider/ -count=1 -run TestPlanQuotas
+  --- FAIL: TestPlanQuotas; planquota_test.go:386: go read at: ReadAt:<nil>
+
+Green: same command passes, as does TestClaudeKeptReadingKeepsItsTime.
+Whole package: TestUnreadLoginsWriteErrorsKeepCredentials dies with "close of
+synctest channel from outside bubble" and TestFetchAsksOneListOnceForTwoBasesOfIt,
+TestFetchUnionsProtocolListsWithoutChat, TestFetchAsksASharedBaseOnce fail at
+this base too (checked by stashing this change); TestOpenCodeSessionOnEveryCall
+is flaky in the full run and passes alone. Everything else in
+./internal/provider/ passes.
+---
+ internal/provider/planquota.go        | 5 +++++
+ internal/provider/planquota_test.go   | 5 +++++
+ internal/provider/stepfun_plan.go     | 4 +++-
+ internal/provider/tencent_usage.go    | 5 +++++
+ internal/provider/volcengine_usage.go | 5 +++++
+ 5 files changed, 23 insertions(+), 1 deletion(-)
+
+diff --git a/internal/provider/planquota.go b/internal/provider/planquota.go
+index ea512a32..63ced4e9 100644
+--- a/internal/provider/planquota.go
++++ b/internal/provider/planquota.go
+@@ -725,6 +725,11 @@ func PlanQuotas(ctx context.Context) []SubscriptionQuota {
+ 				}
+ 			}
+ 			q = keepReading(ctx, q, tag)
++			// a success read just now says so (#3816); a time keepReading
++			// restored is not overwritten
++			if q.Error == "" && len(q.Windows) > 0 && q.ReadAt == nil {
++				q = readNow(q)
++			}
+ 			got[i] = &q
+ 		}()
+ 	}
+diff --git a/internal/provider/planquota_test.go b/internal/provider/planquota_test.go
+index 2ca41b1e..ab5c6543 100644
+--- a/internal/provider/planquota_test.go
++++ b/internal/provider/planquota_test.go
+@@ -380,6 +380,11 @@ func TestPlanQuotas(t *testing.T) {
+ 	if q := got["go/"]; q.Name != "OpenCode Go" || len(q.Windows) != 1 || q.Windows[0].Name != "5 hours" {
+ 		t.Errorf("go: %+v", q)
+ 	}
++	// a live success says when it was read (#3816): the Usage page's timer
++	// and routing go by ReadAt, and a card without it looks never read
++	if q := got["go/"]; q.ReadAt == nil || time.Since(*q.ReadAt) > time.Minute {
++		t.Errorf("go read at: %+v", q)
++	}
+ 	if q := got["go-inference/"]; len(q.Windows) != 1 || q.Windows[0].Name != "5 hours" || q.Error != "" {
+ 		t.Errorf("go at the inference API: %+v", q)
+ 	}
+diff --git a/internal/provider/stepfun_plan.go b/internal/provider/stepfun_plan.go
+index 11ebcd62..e2a8bfd6 100644
+--- a/internal/provider/stepfun_plan.go
++++ b/internal/provider/stepfun_plan.go
+@@ -583,7 +583,9 @@ func stepPlanQuota(ctx context.Context, p Provider) SubscriptionQuota {
+ 	case q.Plan == "":
+ 		q.Plan = "Step Plan"
+ 	}
+-	return q
++	// no keepReading here: a live read is stamped (#3816), a failed or
++	// empty one readNow leaves alone
++	return readNow(q)
+ }
+ 
+ // stepPlanQuotas is a card for each StepFun provider in use that magpie
+diff --git a/internal/provider/tencent_usage.go b/internal/provider/tencent_usage.go
+index 3c043628..74fdef0a 100644
+--- a/internal/provider/tencent_usage.go
++++ b/internal/provider/tencent_usage.go
+@@ -230,6 +230,11 @@ func tencentPlanCards(ctx context.Context, p Provider, region string, now func()
+ 				q.Error = "Tencent Cloud told no quota for this Token Plan Enterprise: " + shapeOf(told)
+ 			}
+ 			out[i] = keepReading(ctx, q, keyTag("tencent "+region+" "+t.TeamID, p.AccessKeyID))
++			// a read just made says when (#3816); a kept time is not
++			// overwritten
++			if out[i].Error == "" && len(out[i].Windows) > 0 && out[i].ReadAt == nil {
++				out[i] = readNow(out[i])
++			}
+ 		}()
+ 	}
+ 	wg.Wait()
+diff --git a/internal/provider/volcengine_usage.go b/internal/provider/volcengine_usage.go
+index 13dfd4c7..b20ee9dc 100644
+--- a/internal/provider/volcengine_usage.go
++++ b/internal/provider/volcengine_usage.go
+@@ -137,6 +137,11 @@ func volcPlanQuotas(ctx context.Context) []SubscriptionQuota {
+ 			out[i] = volcPlanQuota(j.p.Via(ctx), j.p, j.action, j.plan, j.region)
+ 			// a failed read shows what was last read, as a key's plan does
+ 			out[i] = keepReading(ctx, out[i], keyTag("volc "+j.action, j.p.AccessKeyID))
++			// a read just made says when (#3816); a kept time is not
++			// overwritten
++			if out[i].Error == "" && len(out[i].Windows) > 0 && out[i].ReadAt == nil {
++				out[i] = readNow(out[i])
++			}
+ 		}()
+ 	}
+ 	wg.Wait()
+-- 
+2.56.0
+
