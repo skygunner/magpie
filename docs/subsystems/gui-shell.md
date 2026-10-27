@@ -669,3 +669,19 @@ and records the arrival so asynchronous page loads do not restore the old
 scroll position. Picking a request within Routing still preserves the reader’s
 position. `usage-routing-visible.test.cjs` covers an already-scrolled history
 view in both browser engines and all five languages.
+
+## Request outcome visibility
+
+The Usage request table keeps HTTP status separate from recorded errors:
+`200 · Protocol error` is a failed request observed by the gateway, while
+`200 · Client-reported error` comes from an existing reported record. Expanded
+rows show the error source and original error text. Reports remain separate
+records; this UI does not collect client logs or correlate reports with gateway
+calls. A gateway response cannot establish whether Hindsight or another client
+parsed or used it, and the details explicitly say so.
+
+A missing speed has a visible non-streaming or insufficient-sample label and a
+specific explanation in the tooltip and details. Speed estimates and their
+sample thresholds are unchanged; speed is not evidence of success. The
+`usage-speed-every-row.test.cjs` tests cover error provenance and HTTP 200 in all
+five languages in Chromium and WebKit.

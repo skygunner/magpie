@@ -130,7 +130,7 @@ func (b *byKey) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, `{"error":{"message":"rate limited"}}`)
 		return
 	}
-	io.WriteString(w, `{"id":"from-`+key+`","choices":[]}`)
+	io.WriteString(w, `{"id":"from-`+key+`","choices":[{"message":{"role":"assistant","content":"hello"},"finish_reason":"stop"}]}`)
 }
 
 func TestSeveralKeysOnTakeOverFromEachOther(t *testing.T) {

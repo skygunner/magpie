@@ -174,3 +174,48 @@ Full integration suite: `go test -p 2 -tags nogui ./... -count=1
 Deployment handoff: this follow-up is not deployed by this work. Cherry-pick
 only this follow-up onto the v0.1.1767 integration line that already carries
 `dd670e6`; do not merge the older release base into the deployment branch.
+
+## Request protocol and client-error visibility (2026-10-28)
+
+Branch `fix/request-protocol-visibility`, based on deployed source `1207467e`
+(v0.1.1767-p2). Cherry-pick this follow-up onto the deployment integration;
+it does not replace the earlier non-streaming SSE fix and is not deployed here.
+
+A completed, non-streaming Chat/Responses/Anthropic response is checked using
+its existing bounded capture. SSE instead of JSON, malformed JSON, missing
+response arrays and empty Chat choices become `protocol_error` while retaining
+the committed HTTP status, including 200. This is diagnostic recording, not a
+new retry or cooldown policy. Truncated/encoded captures and streaming response
+bodies are outside this check; valid tool calls, refusals and empty text pass.
+
+Usage shows `200 · Protocol error`, identifies gateway checks versus existing
+client reports/logs, and explains that HTTP status cannot establish client
+processing success. Missing speed says non-streaming/untimed or insufficient
+sample, with its specific reason. No Hindsight log collector, client changes,
+feedback endpoint, historical backfill or report-to-request merging is added.
+
+Validation:
+
+- New HTTP integration checks fail on the old code because missing/empty choices
+  remain HTTP 200 without a recorded failure. New UI checks fail on the old
+  untranslated protocol status and blank speed. Both pass with this change.
+- Protocol/capture, Routing totals and OTLP fallback checks pass 20 repetitions
+  under `-race`. Two existing success fixtures now use valid choices rather
+  than empty arrays; their original success assertions are retained.
+- Chromium and WebKit: speed, request details and protocol tests pass, including
+  all five languages for the new labels and existing narrow-window speed tests.
+- Native/Linux/Windows vet and builds pass.
+- The complete `go test -tags nogui ./...` run is not green. Aside from those two
+  corrected fixtures, its failures reproduce on unchanged `1207467e`:
+  `TestAgyShell`, `TestWSLColdPlaceOpensNothing`,
+  `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`,
+  `TestMarshalRawIsEncodingJSON`, `FuzzMarshalRaw`,
+  `TestServeWSLListensBesideLoopback`, `TestPluginSOCKSProxy`, `TestEnvOfChild`,
+  `TestCodexAppServersOnHome`, `TestTUIFetchesSubscriptionModels` and intermittent
+  `TestHandedOverGatewayFinishesItsStream` (EOF, also reproduced in 20 baseline
+  repetitions). These are not repaired in this observability patch.
+- The final gateway package run passes in 318.139s with only these five
+  reproduced baseline failures excluded via `-skip`:
+  `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`,
+  `TestMarshalRawIsEncodingJSON`, `TestServeWSLListensBesideLoopback`, and
+  `FuzzMarshalRaw`. The intermittent handover test was included and passed.

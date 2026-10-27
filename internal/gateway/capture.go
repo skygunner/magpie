@@ -48,7 +48,9 @@ func captureRequestBody(p []byte) (string, bool) {
 
 type captureResponseWriter struct {
 	http.ResponseWriter
-	body capturedBody
+	body   capturedBody
+	status int
+	header http.Header
 	// full: the whole body, for the request archive, when it is on
 	full *spool
 	// whole: the whole body, for an observer that asks for it uncut (#538)
@@ -57,7 +59,18 @@ type captureResponseWriter struct {
 	tools *toolScan
 }
 
+// Keep the headers actually sent, not later edits to the writer's header map.
+func (w *captureResponseWriter) WriteHeader(status int) {
+	if status >= 200 && w.status == 0 {
+		w.status, w.header = status, w.Header().Clone()
+	}
+	w.ResponseWriter.WriteHeader(status)
+}
+
 func (w *captureResponseWriter) Write(p []byte) (int, error) {
+	if w.status == 0 {
+		w.WriteHeader(http.StatusOK)
+	}
 	w.body.add(p)
 	w.tools.add(p)
 	if w.full != nil {
@@ -135,6 +148,9 @@ func (s *spool) discard() {
 }
 
 func (w *captureResponseWriter) Flush() {
+	if w.status == 0 {
+		w.WriteHeader(http.StatusOK)
+	}
 	if f, ok := w.ResponseWriter.(http.Flusher); ok {
 		f.Flush()
 	}

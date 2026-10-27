@@ -43,11 +43,14 @@ const ROWS = [
   { ...GW, route_id: 8, t: at(7), out: 41, reasoning: 41, ms: 6000, ttft_ms: 5000, reasoning_hidden: true, flow_ms: 1 },
   // 8: measured: 500 tokens in the 5 s after its first
   { ...GW, route_id: 9, t: at(8), out: 500, ms: 7000, ttft_ms: 2000, first_text_ms: 2000, flow_ms: 5000 },
+  { ...GW, route_id: 10, t: at(9), out: 0, ms: 2000, err_type: "protocol_error", err: "protocol error: non-streaming response has missing or invalid choices" },
+  { ...GW, route_id: 11, t: at(10), source: "reported", rid: "client-1", out: 12, ms: 2000, err: "ProviderResponseError: missing choices" },
+  { ...GW, route_id: 12, t: at(11), source: "reported", status: 0, rid: "client-2", err: "Traceback: ProviderResponseError" },
 ];
 
 function ledger(period) {
   return {
-    period, rows: ROWS, offset: 0, total: ROWS.length, calls: ROWS.length, errors: 1,
+    period, rows: ROWS, offset: 0, total: ROWS.length, calls: ROWS.length, errors: 4,
     input: 1, output: 1, cache_read: 0, cache_write: 0, cost: 0.02, unpriced: 0,
     timed: 1, ttft_ms: 2000, decode_ms: 5000, decode_out: 500, decode_n: 1,
     by: { model: [] }, bucket: "hour", series: [],
@@ -85,7 +88,8 @@ const L = {
   en: {
     whole: "≥124 tok/s", answer: "≥100 tok/s", measured: "100 tok/s",
     wholeTip: "At least: 3,832 output tokens in 31 s, from the request to its last token, the wait for the first one counted too",
-    notStreamed: "Not streamed: no first token to time a speed from",
+    short: "Non-streaming / untimed", sample: "Insufficient sample",
+    notStreamed: "No first-token timing was recorded: non-streaming or unavailable",
     answerTip: "At least: 1,000 answer tokens in 10 s after the first token, the 300 reasoning tokens left out. No first text was recorded",
     little: "Too little came after the first token to time a speed by: 6 tokens in 87 ms",
     burst: "It came in one burst at its end, not as it was written, so how fast it was written isn't seen",
@@ -96,7 +100,8 @@ const L = {
   zh: {
     whole: "≥124 token/秒", answer: "≥100 token/秒", measured: "100 token/秒",
     wholeTip: "下限：从收到请求到最后一个 token，31 秒 输出 3,832 个 token，等首字的时间也算在里面",
-    notStreamed: "非流式：没有首字时间，算不出速度",
+    short: "非流式／无计时", sample: "样本不足",
+    notStreamed: "未记录首字时间：非流式或计时不可用",
     answerTip: "下限：首字后 10 秒 输出 1,000 个正文 token，300 个推理 token 不计。没有记录首个正文的时间",
     little: "首字后内容太少，测不出速度：87 毫秒 输出 6 个 token",
     burst: "内容在最后一次性到达，不是边写边发，看不出写得多快",
@@ -142,13 +147,13 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         assert((await tip(0)).startsWith(w.wholeTip), await tip(0));
         assert((await tip(0)).includes(w.notStreamed), await tip(0));
         // not streamed, too short for a floor
-        assert.equal(await text(1), "—");
+        assert.equal(await text(1), w.short);
         assert.equal(await tip(1), w.notStreamed);
         // 6 tokens 87 ms after the first
-        assert.equal(await text(2), "—");
+        assert.equal(await text(2), w.sample);
         assert.equal(await tip(2), w.little);
         // a burst
-        assert.equal(await text(3), "—");
+        assert.equal(await text(3), w.sample);
         assert.equal(await tip(3), w.burst);
         // failed, and no output
         assert.equal(await tip(4), w.failed);
@@ -157,7 +162,7 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         assert.equal(await text(6), w.answer);
         assert((await tip(6)).startsWith(w.answerTip), await tip(6));
         // reasoning only
-        assert.equal(await text(7), "—");
+        assert.equal(await text(7), w.sample);
         assert.equal(await tip(7), w.allReasoning);
         // what was measured is as it was
         assert.equal(await text(8), w.measured);
@@ -166,5 +171,48 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         await ctx.close();
       });
     }
+  });
+}
+
+const visibilityWords = {
+  en: ["Protocol error", "Client-reported error", "Gateway protocol check", "Client report", "Non-streaming / untimed", "Client processing"],
+  zh: ["协议错误", "客户端上报错误", "网关协议检查", "客户端上报", "非流式／无计时", "客户端处理"],
+  "zh-TW": ["協定錯誤", "用戶端回報錯誤", "閘道協定檢查", "用戶端回報", "非串流／無計時", "用戶端處理"],
+  ja: ["プロトコルエラー", "クライアント報告エラー", "ゲートウェイのプロトコル検査", "クライアントからの報告", "非ストリーミング／計時なし", "クライアント処理"],
+  de: ["Protokollfehler", "Vom Client gemeldeter Fehler", "Protokollprüfung des Gateways", "Client-Meldung", "Nicht gestreamt / ohne Zeitmessung", "Client-Verarbeitung"],
+};
+for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"])) {
+  test(engine + ": HTTP 200 does not hide protocol or reported client errors", async (t) => {
+    const browser = await (engine === "webkit" ? webkit.launch() : chromium.launch({ channel: "chromium" }));
+    t.after(() => browser.close());
+    for (const [lang, words] of Object.entries(visibilityWords)) await t.test(lang, async () => {
+      const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 }, reducedMotion: "reduce" });
+      try {
+        const p = await ctx.newPage();
+        p.setDefaultTimeout(5000);
+        await p.route("**/*", server(lang));
+        await p.goto("http://magpie.test/");
+        await p.locator('[data-view="usage"]').first().click();
+        await p.locator(":is(#usageTab .opt, .nav-s):visible").nth(1).click();
+        const rows = p.locator(".led tbody tr.led-row");
+        await rows.first().waitFor();
+        assert.equal((await rows.nth(9).locator(".st").textContent()).trim(), "200 · " + words[0]);
+        assert.equal((await rows.nth(10).locator(".st").textContent()).trim(), "200 · " + words[1]);
+        assert.equal((await rows.nth(1).locator("td.speed").textContent()).trim(), words[4]);
+        assert.equal((await rows.nth(11).locator(".st").textContent()).trim(), words[1]);
+        await rows.nth(9).click();
+        assert((await p.locator(".led-detail").innerText()).includes(words[2]));
+        await rows.nth(9).click();
+        await rows.nth(10).click();
+        const reported = await p.locator(".led-detail").innerText();
+        assert(reported.includes(words[3]));
+        assert(reported.includes("ProviderResponseError: missing choices"));
+        await rows.nth(10).click();
+        await rows.nth(1).click();
+        assert((await p.locator(".led-detail").innerText()).includes(words[5]));
+      } finally {
+        await ctx.close();
+      }
+    });
   });
 }
