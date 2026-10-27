@@ -2,12 +2,24 @@ package usage
 
 import (
 	"github.com/yetone/magpie/internal/catalog"
+	"github.com/yetone/magpie/internal/filememo"
 	"github.com/yetone/magpie/internal/provider"
 	"github.com/yetone/magpie/internal/settings"
 	"os"
 	"testing"
 	"time"
 )
+
+// holdFilememoClock pins filememo's own clock (its stamp/settle decisions
+// read it, not the machine's): a file's real mtime is beside the point once
+// the test says what now is, so a loaded machine cannot push the two reads
+// of TestSummaryInvalidatesSameStampPrice past settle between them (#2761).
+func holdFilememoClock(t *testing.T, at time.Time) {
+	t.Helper()
+	old := filememo.Now
+	filememo.Now = func() time.Time { return at }
+	t.Cleanup(func() { filememo.Now = old })
+}
 
 func TestSummaryInvalidatesLiveFreePrice(t *testing.T) {
 	pageHome(t)
@@ -38,6 +50,7 @@ func TestSummaryInvalidatesLiveFreePrice(t *testing.T) {
 func TestSummaryInvalidatesSameStampPrice(t *testing.T) {
 	pageHome(t)
 	now := holdClock(t, time.Date(2026, 9, 30, 12, 0, 0, 0, time.Local))
+	holdFilememoClock(t, now)
 	s := settings.Load()
 	s.ModelPrices = map[string]settings.ModelPrice{"*/m": {Input: new(2.0), Output: new(8.0), CacheRead: new(0.0), CacheWrite: new(0.0)}}
 	if err := settings.Save(s); err != nil {

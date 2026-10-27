@@ -71,6 +71,11 @@ const heldFor = time.Second
 // state looked at each agent's files hundreds of times over, a few
 // thousand looks at the disk that a slow one (a Mac's antivirus looking
 // at each) made seconds. A write meanwhile (Forget) has them looked at.
+// Now is the clock filememo reads its files' ages by; a test holds it so a
+// file written within settle cannot be mistaken for an old one, however the
+// machine's own clock runs (#2761).
+var Now = time.Now
+
 func Hold() (release func()) {
 	mu.Lock()
 	holds++
@@ -149,11 +154,11 @@ func Read[T any](kind, path string, parse func([]byte) (T, error)) (T, error) {
 	key := kind + "\x00" + path
 	mu.Lock()
 	e, ok := seen[key]
-	if ok && holds > 0 && e.raw == nil && e.gen == gen && time.Since(e.checked) < heldFor {
+	if ok && holds > 0 && e.raw == nil && e.gen == gen && Now().Sub(e.checked) < heldFor {
 		mu.Unlock()
 		return e.v.(T), nil
 	}
-	if m, ok := missing[path]; ok && holds > 0 && m.gen == gen && time.Since(m.checked) < heldFor {
+	if m, ok := missing[path]; ok && holds > 0 && m.gen == gen && Now().Sub(m.checked) < heldFor {
 		mu.Unlock()
 		return zero, m.err
 	}
@@ -164,7 +169,7 @@ func Read[T any](kind, path string, parse func([]byte) (T, error)) (T, error) {
 		if errors.Is(err, fs.ErrNotExist) {
 			mu.Lock()
 			if holds > 0 && g == gen {
-				missing[path] = missingFile{err, time.Now(), g}
+				missing[path] = missingFile{err, Now(), g}
 			}
 			mu.Unlock()
 		}
@@ -173,7 +178,7 @@ func Read[T any](kind, path string, parse func([]byte) (T, error)) (T, error) {
 	if ok && e.mod.Equal(fi.ModTime()) && e.size == fi.Size() && e.raw == nil {
 		mu.Lock()
 		if holds > 0 && g == gen {
-			e.checked, e.gen = time.Now(), g
+			e.checked, e.gen = Now(), g
 			seen[key] = e
 		}
 		mu.Unlock()
@@ -184,7 +189,7 @@ func Read[T any](kind, path string, parse func([]byte) (T, error)) (T, error) {
 		return zero, err
 	}
 	if ok && e.mod.Equal(fi.ModTime()) && bytes.Equal(b, e.raw) {
-		if time.Since(e.mod) > settled {
+		if Now().Sub(e.mod) > settled {
 			mu.Lock()
 			e.raw = nil
 			seen[key] = e
@@ -198,10 +203,10 @@ func Read[T any](kind, path string, parse func([]byte) (T, error)) (T, error) {
 	}
 	mu.Lock()
 	e = entry{mod: fi.ModTime(), size: fi.Size(), v: v}
-	if time.Since(e.mod) <= settled {
+	if Now().Sub(e.mod) <= settled {
 		e.raw = b
 	} else if holds > 0 && g == gen {
-		e.checked, e.gen = time.Now(), g
+		e.checked, e.gen = Now(), g
 	}
 	seen[key] = e
 	mu.Unlock()
