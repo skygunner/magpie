@@ -2263,6 +2263,12 @@ func setAside(agent, p string) (string, error) {
 		return "", err
 	}
 	if err := move(p, dst); err != nil {
+		// the copy is whole even when the removal stopped partway (#1903):
+		// say where it is, so what is left behind can be finished by hand
+		var left *leftBehind
+		if errors.As(err, &left) {
+			return dst, fmt.Errorf("%s couldn't be taken out of the way whole: what remains of it stands as it was, and the whole of it is kept at %s: %w", p, dst, left)
+		}
 		return "", err
 	}
 	return dst, nil
