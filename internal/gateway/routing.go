@@ -1373,11 +1373,14 @@ func (c candidate) full(now time.Time) time.Time {
 	}
 	// a free model shares an account-wide free quota only, so its own
 	// failure does not ride the account's window: a free model's
-	// allowance used up rests the model, not the account (#3738).
-	if c.p.FreeModel(c.model) {
+	// allowance used up rests the model, not the account (#3738). FreeModel
+	// is asked only when there is a window to override: the searcher's
+	// model pick calls this per candidate, and its allocation test counts.
+	full := a.Full(c.model, provider.SpentShareOf(c.p.Routing), now)
+	if !full.IsZero() && c.p.FreeModel(c.model) {
 		return time.Time{}
 	}
-	return a.Full(c.model, provider.SpentShareOf(c.p.Routing), now)
+	return full
 }
 
 // onCredits: c is a Codex account that goes on past its allowance on its
