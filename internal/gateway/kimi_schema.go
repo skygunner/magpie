@@ -303,7 +303,8 @@ func kimiToolRefTypes(p provider.Provider, to provider.Protocol, body []byte) []
 
 // collectRefTargets adds, for each local $ref under node (a schema of the
 // tool schema root) whose target Kimi would refuse untyped, where the
-// target opens and the type it is given.
+// target opens and the type it is given. Also recurses into typed $ref
+// targets to find untyped oneOf/anyOf unions inside them (#3566).
 func collectRefTargets(body []byte, root, node gjson.Result, ins *[]typeInsert) {
 	walkSchema(node, func(s gjson.Result) {
 		ref := s.Get(`\$ref`)
@@ -311,12 +312,24 @@ func collectRefTargets(body []byte, root, node gjson.Result, ins *[]typeInsert) 
 			return
 		}
 		t, ok := refTarget(root, ref.String())
-		if !ok || !t.IsObject() || t.Index <= 0 || t.Index >= len(body) || body[t.Index] != '{' || !untypedForKimi(t) {
+		if !ok || !t.IsObject() || t.Index <= 0 || t.Index >= len(body) || body[t.Index] != '{' {
 			return
 		}
-		if typ := kimiSchemaType(root, t); typ != "" {
-			*ins = append(*ins, typeInsert{t.Index, typ})
+		// If untyped, add type as before
+		if untypedForKimi(t) {
+			if typ := kimiSchemaType(root, t); typ != "" {
+				*ins = append(*ins, typeInsert{t.Index, typ})
+			}
+			return
 		}
+		// If typed, recurse into it to find untyped oneOf/anyOf unions inside
+		walkSchema(t, func(inner gjson.Result) {
+			if untypedForKimi(inner) {
+				if typ := kimiSchemaType(root, inner); typ != "" {
+					*ins = append(*ins, typeInsert{inner.Index, typ})
+				}
+			}
+		})
 	})
 }
 
