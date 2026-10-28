@@ -710,10 +710,12 @@ func (p Provider) fetchOne(ctx context.Context) (fetched, error) {
 			if p.Gemini == "" {
 				continue // Factory's, whose list is its sign-in's
 			}
-			if p.IsOpenCode() {
+			if p.IsOpenCode() || p.IsRemoteMagpie() {
 				// OpenCode's Gemini models are in the list its other
 				// APIs share, asked at its chat URL; it has no Gemini
-				// list of its own
+				// list of its own. Another magpie's list is one list
+				// too: /v1/models already names every model it serves,
+				// with the APIs serving each (native_endpoints)
 				continue
 			}
 			// listed as the Gemini API lists them, the key in its header,

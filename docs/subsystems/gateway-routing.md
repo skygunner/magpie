@@ -380,8 +380,9 @@ request alone. `Server.gatewayTrace` in
 
 A remote provider serves the conversation, token-counting, System One,
 embeddings, rerank, speech-to-text, image generation/edit and video
-creation/status/content APIs. Gemini clients enter through the local Gemini adapter and follow the
-same model routing as other conversation clients. Responses uses HTTP/SSE;
+creation/status/content APIs. Remote providers derive a Gemini base at `/v1beta`;
+Gemini streaming requests keep that API when available. Whole Gemini replies are
+gathered from that API's stream without falling back to Chat. Responses uses HTTP/SSE;
 its WebSocket route still answers 426 (magpie's own leg to the ChatGPT
 backend is a WebSocket for a streamed turn: see
 [Providers and accounts](providers-accounts.md)). Discovery and older-peer behavior

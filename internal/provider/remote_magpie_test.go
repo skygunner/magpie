@@ -16,6 +16,8 @@ func TestRemoteMagpie(t *testing.T) {
 		"192.168.1.20:3425",
 		"http://192.168.1.20:3425/",
 		"http://192.168.1.20:3425/v1",
+		"http://192.168.1.20:3425/v1beta",
+		"http://192.168.1.20:3425/v1beta/models",
 		"http://192.168.1.20:3425/v1/messages",
 		"http://192.168.1.20:3425/v1/systemone",
 		"http://192.168.1.20:3425/v1/embeddings",
@@ -26,8 +28,8 @@ func TestRemoteMagpie(t *testing.T) {
 		"http://192.168.1.20:3425/v1/messages/count_tokens",
 	} {
 		p := normalize(Provider{Preset: RemoteMagpiePreset, Chat: in})
-		if p.Chat != "http://192.168.1.20:3425/v1" || p.Responses != p.Chat || p.Anthropic != "http://192.168.1.20:3425" || p.Decide != p.Chat {
-			t.Errorf("%q: %q %q %q", in, p.Chat, p.Responses, p.Anthropic)
+		if p.Chat != "http://192.168.1.20:3425/v1" || p.Responses != p.Chat || p.Anthropic != "http://192.168.1.20:3425" || p.Decide != p.Chat || p.Gemini != "http://192.168.1.20:3425/v1beta" {
+			t.Errorf("%q: chat=%q responses=%q messages=%q gemini=%q", in, p.Chat, p.Responses, p.Anthropic, p.Gemini)
 		}
 	}
 	// a custom provider's URL is left as it was

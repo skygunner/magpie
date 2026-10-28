@@ -3990,7 +3990,7 @@ func (s *Server) attempt(w http.ResponseWriter, r *http.Request, from provider.P
 	// whole, and a translation would drop what the client asked that magpie
 	// doesn't read (its safetySettings, topK, schema, thinkingBudget 0)
 	if relay && from == provider.Gemini && !streamOf(body) && !p.IsVertex() {
-		relay = false
+		relay, ownAPI = false, true
 	}
 	// a Qwen model that thinks gives one JSON body only with its thinking
 	// off: DashScope turns the request away with "parameter.enable_thinking

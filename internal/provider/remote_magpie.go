@@ -13,7 +13,8 @@ import (
 // routing groups and usage are the one magpie's they all share. Its
 // address serves every API magpie does, so the provider speaks them all
 // — Chat Completions and Responses at <address>/v1, Anthropic's Messages
-// at the address — and a request goes on in the API the agent spoke. Its
+// at the address, Gemini's generateContent at <address>/v1beta — and a
+// request goes on in the API the agent spoke. Its
 // model list tells, of each model, the APIs its own provider serves it on
 // (native_endpoints), and a request for one goes on one of those: turned
 // into another API once, here, when it must be, never on both computers.
@@ -77,7 +78,7 @@ func (p *Provider) remoteMagpieEndpoints() {
 		return
 	}
 	root := ""
-	for _, u := range []string{p.Chat, p.Responses, p.Anthropic, p.Decide} {
+	for _, u := range []string{p.Chat, p.Responses, p.Anthropic, p.Decide, p.Gemini} {
 		if u = strings.TrimRight(strings.TrimSpace(u), "/"); u != "" {
 			root = u
 			break
@@ -90,12 +91,12 @@ func (p *Provider) remoteMagpieEndpoints() {
 		root = "http://" + root
 	}
 	for _, suf := range []string{
-		"/v1/messages/count_tokens", "/v1/messages",
+		"/v1beta/models", "/v1/messages/count_tokens", "/v1/messages",
 		"/v1/chat/completions", "/v1/responses", "/v1/systemone",
 		"/v1/embeddings", "/v1/rerank",
 		"/v1/audio/transcriptions", "/v1/audio/translations",
 		"/v1/images/generations", "/v1/images/edits",
-		"/v1/videos", "/v1",
+		"/v1/videos", "/v1beta", "/v1",
 	} {
 		if b, ok := strings.CutSuffix(root, suf); ok {
 			root = b
@@ -104,6 +105,7 @@ func (p *Provider) remoteMagpieEndpoints() {
 	}
 	p.Chat, p.Responses, p.Anthropic = root+"/v1", root+"/v1", root
 	p.Decide = p.Chat
+	p.Gemini = root + "/v1beta"
 }
 
 // listHeaders are the headers p's model list is asked with: a remote

@@ -70,7 +70,7 @@ a relay: the app's Add sheet lists it under Another computer's magpie, after
 On this machine, and `magpie presets` and the TUI's add list name it so too
 (`kindNote` in [`tui/pages.go`](../../internal/tui/pages.go)).
 
-A `remote-magpie` provider derives Chat, Responses, Messages and System One
+A `remote-magpie` provider derives Chat, Responses, Messages, Gemini and System One
 bases from one address (`remoteMagpieEndpoints` in
 [`remote_magpie.go`](../../internal/provider/remote_magpie.go)). Its model
 list requests images, videos and decisions with `X-Magpie-Drawers`,
