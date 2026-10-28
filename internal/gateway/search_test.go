@@ -442,6 +442,113 @@ func TestDeepSeekSearchesOnResponses(t *testing.T) {
 	}
 }
 
+// DeepSeek's Responses API runs web_search with deepseek-v4-pro and ignores
+// it with deepseek-flash (api-docs.deepseek.com/guides/responses_api,
+// 10-17), so a turn offering it to deepseek-flash is not left to a tool
+// DeepSeek drops: magpie searches for that model, and deepseek-v4-pro is
+// still sent DeepSeek's own (#2729).
+func TestDeepSeekFlashGetsMagpieSearch(t *testing.T) {
+	p, err := provider.FromPreset("deepseek")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if searchesModel(p, provider.Responses, "deepseek-flash") {
+		t.Error("deepseek-flash is left to DeepSeek's web_search, which DeepSeek ignores")
+	}
+	if !searchesModel(p, provider.Responses, "deepseek-v4-pro") || !searchesModel(p, provider.Anthropic, "deepseek-flash") {
+		t.Error("a model DeepSeek documents its search for is given magpie's")
+	}
+
+	searchSandbox(t)
+	var mu sync.Mutex
+	var asked []string
+	var searched int
+	search := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasSuffix(r.URL.Path, "/models") {
+			io.WriteString(w, `{"data":[{"id":"claude-haiku-4-5"}]}`)
+			return
+		}
+		mu.Lock()
+		searched++
+		mu.Unlock()
+		w.Header().Set("Content-Type", "application/json")
+		io.WriteString(w, `{"id":"s","type":"message","role":"assistant","model":"claude-haiku-4-5","content":[
+			{"type":"server_tool_use","id":"srv","name":"web_search","input":{"query":"latest go"}},
+			{"type":"web_search_tool_result","tool_use_id":"srv","content":[{"type":"web_search_result","title":"Go downloads","url":"https://go.dev/dl/"}]},
+			{"type":"text","text":"The latest Go is 1.27.1."}],"stop_reason":"end_turn","usage":{"input_tokens":5,"output_tokens":5}}`)
+	}))
+	defer search.Close()
+	// DeepSeek's Responses API: its own hosted web_search, or the model
+	// calling the function magpie gives a model that can't search
+	ds := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		if strings.HasSuffix(r.URL.Path, "/models") {
+			io.WriteString(w, `{"data":[{"id":"deepseek-flash"},{"id":"deepseek-v4-pro"}]}`)
+			return
+		}
+		mu.Lock()
+		asked = append(asked, string(b))
+		mu.Unlock()
+		w.Header().Set("Content-Type", "text/event-stream")
+		switch {
+		case strings.Contains(string(b), `"type":"web_search"`):
+			io.WriteString(w, sse(`data: {"type":"response.output_item.done","item":{"type":"web_search_call","status":"completed","action":{"type":"search","query":"latest go","sources":[{"type":"url","url":"https://go.dev/dl/"}]}}}`,
+				`data: {"type":"response.output_text.delta","item_id":"m","output_index":0,"content_index":0,"delta":"Go 1.27.1 is out."}`,
+				`data: {"type":"response.completed","response":{"id":"r1","status":"completed","output":[{"type":"message","id":"m","role":"assistant","content":[{"type":"output_text","text":"Go 1.27.1 is out."}]}],"usage":{"input_tokens":30,"output_tokens":5}}}`))
+		case strings.Contains(string(b), `"function_call_output"`):
+			io.WriteString(w, sse(`data: {"type":"response.output_text.delta","item_id":"m","output_index":0,"content_index":0,"delta":"Go 1.27.1 is out."}`,
+				`data: {"type":"response.completed","response":{"id":"r2","status":"completed","output":[{"type":"message","id":"m","role":"assistant","content":[{"type":"output_text","text":"Go 1.27.1 is out."}]}],"usage":{"input_tokens":10,"output_tokens":5}}}`))
+		default:
+			io.WriteString(w, sse(`data: {"type":"response.output_item.added","output_index":0,"item":{"type":"function_call","id":"fc_1","call_id":"call_1","name":"web_search","arguments":""}}`,
+				`data: {"type":"response.function_call_arguments.delta","output_index":0,"item_id":"fc_1","delta":"{\"query\":\"latest go\"}"}`,
+				`data: {"type":"response.output_item.done","output_index":0,"item":{"type":"function_call","id":"fc_1","call_id":"call_1","name":"web_search","arguments":"{\"query\":\"latest go\"}"}}`,
+				`data: {"type":"response.completed","response":{"id":"r0","status":"completed","output":[{"type":"function_call","id":"fc_1","call_id":"call_1","name":"web_search","arguments":"{\"query\":\"latest go\"}"}],"usage":{"input_tokens":30,"output_tokens":7}}}`))
+		}
+	}))
+	defer ds.Close()
+	searchesOn(t, provider.Anthropic, search.URL)
+	searchesOn(t, provider.Responses, ds.URL)
+	save(t, provider.Provider{ID: "srch", Name: "Search", Key: "k", Anthropic: search.URL},
+		provider.Provider{ID: "ds", Name: "DeepSeek", Key: "k", Preset: "deepseek", Responses: ds.URL + "/v1",
+			Models: []string{"deepseek-flash", "deepseek-v4-pro"}})
+	codex := func(model string) string {
+		return `{"model":"ds/` + model + `","stream":true,"input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"What is the latest Go?"}]}],
+			"tools":[{"type":"function","name":"shell","description":"run","parameters":{"type":"object","properties":{}}},{"type":"web_search","external_web_access":false}]}`
+	}
+
+	if code, out := post(t, "/v1/responses", codex("deepseek-flash")); code != 200 || !strings.Contains(out, "Go 1.27.1 is out.") {
+		t.Fatalf("deepseek-flash: %d %s", code, out)
+	}
+	mu.Lock()
+	one, n, asked1 := searched, len(asked), slices.Clone(asked)
+	mu.Unlock()
+	if one != 1 {
+		t.Fatalf("deepseek-flash: magpie searched %d times, want its own search to answer", one)
+	}
+	if n != 2 || strings.Contains(asked1[0], `"type":"web_search"`) || !strings.Contains(asked1[0], `"name":"web_search"`) {
+		t.Fatalf("deepseek-flash was sent %d requests, the first:\n%s", n, asked1[0])
+	}
+	if !strings.Contains(asked1[1], "1.27.1") {
+		t.Fatalf("the search's answer didn't reach the model:\n%s", asked1[1])
+	}
+
+	mu.Lock()
+	asked, searched = nil, 0
+	mu.Unlock()
+	if code, out := post(t, "/v1/responses", codex("deepseek-v4-pro")); code != 200 || !strings.Contains(out, "Go 1.27.1 is out.") {
+		t.Fatalf("deepseek-v4-pro: %d %s", code, out)
+	}
+	mu.Lock()
+	one, n, asked1 = searched, len(asked), slices.Clone(asked)
+	mu.Unlock()
+	if n != 1 || !strings.Contains(asked1[0], `"type":"web_search"`) {
+		t.Fatalf("deepseek-v4-pro wasn't sent DeepSeek's own web_search: %d requests\n%s", n, asked1)
+	}
+	if one != 0 {
+		t.Fatalf("deepseek-v4-pro: magpie searched for it %d times", one)
+	}
+}
+
 // Zhipu's and Z.ai's Responses APIs take the hosted web_search tool: a GLM
 // provider searches by itself there, not on its other APIs.
 func TestZhipuSearchesOnResponses(t *testing.T) {

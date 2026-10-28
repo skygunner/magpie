@@ -577,7 +577,13 @@ its list marks `searches` (`pluginSearches`: a model that searches the web
 by itself when asked in plain words, catalog `WebSearch` "native"): it is
 asked with no search tool, and `searchWith` takes a reply that names a
 link. Before, every plugin's provider was left out whatever its models
-did (01huadalang, 10-20, of Trae's search model). A client's own
+did (01huadalang, 10-20, of Trae's search model). A host whose own search
+tool serves some of its models only (`searchHostModels`) searches for the
+models it lists alone, and the rest are given magpie's search: DeepSeek's
+Responses API runs `web_search` with `deepseek-v4-pro` and ignores it with
+`deepseek-flash` (api-docs.deepseek.com/guides/responses_api, 10-17), so
+the tool relayed for flash searched nothing and the model answered as if
+it had (#2729). A client's own
 `web_search` to such a model still gets magpie's searcher. A provider none
 of whose models searches by itself, such as a plugin that marks none and
 whose `config` hook doesn't set `searches`, is not a searcher: its models

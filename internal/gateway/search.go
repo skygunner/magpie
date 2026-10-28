@@ -156,9 +156,42 @@ func searchesFor(p provider.Provider, proto provider.Protocol, model string, req
 }
 
 // searchesModel is searchesItself for one model: a Remote magpie searches
-// for the models its list says it does, on any API (search_remote.go).
+// for the models its list says it does, on any API (search_remote.go), and
+// a host whose own tool serves some of its models only searches for those
+// (searchHostModels).
 func searchesModel(p provider.Provider, proto provider.Protocol, model string) bool {
-	return searchesItself(p, proto) || proto != provider.Gemini && remoteSearch(p, model) != "" || modelSearches(p, proto, model)
+	if searchesItself(p, proto) {
+		return hostSearchesModel(p, proto, model)
+	}
+	return proto != provider.Gemini && remoteSearch(p, model) != "" || modelSearches(p, proto, model)
+}
+
+// searchHostModels are the models a host of searchHosts searches by itself
+// for, by API, where its search tool serves only some of its models:
+// DeepSeek's Responses API runs web_search with deepseek-v4-pro and ignores
+// it with deepseek-flash (api-docs.deepseek.com/guides/responses_api,
+// 10-17), so the tool relayed for the rest searched nothing and the model
+// answered as if it had (#2729). A model the list leaves out is given
+// magpie's search, which never claims a search that didn't happen.
+var searchHostModels = map[string]map[provider.Protocol][]string{
+	"deepseek": {provider.Responses: {"deepseek-v4-pro"}},
+}
+
+// searchHostModelsHosts are searchHostModels' providers by host, for one
+// added by hand rather than from the preset.
+var searchHostModelsHosts = map[string]string{"api.deepseek.com": "deepseek"}
+
+// hostSearchesModel is whether p's host searches by itself for model: a
+// host of searchHostModels for the models it lists alone, on the API that
+// lists them.
+func hostSearchesModel(p provider.Provider, proto provider.Protocol, model string) bool {
+	id := p.Preset
+	if _, ok := searchHostModels[id]; !ok {
+		id = searchHostModelsHosts[provider.HostOf(p.Base(proto))]
+	}
+	models, some := searchHostModels[id]
+	listed, onOne := models[proto]
+	return !some || !onOne || slices.Contains(listed, model)
 }
 
 // searchModels are the models a provider runs web_search for only for some
@@ -247,9 +280,10 @@ func partSearcher(p provider.Provider) bool {
 // searchHosts are the APIs that search by themselves: OpenAI's, xAI's,
 // DeepSeek's, Zhipu's and Z.ai's web_search tool (Zhipu's on its Responses
 // API only, DeepSeek's on its Responses and Anthropic APIs: their Chat APIs
-// have no such tool), Anthropic's web_search_20250305 (DeepSeek's Anthropic
-// API runs it too, answering web_search_tool_result blocks, #669),
-// OpenRouter's web plugin, Gemini's googleSearch.
+// have no such tool, and DeepSeek's Responses tool is for deepseek-v4-pro
+// alone, searchHostModels), Anthropic's web_search_20250305 (DeepSeek's
+// Anthropic API runs it too, answering web_search_tool_result blocks,
+// #669), OpenRouter's web plugin, Gemini's googleSearch.
 var searchHosts = map[provider.Protocol][]string{
 	provider.Responses: {"api.openai.com", "api.x.ai", "api.deepseek.com", "open.bigmodel.cn", "api.z.ai"},
 	provider.Anthropic: {"api.anthropic.com", "api.deepseek.com"},
