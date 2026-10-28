@@ -62,6 +62,7 @@ function serve(lang, list, posts) {
     if (url.pathname === "/api/gateway/trace") return json({ routes: [] });
     if (route.request().method() === "POST" && (url.pathname === "/api/open" || url.pathname.startsWith("/api/provider/"))) {
       posts.push({ action: url.pathname.slice("/api/".length), body: route.request().postDataJSON() });
+      for (const w of posts.wake.splice(0)) w();
       return url.pathname === "/api/open" ? route.fulfill({ status: 204, body: "" }) : json(providers);
     }
     if (url.pathname.startsWith("/api/")) return json({});
@@ -79,14 +80,27 @@ const words = {
 for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"])) {
   for (const lang of ["en", "zh"]) {
     const w = words[lang];
-    const start = async (t, list) => {
+    const start = async (t, list, late) => {
       const browser = await (engine === "webkit" ? webkit.launch() : chromium.launch({ channel: "chromium" }));
       t.after(() => browser.close());
       const page = await (await browser.newContext({ viewport: { width: 900, height: 800 }, reducedMotion: "reduce" })).newPage();
-      page.setDefaultTimeout(5000);
+      if (late) await page.addInitScript(() => {
+        // #1579: a loaded runner meets a late providers read (the tiles and
+        // the region strip wait for it) and posts that follow their click by
+        // seconds; the page here is held back the same way
+        const f = window.fetch.bind(window);
+        window.fetch = (input, init) => {
+          const u = new URL(typeof input === "string" ? input : input.url, location.href);
+          const slow = u.pathname === "/api/providers" ||
+            (init?.method === "POST" && (u.pathname === "/api/open" || u.pathname.startsWith("/api/provider/")));
+          return slow ? new Promise((ok) => setTimeout(() => ok(f(input, init)), 6000)) : f(input, init);
+        };
+      });
+      page.setDefaultTimeout(15000);
       const errors = [];
       page.on("pageerror", (e) => errors.push(e.message));
       const posts = [];
+      posts.wake = []; // posted waits on a post's arrival, served here
       await page.route("**/*", serve(lang, list, posts));
       await page.goto("http://magpie.test/?view=providers");
       return { page, errors, posts };
@@ -94,15 +108,27 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
     const ed = (page) => page.locator("#modal .editor");
     const segs = (page) => ed(page).locator(".segs.regions .opt");
     const site = (page) => ed(page).locator(".ehead .link.site");
-    const posted = async (page, posts, n, action) => {
-      for (let i = 0; i < 50 && !posts.slice(n).some((p) => p.action === action); i++) await page.waitForTimeout(50);
-      return posts.slice(n).find((p) => p.action === action);
+    // #1579: a loaded runner can leave a post seconds behind its click; the
+    // 50×50ms poll budget was a wall-clock bound it could pass. Wait for the
+    // post's arrival, with room to spare for a genuine failure to fail fast.
+    const posted = (posts, n, action) => {
+      const hit = posts.slice(n).find((p) => p.action === action);
+      if (hit) return Promise.resolve(hit);
+      return new Promise((ok, no) => {
+        const timer = setTimeout(() => no(new Error(`no ${action} post arrived (watching since post #${n})`)), 30000);
+        const wake = () => {
+          const p = posts.slice(n).find((q) => q.action === action);
+          if (p) { clearTimeout(timer); return ok(p); }
+          posts.wake.push(wake);
+        };
+        wake();
+      });
     };
     // the link's page, as a click opens it
     const opens = async (page, posts, loc) => {
       const n = posts.length;
       await loc.click();
-      return (await posted(page, posts, n, "open"))?.body.url;
+      return (await posted(posts, n, "open"))?.body.url;
     };
 
     test(`${engine} ${lang}: one Tencent Cloud tile, its regions picked with the segmented control`, async (t) => {
@@ -146,7 +172,7 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       await ed(page).locator("input[type=password]").first().fill("sk-tc-1");
       const n = posts.length;
       await ed(page).locator(".bar").getByRole("button", { name: w.add, exact: true }).click();
-      const saved = await posted(page, posts, n, "provider/save");
+      const saved = await posted(posts, n, "provider/save");
       assert(saved, "saved");
       assert.equal(saved.body.preset, "tencent-cloud");
       assert.deepEqual([saved.body.chat, saved.body.responses, saved.body.anthropic], [cn.chat, cn.responses, cn.anthropic]);
@@ -169,7 +195,7 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       assert.equal(await opens(page, posts, site(page)), intl.website);
       const n = posts.length;
       await ed(page).locator(".bar").getByRole("button", { name: w.save, exact: true }).click();
-      const saved = await posted(page, posts, n, "provider/save");
+      const saved = await posted(posts, n, "provider/save");
       assert(saved, "saved");
       assert.equal(saved.body.id, "tencent-tokenhub-cn");
       assert.equal(saved.body.preset, "tencent-cloud");
@@ -209,5 +235,28 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       assert.deepEqual(missed, []);
       assert.deepEqual(errors, []);
     });
+
+    // #1579: the file was red once in a parallel run and the output was not
+    // kept. What a loaded runner can make late is the region/tile render
+    // (its /api/providers read) and the posts a click triggers; the waits
+    // take that from the state, not from a fixed budget: this holds the
+    // read and the posts back 6s and still expects the flow through.
+    if (engine === "webkit" && lang === "en") {
+      test(`${engine} ${lang}: a late providers read and late posts are still waited for`, async (t) => {
+        const { page, errors, posts } = await start(t, [relay], true);
+        await page.locator("#addProvider").click();
+        await page.locator('#addSheet .tile[data-pick="Tencent Cloud"]').click();
+        await ed(page).locator(".segs.regions").waitFor();
+        await segs(page).nth(2).click();
+        assert.equal(await opens(page, posts, site(page)), intl.website);
+        await ed(page).locator("input[type=password]").first().fill("sk-tc-1");
+        const n = posts.length;
+        await ed(page).locator(".bar").getByRole("button", { name: w.add, exact: true }).click();
+        const saved = await posted(posts, n, "provider/save");
+        assert.equal(saved.body.preset, "tencent-cloud");
+        assert.deepEqual([saved.body.chat, saved.body.responses, saved.body.anthropic], [intl.chat, intl.responses, intl.anthropic]);
+        assert.deepEqual(errors, []);
+      });
+    }
   }
 }
