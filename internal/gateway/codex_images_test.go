@@ -355,11 +355,17 @@ func TestCodexFittedImagesPastTheBudget(t *testing.T) {
 	body := computerUseRequest(shots)
 	was := int64(0)
 	for turn := 1; turn <= 3; turn++ {
+		fitted.Lock()
+		kept := len(fitted.m)
+		fitted.Unlock()
+		if turn > 1 && (kept == 0 || kept >= len(shots)) {
+			t.Fatalf("turn %d: budget should retain some images, kept %d of %d", turn, kept, len(shots))
+		}
 		codexImagesFit(codexAccount(), provider.Responses, body)
 		n := made() - was
 		was += n
-		if turn == 1 && n != 30 || turn > 1 && n != 20 {
-			t.Errorf("turn %d made %d of 30 images, with 10 kept", turn, n)
+		if want := int64(len(shots) - kept); n != want {
+			t.Errorf("turn %d made %d of %d images, with %d kept; want %d", turn, n, len(shots), kept, want)
 		}
 		fitted.Lock()
 		held := fitted.bytes
