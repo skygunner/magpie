@@ -3627,6 +3627,18 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 				continue
 			}
 		}
+		// The member failed the conversation's request, and the member is
+		// what failed: it isn't kept there, as one whose reply broke off
+		// isn't (#733), so the next request of the conversation is routed
+		// again rather than back to the one that just failed it. The last
+		// one left rests for none of these, so the stick alone held it
+		// there (#3703: a Grok account out of its weekly balance, 402 on
+		// every try, sixteen times over, until the stick was cleared from
+		// affinity.json by hand). A request the vendor refused, or turned
+		// away, is the request's, and leaves it where it was.
+		if hw.failed() && !hw.refused && !hw.turnedAway && (hit == nil || !hit.Compact) && aff.Why != "strict" {
+			unanswered(stuck, c)
+		}
 		if last && !held && !hw.passing && hw.failed() && c.p.Account == nil && quotaStatus(hw.code()) && (try.Fail == failQuota || try.Fail == failCredit || failure(hw.code(), hw.errBody()) == failQuota || failure(hw.code(), hw.errBody()) == failCredit) {
 			// the last key left is out of its allowance: it rests as the
 			// ones before it did, for the next request to be answered
