@@ -9,25 +9,30 @@ import (
 )
 
 // upstreamOf is the provider an aggregator's reply (a JSON body, or one
-// event of its stream) says answered behind it, "" when it says none.
+// event of its stream) says answered behind it, "" when it says none, and
+// the canonical slug it names that provider by, "" when it names none.
 // OpenRouter names it in a top-level "provider" — a Chat body and every
 // chunk of its stream, an Anthropic Messages body — and in a Messages
 // stream's message_start, as message.provider (seen 2026-10-05: DeepInfra,
 // StreamLake). Its Responses replies name none. ClinePass (api.cline.bot)
 // names it in a Chat choice's provider_metadata, as
 // gateway.routing.finalProvider: under delta in a stream's chunk, under
-// message in one body (#2847, smart-lty). Only those places count: a
-// choice's content is the model's, and providerAttempts inside routing
-// lists every provider tried, not the one that answered.
-func upstreamOf(b []byte) string {
-	if !bytes.Contains(b, []byte(`"provider"`)) && !bytes.Contains(b, []byte(`"finalProvider"`)) {
-		return ""
+// message in one body (#2847, smart-lty); the slug there,
+// gateway.routing.canonicalSlug, is what tells the model really served
+// apart — the official deepseek/deepseek-v4.1-flash from a private pool's
+// private/… (#3713, xdeers2). Only those places count: a choice's content
+// is the model's, and providerAttempts and modelAttempts inside routing
+// list what was tried, not what answered.
+func upstreamOf(b []byte) (provider, slug string) {
+	if !bytes.Contains(b, []byte(`"provider"`)) && !bytes.Contains(b, []byte(`"finalProvider"`)) && !bytes.Contains(b, []byte(`"canonicalSlug"`)) {
+		return "", ""
 	}
 	type routed struct {
 		ProviderMetadata struct {
 			Gateway struct {
 				Routing struct {
 					FinalProvider json.RawMessage `json:"finalProvider"`
+					CanonicalSlug json.RawMessage `json:"canonicalSlug"`
 				} `json:"routing"`
 			} `json:"gateway"`
 		} `json:"provider_metadata"`
@@ -46,12 +51,19 @@ func upstreamOf(b []byte) string {
 		} `json:"choices"`
 	}
 	if json.Unmarshal(b, &v) != nil {
-		return ""
+		return "", ""
 	}
 	raws := []json.RawMessage{v.Provider, v.Message.Provider, v.Response.Provider}
+	slugs := []json.RawMessage(nil)
 	for _, c := range v.Choices {
 		raws = append(raws, c.Delta.ProviderMetadata.Gateway.Routing.FinalProvider, c.Message.ProviderMetadata.Gateway.Routing.FinalProvider)
+		slugs = append(slugs, c.Delta.ProviderMetadata.Gateway.Routing.CanonicalSlug, c.Message.ProviderMetadata.Gateway.Routing.CanonicalSlug)
 	}
+	return stringIn(raws), stringIn(slugs)
+}
+
+// stringIn is the first of raws that is a short, non-empty JSON string.
+func stringIn(raws []json.RawMessage) string {
 	for _, raw := range raws {
 		var s string // a request's provider options echoed back are an object
 		if json.Unmarshal(raw, &s) == nil {
