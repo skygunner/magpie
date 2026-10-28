@@ -3,6 +3,7 @@ package gateway
 import (
 	"bytes"
 	"encoding/json"
+	"go/version"
 	"math/rand/v2"
 	"runtime"
 	"strings"
@@ -32,12 +33,9 @@ func mrCompare(t *testing.T, v any) {
 		if werr != nil {
 			t.Fatalf("escape %v: marshalRaw wrote %q, encoding/json refused: %v", escape, got, werr)
 		}
-		if goMinor() >= 27 && !escape {
-			// Go 1.27+ escapes U+2028/U+2029 with SetEscapeHTML(false) too;
-			// fastjson keeps them raw in string values, as json/v2 does, and
-			// escapes them in names. Compare with the sequences unescaped on
-			// both sides.
-			got, want = unescapeLineSeps(got), unescapeLineSeps(want)
+		if version.Compare(version.Lang(runtime.Version()), "go1.27") >= 0 && !escape {
+			// Escape raw separators only: unescaping sequences also changes literal backslash-u strings.
+			got, want = escapeLineSeps(got), escapeLineSeps(want)
 		}
 		if !bytes.Equal(got, want) {
 			t.Fatalf("escape %v:\n marshalRaw   %q\n encoding/json %q", escape, got, want)
@@ -45,24 +43,22 @@ func mrCompare(t *testing.T, v any) {
 	}
 }
 
-func goMinor() int {
-	_, rest, ok := strings.Cut(strings.TrimPrefix(runtime.Version(), "go"), ".")
-	if !ok {
-		return 0
-	}
-	n := 0
-	for _, c := range rest {
-		if c < '0' || c > '9' {
-			break
-		}
-		n = n*10 + int(c-'0')
-	}
-	return n
+func escapeLineSeps(b []byte) []byte {
+	b = bytes.ReplaceAll(b, []byte("\u2028"), []byte(`\u2028`))
+	return bytes.ReplaceAll(b, []byte("\u2029"), []byte(`\u2029`))
 }
 
-func unescapeLineSeps(b []byte) []byte {
-	b = bytes.ReplaceAll(b, []byte(`\u2028`), []byte("\u2028"))
-	return bytes.ReplaceAll(b, []byte(`\u2029`), []byte("\u2029"))
+func TestMarshalRawLineSeparators(t *testing.T) {
+	values := []json.RawMessage{json.RawMessage("\"\u2028\u2029\""), json.RawMessage(`"\\u2028\\u2029"`)}
+	got, ok := marshalRaw(values, false)
+	if !ok || string(got) != "[\"\u2028\u2029\",\"\\\\u2028\\\\u2029\"]" {
+		t.Fatalf("raw separators and literal escapes = %q, %v", got, ok)
+	}
+	want := `["\u2028\u2029","\\u2028\\u2029"]`
+	if normalized := escapeLineSeps(got); string(normalized) != want {
+		t.Fatalf("normalized = %q, want %q", normalized, want)
+	}
+	mrCompare(t, values)
 }
 
 // mrValues are raw values as a request's members and items hold them:
