@@ -2,11 +2,15 @@ package sessions
 
 import (
 	"database/sql"
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/yetone/magpie/internal/filelock"
 )
 
 // cxRollout writes a Codex rollout of the thread id on the provider p, as
@@ -127,5 +131,71 @@ func TestMoveCodexThreadsNone(t *testing.T) {
 	}
 	if _, err := MoveCodexThreads(home, "magpie", "magpie"); err == nil {
 		t.Fatal("a move to the same provider went")
+	}
+}
+
+// bringBack's move leaves a thread a Codex has open for its next call, as
+// it leaves one written to in the last minute: the other threads move, this
+// one keeps its file and its row, and the next call moves it once Codex has
+// let go (#3751). A Codex home without writer locks, as a Codex from before
+// them keeps its threads, moves as before and is given none.
+func TestMoveCodexThreadsLeavesAnOpenThread(t *testing.T) {
+	_, home := manageSetup(t)
+	const (
+		open  = "019a0000-0000-7000-8000-000000000011"
+		other = "019a0000-0000-7000-8000-000000000012"
+	)
+	day := time.Now().Add(-24 * time.Hour).Truncate(time.Second)
+	openPath := cxRollout(t, home, "sessions", open, "custom", day)
+	otherPath := cxRollout(t, home, "sessions", other, "custom", day)
+	db := cxThreadRows(t, home, map[string]string{open: "custom", other: "custom"})
+	locks := filepath.Join(home, "thread-writer-locks")
+
+	if moved, err := MoveCodexThreads(home, "custom", "magpie"); err != nil || len(moved) != 2 {
+		t.Fatalf("no writer locks: %+v %v", moved, err)
+	}
+	if _, err := os.Stat(locks); !errors.Is(err, fs.ErrNotExist) {
+		t.Fatalf("a home without writer locks was given one: %v", err)
+	}
+	if moved, err := MoveCodexThreads(home, "magpie", "custom"); err != nil || len(moved) != 2 {
+		t.Fatalf("back: %+v %v", moved, err)
+	}
+
+	// a Codex that resumed one thread holds its writer lock
+	if err := os.MkdirAll(locks, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	lf, err := os.OpenFile(filepath.Join(locks, open+".lock"), os.O_CREATE|os.O_RDWR, 0o644)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lf.Close()
+	if got, err := filelock.TryLock(lf); !got || err != nil {
+		t.Fatalf("lock: %v %v", got, err)
+	}
+	moved, err := MoveCodexThreads(home, "custom", "magpie")
+	if err != nil || len(moved) != 1 || moved[0].ID != other {
+		t.Fatalf("with a thread open: %+v %v", moved, err)
+	}
+	if got := codexMetaProvider(otherPath); got != "magpie" {
+		t.Errorf("the other thread's file is on %q", got)
+	}
+	if got := codexMetaProvider(openPath); got != "custom" {
+		t.Fatalf("the open thread's file is on %q", got)
+	}
+	if got, _, _ := threadProvider(t, db, open); got != "custom" {
+		t.Fatalf("the open thread's row is on %q", got)
+	}
+
+	// once Codex has let go, the next call moves it
+	filelock.Unlock(lf)
+	if moved, err := MoveCodexThreads(home, "custom", "magpie"); err != nil || len(moved) != 1 || moved[0].ID != open {
+		t.Fatalf("after its Codex let go: %+v %v", moved, err)
+	}
+	if got := codexMetaProvider(openPath); got != "magpie" {
+		t.Fatalf("the file is on %q", got)
+	}
+	if got, _, _ := threadProvider(t, db, open); got != "magpie" {
+		t.Fatalf("the row is on %q", got)
 	}
 }
