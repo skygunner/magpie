@@ -103,8 +103,9 @@ func (p *slowUplink) splat(dst, src net.Conn) {
 // same uplink answered a small turn. The body is still going out, so the
 // vendor sends nothing; the read-idle ping is written behind the body's
 // own DATA and can only be answered once the last byte arrives, so the
-// health check closed a connection that was working. A body that may still
-// be under way is not watched by that ping.
+// health check closed a connection that was working. The first try is
+// watched and cut by that ping; the body is then sent again on a
+// connection that is not pinged, which is the try the vendor answers.
 func TestUploadStillUnderwayIsNotCutByHealthPing(t *testing.T) {
 	fresh(t)
 	body := []byte(`{"model":"gemini-4-argon","messages":[{"role":"user","content":"` +
