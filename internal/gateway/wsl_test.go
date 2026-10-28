@@ -138,7 +138,7 @@ func TestServeWSLListensBesideLoopback(t *testing.T) {
 
 	at := "http://" + net.JoinHostPort("::1", Port()) + "/"
 	answers := func() bool {
-		c := &http.Client{Timeout: time.Second}
+		c := &http.Client{Timeout: time.Second, Transport: &http.Transport{DisableKeepAlives: true}}
 		res, err := c.Get(at)
 		if err != nil {
 			return false
