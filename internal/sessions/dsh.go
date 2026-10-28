@@ -68,8 +68,13 @@ var (
 	dshHeads = map[string]dshHead{}
 )
 
-func dshFiles() []file {
-	dirs, _ := filepath.Glob(filepath.Join(DshDir(), "sessions", "*", "*"))
+// dshFiles are the sessions in dsh's own folder on this computer (DshDir).
+func dshFiles() []file { return dshFilesIn(DshDir()) }
+
+// dshFilesIn are the sessions in a dsh folder: this computer's, or a WSL
+// distro's ~/.dsh, whose DSH_HOME can't be read from Windows (wslScan).
+func dshFilesIn(dir string) []file {
+	dirs, _ := filepath.Glob(filepath.Join(dir, "sessions", "*", "*"))
 	var out []file
 	parent := map[string]string{}
 	seen := map[string]bool{}
@@ -113,7 +118,9 @@ func dshFiles() []file {
 		out = append(out, f)
 	}
 	for p := range dshHeads {
-		if !seen[p] {
+		// a distro's are kept: its listing reads the headers again over
+		// \\wsl.localhost, and reading one there is slow
+		if !seen[p] && under(p, dir) {
 			delete(dshHeads, p)
 		}
 	}
@@ -128,6 +135,20 @@ func dshFiles() []file {
 	return out
 }
 
+// dshRoot is the dsh folder a session file is in: its distro's ~/.dsh when
+// it is in a WSL distro, else this computer's; "" for a distro no listing
+// knows.
+func dshRoot(f file) string {
+	if d := f.m().wsl; d != "" {
+		home := wslHomeOf(d)
+		if home == "" {
+			return ""
+		}
+		return filepath.Join(home, ".dsh")
+	}
+	return DshDir()
+}
+
 // dshSessionDir is the folder dsh keeps a session file's session in, all
 // of it that session's own: <sessions>/<project>/<the id, escaped>/, with
 // the session's generations and its session.lock. "" when the file isn't
@@ -136,8 +157,12 @@ func dshSessionDir(f file) string {
 	if f.agent != "dsh" || f.m().sid == "" {
 		return ""
 	}
+	root := dshRoot(f)
+	if root == "" {
+		return ""
+	}
 	d := filepath.Dir(f.path)
-	if filepath.Base(d) != dshSegment(f.m().sid) || filepath.Dir(filepath.Dir(d)) != filepath.Join(DshDir(), "sessions") {
+	if filepath.Base(d) != dshSegment(f.m().sid) || filepath.Dir(filepath.Dir(d)) != filepath.Join(root, "sessions") {
 		return ""
 	}
 	return d
@@ -168,11 +193,16 @@ func dshSegment(id string) string {
 // (dsh-session-projection-cache, on dsh-storage-json's per-record layout):
 // <dsh>/storages/session_projcache/sessions/<id>.json. "" for an id that
 // layout can't hold.
-func dshCacheRecord(id string) string {
+func dshCacheRecord(f file) string {
+	id := f.m().sid
 	if !safeID.MatchString(id) {
 		return ""
 	}
-	return filepath.Join(DshDir(), "storages", "session_projcache", "sessions", id+".json")
+	root := dshRoot(f)
+	if root == "" {
+		return ""
+	}
+	return filepath.Join(root, "storages", "session_projcache", "sessions", id+".json")
 }
 
 // dshOpen reads a session file's lines, decompressed.

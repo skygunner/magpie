@@ -416,7 +416,7 @@ func sessionPaths(agent, id string, fs []file) []string {
 		}
 		for _, f := range fs {
 			add(dshSessionDir(f))
-			add(dshCacheRecord(f.m().sid))
+			add(dshCacheRecord(f))
 		}
 		return out
 	}

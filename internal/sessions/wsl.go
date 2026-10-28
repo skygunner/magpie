@@ -69,6 +69,7 @@ var wslAgents = []struct{ agent, dir string }{
 	{"pi", filepath.Join(".pi", "agent")},
 	{"omp", filepath.Join(".omp", "agent")},
 	{"kimi", ".kimi-code"},
+	{"dsh", ".dsh"},
 }
 
 // wslScan lists the session files under a distro's home.
@@ -87,6 +88,8 @@ func wslScan(home string) []file {
 			out = append(out, ompFilesIn(dir)...)
 		case "kimi":
 			out = append(out, kimiFilesIn(filepath.Join(dir, "sessions"))...)
+		case "dsh":
+			out = append(out, dshFilesIn(dir)...)
 		}
 	}
 	return out
@@ -100,6 +103,9 @@ type wslEntry struct {
 	Main  bool      `json:"main,omitempty"`
 	Size  int64     `json:"size"`
 	Mod   time.Time `json:"mod"`
+	// SID is the session id a file's folder and cached row are named by
+	// (dsh's), so a stopped distro's session can be deleted too
+	SID string `json:"sid,omitempty"`
 }
 
 // wslListing is a distro's files as last listed.
@@ -192,9 +198,14 @@ func wslFiles(agents ...string) []file {
 		cold := !l.Running || !up[n]
 		in := &fileMore{wsl: n} // the distro's files share it
 		for _, e := range l.Files {
-			if want[e.Agent] {
-				out = append(out, file{agent: e.Agent, key: e.Key, path: e.Path, main: e.Main, size: e.Size, mod: e.Mod, more: in, cold: cold})
+			if !want[e.Agent] {
+				continue
 			}
+			f := file{agent: e.Agent, key: e.Key, path: e.Path, main: e.Main, size: e.Size, mod: e.Mod, more: in, cold: cold}
+			if e.SID != "" {
+				f.w().sid = e.SID // dsh's, whose folder and cached row it names
+			}
+			out = append(out, f)
 		}
 	}
 	return out
@@ -224,7 +235,7 @@ func wslList(gen uint64, done chan struct{}) {
 		}
 		l := &wslListing{Home: h.Home, Running: true, Files: []wslEntry{}}
 		for _, f := range wslScan(h.Home) {
-			l.Files = append(l.Files, wslEntry{Agent: f.agent, Key: f.key, Path: f.path, Main: f.main, Size: f.size, Mod: f.mod})
+			l.Files = append(l.Files, wslEntry{Agent: f.agent, Key: f.key, Path: f.path, Main: f.main, Size: f.size, Mod: f.mod, SID: f.m().sid})
 		}
 		lists[h.Distro] = l
 	}

@@ -24,14 +24,15 @@ import (
 // nameless local session. The provider a session's record names is kept as
 // history (Upstream), never as proof of the route.
 
-// dshCallFiles are dsh's sessions as call sources. It is dshFiles with the
-// size and time its summary reader already keeps, so a session that has not
-// changed is not read again. A subagent's file is a source of its own, as
-// WorkBuddy's subagents' are: nothing in this path reads a file's main (the
-// Sessions page's mark for a session's own file), so it is left as dshFiles
-// set it.
+// dshCallFiles are dsh's sessions as call sources: this computer's and a WSL
+// distro's, whose own calls the usage ledger was missing as the Sessions
+// page's were (#2771). It is dshFiles with the size and time its summary
+// reader already keeps, so a session that has not changed is not read again.
+// A subagent's file is a source of its own, as WorkBuddy's subagents' are:
+// nothing in this path reads a file's main (the Sessions page's mark for a
+// session's own file), so it is left as dshFiles set it.
 func dshCallFiles() []file {
-	return dshFiles()
+	return append(dshFiles(), wslFiles("dsh")...)
 }
 
 // readDshCalls reads a dsh session's calls. dsh only appends to a session
