@@ -3,8 +3,9 @@
 // and description kept inside its row ("linked from" on one line, the row's
 // name not pushed out of it), light and dark, wide and narrow; what the last
 // change couldn't write listed above the tabs' content — which agent, what,
-// why — Try again posting all/sync with nothing moved, and a chip's write
-// changing the list in place, the row clicked where it was; and an agent's
+// why — Try again posting all/sync with nothing moved, closing that list
+// without writing anything and it opening again on a later failure, and a
+// chip's write changing the list in place, the row clicked where it was; and an agent's
 // icon whose picture failed to load at first shown once it does, not left
 // empty until the page is loaded again. In English and Chinese. No backend:
 // the API is faked here.
@@ -26,6 +27,8 @@ const skills = [
   },
   ...Array.from({ length: 30 }, (_, i) => ({ name: "s" + String(i).padStart(2, "0"), description: "d", agents: i % 2 ? ["claude"] : ["claude", "codex"], kind: "folder", source: `${HOME}/skills/s${i}` })),
 ];
+// the row its own mark says what a failed write was about (the agent's side)
+skills[0].problems = { zcode: `open ${HOME}/.zcode/skills/${LONG}: permission denied` };
 const problems = [
   { agent: "claude", what: "instructions", error: `open ${HOME}/.claude/CLAUDE.md: permission denied` },
   { agent: "codex", what: "mcp", error: "config.toml: toml: line 3: expected '=' after a key" },
@@ -39,7 +42,7 @@ const base = () => ({
 });
 
 function server(lang, theme, posts, opts = {}) {
-  let first = 0;
+  let first = 0, repeated = 0;
   return async (route) => {
     const req = route.request(), url = new URL(req.url());
     if (url.pathname === "/boot.js") return route.fulfill({ contentType: "text/javascript", body: `window.bootPrefs = {lang:"${lang}",theme:"${theme}",web:true};` });
@@ -53,9 +56,11 @@ function server(lang, theme, posts, opts = {}) {
     if (url.pathname === "/api/library/skills/agents") {
       const body = req.postDataJSON();
       posts.push(body);
-      const more = [...problems, { agent: "pi", what: "skill:" + body.name, error: "read-only file system" }];
       const v = base();
       v.skills.find((s) => s.name === body.name).agents = body.agents;
+      // the same write failing again, as a file still not writable does
+      if (opts.repeat && !repeated++) return route.fulfill({ json: { ...v, problems, result: { changed: [], problems: [problems[0]] } } });
+      const more = [...problems, { agent: "pi", what: "skill:" + body.name, error: "read-only file system" }];
       return route.fulfill({ json: { ...v, problems: more, result: { changed: [], problems: more.slice(-1) } } });
     }
     if (url.pathname === "/api/usage/quotas") return route.fulfill({ json: [] });
@@ -77,12 +82,14 @@ function server(lang, theme, posts, opts = {}) {
 // where (#1896: Claude Desktop's skills read as duplicated MCP servers)
 const words = {
   en: {
-    title: "Some of the Library couldn't be written", again: "Try again",
+    title: "Some of the Library couldn't be written", again: "Try again", close: "Dismiss write error",
+    instrTab: "Instructions", skillsTab: "Skills",
     lines: ["ZCode · Skill " + LONG, "~/code/app · The project"], away: ["Instructions: 1 more", "MCP servers: 1 more"],
     instr: ["Claude Code · Instructions"], instrAway: ["MCP servers: 1 more", "Skills: 2 more"],
   },
   zh: {
-    title: "资源库有部分内容未能写入", again: "重试",
+    title: "资源库有部分内容未能写入", again: "重试", close: "关闭写入错误",
+    instrTab: "指令", skillsTab: "技能",
     lines: ["ZCode · 技能 " + LONG, "~/code/app · 项目"], away: ["指令：另有 1 项", "MCP 服务器：另有 1 项"],
     instr: ["Claude Code · 指令"], instrAway: ["MCP 服务器：另有 1 项", "技能：另有 2 项"],
   },
@@ -98,14 +105,14 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       if (errors.length) console.log(errors);
       await browser.close();
     });
-    const open = async (lang, { theme = "light", width = 980, posts = [], flaky = false } = {}) => {
+    const open = async (lang, { theme = "light", width = 980, posts = [], flaky = false, repeat = false } = {}) => {
       const ctx = await browser.newContext({ viewport: { width, height: 700 }, colorScheme: theme });
       await ctx.addInitScript(() => { try { localStorage.setItem("magpie.libTab", "skills"); } catch {} });
       const page = await ctx.newPage();
       page.setDefaultTimeout(5000);
       page.on("pageerror", (e) => errors.push(e.message));
       // only the page's own address: a blob: URL (the grey copies) is left alone
-      await page.route("http://magpie.test/**", server(lang, theme, posts, { flaky }));
+      await page.route("http://magpie.test/**", server(lang, theme, posts, { flaky, repeat }));
       await page.goto("http://magpie.test/");
       await page.locator('button[data-view="library"]').click();
       await page.locator("#view-library .lib-body:not(.lib-skel) .lib-row").first().waitFor();
@@ -177,6 +184,44 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         await card.waitFor({ state: "detached" });
         assert.deepEqual(posts, ["/api/library/all/sync"]);
         assert.equal(await page.evaluate(() => document.querySelector("#view-library").scrollTop), before);
+        await page.close();
+      });
+
+      await t.test(lang + ": a write error closes until a later failure, its item still marked", async () => {
+        const posts = [];
+        const page = await open(lang, { posts, repeat: true });
+        const card = page.locator("#view-library > .lib-problems");
+        await card.waitFor();
+        const long = page.locator("#view-library .lib-row").filter({ hasText: LONG });
+        const warn = long.locator('.lib-ag[data-agent="zcode"]');
+        assert.ok((await warn.getAttribute("title")).includes("permission denied"), "the item says why its write failed");
+        const close = async () => {
+          await card.getByRole("button", { name: words[lang].close }).click();
+          await card.waitFor({ state: "detached" });
+        };
+        // closing says nothing was written, and takes the list off the page
+        await close();
+        assert.deepEqual(posts, [], "closing writes nothing");
+        assert.ok(await warn.evaluate((c) => c.classList.contains("warn")), "the item's failed write is still marked");
+        await page.locator("#view-library .lib-tabs .opt").filter({ hasText: words[lang].instrTab }).click();
+        await page.locator("#view-library .lib-body:not(.lib-skel)").waitFor();
+        assert.equal(await page.locator("#view-library > .lib-problems").count(), 0, "closed on every tab");
+        await page.locator("#view-library .lib-tabs .opt").filter({ hasText: words[lang].skillsTab }).click();
+        await long.waitFor();
+        const writeToPi = async () => {
+          await long.locator(".lib-agents").hover();
+          await long.locator('.lib-ag[data-agent="pi"]').click();
+          await card.waitFor();
+        };
+        // the same failure again opens the list again, though it was closed
+        await writeToPi();
+        assert.equal(await card.locator(".lib-problems-head b").textContent(), words[lang].title);
+        assert.deepEqual(await card.locator("li").evaluateAll(lineOf), words[lang].lines);
+        // and a newer failure says itself too
+        await close();
+        await writeToPi();
+        assert.ok((await card.locator(".lib-problems-err").allTextContents()).includes("read-only file system"), "the new failure is listed");
+        assert.equal(await warn.evaluate((c) => c.classList.contains("warn")), true, "the item is still marked");
         await page.close();
       });
 

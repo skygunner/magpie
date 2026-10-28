@@ -540,6 +540,7 @@ magpie.plugin("library", (ctx) => {
       return;
     }
     if (res.problems?.length) {
+      dismissed = ""; // said again though the reader closed the last one
       const p = res.problems[0];
       status(t("{agent}: {error}", { agent: tilde(nameOf(p.agent)), error: p.error }) + (res.problems.length > 1 ? " " + t("(and {n} more)", { n: res.problems.length - 1 }) : ""), "warn", 8000);
       return;
@@ -563,8 +564,14 @@ magpie.plugin("library", (ctx) => {
   // (#1896). An agent's own skills in the library's way are one row for
   // the agent, settled together, not a write that failed: Try again, which
   // can't change them, is offered only beside a write that did fail.
+  // The reader can take the failures off the page (#3745): they are theirs
+  // to read, and a failure reported later says itself again. Closing says
+  // nothing about them, so the item keeps the mark that says why.
+  let dismissed = ""; // the write failures the reader closed, as failuresKey joins them
+  const failuresKey = (list) => list.filter((p) => !p.own).map((p) => [p.agent, p.what, p.error].join("\u0000")).sort().join("\u0001");
   function problemsCard() {
-    const list = lib.problems || [];
+    let list = lib.problems || [];
+    if (dismissed && failuresKey(list) === dismissed) list = list.filter((p) => p.own);
     if (!list.length) return null;
     const here = list.filter((p) => !problemTab(p.what) || problemTab(p.what) === tab);
     const away = {};
@@ -586,6 +593,11 @@ magpie.plugin("library", (ctx) => {
       const again = button(t("Try again"), "action", () => change("all/sync", {}));
       again.title = t("Writes the library into every agent again");
       ttl.append(again);
+      const close = button("", "lib-x", () => { dismissed = failuresKey(lib.problems || []); render(); });
+      close.append(svg("M4.5 4.5l7 7M11.5 4.5l-7 7", 11, 1.6));
+      close.setAttribute("aria-label", t("Dismiss write error"));
+      close.title = t("Dismiss write error");
+      ttl.append(close);
     }
     card.append(ttl);
     const ul = el("ul");
