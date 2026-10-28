@@ -2229,7 +2229,9 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 			record = cappedRecord(held)
 		}
 		if d := time.Until(back); d > 0 {
-			w.Header().Set("Retry-After", strconv.Itoa(int(d.Seconds())+1))
+			// held quota rest is magpie's own and can be lifted by Try now:
+			// use a short Retry-After so agents don't wait out the full rest
+			w.Header().Set("Retry-After", "1")
 		}
 		call.Status, call.Error = 429, record
 		writeError(w, from, 429, msg)
