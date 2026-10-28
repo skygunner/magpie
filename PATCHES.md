@@ -66,15 +66,16 @@ Each round:
 8. Accept: healthy, 401/200 auth pair, model count equal before/after, a
    real `group/fast-cheap` request 200. Push `prod` and the tag.
 
-## Carried patches (as of v0.1.1840-p1, 2026-10-28)
+## Carried patches (as of v0.1.1900-p1, 2026-10-28)
 
-Checked against v0.1.1840 (2026-10-28): none absorbed, ten patches
-carried (#3948 joined at 0.1.1767-p3). The merge had two conflicts, both
-mechanical: the `Provider` literal gained upstream's `CapStop`,
-`CapCareful` and `PriceRate` beside this line's `ModelCooldown`, and the
-usage plugin's `i18n.js` gained upstream lines after each of the four
-language blocks #3948 extends — both sides kept. The #3487
-and #3788 issues gained comments in the previous round: both are our own
+Checked against v0.1.1900 (2026-10-28): none absorbed, ten patches
+carried (#3948 joined at 0.1.1767-p3). The merge was clean — no
+conflicts. Upstream refactored the gateway's internals this range: the
+guided-grammar refusal moved to `format.go`, protocol-error recording
+and the model-cooldown policy into `gateway.go`/`routing.go`, cooldown
+span handling into `provider/group.go`; every carried fix's semantics
+land in its new home and the regression battery passes there. The #3487
+and #3788 issues gained comments in an earlier round: both are our own
 integration announcements (b6f71ebd and the #3948 split), no rework. #3487's source also gained `b6f71ebd`
 (`fix/3487-quota-span-fixture-1767`): a one-line test-fixture repair for
 `TestQuotaSpanCarriesEveryWindowField`, carried here as `3ea2e279`.
@@ -152,6 +153,10 @@ This section stays for the next user-directed request without a fix.
 - `prod/0.1.1840-p1` — 2026-10-28. Rolling merge of v0.1.1840; two
   mechanical conflicts (the `Provider` literal, the usage plugin's
   `i18n.js`), none absorbed, same ten patches.
+- `prod/0.1.1900-p1` — 2026-10-28. Rolling merge of v0.1.1900 (93
+  commits); clean merge, none absorbed, same ten patches. Upstream
+  refactored gateway internals (format/gateway/routing split); the
+  carried fixes' regressions pass at their new homes.
 
 ## Non-streaming SSE regression follow-up (2026-10-28)
 
