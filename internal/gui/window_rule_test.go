@@ -48,6 +48,104 @@ func TestFitRoom(t *testing.T) {
 	}
 }
 
+// The window opens where it was last left (#2785), not centred: the place it
+// is moved to is kept as it settles, and used again. One left on a screen
+// since unplugged opens centred, where its title bar is in reach, rather than
+// off every screen; screens not looked at yet are unknown, not gone. A file
+// from an older magpie, or a place short of x and y, is no place.
+func TestMainWindowKeepsItsPlace(t *testing.T) {
+	screens := []desk{
+		{"built-in", [4]int{0, 0, 1728, 1084}},
+		{"left", [4]int{-1280, 0, 1280, 1024}},
+	}
+	var s settings.Settings
+	if !settleAt(&s, -1280, 0, "left") || !slices.Equal(s.WindowAt, []int{-1280, 0}) || s.WindowScreen != "left" {
+		t.Fatalf("settleAt kept %v on %q", s.WindowAt, s.WindowScreen)
+	}
+	if _, x, y, ok := openAt(s.WindowAt, s.WindowScreen, screens); !ok || x != -1280 || y != 0 {
+		t.Errorf("openAt = %d, %d, %v; want -1280, 0, true", x, y, ok)
+	}
+	if settleAt(&s, -1280, 0, "left") {
+		t.Errorf("settleAt changed a place it had kept: %v %q", s.WindowAt, s.WindowScreen)
+	}
+	if !settleAt(&s, 100, 50, "built-in") {
+		t.Errorf("settleAt kept nothing of a place moved to: %v", s.WindowAt)
+	}
+	// the screen that place is on unplugged, the first one left
+	if _, _, _, ok := openAt(s.WindowAt, s.WindowScreen, screens[1:]); ok {
+		t.Errorf("openAt = a place on a screen that has gone; want centred")
+	}
+	// just past its right edge, and its last point
+	if _, _, _, ok := openAt([]int{0, 0}, "", screens[1:]); ok {
+		t.Error("openAt kept a place past the screen's right edge")
+	}
+	if _, _, _, ok := openAt([]int{-1, 1023}, "", screens[1:]); !ok {
+		t.Error("openAt lost a place on the screen's last point")
+	}
+	if _, x, y, ok := openAt([]int{100, 50}, "", nil); !ok || x != 100 || y != 50 {
+		t.Errorf("openAt with no screens looked at = %d, %d, %v; want the place kept", x, y, ok)
+	}
+	for _, saved := range [][]int{nil, {5}} {
+		if _, _, _, ok := openAt(saved, "", screens); ok {
+			t.Errorf("openAt(%v) = a place, want centred", saved)
+		}
+	}
+}
+
+// Of two screens, the window opens on the one it was left on (#2785): the
+// screen is kept with the place (settings.WindowScreen), and the screen it
+// was on is the one chosen while it is still attached and its work area still
+// holds the place. When it is gone, or no longer reaches the place, the place
+// is used from any screen that still holds it; when none does, it opens
+// centred.
+func TestMainWindowOpensOnItsMonitor(t *testing.T) {
+	builtIn := desk{"display-1", [4]int{0, 0, 1728, 1084}}
+	left := desk{"display-2", [4]int{-1280, 0, 1280, 1024}}
+	screens := []desk{builtIn, left}
+	var s settings.Settings
+	if !settleAt(&s, -1000, 120, "display-2") || !slices.Equal(s.WindowAt, []int{-1000, 120}) || s.WindowScreen != "display-2" {
+		t.Fatalf("settleAt kept %v on %q; want -1000, 120 on display-2", s.WindowAt, s.WindowScreen)
+	}
+	if id := deskOf(screens, -1000, 120); id != "display-2" {
+		t.Errorf("deskOf = %q, want display-2", id)
+	}
+	if id := deskOf(screens, -4000, 0); id != "" {
+		t.Errorf("deskOf = %q off every screen, want none", id)
+	}
+	if at, x, y, ok := openAt(s.WindowAt, s.WindowScreen, screens); !ok || at.id != "display-2" || x != -1000 || y != 120 {
+		t.Errorf("openAt = %q, %d, %d, %v; want display-2 there", at.id, x, y, ok)
+	}
+	// both screens hold the place, as the platform may report overlapping
+	// work areas: the one it was on wins over the one listed first
+	over := []desk{{builtIn.id, [4]int{-1200, 0, 1728, 1084}}, left}
+	if at, _, _, ok := openAt(s.WindowAt, s.WindowScreen, over); !ok || at.id != "display-2" {
+		t.Errorf("openAt = %q, want the screen it was on (display-2)", at.id)
+	}
+	// that screen renamed by the platform, still where it was: the place is
+	// kept, on the screen that holds it now
+	renamed := []desk{builtIn, {"3", [4]int{-1280, 0, 1280, 1024}}}
+	if at, x, y, ok := openAt(s.WindowAt, s.WindowScreen, renamed); !ok || at.id != "3" || x != -1000 || y != 120 {
+		t.Errorf("openAt = %q, %d, %d, %v; want the place on screen 3", at.id, x, y, ok)
+	}
+	// that screen gone, and the remaining one does not reach the place
+	if _, _, _, ok := openAt(s.WindowAt, s.WindowScreen, screens[:1]); ok {
+		t.Error("openAt kept a place no screen it has now holds")
+	}
+	// that screen still here but made smaller, off the place: centred
+	smaller := []desk{builtIn, {"display-2", [4]int{-800, 0, 800, 1024}}}
+	if _, _, _, ok := openAt(s.WindowAt, s.WindowScreen, smaller); ok {
+		t.Error("openAt kept a place the remembered screen no longer holds")
+	}
+	// a place kept before the screen was (an older file): the point alone
+	if at, x, y, ok := openAt(s.WindowAt, "", screens); !ok || at.id != "display-2" || x != -1000 || y != 120 {
+		t.Errorf("openAt = %q, %d, %d, %v; want the place on display-2", at.id, x, y, ok)
+	}
+	// no screen holds it
+	if _, _, _, ok := openAt([]int{-4000, 0}, "display-2", screens); ok {
+		t.Error("openAt kept a place off every screen")
+	}
+}
+
 // The window is kept as it settles: maximised or not, and the size it is
 // restored to. Maximised, the size kept stays the one the user gave it, so
 // it opens maximised and restores to that size (on a MacBook: zoomed last,

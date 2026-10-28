@@ -289,6 +289,7 @@ func TestSettingsPageSaveKeepsWhatOtherPagesSet(t *testing.T) {
 	names := setPerModel(t, &want, "openai/gpt-5-mini")
 	want.Visible = map[string][]string{"code": {"openai/gpt-5-mini"}}
 	want.LANKey, want.TextSize = "magpie-lan", 125
+	want.WindowAt, want.WindowScreen = []int{120, 90}, "display-2"
 	if err := Save(want); err != nil {
 		t.Fatal(err)
 	}
@@ -301,6 +302,7 @@ func TestSettingsPageSaveKeepsWhatOtherPagesSet(t *testing.T) {
 	cur := Load()
 	in.AgentOrder, in.AgentsHidden, in.AgentsShown = cur.AgentOrder, cur.AgentsHidden, cur.AgentsShown
 	in.Window = cur.Window
+	in.WindowAt, in.WindowScreen = cur.WindowAt, cur.WindowScreen
 	in.Visible = cur.Visible
 	CarryPerModel(&in, &cur)
 	in.LAN, in.LANKey = cur.LAN, cur.LANKey
@@ -324,7 +326,7 @@ func TestSettingsPageSaveKeepsWhatOtherPagesSet(t *testing.T) {
 			t.Errorf("%s was lost: %v", name, g.Interface())
 		}
 	}
-	if !reflect.DeepEqual(got.Visible, want.Visible) || got.LANKey != want.LANKey || got.TextSize != want.TextSize {
+	if !reflect.DeepEqual(got.Visible, want.Visible) || got.LANKey != want.LANKey || got.TextSize != want.TextSize || !slices.Equal(got.WindowAt, want.WindowAt) || got.WindowScreen != want.WindowScreen {
 		t.Fatalf("the rest of what other pages keep was lost: %+v", got)
 	}
 }

@@ -1306,7 +1306,9 @@ func Handler(w Windows, gw *gateway.Server) http.Handler {
 			in.ReduceMotion = cur.ReduceMotion
 		}
 		in.AgentOrder, in.AgentsHidden, in.AgentsShown = cur.AgentOrder, cur.AgentsHidden, cur.AgentsShown
-		in.Window, in.WindowMaximised = cur.Window, cur.WindowMaximised // the window's own, as it was last resized
+		// the window's own: its size, the place and screen it was last left
+		// at, and whether it was maximised
+		in.Window, in.WindowAt, in.WindowScreen, in.WindowMaximised = cur.Window, cur.WindowAt, cur.WindowScreen, cur.WindowMaximised
 		// and what other pages keep here: which models an agent is shown, and
 		// everything the user said of a model anywhere else in the app, set on
 		// its own. The per-model maps are carried whole rather than named one
