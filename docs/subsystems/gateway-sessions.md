@@ -406,6 +406,19 @@ reporter's real wire files), `TestCodeBuddyCalls`, `TestWorkBuddyCalls*`,
 `TestPiCalls*` (Pi 1.1.0's and omp 18.9.1's own files) and
 `TestWSLSessionsListed`.
 
+MiniMax Code's sessions are on the Sessions page from the same `messages.jsonl`
+its calls are read from (`minimaxSessionFiles`,
+[`minimax.go`](../../internal/sessions/minimax.go), #2301), each under the
+`mvs_` id its calls carry, so Usage's per-session rows name the session the
+page lists. A user message is what was typed, the prompt taken after MiniMax
+Code's `<system-reminder>` wrapper, and an assistant message's usage is the
+row's tokens and models; the other generations of a history `messages*.jsonl`
+the calls reader counts are not counted here, so a reply copied into one is
+not counted twice. The folder names neither the folder the session ran in nor
+a resume command, so a row is listed with what it spent and the page says
+magpie can list it but not resume or delete it, and MiniMax Code is not in
+`Deletable`. Verification: `TestMiniMaxCodeSessionsListed`.
+
 Antigravity CLI's (agy's) conversations are sessions too (RickyWei on
 Discord): one per `brain/<conversation id>/` of `~/.gemini/antigravity-cli`,
 read from the same `transcript_full.jsonl` its calls are (`agyFiles`,

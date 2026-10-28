@@ -50,24 +50,7 @@ const mcodeGateway = "custom_provider:magpie"
 // any other generation of it the session's history-catalog.json keeps
 // beside it (messages*.jsonl). A reply copied into another generation keeps
 // its message_id, and Calls counts an id once.
-func minimaxCallFiles() []file {
-	var out []file
-	walkLinked(minimaxSessions(), func(p string, d os.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
-			return nil
-		}
-		name := d.Name()
-		if !strings.HasPrefix(name, "messages") || !strings.HasSuffix(name, ".jsonl") {
-			return nil
-		}
-		f := file{agent: "minimax-code", key: "minimax-code:" + minimaxSessionID(filepath.Base(filepath.Dir(p))), path: p, main: true}
-		if stat(&f) {
-			out = append(out, f)
-		}
-		return nil
-	})
-	return out
-}
+func minimaxCallFiles() []file { return minimaxMessagesFiles(true) }
 
 // minimaxSessionID is a session folder's session id: the base64 after
 // "session_" (mvs_…), or the folder's name when it isn't that.
