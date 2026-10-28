@@ -43,14 +43,12 @@ type QuotaWindow struct {
 	// Amount of Limit is the window's own count in Unit, when the vendor
 	// counts it so (WorkBuddy's credits): Used is Amount as a share of
 	// Limit. The GUI says it as used or left, as it says the share (#659).
+	// An amount of 0 is what a count left out reads as (upstream's
+	// plugins#468 model, which took #3487's point over), so a window with
+	// a limit and no count says its text, never a full allowance.
 	Amount float64 `json:"amount,omitempty"`
 	Limit  float64 `json:"limit,omitempty"`
 	Unit   string  `json:"unit,omitempty"`
-	// AmountUnknown: the vendor gave the window a limit but no count of
-	// what was used (a plugin's "amount": null) — Amount's 0 is not known,
-	// not nothing used, so the count says the vendor's own words instead
-	// (#3487).
-	AmountUnknown bool `json:"amountUnknown,omitempty"`
 	// RunsOutAt is when the soonest of what is left is lost, and RunsOut
 	// how much (in Unit), when it runs out apart from the window's reset:
 	// WorkBuddy's credits come in packages that each end on their own
@@ -1267,7 +1265,7 @@ func compactNumber(n float64) string {
 // "355 / 500 credits" used, or what is left of it when left (#659); the
 // vendor's Display when it doesn't count in amounts.
 func (w QuotaWindow) Count(left bool) string {
-	if w.Limit <= 0 || w.AmountUnknown {
+	if w.Limit <= 0 || !(w.Amount > 0) {
 		return w.Display
 	}
 	n := w.Amount

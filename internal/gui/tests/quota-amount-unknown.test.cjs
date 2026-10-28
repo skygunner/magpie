@@ -15,7 +15,7 @@ const assets = path.resolve(__dirname, "../assets");
 const resetsAt = new Date(Date.now() + 12 * 3600e3).toISOString();
 const quotas = [
   { provider: "cloudflare-workers-ai", name: "Workers AI", icon: "generic", plan: "Free", user: "a", windows: [
-    { name: "Daily", used: 0, resetsAt, limit: 10000, unit: "Neurons", amountUnknown: true },
+    { name: "Daily", used: 0, resetsAt, limit: 10000, unit: "Neurons" }, // no amount: a count left out reads as 0 (upstream's plugins#468 model)
   ] },
   { provider: "workbuddy", name: "WorkBuddy", icon: "workbuddy-color", plan: "Free", user: "b", windows: [
     { name: "Credits", used: 71, resetsAt, amount: 3550, limit: 5000, unit: "credits" },

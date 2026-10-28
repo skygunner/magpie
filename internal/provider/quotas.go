@@ -136,11 +136,8 @@ type QuotaSpan struct {
 	// counts it so ("credits")
 	Amount float64 `json:"amount,omitempty"`
 	Limit  float64 `json:"limit,omitempty"`
-	// AmountUnknown: the vendor gave the window a limit but no count of
-	// what was used; the count says the vendor's own words instead (#3487)
-	AmountUnknown bool   `json:"amountUnknown,omitempty"`
-	Unit          string `json:"unit,omitempty"`
-	Pool          string `json:"pool,omitempty"` // the shared pool the window draws on ("Gemini")
+	Unit   string  `json:"unit,omitempty"`
+	Pool   string  `json:"pool,omitempty"` // the shared pool the window draws on ("Gemini")
 	// RunsOutAt is when the soonest of what is left is lost, apart from
 	// the reset, and RunsOut how much (QuotaWindow.RunsOutAt): WorkBuddy's
 	// credits come in packages that each end on their own day, and a free
@@ -206,7 +203,7 @@ func quotaReport(subs, plans, balances []SubscriptionQuota, now time.Time) []Quo
 			// as the usage page shows them
 			for _, w := range PooledWindows(q.Windows) {
 				s := QuotaSpan{Unlimited: w.Unlimited, Name: w.Name, Used: w.Used, Remaining: max(0, 100-w.Used), ResetsAt: w.ResetsAt, Display: w.Display, Text: w.Text,
-					Amount: w.Amount, Limit: w.Limit, Unit: w.Unit, AmountUnknown: w.AmountUnknown, Pool: w.Pool, RunsOutAt: w.RunsOutAt, RunsOut: w.RunsOut, Balance: w.Balance, Holds: w.Holds, HoldsWhy: w.HoldsWhy}
+					Amount: w.Amount, Limit: w.Limit, Unit: w.Unit, Pool: w.Pool, RunsOutAt: w.RunsOutAt, RunsOut: w.RunsOut, Balance: w.Balance, Holds: w.Holds, HoldsWhy: w.HoldsWhy}
 				if s.ResetsAt == nil && w.ResetSecs > 0 {
 					t := now.Add(time.Duration(w.ResetSecs) * time.Second)
 					s.ResetsAt = &t

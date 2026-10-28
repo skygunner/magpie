@@ -22,7 +22,7 @@ func TestCreditsRunningOutReachTheQuotaReport(t *testing.T) {
 	// no resetsAt, the soonest package's end in runsOutAt
 	used := 100 * 282 / 3400.0
 	u := plugin.Usage{Plan: "Free plan", Windows: []plugin.UsageWindow{{Name: "Credits", Used: &used,
-		Display: "282 / 3400", Amount: fptr(282), Limit: 3400, Unit: "credits", RunsOutAt: "2026-10-30T17:34:42.000Z", RunsOut: 18.44}}}
+		Display: "282 / 3400", Amount: 282, Limit: 3400, Unit: "credits", RunsOutAt: "2026-10-30T17:34:42.000Z", RunsOut: 18.44}}}
 	q := quotaOfPlugin(SubscriptionQuota{Kind: "subscription", Provider: "workbuddy", User: "133****0660"}, u)
 
 	got := quotaReport([]SubscriptionQuota{q}, nil, nil, now)
@@ -84,7 +84,7 @@ func TestQuotaSpanCarriesEveryWindowField(t *testing.T) {
 	// and what is carried is copied: a window with each set says each
 	at := time.Date(2026, 10, 30, 17, 0, 0, 0, time.UTC)
 	bal := 6291.0
-	full := QuotaWindow{Balance: &bal, Unlimited: true, Name: "Credits", Used: 40, ResetsAt: &at, Display: "1 / 2", Text: true, Amount: 1, Limit: 2, Unit: "credits", AmountUnknown: true,
+	full := QuotaWindow{Balance: &bal, Unlimited: true, Name: "Credits", Used: 40, ResetsAt: &at, Display: "1 / 2", Text: true, Amount: 1, Limit: 2, Unit: "credits",
 		RunsOutAt: &at, RunsOut: 3, Pool: "P", Holds: &WindowHolds{}, HoldsWhy: "x"}
 	got := quotaReport([]SubscriptionQuota{{Provider: "p", Windows: []QuotaWindow{full}}}, nil, nil, at)
 	b, _ := json.Marshal(got[0].Windows[0])

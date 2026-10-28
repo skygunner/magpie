@@ -140,7 +140,7 @@ line; agents connected to magpie lose it when it quits.
 | ZCode        | `~/.zcode/v2/provider_config.json` and `config.json`, under the data folder moved in ZCode's settings (`dataBaseDir`); `~` is `$HOME` when set, on Windows too, as ZCode reads it before `%USERPROFILE%` | provider (magpie's models in ZCode's picker) |
 | WorkBuddy    | `~/.workbuddy/models.json` (`$WORKBUDDY_CONFIG_DIR`) | provider (magpie's models in WorkBuddy's picker) |
 | WorkBuddy AI | `~/.workbuddy-ai/models.json` (the international build) | provider (magpie's models in WorkBuddy AI's picker) |
-| CodeBuddy Code | `~/.codebuddy/models.json` (`$CODEBUDDY_CONFIG_DIR`), `settings.json` | model (magpie's models in its list; the session model) |
+| CodeBuddy (CodeBuddy Code CLI, CodeBuddy IDE) | `~/.codebuddy/models.json` (`$CODEBUDDY_CONFIG_DIR` for the CLI), `settings.json` | model (magpie's models in its list; the CLI session's model; the IDE picks from the list) |
 | Raycast      | `~/.config/raycast/ai/providers.yaml` in the user's folder, on Mac and Windows | provider (a `magpie` entry in Raycast AI's Custom Providers, magpie's models in its model picker; Raycast Pro; the user's providers, `tools` and comments kept) |
 | Kiro Crew    | `~/.kiro/crew/config.json` (`$KIROCREW_HOME`; `config.local.json` over it is left alone) | provider, harness (`agent.acp_backend`, and `agent.member_acp_backend` for a harness that can dispatch: an agent connected to magpie, so its models are magpie's: the one Crew is set to is connected along with it when it isn't yet, and disconnected with it again; the user's value is put back on Disconnect) |
 | OpenPencil   | `openpencil/settings.json` in the config folder: `~/Library/Application Support` (macOS), `$XDG_CONFIG_HOME` or `~/.config` (Linux), `%APPDATA%` (Windows) | provider (a `magpie` entry in its `builtin_agents`, magpie's models in its chat's model picker; the user's entries and settings kept; refused while OpenPencil runs, as it writes the file back when it quits) |
@@ -874,7 +874,9 @@ shows them, so magpie shows no plan usage for these keys.
 
 Google Vertex AI (`google-vertex`), which Google's documentation now calls
 Gemini Enterprise Agent Platform, serves Google's Gemini models from your own
-Google Cloud project, which is billed for them. It takes no API key: each
+Google Cloud project, which is billed for them. It serves the
+[partner and open models](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/maas/call-open-model-apis)
+too, such as DeepSeek, GLM and gpt-oss. It takes no API key: each
 request is signed with a token minted from your Google credentials. First turn
 on the Agent Platform API (`aiplatform.googleapis.com`) in the project (billing
 has to be on there), then sign in with `gcloud auth application-default login`
@@ -910,7 +912,7 @@ so magpie gives each location the models it answered with on 2026-10-06
 
 | Location | Models |
 | --- | --- |
-| `global` | `gemini-3.8-flash`, `gemini-3.7-flash`, `gemini-3.6-flash`, `gemini-3.5-flash`, `gemini-3.5-flash-lite`, `gemini-4-argon`, `gemini-3.1-pro-preview`, `gemini-3.1-pro-preview-customtools`, `gemini-3.1-flash-lite`, `gemini-3-flash-preview`, `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite` |
+| `global` | `gemini-3.8-flash`, `gemini-3.7-flash`, `gemini-3.6-flash`, `gemini-3.5-flash`, `gemini-3.5-flash-lite`, `gemini-4-argon`, `gemini-3.1-pro-preview`, `gemini-3.1-pro-preview-customtools`, `gemini-3.1-flash-lite`, `gemini-3-flash-preview`, `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite`, `deepseek-ai/deepseek-v4.1-flash-maas`, `zai-org/glm-5.2-maas`, `openai/gpt-oss-120b-maas` |
 | `us`, `eu` | `gemini-3.8-flash`, `gemini-3.7-flash`, `gemini-3.6-flash`, `gemini-3.5-flash`, `gemini-3.5-flash-lite`, `gemini-3.1-flash-lite` |
 | A region | `gemini-2.5-pro`, `gemini-2.5-flash`, `gemini-2.5-flash-lite` |
 
@@ -924,6 +926,26 @@ magpie provider models google-vertex all     # back to the location's list
 
 `magpie provider set google-vertex location=…` keeps the models picked, so pick
 again after a move.
+
+A partner model is one whose id names its publisher before a slash, as
+`deepseek-ai/deepseek-v4.1-flash-maas` does. magpie asks it on Google's
+OpenAI-compatible chat completions in your project
+(`…/locations/<location>/endpoints/openapi/chat/completions`) with the same
+credentials, and asks a Gemini model on generateContent, with nothing to set.
+The three in the `global` row are the ones Google's docs list as live there on
+2026-10-28. Another partner model (one in preview, or one Google lists later,
+such as `google/gemma-4-26b-a4b-it-maas`) is typed in under its full id, as
+any model is:
+
+```sh
+magpie provider models google-vertex gemini-3.8-flash deepseek-ai/deepseek-v4.1-flash-maas google/gemma-4-26b-a4b-it-maas
+```
+
+Turn each partner model on for the project in Model Garden first: until then
+Google refuses it. `magpie provider test google-vertex` tests Gemini, and a
+partner model is tested on its own (right-click it in the app, or
+`magpie provider test google-vertex <model>`). Claude on Vertex AI isn't
+served: it takes a request of its own (`rawPredict`), not chat completions.
 
 Google's [Priority PayGo](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/priority-paygo)
 and [Flex PayGo](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/flex-paygo)
