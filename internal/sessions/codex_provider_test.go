@@ -12,6 +12,8 @@ import (
 
 	"github.com/klauspost/compress/zstd"
 	_ "modernc.org/sqlite"
+
+	"github.com/yetone/magpie/internal/filelock"
 )
 
 // codexState makes a Codex state database with a thread's row, as Codex
@@ -165,6 +167,66 @@ func TestMoveCodexProviderPacked(t *testing.T) {
 	}
 	if want := bytes.Replace(b, []byte(`"model_provider":"custom"`), []byte(`"model_provider":"openai"`), 1); !bytes.Equal(got.Bytes(), want) {
 		t.Fatal("the compressed file wasn't moved")
+	}
+}
+
+// A Codex that resumed a thread keeps its rollout open to append to
+// (Codex's open_rollout_for_append), so a move that took no lock left what
+// it wrote after the move in the file the rename had put aside: a turn the
+// upstream answered was in neither the rollout nor what Codex sent after
+// its next resume (#3751). A move holds the thread as Codex holds one it
+// archives: a thread a Codex has open is left as it was, refused as one
+// written to in the last minute, and moved once Codex has let go.
+func TestMoveCodexProviderLeavesAnOpenThread(t *testing.T) {
+	_, codex := manageSetup(t)
+	main := filepath.Join(codex, "sessions", "2026", "09", "20", "rollout-2026-09-20T15-48-28-"+mgCX+".jsonl")
+	b, err := os.ReadFile(main)
+	if err != nil {
+		t.Fatal(err)
+	}
+	orig := bytes.Replace(b, []byte(`"model_provider":"openai"`), []byte(`"model_provider":"custom"`), 1)
+	old := time.Now().Add(-24 * time.Hour).Truncate(time.Second)
+	os.WriteFile(main, orig, 0o644)
+	os.Chtimes(main, old, old)
+	db := codexStateDB(t, codex, mgCX, "custom")
+
+	// a Codex that resumed the thread holds its writer lock
+	locks := filepath.Join(codex, "thread-writer-locks")
+	if err := os.MkdirAll(locks, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	lf, err := os.OpenFile(filepath.Join(locks, mgCX+".lock"), os.O_CREATE|os.O_RDWR, 0o644)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lf.Close()
+	if got, err := filelock.TryLock(lf); !got || err != nil {
+		t.Fatalf("lock: %v %v", got, err)
+	}
+	if _, err := MoveCodexProvider(mgCX, "magpie"); !errors.Is(err, ErrActive) {
+		t.Fatalf("err %v, want ErrActive", err)
+	}
+	if b, _ := os.ReadFile(main); !bytes.Equal(b, orig) {
+		t.Fatal("the file of a thread a Codex has open was changed")
+	}
+	if fi, _ := os.Stat(main); !fi.ModTime().Equal(old) {
+		t.Errorf("its time became %v, want %v", fi.ModTime(), old)
+	}
+	if p, _, _ := threadProvider(t, db, mgCX); p != "custom" {
+		t.Fatalf("its row moved to %q, its files didn't", p)
+	}
+
+	// with Codex's lock let go, the next move goes through, the file it
+	// left behind being no lock at all
+	filelock.Unlock(lf)
+	if _, err := MoveCodexProvider(mgCX, "magpie"); err != nil {
+		t.Fatal(err)
+	}
+	if p, _, _ := threadProvider(t, db, mgCX); p != "magpie" {
+		t.Fatalf("its row is %q after the move", p)
+	}
+	if b, _ := os.ReadFile(main); !bytes.Contains(b, []byte(`"model_provider":"magpie"`)) {
+		t.Fatal("the file wasn't moved")
 	}
 }
 
