@@ -405,6 +405,19 @@ var (
 	// via provider upstream" (#3039, Welkon's relay), or OmniRoute's "All
 	// credentials for the requested model are cooling down"
 	modelCooling = regexp.MustCompile(`(?i)credentials for (?:the requested )?model .{0,200}?cooling down`)
+	// modelRateWords are how a vendor says a rate limit is on the model
+	// alone, not the key or account: SophNet's "Model tpm limit exceeded"
+	// for one model of a key (its console limits each model's tokens a
+	// minute), while the key's other models are asked as before (#3619).
+	// The window between the words stays inside one string: a " or a brace
+	// ends it, so an envelope field after the message ("type":"rate_limit_
+	// error") can't bridge "model" in "free-models-per-min" to "rate" and
+	// read OpenRouter's account-wide free-model limit as one model's
+	// (#153). A limit on the model is not one on the key, so the key rests
+	// only if a second distinct model on it also 429s (rateRest counts the
+	// key, and the model count climbs its own ladder in the default
+	// branch).
+	modelRateWords = regexp.MustCompile(`(?i)(model[^"{}\n]{0,40}(limit|quota|tpm|rpm|rate|throttl)|(?:limit|quota|tpm|rpm|rate|throttl)[^"{}\n]{0,24}(?:for|on) (?:the )?model)`)
 	// clineFreeLimit: Cline's refusal of a free model whose day's allowance
 	// is used up, 429 "Daily free limit reached on model deepseek/deepseek-
 	// v4-flash. Try again in 23h 59m", as its own clients read it (cline/
@@ -1646,6 +1659,11 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
 	if remoteModelRest(c, why, header) {
 		id, r.there = c.restID(), true
 	}
+	// a rate limit the vendor puts on the model alone is the model's:
+	// the key's other models are asked as before (#3619)
+	if why == failRate && modelRateWords.Match(wordsOf(body)) {
+		id = c.restID()
+	}
 	r.Key = id
 	if id == c.restID() {
 		r.Model = c.model
@@ -1824,6 +1842,11 @@ func backingOff(key string, now time.Time) bool {
 func (s *Server) rateRest(c candidate, header http.Header, body []byte, sharedPool bool, now time.Time) (time.Duration, string, int) {
 	id := c.restKey()
 	if c.isOpenRouterFree() && sharedPool || remoteModelRest(c, failRate, header) || modelCooledDown(failRate, body) {
+		id = c.restID()
+	} else if modelRateWords.Match(wordsOf(body)) {
+		// a rate limit the vendor puts on the model alone rests that
+		// model and not its key: the key's other models are asked as
+		// before (#3619)
 		id = c.restID()
 	}
 	n := 1
