@@ -54,7 +54,7 @@ func TestPluginUsage(t *testing.T) {
 			t.Fatalf("%s: %d accounts' usage, want 3: %+v", agent, len(u), u)
 		}
 		q := u["a@fake"]
-		if q.Error != "" || q.Plan != "Fake Pro" || q.Provider != "fakeco" || q.Name != "FakeCo" || len(q.Windows) != 3 {
+		if q.Error != "" || q.Plan != "Fake Pro" || q.Provider != "fakeco" || q.Name != "FakeCo" || len(q.Windows) != 4 {
 			t.Fatalf("%s: a@fake = %+v", agent, q)
 		}
 		if q.Until == nil || q.Until.Year() != 2030 || q.Renew != "auto" {
@@ -74,6 +74,13 @@ func TestPluginUsage(t *testing.T) {
 		}
 		if extra.Used != 250 || extra.Display != "$2.50" || !extra.Aside {
 			t.Fatalf("%s: extra = %+v", agent, extra)
+		}
+		// a limit with no count is not a full allowance (#3487): the
+		// plugin's "amount": null reads as 0, and the count says the
+		// vendor's words — nothing here — never a made-up share
+		if daily := q.Windows[3]; daily.Name != "Daily" || daily.Used != 0 || daily.Amount != 0 || daily.Limit != 10000 ||
+			daily.Count(false) != "" || daily.Count(true) != "" {
+			t.Fatalf("%s: daily = %+v (count %q / %q)", agent, daily, daily.Count(false), daily.Count(true))
 		}
 		// when its soonest credits are lost, and how many, through the
 		// host (#2265); one it can't read is not known
