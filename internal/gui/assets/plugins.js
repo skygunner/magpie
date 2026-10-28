@@ -897,7 +897,10 @@
       return;
     }
     const f = query.trim().toLowerCase();
-    const match = (l) => !f || [l.name, l.package, summary(l), (l.providers || []).join(" "), l.npm?.publisher || ""].join(" ").toLowerCase().includes(f);
+    // a community card says its name, its summary and magpie community, not
+    // the package and publisher all of them share (@magpie-community/opencode-…,
+    // yetone), so a search for opencode answered with the whole market (#3886)
+    const match = (l) => !f || [l.name, summary(l), (l.providers || []).join(" "), l.community ? "" : l.npm?.publisher || l.package].join(" ").toLowerCase().includes(f);
     const ls = listings.filter(match);
     // a tagged repository the market already lists is the market's card
     const listed = new Set(listings.map((l) => l.package));
