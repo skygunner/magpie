@@ -110,6 +110,10 @@ func vertexEffort(req *Request, levels []string) *Request {
 // away as one it didn't give: "Invalid thought signature.".
 var vertexSignatureRefused = regexp.MustCompile(`(?i)invalid thought signature`)
 
+// corruptedThoughtSignature is Antigravity (Code Assist) turning a call's
+// thought signature away: "Corrupted thought signature".
+var corruptedThoughtSignature = regexp.MustCompile(`(?i)corrupted thought signature`)
+
 // withoutSignatures is req with no thought signature on its calls, each of
 // which then goes to Vertex AI waved through (skipSignature); false when it
 // had none.

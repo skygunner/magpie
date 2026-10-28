@@ -5745,9 +5745,9 @@ func (s *Server) forwardTranslated(ctx context.Context, p provider.Provider, to 
 				continue
 			}
 		}
-		if p.IsVertex() && res.StatusCode == http.StatusBadRequest && vertexSignatureRefused.Match(b) {
-			// a call's signature Vertex AI won't take (a client changed
-			// it, or another API gave it, the conversation having moved):
+		if (p.IsVertex() || p.ID == "antigravity") && res.StatusCode == http.StatusBadRequest && (vertexSignatureRefused.Match(b) || corruptedThoughtSignature.Match(b)) {
+			// a call's signature Vertex AI or Antigravity won't take (a client
+			// changed it, or another API gave it, the conversation having moved):
 			// the calls waved through instead, for this request
 			if r, had := withoutSignatures(req); had {
 				req = r
