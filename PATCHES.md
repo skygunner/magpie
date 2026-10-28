@@ -66,40 +66,39 @@ Each round:
 8. Accept: healthy, 401/200 auth pair, model count equal before/after, a
    real `group/fast-cheap` request 200. Push `prod` and the tag.
 
-## Carried patches (as of v0.1.1900-p1, 2026-10-28)
+## Carried patches (as of v0.1.1948-p1, 2026-10-29)
 
-Checked against v0.1.1900 (2026-10-28): none absorbed, ten patches
-carried (#3948 joined at 0.1.1767-p3). The merge was clean — no
-conflicts. Upstream refactored the gateway's internals this range: the
-guided-grammar refusal moved to `format.go`, protocol-error recording
-and the model-cooldown policy into `gateway.go`/`routing.go`, cooldown
-span handling into `provider/group.go`; every carried fix's semantics
-land in its new home and the regression battery passes there. The #3487
-and #3788 issues gained comments in an earlier round: both are our own
-integration announcements (b6f71ebd and the #3948 split), no rework. #3487's source also gained `b6f71ebd`
-(`fix/3487-quota-span-fixture-1767`): a one-line test-fixture repair for
-`TestQuotaSpanCarriesEveryWindowField`, carried here as `3ea2e279`.
+Checked against v0.1.1948 (2026-10-29): nine patches carried as cherry-
+picks plus #3487's remainder, re-expressed at the merge (#3948 joined at
+0.1.1767-p3). Upstream `1390aa458` (community plugins#468) took #3487's
+point over its own way — a plugin window's `Amount` is a bare count
+again, where 0 is what a count left out reads as and a limit alone says
+nothing — so the carried pointer form (`d4944ace`'s `amountUnknown`
+flag) could not sit beside the type change and was taken over: this
+merge carries only what upstream lacks, the quota card and tray
+refusing to draw a full allowance for a limit with no count (`quotaCount`
+and `QuotaWindow.Count` treat an amount of 0 as not said) and the
+millisecond-span guard (`quotaSpanLimit`), plus the fake plugin's
+`Daily` (`amount: null`) window as the pipeline regression; told
+upstream in the issue. The other three conflicts kept both sides:
+`fallback.go`'s `shapeRefused`/`retryable` (our `refusedParameterList`
+beside upstream's `creditWords` guard) and the usage plugin's `i18n.js`
+(our #3948 strings beside upstream's clear-usage strings). The #3788
+issue's comments are our own integration announcements, no rework.
 
-Equivalence note for the sweep: `fix/hindsight-nonstream-cooldown`'s tip
-`b48a91bb` and `dfd128ca` are the same SSE fix on different bases — never
-pick both. This line tracks `fix/hindsight-nonstream-sse-1767`
-(v0.1.1767 base); the cooldown branch's newer tips are not picked. The
-v0.1.1734 round's sweep found #3035's fix had
-evolved on the fork (the issue's own latest comment supersedes the
-original approach): `223f9b0a` (fix/bare-request-failover) is carried
-beside `8f931a28`. The #3487 source branch's six newer commits are other
-issues' fixes and touch none of #3487's files; the other branches are
-docs-only ahead. Integration notes: at
-v0.1.1612 upstream made a plugin window's `Used` a pointer (#3650), kept
-beside #3487's pointer `Amount`; at v0.1.1670 upstream added runs-out
-spans (#3762) whose new test wrote a bare `Amount` — adapted to the
-pointer on this line.
+Equivalence notes for the sweep: `fix/hindsight-nonstream-cooldown`'s
+tip `b48a91bb` and `dfd128ca` are the same SSE fix on different bases —
+never pick both; #3788/#3791 track `fix/hindsight-nonstream-sse-1767`.
+#3035's evolved fix `223f9b0a` (fix/bare-request-failover) is carried
+beside `8f931a28`. The #3487 source branch's newer commits are other
+issues' fixes touching none of its files; the nvidia branch's extra
+commit is docs-only.
 
 | upstream | fix of record (skygunner/magpie) | source to track | what it does |
 | --- | --- | --- | --- |
 | yetone/magpie#3035 | `8f931a28` + `223f9b0a` | `fix/sensenova-grammar-refusal`, `fix/bare-request-failover` | recognize SenseNova's guided_grammar compile_grammar refusal and retry the schema as json_object; an otherwise unexplained 400/422 `Invalid request` also fails over to the next candidate, resting nothing |
 | yetone/magpie#3417 | `e75480ec` | `fix/codex-expiry-window` | Codex expiry-only resets stay inside the expiry window |
-| yetone/magpie#3487 | `d4944ace` | `fix/issue-batch-1025a` | quota card: a null amount is not a full allowance; a millisecond span is not charted as seconds |
+| yetone/magpie#3487 | merge-carried (was `d4944ace`) | `fix/issue-batch-1025a` | quota card: a limit with no count is not a full allowance — on upstream's bare-amount model (plugins#468) the card and tray treat an amount of 0 as not said; a millisecond span is not charted as seconds (`quotaSpanLimit`, upstream lacks it) |
 | yetone/magpie#3635 | `ad3badd3` + `4f7e63a8` | `fix/nvidia-parameters-routing` | NVIDIA parameter-list repair keeps reasoning effort; duplicate effort controls stay aligned through routing |
 | yetone/magpie#3636 | `0d3dca3d` | `fix/nvidia-parameters-routing` | an explicit unsupported-parameter 400 fails over to the group's remaining members |
 | yetone/magpie#3624 | `c931166a` | `fix/nvidia-parameters-routing` | Usage → View routing reveals the selected trace, not off-screen |
@@ -157,6 +156,11 @@ This section stays for the next user-directed request without a fix.
   commits); clean merge, none absorbed, same ten patches. Upstream
   refactored gateway internals (format/gateway/routing split); the
   carried fixes' regressions pass at their new homes.
+- `prod/0.1.1948-p1` — 2026-10-29. Rolling merge of v0.1.1948 (69
+  commits); three conflicts. Upstream took #3487's semantics over
+  (bare `Amount`, plugins#468); this line now carries only its card
+  display and millisecond-span guard, re-expressed at the merge. Nine
+  cherry-picked patches unchanged.
 
 ## Non-streaming SSE regression follow-up (2026-10-28)
 
