@@ -1,8 +1,13 @@
 package gateway
 
 import (
+	"context"
 	"crypto/tls"
+	"errors"
+	"fmt"
+	"io"
 	"net/http"
+	"net/http/httptrace"
 	"time"
 
 	"github.com/yetone/magpie/internal/netproxy"
@@ -24,14 +29,84 @@ var upstreamTLS *tls.Config
 // Image generation timeout gives it (drawWithin), up to 60 minutes.
 func upstreamTransport() http.RoundTripper {
 	return drawsApart{
-		any:   codexSocket{replayable{netproxy.Dispatch(vendorTransport(upstreamHeaderWait))}},
-		draws: replayable{netproxy.Dispatch(vendorTransport(0))},
+		any:   codexSocket{replayable{writeBounded{netproxy.Dispatch(vendorTransport(upstreamHeaderWait))}}},
+		draws: replayable{writeBounded{netproxy.Dispatch(vendorTransport(0))}},
 	}
 }
 
 // upstreamHeaderWait is how long a vendor is given to begin answering a
 // request that isn't a drawing.
 var upstreamHeaderWait = 10 * time.Minute
+
+// upstreamWriteStall is how long a request's body may go untaken: the
+// transport has a chunk to write, the vendor's window has no room for it,
+// and then no room comes. A connection that is open and answers its pings
+// but has stopped reading held a request in the write phase for as long as
+// the client waited (#3191: 900s, five turns running), since
+// ResponseHeaderTimeout begins only once a request is written.
+var upstreamWriteStall = time.Minute
+
+// errWriteStalled is why a request the vendor stopped taking is let go.
+var errWriteStalled = errors.New("the vendor stopped taking the request")
+
+// writeBounded lets go of a request whose body the vendor stops taking:
+// the transport's write makes no progress against it for upstreamWriteStall
+// while its body has more to send. It is let go by its context, which ends
+// the write and gives the caller an error, so a group asks its next member
+// instead of waiting for the client to give up.
+type writeBounded struct{ http.RoundTripper }
+
+func (t writeBounded) RoundTrip(req *http.Request) (*http.Response, error) {
+	if req.Body == nil || req.Body == http.NoBody {
+		return t.RoundTripper.RoundTrip(req)
+	}
+	ctx, stop := context.WithCancelCause(req.Context())
+	defer stop(nil)
+	stall := time.AfterFunc(upstreamWriteStall, func() { stop(errWriteStalled) })
+	defer stall.Stop()
+	ctx = httptrace.WithClientTrace(ctx, &httptrace.ClientTrace{
+		// the request is written: what the vendor does before answering
+		// now is ResponseHeaderTimeout's to bound
+		WroteRequest: func(i httptrace.WroteRequestInfo) {
+			if i.Err == nil {
+				stall.Stop()
+			}
+		},
+	})
+	r := req.WithContext(ctx)
+	r.Body = &takenInTime{rc: req.Body, stall: stall}
+	if get := req.GetBody; get != nil {
+		r.GetBody = func() (io.ReadCloser, error) {
+			rc, err := get()
+			if err != nil {
+				return nil, err
+			}
+			return &takenInTime{rc: rc, stall: stall}, nil
+		}
+	}
+	res, err := t.RoundTripper.RoundTrip(r)
+	if errors.Is(context.Cause(ctx), errWriteStalled) {
+		return nil, fmt.Errorf("%s for %s", errWriteStalled, upstreamWriteStall)
+	}
+	return res, err
+}
+
+// takenInTime is a request's body as the transport takes it: a read puts
+// the stall back off, the vendor having taken more of it.
+type takenInTime struct {
+	rc    io.ReadCloser
+	stall *time.Timer
+}
+
+func (b *takenInTime) Read(p []byte) (int, error) {
+	n, err := b.rc.Read(p)
+	if n > 0 {
+		b.stall.Reset(upstreamWriteStall)
+	}
+	return n, err
+}
+
+func (b *takenInTime) Close() error { return b.rc.Close() }
 
 // vendorTransport is a transport to the vendors that gives one wait to
 // begin answering, none for 0: the request's context then bounds it.
