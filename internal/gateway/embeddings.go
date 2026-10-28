@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -250,11 +251,59 @@ func (s *Server) serveRetrieval(w http.ResponseWriter, r *http.Request, path, op
 			return
 		}
 		s.record(call)
+		if path == "/embeddings" && code == http.StatusOK {
+			b = embeddingIndices(b)
+		}
 		w.Header().Set("Content-Type", req.answerType(got))
 		w.WriteHeader(code)
 		w.Write(b)
 		return
 	}
+}
+
+// embeddingIndices fills a missing or null data[i].index with the item's
+// position (#3302): providers that serialize index omitempty (Google's
+// OpenAI-compat embeddings) drop the 0, and clients that sort by index
+// crash on the absent field. An index that is there - explicit 0, another
+// order - is kept, and anything that isn't an embeddings answer is
+// returned as it came.
+func embeddingIndices(body []byte) []byte {
+	var top map[string]json.RawMessage
+	if json.Unmarshal(body, &top) != nil || top["object"] == nil ||
+		string(top["object"]) != `"list"` || top["data"] == nil {
+		return body
+	}
+	var items []map[string]json.RawMessage
+	if json.Unmarshal(top["data"], &items) != nil {
+		return body
+	}
+	changed := false
+	for i, item := range items {
+		if item == nil {
+			continue
+		}
+		if ix, said := item["index"]; said && string(ix) != "null" {
+			continue
+		}
+		if items[i] == nil {
+			items[i] = map[string]json.RawMessage{}
+		}
+		items[i]["index"] = json.RawMessage(strconv.Itoa(i))
+		changed = true
+	}
+	if !changed {
+		return body
+	}
+	data, err := json.Marshal(items)
+	if err != nil {
+		return body
+	}
+	top["data"] = data
+	out, err := json.Marshal(top)
+	if err != nil {
+		return body
+	}
+	return out
 }
 
 // resolveRetrievalModel also finds a preset plan's embedding model by its

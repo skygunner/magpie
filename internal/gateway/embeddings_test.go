@@ -19,8 +19,9 @@ import (
 // library is a vendor with an embeddings model and a reranker; what each
 // path was sent is kept.
 type library struct {
-	mu   sync.Mutex
-	sent map[string][]string
+	mu           sync.Mutex
+	sent         map[string][]string
+	onEmbeddings string
 }
 
 func (l *library) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -36,6 +37,10 @@ func (l *library) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "application/json")
+	if r.URL.Path == "/v1/embeddings" && l.onEmbeddings != "" {
+		io.WriteString(w, l.onEmbeddings)
+		return
+	}
 	switch r.URL.Path {
 	case "/v1/embeddings":
 		if strings.Contains(string(body), "chat-model") {
