@@ -1238,6 +1238,16 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
 	if remoteModelRest(c, why, header) {
 		id = c.restID()
 	}
+	// a subscription account out of its allowance, seen through a key
+	// whose own windows magpie reads none of, is that model's alone:
+	// behind one key a relay may serve each of its models from an account
+	// of its own, so neither the vendor's words nor a guessed rest may
+	// hold the others (#2744, Goalonez: sol out of its allowance held
+	// luna, which another account behind the same gateway serves, until
+	// sol's reset)
+	if keyModelOnlyQuota(c, why, header, body) {
+		id = c.restID()
+	}
 	r.Key = id
 	if id == c.restID() {
 		r.Model = c.model
@@ -1288,6 +1298,40 @@ func remoteModelRest(c candidate, why string, header http.Header) bool {
 	}
 	return why == failQuota || why == failCredit || why == failRate || why == failRestricted || why == failVerify
 }
+
+// keyModelOnlyQuota says the refusal is a subscription account's own
+// allowance (subscriptionQuota), seen through a key whose own allowance
+// magpie reads no windows for: behind one key a relay may serve each of
+// its models from an account of its own, so the account out rests that
+// model alone (#2744, Goalonez's own gateway fronts a plus account for sol
+// and another for luna, and sol out of its allowance held luna, "not
+// asked again before 21:50", until sol's reset). A key whose windows
+// magpie reads, or whose own limit the vendor named (keyLimited's
+// header), is out whole, and rests as it is.
+func keyModelOnlyQuota(c candidate, why string, header http.Header, body []byte) bool {
+	if why != failQuota || c.p.Account != nil || !subscriptionQuota(body) {
+		return false
+	}
+	if header.Get(remoteKeyLimitHeader) != "" || header.Get(keyLimitThereHeader) != "" {
+		return false
+	}
+	_, known := c.allowance()
+	return !known
+}
+
+// subscriptionQuota says the refusal is a subscription account's own
+// allowance rather than a key's: Codex's usage_limit_reached, the words it
+// answers with (a relay may pass on the message alone), Claude Code's
+// usage limit reached|<unix>, or Gemini's RESOURCE_EXHAUSTED, whose quota
+// counts a model at a time (quotaCodes).
+func subscriptionQuota(body []byte) bool {
+	b := wordsOf(body)
+	return quotaCodes.Match(b) || codexUsageLimit.Match(b)
+}
+
+// codexUsageLimit is how ChatGPT words the refusal quotaCodes'
+// usage_limit_reached codes.
+var codexUsageLimit = regexp.MustCompile(`(?i)the usage limit has been reached`)
 
 // restSlow counts a slow start — let go for no first token in its group's
 // FirstToken — against the candidate's model on its account or key
