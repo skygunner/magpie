@@ -596,7 +596,8 @@ const noReasoning = " "
 // goes in reasoning_content alone (asReasoningContent). A message with
 // reasoning_content of its own keeps it, any other reply is left as it is
 // (DeepSeek doesn't ask for its thinking), and a body with no tool calls
-// comes back byte for byte.
+// comes back byte for byte. Both spellings on one message are folded by
+// foldReasoningAliases, which passthrough runs after this.
 func withReasoningOnToolTurns(body []byte) []byte {
 	afterTool := false
 	return editMessages(body, []string{"tool_calls"}, func(m map[string]json.RawMessage) bool {
@@ -639,6 +640,32 @@ func withReasoningOnToolTurns(body []byte) []byte {
 func asReasoningContent(m map[string]json.RawMessage, think string) {
 	m["reasoning_content"], _ = marshalPlain(think)
 	delete(m, "reasoning")
+}
+
+// foldReasoningAliases leaves one thinking spelling on a message that
+// carries both reasoning_content (DeepSeek's, which withReasoningOnToolTurns
+// writes) and reasoning (OpenRouter's): reasoning_content stays, the one
+// chatReplaysReasoning exists to send. A self-hosted DeepSeek engine's serde
+// reads the two as one field and turns the whole request away as
+// "duplicate field `reasoning`" (#3165, ggbdpq), and two shapes reach it
+// with the pair: a tool turn whose reasoning_content the client sent itself,
+// which withReasoningOnToolTurns leaves as it came, and an ordinary message
+// in a body with no tool calls, which it leaves byte for byte. The serde
+// names the second spelling of the field as the duplicate, so reasoning goes
+// even beside an empty reasoning_content; the issue's engine was shown
+// refusing the pair with text in both. reasoning_details stays: it is a list
+// of typed entries, not another name for the text (asReasoningContent).
+func foldReasoningAliases(body []byte) []byte {
+	return editMessages(body, []string{"reasoning"}, func(m map[string]json.RawMessage) bool {
+		if _, echoed := m["reasoning"]; !echoed {
+			return false
+		}
+		if _, own := m["reasoning_content"]; !own {
+			return false
+		}
+		delete(m, "reasoning")
+		return true
+	})
 }
 
 // silentAssistantsOut is withoutSilentAssistants for a Chat request
