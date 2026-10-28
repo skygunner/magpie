@@ -265,6 +265,14 @@ var (
 	// answer ("切换其他模型", "switch to the other models"): its limit is
 	// the model's, and the model alone rests
 	otherModels = regexp.MustCompile(`(?i)switch(?:ing)? to (?:the )?other models?|切换(?:到)?其他模型`)
+	// modelRateWords are how a vendor says a rate limit is on the model
+	// alone, not the key or account: SophNet's "Model tpm limit exceeded"
+	// for one model of a key (its console limits each model's tokens a
+	// minute), while the key's other models are asked as before (#3619).
+	// A limit on the model is not one on the key, so the key rests only if
+	// a second distinct model on it also 429s (rateRest counts the key,
+	// and the model count climbs its own ladder in the default branch).
+	modelRateWords = regexp.MustCompile(`(?i)(model.{0,40}(limit|quota|tpm|rpm|rate|throttl)|(limit|quota|tpm|rpm|rate|throttl).{0,40}model)`)
 	// clineFreeLimit: Cline's refusal of a free model whose day's allowance
 	// is used up, 429 "Daily free limit reached on model deepseek/deepseek-
 	// v4-flash. Try again in 23h 59m", as its own clients read it (cline/
@@ -1238,6 +1246,11 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
 	if remoteModelRest(c, why, header) {
 		id = c.restID()
 	}
+	// a rate limit the vendor puts on the model alone is the model's:
+	// the key's other models are asked as before (#3619)
+	if why == failRate && modelRateWords.Match(wordsOf(body)) {
+		id = c.restID()
+	}
 	r.Key = id
 	if id == c.restID() {
 		r.Model = c.model
@@ -1356,6 +1369,11 @@ func restSlow(c candidate, now time.Time) (Rest, bool) {
 func (s *Server) rateRest(c candidate, header http.Header, body []byte, sharedPool bool, now time.Time) (time.Duration, string, int) {
 	id := c.restKey()
 	if c.isOpenRouterFree() && sharedPool || remoteModelRest(c, failRate, header) {
+		id = c.restID()
+	} else if modelRateWords.Match(wordsOf(body)) {
+		// a rate limit the vendor puts on the model alone rests that
+		// model and not its key: the key's other models are asked as
+		// before (#3619)
 		id = c.restID()
 	}
 	n := 1
