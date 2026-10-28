@@ -183,7 +183,7 @@ var rules = append([]rule{
 
 	{kind: "EMAIL", re: regexp.MustCompile(`[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}`), markers: []string{"@"}, bound: alnum + "_%+-", ok: realEmail, at: emailAt, cat: catPersonal},
 	{kind: "ID_CARD", re: regexp.MustCompile(`[1-9]\d{5}(?:18|19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx]`), bound: alnum, ok: chineseID, cat: catPersonal},
-	{kind: "PHONE", re: regexp.MustCompile(`(?:\+?86[- ]?)?1[3-9]\d{9}`), bound: digits, cat: catPersonal},
+	{kind: "PHONE", re: regexp.MustCompile(`(?:\+?86[- ]?)?1[3-9]\d{9}`), bound: digits, ok: realPhone, cat: catPersonal},
 	{kind: "BANK_CARD", re: regexp.MustCompile(`[3-6]\d{3}(?:[ -]?\d{4}){2,3}(?:[ -]?\d{1,3})?`), bound: digits, ok: luhn, cat: catPersonal},
 }, moreRules...)
 
@@ -405,6 +405,9 @@ func realEmail(v string) bool {
 		return false
 	}
 	host := strings.ToLower(v[at+1:])
+	if strings.HasPrefix(host, ".") {
+		return false
+	}
 	if fileHost(host) || docFiles[host] || !mailTLD(host[strings.LastIndexByte(host, '.')+1:]) {
 		return false
 	}
@@ -414,6 +417,54 @@ func realEmail(v string) bool {
 		}
 	}
 	return !strings.HasPrefix(host, "noreply") && !strings.Contains(v, "noreply@")
+}
+
+// realPhone is whether v, matched as a phone number, is someone's.
+// An 11-digit number in a JSON numeric field (like "swap_free_bytes": 10000000000)
+// is not a phone number.
+func realPhone(v string) bool {
+	// JSON numeric field: "key": 12345678901 or "key":12345678901
+	// We check the matched value for patterns that are clearly not phone-like:
+	// - All same digit (11111111111)
+	// - Sequential (12345678901, 98765432101)
+	// - Common byte count patterns (powers of 10: 10000000000)
+	n := v
+	if strings.HasPrefix(n, "+86") || strings.HasPrefix(n, "86") {
+		n = strings.TrimPrefix(strings.TrimPrefix(n, "+86"), "86")
+	}
+	n = strings.TrimPrefix(n, "1") // remove leading 1 for mobile
+	if len(n) != 10 {
+		return false
+	}
+	// reject all-same-digit
+	allSame := true
+	for i := 1; i < 10; i++ {
+		if n[i] != n[0] {
+			allSame = false
+			break
+		}
+	}
+	if allSame {
+		return false
+	}
+	// reject sequential ascending/descending
+	seqAsc, seqDesc := true, true
+	for i := 1; i < 10; i++ {
+		if n[i] != n[i-1]+1 {
+			seqAsc = false
+		}
+		if n[i] != n[i-1]-1 {
+			seqDesc = false
+		}
+	}
+	if seqAsc || seqDesc {
+		return false
+	}
+	// reject common byte patterns: 1 followed by zeros (10000000000)
+	if n[0] == '1' && strings.Count(n, "0") == 9 {
+		return false
+	}
+	return true
 }
 
 // docFiles are the files agents read by name, on a domain's ending
