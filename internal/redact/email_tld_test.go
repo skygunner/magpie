@@ -24,7 +24,7 @@ func TestEmailNeedsAMailDomain(t *testing.T) {
 	}
 	for _, s := range []string{
 		"rina.k@fastmail.com", "dev@startup.io", "me@notes.md", "ops@corp.example.co.uk",
-		"x@company.ai", "li.wei@qq.com", "admin@build.local", "ops@mail.corp", "j@Gmail.COM",
+		"x@company.ai", "li.wei@qq.com", "ops@mail.corp", "j@Gmail.COM",
 	} {
 		in := "mail " + s + " today"
 		if out, n := Mask(in, o); n != 1 || strings.Contains(out, s) {

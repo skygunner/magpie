@@ -405,7 +405,7 @@ func realEmail(v string) bool {
 		return false
 	}
 	host := strings.ToLower(v[at+1:])
-	if strings.HasPrefix(host, ".") {
+	if strings.HasPrefix(host, ".") || strings.HasSuffix(host, ".local") {
 		return false
 	}
 	if fileHost(host) || docFiles[host] || !mailTLD(host[strings.LastIndexByte(host, '.')+1:]) {
