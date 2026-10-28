@@ -50,7 +50,8 @@ func modelCat(kind string) string {
 // modelSpans are o.found's spans for s that o covers, trimmed of the
 // spaces the model takes in with a word (and a Chinese name of what it
 // ran on into, zhTrim), and with what it gets wrong often left out
-// (modelTakes); and the Chinese names it missed (zhNameSpans).
+// (modelTakes); and the Chinese names it missed (zhNameSpans: only
+// nicknames where the model finds names itself, o.NamesByModel).
 func modelSpans(s string, o Options) []span {
 	if o.Model == nil || !o.covers(catPersonal) && len(o.found[s]) == 0 {
 		return nil
@@ -82,8 +83,8 @@ func modelSpans(s string, o Options) []span {
 		if kind == "PERSON" {
 			a, b = zhTrim(s, a, b)
 		}
-		if a < b && utf8.ValidString(s[a:b]) && modelTakes(kind, s[a:b]) && modelFits(s, a, b, kind) {
-			out = append(out, span{a, b, kind, ByModel})
+		if a < b && utf8.ValidString(s[a:b]) && modelTakes(kind, s[a:b]) && modelFits(s, a, b, kind) && !(kind == "PERSON" && zhWordNotName(s, a, b)) {
+			out = append(out, span{a, b, kind, ByModel, f.Score})
 		}
 	}
 	if o.covers(catPersonal) {
@@ -93,7 +94,7 @@ func modelSpans(s string, o Options) []span {
 				person = append(person, f)
 			}
 		}
-		out = append(out, zhNameSpans(s, person)...)
+		out = append(out, zhNameSpans(s, person, o.NamesByModel)...)
 	}
 	return out
 }
@@ -122,12 +123,15 @@ func modelTakes(kind, v string) bool {
 	case "SECRET":
 		return len(v) >= 8 && !madeID(v) && !namesThing(v)
 	case "PERSON":
+		// (an ordinary Chinese word, 文案 or 关键词, is left where it is
+		// read: zhWordNotName)
 		return utf8.RuneCountInString(v) >= 2 && strings.IndexFunc(v, unicode.IsLetter) >= 0 && !snakeWord(v)
 	case "ACCOUNT":
 		return !madeID(v)
 	case "EMAIL":
 		// as the rule's: a file's name (icon@2x.png) or an example's is no
-		// address, nor a host's name with no @ (eu.stg.acme.io)
+		// address, nor a host's name with no @ (eu.stg.acme.io), nor a
+		// symbol (system@got, foo@@GLIBC_2.2.5): realEmail's mailHost
 		return strings.Contains(v, "@") && realEmail(v)
 	}
 	return true
@@ -302,6 +306,14 @@ func modelFits(s string, a, b int, kind string) bool {
 		return false
 	}
 	v := s[a:b]
+	if evmRe.MatchString(v) {
+		// a wallet's or a contract's address (0x and 40 hex digits) is
+		// public, on its chain for anyone to read, and the vendor's model
+		// needs it as written: masked, it took the placeholder for a
+		// private key and told the user to rotate it (0x0_air on X,
+		// 10-28). A key is 64 hex digits; one called a key is masked still.
+		return kind == "SECRET" && secretCued(s, a)
+	}
 	switch kind {
 	case "PERSON":
 		return personFits(s, a, b, v)
@@ -497,7 +509,10 @@ var assistantNames = map[string]bool{
 }
 
 var (
-	hexRe     = regexp.MustCompile(`^[0-9a-f]{7,64}$`)
+	hexRe = regexp.MustCompile(`^[0-9a-f]{7,64}$`)
+	// an EVM chain's address: 0x and 40 hex digits, in either case or
+	// mixed (EIP-55's checksum)
+	evmRe     = regexp.MustCompile(`^0[xX][0-9a-fA-F]{40}$`)
 	decimalRe = regexp.MustCompile(`^\d+\.\d+$`)
 	// a time of day in words the model took for a passphrase (release
 	// about 17:05Z)

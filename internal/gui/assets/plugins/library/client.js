@@ -755,7 +755,7 @@ magpie.plugin("library", (ctx) => {
         if (!mk || !window.scrollOnPurpose?.(e, 1500)) return;
         // its heading just under the strip, however many lines that takes
         const top = mk.getBoundingClientRect().top - page.getBoundingClientRect().top + page.scrollTop - head.getBoundingClientRect().height - 8;
-        page.scrollTo({ top, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+        page.scrollTo({ top, behavior: calm() ? "auto" : "smooth" });
         mk.querySelector("input")?.focus({ preventScroll: true });
       });
       go.append(glyph(GLYPH.search, "lib-mini"), el("span", "", t("Discover")));
@@ -938,6 +938,10 @@ magpie.plugin("library", (ctx) => {
         ? t("Installing RTK… this can take a minute.")
         : t("RTK isn't installed. magpie can install it for you, or get it from its site.")));
       if (rtk.install) card.append(el("p", "lib-rtk-cmd", rtk.install));
+      // why the last install failed stays on the card, beside Get RTK, not
+      // only in a status line gone after ten seconds (Scott__D on X: the
+      // install never succeeded, and nothing on the page said why)
+      if (rtkInstallErr && !rtkInstalling) card.append(el("p", "lib-rtk-note lib-rtk-err lib-rtk-install-err", t("The install failed: {why}", { why: rtkInstallErr })));
       const acts = el("div", "lib-acts");
       if (rtk.install) {
         const ib = button(rtkInstalling ? t("Installing…") : t("Install RTK"), "action", installRTK);
@@ -1110,14 +1114,16 @@ magpie.plugin("library", (ctx) => {
     rtkPathing = false;
     render();
   }
-  let rtkInstalling = false;
+  let rtkInstalling = false, rtkInstallErr = "";
   async function installRTK() {
     rtkInstalling = true;
+    rtkInstallErr = "";
     render();
     try {
       rtk = await api("library/rtk/install", {});
       status(t("RTK is installed — switch it on for your agents below"), "ok", 6000);
     } catch (e) {
+      rtkInstallErr = e.message;
       status(e.message, "err", 10000);
     }
     rtkInstalling = false;

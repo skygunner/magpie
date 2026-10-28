@@ -174,7 +174,7 @@ code { font: var(--code-style, normal) var(--code-weight, 400) 11.5px var(--code
    they read a size bigger than a line logo beside them, so they are drawn at
    the size Alma's and Cindy's tiles have of their own. icon-tile.test.cjs
    measures every file in icons/ and keeps this list whole. */
-.ic:is([data-icon="aihubmix-color"], [data-icon="atomcode"], [data-icon="cherryin-color"], [data-icon="codebuddy-color"], [data-icon="codex-color"], [data-icon="crush"], [data-icon="geminicli-color"], [data-icon="hanako"], [data-icon="hunyuan-color"], [data-icon="kilo"], [data-icon="kiro-color"], [data-icon="lody"], [data-icon="mistermorph-color"], [data-icon="mlx-serve"], [data-icon="monica-color"], [data-icon="phala-color"], [data-icon="pipellm-color"], [data-icon="qoder"], [data-icon="snow"], [data-icon="targon-color"], [data-icon="typesafe"], [data-icon="workbuddy-color"], [data-icon="yuanbao-color"], [data-icon="zcode"], [data-icon="zoo-code"]) > * { width: 82%; height: 82%; }
+.ic:is([data-icon="aihubmix-color"], [data-icon="atomcode"], [data-icon="cherryin-color"], [data-icon="codebuddy-color"], [data-icon="codex-color"], [data-icon="crush"], [data-icon="geminicli-color"], [data-icon="hanako"], [data-icon="hunyuan-color"], [data-icon="kilo"], [data-icon="kiro-color"], [data-icon="lody"], [data-icon="mistermorph-color"], [data-icon="mlx-serve"], [data-icon="monica-color"], [data-icon="penguin-color"], [data-icon="phala-color"], [data-icon="pipellm-color"], [data-icon="qoder"], [data-icon="snow"], [data-icon="targon-color"], [data-icon="typesafe"], [data-icon="workbuddy-color"], [data-icon="yuanbao-color"], [data-icon="zcode"], [data-icon="zoo-code"]) > * { width: 82%; height: 82%; }
 .ic.generic { color: var(--muted); }
 /* maskSpan's shelf: a hidden user of every mask picture loaded, so a logo drawn again paints at once (#1847) */
 .mask-shelf { position: fixed; top: 0; left: 0; width: 0; height: 0; overflow: hidden; visibility: hidden; pointer-events: none; }
@@ -2277,20 +2277,45 @@ body.window .ag-sk-icon { width: 22px; height: 22px; border-radius: 6px; }
 .gw-sk-call .result { width: 68px; }
 /* the status card: a dot where the logo would be, the URL as a pill */
 .gwcard { margin: 4px 0 2px; }
-.gw .dot { width: 8px; height: 8px; margin: 0 7px; border-radius: 50%; background: var(--amber); flex: none; box-shadow: 0 0 0 3px var(--amber-soft); }
-.gw .dot.on { background: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
-.gw .who { flex: 1 1 auto; }
+/* the gateway's mark, the sidebar's glyph in a tile, its two lights the
+   state: green running, amber not or served by an older magpie */
+.gw { min-height: 52px; padding: 8px 10px 8px 11px; gap: 8px 11px; flex-wrap: wrap; }
+.gw .gw-mark { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 7px; flex: none; color: var(--fg-2); background: var(--pill); box-shadow: inset 0 0 0 1px var(--line-2); }
+.gw .gw-mark svg { display: block; }
+.gw .gw-mark .led { fill: var(--amber); }
+.gw .gw-mark.on .led { fill: var(--green); }
+/* narrow, the fix button goes under the state rather than squeeze it */
+.gw .who { flex: 1 1 15em; min-width: 0; }
 .gw .name .state { margin-left: 8px; font-size: 11px; font-weight: 500; color: var(--green); }
-.gw .dot:not(.on) ~ .who .state { color: var(--amber); }
+.gw .gw-mark:not(.on) ~ .who .state { color: var(--amber); }
 .gw .sub.old { white-space: normal; overflow: visible; text-overflow: clip; }
 .gw .sub.err { color: var(--red); overflow-wrap: anywhere; }
 /* the take-over / restart button: bordered, so it reads as a button on the
    card in either theme (leslie_luo on Discord: in dark mode it didn't) */
-.gw .gw-fix { display: inline-flex; height: auto; min-height: 27px; margin: 6px 0 0; padding: 4px 10px; white-space: normal; text-align: left; }
-.gw .url { display: inline-flex; align-items: center; height: 24px; padding: 0 8px; border-radius: 6px; background: var(--pill); box-shadow: inset 0 0 0 1px var(--line-2); flex: none; transition: background .12s, box-shadow .12s; }
-.gw .url:hover { background: var(--pill-hover); box-shadow: inset 0 0 0 1px var(--line); }
-.gw .url code { color: var(--fg-2); font-size: 11px; }
-.gw .url:hover code { color: var(--fg); }
+.gw .gw-fix { display: inline-flex; flex: none; height: auto; min-height: 27px; max-width: 100%; margin: 0 0 0 auto; padding: 4px 10px; white-space: normal; text-align: left; }
+/* Share on local network, on the card under the state, and the addresses
+   the gateway answers on: one quiet line each, the copy beside it */
+#gatewayLan { border-top: 1px solid var(--line-2); }
+/* narrow, the choice goes under its name rather than wrap it word by word */
+.gw-share { min-height: 40px; padding: 5px 10px 5px 11px; flex-wrap: wrap; row-gap: 4px; }
+.gw-share .name { flex: 1 1 9em; font-size: 12.5px; white-space: normal; overflow-wrap: anywhere; }
+.gw-share .segs { align-self: center; flex: none; max-width: 100%; margin-left: auto; }
+/* the addresses: their labels one column as wide as the longest, the
+   address and its copy the next */
+.gw-urls { display: grid; grid-template-columns: max-content minmax(0, 1fr); column-gap: 14px; padding: 0 10px 7px 11px; }
+.gw-url { display: contents; }
+.gw-url-label { align-self: center; max-width: 12em; font-size: 11.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gw-url-val { display: flex; align-items: center; gap: 6px; min-height: 28px; min-width: 0; }
+.gw-url code { flex: 0 1 auto; min-width: 0; font-size: 12px; color: var(--fg-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; user-select: text; }
+.gw-url .copy { flex: none; }
+.gw-url-none { grid-column: 2; padding: 4px 0 2px; font-size: 11.5px; color: var(--muted); }
+/* a gateway key: the copy right beside the masked key, the rest under
+   its … (the owner: a copy out in the row's middle looked lost) */
+.gw-keys .acc > .plan + .copy { margin-left: -5px; }
+/* narrow, the masked key gives up its room before the key's name does */
+.gw-keys .acc > .plan { flex-shrink: 6; }
+.gw-keys .gw-key-more { flex: none; color: var(--muted); }
+.gw-keys .gw-key-more:is(:hover, .open) { color: var(--fg); }
 #view-gateway .row-head, #view-usage .row-head { margin: 14px 0 6px; padding: 0 2px; }
 #view-usage .row-head.quota-head { margin: 6px 0 6px; }
 #view-gateway .row-head .note { font-size: 11px; color: var(--faint); }
@@ -2695,10 +2720,13 @@ body.window .ag-sk-icon { width: 22px; height: 22px; border-radius: 6px; }
 .proto-menu .pm-head { padding: 6px 8px 5px; font-size: 11px; color: var(--muted); }
 .proto-menu .pm-item { display: flex; align-items: flex-start; gap: 7px; width: 100%; padding: 6px 8px 7px; border: 0; border-radius: 7px; background: none; color: var(--fg); font: inherit; text-align: left; cursor: default; outline: none; }
 .proto-menu .pm-item:hover, .proto-menu .pm-item:focus { background: var(--pill); }
+/* a font typed in a browser tab that it can't draw (webfonts.js) */
+.proto-menu .pm-item:disabled { background: none; }
+.proto-menu .pm-item:disabled .pm-name { color: var(--muted); }
 .proto-menu .pm-tick { width: 14px; height: 16px; flex: none; display: grid; place-items: center; color: var(--fg); }
 /* a menu of actions, where nothing is or can be ticked, keeps no room for
    a tick: its items line up with its heading */
-.proto-menu:not(:has(.pm-item.on, [role=menuitemcheckbox])) .pm-tick { display: none; }
+.proto-menu.pm-bare .pm-tick { display: none; }
 .proto-menu .pm-words { display: grid; gap: 1px; min-width: 0; }
 .proto-menu .pm-name { font-size: 12.5px; font-weight: 500; line-height: 16px; }
 .proto-menu .pm-note { font-size: 11px; color: var(--muted); line-height: 15px; }
@@ -2870,6 +2898,18 @@ body.window .ag-sk-icon { width: 22px; height: 22px; border-radius: 6px; }
 .sheet .kind { display: flex; align-items: baseline; gap: 8px; padding: 22px 8px 6px; font-size: 12px; }
 .sheet .kind b { font-size: 13px; font-weight: 600; color: var(--fg); }
 .sheet .kind span { color: var(--faint); }
+/* Partners' light (shinePartners): a hairline runs once round the heading
+   and fades, over a breath of the accent; nothing with reduced motion */
+@property --shine-a { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+.sheet .kind.shine { position: relative; width: fit-content; }
+.sheet .kind.shine i { position: absolute; inset: 17px 0 1px; border-radius: 8px; opacity: 0; pointer-events: none; }
+.sheet .kind.shine .glow { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.sheet .kind.shine .ring { padding: 1px; background: conic-gradient(from var(--shine-a), transparent 0deg 250deg, color-mix(in srgb, var(--accent) 35%, transparent) 300deg, var(--accent) 345deg, transparent 360deg); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+.sheet .kind.lit .ring { animation: shine-trace 1.8s cubic-bezier(.5, 0, .3, 1); }
+.sheet .kind.lit .glow { animation: shine-glow 1.8s ease-out; }
+@keyframes shine-trace { 0% { --shine-a: 0deg; opacity: 0; } 15%, 70% { opacity: 1; } 100% { --shine-a: 360deg; opacity: 0; } }
+@keyframes shine-glow { 35% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .sheet .kind.shine i { display: none; } }
 /* a removed account: its name, then Add it back and Sign out… side by
    side, across the row (#694) */
 .sheet .tile.removed { grid-column: 1 / -1; }
@@ -3790,7 +3830,7 @@ body.panel .modal { padding: 16px 12px; }
   body.web .row.gw { flex-wrap: wrap; }
   body.web .row.gw > .who { flex: 1 1 0; min-width: 0; }
   body.web .row.gw .sub { white-space: normal; }
-  body.web .row.gw > .url { order: 2; margin-left: 17px; max-width: calc(100% - 17px); }
+  body.web .row.gw > .gw-fix { order: 2; margin-left: 39px; max-width: calc(100% - 39px); }
   body.web .call { flex-wrap: wrap; height: auto; min-height: 24px; padding: 3px 6px; }
   body.web .call > .m { order: 2; margin-left: 20px; min-width: 0; }
   body.web .call > .p { order: 3; }
@@ -4382,3 +4422,5 @@ body .row.agent .ag-prefs .row.pref .who { display: block; }
 .sess-pick.led-more { padding: 0 6px; }
 .sess-pick.led-more svg { transform: none; }
 .sess-tools .led-rename { flex: none; width: 180px; height: 26px; padding: 0 8px; border-radius: 7px; font-size: 12px; }
+/* Settings › About › Open-source licenses: the notices, as written */
+.notices-text { margin: 0; font: 11px/1.5 var(--code); white-space: pre-wrap; overflow-wrap: anywhere; }
