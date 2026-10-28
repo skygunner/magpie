@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"math/rand/v2"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -31,10 +32,37 @@ func mrCompare(t *testing.T, v any) {
 		if werr != nil {
 			t.Fatalf("escape %v: marshalRaw wrote %q, encoding/json refused: %v", escape, got, werr)
 		}
+		if goMinor() >= 27 && !escape {
+			// Go 1.27+ escapes U+2028/U+2029 with SetEscapeHTML(false) too;
+			// fastjson keeps them raw in string values, as json/v2 does, and
+			// escapes them in names. Compare with the sequences unescaped on
+			// both sides.
+			got, want = unescapeLineSeps(got), unescapeLineSeps(want)
+		}
 		if !bytes.Equal(got, want) {
 			t.Fatalf("escape %v:\n marshalRaw   %q\n encoding/json %q", escape, got, want)
 		}
 	}
+}
+
+func goMinor() int {
+	_, rest, ok := strings.Cut(strings.TrimPrefix(runtime.Version(), "go"), ".")
+	if !ok {
+		return 0
+	}
+	n := 0
+	for _, c := range rest {
+		if c < '0' || c > '9' {
+			break
+		}
+		n = n*10 + int(c-'0')
+	}
+	return n
+}
+
+func unescapeLineSeps(b []byte) []byte {
+	b = bytes.ReplaceAll(b, []byte(`\u2028`), []byte("\u2028"))
+	return bytes.ReplaceAll(b, []byte(`\u2029`), []byte("\u2029"))
 }
 
 // mrValues are raw values as a request's members and items hold them:
