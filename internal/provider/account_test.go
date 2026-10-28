@@ -262,7 +262,25 @@ func claudeSignIn(t *testing.T, home string, expiry time.Time) string {
 		// what magpie must not clobber when it writes a refreshed token back
 		"mcpOAuth": map[string]any{"plugin:slack:slack|x": map[string]any{"serverName": "Slack"}},
 	})
+	// Serve the login just written, not a miss read before it (#3174).
+	forgetClaudeCredential()
 	return path
+}
+
+// A read before the fixture writes its login caches a miss (#3174); the
+// fixture is what has to invalidate it, not the product's cached reader.
+func TestClaudeSignInReplacesCachedMiss(t *testing.T) {
+	home := claudeHome(t)
+	if _, _, ok := claudeCredential(); ok {
+		t.Fatal("fresh home has a credential")
+	}
+	claudeSignIn(t, home, time.Now().Add(time.Hour))
+	if _, _, ok := claudeCredential(); !ok {
+		t.Fatal("the login just written still reads as the cached miss")
+	}
+	if p, ok := find(All(), "claude"); !ok || p.Account == nil {
+		t.Fatal("Claude account missing after the fixture signed in")
+	}
 }
 
 // claudeHome sets up a temp home with the usual env; the caller adds credentials.
