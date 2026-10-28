@@ -222,6 +222,12 @@ func magpieModels(agent string) []catalog.Model {
 		if e.Group == "" {
 			if n := e.Provider.Native(e.Model); n != "" {
 				m.APIs = []string{string(n)}
+			} else if e.Provider.MessagesFirst(e.Model) {
+				// A subscription the gateway serves on Messages runs its own
+				// binary, so Native is empty; dsh then still routes the model
+				// to the openai-completions magpie route and Copilot-style
+				// calls fail. Name the Messages route instead (#3514)
+				m.APIs = []string{string(provider.Anthropic)}
 			}
 		} else if allResponses(members(e.ID)) {
 			m.APIs = []string{string(provider.Responses)}
