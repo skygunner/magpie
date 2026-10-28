@@ -66,10 +66,15 @@ Each round:
 8. Accept: healthy, 401/200 auth pair, model count equal before/after, a
    real `group/fast-cheap` request 200. Push `prod` and the tag.
 
-## Carried patches (as of v0.1.1767-p1, 2026-10-28)
+## Carried patches (as of v0.1.1790-p1, 2026-10-28)
 
-Checked against v0.1.1767 (2026-10-28): none absorbed yet; all nine
-issues still open. #3487's source also gained `b6f71ebd`
+Checked against v0.1.1790 (2026-10-28): none absorbed, ten patches
+carried (#3948 joined at 0.1.1767-p3). Upstream #3950 added a wallet
+`Balance` pointer window field; the merge keeps it beside #3487's
+`AmountUnknown` — one conditional block each, the aside-text condition
+reads both pointers, and the span fixture sets both fields. The #3487
+and #3788 issues each gained a comment this round: both are our own
+integration announcements (b6f71ebd and the #3948 split), no rework. #3487's source also gained `b6f71ebd`
 (`fix/3487-quota-span-fixture-1767`): a one-line test-fixture repair for
 `TestQuotaSpanCarriesEveryWindowField`, carried here as `3ea2e279`.
 
