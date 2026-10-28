@@ -272,7 +272,9 @@ var (
 	// A limit on the model is not one on the key, so the key rests only if
 	// a second distinct model on it also 429s (rateRest counts the key,
 	// and the model count climbs its own ladder in the default branch).
-	modelRateWords = regexp.MustCompile(`(?i)(model.{0,40}(limit|quota|tpm|rpm|rate|throttl)|(limit|quota|tpm|rpm|rate|throttl).{0,40}model)`)
+	modelRateWords = regexp.MustCompile(`(?i)(model.{0,40}(limit|quota|tpm|rpm|rate|throttl)|(?:limit|quota|tpm|rpm|rate|throttl)[^.\n]{0,24}(?:for|on) (?:the )?model)`)
+	// freeModelsPerMin matches OpenRouter's account-wide free model limit.
+	freeModelsPerMin = regexp.MustCompile(`(?i)free[ -]?models?[ -]?per[ -]?(min|minute|hour)`)
 	// clineFreeLimit: Cline's refusal of a free model whose day's allowance
 	// is used up, 429 "Daily free limit reached on model deepseek/deepseek-
 	// v4-flash. Try again in 23h 59m", as its own clients read it (cline/
@@ -1245,6 +1247,11 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
 	}
 	if remoteModelRest(c, why, header) {
 		id = c.restID()
+	}
+	// OpenRouter's free-models-per-min is an account-wide limit: the
+	// provider key rests, not the model (#3619 and OpenRouter free test).
+	if why == failRate && c.p.Preset == "openrouter" && freeModelsPerMin.Match(wordsOf(body)) {
+		id = provider.KeyAllowanceID(c.p)
 	}
 	// a rate limit the vendor puts on the model alone is the model's:
 	// the key's other models are asked as before (#3619)
