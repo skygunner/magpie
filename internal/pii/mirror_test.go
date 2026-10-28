@@ -84,8 +84,8 @@ func serving(b []byte) func(*http.Request) (*http.Response, error) {
 // against the pin all the same.
 func TestModelFromTheMirrorWhenHuggingFaceFails(t *testing.T) {
 	body := bytes.Repeat([]byte("guard bytes "), 1000)
-	was := client
-	t.Cleanup(func() { client = was })
+	was := clientFactory
+	t.Cleanup(func() { clientFactory = was })
 	raw := guardBase + guardRev + "/int8/tokenizer.json"
 	for _, fail := range []error{
 		errors.New("tls: failed to verify certificate: x509: certificate is valid for *.facebook.com, facebook.com, not huggingface.co"),
@@ -102,10 +102,12 @@ func TestModelFromTheMirrorWhenHuggingFaceFails(t *testing.T) {
 				return f(r)
 			}
 		}
-		client = &http.Client{Transport: hosts{
-			"huggingface.co": note(func(*http.Request) (*http.Response, error) { return nil, fail }),
-			"hf-mirror.com":  note(serving(body)),
-		}}
+		clientFactory = func() *http.Client {
+			return &http.Client{Transport: hosts{
+				"huggingface.co": note(func(*http.Request) (*http.Response, error) { return nil, fail }),
+				"hf-mirror.com":  note(serving(body)),
+			}}
+		}
 		path := filepath.Join(t.TempDir(), "tokenizer.json")
 		var n atomic.Int64
 		if err := fetch(context.Background(), raw, path, int64(len(body)), sum(body), &n); err != nil {
@@ -118,10 +120,12 @@ func TestModelFromTheMirrorWhenHuggingFaceFails(t *testing.T) {
 	}
 
 	// a mirror's file that isn't the pinned one is not kept
-	client = &http.Client{Transport: hosts{
-		"huggingface.co": func(*http.Request) (*http.Response, error) { return nil, io.EOF },
-		"hf-mirror.com":  serving(bytes.Repeat([]byte("other bytes "), 1000)),
-	}}
+	clientFactory = func() *http.Client {
+		return &http.Client{Transport: hosts{
+			"huggingface.co": func(*http.Request) (*http.Response, error) { return nil, io.EOF },
+			"hf-mirror.com":  serving(bytes.Repeat([]byte("other bytes "), 1000)),
+		}}
+	}
 	path := filepath.Join(t.TempDir(), "tokenizer.json")
 	var n atomic.Int64
 	err := fetch(context.Background(), raw, path, int64(len(body)), sum(body), &n)
