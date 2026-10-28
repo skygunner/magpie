@@ -66,14 +66,15 @@ Each round:
 8. Accept: healthy, 401/200 auth pair, model count equal before/after, a
    real `group/fast-cheap` request 200. Push `prod` and the tag.
 
-## Carried patches (as of v0.1.1790-p1, 2026-10-28)
+## Carried patches (as of v0.1.1840-p1, 2026-10-28)
 
-Checked against v0.1.1790 (2026-10-28): none absorbed, ten patches
-carried (#3948 joined at 0.1.1767-p3). Upstream #3950 added a wallet
-`Balance` pointer window field; the merge keeps it beside #3487's
-`AmountUnknown` — one conditional block each, the aside-text condition
-reads both pointers, and the span fixture sets both fields. The #3487
-and #3788 issues each gained a comment this round: both are our own
+Checked against v0.1.1840 (2026-10-28): none absorbed, ten patches
+carried (#3948 joined at 0.1.1767-p3). The merge had two conflicts, both
+mechanical: the `Provider` literal gained upstream's `CapStop`,
+`CapCareful` and `PriceRate` beside this line's `ModelCooldown`, and the
+usage plugin's `i18n.js` gained upstream lines after each of the four
+language blocks #3948 extends — both sides kept. The #3487
+and #3788 issues gained comments in the previous round: both are our own
 integration announcements (b6f71ebd and the #3948 split), no rework. #3487's source also gained `b6f71ebd`
 (`fix/3487-quota-span-fixture-1767`): a one-line test-fixture repair for
 `TestQuotaSpanCarriesEveryWindowField`, carried here as `3ea2e279`.
@@ -81,7 +82,8 @@ integration announcements (b6f71ebd and the #3948 split), no rework. #3487's sou
 Equivalence note for the sweep: `fix/hindsight-nonstream-cooldown`'s tip
 `b48a91bb` and `dfd128ca` are the same SSE fix on different bases — never
 pick both. This line tracks `fix/hindsight-nonstream-sse-1767`
-(v0.1.1767 base); the cooldown branch's newer tips are not picked. This round's freshness sweep found #3035's fix had
+(v0.1.1767 base); the cooldown branch's newer tips are not picked. The
+v0.1.1734 round's sweep found #3035's fix had
 evolved on the fork (the issue's own latest comment supersedes the
 original approach): `223f9b0a` (fix/bare-request-failover) is carried
 beside `8f931a28`. The #3487 source branch's six newer commits are other
@@ -136,6 +138,20 @@ This section stays for the next user-directed request without a fix.
   on, every deployment is published there too.
 - `prod/0.1.1691-p1` — 2026-10-27. Rolling merge of v0.1.1691; no
   conflicts, none absorbed, same nine patches.
+- `prod/0.1.1734-p1` — 2026-10-27. Rolling merge of v0.1.1734; #3035's
+  evolved fix (`223f9b0a`, bare-request failover) joined `8f931a28`.
+- `prod/0.1.1767-p1` — 2026-10-28. Rolling merge of v0.1.1767; clean
+  merge, no sweep movement, none absorbed.
+- `prod/0.1.1767-p2` — 2026-10-28. Same upstream, plus the non-streaming
+  SSE follow-up (`dfd128ca`) and the #3487 span-fixture repair
+  (`3ea2e279`).
+- `prod/0.1.1767-p3` — 2026-10-28. Same upstream, plus #3948
+  (`56eb1ba1`).
+- `prod/0.1.1790-p1` — 2026-10-28. Rolling merge of v0.1.1790; #3950's
+  wallet `Balance` pointer kept beside #3487's `AmountUnknown`.
+- `prod/0.1.1840-p1` — 2026-10-28. Rolling merge of v0.1.1840; two
+  mechanical conflicts (the `Provider` literal, the usage plugin's
+  `i18n.js`), none absorbed, same ten patches.
 
 ## Non-streaming SSE regression follow-up (2026-10-28)
 
