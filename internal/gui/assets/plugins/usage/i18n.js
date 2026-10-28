@@ -14,6 +14,7 @@ magpie.strings({
     "Gateway / upstream": "网关／上游",
     "Not observed by the gateway. HTTP status does not confirm that the client parsed or used the response.": "网关无法观察。HTTP 状态不能确认客户端是否成功解析或使用了响应。",
 
+    "Deleted {date}": "{date} 已删除",
     "Bar chart": "柱状图",
     "Line chart": "折线图",
     "Chart style": "图表样式",
@@ -228,6 +229,7 @@ magpie.strings({
     "Gateway / upstream": "閘道／上游",
     "Not observed by the gateway. HTTP status does not confirm that the client parsed or used the response.": "閘道無法觀察。HTTP 狀態不能確認用戶端是否成功解析或使用了回應。",
 
+    "Deleted {date}": "{date} 已刪除",
     "Bar chart": "長條圖",
     "Line chart": "折線圖",
     "Chart style": "圖表樣式",
@@ -442,6 +444,7 @@ magpie.strings({
     "Gateway / upstream": "ゲートウェイ / 上流",
     "Not observed by the gateway. HTTP status does not confirm that the client parsed or used the response.": "ゲートウェイでは観測できません。HTTP ステータスは、クライアントが応答を解析または使用できたことを保証しません。",
 
+    "Deleted {date}": "{date} に削除",
     "Bar chart": "棒グラフ",
     "Line chart": "折れ線グラフ",
     "Chart style": "グラフの種類",
@@ -656,6 +659,7 @@ magpie.strings({
     "Gateway / upstream": "Gateway / Upstream",
     "Not observed by the gateway. HTTP status does not confirm that the client parsed or used the response.": "Vom Gateway nicht beobachtbar. Der HTTP-Status bestätigt nicht, dass der Client die Antwort verarbeitet oder verwendet hat.",
 
+    "Deleted {date}": "Gelöscht am {date}",
     "Bar chart": "Balkendiagramm",
     "Line chart": "Liniendiagramm",
     "Chart style": "Diagrammart",
