@@ -417,7 +417,7 @@ button.rt-session { cursor: pointer; }
 .rt-livedot { width: 6px; height: 6px; margin-left: 7px; border-radius: 50%; background: var(--green); --fg: var(--green); }
 /* it pulses while a request is under way only (#2827) */
 .rt-livedot.on { animation: rtlive 1.8s infinite; }
-@media (prefers-reduced-motion: reduce) { .rt-livedot { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .rt-livedot, .rt-livedot.on { animation: none; } }
 /* routing groups, and the providers routing over several of their own */
 .rt-gsec { display: grid; gap: 6px; margin-top: 16px; }
 .rt-gsec .row-head .note { margin-right: 6px; }
@@ -782,6 +782,7 @@ button.rt-session { cursor: pointer; }
 .rp-top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .rp-tag { font-size: 11px; font-weight: 600; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; }
 .rp-tag::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: rppulse 1.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .rp-tag::before { animation: none; } }
 @keyframes rppulse { 50% { opacity: .3; } }
 .rp-clock { font-size: 22px; font-weight: 650; letter-spacing: -.02em; font-variant-numeric: tabular-nums; color: var(--fg); }
 .rp-day { font-size: 11px; color: var(--muted); }

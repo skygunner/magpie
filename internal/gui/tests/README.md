@@ -378,6 +378,14 @@ it and over no other icon (the browser's tooltip put Devin's name on ZCode's
 Z), moves at once to the next icon, and goes on a click, on leaving, and when
 Esc closes the picker; a rail icon focused from the keyboard is named too.
 
+`reduced-motion-decorative.test.cjs` loads the app with Reduce motion on and
+probes the decorative loops' computed styles: the model chip's waiting dot,
+the library icon's bob, the routing live dot's pulse (its `.on` rule
+outweighed the stop the sheet already declared, #3157) and the pulse before
+a provider's tag all read `animation: none`, while a waiting request's dot,
+a status loop, keeps its animation. Chromium on this machine; WebKit needs
+`libicu74` and `libflite1`, which the host lacks.
+
 `agent-models-all-hidden.test.cjs` takes every model out of DeepSeek
 Harness's lists with "Hide all" (#356): the line under its name reads
 "Showing 0 / 3 models" (显示 0 / 3 个模型), stays once the list is closed and

@@ -288,6 +288,7 @@ input.lib-setname:focus { border-color: var(--accent); box-shadow: 0 0 0 3px col
 .lib-row:hover .lib-rowacts, .lib-rowacts:focus-within { opacity: 1; }
 .lib-icon { width: 26px; height: 26px; padding: 0; display: inline-grid; place-items: center; }
 .lib-icon.busy svg { animation: lib-bob .8s var(--ease) infinite alternate; }
+@media (prefers-reduced-motion: reduce) { .lib-icon.busy svg { animation: none; } }
 @keyframes lib-bob { to { transform: translateY(-2px); } }
 
 /* the skill finder */
