@@ -1,0 +1,42 @@
+=== 2026-10-29T10:50:26+10:00 worktree /tmp/mg-fix-pii-stale-miss on fix/wip-pii-stale-miss at 926ef769f ===
+--- RED run: go test ./internal/pii -run TestCacheFilledWhileYielding -count=1 ---
+--- FAIL: TestCacheFilledWhileYielding (0.00s)
+    --- FAIL: TestCacheFilledWhileYielding/strict (0.00s)
+        cache_yield_regression_test.go:34: cache was filled before the next chunk: the local masking model has no text to read for 1 texts
+    --- FAIL: TestCacheFilledWhileYielding/bounded (0.00s)
+        cache_yield_regression_test.go:38: cached detection must be returned: [][]redact.Found{[]redact.Found(nil), []redact.Found(nil)}
+FAIL
+FAIL	github.com/yetone/magpie/internal/pii	0.004s
+FAIL
+RED: PASS (test fails as expected, exit 1)
+--- exit 1 ---
+ internal/pii/find.go | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+--- GREEN run: go test ./internal/pii -run TestCacheFilledWhileYielding -count=1 ---
+ok  	github.com/yetone/magpie/internal/pii	0.004s
+GREEN: PASS (targeted regression test passes, exit 0)
+--- go test ./internal/pii -count=1 ---
+ok  	github.com/yetone/magpie/internal/pii	10.873s
+PII TESTS: PASS
+--- go test -race ./internal/pii -count=1 ---
+ok  	github.com/yetone/magpie/internal/pii	45.940s
+PII TESTS -race: PASS
+--- go build ./... ---
+BUILD: PASS
+--- go vet ./... ---
+VET: PASS
+--- gofmt -l internal/pii ---
+(empty)
+GOFMT: PASS
+[fix/wip-pii-stale-miss ab3ed5322] pii: a filled cache ends the stale miss list
+ 2 files changed, 54 insertions(+)
+ create mode 100644 internal/pii/cache_yield_regression_test.go
+COMMIT: PASS
+COMMIT: ab3ed532271ca649b4b5a74df6d6885cc76793cc pii: a filled cache ends the stale miss list
+--- final tree (0 dirty entries) ---
+ab3ed5322 pii: a filled cache ends the stale miss list
+ internal/pii/cache_yield_regression_test.go | 42 +++++++++++++++++++++++++++++
+ internal/pii/find.go                        | 12 +++++++++
+ 2 files changed, 54 insertions(+)
+
+Final Batch 1 verification: go build -tags nogui ./... and go vet -tags nogui ./... exit 0. Remote HEAD checked.

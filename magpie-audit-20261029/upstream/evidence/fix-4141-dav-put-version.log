@@ -1,0 +1,33 @@
+B6 P2-30 and verify-stores A2
+Worktree: /tmp/mg-fix-dav-put-version
+Branch: fix/wip-dav-put-version
+Base: 926ef769ffd102e0a06f4cd7b0d583782d254d40
+
+Decision: A successful DAV PUT without If-Match is blind, including any successful short-write attempt without If-Match. Preserve Blind if a later retry uses an ETag. Use only the successful PUT response's versionOf, including Last-Modified when its Date is at least one second later; do not carry forward the old read's timestamp. HTTP dates are not write preconditions and do not provide lost-update protection. Correctness assumes a server enforces If-Match. Blind reconciliation restores the previous merge baseline after another writer overwrites this write; a writer whose change was overwritten must sync again. A cached, identifiable truncated copy remains eligible for existing damage recovery.
+
+Red: go test -tags nogui ./internal/davsync -run '^TestDAVPutReportsBlindAndUsesOnlySafePutVersion$' -count=1 on base code with regression test: exit 1. Unconditional, old modification date, and same second cases returned Blind:false; old modification date also lacked Modified. Conditional ETag case passed.
+Green: go test -tags nogui ./internal/davsync -count=1: exit 0, ok github.com/yetone/magpie/internal/davsync 19.203s.
+Initial whole-package run after change failed TestSyncRebuildsFromCachedCopy and TestGatewayKeysConflict/with_keys/key_newer. Fixed the first by retaining the existing verified truncated-copy recovery baseline and updated the second fixture to read back the initial blind write before its later conflict. Final package run passed.
+go build ./...: exit 0.
+go vet ./...: exit 0.
+gofmt -l on four changed Go files: empty, exit 0.
+git diff --check: exit 0.
+LSP diagnostics unavailable: gopls not installed.
+No real DAV service used. Full repository test suite and cross-platform vet/build not run. No push.
+
+Commit: 17b524b0cfa5fefbb0236f8cfdafeb121a59ed63
+Post-commit worktree: clean, branch ahead of upstream/main by one commit.
+
+Independent review follow-up:
+Red: TestDAVInitialBlindWritesMergeAfterOverwrite failed with A's provider lost: [] on 17b524b0c.
+Green: go test -tags nogui ./internal/davsync -count=1: ok, 19.353s; go build ./... and go vet ./... exit 0; gofmt and git diff --check passed.
+First blind writes overwritten by a competing initial write now use existing per-part conflict resolution. Same-part conflicts retain the existing timestamp and saved-copy policy.
+Follow-up commit: cb0ee119b2d753fdd33f13cc80c00cc1bb205fa3; worktree clean; no push.
+
+Second review follow-up:
+Red on cb0ee119b: first-writer provider file dated one hour in the past; TestDAVInitialBlindWritesMergeAfterOverwrite failed: A's provider lost: [].
+Green: renamed TestDAVInitialBlindWritesPreserveBothAfterOverwrite passes, retains both local setup and remote file, and fails safely on retry. Full go test -tags nogui ./internal/davsync -count=1 passed in 21.019s; go build ./..., go vet ./..., gofmt and git diff --check passed.
+A later write before the initial writer reads back is indistinguishable from concurrent first writes: sync stops and requires manual reconciliation. Existing tests of later writes establish the initial baseline by reading it back first.
+Second follow-up commit: 3452982b8ad99aa3c74f86c326a65f5f53ad1844; worktree clean; no push.
+
+Final Batch 1 verification: go build -tags nogui ./... and go vet -tags nogui ./... exit 0. Remote HEAD checked.

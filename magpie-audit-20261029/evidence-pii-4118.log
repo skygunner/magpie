@@ -1,0 +1,11 @@
+=== RUN   TestCacheFilledWhileYielding
+=== RUN   TestCacheFilledWhileYielding/strict
+    cache_yield_regression_test.go:34: cache was filled before the next chunk: the local masking model has no text to read for 1 texts
+=== RUN   TestCacheFilledWhileYielding/bounded
+    cache_yield_regression_test.go:38: cached detection must be returned: [][]redact.Found{[]redact.Found(nil), []redact.Found(nil)}
+--- FAIL: TestCacheFilledWhileYielding (0.00s)
+    --- FAIL: TestCacheFilledWhileYielding/strict (0.00s)
+    --- FAIL: TestCacheFilledWhileYielding/bounded (0.00s)
+FAIL
+FAIL	github.com/yetone/magpie/internal/pii	0.005s
+FAIL

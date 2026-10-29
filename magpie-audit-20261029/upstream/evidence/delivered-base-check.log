@@ -1,0 +1,7 @@
+2026-10-29: checked git status --porcelain (empty) and git merge-base HEAD 926ef769f for four worktrees.
+B1 ab3ed532271ca649b4b5a74df6d6885cc76793cc
+B2 3ff971ddd56463a7bed3c8a2230ba8783ae57d23
+B3 788f18e38b92cdd1a3a1c1cff8cf846552850319
+B6 3452982b8ad99aa3c74f86c326a65f5f53ad1844
+All merge-base 926ef769ffd102e0a06f4cd7b0d583782d254d40.
+B5 worktree HEAD ba4f3ef69a0fbfd85c0250b9e8d8dcef0ba3866f matches full SHA in delivered-issues.md; remote was independently read back earlier.

@@ -1,0 +1,28 @@
+== pii-stale-miss
+ab3ed532271ca649b4b5a74df6d6885cc76793cc
+0
+removed /tmp/mg-fix-pii-stale-miss
+== davsync-read-cap
+3ff971ddd56463a7bed3c8a2230ba8783ae57d23
+0
+removed /tmp/mg-fix-davsync-read-cap
+== wsl-probe-lock
+788f18e38b92cdd1a3a1c1cff8cf846552850319
+0
+removed /tmp/mg-fix-wsl-probe-lock
+== sessions-frame-tail
+ba4f3ef69a0fbfd85c0250b9e8d8dcef0ba3866f
+0
+removed /tmp/mg-fix-sessions-frame-tail
+== dav-put-version
+3452982b8ad99aa3c74f86c326a65f5f53ad1844
+0
+removed /tmp/mg-fix-dav-put-version
+== agent-stash
+9b83ba67049afc9f9cf96c339c8c46a4f29dc0bd
+0
+removed /tmp/mg-fix-agent-stash
+== remaining
+
+Removed temp source copy /tmp/magpie-audit-Pzn4fNp7 (129M), /tmp/b4-body, empty /tmp/ulw-audit-close.OJfqZT. Remaining /tmp/mg-fix-*: none. Notepad /tmp/ulw-20261029-103945.WJNRJQ.md retained as run record.
+Main worktree: 29 status entries; 3 pre-existing internal/redact conflicts (DU/UU/DU), 2 new untracked dirs from this round, 24 pre-existing untracked entries untouched.

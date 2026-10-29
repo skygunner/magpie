@@ -1,0 +1,8 @@
+Batch 1 final ledger check (2026-10-29)
+FIX-MAP copies identical: true
+delivered-issues rows: 6 (B1..B6)
+issues: 4118 (comment), 4137, 4136, 4144, 4141, 4258 (issue+comment)
+branches pushed to origin skygunner/magpie: fix/4118-pii-stale-miss ab3ed5322; fix/4137-davsync-read-cap 3ff971ddd; fix/4136-wsl-probe-lock 788f18e38; fix/4144-sessions-frame-tail ba4f3ef69; fix/4141-dav-put-version 3452982b8; fix/4258-agent-stash-durability 9b83ba670
+build+vet: all six pass (nogui); B3 GOOS=windows build+vet pass
+worktrees removed: /tmp/mg-fix-{pii-stale-miss,davsync-read-cap,wsl-probe-lock,sessions-frame-tail,dav-put-version,agent-stash}
+limitations: B2/B3/B5/B6 contain multiple commits; B5 conservative mitigation; B4 external-editor race and crash/power-loss unverified; no full-repo green suite; main worktree has pre-existing internal/redact conflicts and other untracked files

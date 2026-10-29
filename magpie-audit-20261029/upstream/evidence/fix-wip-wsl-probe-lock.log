@@ -1,0 +1,40 @@
+=== 2026-10-29T10:53:17+10:00 worktree /tmp/mg-fix-wsl-probe-lock on fix/wip-wsl-probe-lock, base 926ef769f ===
+Commit: 21115d0480dbf68dc4a86e5e4f5c1ebbe108b9a4
+Subject: wsl: a distro's probe runs outside the lock the GUI and /api/state wait on
+Initial verification: gofmt -l internal/agent/wsl.go; go build ./...; go vet ./...; GOOS=windows go build ./...; GOOS=windows go vet ./... all returned exit 0 with no output. Windows behavior was not executed or simulated. Initial worktree was clean after commit.
+=== Review follow-up: 2026-10-29 ===
+Review: /home/vincenty/Projects/magpie/.omo/evidence/wsl-probe-lock-code-review.md
+Follow-up commit: 05e0067451798f54f148c954a722bfd16a4e430d (parent 21115d0480dbf68dc4a86e5e4f5c1ebbe108b9a4)
+Code inspection confirms all four findings: stale installed snapshot deletes and omits newly listed distros; old probes can be accepted after rescan or observed stop/start; concurrent calls duplicate probes and failure completion resets retry timing; no concurrency regression test existed. These interleavings were inspected, not executed.
+The fix uses the current listing for output and cleanup, identifies in-flight probes and invalidates them on rescan, observed stop or removal. Concurrent ordinary readers do not launch duplicate probes; a rescan can start a fresh probe while an invalidated one is still running. The stop/start protection requires the stopped state to have been observed by a running-list refresh.
+Added internal/agent/wsl_probe_lock_windows_test.go with channel-controlled scenarios for list change and persistence, rescan, observed stop/start, and duplicate readers. Tests have not been run; there is no red/green or Windows runtime evidence. No Windows environment was faked.
+Commands in /tmp/mg-fix-wsl-probe-lock, all completed successfully with no output:
+  go build ./...
+  go vet ./...
+  GOOS=windows go build ./...
+  GOOS=windows go vet ./... (repeated after test edit; both runs successful)
+  gofmt -l internal/agent/wsl.go internal/agent/rescan.go internal/agent/wsl_probe_lock_windows_test.go
+  git diff --cached --check
+LSP diagnostics unavailable: gopls is not installed. No test, race detector, or real Windows/WSL runtime was executed. Go vet typechecked the Windows test but does not prove its behavior. No push.
+
+=== Concurrent reader follow-up 2026-10-29 ===
+Commit: 03eef223bb211222ee21fab6fa3ff558ba5a5da9 (parent 05e0067451798f54f148c954a722bfd16a4e430d)
+Code inspection confirms a concurrent wslDistros caller could skip an in-flight probe and return stale or absent state. The fix waits on completion/invalidation channels outside the state lock, rechecks the current list and retries unprobed entries after invalidation. Rescan, observed stop and removal invalidate and wake waiters.
+Updated Windows-only event-controlled tests check concurrent results, lock availability, list changes, rescan and observed restart; failure waits use timeouts. Tests were not executed or simulated on Linux, so their behavior and race safety remain unverified.
+Commands, all exit 0 with no output: go build ./...; go vet ./...; GOOS=windows go build ./...; GOOS=windows go vet ./...; gofmt -l internal/agent/wsl.go internal/agent/rescan.go internal/agent/wsl_probe_lock_windows_test.go; git diff --cached --check. Windows vet typechecks test code without running it. No push.
+
+=== Deterministic reader test follow-up 2026-10-29 ===
+Commit: 9281daa5734f1df78dd0567c2045aaa17f18696e
+The Windows-only test uses testing/synctest.Wait to observe quiescence before releasing the first probe, asserts the second reader has not returned, and checks complete ordered distro results. Failure waits are bounded.
+Commands: go build ./...; go vet ./...; GOOS=windows go build ./...; GOOS=windows go vet ./...; gofmt -l internal/agent/wsl_probe_lock_windows_test.go; git diff --check. All completed successfully with no output. Windows tests were not run on Linux; neither their runtime behavior nor real WSL was verified. No push.
+
+=== Real-time watchdog follow-up 2026-10-29 ===
+Commit: a4537ed60fadd2b6a5c4f77f3c3ed8f584678db7
+A timer started outside the synctest bubble releases the externally created probe channel after 30 real seconds and records failure, so a reader blocked on the WSL mutex cannot prevent timeout progress. The watchdog is stopped and joined on normal completion.
+Commands: go build ./...; go vet ./...; GOOS=windows go build ./...; GOOS=windows go vet ./...; gofmt -l internal/agent/wsl_probe_lock_windows_test.go; git diff --check; git diff --cached --check. All successful with no output. Windows tests and real WSL were not run; watchdog behavior remains unverified at runtime. No push.
+
+=== Bubble-owned channel follow-up 2026-10-29 ===
+Commit: 788f18e38b92cdd1a3a1c1cff8cf846552850319
+The probe release channel is created inside the synctest bubble. A parent test runs the scenario in a child test process under a 30-second real context deadline, killing the child on timeout. No sleeps are used.
+Portable isolated Go synctest experiment (not Magpie or Windows test): go test -count=1 -run ^TestBubble$ -timeout=4s passed for a bubble-owned channel; with a deliberate mutex regression it exited nonzero after 4.023s with sync.Mutex.Lock and synctest.Wait in the timeout stack.
+Commands: go build ./...; go vet ./...; GOOS=windows go build ./...; GOOS=windows go vet ./...; gofmt -l internal/agent/wsl_probe_lock_windows_test.go; git diff --check; git diff --cached --check. All completed successfully with no output. Windows tests and real WSL were not run. No push.

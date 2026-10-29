@@ -1,0 +1,5 @@
+FIX-MAP copies byte-identical: true
+IDs: 76, unique: 76
+Batch 1 delivered issue links present: true, true, true, true, true, true
+delivered-issues rows: 6
+B4 marked delivered: true

@@ -1,0 +1,26 @@
+B5 conservative fix evidence
+
+REVIEW UPDATE: The original behavior described below was rejected and superseded by commit ba4f3ef69. It skipped checksum-corrupt frames, which can hide an end-seed marker or a partial line; it is not the final behavior.
+
+Final branch head: ba4f3ef69 (fix/wip-sessions-frame-tail), two commits ahead, clean, no push.
+The reader now stops on all decoder errors and malformed headers. A failed dsh read keeps the last successful summary and calls; without one it returns no partial data. Summary cache version 27 and calls-v16 invalidate results from the earlier skip. Incomplete frames still wait for more data. A modified size or timestamp prompts a retry, with the existing sampled-prefix tail validation; same metadata or an unsampled rewrite may leave older cached data.
+
+Red against 1e7183e: TestCorruptFrameDoesNotExposeLineContinuation emitted suffix alone; TestDshCorruptSeedCacheRepair counted 106 input tokens (99 inherited + 7 own). Exit 1. A first version of the cache test timed out because the test left the global cache nil while calling refresh; its fixture was corrected to initialize the cache. This was test setup, not a production timeout.
+Green against ba4f3ef69 tree: the focused tests passed through the real summary refresh and calls cache, including repair and read again; go test -tags nogui ./internal/sessions -count=1 passed (5.944s); focused go test -race -tags nogui passed (2.129s); go build ./... and go vet ./... exited 0; gofmt -l and git diff --check clean. gopls unavailable; full repository suite and cross-platform tests not run.
+
+Remaining limit: no safe automatic resynchronization across any corrupt frame or malformed header. Later data remains inaccessible until the source is repaired and the change is detected; same-size, same-time repair may not be noticed. Existing cached successful state may remain visible until a successful reread. No push.
+
+--- Historical record, superseded ---
+Worktree: /tmp/mg-fix-sessions-frame-tail
+Branch: fix/wip-sessions-frame-tail
+Base: 926ef769ffd102e0a06f4cd7b0d583782d254d40
+Commit: 1e7183ee2831e6dbd9b4ffd355f8e88c479d8fb5
+Final status: clean, ahead of upstream/main by one commit. No push.
+
+Scope: internal/sessions/frames.go, internal/sessions/frames_corrupt_test.go, docs/subsystems/gateway-sessions.md.
+scanFrames is called by parseDsh and readDshCalls; both persist tails only on nil errors. A complete frame whose decoder reports a checksum mismatch can be passed at its parsed end when no prior incomplete line or skip depends on it; both real callers are exercised by a test and retain the later frame. Malformed frame headers and all other decoder errors are returned, stopping safely; callers discard the tail and retry from the start on a later read. Partial frames and partial magic are retained for future appends.
+
+Red on base (go test -tags nogui ./internal/sessions -run 'TestScanFrames(Corruption|IncompleteRetained|CorruptFrameInsideLine)$' -count=1): complete corrupt frame emitted only first rather than first and last; malformed header returned nil rather than errFrame; corruption crossing a partial line returned nil. Exit 1. Partial-frame test passed in the same run.
+Green on changed tree: focused corruption, partial header, incomplete nested frame, dictionary, crossing-line and both-caller tests: ok 0.028s. go test -tags nogui ./internal/sessions -count=1: ok 5.730s. Focused go test -race -tags nogui: ok 1.259s. go build ./... and go vet ./...: exit 0. gofmt -l on changed Go files: no output. git diff --check: clean. gopls unavailable; compiler and vet ran. Full repository test suite and cross-OS tests not run.
+
+Limit: malformed headers have no trustworthy end, and searching for frame magic can mistake compressed or raw payload for an independent frame. An incomplete outer raw block can contain a whole decodable zstd frame as data. The same prefix can represent a corrupted length followed by a valid frame. Therefore malformed headers stop without recovering later frames, as do non-checksum decoding errors (including unknown dictionaries and decoder limits) and corrupt frames crossing an unfinished line. No claim of universal recovery. Content inside a checksum-failed frame cannot be recovered; the fix skips that frame only at a known parsed boundary.
