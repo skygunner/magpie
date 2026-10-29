@@ -222,8 +222,8 @@ type state struct {
 // what this computer changed counts as changed here again and goes back
 // up beside the other's, where taking the other's file as having seen
 // this one's would bring the old parts in over this computer's changes.
-// Remote and Local are nil for a write to an empty server: the next sync
-// is then a first one, as it would have been.
+// Remote and Local are nil for a write to an empty server; if it is
+// overwritten, both sides count as changed under the conflict policy.
 type blind struct {
 	Sum    string            `json:"sum"`
 	Remote map[string]string `json:"remote,omitempty"`
@@ -1062,6 +1062,9 @@ func syncOnce(ctx context.Context, c Config, st *state) error {
 			good := cached(st.Sum)
 			if good == nil || !bytes.HasPrefix(good, data) || len(data) <= bytes.Index(good, []byte(`"data"`)) {
 				st.Remote, st.Local = b.Remote, b.Local
+				if st.Local == nil {
+					st.Local = map[string]string{}
+				}
 			}
 		}
 		st.Blind = nil
