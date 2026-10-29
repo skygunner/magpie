@@ -977,7 +977,7 @@ var wsl struct {
 	seen    map[string]*distro
 	probed  map[string]bool
 	failed  map[string]time.Time
-	probing map[string]*struct{ marker byte }
+	probing map[string]chan struct{}
 	dirty   bool
 }
 
@@ -1092,6 +1092,7 @@ func wslHung(hung bool) {
 func wslStatePath() string { return filepath.Join(filepath.Dir(provider.Path()), "wsl.json") }
 
 func wslDistros() []distro {
+retry:
 	wsl.Lock()
 	if wsl.seen == nil {
 		wsl.seen, wsl.probed, wsl.failed = map[string]*distro{}, map[string]bool{}, map[string]time.Time{}
@@ -1115,15 +1116,19 @@ func wslDistros() []distro {
 			// none to run: a wsl.exe that couldn't list them isn't asked
 			// again which run, another timeout under the lock the GUI waits on
 			wsl.running, wsl.runOK, wsl.runAt = map[string]bool{}, wsl.listed, time.Now()
-			clear(wsl.probing)
+			for n, done := range wsl.probing {
+				delete(wsl.probing, n)
+				close(done)
+			}
 			clear(wsl.probed)
 		}
 	}
 	wslRunningLocked()
 	if wsl.listed {
-		for n := range wsl.probing {
+		for n, done := range wsl.probing {
 			if !slices.Contains(wsl.names, n) {
 				delete(wsl.probing, n)
+				close(done)
 			}
 		}
 		for n := range wsl.probed {
@@ -1133,10 +1138,10 @@ func wslDistros() []distro {
 		}
 	}
 	if wsl.probing == nil {
-		wsl.probing = map[string]*struct{ marker byte }{}
+		wsl.probing = map[string]chan struct{}{}
 	}
-	// Tokens identify the current probe so a rescan or stop can invalidate it.
-	probing := map[string]*struct{ marker byte }{}
+	// A channel identifies a probe and wakes readers after it is merged or invalidated.
+	probing := map[string]chan struct{}{}
 	var names []string
 	for _, n := range wsl.names {
 		// a distro that stopped is probed again once it runs: WSL may have
@@ -1151,7 +1156,7 @@ func wslDistros() []distro {
 		if t, ok := wsl.failed[n]; ok && time.Since(t) <= wslRetryAge {
 			continue
 		}
-		probe := new(struct{ marker byte })
+		probe := make(chan struct{})
 		probing[n], wsl.probing[n] = probe, probe
 		names = append(names, n)
 	}
@@ -1169,12 +1174,12 @@ func wslDistros() []distro {
 	}
 
 	wsl.Lock()
-	defer wsl.Unlock()
 	for _, n := range names {
 		if wsl.probing[n] != probing[n] {
 			continue
 		}
 		delete(wsl.probing, n)
+		close(probing[n])
 		if !wsl.running[n] || wsl.probed[n] || !slices.Contains(wsl.names, n) {
 			continue
 		}
@@ -1194,6 +1199,30 @@ func wslDistros() []distro {
 			delete(wsl.seen, n)
 		}
 		wsl.dirty = true
+	}
+	// Wait outside the lock, then recheck because a refresh may replace a probe.
+	for {
+		var wait chan struct{}
+		for _, n := range wsl.names {
+			if wsl.running[n] && wsl.probing[n] != nil {
+				wait = wsl.probing[n]
+				break
+			}
+		}
+		if wait == nil {
+			for _, n := range wsl.names {
+				if wsl.running[n] && !wsl.probed[n] {
+					if t, ok := wsl.failed[n]; !ok || time.Since(t) > wslRetryAge {
+						wsl.Unlock()
+						goto retry
+					}
+				}
+			}
+			break
+		}
+		wsl.Unlock()
+		<-wait
+		wsl.Lock()
 	}
 	var out []distro
 	for _, n := range wsl.names {
@@ -1215,6 +1244,7 @@ func wslDistros() []distro {
 		}
 	}
 	wslSaveLocked()
+	wsl.Unlock()
 	return out
 }
 
@@ -1275,9 +1305,10 @@ func wslRunningLocked() {
 	for _, n := range run {
 		wsl.running[n] = true
 	}
-	for n := range wsl.probing {
+	for n, done := range wsl.probing {
 		if !wsl.running[n] {
 			delete(wsl.probing, n)
+			close(done)
 		}
 	}
 	for n := range wsl.probed {

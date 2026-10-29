@@ -19,8 +19,11 @@ func TestWSLProbeConcurrentChanges(t *testing.T) {
 			wsl.probing = nil
 			wsl.Unlock()
 			t.Cleanup(func() { wsl.Lock(); wsl.probing = nil; wsl.Unlock() })
+			var releaseOnce sync.Once
+			var release chan struct{}
 
-			started, release := make(chan struct{}), make(chan struct{})
+			started, listed := make(chan struct{}), make(chan struct{})
+			release = make(chan struct{})
 			var mu sync.Mutex
 			installed, running, calls := "Ubuntu", "Ubuntu", 0
 			wslRun = func(_ time.Duration, args ...string) ([]byte, error) {
@@ -44,6 +47,9 @@ func TestWSLProbeConcurrentChanges(t *testing.T) {
 						<-release
 						return []byte("home:/old\ndir:.codex\n"), nil
 					}
+					if args[1] == "Debian" {
+						close(listed)
+					}
 					return []byte("home:/new\ndir:.codex\n"), nil
 				}
 				mu.Unlock()
@@ -53,12 +59,12 @@ func TestWSLProbeConcurrentChanges(t *testing.T) {
 			done := make(chan []distro, 1)
 			go func() { done <- wslDistros() }()
 			t.Cleanup(func() {
+				releaseOnce.Do(func() { close(release) })
 				select {
-				case <-release:
-				default:
-					close(release)
+				case <-done:
+				case <-time.After(10 * time.Second):
+					t.Error("first reader did not stop")
 				}
-				<-done
 			})
 			select {
 			case <-started:
@@ -66,39 +72,87 @@ func TestWSLProbeConcurrentChanges(t *testing.T) {
 				t.Fatal("probe did not start")
 			}
 
-			switch change {
-			case "list":
-				mu.Lock()
-				installed, running = "Ubuntu\nDebian", "Ubuntu\nDebian"
-				mu.Unlock()
-				wsl.Lock()
-				wsl.at, wsl.runAt = time.Time{}, time.Time{}
-				wsl.Unlock()
-				wslDistros()
-			case "rescan":
-				Rescan()
-				wslDistros()
-			case "restart":
-				mu.Lock()
-				running = ""
-				mu.Unlock()
-				wsl.Lock()
-				wsl.runAt = time.Time{}
-				wsl.Unlock()
-				wslUp("Ubuntu")
-				mu.Lock()
-				running = "Ubuntu"
-				mu.Unlock()
-				wsl.Lock()
-				wsl.runAt = time.Time{}
-				wsl.Unlock()
-				wslDistros()
-			case "duplicate":
-				wslDistros()
+			unlocked := make(chan struct{})
+			go func() { wsl.Lock(); wsl.Unlock(); close(unlocked) }()
+			select {
+			case <-unlocked:
+			case <-time.After(10 * time.Second):
+				t.Error("probe held the state lock")
 			}
-			close(release)
-			ds := <-done
-			done <- ds
+			second := make(chan []distro, 1)
+			secondDone := make(chan struct{})
+			t.Cleanup(func() {
+				releaseOnce.Do(func() { close(release) })
+				select {
+				case <-secondDone:
+				case <-time.After(10 * time.Second):
+					t.Error("second reader did not stop")
+				}
+			})
+			go func() {
+				defer close(secondDone)
+				switch change {
+				case "list":
+					mu.Lock()
+					installed, running = "Ubuntu\nDebian", "Ubuntu\nDebian"
+					mu.Unlock()
+					wsl.Lock()
+					wsl.at, wsl.runAt = time.Time{}, time.Time{}
+					wsl.Unlock()
+				case "rescan":
+					Rescan()
+				case "restart":
+					mu.Lock()
+					running = ""
+					mu.Unlock()
+					wsl.Lock()
+					wsl.runAt = time.Time{}
+					wsl.Unlock()
+					wslUp("Ubuntu")
+					mu.Lock()
+					running = "Ubuntu"
+					mu.Unlock()
+					wsl.Lock()
+					wsl.runAt = time.Time{}
+					wsl.Unlock()
+				case "duplicate":
+				}
+				second <- wslDistros()
+			}()
+			if change == "list" {
+				select {
+				case <-listed:
+				case <-time.After(10 * time.Second):
+					t.Error("new distro was not probed")
+				}
+			}
+			if change == "rescan" || change == "restart" {
+				select {
+				case ds := <-second:
+					if len(ds) != 1 || ds[0].Home != "/new" {
+						t.Errorf("fresh result after %s: %+v", change, ds)
+					}
+					second <- ds
+				case <-time.After(10 * time.Second):
+					t.Error("fresh probe did not finish")
+				}
+			}
+			releaseOnce.Do(func() { close(release) })
+			var ds []distro
+			select {
+			case ds = <-done:
+				done <- ds
+			case <-time.After(10 * time.Second):
+				t.Fatal("first reader did not finish")
+			}
+			select {
+			case got := <-second:
+				if len(got) == 0 || len(ds) == 0 || got[0].Home != ds[0].Home {
+					t.Errorf("concurrent reader got %+v, first got %+v", got, ds)
+				}
+			case <-time.After(10 * time.Second):
+				t.Error("second reader did not finish")
+			}
 			if change == "list" {
 				if len(ds) != 2 || ds[0].Name != "Ubuntu" || ds[1].Name != "Debian" {
 					t.Fatalf("distros after listing changed: %+v", ds)
