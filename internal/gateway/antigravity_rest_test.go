@@ -237,8 +237,8 @@ func TestAntigravityQuotaStillRests(t *testing.T) {
 	if len(r.Tries) != 2 || r.Tries[0].Status != 429 || r.Tries[0].Fail != failQuota || r.Tries[0].Rest == nil {
 		t.Fatalf("the used-up try: %+v", r.Tries)
 	}
-	if d := time.Until(r.Tries[0].Rest.Until); d < 14*time.Minute || d > 15*time.Minute {
-		t.Fatalf("rests %v, not the 15 minutes a used-up plan takes", d)
+	if d := time.Until(r.Tries[0].Rest.Until); d < 29*time.Minute || d > 30*time.Minute {
+		t.Fatalf("rests %v, not the 30 minutes a used-up plan takes", d)
 	}
 	if *askedUsage != 1 {
 		t.Fatalf("the account's usage was asked again %d times, once as it was", *askedUsage)

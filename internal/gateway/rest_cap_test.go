@@ -32,9 +32,9 @@ func TestOwnRestCap(t *testing.T) {
 	rate := `{"error":{"message":"Too many requests","type":"rate_limit_error"}}`
 	fail := `{"error":{"message":"upstream connect error","type":"api_error"}}`
 	m := time.Minute
-	ladder("rate-long", 240, 429, rate, m, 2*m, 4*m, 8*m, 16*m, 32*m, 64*m, 128*m, 240*m, 240*m)
-	ladder("rate-short", 3, 429, rate, m, 2*m, 3*m, 3*m)
-	ladder("rate-own", 0, 429, rate, m, 2*m, 4*m, 8*m, 16*m, 30*m, 30*m)
+	ladder("rate-long", 240, 429, rate, 2*m, 4*m, 8*m, 16*m, 32*m, 64*m, 128*m, 240*m, 240*m)
+	ladder("rate-short", 3, 429, rate, 2*m, 3*m, 3*m)
+	ladder("rate-own", 0, 429, rate, 2*m, 4*m, 8*m, 16*m, 32*m, 64*m, 64*m)
 	ladder("fail-long", 120, 502, fail, m, 2*m, 4*m, 8*m, 16*m, 32*m, 64*m, 120*m)
 	ladder("fail-own", 0, 502, fail, m, 2*m, 4*m, 8*m, 10*m, 10*m)
 }

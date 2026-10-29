@@ -10,7 +10,7 @@ import (
 )
 
 // A rate limit that comes back as soon as its rest is over rests twice as
-// long each time, up to half an hour, until the account answers; a vendor's
+// long each time, up to 64 minutes, until the account answers; a vendor's
 // own word of when (a header, or a reset time in its error) is kept; and
 // an account whose usage says it has credits left still waits its rest out
 // behind the others (01huadalang: a WorkBuddy free model 429 while the
@@ -33,7 +33,7 @@ func TestRateLimitBacksOffWhenItComesBack(t *testing.T) {
 		restingUntil.Unlock()
 	}
 
-	for i, want := range []time.Duration{time.Minute, 2 * time.Minute, 4 * time.Minute, 8 * time.Minute, 16 * time.Minute, 30 * time.Minute, 30 * time.Minute} {
+	for i, want := range []time.Duration{2 * time.Minute, 4 * time.Minute, 8 * time.Minute, 16 * time.Minute, 32 * time.Minute, 64 * time.Minute, 64 * time.Minute} {
 		r := s.restAfter(c, 429, http.Header{}, body)
 		if r.Why != failRate || !near(time.Until(r.Until), want) || r.Failures != i+1 {
 			t.Fatalf("429 #%d: rests %v by %s, %d failures; want %v", i+1, time.Until(r.Until), r.By, r.Failures, want)
@@ -55,15 +55,15 @@ func TestRateLimitBacksOffWhenItComesBack(t *testing.T) {
 	servedCandidate(c, 1)
 	s.restAfter(c, 429, http.Header{}, body)
 	expire()
-	s.restAfter(c, 429, http.Header{}, body) // 2m
+	s.restAfter(c, 429, http.Header{}, body) // 4m
 	r := s.restAfter(c, 429, http.Header{}, body)
-	if !near(time.Until(r.Until), 2*time.Minute) || r.Failures != 2 {
+	if !near(time.Until(r.Until), 4*time.Minute) || r.Failures != 2 {
 		t.Fatalf("failed again while resting: %v, %d failures", time.Until(r.Until), r.Failures)
 	}
 
 	// an answer starts it over
 	servedCandidate(c, 1)
-	if r := s.restAfter(c, 429, http.Header{}, body); !near(time.Until(r.Until), time.Minute) || r.By != "cooldown" {
+	if r := s.restAfter(c, 429, http.Header{}, body); !near(time.Until(r.Until), 2*time.Minute) || r.By != "cooldown" {
 		t.Fatalf("after an answer: %v by %s", time.Until(r.Until), r.By)
 	}
 
@@ -85,7 +85,7 @@ func TestRateLimitBacksOffWhenItComesBack(t *testing.T) {
 	restingUntil.Lock()
 	restingUntil.m[id] = time.Now().Add(-rateForget - time.Minute)
 	restingUntil.Unlock()
-	if r := s.restAfter(c, 429, http.Header{}, body); !near(time.Until(r.Until), time.Minute) || r.Failures != 1 {
+	if r := s.restAfter(c, 429, http.Header{}, body); !near(time.Until(r.Until), 2*time.Minute) || r.Failures != 1 {
 		t.Fatalf("long after: %v, %d failures", time.Until(r.Until), r.Failures)
 	}
 	servedCandidate(c, 1)

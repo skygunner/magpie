@@ -2647,7 +2647,7 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 	for i := 0; i < len(cands); i++ {
 		c := cands[i]
 		// Opted-in cooldowns are hard holds, even when probeOne kept the last candidate.
-		if rest, ok := restOf(c.restID()); ok && c.p.ModelCooldown[c.model] > 0 && !c.p.NoFailRest() && (rest.Why == failSlow || rest.Why == failCanceled) {
+		if rest, ok := restOf(c.restID()); ok && c.p.ModelCooldownCap(c.model) > 0 && !c.p.NoFailRest() && (rest.Why == failSlow || rest.Why == failCanceled) {
 			if i < len(cands)-1 {
 				continue
 			}
@@ -3162,7 +3162,7 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 			// The agent went away; opted-in models cool down, but no next candidate is asked.
 			call.Status, call.Error = canceled(r.Context())
 			try.Status, try.Error, try.Fail = call.Status, call.Error, failCanceled
-			if c.p.ModelCooldown[c.model] > 0 && asked.Load() > 0 {
+			if c.p.ModelCooldownCap(c.model) > 0 && asked.Load() > 0 {
 				if rest, ok := restUnresponsive(c, time.Now(), failCanceled, 499, 1); ok {
 					try.Rest = &rest
 				}

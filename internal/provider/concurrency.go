@@ -228,6 +228,7 @@ func SetQuotaRest(id string, minutes int) error {
 		return err
 	}
 	p.QuotaRest = minutes
+	p.Cooldown.QuotaRest, p.Cooldown.QuotaResetAt = nil, nil
 	if minutes > 0 {
 		p.QuotaResetAt = "" // the one set last is the one that counts
 	}
@@ -238,10 +239,14 @@ func SetQuotaRest(id string, minutes int) error {
 // when the vendor doesn't say when it is back: until the next QuotaResetAt
 // when one is set, else QuotaRest; 0 for the gateway's own.
 func (p Provider) OwnQuotaRest(now time.Time) time.Duration {
-	if t, ok := NextResetAt(p.QuotaResetAt, now); ok {
+	policy := p.CooldownFor(p.CooldownIdentity())
+	if t, ok := NextResetAt(policy.QuotaResetAt, now); ok {
 		return t.Sub(now)
 	}
-	return p.QuotaRestFor()
+	if policy.Source["quotaRest"] == "" {
+		return 0
+	}
+	return time.Duration(policy.QuotaRest) * time.Minute
 }
 
 // ResetAt is a time of day an allowance comes back: an hour and minute, on
@@ -315,6 +320,7 @@ func SetQuotaResetAt(id, at string) error {
 	if err != nil {
 		return err
 	}
+	p.Cooldown.QuotaRest, p.Cooldown.QuotaResetAt = nil, nil
 	p.QuotaResetAt = strings.TrimSpace(at)
 	if p.QuotaResetAt != "" {
 		p.QuotaRest = 0
@@ -334,7 +340,7 @@ const RestCapOff = -1
 
 // NoFailRest says p's keys and accounts don't rest after an unknown
 // failure (RestCapOff).
-func (p Provider) NoFailRest() bool { return p.RestCap == RestCapOff }
+func (p Provider) NoFailRest() bool { return !p.CooldownFor(p.CooldownIdentity()).FailRest }
 
 // RestCapOr is the most one of p's keys or accounts sits out while it keeps
 // failing: the user's RestCap, else the gateway's own def (RestCapOff
@@ -358,6 +364,7 @@ func SetRestCap(id string, minutes int) error {
 		return err
 	}
 	p.RestCap = minutes
+	p.Cooldown.RateCap, p.Cooldown.SlowCap, p.Cooldown.FailureCap, p.Cooldown.FailRest = nil, nil, nil, nil
 	return Save(*p)
 }
 

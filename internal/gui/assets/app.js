@@ -5881,7 +5881,7 @@ document.addEventListener("mousedown", (e) => {
 });
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape" || pick) return;
-  if (editing !== null || importingApps) cancelEdit();
+  if (editing !== null || importingApps || cooldownOpen) cancelEdit();
   else if (adding && !$("#view-providers").hidden && providers.providers.length) closeAddSheet();
   else if (profileEscape()) e.preventDefault();
   else if (mode === "panel") api("window/hide", {});
@@ -6268,7 +6268,10 @@ function renderProviders() {
     chev.append(svg(CHEV_R, 11, 1.7));
     // a provider on is listed, and tried, in the order the user puts it in
     // (#499): its logo is the handle, as an agent row's is
-    row.append(p.off ? icon(p.icon || "generic") : providerHandle(p, row), who, uses, key, providerSwitch(p), chev);
+    const cooldown = cooldownButton(p.id);
+    cooldown.classList.add("compact");
+    cooldown.replaceChildren(svg("M8 2a6 6 0 1 0 0 12A6 6 0 0 0 8 2M8 4v4l3 2", 14, 1.5));
+    row.append(p.off ? icon(p.icon || "generic") : providerHandle(p, row), who, uses, key, cooldown, providerSwitch(p), chev);
     // right-click: Move to Top, Move Up, Move Down, Move to Bottom (#1614)
     if (!p.off) row.oncontextmenu = (ev) => { ev.preventDefault(); openProviderMenu(row.querySelector(".pv-handle"), p); };
     row.onclick = async () => {
@@ -6295,7 +6298,7 @@ function renderProviders() {
   keptIcons = null;
   markUpstream();
   view.scrollTop = top; // first: a closing dialog folds into its row where it is
-  if (dialog) openModal(dialog); else closeModal();
+  if (dialog) openModal(dialog); else if (!cooldownOpen) closeModal();
 }
 
 // providerHandle is an on row's logo, which is also its handle (#499):
@@ -6363,6 +6366,7 @@ function openProviderMenu(anchor, p) {
   const i = on.indexOf(p.id), k = shown.indexOf(p.id);
   if (i < 0) return;
   openRowMenu(anchor, [
+    { name: "Error cooldown and backoff", run: () => openCooldown(p.id) },
     { name: "Move to top", icon: MOVE_TOP, key: ALT + SHIFT + "↑", off: i === 0, run: () => arrangeProvider(p.id, 0) },
     { name: "Move up", icon: MOVE_UP, key: ALT + "↑", off: k <= 0, run: () => stepProvider(p.id, -1) },
     { name: "Move down", icon: MOVE_DOWN, key: ALT + "↓", off: k < 0 || k >= shown.length - 1, run: () => stepProvider(p.id, 1) },
@@ -7586,7 +7590,7 @@ function input(value, placeholder, type = "text") {
   i.onkeydown = (e) => {
     e.stopPropagation();
     if (e.key === "Escape") {
-      if (editing !== null || importing || importingApps) cancelEdit();
+      if (editing !== null || importing || importingApps || cooldownOpen) cancelEdit();
     }
   };
   return i;
@@ -7693,13 +7697,17 @@ function confirmDiscard() {
   return confirmAction(t("Discard"), t("Discard unsaved changes? Your changes will be lost."), t("Discard"));
 }
 async function cancelEdit(keep) {
+  if (cooldownOpen) {
+    if (cooldownSaving || (modalFormDirty() && !await confirmDiscard())) return false;
+    await closeModal(); return true;
+  }
   if ((providerDirty() || ((importing || importingApps) && modalFormDirty())) && !(await confirmDiscard())) return false;
   if (keep !== true) dropSigningIn(editing);
   editing = null; draft = null; acctModels = null; importing = null; importingApps = null; renderProviders();
   return true;
 }
 window.addEventListener("beforeunload", (e) => {
-  if (providerDirty() || magpie.call("routing", "dirty") || ((view === "library" || importing || importingApps) && modalFormDirty())) {
+  if (providerDirty() || magpie.call("routing", "dirty") || ((view === "library" || importing || importingApps || cooldownOpen) && modalFormDirty())) {
     e.preventDefault();
     e.returnValue = "";
   }
@@ -8647,7 +8655,7 @@ function morphFrom(from, to) {
 // fades by itself instead.
 const VEIL_OFF = { backgroundColor: "rgba(0, 0, 0, 0)", backdropFilter: "blur(0px) saturate(1)", webkitBackdropFilter: "blur(0px) saturate(1)" };
 const unveil = (m) => { for (const p of ["opacity", "background-color", "backdrop-filter", "-webkit-backdrop-filter"]) m.style.removeProperty(p); };
-let modalReturnFocus = null, modalFormBase = "";
+let modalReturnFocus = null, modalFormBase = "", cooldownOpen = false, cooldownSaving = false;
 function formValues(box) {
   return JSON.stringify([
     [...box.querySelectorAll("input:not([type=search]), textarea, select")].map((input) =>
@@ -8878,6 +8886,8 @@ function frame(ed) {
   ed.classList.add("framed");
 }
 function closeModal() {
+  if (cooldownSaving) return Promise.resolve();
+  cooldownOpen = false;
   const m = $("#modal"), d = m.firstElementChild;
   if (m.hidden) return Promise.resolve();
   if (m.classList.contains("out")) return modalDone || Promise.resolve();
@@ -13168,6 +13178,7 @@ function renderAccounts(a, p) {
       dot.title = on ? t("Stop using this account") : t("Use this account too");
       dot.onclick = () => accountAction("login/" + (on ? "off" : "on"), { agent: a.agent, user: l.user });
     }
+    if (p) row.append(cooldownButton(p.id, l.user));
     row.append(dot, accountNameButton(p, l.user), el("span", "plan", accountPlan({ agent: a.agent, builtin: a.builtin, plan: l.plan })));
     // its own models (#474), when there is another account to send the rest to
     const [amPill, amBox] = ls.length > 1 || accountModelsOf(p, l.user).length ? accountModels(p, l.user, false, l.user) : [];
@@ -14500,7 +14511,7 @@ function renderKeyAccounts(p) {
       e.stopPropagation();
       try { copy((await api("provider/key", { id: p.id, account: k.id })).key, k.name || k.masked, cp); } catch (err) { status(err.message, "err"); }
     };
-    row.append(cp, edit);
+    row.append(cp, edit, cooldownButton(p.id, k.id));
     // one the gateway passes over after a failure: why, and until when, on
     // a line of its own under the key's, so the row's controls stay in reach
     let restLine = null;
@@ -23180,7 +23191,8 @@ async function show(v) {
     if (view === "providers" && (editing !== null || importing || importingApps)) {
       if (!await cancelEdit(true)) return false;
     } else if (!$("#modal").hidden && !$("#modal").classList.contains("out")) {
-      if (view === "library" && modalFormDirty() && !(await confirmDiscard())) return false;
+      if (cooldownSaving) return false;
+      if ((view === "library" || cooldownOpen) && modalFormDirty() && !(await confirmDiscard())) return false;
       if (view === "library") magpie.call("library", "close"); else closeModal();
     }
     if (view === "routing" && magpie.call("routing", "dirty")) {
@@ -24479,3 +24491,427 @@ if (mode === "window" && params.get("import")) {
   }).catch(() => {});
 }
 if (mode === "window" && params.get("view") === "providers" && params.get("edit")) editing = params.get("edit");
+
+// One editor for global defaults, provider defaults and account/key overrides.
+function cooldownButton(id = "", ref = "") {
+  const b = el("button", "text cooldown-open", t("Error cooldown and backoff"));
+  b.title = t("Error cooldown and backoff");
+  b.setAttribute("aria-label", t("Error cooldown and backoff"));
+  b.onclick = (e) => {
+    e.stopPropagation();
+    openCooldown(id, ref);
+  };
+  return b;
+}
+async function openCooldown(id = "", ref = "") {
+  if (providerDirty() && !(await confirmDiscard())) return;
+  const url = "cooldown?" + new URLSearchParams({ id, ref });
+  try {
+    const data = await api(url);
+    editing = null;
+    draft = null;
+    importing = null;
+    importingApps = null;
+    drawCooldown(data, id, ref, url);
+  } catch (err) {
+    status(err.message, "err");
+  }
+}
+function drawCooldown(data, id, ref, url) {
+  cooldownOpen = true;
+  const inherited = data.inherited || data.effective;
+  const draft = structuredClone({
+    ...data.legacy,
+    ...data.raw,
+    models: { ...data.legacy?.models, ...data.raw?.models },
+  });
+  const box = el("div", "editor framed cooldown-editor");
+  const head = el("div", "ehead");
+  head.append(el("b", "", t("Error cooldown and backoff")));
+  const body = el("div", "ebody");
+  const scope = ref ? id + " / " + ref : id || t("Global defaults");
+  body.append(
+    el("p", "", scope),
+    el(
+      "p",
+      "hint",
+      t(
+        "Account/key overrides provider; provider overrides global defaults. Blank fields inherit. Saving changes future failures; current rests keep their end time.",
+      ),
+    ),
+  );
+  const sources = {
+    global: t("Global defaults"),
+    provider: t("Provider override"),
+    account: t("Account/key override"),
+    legacy: t("Existing provider setting"),
+  };
+  const controls = new Map();
+  const number = (key, label, hint, max = 11520) => {
+    const wrap = el("label", "cooldown-field");
+    wrap.append(el("b", "", t(label)));
+    const i = input(
+      draft[key] == null ? "" : String(draft[key]),
+      String(inherited[key]),
+    );
+    i.type = "number";
+    i.min = "1";
+    i.max = String(max);
+    i.step = "1";
+    i.dataset.cooldown = key;
+    i.setAttribute("aria-label", t(label));
+    const effective = el(
+      "span",
+      "hint",
+      t("Effective: {value}; source: {source}", {
+        value: data.effective[key],
+        source: sources[data.effective.source[key]] || t("Built-in default"),
+      }),
+    );
+    wrap.append(i, effective, el("span", "hint", t(hint)));
+    body.append(wrap);
+    controls.set(key, i);
+    i.oninput = () => {
+      if (i.value === "") delete draft[key];
+      else draft[key] = Number(i.value);
+      preview();
+    };
+  };
+  number(
+    "rateStart",
+    "Rate limit: first rest (minutes)",
+    "Temporary 429 rate limits double after each rest expires. Example: 2 → 4 → 8 → 16 → 32 → 64 minutes. Success resets the ladder.",
+  );
+  number(
+    "rateCap",
+    "Rate limit: backoff cap (minutes)",
+    "This caps Magpie's calculated backoff. A recognized longer upstream wait still wins. Retry-After is capped at one hour; explicit reset times can be longer.",
+  );
+  const ladder = el("p", "cooldown-ladder");
+  body.append(ladder);
+  const preview = () => {
+    const start = draft.rateStart ?? inherited.rateStart,
+      cap = draft.rateCap ?? inherited.rateCap;
+    const steps = [];
+    let n = Math.min(start, cap);
+    for (let j = 0; j < 16 && Number.isFinite(n) && n > 0; j++) {
+      steps.push(n);
+      if (n >= cap) break;
+      n = Math.min(n * 2, cap);
+    }
+    ladder.textContent = t("Rate limit ladder (minutes): {steps}", {
+      steps: steps.join(" → "),
+    });
+  };
+  preview();
+  number(
+    "slowThreshold",
+    "First-response timeout: failures before resting",
+    "Default: the first timeout falls back without resting; the second starts resting. A successful response resets the count. The last candidate has no first-response deadline.",
+  );
+  number(
+    "slowStart",
+    "First-response timeout: first rest (minutes)",
+    "This is the rest after a timeout, not the response deadline. Configure the response deadline in the routing group's response waiting setting.",
+  );
+  number(
+    "slowCap",
+    "First-response timeout: backoff cap (minutes)",
+    "Default ladder: 1 → 2 → 4 → 8 → 10 minutes. Only this model on this account/key rests. An enabled model cooldown uses its own cap instead.",
+  );
+  if (data.groups?.length) {
+    const waits = el("div", "hint");
+    for (const g of data.groups)
+      waits.append(
+        el(
+          "p",
+          "",
+          t(
+            "Group {group}, model {model}: first-response wait {seconds} seconds (0 means unlimited; the last candidate is unlimited).",
+            { group: g.name, model: g.model, seconds: g.seconds },
+          ),
+        ),
+      );
+    body.append(waits);
+  }
+  const routing = el(
+    "button",
+    "text",
+    t("Configure response waits in Routing"),
+  );
+  routing.onclick = async () => {
+    if (modalFormDirty() && !(await confirmDiscard())) return;
+    await closeModal();
+    await show("routing");
+    $("#rtGoGroups")?.click();
+  };
+  body.append(routing);
+  number(
+    "failureCap",
+    "Other failures: backoff cap (minutes)",
+    "Unknown upstream failures such as 5xx or a dropped connection start at one minute and double to this cap. The affected account/key usually rests.",
+  );
+  number(
+    "quotaRest",
+    "Quota exhausted without a reset: fixed rest (minutes)",
+    "Uses quotaRest. Example: exhausted at 14:00 with 30 minutes set, try after 14:30. Still exhausted: another 30 minutes, without doubling. A recognized upstream reset or allowance window takes priority.",
+  );
+  const resetWrap = el("div", "cooldown-field");
+  resetWrap.setAttribute("role", "group");
+  resetWrap.setAttribute("aria-label", t("Daily quota reset time"));
+  resetWrap.append(el("b", "", t("Daily quota reset time")));
+  const reset = input(
+    draft.quotaResetAt ?? "",
+    inherited.quotaResetAt || "00:00+08:00",
+  );
+  reset.setAttribute("aria-label", t("Daily quota reset time"));
+  const resetMode = el("select");
+  resetMode.setAttribute("aria-label", t("Quota rest mode"));
+  for (const [value, label] of [
+    ["inherit", "Inherit"],
+    ["fixed", "Fixed duration"],
+    ["daily", "Daily reset"],
+  ]) {
+    const o = el("option", "", t(label));
+    o.value = value;
+    resetMode.append(o);
+  }
+  resetMode.value =
+    draft.quotaResetAt == null
+      ? "inherit"
+      : draft.quotaResetAt
+        ? "daily"
+        : "fixed";
+  const resetChanged = () => {
+    reset.disabled = resetMode.value !== "daily";
+    if (resetMode.value === "inherit") delete draft.quotaResetAt;
+    else
+      draft.quotaResetAt =
+        resetMode.value === "daily" ? reset.value.trim() : "";
+  };
+  resetMode.onchange = resetChanged;
+  reset.oninput = resetChanged;
+  resetChanged();
+  resetWrap.append(
+    resetMode,
+    reset,
+    el(
+      "span",
+      "hint",
+      t(
+        "Daily reset replaces the fixed wait. Use 08:00 for this server's clock, or 00:00+08:00 for an explicit UTC offset. Choose Fixed duration to clear an inherited daily reset.",
+      ),
+    ),
+    el(
+      "span",
+      "hint",
+      t("Effective: {value}; source: {source}", {
+        value: data.effective.quotaResetAt || t("Fixed duration"),
+        source:
+          sources[data.effective.source.quotaResetAt] || t("Built-in default"),
+      }),
+    ),
+  );
+  body.append(resetWrap);
+  for (const [key, label, hint] of [
+    [
+      "failRest",
+      "Rest after unknown failures and timeouts",
+      "Turning this off disables unknown-failure, slow-start and model cancellation rests (legacy restCap off). Rate limits and quota rests are controlled separately.",
+    ],
+    [
+      "limitRest",
+      "Rest after rate limits, exhausted quota or credit",
+      "Turning this off disables rests for limits and exhausted credit (limitRestOff). Authentication and other failures still follow their own rules.",
+    ],
+  ]) {
+    const wrap = el("label", "cooldown-field");
+    wrap.append(el("b", "", t(label)));
+    const select = el("select");
+    select.setAttribute("aria-label", t(label));
+    for (const [value, label] of [
+      ["inherit", "Inherit"],
+      ["true", "On"],
+      ["false", "Off"],
+    ]) {
+      const o = el("option", "", t(label));
+      o.value = value;
+      select.append(o);
+    }
+    select.value = draft[key] == null ? "inherit" : String(draft[key]);
+    select.onchange = () => {
+      if (select.value === "inherit") delete draft[key];
+      else draft[key] = select.value === "true";
+    };
+    wrap.append(
+      select,
+      el(
+        "span",
+        "hint",
+        t("Effective: {value}; source: {source}", {
+          value: t(data.effective[key] ? "On" : "Off"),
+          source: sources[data.effective.source[key]] || t("Built-in default"),
+        }),
+      ),
+      el("span", "hint", t(hint)),
+    );
+    body.append(wrap);
+  }
+  if (!data.effective.failRest)
+    body.append(
+      el(
+        "p",
+        "hint",
+        t(
+          "Currently disabled by the failure-rest switch: timeout, other-failure and model cancellation cooldowns.",
+        ),
+      ),
+    );
+  if (!data.effective.limitRest)
+    body.append(
+      el(
+        "p",
+        "hint",
+        t(
+          "Currently disabled by the limit-rest switch: rate-limit, quota and credit rests.",
+        ),
+      ),
+    );
+  body.append(
+    el("h3", "", t("Model timeout and cancellation cooldown")),
+    el(
+      "p",
+      "hint",
+      t(
+        "Exact model IDs, on this account/key only. Enabled models rest from the first timeout or in-flight client cancellation (499), including manual cancellation. Ladder: 1 → 2 → 4… up to 60 minutes. Success resets it. A cooling model is never probed; no available candidate returns 503 with Retry-After.",
+      ),
+    ),
+  );
+  const modelRows = el("div");
+  body.append(modelRows);
+  const addModel = (model = "") => {
+    const row = el("div", "cooldown-model");
+    const name = input(model, t("Exact model ID"));
+    name.setAttribute("aria-label", t("Exact model ID"));
+    const cap = input(
+      draft.models[model] ?? "",
+      String(inherited.models[model] ?? 0),
+    );
+    cap.type = "number";
+    cap.min = "0";
+    cap.max = "60";
+    cap.step = "1";
+    cap.setAttribute("aria-label", t("Model cap (0 disables; blank inherits)"));
+    const note = el(
+      "span",
+      "hint",
+      t("Effective: {value}; source: {source}", {
+        value: data.effective.models[model] ?? 0,
+        source:
+          sources[data.effective.source["model:" + model]] ||
+          t("Built-in default"),
+      }),
+    );
+    row.append(name, cap, note);
+    modelRows.append(row);
+  };
+  for (const model of new Set([
+    ...Object.keys(data.effective.models),
+    ...Object.keys(draft.models),
+  ]))
+    addModel(model);
+  const add = el("button", "text", t("Add model cooldown"));
+  add.onclick = () => addModel();
+  body.append(
+    add,
+    el("p", "hint", t("Model cap (0 disables; blank inherits)")),
+  );
+  for (const rest of data.rests || []) {
+    const row = el(
+      "p",
+      "hint",
+      t("Current rest: {why}; failures: {count}; until: {time}", {
+        why: rest.why + (rest.model ? " / " + rest.model : ""),
+        count: rest.failures || 0,
+        time: new Date(rest.until).toLocaleString(intlLang()),
+      }),
+    );
+    const go = el("button", "text", t("Try now"));
+    go.onclick = async () => {
+      try {
+        await api("gateway/unrest", { key: rest.key });
+        row.remove();
+      } catch (err) {
+        status(err.message, "err");
+      }
+    };
+    row.append(go);
+    body.append(row);
+  }
+  body.append(
+    el(
+      "p",
+      "hint",
+      t(
+        "Try now ends the current rest; it does not clear failure counts. Runtime cooldown state is cleared by a gateway restart.",
+      ),
+    ),
+  );
+  const foot = el("div", "bar");
+  const cancel = el("button", "text", t("Cancel"));
+  cancel.onclick = cancelEdit;
+  const save = el("button", "text primary", t("Save"));
+  const error = el("p", "hint");
+  error.setAttribute("role", "alert");
+  body.append(error);
+  save.onclick = async () => {
+    for (const i of controls.values()) if (!i.reportValidity()) return;
+    for (const [start, cap] of [
+      ["rateStart", "rateCap"],
+      ["slowStart", "slowCap"],
+    ])
+      if (
+        (draft[start] ?? inherited[start]) >
+        (draft[cap] ?? inherited[cap])
+      ) {
+        error.textContent = t("The first rest cannot exceed its cap.");
+        return;
+      }
+    const models = {};
+    for (const row of modelRows.children) {
+      const [name, cap] = row.querySelectorAll("input");
+      if (!cap.reportValidity()) return;
+      if (cap.value !== "") {
+        if (!name.value.trim()) {
+          name.focus();
+          return;
+        }
+        models[name.value.trim()] = Number(cap.value);
+      }
+    }
+    draft.models = models;
+    if (resetMode.value === "daily" && !reset.value.trim()) {
+      reset.focus();
+      return;
+    }
+    save.disabled = true;
+    cancel.disabled = true;
+    cooldownSaving = true;
+    try {
+      const fresh = await api(url, draft);
+      cooldownSaving = false;
+      drawCooldown(fresh, id, ref, url);
+      status(t("Saved"), "ok");
+    } catch (err) {
+      cooldownSaving = false;
+      error.textContent = err.message;
+      save.disabled = false;
+      cancel.disabled = false;
+    }
+  };
+  foot.append(el("span", "grow"), cancel, save);
+  box.append(head, body, foot);
+  openModal(box);
+  markModalSaved();
+}
+$("#cooldownDefaults").onclick = () => openCooldown();

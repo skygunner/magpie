@@ -186,6 +186,8 @@ func TestSettingsSaveKeepsWhatItDoesNotSend(t *testing.T) {
 		RedactModelName:      "astrlink-guard",
 		RedactModelScore:     map[string]float64{"astrlink-guard": 0.9},
 	}
+	cooldownCap := 64
+	was.Cooldown = settings.CooldownPolicy{RateCap: &cooldownCap}
 	was.RedactModelOff, was.RedactModelAuto = true, true
 	was.DesktopSubagentEffort = "high"
 	was.CodexAsyncCompact, was.CodexAsyncCompactPercent = true, 70

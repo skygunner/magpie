@@ -1283,6 +1283,8 @@ func Handler(w Windows, gw *gateway.Server) http.Handler {
 		}
 		var fields map[string]json.RawMessage
 		_ = json.Unmarshal(body, &fields)
+		// The dedicated cooldown editor owns this policy.
+		in.Cooldown = cur.Cooldown
 		// Older pages do not send fonts. An explicit null restores the
 		// default, while an omitted field (or a browser save) preserves it.
 		if _, sent := fields["uiFont"]; !sent || isWeb(w) {

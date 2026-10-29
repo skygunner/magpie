@@ -1004,13 +1004,16 @@ func (s *Server) drawOnAccounts(ctx context.Context, r *http.Request, p provider
 // kind rests nothing, as before: a key, a request refused, a vendor down;
 // nor does any on a provider set never to rest for a limit (LimitRestOff).
 func restDrawer(c candidate, code int, msg string) {
-	if c.p.Account == nil || c.p.LimitRestOff || c.model == "" || failure(code, []byte(msg)) != failQuota {
+	if c.p.Account == nil || !c.p.CooldownFor(c.p.CooldownIdentity()).LimitRest || c.model == "" || failure(code, []byte(msg)) != failQuota {
 		return
 	}
 	now := time.Now()
 	r := Rest{Why: failQuota, Status: code, By: "quota", Key: c.restID(), Model: c.model,
 		agent: c.p.Account.UsageAgent(), user: c.p.Account.User, said: msg}
 	d := quotaRest
+	if own := c.p.OwnQuotaRest(now); own > 0 {
+		d = own
+	}
 	if w := resetsAt([]byte(msg), now); w > 0 {
 		d, r.By = min(w, longestQuota), "resets"
 	}

@@ -4460,3 +4460,9 @@ body .row.agent .ag-prefs .row.pref .who { display: block; }
 .sess-tools .led-rename { flex: none; width: 180px; height: 26px; padding: 0 8px; border-radius: 7px; font-size: 12px; }
 /* Settings › About › Open-source licenses: the notices, as written */
 .notices-text { margin: 0; font: 11px/1.5 var(--code); white-space: pre-wrap; overflow-wrap: anywhere; }
+
+.cooldown-editor .cooldown-field{display:grid;gap:7px;margin:18px 0}.cooldown-field input,.cooldown-field select{max-width:100%;width:220px}.cooldown-editor .hint{white-space:normal;line-height:1.6}.cooldown-model{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.cooldown-model input{min-width:0;width:42%}.cooldown-model .hint{width:100%}.cooldown-open{font-size:11px;margin-inline-start:8px}.cooldown-ladder{font-variant-numeric:tabular-nums}
+
+.cooldown-open.compact{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;flex:none;padding:0;margin:0}
+
+.modal .editor.cooldown-editor > .ebody{display:block}

@@ -60,8 +60,8 @@ func TestShortResetRestsWhatItSays(t *testing.T) {
 	clearRest(c.restKey())
 	t.Cleanup(func() { clearRest(c.restKey()) })
 	r := s.restAfter(c, 429, http.Header{}, []byte(`{"error":{"message":"`+frequencyLimited+`"}}`))
-	if d := time.Until(r.Until); r.Why != failRate || d > time.Minute || d < 50*time.Second {
-		t.Fatalf("rests %v by %s (%s), want about a minute as a rate limit", d, r.By, r.Why)
+	if d := time.Until(r.Until); r.Why != failRate || d > 2*time.Minute || d < 110*time.Second {
+		t.Fatalf("rests %v by %s (%s), want about two minutes as a rate limit", d, r.By, r.Why)
 	}
 }
 

@@ -127,14 +127,14 @@ func TestSystemOneDecisionGroupFailsOver(t *testing.T) {
 		t.Fatalf("by name asked %s, want kb", got)
 	}
 	// all failing: the one not resting tried, then of those resting only
-	// the one back soonest (ka1, rested first, #1799), and the last
+	// the one back soonest (ka2: 503 rests 1m, 429 now rests 2m), and the last
 	// one's answer passed on
 	f.set("kb", 429)
 	rec = call("/v1/systemone", strings.Replace(ask, "%q", `"group/jevs"`, 1))
-	if got := strings.Join(f.took(), ","); got != "kb,ka1" {
-		t.Fatalf("all failing asked %s, want kb,ka1", got)
+	if got := strings.Join(f.took(), ","); got != "kb,ka2" {
+		t.Fatalf("all failing asked %s, want kb,ka2", got)
 	}
-	if rec.Code != 429 || !strings.Contains(rec.Body.String(), "no capacity for ka1") {
+	if rec.Code != 503 || !strings.Contains(rec.Body.String(), "no capacity for ka2") {
 		t.Fatalf("all failing: %d %s", rec.Code, rec.Body)
 	}
 	// a chat request to it is told where it is asked

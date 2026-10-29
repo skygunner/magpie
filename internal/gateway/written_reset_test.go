@@ -191,8 +191,8 @@ func TestWrittenResetRestsUntilThen(t *testing.T) {
 		why  string
 		d    time.Duration
 	}{
-		{`{"error":{"message":"Rate limit reached for requests","type":"rate_limit_error"}}`, failRate, fallbackCooldown},
-		{`{"error":{"message":"Too many requests, retry after 2026-10-11 12:37:53 UTC+8."}}`, failRate, fallbackCooldown},
+		{`{"error":{"message":"Rate limit reached for requests","type":"rate_limit_error"}}`, failRate, 2 * time.Minute},
+		{`{"error":{"message":"Too many requests, retry after 2026-10-11 12:37:53 UTC+8."}}`, failRate, 2 * time.Minute},
 		{`{"error":{"message":"You exceeded your current quota. glm-4 is deprecated on ` + time.Now().Add(72*time.Hour).Format("2006-01-02 15:04:05") + ` UTC+8."}}`, failQuota, quotaRest},
 	} {
 		k := acct("other", "o@x.com", "m")

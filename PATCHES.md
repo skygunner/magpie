@@ -270,3 +270,13 @@ Validation:
   `TestClaudeClientCacheAbsentUnchanged`, `TestCodexFittedImagesPastTheBudget`,
   `TestMarshalRawIsEncodingJSON`, `TestServeWSLListensBesideLoopback`, and
   `FuzzMarshalRaw`. The intermittent handover test was included and passed.
+
+## Fork-only feature: cooldown settings
+
+`feature/cooldown-settings` adds global/provider/account/key policy editors with
+resolved-value/source display, modelCooldown controls, detailed examples and
+active-rest release. Rate-limit defaults become 2 minutes initially and 64 minutes
+maximum; quota exhausted without a reset defaults to a fixed 30-minute rest.
+Explicit old provider values remain overrides. This feature is kept on the user's
+fork for trial; no upstream feature request is submitted. It is not deployed by
+this branch push. See the fork policy section of docs/subsystems/gateway-routing.md.

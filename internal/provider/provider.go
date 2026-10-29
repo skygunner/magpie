@@ -184,7 +184,7 @@ type Provider struct {
 	// QuotaRest is how many minutes one of its keys sits out once the
 	// vendor says it is out of its allowance without saying when it is
 	// back (#1772: Ollama Cloud's weekly limit); 0 is the gateway's own
-	// quarter of an hour. A time the vendor names stands over it.
+	// half hour. A time the vendor names stands over it.
 	QuotaRest int `json:"quotaRest,omitempty"`
 	// QuotaResetAt is the time of day a key of it out of its allowance is
 	// back, when its vendor refuses for a day's allowance without saying
@@ -195,10 +195,12 @@ type Provider struct {
 	// RestCap is the most, in minutes, one of its keys or accounts sits
 	// out while it keeps failing or keeps being rate limited as soon as
 	// its rest is over (#2008); 0 is the gateway's own, 10 minutes for a
-	// failure and 30 for a rate limit. The vendor's own "try again in"
+	// failure and 64 for a rate limit. The vendor's own "try again in"
 	// still stands over it. RestCapOff (-1): no rest at all after a
 	// failure that says nothing of why, a rate limit's as the gateway's own.
-	RestCap int `json:"restCap,omitempty"`
+	RestCap         int                                `json:"restCap,omitempty"`
+	Cooldown        settings.CooldownPolicy            `json:"cooldown,omitempty"`
+	AccountCooldown map[string]settings.CooldownPolicy `json:"accountCooldown,omitempty"`
 	// ModelCooldown opts exact model IDs into aggressive timeout/cancel
 	// cooldowns. Values are exponential-backoff caps in minutes (1..60).
 	// Unset models retain the normal policy: a client cancellation rests nothing.
@@ -685,6 +687,11 @@ func (p Provider) clone() Provider {
 	p.PickedFrom = slices.Clone(p.PickedFrom)
 	p.Delisted = slices.Clone(p.Delisted)
 	p.AutoInclude = slices.Clone(p.AutoInclude)
+	p.Cooldown = CloneCooldown(p.Cooldown)
+	p.AccountCooldown = maps.Clone(p.AccountCooldown)
+	for k, v := range p.AccountCooldown {
+		p.AccountCooldown[k] = CloneCooldown(v)
+	}
 	p.ModelCooldown = maps.Clone(p.ModelCooldown)
 	p.Headers = maps.Clone(p.Headers)
 	p.ExtraBody = maps.Clone(p.ExtraBody)
@@ -781,6 +788,8 @@ func withPicks(a, pk Provider) Provider {
 	a.MaxConcurrency, a.PinUpstream = pk.MaxConcurrency, pk.PinUpstream
 	a.AccountConcurrency, a.QueueLimit, a.QueueWait = pk.AccountConcurrency, pk.QueueLimit, pk.QueueWait
 	a.MaxRPM = pk.MaxRPM
+	a.RestCap, a.QuotaRest, a.QuotaResetAt, a.ModelCooldown, a.LimitRestOff = pk.RestCap, pk.QuotaRest, pk.QuotaResetAt, pk.ModelCooldown, pk.LimitRestOff
+	a.Cooldown, a.AccountCooldown = pk.Cooldown, pk.AccountCooldown
 	// and what it bills against the official price (#819): an account's
 	// editor sets it as a key provider's does (PaulT on Discord, Codex)
 	a.PriceRate = pk.PriceRate
@@ -878,6 +887,14 @@ func Save(p Provider) error {
 	if p.IsVertex() && (strings.TrimSpace(p.Key) != "" || len(p.Keys) > 0) {
 		return errors.New("Google Vertex AI is asked with your Google credentials, not an API key")
 	}
+	if err := CheckCooldown(p.Cooldown); err != nil {
+		return err
+	}
+	for _, policy := range p.AccountCooldown {
+		if err := CheckCooldown(policy); err != nil {
+			return err
+		}
+	}
 	p = normalize(p)
 	p.IconURL = "" // import-only: never stored
 	if p.ID == "" {
@@ -918,7 +935,7 @@ func Save(p Provider) error {
 		if p.ID == "kiro" {
 			key = p.Key
 		}
-		p = Provider{ID: p.ID, Key: key, Models: p.Models, NoModels: p.NoModels, PickedFrom: p.PickedFrom, Delisted: p.Delisted, Unlisted: p.Unlisted, HiddenDrawers: p.HiddenDrawers, Off: p.Off, Fallback: p.Fallback, Routing: p.Routing, Sink: p.Sink, Affinity: p.Affinity, KeepLogin: p.KeepLogin, KeepLoginAs: p.KeepLoginAs, SwitchOnly: p.SwitchOnly, Contexts: p.Contexts, Family: p.Family, Proxy: p.Proxy, AccountProxies: p.AccountProxies, AccountModels: p.AccountModels, AccountCaps: p.AccountCaps, AccountWindowCaps: p.AccountWindowCaps, CapStop: p.CapStop, CapCareful: p.CapCareful, AccountNames: p.AccountNames, MaxConcurrency: p.MaxConcurrency, AccountConcurrency: p.AccountConcurrency, QueueLimit: p.QueueLimit, QueueWait: p.QueueWait, MaxRPM: p.MaxRPM, PriceRate: p.PriceRate, QuotaRest: p.QuotaRest, QuotaResetAt: p.QuotaResetAt, RestCap: p.RestCap, ModelCooldown: p.ModelCooldown, PinUpstream: p.PinUpstream, NativeCompaction: p.NativeCompaction, PromptAsWritten: p.PromptAsWritten, Hidden: hiddenAccount(p.ID), Quiet: quietAccount(p.ID), Tucked: tuckedAccount(p.ID)}
+		p = Provider{ID: p.ID, Key: key, Models: p.Models, NoModels: p.NoModels, PickedFrom: p.PickedFrom, Delisted: p.Delisted, Unlisted: p.Unlisted, HiddenDrawers: p.HiddenDrawers, Off: p.Off, Fallback: p.Fallback, Routing: p.Routing, Sink: p.Sink, Affinity: p.Affinity, KeepLogin: p.KeepLogin, KeepLoginAs: p.KeepLoginAs, SwitchOnly: p.SwitchOnly, Contexts: p.Contexts, Family: p.Family, Proxy: p.Proxy, AccountProxies: p.AccountProxies, AccountModels: p.AccountModels, AccountCaps: p.AccountCaps, AccountWindowCaps: p.AccountWindowCaps, CapStop: p.CapStop, CapCareful: p.CapCareful, AccountNames: p.AccountNames, MaxConcurrency: p.MaxConcurrency, AccountConcurrency: p.AccountConcurrency, QueueLimit: p.QueueLimit, QueueWait: p.QueueWait, MaxRPM: p.MaxRPM, PriceRate: p.PriceRate, QuotaRest: p.QuotaRest, QuotaResetAt: p.QuotaResetAt, RestCap: p.RestCap, ModelCooldown: p.ModelCooldown, LimitRestOff: p.LimitRestOff, Cooldown: p.Cooldown, AccountCooldown: p.AccountCooldown, PinUpstream: p.PinUpstream, NativeCompaction: p.NativeCompaction, PromptAsWritten: p.PromptAsWritten, Hidden: hiddenAccount(p.ID), Quiet: quietAccount(p.ID), Tucked: tuckedAccount(p.ID)}
 	} else {
 		p.AccountProxies = keyProxies(p) // a provider of keys proxies each key apart
 		if subscriptionID(p.ID) && !stored(p.ID) {
@@ -1454,6 +1471,11 @@ func normalize(p Provider) Provider {
 	p.QueueLimit, p.QueueWait = min(max(p.QueueLimit, 0), MaxQueueLimit), min(max(p.QueueWait, 0), MaxQueueWait)
 	p.MaxRPM = min(max(p.MaxRPM, 0), MaxRPMLimit)
 	p.QuotaRest = min(max(p.QuotaRest, 0), MaxQuotaRest)
+	p.Cooldown = CloneCooldown(p.Cooldown)
+	p.AccountCooldown = maps.Clone(p.AccountCooldown)
+	for k, v := range p.AccountCooldown {
+		p.AccountCooldown[k] = CloneCooldown(v)
+	}
 	p.ModelCooldown = maps.Clone(p.ModelCooldown)
 	for model, cap := range p.ModelCooldown {
 		if strings.TrimSpace(model) == "" || cap <= 0 {
