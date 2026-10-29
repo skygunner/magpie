@@ -1220,6 +1220,22 @@ function ledDetail(r, cols) {
     dd.append(go);
     dl.append(el("dt", "", t("Routing")), dd);
   }
+  if (r.route_id && !r.computer) {
+    const attempts = el("dd", "led-attempts", t("Loading…"));
+    dl.append(el("dt", "", t("Attempt history")), attempts);
+    const q = new URLSearchParams({ id: r.route_id, day: r.t.slice(0, 10) });
+    fetch("/api/gateway/route?" + q).then((res) => {
+      if (!res.ok) throw new Error();
+      return res.json();
+    }).then((route) => {
+      const tries = route.tries || [];
+      if (!tries.length) { attempts.textContent = t("No attempts recorded"); return; }
+      attempts.replaceChildren(...tries.map((tr, i) => {
+        const result = [tr.status || (tr.done ? "—" : t("In progress")), tr.ms > 0 ? ledTook(tr.ms) : "", tr.error || tr.fail || ""].filter(Boolean).join(" · ");
+        return el("div", "", `${i + 1}. ${tr.id}${tr.model ? "/" + tr.model : ""} — ${result}`);
+      }));
+    }).catch(() => { attempts.textContent = t("Attempt history unavailable"); });
+  }
   if (r.computerName) add("Computer", r.computerName);
   // the client's own name, for one the user counts as an agent (#1958)
   add("Client", r.client);

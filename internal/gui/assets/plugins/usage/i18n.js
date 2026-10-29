@@ -2,6 +2,11 @@
 // kernel adds them to i18n.js's (magpie.strings).
 magpie.strings({
   zh: {
+    "Attempt history": "尝试记录",
+    "No attempts recorded": "没有已记录的尝试",
+    "In progress": "进行中",
+    "Attempt history unavailable": "尝试记录不可用",
+
     "Hide from Overview": "从概览中隐藏",
     "Hide this account from Overview": "从概览中隐藏这个账号",
     "Hide its balance from Overview": "从概览中隐藏它的余额",
@@ -237,6 +242,11 @@ magpie.strings({
     "Sent upstream as {to}, as the agent spoke it": "以 {to} 协议发往上游，与 agent 所用协议相同",
   },
   "zh-TW": {
+    "Attempt history": "嘗試記錄",
+    "No attempts recorded": "沒有已記錄的嘗試",
+    "In progress": "進行中",
+    "Attempt history unavailable": "嘗試記錄無法使用",
+
     "Hide from Overview": "從概覽中隱藏",
     "Hide this account from Overview": "從概覽中隱藏這個帳號",
     "Hide its balance from Overview": "從概覽中隱藏它的餘額",
@@ -472,6 +482,11 @@ magpie.strings({
     "Sent upstream as {to}, as the agent spoke it": "以 {to} 協議發往上游，與 agent 所用協議相同",
   },
   ja: {
+    "Attempt history": "試行履歴",
+    "No attempts recorded": "記録された試行はありません",
+    "In progress": "進行中",
+    "Attempt history unavailable": "試行履歴を利用できません",
+
     "Hide from Overview": "概要から隠す",
     "Hide this account from Overview": "このアカウントを概要から隠す",
     "Hide its balance from Overview": "残高を概要から隠す",
@@ -707,6 +722,11 @@ magpie.strings({
     "Sent upstream as {to}, as the agent spoke it": "エージェントと同じ {to} で上流へ送信",
   },
   de: {
+    "Attempt history": "Versuchsverlauf",
+    "No attempts recorded": "Keine Versuche aufgezeichnet",
+    "In progress": "Läuft",
+    "Attempt history unavailable": "Versuchsverlauf nicht verfügbar",
+
     "Hide from Overview": "In der Übersicht ausblenden",
     "Hide this account from Overview": "Dieses Konto in der Übersicht ausblenden",
     "Hide its balance from Overview": "Sein Guthaben in der Übersicht ausblenden",

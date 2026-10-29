@@ -30,7 +30,7 @@ const ROWS = [
   { t: new Date(now - 240e3).toISOString(), agent: "claude-desktop", agentName: "Claude Desktop", icon: "claude-color", provider: "claude", providerName: "Claude", model: "", in: 0, out: 0, status: 0, err: "You've hit your limit · resets 3am", err_type: "rate_limit", rid: "req_lim", session: "s3", source: "log", cost: 0, priced: false },
   // the gateway's, answered on its second try (#1532): the vendor held the
   // first ~103 s before its 503, which isn't magpie's time
-  { t: new Date(now - 300e3).toISOString(), agent: "codex", agentName: "Codex", icon: "codex-color", provider: "opencode-go", providerName: "OpenCode Go", host: "opencode.ai", req: "opencode-go/deepseek-flash", model: "deepseek-flash", served: "deepseek-flash", effort: "max", in: 7064, out: 5373, cache_read: 314624, reasoning: 4946, ms: 160000, ttft_ms: 141000, sent_ms: 104000, own_ms: 180, masking_ms: 150, retried_ms: 103000, tries: 2, status: 200, ep: "/backend-api/codex/responses", session: "01a12671", cost: 0.005, priced: true },
+  { t: new Date(now - 300e3).toISOString(), agent: "codex", agentName: "Codex", icon: "codex-color", provider: "opencode-go", providerName: "OpenCode Go", host: "opencode.ai", req: "opencode-go/deepseek-flash", model: "deepseek-flash", served: "deepseek-flash", effort: "max", in: 7064, out: 5373, cache_read: 314624, reasoning: 4946, ms: 160000, ttft_ms: 141000, sent_ms: 104000, own_ms: 180, masking_ms: 150, retried_ms: 103000, tries: 2, route_id: 123, status: 200, ep: "/backend-api/codex/responses", session: "01a12671", cost: 0.005, priced: true },
 ];
 
 function page(q) {
@@ -50,6 +50,7 @@ function server(lang, refreshed) {
     if (url.pathname === "/boot.js") return route.fulfill({ contentType: "text/javascript", body: `window.bootPrefs = {lang:"${lang}",theme:"light",web:false};` });
     if (url.pathname === "/wails/runtime.js") return route.fulfill({ contentType: "text/javascript", body: "export const Window = {};" });
     if (url.pathname === "/api/state") return json({ agents: [], profiles: [], settings: { lang, theme: "light" }, fx: { rate: 7.2, at: new Date().toISOString() } });
+    if (url.pathname === "/api/gateway/route") return json({ tries: [{ id: "codex", model: "gpt-6.1-sol", done: true, status: 504, ms: 25023, error: "first-token timeout" }, { id: "nvidia", model: "stepfun/step-5", done: true, status: 429, ms: 1577 }] });
     if (url.pathname === "/api/usage/requests") { refreshed.n++; return json(page(url.searchParams)); }
     if (url.pathname === "/api/usage/quotas") return json([]);
     if (url.pathname === "/api/usage") return json({ calls: 4, errors: 2, input: 1300, output: 240, cache_read: 4000, cache_write: 500, reasoning: 0, unpriced: 0, cost: 0.03, bucket: "day", series: [], agents: [], models: [], path: "~/.config/magpie/usage.jsonl" });
@@ -186,6 +187,9 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         // "In magpie" (above). Of magpie's own, the 150 ms masking it took
         // is told apart (fremontdango on Discord)
         await reader.click(p, rows.nth(4));
+        const attempts = p.locator(".led-detail").nth(3).locator(".led-attempts");
+        await attempts.locator("div").first().waitFor();
+        assert.deepEqual(await attempts.locator("div").allTextContents(), ["1. codex/gpt-6.1-sol — 504 · 25 s · first-token timeout", "2. nvidia/stepfun/step-5 — 429 · 1.6 s"].map(x => lang === "zh" ? x.replace("25 s", "25 秒").replace("1.6 s", "1.6 秒") : x));
         const pairs = await p.locator(".led-detail").nth(3).evaluate((d) => [...d.querySelectorAll("dt")].map((dt) => [dt.textContent, dt.nextElementSibling.textContent]));
         const at = pairs.findIndex(([k]) => k === w.split[0][0]);
         assert.deepEqual(pairs.slice(at, at + w.split.length), w.split);
@@ -217,5 +221,36 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         assert.deepEqual(errors, []);
       });
     }
+  });
+}
+
+for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"])) {
+  test(engine + ": canceled request shows its actual attempt chain", async (t) => {
+    const browser = await (engine === "webkit" ? webkit.launch() : chromium.launch({ channel: "chromium" }));
+    t.after(() => browser.close());
+    const p = await (await browser.newContext()).newPage();
+    const fallback = server("en", { n: 0 });
+    let missing = false;
+    await p.route("**/*", async (route) => {
+      const url = new URL(route.request().url());
+      if (url.pathname === "/api/gateway/route" && missing) return route.fulfill({ status: 404, body: "gone" });
+      if (url.pathname === "/api/usage/requests") {
+        const data = page(url.searchParams);
+        data.rows = [{ ...ROWS[0], route_id: 123, tries: 2, status: 499, err: "the agent canceled the request" }];
+        return route.fulfill({ json: data });
+      }
+      return fallback(route);
+    });
+    await p.goto("http://magpie.test/");
+    await p.locator('[data-view="usage"]').first().click();
+    await p.locator(":is(#usageTab .opt, .nav-s):visible").nth(1).click();
+    await p.locator(".led-row").first().click();
+    const attempts = p.locator(".led-detail .led-attempts div");
+    await attempts.first().waitFor();
+    assert.deepEqual(await attempts.allTextContents(), ["1. codex/gpt-6.1-sol — 504 · 25 s · first-token timeout", "2. nvidia/stepfun/step-5 — 429 · 1.6 s"]);
+    missing = true;
+    await p.locator(".led-row").first().click();
+    await p.locator(".led-row").first().click();
+    await p.getByText("Attempt history unavailable", { exact: true }).waitFor();
   });
 }

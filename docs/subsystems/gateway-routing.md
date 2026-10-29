@@ -22,6 +22,12 @@ message digest is not migrated to a newly recognised native id, so the first
 request after upgrading can choose an account anew. Historical usage is not
 backfilled; see [Gateway Session Aggregation](gateway-sessions.md).
 
+The Usage request details load the route by its recorded ID and day to show
+its ordered attempts, including cancellations. The list shows only attempts
+recorded in the routing trace; when the trace has expired, it says the attempt
+history is unavailable. `ledDetail` in [`page.js`](../../internal/gui/assets/plugins/usage/page.js)
+uses `/api/gateway/route` in [`trace.go`](../../internal/gui/trace.go).
+
 ## Responsibilities and sources of truth
 
 | Part | Responsibility | Source |
