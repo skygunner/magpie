@@ -107,6 +107,9 @@ func TestRestore(t *testing.T) {
 	if err := Now(ctx); err != nil {
 		t.Fatal(err)
 	}
+	if err := Now(ctx); err != nil { // confirm the initial blind write
+		t.Fatal(err)
+	}
 	b.use(t)
 	if err := Configure(cfg); err != nil {
 		t.Fatal(err)

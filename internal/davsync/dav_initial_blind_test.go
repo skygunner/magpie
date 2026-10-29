@@ -12,7 +12,7 @@ import (
 	"github.com/yetone/magpie/internal/settings"
 )
 
-func TestDAVInitialBlindWritesMergeAfterOverwrite(t *testing.T) {
+func TestDAVInitialBlindWritesPreserveBothAfterOverwrite(t *testing.T) {
 	fake := &fakeDAV{files: map[string][]byte{}, etags: map[string]string{}, dirs: map[string]bool{"/dav": true}}
 	srv := httptest.NewServer(fake)
 	defer srv.Close()
@@ -45,24 +45,28 @@ func TestDAVInitialBlindWritesMergeAfterOverwrite(t *testing.T) {
 	}
 
 	a.use(t)
-	newer := time.Now().Add(time.Hour)
-	if err := os.Chtimes(provider.Path(), newer, newer); err != nil {
+	older := time.Now().Add(-time.Hour)
+	if err := os.Chtimes(provider.Path(), older, older); err != nil {
 		t.Fatal(err)
 	}
-	if err := Now(ctx); err != nil {
-		t.Fatal(err)
-	}
+	err := Now(ctx)
 	if got := ids(); len(got) != 1 || got[0] != "deepseek=a" {
 		t.Fatalf("A's provider lost: %v", got)
 	}
-	if got := settings.Load().Theme; got != "dark" {
-		t.Fatalf("B's theme not merged: %q", got)
+	if err == nil {
+		t.Fatal("competing initial writes must stop for reconciliation")
 	}
 	bundle, err := backup.Open(onServer(fake, backupFile), cfg.Passphrase)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(bundle.Providers) != 1 || bundle.Providers[0].ID != "deepseek" || bundle.Settings.Theme != "dark" {
-		t.Fatalf("server did not merge both changes: %+v", bundle)
+	if len(bundle.Providers) != 0 || bundle.Settings.Theme != "dark" {
+		t.Fatalf("server's competing write was changed: %+v", bundle)
+	}
+	if err := Now(ctx); err == nil {
+		t.Fatal("retry must preserve the unresolved conflict")
+	}
+	if got := ids(); len(got) != 1 || got[0] != "deepseek=a" {
+		t.Fatalf("A's provider lost on retry: %v", got)
 	}
 }

@@ -407,6 +407,7 @@ func TestSyncProviderOrder(t *testing.T) {
 	}
 	Configure(cfg)
 	now(t)
+	now(t) // confirm the initial blind write before another computer changes it
 
 	b.use(t)
 	Configure(cfg)
@@ -473,6 +474,7 @@ func TestSyncLibrary(t *testing.T) {
 	if v := now(t); v.Error != "" || !v.Library {
 		t.Fatalf("a: %+v", v)
 	}
+	now(t) // confirm the initial blind write
 
 	b.use(t)
 	os.MkdirAll(filepath.Join(string(b), ".claude"), 0o755)

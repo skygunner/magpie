@@ -86,9 +86,15 @@ A conditional write refused because another computer committed in between
 is retried through this same merge. WebDAV writes without `If-Match` are
 marked blind, including a short-write retry without an ETag. On the next sync,
 if another file replaced the blind write, sync merges again from the state
-before it. For competing first writes, both sides count as changed and the
-usual per-part conflict policy applies. This cannot recover another writer's
-changes that the blind write itself overwrote; that writer must sync again.
+before it. If competing first writes differ, there is no common baseline:
+sync stops with an error and retains this computer's setup and the server's
+backup for manual reconciliation. The same happens if the other computer
+writes after the first write but before its writer reads it back; the two
+cases cannot be distinguished. The error persists on retry. Restore can bring
+the server's setup in while keeping an Undo copy of the local setup; the user
+can then reconcile that copy. This cannot
+recover another writer's changes that the blind write itself overwrote; that
+writer must sync again.
 A server must enforce `If-Match` for an ETag-based write to provide protection. HTTP dates have second
 resolution and are not used as write preconditions. A PUT's Last-Modified is
 used for a conditional read only when its response Date is at least a second

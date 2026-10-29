@@ -77,6 +77,7 @@ func TestGatewayKeysJoinKeepsUnseenKeys(t *testing.T) {
 		t.Fatal(err)
 	}
 	now()
+	now() // confirm B's initial blind write
 
 	// Computer A holds several gateway keys of its own and joins after.
 	use(a)

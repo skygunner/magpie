@@ -84,6 +84,7 @@ func TestLANSharingStaysOnItsComputer(t *testing.T) {
 		t.Fatal(err)
 	}
 	now()
+	now() // confirm home's initial blind write
 
 	// Work, sharing off, joins: home's theme comes in, home's sharing
 	// doesn't.
