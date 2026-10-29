@@ -173,10 +173,23 @@ type semver struct {
 	pre string
 }
 
+// prodBuild matches this fork's -pN production suffix (0.1.2051-p1): a
+// patch set on the release named by its base, which compares as that base.
+// Semver would order 0.1.2051-p1 before 0.1.2051, which hid the base
+// release from What's new at both ends of its range.
+var prodBuild = regexp.MustCompile(`-p\d+$`)
+
+// base is the release version a version of this fork's production line
+// stands for: its -pN suffix taken off.
+func base(v string) string {
+	return prodBuild.ReplaceAllString(strings.TrimPrefix(strings.TrimSpace(v), "v"), "")
+}
+
 func parse(v string) *semver {
 	v = strings.TrimPrefix(strings.TrimSpace(v), "v")
 	// build metadata ("+sha.5d0c1dc") plays no part in the order
 	v, _, _ = strings.Cut(v, "+")
+	v = prodBuild.ReplaceAllString(v, "")
 	v, pre, _ := strings.Cut(v, "-")
 	parts := strings.Split(v, ".")
 	if len(parts) != 3 {

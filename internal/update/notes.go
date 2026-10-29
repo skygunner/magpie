@@ -35,18 +35,21 @@ func NotesFeed() string {
 }
 
 // ReleasePage is version's page on GitHub, where its notes are when the
-// site can't give them (#661).
+// site can't give them (#661). A -pN build points at its base release,
+// which is the page that exists.
 func ReleasePage(version string) string {
-	return "https://github.com/yetone/magpie-releases/releases/tag/v" + strings.TrimPrefix(strings.TrimSpace(version), "v")
+	return "https://github.com/yetone/magpie-releases/releases/tag/v" + base(version)
 }
 
 // NotesBetween asks the site for the notes of every release after after
 // (none when "") up to and including upto, newest first, in lang (see
-// InLang).
+// InLang). The site is asked in whole release numbers: its own newer()
+// reads a -pN suffix as a pre-release, which would leave the range's base
+// releases out at both ends.
 func NotesBetween(ctx context.Context, after, upto, lang string) ([]Note, error) {
-	q := url.Values{"upto": {upto}}
+	q := url.Values{"upto": {base(upto)}}
 	if after != "" {
-		q.Set("after", after)
+		q.Set("after", base(after))
 	}
 	notes, err := askNotes(ctx, q, lang)
 	if err != nil {
@@ -64,7 +67,7 @@ var BackCounts = []int{10, 20, 50, 100}
 // it, newest first, in lang. The site is asked for those alone (limit); one
 // from before it took a limit sends them all, and Back keeps n+1.
 func NotesBack(ctx context.Context, upto string, n int, lang string) ([]Note, error) {
-	notes, err := askNotes(ctx, url.Values{"upto": {upto}, "limit": {strconv.Itoa(n + 1)}}, lang)
+	notes, err := askNotes(ctx, url.Values{"upto": {base(upto)}, "limit": {strconv.Itoa(n + 1)}}, lang)
 	if err != nil {
 		return nil, err
 	}
