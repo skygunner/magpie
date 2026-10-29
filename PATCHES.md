@@ -66,11 +66,19 @@ Each round:
 8. Accept: healthy, 401/200 auth pair, model count equal before/after, a
    real `group/fast-cheap` request 200. Push `prod` and the tag.
 
-## Carried patches (as of v0.1.1948-p1, 2026-10-29)
+## Carried patches (as of v0.1.2051-p1, 2026-10-29)
 
-Checked against v0.1.1948 (2026-10-29): nine patches carried as cherry-
-picks plus #3487's remainder, re-expressed at the merge (#3948 joined at
-0.1.1767-p3). Upstream `1390aa458` (community plugins#468) took #3487's
+Checked against v0.1.2051 (2026-10-29): nine patches carried as cherry-
+picks plus #3487's remainder, re-expressed at the v0.1.1948 merge
+(#3948 joined at 0.1.1767-p3). The v0.1.2051 merge kept both sides of
+four collisions: the Provider literal (ModelCooldown beside upstream's
+HiddenDrawers), the usage plugin's i18n.js (#3948's four language
+blocks beside upstream's hide-from-Overview strings), gateway-routing.md
+(our FirstToken/modelCooldown bullets beside upstream's new
+fallback-header bullet) and the quota CLI's wording, which takes
+upstream's newest. This round also restored the held-up wording of the
+Codex auto-reset strings, i18n.js and their test, which an earlier
+round's conflict resolution had trimmed on this line. Upstream `1390aa458` (community plugins#468) took #3487's
 point over its own way — a plugin window's `Amount` is a bare count
 again, where 0 is what a count left out reads as and a limit alone says
 nothing — so the carried pointer form (`d4944ace`'s `amountUnknown`
@@ -161,6 +169,12 @@ This section stays for the next user-directed request without a fix.
   (bare `Amount`, plugins#468); this line now carries only its card
   display and millisecond-span guard, re-expressed at the merge. Nine
   cherry-picked patches unchanged.
+- `prod/0.1.2051-p1` — 2026-10-29. Rolling merge of v0.1.2051 (126
+  commits); four conflicts, both sides kept (the Provider literal, the
+  usage plugin's i18n.js, gateway-routing.md, the quota CLI line). The
+  Codex auto-reset strings, i18n.js and their test were restored to
+  upstream's held-up wording, which an earlier round's conflict
+  resolution had trimmed here. No patch movement.
 
 ## Non-streaming SSE regression follow-up (2026-10-28)
 
