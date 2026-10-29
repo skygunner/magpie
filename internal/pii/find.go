@@ -211,6 +211,18 @@ func (b *backend) find(ctx context.Context, texts []string) ([][]redact.Found, e
 				return
 			}
 			units := b.missing(texts, miss, got)
+			if len(units) == 0 {
+				// nothing of miss is left to ask: the yield this one gave
+				// way in let another request read and keep it, and miss was
+				// read before that. Ask known again, so its answers are this
+				// one's: asked of miss as it was, find answered a request it
+				// had all the answers for with none found, or with an error
+				// (masking failed, so nothing was sent)
+				out, miss = b.known(texts, got)
+				if len(miss) == 0 {
+					break
+				}
+			}
 			if lenient {
 				// the backlog past its cap is left: its texts go with
 				// what the rules find
