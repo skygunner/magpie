@@ -230,8 +230,8 @@ func unpacked(kind string, data []byte, encoding string) ([]byte, error) {
 		defer d.Close()
 		return readAll(d, nil)
 	case enc == "deflate" && len(data) > 0 && data[0] != '{':
-		if out, err := readAll(zlib.NewReader(bytes.NewReader(data))); err == nil {
-			return out, nil
+		if out, err := readAll(zlib.NewReader(bytes.NewReader(data))); err == nil || errors.Is(err, errFileTooLarge) {
+			return out, err
 		}
 		return readAll(flate.NewReader(bytes.NewReader(data)), nil)
 	case enc == "br" && len(data) > 0 && data[0] != '{':
@@ -244,5 +244,27 @@ func readAll[R io.Reader](r R, err error) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return io.ReadAll(io.LimitReader(r, 64<<20))
+	return readCapped(r)
+}
+
+// maxRead is the most of a file the sync reads: a backup or a usage file.
+const maxRead = 64 << 20
+
+// errFileTooLarge is a file on the server past maxRead. It is an error of
+// its own, never a short read: a body cut at the cap is a backup cut short
+// to backup.Open (ErrCorrupt), and a sync then takes an intact file that was
+// only bigger for damage, rebuilding or offering to replace it.
+var errFileTooLarge = errors.New("the file on the server is larger than the 64 MiB a sync reads")
+
+// readCapped reads r whole, up to maxRead: past it is errFileTooLarge, so
+// the cap never cuts a body short.
+func readCapped(r io.Reader) ([]byte, error) {
+	b, err := io.ReadAll(io.LimitReader(r, maxRead+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(b) > maxRead {
+		return nil, errFileTooLarge
+	}
+	return b, nil
 }

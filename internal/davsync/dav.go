@@ -288,7 +288,7 @@ func (d *dav) get(ctx context.Context, have version) (data []byte, v version, er
 	case res.StatusCode != http.StatusOK:
 		return nil, version{}, fmt.Errorf("reading %s from the WebDAV server: HTTP %d", file, res.StatusCode)
 	}
-	data, err = io.ReadAll(io.LimitReader(res.Body, 64<<20))
+	data, err = readCapped(res.Body)
 	if err != nil {
 		return nil, version{}, err
 	}

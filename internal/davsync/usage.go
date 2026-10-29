@@ -361,7 +361,7 @@ func (d *dav) read(ctx context.Context, name string) ([]byte, error) {
 	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("reading %s from the WebDAV server: HTTP %d", name, res.StatusCode)
 	}
-	return io.ReadAll(io.LimitReader(res.Body, 64<<20))
+	return readCapped(res.Body)
 }
 
 func (d *dav) write(ctx context.Context, name string, data []byte) error {
@@ -474,7 +474,7 @@ func (s *s3) read(ctx context.Context, name string) ([]byte, error) {
 	if res.StatusCode != http.StatusOK {
 		return nil, s.explain("read", readError(res))
 	}
-	return io.ReadAll(io.LimitReader(res.Body, 64<<20))
+	return readCapped(res.Body)
 }
 
 func (s *s3) write(ctx context.Context, name string, data []byte) error {

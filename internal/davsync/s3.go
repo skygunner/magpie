@@ -231,7 +231,7 @@ func (s *s3) get(ctx context.Context, have version) (data []byte, v version, err
 		}
 		return nil, version{}, s.explain("read", e)
 	}
-	data, err = io.ReadAll(io.LimitReader(res.Body, 64<<20))
+	data, err = readCapped(res.Body)
 	if err != nil {
 		return nil, version{}, err
 	}
