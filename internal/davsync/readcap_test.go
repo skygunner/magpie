@@ -112,6 +112,48 @@ func TestWriteBackupSizeLimit(t *testing.T) {
 	}
 }
 
+func TestWriteUsageSizeLimit(t *testing.T) {
+	requests := make(chan struct{}, 10)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodHead {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		requests <- struct{}{}
+		w.WriteHeader(http.StatusCreated)
+	}))
+	defer srv.Close()
+	d, err := newDAV(Config{URL: srv.URL})
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := newS3(Config{URL: "s3://bucket", Endpoint: srv.URL, User: "key", Password: "secret"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	data := make([]byte, maxRead+1)
+	for name, store := range map[string]files{"WebDAV": d, "S3": s} {
+		t.Run(name, func(t *testing.T) {
+			if err := store.write(context.Background(), "day.usage", data); !errors.Is(err, errFileTooLarge) {
+				t.Fatalf("oversized usage: %v, want errFileTooLarge", err)
+			}
+			select {
+			case <-requests:
+				t.Fatal("oversized usage made a request")
+			default:
+			}
+			if err := store.write(context.Background(), "day.usage", data[:maxRead]); err != nil {
+				t.Fatalf("usage exactly at the limit: %v", err)
+			}
+			select {
+			case <-requests:
+			default:
+				t.Fatal("usage at the limit was not sent")
+			}
+		})
+	}
+}
+
 func TestReadCappedBoundary(t *testing.T) {
 	if b, err := readCapped(bytes.NewReader(make([]byte, maxRead))); err != nil || len(b) != maxRead {
 		t.Fatalf("a file of exactly the cap: %v, %d bytes", err, len(b))

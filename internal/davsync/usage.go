@@ -365,6 +365,9 @@ func (d *dav) read(ctx context.Context, name string) ([]byte, error) {
 }
 
 func (d *dav) write(ctx context.Context, name string, data []byte) error {
+	if len(data) > maxRead {
+		return errFileTooLarge
+	}
 	for try, writes := 0, 0; ; try++ {
 		res, err := d.send(ctx, http.MethodPut, d.usageURL(name), data, map[string]string{"Content-Type": "application/octet-stream"})
 		if err != nil {
@@ -478,6 +481,9 @@ func (s *s3) read(ctx context.Context, name string) ([]byte, error) {
 }
 
 func (s *s3) write(ctx context.Context, name string, data []byte) error {
+	if len(data) > maxRead {
+		return errFileTooLarge
+	}
 	res, err := s.sendTo(ctx, http.MethodPut, s.urlOf(s.usageKey(name)), data, map[string]string{"Content-Type": "application/octet-stream"})
 	if err != nil {
 		return err
