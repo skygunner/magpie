@@ -1,9 +1,11 @@
 package agent
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"os"
+	"os/exec"
 	"strings"
 	"sync"
 	"testing"
@@ -12,6 +14,20 @@ import (
 )
 
 func TestWSLProbeConcurrentReaderWaits(t *testing.T) {
+	if os.Getenv("MAGPIE_WSL_PROBE_TEST_CHILD") != "1" {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		cmd := exec.CommandContext(ctx, os.Args[0], "-test.run=^TestWSLProbeConcurrentReaderWaits$", "-test.count=1")
+		cmd.Env = append(os.Environ(), "MAGPIE_WSL_PROBE_TEST_CHILD=1")
+		out, err := cmd.CombinedOutput()
+		if ctx.Err() != nil {
+			t.Fatalf("probe test timed out: %s", out)
+		}
+		if err != nil {
+			t.Fatalf("probe test failed: %v\n%s", err, out)
+		}
+		return
+	}
 	syncHome(t)
 	fakeWSL(t, "", "", nil, nil)
 	wsl.Lock()
@@ -19,31 +35,10 @@ func TestWSLProbeConcurrentReaderWaits(t *testing.T) {
 	wsl.Unlock()
 	t.Cleanup(func() { wsl.Lock(); wsl.probing = nil; wsl.Unlock() })
 
-	watchdogDone := make(chan struct{})
-	watchdogStop := make(chan struct{})
-	watchdogFired := make(chan struct{})
-	abortProbe := make(chan struct{})
-	var releaseOnce sync.Once
-	finishProbe := func() { releaseOnce.Do(func() { close(abortProbe) }) }
-	go func() {
-		defer close(watchdogDone)
-		timer := time.NewTimer(30 * time.Second)
-		defer timer.Stop()
-		select {
-		case <-watchdogStop:
-		case <-timer.C:
-			close(watchdogFired)
-			finishProbe()
-		}
-	}()
-	t.Cleanup(func() {
-		close(watchdogStop)
-		<-watchdogDone
-	})
-
 	synctest.Test(t, func(t *testing.T) {
-		started := make(chan struct{})
-		release := abortProbe
+		started, release := make(chan struct{}), make(chan struct{})
+		var releaseOnce sync.Once
+		finishProbe := func() { releaseOnce.Do(func() { close(release) }) }
 		defer finishProbe()
 		var mu sync.Mutex
 		calls := 0
@@ -106,11 +101,6 @@ func TestWSLProbeConcurrentReaderWaits(t *testing.T) {
 			t.Errorf("concurrent readers started %d probes", count)
 		}
 	})
-	select {
-	case <-watchdogFired:
-		t.Error("real-time watchdog released the blocked probe")
-	default:
-	}
 }
 
 func TestWSLProbeConcurrentChanges(t *testing.T) {
