@@ -77,6 +77,41 @@ func TestReadSaysTooLargeRatherThanCut(t *testing.T) {
 }
 
 // The cap itself is read whole: a file of exactly maxRead is not too large.
+func TestWriteBackupSizeLimit(t *testing.T) {
+	requests := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		w.WriteHeader(http.StatusCreated)
+	}))
+	defer srv.Close()
+	d, err := newDAV(Config{URL: srv.URL})
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := newS3(Config{URL: "s3://bucket", Endpoint: srv.URL, User: "key", Password: "secret"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	data := make([]byte, maxRead+1)
+	for name, remote := range map[string]remote{"WebDAV": d, "S3": s} {
+		t.Run(name, func(t *testing.T) {
+			requests = 0
+			if _, err := remote.put(context.Background(), data, ""); !errors.Is(err, errFileTooLarge) {
+				t.Fatalf("oversized backup: %v, want errFileTooLarge", err)
+			}
+			if requests != 0 {
+				t.Fatalf("oversized backup made %d requests", requests)
+			}
+			if _, err := remote.put(context.Background(), data[:maxRead], ""); err != nil {
+				t.Fatalf("backup exactly at the limit: %v", err)
+			}
+			if requests == 0 {
+				t.Fatal("backup at the limit was not sent")
+			}
+		})
+	}
+}
+
 func TestReadCappedBoundary(t *testing.T) {
 	if b, err := readCapped(bytes.NewReader(make([]byte, maxRead))); err != nil || len(b) != maxRead {
 		t.Fatalf("a file of exactly the cap: %v, %d bytes", err, len(b))

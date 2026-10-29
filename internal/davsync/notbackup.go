@@ -254,7 +254,7 @@ const maxRead = 64 << 20
 // its own, never a short read: a body cut at the cap is a backup cut short
 // to backup.Open (ErrCorrupt), and a sync then takes an intact file that was
 // only bigger for damage, rebuilding or offering to replace it.
-var errFileTooLarge = errors.New("the file on the server is larger than the 64 MiB a sync reads")
+var errFileTooLarge = errors.New("the sync file is larger than the 64 MiB limit")
 
 // readCapped reads r whole, up to maxRead: past it is errFileTooLarge, so
 // the cap never cuts a body short.

@@ -85,6 +85,11 @@ on both sides keeps the newer version while retaining the replaced copy.
 A conditional write refused because another computer committed in between
 is retried through this same merge.
 
+WebDAV and S3 backup reads and writes are limited to 64 MiB. A file beyond
+that limit returns a size error before it can be treated as damaged or written;
+a file exactly at the limit is allowed. Oversized shared usage files also
+return a size error when read. GitHub applies its own 64 MiB sync-file limit.
+
 When a remote file is empty, damaged or another app's format, sync stops and
 describes it through `ServerFile`. Settings and the backend's `upload` command
 can replace it with this computer's setup, keeping the old file first.

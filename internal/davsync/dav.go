@@ -317,6 +317,9 @@ func (d *dav) get(ctx context.Context, have version) (data []byte, v version, er
 // backup" on every sync after, so what a write kept is read back and
 // compared; a short write is tried again and told as itself in the end.
 func (d *dav) put(ctx context.Context, data []byte, etag string) (version, error) {
+	if len(data) > maxRead {
+		return version{}, errFileTooLarge
+	}
 	h := map[string]string{"Content-Type": "application/octet-stream"}
 	if etag != "" {
 		h["If-Match"] = etag
