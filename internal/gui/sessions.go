@@ -106,7 +106,9 @@ func sessionRoutes(mux *http.ServeMux, w Windows) {
 		list := sessions.List(sessions.All)
 		nativeKeys := map[string]bool{}
 		for _, s := range list {
-			nativeKeys[s.Agent+"|"+s.ID] = true
+			for _, k := range sessions.GatewayKeys(s) {
+				nativeKeys[k] = true
+			}
 			// a copy of its conversation is the agent's own too
 			for _, id := range s.Copies {
 				nativeKeys[s.Agent+"|"+id] = true
@@ -139,7 +141,7 @@ func sessionRoutes(mux *http.ServeMux, w Windows) {
 		}
 		vias := usage.Vias(since.Add(-time.Minute))
 		for _, s := range list {
-			j := sessionJSON{Session: s, Name: s.Agent, Icon: "generic", Via: vias.Of(s.Agent + "|" + s.ID)}
+			j := sessionJSON{Session: s, Name: s.Agent, Icon: "generic", Via: viaOf(vias, s)}
 			if a := agents[s.Agent]; a != nil {
 				j.Name, j.Icon = a.SharedName(), a.Icon
 			}
@@ -250,7 +252,7 @@ func sessionRoutes(mux *http.ServeMux, w Windows) {
 		if since.IsZero() {
 			since = s.Last
 		}
-		j.Via = usage.Vias(since.Add(-time.Minute)).Of(s.Agent + "|" + s.ID)
+		j.Via = viaOf(usage.Vias(since.Add(-time.Minute)), s)
 		j.Path = tilde(j.Path)
 		writeJSON(rw, j)
 	})
@@ -476,16 +478,28 @@ func statsFor(days int) sessions.Stats {
 		statsMemo.asks++
 		k.used = statsMemo.asks
 		if !k.busy && time.Since(k.at) > 10*time.Second {
-			k.busy = true
+			// every range kept that is as old is read again with it, in
+			// one pass: the page asks for 7, 30 and every day, and each
+			// read alone listed and summed every session file (#2278)
+			var ranges []int
+			var kept []*statsKept
+			for d, o := range statsMemo.m {
+				if !o.busy && time.Since(o.at) > 10*time.Second {
+					o.busy = true
+					ranges, kept = append(ranges, d), append(kept, o)
+				}
+			}
 			// read beside the page's own reads: with their listing of
 			// the session files, and handed back once they all rest
 			shared, rest := sessions.ShareListing(), readingPage()
 			go func() {
 				defer rest()
 				defer shared()
-				st := combinedSessionStats(days)
+				sts := combinedSessionStatsAll(ranges)
 				statsMemo.Lock()
-				k.at, k.st, k.busy = time.Now(), st, false
+				for i, o := range kept {
+					o.at, o.st, o.busy = time.Now(), sts[i], false
+				}
 				statsMemo.Unlock()
 			}()
 		}
@@ -517,7 +531,20 @@ func statsFor(days int) sessions.Stats {
 }
 
 func combinedSessionStats(days int) sessions.Stats {
-	st, nativeKeys := sessions.StatsAndNative(days)
+	return combinedSessionStatsAll([]int{days})[0]
+}
+
+// combinedSessionStatsAll is combinedSessionStats for each of days, the
+// session files read once for all of them.
+func combinedSessionStatsAll(days []int) []sessions.Stats {
+	sts, nativeKeys := sessions.StatsAndNativeAll(days)
+	for i := range sts {
+		sts[i] = withGatewaySessions(sts[i], days[i], nativeKeys)
+	}
+	return sts
+}
+
+func withGatewaySessions(st sessions.Stats, days int, nativeKeys map[string]bool) sessions.Stats {
 	var since time.Time
 	if days > 0 && st.From != "" {
 		since, _ = time.ParseInLocation(time.DateOnly, st.From, time.Local)
@@ -717,5 +744,16 @@ func openTerminal(command, choice string) error {
 	}
 	// Terminal has read it long before
 	time.AfterFunc(time.Minute, func() { os.Remove(f.Name()) })
+	return nil
+}
+
+// viaOf is what the gateway sent a session's calls to, under any key its
+// gateway record can carry (sessions.GatewayKeys: Raft's Pi says it is Pi).
+func viaOf(x usage.ViaIndex, s sessions.Session) []usage.Via {
+	for _, k := range sessions.GatewayKeys(s) {
+		if v := x.Of(k); v != nil {
+			return v
+		}
+	}
 	return nil
 }

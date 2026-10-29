@@ -22,6 +22,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 	"unsafe"
 
@@ -538,6 +539,8 @@ type requestIndex struct {
 	// heatParts are the heatmap's sums of each chunk (heatOf), kept as
 	// parts are but apart, so that the heatmap's never push a page's out
 	heatParts map[partKey]map[uint64]*chunkPart
+	// heatOld are the heatmap's days before its last few (heatSplit)
+	heatOld map[partKey]*heatOld
 	// pairs are the last pairing of each of a few periods (pairMemo),
 	// kept as parts are
 	pairs map[Period]*pairMemo
@@ -774,7 +777,7 @@ func queryPageOf(p Period, f Filter, offset, limit int, readSource func(sessions
 	var cache *partCache
 	pk := partKey{p: p, f: f, since: p.Since(now), until: p.Until(now), loc: now.Location()}
 	if p == heatmapPeriod {
-		cache = &partCache{old: idx.heatParts[pk], next: map[uint64]*chunkPart{}}
+		cache = &partCache{old: idx.heatParts[pk], next: map[uint64]*chunkPart{}, heatOld: idx.heatOld[pk]}
 	} else if p.Last() == 0 {
 		cache = &partCache{old: idx.parts[pk], next: map[uint64]*chunkPart{}, pairs: idx.pairs[p]}
 	}
@@ -804,6 +807,10 @@ func queryPageOf(p Period, f Filter, offset, limit int, readSource func(sessions
 			shared.heatParts = map[partKey]map[uint64]*chunkPart{}
 		}
 		shared.heatParts[pk] = cache.next
+		if shared.heatOld == nil || len(shared.heatOld) >= partSets && shared.heatOld[pk] == nil {
+			shared.heatOld = map[partKey]*heatOld{}
+		}
+		shared.heatOld[pk] = cache.heatOldNext
 	} else if cache != nil {
 		if shared.parts == nil || len(shared.parts) >= partSets && shared.parts[pk] == nil {
 			shared.parts = map[partKey]map[uint64]*chunkPart{}
@@ -1072,6 +1079,7 @@ func (idx *requestIndex) adopt(st requestState) {
 		idx.heats = nil
 		idx.parts = nil
 		idx.heatParts = nil
+		idx.heatOld = nil
 		idx.pairs = nil
 		idx.key = ""
 	}
@@ -1329,9 +1337,99 @@ type matchEnd struct {
 	at    time.Time
 	index rowRef
 }
+
+// matchGroup is a key's gateway calls, ends[off:off+n] of one slab, by
+// their end; its range counts are counts[off+k:off+k+n+1] for the k-th
+// group. A key holds a call or two, a slice each was ~1 GB of what 80 s
+// of polls allocated while calls came in, on a year's history (#2278).
 type matchGroup struct {
-	ends   []matchEnd
-	counts []int
+	off, n int32
+}
+
+// matchCandidate is a local call with one gateway call in its range, and
+// that call's place in ends
+type matchCandidate struct {
+	ref rowRef
+	at  int32
+}
+
+// matchScratch is what one matchedBlocks call works in, kept for the
+// next. Every poll while an agent works matches a year's history again,
+// and growing these afresh each time was ~1.9 of the ~2.2 GB the matcher
+// allocated in 80 s of polls (#2278). A sync.Pool kept nothing: a poll
+// collects several times a second, and each collection empties it. One is
+// kept until ReleaseScratch, which the window calls once its reads rest.
+type matchScratch struct {
+	reserved   map[rowRef]bool
+	byID       map[string]int32
+	calls      []idCalls
+	ids        map[uint32]struct{}
+	found      []idLocal
+	used       map[rowRef]bool
+	refs       []timedRef
+	groupOf    map[matchKey]int32
+	groups     []matchGroup
+	ks         []int32
+	ends       []matchEnd
+	counts     []int32
+	named      map[uint64]struct{}
+	unique     []bool
+	candidates []matchCandidate
+}
+
+var keptMatch atomic.Pointer[matchScratch]
+
+// matchScratchFor is the kept scratch, or a new one when another call has
+// it or none is kept
+func matchScratchFor() *matchScratch {
+	if s := keptMatch.Swap(nil); s != nil {
+		return s
+	}
+	return &matchScratch{}
+}
+
+// mapFor is m, or a new map made for n when there is none yet
+func mapFor[K comparable, V any](m map[K]V, n int) map[K]V {
+	if m == nil {
+		return make(map[K]V, n)
+	}
+	return m
+}
+
+// ReleaseScratch lets go of what the request matching keeps between calls,
+// and the priced blocks no query holds.
+func ReleaseScratch() {
+	keptMatch.Store(nil)
+	keptPicks.Store(nil)
+	releasePriced()
+}
+
+// sized is s[:n], zeroed, in s's array when it holds n
+func sized[T any](s []T, n int) []T {
+	if cap(s) < n {
+		return make([]T, n)
+	}
+	s = s[:n]
+	clear(s)
+	return s
+}
+
+// release empties s, so it holds no chunk of this call, and keeps it
+func (s *matchScratch) release() {
+	clear(s.reserved)
+	clear(s.byID)
+	clear(s.ids)
+	clear(s.used)
+	clear(s.groupOf)
+	clear(s.named)
+	clear(s.calls)
+	clear(s.found)
+	clear(s.refs)
+	clear(s.ends)
+	clear(s.candidates)
+	s.calls, s.found, s.refs, s.groups, s.ks = s.calls[:0], s.found[:0], s.refs[:0], s.groups[:0], s.ks[:0]
+	s.ends, s.counts, s.unique, s.candidates = s.ends[:0], s.counts[:0], s.unique[:0], s.candidates[:0]
+	keptMatch.Store(s)
 }
 
 // agyMatchSession stands for the session of an Antigravity CLI (agy) call
@@ -1350,11 +1448,12 @@ func matchedLocal(gateway *rowChunk, chunks []*rowChunk, skip map[rowRef]bool, s
 }
 
 func matchedBlocks(gateways []*rowChunk, chunks []*rowChunk, skip map[rowRef]bool, responsePairs map[rowRef]rowRef, since time.Time, newestIDs bool) map[rowRef]bool {
-	reserved := make(map[rowRef]bool, len(responsePairs)*2)
-	matched := make(map[rowRef]bool, len(responsePairs))
+	scratch := matchScratchFor()
+	defer scratch.release()
+	scratch.reserved = mapFor(scratch.reserved, len(responsePairs)*2)
+	reserved := scratch.reserved
 	for gateway, local := range responsePairs {
 		reserved[gateway], reserved[local] = true, true
-		matched[local] = true
 	}
 	gatewaySince := since
 	if !since.IsZero() {
@@ -1376,8 +1475,10 @@ func matchedBlocks(gateways []*rowChunk, chunks []*rowChunk, skip map[rowRef]boo
 			}
 		}
 	}
-	byID := make(map[string]int32, withID)
-	calls := make([]idCalls, 0, withID)
+	scratch.byID = mapFor(scratch.byID, withID)
+	byID := scratch.byID
+	calls := slices.Grow(scratch.calls, withID)
+	defer func() { scratch.calls = calls }()
 	for _, gateway := range gateways {
 		for i := range gateway.Rows {
 			ref := rowRef{gateway, i}
@@ -1397,11 +1498,13 @@ func matchedBlocks(gateways []*rowChunk, chunks []*rowChunk, skip map[rowRef]boo
 	}
 	// the local calls that name an id, chained from its calls[k].last in
 	// the order they were found
-	var found []idLocal
+	found := scratch.found
+	defer func() { scratch.found = found }()
 	rows := lentRows() // a key is looked up
 	defer rows.release()
 	hints := hintsOf(chunks, &rows)
-	ids := make(map[uint32]struct{}, len(byID))
+	scratch.ids = mapFor(scratch.ids, len(byID))
+	ids := scratch.ids
 	for id := range byID {
 		ids[uint32(matchHash(id))] = struct{}{}
 	}
@@ -1428,8 +1531,16 @@ func matchedBlocks(gateways []*rowChunk, chunks []*rowChunk, skip map[rowRef]boo
 			}
 		}
 	}
-	used := make(map[rowRef]bool, len(found))
-	var refs []timedRef
+	// made once the calls matched by id are known: grown from the response
+	// pairs alone, it was ~300 MB of what 80 s of polls allocated
+	matched := make(map[rowRef]bool, len(responsePairs)+len(found))
+	for _, local := range responsePairs {
+		matched[local] = true
+	}
+	scratch.used = mapFor(scratch.used, len(found))
+	used := scratch.used
+	refs := scratch.refs
+	defer func() { scratch.refs = refs }()
 	for k := range calls {
 		refs = refs[:0]
 		for j := calls[k].last; j != 0; j = found[j-1].before {
@@ -1454,48 +1565,90 @@ func matchedBlocks(gateways []*rowChunk, chunks []*rowChunk, skip map[rowRef]boo
 			matched[ref.rowRef], used[calls[k].at(j)] = true, true
 		}
 	}
-	groupOf := map[matchKey]int32{} // a key's place in groups
-	var groups []matchGroup
+	// keyOf is the key of a gateway call the local calls left without a
+	// request id may match, ok false for one they never do
+	keyOf := func(gateway *rowChunk, i int) (matchKey, bool) {
+		if reserved[rowRef{gateway, i}] || used[rowRef{gateway, i}] {
+			return matchKey{}, false
+		}
+		p := &gateway.Rows[i]
+		if (p.Flags&4 != 0 || gateway.text(p, 1) == 0 && p.Status >= 400) || p.Time.Before(gatewaySince) {
+			return matchKey{}, false
+		}
+		session := gateway.Strings[gateway.text(p, 14)]
+		if session == "" {
+			session = gateway.Strings[gateway.text(p, 13)]
+		}
+		if session == "" && gateway.Strings[gateway.text(p, 0)] == "agy" {
+			session = agyMatchSession
+		}
+		if session == "" {
+			return matchKey{}, false
+		}
+		return matchKey{session, matchTokens(p.Tokens), p.Status >= 400 || gateway.text(p, 9) != 0, gateway.text(p, 11) != 0}, true
+	}
+	kept := 0
 	for _, gateway := range gateways {
 		for i := range gateway.Rows {
-			ref := rowRef{gateway, i}
-			if reserved[ref] {
+			if _, ok := keyOf(gateway, i); ok {
+				kept++
+			}
+		}
+	}
+	scratch.groupOf = mapFor(scratch.groupOf, kept)
+	groupOf := scratch.groupOf // a key's place in groups
+	groups := scratch.groups
+	defer func() { scratch.groups = groups }()
+	ks := slices.Grow(scratch.ks, kept) // each kept call's group, in the order read
+	for _, gateway := range gateways {
+		for i := range gateway.Rows {
+			key, ok := keyOf(gateway, i)
+			if !ok {
 				continue
 			}
-			p := &gateway.Rows[i]
-			if used[ref] || (p.Flags&4 != 0 || gateway.text(p, 1) == 0 && p.Status >= 400) || p.Time.Before(gatewaySince) {
-				continue
-			}
-			session := gateway.Strings[gateway.text(p, 14)]
-			if session == "" {
-				session = gateway.Strings[gateway.text(p, 13)]
-			}
-			if session == "" && gateway.Strings[gateway.text(p, 0)] == "agy" {
-				session = agyMatchSession
-			}
-			if session == "" {
-				continue
-			}
-			key := matchKey{session, matchTokens(p.Tokens), p.Status >= 400 || gateway.text(p, 9) != 0, gateway.text(p, 11) != 0}
 			k, ok := groupOf[key]
 			if !ok {
 				k = int32(len(groups))
 				groupOf[key] = k
 				groups = append(groups, matchGroup{})
 			}
-			groups[k].ends = append(groups[k].ends, matchEnd{p.Time.Add(time.Duration(p.Millis) * time.Millisecond), rowRef{gateway, i}})
+			groups[k].n++
+			ks = append(ks, k)
 		}
 	}
-	for i := range groups {
-		g := &groups[i]
-		slices.SortFunc(g.ends, func(a, b matchEnd) int { return a.at.Compare(b.at) })
-		g.counts = make([]int, len(g.ends)+1)
+	off := int32(0)
+	for k := range groups {
+		groups[k].off, off = off, off+groups[k].n
+		groups[k].n = 0
 	}
-	named := make(map[uint64]struct{}, len(groups))
+	ends := sized(scratch.ends, len(ks))
+	scratch.ends, scratch.ks = ends, ks
+	next := 0
+	for _, gateway := range gateways {
+		for i := range gateway.Rows {
+			if _, ok := keyOf(gateway, i); !ok {
+				continue
+			}
+			g := &groups[ks[next]]
+			next++
+			p := &gateway.Rows[i]
+			ends[g.off+g.n] = matchEnd{p.Time.Add(time.Duration(p.Millis) * time.Millisecond), rowRef{gateway, i}}
+			g.n++
+		}
+	}
+	for k := range groups {
+		g := groups[k]
+		slices.SortFunc(ends[g.off:g.off+g.n], func(a, b matchEnd) int { return a.at.Compare(b.at) })
+	}
+	counts := sized(scratch.counts, len(ends)+len(groups))
+	scratch.counts = counts
+	scratch.named = mapFor(scratch.named, len(groups))
+	named := scratch.named
 	for key := range groupOf {
 		named[matchHash(key.session)] = struct{}{}
 	}
-	candidates := map[rowRef]rowRef{}
+	candidates := scratch.candidates
+	defer func() { scratch.candidates = candidates }()
 	for n, chunk := range chunks {
 		if hints[n].latest.Before(since) || !namesAny(hints[n].sessions, named) {
 			continue
@@ -1519,7 +1672,7 @@ func matchedBlocks(gateways []*rowChunk, chunks []*rowChunk, skip map[rowRef]boo
 			if c.Strings[c.text(p, 0)] == "agy" {
 				key.session, to = agyMatchSession, p.Time.Add(agyStepLongest)
 			}
-			count, candidate := 0, (rowRef{})
+			count, at := 0, int32(0)
 			// Without a local ID either gateway partition can match. With an ID,
 			// only an unnamed gateway call can match (different IDs stay distinct).
 			for _, hasID := range []bool{false, true} {
@@ -1531,37 +1684,39 @@ func matchedBlocks(gateways []*rowChunk, chunks []*rowChunk, skip map[rowRef]boo
 				if !ok {
 					continue
 				}
-				g := &groups[k]
-				lo := sort.Search(len(g.ends), func(i int) bool { return !g.ends[i].at.Before(from) })
-				hi := sort.Search(len(g.ends), func(i int) bool { return g.ends[i].at.After(to) })
+				g := groups[k]
+				in := ends[g.off : g.off+g.n]
+				lo := sort.Search(len(in), func(i int) bool { return !in[i].at.Before(from) })
+				hi := sort.Search(len(in), func(i int) bool { return in[i].at.After(to) })
 				if hi > lo {
 					count += hi - lo
-					candidate = g.ends[lo].index
+					at = g.off + int32(lo)
 					// Range counts preserve ambiguity even for thousands of identical
 					// retries, without enumerating their Cartesian product.
-					g.counts[lo]++
-					g.counts[hi]--
+					counts[g.off+k+int32(lo)]++
+					counts[g.off+k+int32(hi)]--
 				}
 			}
 			if count == 1 {
-				candidates[ref] = candidate
+				candidates = append(candidates, matchCandidate{ref, at})
 			}
 		}
 	}
-	unique := map[rowRef]bool{}
-	for i := range groups {
-		g := &groups[i]
-		count := 0
-		for i, end := range g.ends {
-			count += g.counts[i]
+	unique := sized(scratch.unique, len(ends))
+	scratch.unique = unique
+	for k := range groups {
+		g := groups[k]
+		count := int32(0)
+		for i := int32(0); i < g.n; i++ {
+			count += counts[g.off+int32(k)+i]
 			if count == 1 {
-				unique[end.index] = true
+				unique[g.off+i] = true
 			}
 		}
 	}
-	for ref, i := range candidates {
-		if unique[i] {
-			matched[ref] = true
+	for _, c := range candidates {
+		if unique[c.at] {
+			matched[c.ref] = true
 		}
 	}
 	return matched
@@ -1658,6 +1813,11 @@ type pairedRows struct {
 var pairing func()
 
 func pairRows(p Period, now time.Time, gateways, chunks, others []*rowChunk, identities map[string]sessions.CodexIdentity) *pairedRows {
+	return pairRowsIn(p.Since(now), p.Until(now), gateways, chunks, others, identities)
+}
+
+// pairRowsIn is pairRows over the rows from since to until.
+func pairRowsIn(since, until time.Time, gateways, chunks, others []*rowChunk, identities map[string]sessions.CodexIdentity) *pairedRows {
 	if pairing != nil {
 		pairing()
 	}
@@ -1673,7 +1833,6 @@ func pairRows(p Period, now time.Time, gateways, chunks, others []*rowChunk, ide
 	for ref := range duplicateSkip {
 		skip[ref] = true
 	}
-	since, until := p.Since(now), p.Until(now)
 	matched := matchedBlocks(gateways, chunks, skip, pairs, since, true)
 	for gateway, local := range pairs {
 		setCodexActor(gateway.Chunk, gateway.Index, local.Chunk.codexActors.at(local.Index))
@@ -1727,21 +1886,21 @@ func buildRequestBlocksOf(p Period, f Filter, offset, limit int, now time.Time, 
 // cache's for the chunks it has them for (nil: every chunk's read).
 func buildRequestBlocksIn(p Period, f Filter, offset, limit int, now time.Time, gateways, chunks, others []*rowChunk, names map[string]string, identities map[string]sessions.CodexIdentity, cache *partCache) RequestPage {
 	since := p.Since(now)
-	var ps *pairedRows
-	if cache != nil && p != heatmapPeriod {
-		ps, cache.pairsNext = pairRowsMemo(p, now, gateways, chunks, others, identities, cache.pairs)
-	} else {
-		ps = pairRows(p, now, gateways, chunks, others, identities)
-	}
-	out := RequestPage{Rows: []Row{}, Agents: []string{}, Providers: []string{}, Purposes: []string{}, By: map[string][]Share{}}
 	chartFilter := f
 	chartFilter.Day = ""
 	// The heatmap's page is only its days, all HeatmapOf reads: over its
 	// year the groups, shares and series below took seconds a call (#3493).
 	if p == heatmapPeriod {
-		out.Heat = ps.heatOf(since, now, chartFilter, cache, identities)
-		return out
+		return RequestPage{Rows: []Row{}, Agents: []string{}, Providers: []string{}, Purposes: []string{}, By: map[string][]Share{},
+			Heat: heatSplit(since, now, gateways, chunks, others, chartFilter, identities, cache)}
 	}
+	var ps *pairedRows
+	if cache != nil {
+		ps, cache.pairsNext = pairRowsMemo(p, now, gateways, chunks, others, identities, cache.pairs)
+	} else {
+		ps = pairRows(p, now, gateways, chunks, others, identities)
+	}
+	out := RequestPage{Rows: []Row{}, Agents: []string{}, Providers: []string{}, Purposes: []string{}, By: map[string][]Share{}}
 	agents, providers := map[string]bool{}, map[string]bool{}
 	kinds := map[string]bool{}
 	callers := map[string]*Group{}

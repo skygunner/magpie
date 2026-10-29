@@ -730,6 +730,7 @@ body.window .row.agent .who .ag-cli { flex: 0 1 auto; overflow: hidden; }
 /* the agents plugins add: one row, its way to Plugins */
 .ag-install-plugins { width: 100%; align-items: center; font: inherit; color: var(--accent); text-align: left; cursor: pointer; transition: background .2s; }
 .ag-install-plugins:hover { background: var(--accent-soft); }
+.ag-install-head + .ag-install-plugins { margin-top: 6px; }
 .ag-install-plugins:focus-visible { outline: 1.5px solid var(--fg-2); outline-offset: 1px; }
 .ag-install-plugins .ag-install-who { flex: none; padding-top: 0; }
 .ag-install-plugins .puzzle { flex: none; width: 18px; height: 18px; display: grid; place-items: center; }
@@ -1215,6 +1216,9 @@ body.masked :hover > .acct-eye, body.masked .pq-card:hover .acct-eye, body.maske
 .us-hid .us-hidline[aria-expanded="true"] svg { transform: rotate(180deg); }
 .us-hid .list { margin-top: 4px; }
 .us-hid .list[hidden] { display: none; }
+.us-hid .us-showall { align-self: flex-start; margin: 4px 0 0 2px; font-size: 11.5px; }
+.us-hid .us-showall[hidden] { display: none; }
+#quotaHid .row.stat .who { flex: 1 1 auto; min-width: 0; }
 .row.stat.hid > :not(.us-unhide) { opacity: .55; }
 .usage-note { padding: 10px 4px 2px; font-size: 11px; color: var(--faint); user-select: text; -webkit-user-select: text; }
 .usage-clear { margin: 0; padding: 2px 0 6px; }
@@ -2867,6 +2871,9 @@ body.window .ag-sk-icon { width: 22px; height: 22px; border-radius: 6px; }
 .fbrow { display: flex; align-items: center; gap: 8px; min-height: 28px; font-size: 12.5px; }
 .fbrow .i { width: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .fbrow .grow { flex: 1; }
+/* a routing group among the fallbacks: its fan, then the muted word */
+.fbrow .mtell { color: var(--muted); font-size: 11px; flex: none; }
+.fbrow > svg { flex: none; color: var(--muted); }
 .fallback .mchips:empty { display: none; }
 .after-list { display: flex; align-items: center; gap: 8px; padding: 8px 4px 0; flex: none; }
 /* the Providers page's add button stays at the view's foot over a long list;
@@ -3562,6 +3569,8 @@ input.words.search-key, input.words.search-url { flex: 1 1 120px; width: auto; m
 .prefs .row.rule-editing .val.rule-add { flex-wrap: wrap; row-gap: 6px; }
 .prefs .row.rule-editing .rule-tail { display: flex; align-items: center; gap: 6px; flex: 1 1 240px; min-width: 0; }
 .row.pref .sub.err { color: var(--red); white-space: normal; }
+/* Warm up now's line holds a vendor's reason, which can be one long word */
+.row.warm-now .sub { white-space: normal; overflow-wrap: anywhere; }
 .warm-at { display: flex; align-items: center; gap: 8px; margin-left: auto; flex: none; }
 .warm-at input.at { width: auto; height: 27px; padding: 0 8px; border-radius: 7px; border: 1px solid var(--line); background: var(--card); color: var(--fg); font: inherit; font-size: 12.5px; font-variant-numeric: tabular-nums; outline: none; transition: border-color .12s, box-shadow .12s; }
 .warm-at input.at:focus { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
