@@ -977,6 +977,7 @@ var wsl struct {
 	seen    map[string]*distro
 	probed  map[string]bool
 	failed  map[string]time.Time
+	probing map[string]*struct{ marker byte }
 	dirty   bool
 }
 
@@ -1114,46 +1115,67 @@ func wslDistros() []distro {
 			// none to run: a wsl.exe that couldn't list them isn't asked
 			// again which run, another timeout under the lock the GUI waits on
 			wsl.running, wsl.runOK, wsl.runAt = map[string]bool{}, wsl.listed, time.Now()
+			clear(wsl.probing)
+			clear(wsl.probed)
 		}
 	}
 	wslRunningLocked()
-	installed := map[string]bool{}
-	// a probe runs wsl.exe for up to 30s a distro, while wslAgents,
-	// wslHomes and /api/state wait on this lock: which to probe is taken
-	// here and the probes run outside it, merged below into what the state
-	// is by then
-	var probing []string
+	if wsl.listed {
+		for n := range wsl.probing {
+			if !slices.Contains(wsl.names, n) {
+				delete(wsl.probing, n)
+			}
+		}
+		for n := range wsl.probed {
+			if !slices.Contains(wsl.names, n) {
+				delete(wsl.probed, n)
+			}
+		}
+	}
+	if wsl.probing == nil {
+		wsl.probing = map[string]*struct{ marker byte }{}
+	}
+	// Tokens identify the current probe so a rescan or stop can invalidate it.
+	probing := map[string]*struct{ marker byte }{}
+	var names []string
 	for _, n := range wsl.names {
-		installed[n] = true
 		// a distro that stopped is probed again once it runs: WSL may have
 		// been restarted meanwhile in another networking mode
 		if !wsl.running[n] {
 			delete(wsl.probed, n)
 			continue
 		}
-		if wsl.probed[n] {
+		if wsl.probed[n] || wsl.probing[n] != nil {
 			continue
 		}
 		if t, ok := wsl.failed[n]; ok && time.Since(t) <= wslRetryAge {
 			continue
 		}
-		probing = append(probing, n)
+		probe := new(struct{ marker byte })
+		probing[n], wsl.probing[n] = probe, probe
+		names = append(names, n)
 	}
-	names := wsl.names
 	wsl.Unlock()
 
 	cfg := wslConfig()
 	results := make(map[string]*distro, len(probing))
-	for _, n := range probing {
-		results[n] = wslProbe(n)
+	for _, n := range names {
+		wsl.Lock()
+		current := wsl.probing[n] == probing[n] && wsl.running[n] && slices.Contains(wsl.names, n)
+		wsl.Unlock()
+		if current {
+			results[n] = wslProbe(n)
+		}
 	}
 
 	wsl.Lock()
 	defer wsl.Unlock()
-	for _, n := range probing {
-		// the distro may have stopped, been uninstalled or been probed by
-		// another look meanwhile: its result is dropped, not merged
-		if !wsl.running[n] || wsl.probed[n] || wsl.listed && !slices.Contains(wsl.names, n) {
+	for _, n := range names {
+		if wsl.probing[n] != probing[n] {
+			continue
+		}
+		delete(wsl.probing, n)
+		if !wsl.running[n] || wsl.probed[n] || !slices.Contains(wsl.names, n) {
 			continue
 		}
 		d := results[n]
@@ -1174,7 +1196,7 @@ func wslDistros() []distro {
 		wsl.dirty = true
 	}
 	var out []distro
-	for _, n := range names {
+	for _, n := range wsl.names {
 		d := wsl.seen[n]
 		if d == nil {
 			continue
@@ -1187,7 +1209,7 @@ func wslDistros() []distro {
 	}
 	// an unregistered distro is forgotten
 	for n := range wsl.seen {
-		if wsl.listed && !installed[n] {
+		if wsl.listed && !slices.Contains(wsl.names, n) {
 			delete(wsl.seen, n)
 			wsl.dirty = true
 		}
@@ -1252,6 +1274,16 @@ func wslRunningLocked() {
 	wsl.running = map[string]bool{}
 	for _, n := range run {
 		wsl.running[n] = true
+	}
+	for n := range wsl.probing {
+		if !wsl.running[n] {
+			delete(wsl.probing, n)
+		}
+	}
+	for n := range wsl.probed {
+		if !wsl.running[n] {
+			delete(wsl.probed, n)
+		}
 	}
 	wsl.runAt = time.Now()
 }

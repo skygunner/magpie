@@ -25,6 +25,7 @@ func Rescan() {
 	// a running distro is asked again, and one that failed is retried now
 	// rather than in ten minutes
 	wsl.probed, wsl.failed = map[string]bool{}, map[string]time.Time{}
+	clear(wsl.probing)
 	wsl.Unlock()
 
 	almaRead.Lock()
