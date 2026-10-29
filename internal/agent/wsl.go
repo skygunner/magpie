@@ -1092,7 +1092,6 @@ func wslStatePath() string { return filepath.Join(filepath.Dir(provider.Path()),
 
 func wslDistros() []distro {
 	wsl.Lock()
-	defer wsl.Unlock()
 	if wsl.seen == nil {
 		wsl.seen, wsl.probed, wsl.failed = map[string]*distro{}, map[string]bool{}, map[string]time.Time{}
 		if b, err := os.ReadFile(wslStatePath()); err == nil {
@@ -1119,34 +1118,63 @@ func wslDistros() []distro {
 	}
 	wslRunningLocked()
 	installed := map[string]bool{}
-	cfg := wslConfig()
-	var out []distro
+	// a probe runs wsl.exe for up to 30s a distro, while wslAgents,
+	// wslHomes and /api/state wait on this lock: which to probe is taken
+	// here and the probes run outside it, merged below into what the state
+	// is by then
+	var probing []string
 	for _, n := range wsl.names {
 		installed[n] = true
 		// a distro that stopped is probed again once it runs: WSL may have
 		// been restarted meanwhile in another networking mode
 		if !wsl.running[n] {
 			delete(wsl.probed, n)
+			continue
 		}
-		if wsl.running[n] && !wsl.probed[n] {
-			if t, ok := wsl.failed[n]; !ok || time.Since(t) > wslRetryAge {
-				if d := wslProbe(n); d == nil {
-					wsl.failed[n] = time.Now()
-				} else {
-					wsl.probed[n] = true
-					if wslKept(*d) {
-						if old := wsl.seen[n]; old != nil {
-							d.Values = old.Values
-							d.Was = wslWas(old.Was, old.Gateway, d.Gateway)
-						}
-						wsl.seen[n] = d
-					} else {
-						delete(wsl.seen, n)
-					}
-					wsl.dirty = true
-				}
+		if wsl.probed[n] {
+			continue
+		}
+		if t, ok := wsl.failed[n]; ok && time.Since(t) <= wslRetryAge {
+			continue
+		}
+		probing = append(probing, n)
+	}
+	names := wsl.names
+	wsl.Unlock()
+
+	cfg := wslConfig()
+	results := make(map[string]*distro, len(probing))
+	for _, n := range probing {
+		results[n] = wslProbe(n)
+	}
+
+	wsl.Lock()
+	defer wsl.Unlock()
+	for _, n := range probing {
+		// the distro may have stopped, been uninstalled or been probed by
+		// another look meanwhile: its result is dropped, not merged
+		if !wsl.running[n] || wsl.probed[n] || wsl.listed && !slices.Contains(wsl.names, n) {
+			continue
+		}
+		d := results[n]
+		if d == nil {
+			wsl.failed[n] = time.Now()
+			continue
+		}
+		wsl.probed[n] = true
+		if wslKept(*d) {
+			if old := wsl.seen[n]; old != nil {
+				d.Values = old.Values
+				d.Was = wslWas(old.Was, old.Gateway, d.Gateway)
 			}
+			wsl.seen[n] = d
+		} else {
+			delete(wsl.seen, n)
 		}
+		wsl.dirty = true
+	}
+	var out []distro
+	for _, n := range names {
 		d := wsl.seen[n]
 		if d == nil {
 			continue
