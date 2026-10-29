@@ -114,6 +114,7 @@ commit is docs-only.
 | yetone/magpie#3791 | `dd670e6` + `dfd128ca` | `fix/hindsight-nonstream-sse-1767` | provider JSON `modelCooldown` opts exact model ids into model/account/key cooldowns on 499s and slow starts: 1, 2, 4, 8, 16, 32, then the cap minutes; success resets the ladder; a cooling model is not probed even as last candidate (503 + Retry-After); `RestCapOff` overrides; production opts `raccoon`'s `sn-sensenova-6-8-flash` at a 60-minute cap |
 | yetone/magpie#3948 | `56eb1ba1` | `fix/request-protocol-visibility` | a completed non-streaming response is checked by its existing bounded capture: SSE-instead-of-JSON, malformed JSON, missing arrays and empty Chat choices record `protocol_error` while keeping the committed HTTP status (Usage shows `200 · Protocol error`); missing speed says non-streaming/untimed or insufficient sample — diagnostic recording only, no new retry/cooldown policy |
 | yetone/magpie#3794 | `82d916e3` | `fix/kilo-tools-count-fallback` | an explicit upstream tool-count limit (Kilo refusing 129 tools, max 128) fails the group over to the next member with the full tool list; the refusing member stays eligible for smaller requests |
+| yetone/magpie#3623 | `33c0ade7a` | `feature/request-attempt-chain` | Usage's expanded request loads its recorded routing trace and lists every actual attempt in order — provider/model, status, duration, error, a 499 included; an expired or unavailable trace says so instead of inferring from the current group config. No routing or retry behavior changes |
 | build line (ours) | this branch | `prod` | What's new and the update check read a `-pN` build as its base release: `update.parse` strips the suffix, and the notes site is asked in whole release numbers (its own `newer()` reads `-pN` as a pre-release, which hid the range's base releases at both ends — 0.1.2051's notes stayed out of "since 0.1.1948-p1" and 0.1.1948's crept in). `prod_build_test.go` pins it |
 
 Plugin (not this branch): `@magpie-community/opencode-cloudflare-workers-ai-auth`
@@ -122,13 +123,12 @@ tarball in the volume was packed at `bdc302a`; `38ddeb1` after it is
 test-only, so the runtime content matches the PR head. Rebuilt and
 reinstalled whenever the PR's runtime files change.
 
-Not carried: #3623 (no fix exists on the fork yet; nothing to apply).
-Checked again at v0.1.1670: still zero comments, still nothing upstream.
-
-User-directed entries now carried: #3948 was registered here on
-2026-10-28 while no fix existed; `fix/request-protocol-visibility`
-(`56eb1ba1`) appeared the same day and is carried in the table above.
-This section stays for the next user-directed request without a fix.
+Carried after registering here: #3948 was registered on 2026-10-28
+while no fix existed; `fix/request-protocol-visibility` (`56eb1ba1`)
+appeared the same day and is carried in the table above. #3623 was
+registered on 2026-10-29 and its fix (`33c0ade7a`,
+`feature/request-attempt-chain`) appeared within the hour, carried in
+the table above.
 
 ## Deployment history
 
