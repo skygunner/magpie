@@ -19,8 +19,32 @@ func TestWSLProbeConcurrentReaderWaits(t *testing.T) {
 	wsl.Unlock()
 	t.Cleanup(func() { wsl.Lock(); wsl.probing = nil; wsl.Unlock() })
 
+	watchdogDone := make(chan struct{})
+	watchdogStop := make(chan struct{})
+	watchdogFired := make(chan struct{})
+	abortProbe := make(chan struct{})
+	var releaseOnce sync.Once
+	finishProbe := func() { releaseOnce.Do(func() { close(abortProbe) }) }
+	go func() {
+		defer close(watchdogDone)
+		timer := time.NewTimer(30 * time.Second)
+		defer timer.Stop()
+		select {
+		case <-watchdogStop:
+		case <-timer.C:
+			close(watchdogFired)
+			finishProbe()
+		}
+	}()
+	t.Cleanup(func() {
+		close(watchdogStop)
+		<-watchdogDone
+	})
+
 	synctest.Test(t, func(t *testing.T) {
-		started, release := make(chan struct{}), make(chan struct{})
+		started := make(chan struct{})
+		release := abortProbe
+		defer finishProbe()
 		var mu sync.Mutex
 		calls := 0
 		wslRun = func(_ time.Duration, args ...string) ([]byte, error) {
@@ -47,7 +71,6 @@ func TestWSLProbeConcurrentReaderWaits(t *testing.T) {
 		select {
 		case <-started:
 		case <-time.After(10 * time.Second):
-			close(release)
 			t.Fatal("first probe did not start")
 		}
 		go func() { second <- wslDistros() }()
@@ -56,18 +79,16 @@ func TestWSLProbeConcurrentReaderWaits(t *testing.T) {
 		select {
 		case <-settled:
 		case <-time.After(10 * time.Second):
-			close(release)
 			t.Fatal("readers did not reach a blocked state")
 		}
 		// Wait returns only when both readers are blocked on bubble channels.
 
 		select {
 		case got := <-second:
-			close(release)
 			t.Fatalf("second reader returned before probe completed: %+v", got)
 		default:
 		}
-		close(release)
+		finishProbe()
 		for _, result := range []chan []distro{first, second} {
 			select {
 			case got := <-result:
@@ -85,6 +106,11 @@ func TestWSLProbeConcurrentReaderWaits(t *testing.T) {
 			t.Errorf("concurrent readers started %d probes", count)
 		}
 	})
+	select {
+	case <-watchdogFired:
+		t.Error("real-time watchdog released the blocked probe")
+	default:
+	}
 }
 
 func TestWSLProbeConcurrentChanges(t *testing.T) {
