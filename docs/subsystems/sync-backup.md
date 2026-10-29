@@ -83,7 +83,16 @@ Subsequent syncs compare each part with the hashes from the previous sync:
 local-only changes go up, remote-only changes come down, and a part changed
 on both sides keeps the newer version while retaining the replaced copy.
 A conditional write refused because another computer committed in between
-is retried through this same merge.
+is retried through this same merge. WebDAV writes without `If-Match` are
+marked blind, including a short-write retry without an ETag. On the next sync,
+if another file replaced the blind write, sync merges again from the state
+before it. This cannot recover another writer's changes that the blind write
+itself overwrote; that writer must sync again. A server must enforce `If-Match`
+for an ETag-based write to provide protection. HTTP dates have second
+resolution and are not used as write preconditions. A PUT's Last-Modified is
+used for a conditional read only when its response Date is at least a second
+later; otherwise the next sync downloads the file. No earlier timestamp is
+reused as the version of a new write.
 
 When a remote file is empty, damaged or another app's format, sync stops and
 describes it through `ServerFile`. Settings and the backend's `upload` command

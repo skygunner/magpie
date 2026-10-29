@@ -1059,7 +1059,10 @@ func syncOnce(ctx context.Context, c Config, st *state) error {
 	// computer's write went over it (blind)
 	if b := st.Blind; b != nil {
 		if !unchanged && sum(data) != b.Sum {
-			st.Remote, st.Local = b.Remote, b.Local
+			good := cached(st.Sum)
+			if good == nil || !bytes.HasPrefix(good, data) || len(data) <= bytes.Index(good, []byte(`"data"`)) {
+				st.Remote, st.Local = b.Remote, b.Local
+			}
 		}
 		st.Blind = nil
 	}

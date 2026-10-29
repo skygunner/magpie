@@ -143,6 +143,9 @@ func TestGatewayKeysConflict(t *testing.T) {
 				if err := Now(context.Background()); err != nil {
 					t.Fatal(err)
 				}
+				if err := Now(context.Background()); err != nil {
+					t.Fatal(err)
+				}
 				path := "/dav/magpie/magpie.magpie-backup"
 				fake.mu.Lock()
 				data := append([]byte(nil), fake.files[path]...)

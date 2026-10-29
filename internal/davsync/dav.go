@@ -321,6 +321,7 @@ func (d *dav) put(ctx context.Context, data []byte, etag string) (version, error
 	if etag != "" {
 		h["If-Match"] = etag
 	}
+	blind := false
 	for try, writes := 0, 0; ; try++ {
 		res, err := d.send(ctx, http.MethodPut, d.url(folder, file), data, h)
 		if err != nil {
@@ -330,6 +331,7 @@ func (d *dav) put(ctx context.Context, data []byte, etag string) (version, error
 		switch {
 		case res.StatusCode >= 200 && res.StatusCode < 300:
 			writes++
+			blind = blind || h["If-Match"] == ""
 			he, cerr := d.check(ctx, d.url(folder, file), file, len(data))
 			if cerr != nil {
 				if writes < 3 {
@@ -348,9 +350,9 @@ func (d *dav) put(ctx context.Context, data []byte, etag string) (version, error
 				}
 				return version{}, cerr
 			}
-			// an ETag said here is the version written; with none, the
-			// next sync reads the file in full, as before
-			return version{ETag: res.Header.Get("ETag")}, nil
+			v := versionOf(res.Header)
+			v.Blind = blind
+			return v, nil
 		case res.StatusCode == http.StatusPreconditionFailed:
 			return version{}, errChanged
 		case res.StatusCode == http.StatusForbidden && (try > 0 || d.there(ctx, d.url(folder)+"/")):
