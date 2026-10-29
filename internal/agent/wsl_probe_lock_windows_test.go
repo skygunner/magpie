@@ -7,11 +7,88 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"testing/synctest"
 	"time"
 )
 
+func TestWSLProbeConcurrentReaderWaits(t *testing.T) {
+	syncHome(t)
+	fakeWSL(t, "", "", nil, nil)
+	wsl.Lock()
+	wsl.probing = nil
+	wsl.Unlock()
+	t.Cleanup(func() { wsl.Lock(); wsl.probing = nil; wsl.Unlock() })
+
+	synctest.Test(t, func(t *testing.T) {
+		started, release := make(chan struct{}), make(chan struct{})
+		var mu sync.Mutex
+		calls := 0
+		wslRun = func(_ time.Duration, args ...string) ([]byte, error) {
+			switch strings.Join(args, " ") {
+			case "-l -q", "-l --running -q":
+				return []byte("Ubuntu\n"), nil
+			}
+			if len(args) > 2 && args[0] == "-d" {
+				mu.Lock()
+				calls++
+				first := calls == 1
+				mu.Unlock()
+				if first {
+					close(started)
+					<-release
+				}
+				return []byte("home:/home/me\ndir:.codex\n"), nil
+			}
+			return nil, errors.New("unexpected command")
+		}
+		wslRoot = func(name string) string { return name }
+		first, second := make(chan []distro, 1), make(chan []distro, 1)
+		go func() { first <- wslDistros() }()
+		select {
+		case <-started:
+		case <-time.After(10 * time.Second):
+			close(release)
+			t.Fatal("first probe did not start")
+		}
+		go func() { second <- wslDistros() }()
+		settled := make(chan struct{})
+		go func() { synctest.Wait(); close(settled) }()
+		select {
+		case <-settled:
+		case <-time.After(10 * time.Second):
+			close(release)
+			t.Fatal("readers did not reach a blocked state")
+		}
+		// Wait returns only when both readers are blocked on bubble channels.
+
+		select {
+		case got := <-second:
+			close(release)
+			t.Fatalf("second reader returned before probe completed: %+v", got)
+		default:
+		}
+		close(release)
+		for _, result := range []chan []distro{first, second} {
+			select {
+			case got := <-result:
+				if len(got) != 1 || got[0].Name != "Ubuntu" || got[0].Home != "/home/me" || !got[0].Running {
+					t.Errorf("unexpected distros: %+v", got)
+				}
+			case <-time.After(10 * time.Second):
+				t.Error("reader did not finish")
+			}
+		}
+		mu.Lock()
+		count := calls
+		mu.Unlock()
+		if count != 1 {
+			t.Errorf("concurrent readers started %d probes", count)
+		}
+	})
+}
+
 func TestWSLProbeConcurrentChanges(t *testing.T) {
-	for _, change := range []string{"list", "rescan", "restart", "duplicate"} {
+	for _, change := range []string{"list", "rescan", "restart"} {
 		t.Run(change, func(t *testing.T) {
 			syncHome(t)
 			fakeWSL(t, "", "", nil, nil)
@@ -115,7 +192,6 @@ func TestWSLProbeConcurrentChanges(t *testing.T) {
 					wsl.Lock()
 					wsl.runAt = time.Time{}
 					wsl.Unlock()
-				case "duplicate":
 				}
 				second <- wslDistros()
 			}()
@@ -147,14 +223,20 @@ func TestWSLProbeConcurrentChanges(t *testing.T) {
 			}
 			select {
 			case got := <-second:
-				if len(got) == 0 || len(ds) == 0 || got[0].Home != ds[0].Home {
+				if len(got) != len(ds) {
 					t.Errorf("concurrent reader got %+v, first got %+v", got, ds)
+				} else {
+					for i := range ds {
+						if got[i].Name != ds[i].Name || got[i].Home != ds[i].Home || got[i].Running != ds[i].Running {
+							t.Errorf("concurrent reader got %+v, first got %+v", got, ds)
+						}
+					}
 				}
 			case <-time.After(10 * time.Second):
 				t.Error("second reader did not finish")
 			}
 			if change == "list" {
-				if len(ds) != 2 || ds[0].Name != "Ubuntu" || ds[1].Name != "Debian" {
+				if len(ds) != 2 || ds[0].Name != "Ubuntu" || ds[0].Home != "/old" || !ds[0].Running || ds[1].Name != "Debian" || ds[1].Home != "/new" || !ds[1].Running {
 					t.Fatalf("distros after listing changed: %+v", ds)
 				}
 				b, err := os.ReadFile(wslStatePath())
@@ -167,12 +249,6 @@ func TestWSLProbeConcurrentChanges(t *testing.T) {
 				}
 			} else if len(ds) != 1 || ((change == "rescan" || change == "restart") && ds[0].Home != "/new") {
 				t.Fatalf("distros after %s: %+v", change, ds)
-			}
-			mu.Lock()
-			count := calls
-			mu.Unlock()
-			if change == "duplicate" && count != 1 {
-				t.Fatalf("concurrent readers started %d probes", count)
 			}
 		})
 	}
