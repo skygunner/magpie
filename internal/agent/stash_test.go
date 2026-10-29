@@ -1,13 +1,161 @@
 package agent
 
 import (
+	"bufio"
+	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
 	"sync"
 	"testing"
+	"time"
+
+	"github.com/yetone/magpie/internal/filelock"
+	"github.com/yetone/magpie/internal/proc"
 )
+
+func TestStashCrossProcessLock(t *testing.T) {
+	if os.Getenv("MAGPIE_STASH_LOCK_CHILD") == "1" {
+		unlock, held := filelock.Lock(stashPath()+".lock", time.Second)
+		if !held {
+			t.Fatal("child could not acquire stash lock")
+		}
+		defer unlock()
+		fmt.Println("LOCKED")
+		_, _ = io.ReadAll(os.Stdin)
+		return
+	}
+	stashHome(t)
+	exe, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	cmd := proc.CommandContext(ctx, exe, "-test.run=^TestStashCrossProcessLock$")
+	cmd.Env = append(os.Environ(), "MAGPIE_STASH_LOCK_CHILD=1")
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { stdin.Close(); cmd.Wait() })
+	line, err := bufio.NewReader(stdout).ReadString('\n')
+	if err != nil || line != "LOCKED\n" {
+		t.Fatalf("child lock: %q, %v", line, err)
+	}
+	oldWait := stashWait
+	stashWait = 20 * time.Millisecond
+	t.Cleanup(func() { stashWait = oldWait })
+	if err := stash(map[string]string{"agent.was": "original"}); err == nil {
+		t.Fatal("stash wrote while another process held the lock")
+	}
+	if got := stashLoad()["agent.was"]; got != "" {
+		t.Fatalf("stash changed while lock held: %q", got)
+	}
+}
+
+func TestStashForgetIfUnchanged(t *testing.T) {
+	stashHome(t)
+	if err := stash(map[string]string{"model": "first"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := stash(map[string]string{"model": "newer"}); err != nil {
+		t.Fatal(err)
+	}
+	forgetIfUnchanged("model", "first")
+	if got := stashLoad()["model"]; got != "newer" {
+		t.Fatalf("newer value removed: %q", got)
+	}
+	forgetIfUnchanged("model", "newer")
+	if got := stashLoad()["model"]; got != "" {
+		t.Fatalf("restored value not removed: %q", got)
+	}
+}
+
+func TestPeekStashRejectsMalformedData(t *testing.T) {
+	stashHome(t)
+	if err := os.MkdirAll(filepath.Dir(stashPath()), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	for _, raw := range []string{`{"saved":`, `null`, `[]`} {
+		if err := os.WriteFile(stashPath(), []byte(raw), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := peekStash("saved"); err == nil {
+			t.Fatalf("malformed stash %q was treated as empty", raw)
+		}
+		if _, err := unstash("saved"); err == nil {
+			t.Fatalf("malformed stash %q was treated as empty by unstash", raw)
+		}
+	}
+}
+
+func TestStashLockContention(t *testing.T) {
+	stashHome(t)
+	unlock, held := filelock.Lock(stashPath()+".lock", time.Second)
+	if !held {
+		t.Fatal("could not acquire test lock")
+	}
+	defer unlock()
+	oldWait := stashWait
+	stashWait = 20 * time.Millisecond
+	t.Cleanup(func() { stashWait = oldWait })
+	if err := stash(map[string]string{"agent.was": "original"}); err == nil {
+		t.Fatal("stash succeeded while its lock was held")
+	}
+	if got := stashLoad()["agent.was"]; got != "" {
+		t.Fatalf("value reported saved after lock failure: %q", got)
+	}
+}
+
+func TestStashWriteErrorPreservesValues(t *testing.T) {
+	stashHome(t)
+	if err := os.MkdirAll(stashPath(), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := stash(map[string]string{"agent.was": "original"}); err == nil {
+		t.Fatal("stash reported success when its target is a directory")
+	}
+	if st, err := os.Stat(stashPath()); err != nil || !st.IsDir() {
+		t.Fatalf("stash target changed: %v, %v", st, err)
+	}
+}
+
+func TestStashReadOnlyDirectory(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Unix directory permissions required")
+	}
+	stashHome(t)
+	dir := filepath.Dir(stashPath())
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	// Create the lock while writable so the attempted atomic write fails.
+	unlock, held := filelock.Lock(stashPath()+".lock", time.Second)
+	if !held {
+		t.Fatal("could not acquire test lock")
+	}
+	unlock()
+	if err := os.Chmod(dir, 0o500); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.Chmod(dir, 0o700) })
+	if err := stash(map[string]string{"agent.was": "original"}); err == nil {
+		t.Fatal("stash succeeded in a read-only directory")
+	}
+	if got := stashLoad()["agent.was"]; got != "" {
+		t.Fatalf("value reported saved after write failure: %q", got)
+	}
+}
 
 func stashHome(t *testing.T) {
 	home := t.TempDir()
@@ -36,9 +184,7 @@ func TestStashKeepsChangesMadeAtOnce(t *testing.T) {
 	}
 }
 
-// A stash.json that doesn't parse is read as no stash, and the next change
-// writes over it: what it held, every agent's originals, is copied aside
-// first, so it can still be got back.
+// A malformed stash remains the active file when a mutation fails.
 func TestUnreadStashKeptAside(t *testing.T) {
 	stashHome(t)
 	p := stashPath()
@@ -47,21 +193,12 @@ func TestUnreadStashKeptAside(t *testing.T) {
 	if err := os.WriteFile(p, []byte(half), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	stash(map[string]string{"pi.was": "x"})
-	if got := stashLoad(); got["pi.was"] != "x" {
-		t.Fatalf("stash after the change: %v", got)
+	if err := stash(map[string]string{"pi.was": "x"}); err == nil {
+		t.Fatal("malformed stash accepted")
 	}
-	bad, _ := filepath.Glob(p + ".bad-*")
-	if len(bad) != 1 {
-		t.Fatalf("kept aside: %v", bad)
-	}
-	if b, _ := os.ReadFile(bad[0]); string(b) != half {
-		t.Fatalf("kept aside as %q", b)
-	}
-	// a stash that parses is written over as before, nothing more kept
 	forget("pi.was")
-	if more, _ := filepath.Glob(p + ".bad-*"); len(more) != 1 {
-		t.Fatalf("kept aside after a good write: %v", more)
+	if b, err := os.ReadFile(p); err != nil || string(b) != half {
+		t.Fatalf("active stash changed: %q, %v", b, err)
 	}
 	if fi, err := os.Stat(p); err != nil {
 		t.Fatal(err)
@@ -70,9 +207,7 @@ func TestUnreadStashKeptAside(t *testing.T) {
 	}
 }
 
-// stashLoad reads a stash.json that is valid JSON but not the stash's map
-// (an array) as empty too: it is kept aside like one cut short, not taken
-// as a stash because json.Valid passes it (#2263).
+// A JSON array is not a stash and must not be replaced by a mutation.
 func TestUnreadStashArrayKeptAside(t *testing.T) {
 	stashHome(t)
 	p := stashPath()
@@ -80,12 +215,10 @@ func TestUnreadStashArrayKeptAside(t *testing.T) {
 	if err := os.WriteFile(p, []byte(`[]`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	stash(map[string]string{"pi.was": "x"})
-	bad, _ := filepath.Glob(p + ".bad-*")
-	if len(bad) != 1 {
-		t.Fatalf("kept aside: %v", bad)
+	if err := stash(map[string]string{"pi.was": "x"}); err == nil {
+		t.Fatal("array stash accepted")
 	}
-	if b, _ := os.ReadFile(bad[0]); string(b) != `[]` {
-		t.Fatalf("kept aside as %q", b)
+	if b, err := os.ReadFile(p); err != nil || string(b) != `[]` {
+		t.Fatalf("active stash changed: %q, %v", b, err)
 	}
 }

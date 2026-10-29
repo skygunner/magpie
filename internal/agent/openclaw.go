@@ -300,14 +300,18 @@ func openClawAt(at place) *Agent {
 	// unwire takes magpie's provider out, and OpenClaw back to the model it
 	// ran on before — when it still runs on magpie's: a pick the user made
 	// since is theirs and stands. own, if given, is the model to run on.
-	unwire := func(own string) error {
+	unwire := func(g *rewireGuard, own string) error {
 		s, err := openClawRead(path)
 		if err != nil {
 			return err
 		}
 		c := gjson.ParseBytes(s)
 		var was openClawWas
-		json.Unmarshal([]byte(unstash(keyWas)), &was)
+		kept, err := peekStash(keyWas)
+		if err != nil {
+			return err
+		}
+		json.Unmarshal([]byte(kept), &was)
 		var set []edit.KV
 		del := []string{openClawProvider}
 		m := c.Get(openClawModel)
@@ -375,14 +379,17 @@ func openClawAt(at place) *Agent {
 		}
 		if was.File {
 			if r := read(); r.IsObject() && len(r.Map()) == 0 {
-				return os.Remove(path)
+				if err := os.Remove(path); err != nil {
+					return err
+				}
 			}
 		}
+		g.forgetIfUnchanged(keyWas, kept)
 		return nil
 	}
 	// connect makes model, one of magpie's, the primary, stashing what was
 	// there first
-	connect := func(model string) error {
+	connect := func(g *rewireGuard, model string) error {
 		s, err := openClawRead(path)
 		if err != nil {
 			return err
@@ -410,11 +417,34 @@ func openClawAt(at place) *Agent {
 			}
 		}
 		b, _ := json.Marshal(was)
-		stash(map[string]string{keyWas: string(b)})
+		if err := g.stash(map[string]string{keyWas: string(b)}); err != nil {
+			return err
+		}
 		return patch(set, del)
 	}
+	setModel := func(g *rewireGuard, v string) error {
+		s, err := openClawRead(path)
+		if err != nil {
+			return err
+		}
+		c := gjson.ParseBytes(s)
+		if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+			return connect(g, ref)
+		}
+		if c.Get(openClawProvider).Exists() || ours(c) {
+			return unwire(g, v)
+		}
+		if v == "" {
+			return nil
+		}
+		if m := c.Get(openClawModel); m.IsObject() {
+			return patch([]edit.KV{{Path: openClawModel + ".primary", Value: v}}, nil)
+		}
+		return patch([]edit.KV{{Path: openClawModel, Value: v}}, nil)
+	}
 	return atomic(&Agent{
-		ID: "openclaw", Name: "OpenClaw", Icon: "openclaw", Spelled: prefixed, NoNames: true,
+		reapplyRewire: true,
+		ID:            "openclaw", Name: "OpenClaw", Icon: "openclaw", Spelled: prefixed, NoNames: true,
 		Bin: "openclaw", Dir: dir, Path: path,
 		Notice: func() string { return noticeOpenClaw.String() },
 		Sync: func() error {
@@ -455,27 +485,9 @@ func openClawAt(at place) *Agent {
 			// the model OpenClaw runs on: one of magpie's is
 			// magpie/<provider>/<model>, OpenClaw's ref for it as it is
 			Key: "model", Label: "model",
-			Get: func() string { return openClawPrimary(read().Get(openClawModel)) },
-			Set: func(v string) error {
-				s, err := openClawRead(path)
-				if err != nil {
-					return err
-				}
-				c := gjson.ParseBytes(s)
-				if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-					return connect(ref)
-				}
-				if c.Get(openClawProvider).Exists() || ours(c) {
-					return unwire(v)
-				}
-				if v == "" {
-					return nil
-				}
-				if m := c.Get(openClawModel); m.IsObject() {
-					return patch([]edit.KV{{Path: openClawModel + ".primary", Value: v}}, nil)
-				}
-				return patch([]edit.KV{{Path: openClawModel, Value: v}}, nil)
-			},
+			Get:       func() string { return openClawPrimary(read().Get(openClawModel)) },
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(cur map[string]string) []Option {
 				return append(openClawOwn(keyWas, cur["model"]), viaMagpie("openclaw", magpieID+"/")...)
 			},

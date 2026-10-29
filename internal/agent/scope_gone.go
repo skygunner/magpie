@@ -41,23 +41,24 @@ func scopeGoneLoad(key string) scopeGone {
 	return g
 }
 
-func scopeGoneSave(key string, g scopeGone) {
+func scopeGoneSave(key string, g scopeGone) error {
 	v := ""
 	if len(g.Entries) > 0 {
 		b, _ := json.Marshal(g)
 		v = string(b)
 	}
-	stash(map[string]string{key: v})
+	return stash(map[string]string{key: v})
 }
 
 // scopeGoneRename moves what a sync remembered off a renamed provider, as
 // RenameRefs moves the list's own entries.
-func scopeGoneRename(key, from, to string) {
+func scopeGoneRename(key, from, to string) error {
 	g := scopeGoneLoad(key)
 	if next, ok := renameRefList(g.Entries, from, to); ok {
 		g.Entries = next
-		scopeGoneSave(key, g)
+		return scopeGoneSave(key, g)
 	}
+	return nil
 }
 
 // scopeMagpieOne is the model an entry names outright on magpie, lowercased
@@ -191,8 +192,7 @@ func piScopeSynced(settings, modelsPath, mem string) error {
 			}
 		}
 	}
-	scopeGoneSave(mem, out)
-	return nil
+	return scopeGoneSave(mem, out)
 }
 
 // stepcodeScopeSynced is piScopeSynced for StepCode's enabledModels
@@ -241,8 +241,7 @@ func stepcodeScopeSynced(at place, path, modelsPath, mem string) error {
 			}
 		}
 	}
-	scopeGoneSave(mem, out)
-	return nil
+	return scopeGoneSave(mem, out)
 }
 
 // ompScopeSynced is piScopeSynced for omp's enabledModels (config.yml),
@@ -325,6 +324,5 @@ func ompScopeSynced(cfg, modelsYML, mem string) error {
 			return err
 		}
 	}
-	scopeGoneSave(mem, out)
-	return nil
+	return scopeGoneSave(mem, out)
 }

@@ -95,8 +95,44 @@ func hanako(home string) *Agent {
 	}
 	onMagpie := func() bool { p, _ := chat(); return p == magpieID }
 	key := func() string { return "hanako:" + dir + ":" + hanakoAgent(dir) + ":chat" }
+	setModel := func(g *rewireGuard, v string) error {
+		agent := hanakoAgent(dir)
+		if v == "" {
+			if _, there := hanakoCurrent(dir); there && hanakoSealed(path) && hanakoLive(dir) == nil {
+				return errSealed("take magpie out of")
+			}
+			if onMagpie() {
+				if err := hanakoBack(dir, agent, stashLoad()[key()]); err != nil {
+					return err
+				}
+				g.forget(key())
+			}
+			return hanakoRemove(dir)
+		}
+		if agent == "" {
+			return errors.New("OpenHanako has no agent yet — open it once to make one")
+		}
+		if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+			if p, id := chat(); p != magpieID && id != "" {
+				prev := id
+				if p != "" {
+					prev = p + "/" + id
+				}
+				if err := g.stash(map[string]string{key(): prev}); err != nil {
+					return err
+				}
+			}
+			if err := hanakoSave(dir, hanakoProvider()); err != nil {
+				return err
+			}
+			return hanakoChat(dir, agent, magpieID+"/"+ref)
+		}
+		g.forget(key())
+		return hanakoChat(dir, agent, v)
+	}
 	return &Agent{
-		ID: "hanako", Name: "OpenHanako", Icon: "hanako", Aliases: []string{"openhanako", "hana", "hanaagent"},
+		reapplyRewire: true,
+		ID:            "hanako", Name: "OpenHanako", Icon: "hanako", Aliases: []string{"openhanako", "hana", "hanaagent"},
 		// what its provider client sends, though the key names it first
 		UA:  []string{"hanaagent"},
 		Dir: dir, Path: path,
@@ -133,41 +169,8 @@ func hanako(home string) *Agent {
 				}
 				return p + "/" + id
 			},
-			Set: func(v string) error {
-				agent := hanakoAgent(dir)
-				if v == "" {
-					// nothing changes rather than half of it
-					if _, there := hanakoCurrent(dir); there && hanakoSealed(path) && hanakoLive(dir) == nil {
-						return errSealed("take magpie out of")
-					}
-					if onMagpie() {
-						// the stash goes only once the model is back
-						if err := hanakoBack(dir, agent, stashLoad()[key()]); err != nil {
-							return err
-						}
-						forget(key())
-					}
-					return hanakoRemove(dir)
-				}
-				if agent == "" {
-					return errors.New("OpenHanako has no agent yet — open it once to make one")
-				}
-				if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-					if p, id := chat(); p != magpieID && id != "" {
-						prev := id
-						if p != "" {
-							prev = p + "/" + id
-						}
-						stash(map[string]string{key(): prev})
-					}
-					if err := hanakoSave(dir, hanakoProvider()); err != nil {
-						return err
-					}
-					return hanakoChat(dir, agent, magpieID+"/"+ref)
-				}
-				forget(key())
-				return hanakoChat(dir, agent, v)
-			},
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(cur map[string]string) []Option {
 				return append(hanakoOwn(dir, cur["model"]), viaMagpie("hanako", magpieID+"/")...)
 			},

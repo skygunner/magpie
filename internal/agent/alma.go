@@ -688,7 +688,8 @@ var almaOS = runtime.GOOS
 func alma() *Agent {
 	dir := almaDir(almaOS)
 	return &Agent{
-		ID: "alma", Name: "Alma", Icon: "alma",
+		reapplyRewire: true,
+		ID:            "alma", Name: "Alma", Icon: "alma",
 		UA:  []string{"alma"},
 		Dir: dir, Path: almaAPI,
 		Check: func() string {

@@ -77,11 +77,15 @@ func hermesIn(at place) *Agent {
 	joined := func() bool { _, ok := edit.GetYAML(path, "providers."+magpieID+".base_url"); return ok }
 	// restore puts back the provider and model the user had before magpie,
 	// magpie's provider left beside them
-	restore := func() error {
+	restore := func(g *rewireGuard) error {
 		var del []string
 		var kvs []edit.KV
 		for _, k := range []string{"model.provider", "model.default"} {
-			if v := unstash(key + k); v != "" {
+			v, err := g.unstash(key + k)
+			if err != nil {
+				return err
+			}
+			if v != "" {
 				kvs = append(kvs, edit.KV{Path: k, Value: v})
 			} else {
 				del = append(del, k)
@@ -97,8 +101,56 @@ func hermesIn(at place) *Agent {
 		}
 		return edit.SetYAML(path, kvs...)
 	}
+	setModel := func(g *rewireGuard, v string) error {
+		if v == "" {
+			if onMagpie() {
+				return restore(g)
+			}
+			return edit.DelYAML(path, "model.default")
+		}
+		if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+			// the model magpie had set: recorded, or, before the
+			// record was kept, the one the config is on through magpie
+			// and the one it is on through magpie now, which Hermes
+			// seeds a new bot with too, picked there by `hermes
+			// model` or before the record was kept
+			was := stashLoad()[setKey]
+			now := ""
+			if onMagpie() {
+				now = getKey("model.default")
+			}
+			if !onMagpie() {
+				if err := g.stash(map[string]string{
+					key + "model.provider": getKey("model.provider"),
+					key + "model.default":  getKey("model.default"),
+				}); err != nil {
+					return err
+				}
+			}
+			if err := edit.SetYAML(path,
+				edit.KV{Path: "providers." + magpieID, Value: hermesProvider(path)},
+				edit.KV{Path: "model.provider", Value: magpieID},
+				edit.KV{Path: "model.default", Value: ref},
+			); err != nil {
+				return err
+			}
+			if err := g.stash(map[string]string{setKey: ref}); err != nil {
+				return err
+			}
+			return errors.Join(spread(), hermesBack(g, at, dir, ref), hermesFollow(at, dir, was, now, ref))
+		}
+		if onMagpie() {
+			if err := restore(g); err != nil {
+				return err
+			}
+		}
+		return edit.SetYAML(path, edit.KV{Path: "model.default", Value: v})
+
+	}
+
 	a := &Agent{
-		ID: "hermes", Name: "Hermes Agent", Icon: "hermes", Aliases: []string{"hermes-agent"}, Spelled: prefixed, NoNames: true,
+		reapplyRewire: true,
+		ID:            "hermes", Name: "Hermes Agent", Icon: "hermes", Aliases: []string{"hermes-agent"}, Spelled: prefixed, NoNames: true,
 		UA:  []string{"hermes-agent"},
 		Bin: "hermes", Dir: dir, Path: path,
 		Sync: func() error {
@@ -180,47 +232,8 @@ func hermesIn(at place) *Agent {
 				}
 				return v
 			},
-			Set: func(v string) error {
-				if v == "" {
-					if onMagpie() {
-						return restore()
-					}
-					return edit.DelYAML(path, "model.default")
-				}
-				if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-					// the model magpie had set: recorded, or, before the
-					// record was kept, the one the config is on through magpie
-					// and the one it is on through magpie now, which Hermes
-					// seeds a new bot with too, picked there by `hermes
-					// model` or before the record was kept
-					was := stashLoad()[setKey]
-					now := ""
-					if onMagpie() {
-						now = getKey("model.default")
-					}
-					if !onMagpie() {
-						stash(map[string]string{
-							key + "model.provider": getKey("model.provider"),
-							key + "model.default":  getKey("model.default"),
-						})
-					}
-					if err := edit.SetYAML(path,
-						edit.KV{Path: "providers." + magpieID, Value: hermesProvider(path)},
-						edit.KV{Path: "model.provider", Value: magpieID},
-						edit.KV{Path: "model.default", Value: ref},
-					); err != nil {
-						return err
-					}
-					stash(map[string]string{setKey: ref})
-					return errors.Join(spread(), hermesBack(at, dir, ref), hermesFollow(at, dir, was, now, ref))
-				}
-				if onMagpie() {
-					if err := restore(); err != nil {
-						return err
-					}
-				}
-				return edit.SetYAML(path, edit.KV{Path: "model.default", Value: v})
-			},
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(cur map[string]string) []Option {
 				return append(ownOptions("", cur["model"]), viaMagpie("hermes", magpieID+"/")...)
 			},
@@ -267,6 +280,61 @@ func hermesProfileFields(at place, dir string, provider func(string) any) []Fiel
 			name = filepath.Base(d)
 		}
 		k := "hermes:" + p + ":"
+		setProfile := func(g *rewireGuard, v string) error {
+			cur := hermesModelOf(p)
+			if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+				if cur.Provider != magpieID {
+					if err := g.stash(map[string]string{k + "model.provider": cur.Provider, k + "model.default": cur.Default}); err != nil {
+						return err
+					}
+				}
+				if err := edit.SetYAML(p,
+					edit.KV{Path: "providers." + magpieID, Value: provider(p)},
+					edit.KV{Path: "model.provider", Value: magpieID},
+					edit.KV{Path: "model.default", Value: ref},
+				); err != nil {
+					return err
+				}
+				if err := g.stash(map[string]string{k + "picked": ref}); err != nil {
+					return err
+				}
+				return nil
+			}
+			g.forget(k + "picked")
+			if cur.Provider == magpieID {
+				// back to the provider and model it had before magpie
+				var del []string
+				var kvs []edit.KV
+				for _, f := range []string{"model.provider", "model.default"} {
+					was, err := g.unstash(k + f)
+					if err != nil {
+						return err
+					}
+					if was != "" {
+						kvs = append(kvs, edit.KV{Path: f, Value: was})
+					} else {
+						del = append(del, f)
+					}
+				}
+				if len(del) > 0 {
+					if err := edit.DelYAML(p, del...); err != nil {
+						return err
+					}
+				}
+				if len(kvs) > 0 {
+					if err := edit.SetYAML(p, kvs...); err != nil {
+						return err
+					}
+				}
+			}
+			// unset: the profile keeps its own model, which Hermes
+			// needs to start there
+			if v == "" {
+				return nil
+			}
+			return edit.SetYAML(p, edit.KV{Path: "model.default", Value: v})
+
+		}
 		out = append(out, Field{
 			Key: hermesProfileKey + name, Label: name, Quiet: true,
 			Get: func() string {
@@ -276,52 +344,8 @@ func hermesProfileFields(at place, dir string, provider func(string) any) []Fiel
 				}
 				return m.Default
 			},
-			Set: func(v string) error {
-				cur := hermesModelOf(p)
-				if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-					if cur.Provider != magpieID {
-						stash(map[string]string{k + "model.provider": cur.Provider, k + "model.default": cur.Default})
-					}
-					if err := edit.SetYAML(p,
-						edit.KV{Path: "providers." + magpieID, Value: provider(p)},
-						edit.KV{Path: "model.provider", Value: magpieID},
-						edit.KV{Path: "model.default", Value: ref},
-					); err != nil {
-						return err
-					}
-					stash(map[string]string{k + "picked": ref})
-					return nil
-				}
-				forget(k + "picked")
-				if cur.Provider == magpieID {
-					// back to the provider and model it had before magpie
-					var del []string
-					var kvs []edit.KV
-					for _, f := range []string{"model.provider", "model.default"} {
-						if was := unstash(k + f); was != "" {
-							kvs = append(kvs, edit.KV{Path: f, Value: was})
-						} else {
-							del = append(del, f)
-						}
-					}
-					if len(del) > 0 {
-						if err := edit.DelYAML(p, del...); err != nil {
-							return err
-						}
-					}
-					if len(kvs) > 0 {
-						if err := edit.SetYAML(p, kvs...); err != nil {
-							return err
-						}
-					}
-				}
-				// unset: the profile keeps its own model, which Hermes
-				// needs to start there
-				if v == "" {
-					return nil
-				}
-				return edit.SetYAML(p, edit.KV{Path: "model.default", Value: v})
-			},
+			Set:       func(v string) error { return setProfile(nil, v) },
+			setRewire: setProfile,
 			Options: func(cur map[string]string) []Option {
 				return append(ownOptions("", cur[hermesProfileKey+name]), viaMagpie("hermes", magpieID+"/")...)
 			},
@@ -554,7 +578,9 @@ func hermesUnwireProfile(path, p string, own hermesModel) error {
 		}
 	}
 	b, _ := json.Marshal(hermesOff{Magpie: cur, Left: hermesModelOf(p)})
-	stash(map[string]string{hermesOffKey(p): string(b)})
+	if err := stash(map[string]string{hermesOffKey(p): string(b)}); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -579,12 +605,16 @@ func hermesEntry(path, name string) any {
 // changed it since. A profile with no model at all (one an older magpie's
 // Disconnect emptied, or made from a config with none), which `hermes`
 // can't start in, gets ref, the one magpie sets, as Hermes would seed it.
-func hermesBack(at place, dir, ref string) error {
+func hermesBack(g *rewireGuard, at place, dir, ref string) error {
 	var errs []error
 	for _, p := range hermesOthers(at, dir) {
 		cur := hermesModelOf(p)
 		var off hermesOff
-		if raw := unstash(hermesOffKey(p)); raw != "" && json.Unmarshal([]byte(raw), &off) == nil && off.Magpie.Default != "" {
+		raw, err := g.unstash(hermesOffKey(p))
+		if err != nil {
+			return err
+		}
+		if raw != "" && json.Unmarshal([]byte(raw), &off) == nil && off.Magpie.Default != "" {
 			if cur.Provider != off.Left.Provider || cur.Default != off.Left.Default {
 				continue
 			}

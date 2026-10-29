@@ -151,7 +151,8 @@ func air(home, cfg string) *Agent {
 	// set again to put the entry back
 	model := func() string { v, _ := edit.GetJSON(ocPath, "model"); return v }
 	return atomic(&Agent{
-		ID: "air", Name: "JetBrains Air", Icon: "air", Aliases: []string{"jetbrains-air"},
+		reapplyRewire: true,
+		ID:            "air", Name: "JetBrains Air", Icon: "air", Aliases: []string{"jetbrains-air"},
 		// no Bin: air is other tools' name too (Go's live reloader); its
 		// requests are its OpenCode's, and counted as OpenCode's
 		Dir: dir, Path: path,

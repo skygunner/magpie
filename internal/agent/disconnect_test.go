@@ -220,6 +220,35 @@ func TestGeminiDisconnect(t *testing.T) {
 	}
 }
 
+func TestGeminiRestoreWriteFailureKeepsOriginals(t *testing.T) {
+	home, _ := codexHome(t, "", "")
+	dir := filepath.Join(home, ".gemini")
+	os.MkdirAll(dir, 0o755)
+	settings := filepath.Join(dir, "settings.json")
+	env := filepath.Join(dir, ".env")
+	writeFile(t, settings, `{"security":{"auth":{"selectedType":"gemini-api-key"}},"model":{"name":"gemini-2.5-pro"}}`)
+	writeFile(t, env, "GEMINI_API_KEY=mine\n")
+	g := gemini(home)
+	if err := g.Apply("model", "fake/m1"); err != nil {
+		t.Fatal(err)
+	}
+	good := readFile(settings)
+	writeFile(t, settings, `{"broken":`)
+	if err := g.Unwire(); err == nil {
+		t.Fatal("restore succeeded with malformed settings")
+	}
+	writeFile(t, settings, good)
+	if err := g.Unwire(); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := edit.GetEnvFile(env, "GEMINI_API_KEY"); got != "mine" {
+		t.Fatalf("original key lost after retry: %q", got)
+	}
+	if got, _ := edit.GetJSON(settings, "model.name"); got != "gemini-2.5-pro" {
+		t.Fatalf("original model lost after retry: %q", got)
+	}
+}
+
 // An agent magpie is not in has nothing to disconnect: its config stays
 // byte for byte.
 func TestDisconnectUnwiredLeavesConfig(t *testing.T) {

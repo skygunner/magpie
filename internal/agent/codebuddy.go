@@ -59,7 +59,8 @@ func codebuddyIn(at place) *Agent {
 	// the IDE alone is CodeBuddy here, its CLI not installed
 	ide := func() bool { return at.spell == nil && (&Agent{ID: "codebuddy"}).HasApp() }
 	return &Agent{
-		ID: "codebuddy", Name: "CodeBuddy", Icon: "codebuddy-color", Aliases: []string{"codebuddy-code", "cbc"},
+		reapplyRewire: true,
+		ID:            "codebuddy", Name: "CodeBuddy", Icon: "codebuddy-color", Aliases: []string{"codebuddy-code", "cbc"},
 		UA: []string{"codebuddy"}, Spelled: prefixed,
 		Bin: "codebuddy", Dir: dir, Path: path, sign: ide,
 		Sync: func() error {

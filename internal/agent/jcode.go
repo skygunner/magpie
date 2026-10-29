@@ -258,14 +258,18 @@ func jcodeAt(at place) *Agent {
 	// unwire takes magpie's profile out, and jcode back to what it started
 	// on before — when it still starts on magpie: a pick the user made in
 	// jcode since is theirs and stands
-	unwire := func(own string) error {
+	unwire := func(g *rewireGuard, own string) error {
 		c, err := jcodeRead(path)
 		if err != nil {
 			return err
 		}
 		if ours(c) {
+			kept, err := g.unstash(keyPick)
+			if err != nil {
+				return err
+			}
 			var was jcodePick
-			json.Unmarshal([]byte(unstash(keyPick)), &was)
+			json.Unmarshal([]byte(kept), &was)
 			if own != "" && own != was.Model {
 				was.Model = own
 			}
@@ -273,7 +277,7 @@ func jcodeAt(at place) *Agent {
 				return err
 			}
 		} else {
-			forget(keyPick)
+			g.forget(keyPick)
 			if own != "" {
 				if err := edit.SetTOMLKey(path, "provider", "default_model", own); err != nil {
 					return err
@@ -284,8 +288,31 @@ func jcodeAt(at place) *Agent {
 		// (headers, extra_body) are magpie's profile's, and go with it
 		return edit.SetTOMLTablesMatching(path, []string{jcodeProfile}, []string{jcodeProfile + "."}, nil)
 	}
+	setModel := func(g *rewireGuard, v string) error {
+		c, err := jcodeRead(path)
+		if err != nil {
+			return err
+		}
+		if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+			if !ours(c) {
+				b, _ := json.Marshal(jcodePick{c.Provider.DefaultProvider, c.Provider.DefaultModel})
+				if err := g.stash(map[string]string{keyPick: string(b)}); err != nil {
+					return err
+				}
+			}
+			if err := wire(ref); err != nil {
+				return err
+			}
+			return setPick(jcodePick{magpieID, ref})
+		}
+		if _, on := c.Providers[magpieID]; on || ours(c) {
+			return unwire(g, v)
+		}
+		return setPick(jcodePick{c.Provider.DefaultProvider, v})
+	}
 	return atomic(&Agent{
-		ID: "jcode", Name: "jcode", Icon: "jcode", Spelled: prefixed, NoNames: true,
+		reapplyRewire: true,
+		ID:            "jcode", Name: "jcode", Icon: "jcode", Spelled: prefixed, NoNames: true,
 		Bin: "jcode", Dir: dir, Path: path,
 		Notice: func() string {
 			if Running(`(^|/)jcode( |$)`) {
@@ -330,27 +357,9 @@ func jcodeAt(at place) *Agent {
 			// magpie/<provider>/<model>, magpie's profile with the model's
 			// id in it
 			Key: "model", Label: "model",
-			Get: get,
-			Set: func(v string) error {
-				c, err := jcodeRead(path)
-				if err != nil {
-					return err
-				}
-				if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-					if !ours(c) {
-						b, _ := json.Marshal(jcodePick{c.Provider.DefaultProvider, c.Provider.DefaultModel})
-						stash(map[string]string{keyPick: string(b)})
-					}
-					if err := wire(ref); err != nil {
-						return err
-					}
-					return setPick(jcodePick{magpieID, ref})
-				}
-				if _, on := c.Providers[magpieID]; on || ours(c) {
-					return unwire(v)
-				}
-				return setPick(jcodePick{c.Provider.DefaultProvider, v})
-			},
+			Get:       get,
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(cur map[string]string) []Option {
 				return append(jcodeOwn(path, keyPick, cur["model"]), viaMagpie("jcode", magpieID+"/")...)
 			},

@@ -69,14 +69,76 @@ func museAt(at place, cfg string) *Agent {
 	}
 	// restore puts back the endpoint_transport the user had, or takes
 	// magpie's out where they had none
-	restore := func() error {
-		if was := unstash(keyTransport); was != "" && json.Valid([]byte(was)) {
+	restore := func(g *rewireGuard) error {
+		was, err := g.unstash(keyTransport)
+		if err != nil {
+			return err
+		}
+		if was != "" && json.Valid([]byte(was)) {
 			return edit.SetJSON(path, edit.KV{Path: museTransport, Value: json.RawMessage(was)})
 		}
 		return edit.DelJSON(path, museTransport)
 	}
+	setModel := func(g *rewireGuard, v string) error {
+		if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+			if !on() {
+				t, _ := edit.GetJSON(path, museTransport)
+				m, _ := edit.GetJSON(path, museModel)
+				g.forget(keyTransport, keyModel, keyNew)
+				if err := g.stash(map[string]string{keyTransport: t, keyModel: m}); err != nil {
+					return err
+				}
+				if !isFile(path) {
+					if err := g.stash(map[string]string{keyNew: "1"}); err != nil {
+						return err
+					}
+				}
+			}
+			if _, ok := edit.GetJSON(path, "schema_version"); !ok {
+				if err := edit.SetJSON(path, edit.KV{Path: "schema_version", Value: 1}); err != nil {
+					return err
+				}
+			}
+			if err := edit.SetJSON(path, edit.KV{Path: museTransport, Value: map[string]any{"base_url": gatewayV1(), "auth": "none"}}); err != nil {
+				return err
+			}
+			return put(ref)
+		}
+		made := false
+		if on() {
+			new, err := g.unstash(keyNew)
+			if err != nil {
+				return err
+			}
+			made = new != ""
+			if v == "" {
+				was, err := g.unstash(keyModel)
+				if err != nil {
+					return err
+				}
+				v = was
+			} else {
+				g.forget(keyModel)
+			}
+			if err := restore(g); err != nil {
+				return err
+			}
+		}
+		if err := put(v); err != nil {
+			return err
+		}
+		if made {
+			if raw, err := edit.Read(path); err == nil {
+				if left := gjson.ParseBytes(raw).Map(); len(left) == 1 && left["schema_version"].Int() == 1 {
+					return edit.Remove(path)
+				}
+			}
+		}
+		return nil
+	}
 	return atomic(&Agent{
-		ID: "muse", Name: "Muse Code", Icon: "meta-color", Aliases: []string{"muse-code", "musecode"},
+		reapplyRewire: true,
+		ID:            "muse", Name: "Muse Code", Icon: "meta-color", Aliases: []string{"muse-code", "musecode"},
 		// muse-build/1.4.2 (non-interactive; macos-aarch64; …)
 		UA:  []string{"muse-build", "muse-code"},
 		Bin: "muse", Dir: dir, Path: path,
@@ -98,56 +160,9 @@ func museAt(at place, cfg string) *Agent {
 		},
 		Fields: []Field{{
 			Key: "model", Label: "model",
-			Get: get,
-			Set: func(v string) error {
-				if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-					// what the user had, unless magpie stashed it already
-					// and something else has since moved the endpoint
-					if !on() {
-						t, _ := edit.GetJSON(path, museTransport)
-						m, _ := edit.GetJSON(path, museModel)
-						forget(keyTransport, keyModel, keyNew)
-						stash(map[string]string{keyTransport: t, keyModel: m})
-						if !isFile(path) {
-							stash(map[string]string{keyNew: "1"})
-						}
-					}
-					// Muse reads no file without its schema version
-					if _, ok := edit.GetJSON(path, "schema_version"); !ok {
-						if err := edit.SetJSON(path, edit.KV{Path: "schema_version", Value: 1}); err != nil {
-							return err
-						}
-					}
-					if err := edit.SetJSON(path, edit.KV{Path: museTransport, Value: map[string]any{"base_url": gatewayV1(), "auth": "none"}}); err != nil {
-						return err
-					}
-					return put(ref)
-				}
-				made := false
-				if on() {
-					made = unstash(keyNew) != ""
-					// back to what the user had
-					if v == "" {
-						v = unstash(keyModel)
-					} else {
-						forget(keyModel)
-					}
-					if err := restore(); err != nil {
-						return err
-					}
-				}
-				if err := put(v); err != nil {
-					return err
-				}
-				if made {
-					if raw, err := edit.Read(path); err == nil {
-						if left := gjson.ParseBytes(raw).Map(); len(left) == 1 && left["schema_version"].Int() == 1 {
-							return edit.Remove(path)
-						}
-					}
-				}
-				return nil
-			},
+			Get:       get,
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(cur map[string]string) []Option {
 				var own []Option
 				if c := cur["model"]; c != "" && !usesMagpie(c) {

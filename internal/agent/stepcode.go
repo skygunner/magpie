@@ -207,13 +207,46 @@ func loadStepcodeState(at place) (*stepcodeState, error) {
 }
 
 func stepcodeStoreState(at place, state *stepcodeState) error {
-	stashMu.Lock()
-	defer stashMu.Unlock()
+	return stepcodeStoreStateFor(at, state, nil, nil)
+}
+
+func stepcodeStoreStateFor(at place, state, baseline *stepcodeState, guard *rewireGuard) error {
+	unlock, err := stashLock()
+	if err != nil {
+		return err
+	}
+	defer unlock()
 	m, err := stepcodeReadStash()
 	if err != nil {
 		return err
 	}
 	key := at.key("stepcode.wiring")
+	if guard != nil {
+		if state == nil {
+			guard.blocked = true
+			return errors.New("rewire cannot remove StepCode state")
+		}
+		var current stepcodeState
+		raw, ok := m[key]
+		if !ok || json.Unmarshal([]byte(raw), &current) != nil || baseline == nil {
+			guard.blocked = true
+			return errors.New("rewire cannot read saved StepCode state")
+		}
+		if current.LastHasScope != baseline.LastHasScope || !slices.Equal(current.LastScope, baseline.LastScope) || !slices.Equal(current.AppendedScope, baseline.AppendedScope) {
+			guard.blocked = true
+			return errors.New("rewire found a concurrent StepCode scope change")
+		}
+		// A rewire may update scope bookkeeping, never the saved originals.
+		current.LastHasScope = state.LastHasScope
+		current.LastScope = slices.Clone(state.LastScope)
+		current.AppendedScope = slices.Clone(state.AppendedScope)
+		b, err := json.Marshal(&current)
+		if err != nil {
+			return err
+		}
+		m[key] = string(b)
+		return stashWriteGuard(m, nil, nil)
+	}
 	if state == nil {
 		delete(m, key)
 	} else {
@@ -428,16 +461,161 @@ func stepcodeIn(at place) *Agent {
 		return stepcodeStoreState(at, nil)
 	}
 
+	setModel := func(guard *rewireGuard, v string) error {
+		if v == "" {
+			return unwire()
+		}
+		ref, isMag := strings.CutPrefix(v, magpieID+"/")
+		if !isMag || !isMagpie(ref) {
+			p, m, ok := strings.Cut(v, "/")
+			if !ok || p == "" || m == "" {
+				return fmt.Errorf("expected provider/model, got %q", v)
+			}
+			if err := unwire(); err != nil {
+				return err
+			}
+			cur, err := readStepcodeTOML(path)
+			if err != nil {
+				return err
+			}
+			if err := edit.SetTOMLTopPreserving(path, edit.KV{Path: "defaultProvider", Value: p}, edit.KV{Path: "defaultModel", Value: m}); err != nil {
+				return err
+			}
+			if cur.Scope != nil && len(*cur.Scope) > 0 {
+				if !slices.ContainsFunc(*cur.Scope, func(pat string) bool { return piTakes(pat, v) }) {
+					newScope := append(*cur.Scope, v)
+					raw, err := stepcodeScopeRaw(newScope)
+					if err != nil {
+						return err
+					}
+					if err := edit.SetTOMLTopPreserving(path, edit.KV{Path: "enabledModels", Value: raw}); err != nil {
+						return err
+					}
+				}
+			}
+			return nil
+		}
+
+		curTOML, err := readStepcodeTOML(path)
+		if err != nil {
+			return err
+		}
+		if err := stepcodeValidateModels(modelsPath); err != nil {
+			return err
+		}
+		state, err := loadStepcodeState(at)
+		if err != nil {
+			return err
+		}
+		var baseline *stepcodeState
+		if state != nil {
+			copy := *state
+			copy.LastScope = slices.Clone(state.LastScope)
+			copy.AppendedScope = slices.Clone(state.AppendedScope)
+			baseline = &copy
+		}
+		if state == nil {
+			state = &stepcodeState{}
+			state.ConfigFileExisted = stepcodeFileExists(path)
+			state.ModelsFileExisted = stepcodeFileExists(modelsPath)
+			if rawP, ok := edit.GetJSON(modelsPath, "providers"); ok && rawP != "" {
+				state.ProvidersMapExisted = true
+			}
+			if rawMagpie, ok := edit.GetJSON(modelsPath, "providers."+magpieID); ok {
+				state.OrigMagpieRaw = &rawMagpie
+			}
+			state.OrigProvider = curTOML.Provider
+			state.OrigModel = curTOML.Model
+			if curTOML.Scope != nil {
+				state.OrigHasScope = true
+				state.OrigScope = slices.Clone(*curTOML.Scope)
+			}
+		} else {
+			if stepcodeValue(curTOML.Provider) != magpieID {
+				state.OrigProvider = curTOML.Provider
+				state.OrigModel = curTOML.Model
+			}
+			curHasScope := (curTOML.Scope != nil)
+			var curList []string
+			if curHasScope {
+				curList = *curTOML.Scope
+			}
+			scopeChanged := false
+			if curHasScope != state.LastHasScope {
+				scopeChanged = true
+			} else if curHasScope && !slices.Equal(curList, state.LastScope) {
+				scopeChanged = true
+			}
+			if scopeChanged {
+				state.OrigHasScope = curHasScope
+				if curHasScope {
+					filtered := slices.DeleteFunc(slices.Clone(curList), func(p string) bool {
+						return slices.Contains(state.AppendedScope, p)
+					})
+					state.OrigScope = filtered
+				} else {
+					state.OrigScope = nil
+				}
+			}
+		}
+
+		// Update target scope
+		if curTOML.Scope != nil && len(*curTOML.Scope) > 0 {
+			pats := *curTOML.Scope
+			if !slices.ContainsFunc(pats, func(p string) bool { return piTakes(p, v) }) {
+				newScope := append(slices.Clone(pats), v)
+				state.AppendedScope = append(state.AppendedScope, v)
+				state.LastHasScope = true
+				state.LastScope = newScope
+			} else {
+				state.LastHasScope = true
+				state.LastScope = slices.Clone(pats)
+			}
+		} else {
+			state.LastHasScope = (curTOML.Scope != nil)
+			if curTOML.Scope != nil {
+				state.LastScope = slices.Clone(*curTOML.Scope)
+			} else {
+				state.LastScope = nil
+			}
+		}
+
+		// Save state before config edits
+		if err := stepcodeStoreStateFor(at, state, baseline, guard); err != nil {
+			return err
+		}
+
+		if err := edit.SetJSON(modelsPath, edit.KV{Path: "providers." + magpieID, Value: block()}); err != nil {
+			return err
+		}
+		if err := edit.SetTOMLTopPreserving(path, edit.KV{Path: "defaultProvider", Value: magpieID}, edit.KV{Path: "defaultModel", Value: ref}); err != nil {
+			return err
+		}
+		if state.LastHasScope && (curTOML.Scope == nil || !slices.Equal(*curTOML.Scope, state.LastScope)) {
+			raw, err := stepcodeScopeRaw(state.LastScope)
+			if err != nil {
+				return err
+			}
+			if err := edit.SetTOMLTopPreserving(path, edit.KV{Path: "enabledModels", Value: raw}); err != nil {
+				return err
+			}
+		}
+
+		return nil
+
+	}
+
 	a := &Agent{
-		ID:      "stepcode",
-		Name:    "StepCode",
-		Icon:    "stepfun-color",
-		Bin:     "step",
-		Aliases: []string{"step"},
-		Dir:     dir,
-		Path:    path,
-		Spelled: prefixed,
-		UA:      []string{"stepcode"},
+		ID:            "stepcode",
+		reapplyRewire: true,
+		Name:          "StepCode",
+		Icon:          "stepfun-color",
+		Bin:           "step",
+		Aliases:       []string{"step"},
+		Dir:           dir,
+		Path:          path,
+		Spelled:       prefixed,
+		UA:            []string{"stepcode"},
 		detect: func() bool {
 			return agentDir(dir)
 		},
@@ -445,7 +623,25 @@ func stepcodeIn(at place) *Agent {
 			s, err := loadStepcodeState(at)
 			return err == nil && s != nil
 		},
-		Unwire: unwire,
+		Unwire:             unwire,
+		disconnectSnapshot: func() (string, error) { return stepcodePlan(at, path, modelsPath) },
+		disconnectResume: func(_ map[string]string, snapshot *string) (bool, error) {
+			if snapshot == nil {
+				return false, nil
+			}
+			if err := stepcodeRecover(at, path, modelsPath, snapshot); err != nil {
+				return false, err
+			}
+			return true, nil
+		},
+		disconnectUnwired: func() (bool, error) {
+			state, err := loadStepcodeState(at)
+			if err != nil || state != nil {
+				return false, err
+			}
+			cfg, err := readStepcodeTOML(path)
+			return err == nil && stepcodeValue(cfg.Provider) != magpieID, err
+		},
 		Check: func() string {
 			cur, err := readStepcodeTOML(path)
 			if err != nil {
@@ -482,149 +678,18 @@ func stepcodeIn(at place) *Agent {
 		// enabledModels names models beyond the one field, as omp's list
 		// does: a provider renamed has to take those entries with it
 		RenameRefs: func(from, to string) (bool, error) {
-			scopeGoneRename(gone, from, to)
+			if err := scopeGoneRename(gone, from, to); err != nil {
+				return false, err
+			}
 			return stepcodeRenameRefs(at, path, from, to)
 		},
 		Fields: []Field{
 			{
-				Key:   "model",
-				Label: "model",
-				Get:   startup,
-				Set: func(v string) error {
-					if v == "" {
-						return unwire()
-					}
-					ref, isMag := strings.CutPrefix(v, magpieID+"/")
-					if !isMag || !isMagpie(ref) {
-						p, m, ok := strings.Cut(v, "/")
-						if !ok || p == "" || m == "" {
-							return fmt.Errorf("expected provider/model, got %q", v)
-						}
-						if err := unwire(); err != nil {
-							return err
-						}
-						cur, err := readStepcodeTOML(path)
-						if err != nil {
-							return err
-						}
-						if err := edit.SetTOMLTopPreserving(path, edit.KV{Path: "defaultProvider", Value: p}, edit.KV{Path: "defaultModel", Value: m}); err != nil {
-							return err
-						}
-						if cur.Scope != nil && len(*cur.Scope) > 0 {
-							if !slices.ContainsFunc(*cur.Scope, func(pat string) bool { return piTakes(pat, v) }) {
-								newScope := append(*cur.Scope, v)
-								raw, err := stepcodeScopeRaw(newScope)
-								if err != nil {
-									return err
-								}
-								if err := edit.SetTOMLTopPreserving(path, edit.KV{Path: "enabledModels", Value: raw}); err != nil {
-									return err
-								}
-							}
-						}
-						return nil
-					}
-
-					curTOML, err := readStepcodeTOML(path)
-					if err != nil {
-						return err
-					}
-					if err := stepcodeValidateModels(modelsPath); err != nil {
-						return err
-					}
-					state, err := loadStepcodeState(at)
-					if err != nil {
-						return err
-					}
-					if state == nil {
-						state = &stepcodeState{}
-						state.ConfigFileExisted = stepcodeFileExists(path)
-						state.ModelsFileExisted = stepcodeFileExists(modelsPath)
-						if rawP, ok := edit.GetJSON(modelsPath, "providers"); ok && rawP != "" {
-							state.ProvidersMapExisted = true
-						}
-						if rawMagpie, ok := edit.GetJSON(modelsPath, "providers."+magpieID); ok {
-							state.OrigMagpieRaw = &rawMagpie
-						}
-						state.OrigProvider = curTOML.Provider
-						state.OrigModel = curTOML.Model
-						if curTOML.Scope != nil {
-							state.OrigHasScope = true
-							state.OrigScope = slices.Clone(*curTOML.Scope)
-						}
-					} else {
-						if stepcodeValue(curTOML.Provider) != magpieID {
-							state.OrigProvider = curTOML.Provider
-							state.OrigModel = curTOML.Model
-						}
-						curHasScope := (curTOML.Scope != nil)
-						var curList []string
-						if curHasScope {
-							curList = *curTOML.Scope
-						}
-						scopeChanged := false
-						if curHasScope != state.LastHasScope {
-							scopeChanged = true
-						} else if curHasScope && !slices.Equal(curList, state.LastScope) {
-							scopeChanged = true
-						}
-						if scopeChanged {
-							state.OrigHasScope = curHasScope
-							if curHasScope {
-								filtered := slices.DeleteFunc(slices.Clone(curList), func(p string) bool {
-									return slices.Contains(state.AppendedScope, p)
-								})
-								state.OrigScope = filtered
-							} else {
-								state.OrigScope = nil
-							}
-						}
-					}
-
-					// Update target scope
-					if curTOML.Scope != nil && len(*curTOML.Scope) > 0 {
-						pats := *curTOML.Scope
-						if !slices.ContainsFunc(pats, func(p string) bool { return piTakes(p, v) }) {
-							newScope := append(slices.Clone(pats), v)
-							state.AppendedScope = append(state.AppendedScope, v)
-							state.LastHasScope = true
-							state.LastScope = newScope
-						} else {
-							state.LastHasScope = true
-							state.LastScope = slices.Clone(pats)
-						}
-					} else {
-						state.LastHasScope = (curTOML.Scope != nil)
-						if curTOML.Scope != nil {
-							state.LastScope = slices.Clone(*curTOML.Scope)
-						} else {
-							state.LastScope = nil
-						}
-					}
-
-					// Save state before config edits
-					if err := stepcodeStoreState(at, state); err != nil {
-						return err
-					}
-
-					if err := edit.SetJSON(modelsPath, edit.KV{Path: "providers." + magpieID, Value: block()}); err != nil {
-						return err
-					}
-					if err := edit.SetTOMLTopPreserving(path, edit.KV{Path: "defaultProvider", Value: magpieID}, edit.KV{Path: "defaultModel", Value: ref}); err != nil {
-						return err
-					}
-					if state.LastHasScope && (curTOML.Scope == nil || !slices.Equal(*curTOML.Scope, state.LastScope)) {
-						raw, err := stepcodeScopeRaw(state.LastScope)
-						if err != nil {
-							return err
-						}
-						if err := edit.SetTOMLTopPreserving(path, edit.KV{Path: "enabledModels", Value: raw}); err != nil {
-							return err
-						}
-					}
-
-					return nil
-				},
+				Key:       "model",
+				Label:     "model",
+				Get:       startup,
+				Set:       func(v string) error { return setModel(nil, v) },
+				setRewire: setModel,
 				Options: func(cur map[string]string) []Option {
 					return append(ownOptions(authPath, cur["model"]), viaMagpie("stepcode", magpieID+"/")...)
 				},
@@ -632,5 +697,20 @@ func stepcodeIn(at place) *Agent {
 		},
 	}
 
-	return atomic(a, path, modelsPath, stashPath())
+	atomic(a, path, modelsPath, stashPath())
+	a.Unwire = func() error {
+		pending, err := peekStash(a.ID + ".disconnect.pending")
+		if err != nil {
+			return err
+		}
+		var marker struct {
+			Started  bool    `json:"started"`
+			Snapshot *string `json:"snapshot"`
+		}
+		if pending != "" && json.Unmarshal([]byte(pending), &marker) == nil && marker.Started {
+			return stepcodeRecover(at, path, modelsPath, marker.Snapshot)
+		}
+		return edit.Atomically(unwire, path, modelsPath, stashPath())
+	}
+	return a
 }

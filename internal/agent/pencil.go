@@ -37,7 +37,8 @@ func pencil(home string) *Agent {
 	key := "providers." + magpieID
 	wired := func() bool { _, ok := edit.GetJSON(path, key); return ok }
 	return &Agent{
-		ID: "pencil", Name: "Pencil", Icon: "generic", Aliases: []string{"pen.dev", "pen-dev", "pendev"},
+		reapplyRewire: true,
+		ID:            "pencil", Name: "Pencil", Icon: "generic", Aliases: []string{"pen.dev", "pen-dev", "pendev"},
 		Dir: dir, Path: path,
 		// ~/.pencil is the app's (and pen.dev's CLI's) once it has run; the
 		// app installed and never opened is found by its bundle on a Mac.

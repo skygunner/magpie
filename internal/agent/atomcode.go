@@ -111,8 +111,57 @@ func atomcodeIn(at place) *Agent {
 	dropMagpie := func() error {
 		return edit.SetTOMLTablesMatching(path, atomcodeAccountNames, atomcodeTablePrefixes, nil)
 	}
+	setModel := func(g *rewireGuard, v string) error {
+		was := cur()
+		if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+			if !usesMagpie(was) {
+				if err := g.stash(map[string]string{
+					key + ":default_provider": get("default_provider"),
+					key + ":default_model":    get("default_model"),
+				}); err != nil {
+					return err
+				}
+			}
+			if err := writeMagpie(); err != nil {
+				return err
+			}
+			return setDefaults(v)
+		}
+		if !usesMagpie(was) {
+			if v == "" {
+				return edit.DelTOMLTop(path, "default_provider", "default_model")
+			}
+			return setOwn(v)
+		}
+		saved := stashLoad()
+		p, m := saved[key+":default_provider"], saved[key+":default_model"]
+		if p != "" && !usesMagpie(p) && own(p) {
+			if err := edit.SetTOMLTop(path, edit.KV{Path: "default_provider", Value: p}); err != nil {
+				return err
+			}
+		} else if err := edit.DelTOMLTop(path, "default_provider"); err != nil {
+			return err
+		}
+		if v == "" {
+			if m != "" && !usesMagpie(m) && own(m) {
+				if err := edit.SetTOMLTop(path, edit.KV{Path: "default_model", Value: m}); err != nil {
+					return err
+				}
+			} else if err := edit.DelTOMLTop(path, "default_model"); err != nil {
+				return err
+			}
+		} else if err := setOwn(v); err != nil {
+			return err
+		}
+		if err := dropMagpie(); err != nil {
+			return err
+		}
+		g.forget(key+":default_provider", key+":default_model")
+		return nil
+	}
 	return atomic(&Agent{
-		ID: "atomcode", Name: "AtomCode", Icon: "atomcode", Spelled: prefixed, NoNames: true,
+		reapplyRewire: true,
+		ID:            "atomcode", Name: "AtomCode", Icon: "atomcode", Spelled: prefixed, NoNames: true,
 		UA:  []string{"atomcode"},
 		Bin: "atomcode", Dir: dir, Path: path,
 		Sync: func() error {
@@ -157,68 +206,9 @@ func atomcodeIn(at place) *Agent {
 		},
 		Fields: []Field{{
 			Key: "model", Label: "model",
-			Get: cur,
-			Set: func(v string) error {
-				was := cur()
-				if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-					if !usesMagpie(was) {
-						stash(map[string]string{
-							key + ":default_provider": get("default_provider"),
-							key + ":default_model":    get("default_model"),
-						})
-					}
-					if err := writeMagpie(); err != nil {
-						return err
-					}
-					return setDefaults(v)
-				}
-				if !usesMagpie(was) {
-					// no model of magpie's was in use: the pick moves
-					// default_model, default_provider stays as it is
-					if v == "" {
-						return edit.DelTOMLTop(path, "default_provider", "default_model")
-					}
-					return setOwn(v)
-				}
-				// magpie was in use: the defaults the user had come back
-				// where AtomCode still has them
-				saved := stashLoad()
-				p, m := saved[key+":default_provider"], saved[key+":default_model"]
-				if p != "" && !usesMagpie(p) && own(p) {
-					if err := edit.SetTOMLTop(path, edit.KV{Path: "default_provider", Value: p}); err != nil {
-						return err
-					}
-				} else {
-					if err := edit.DelTOMLTop(path, "default_provider"); err != nil {
-						return err
-					}
-				}
-				if v == "" {
-					if m != "" && !usesMagpie(m) && own(m) {
-						if err := edit.SetTOMLTop(path, edit.KV{Path: "default_model", Value: m}); err != nil {
-							return err
-						}
-					} else {
-						if err := edit.DelTOMLTop(path, "default_model"); err != nil {
-							return err
-						}
-					}
-					if err := dropMagpie(); err != nil {
-						return err
-					}
-					forget(key+":default_provider", key+":default_model")
-					return nil
-				}
-				// a model of the user's own picked: it is the current one
-				if err := setOwn(v); err != nil {
-					return err
-				}
-				if err := dropMagpie(); err != nil {
-					return err
-				}
-				forget(key+":default_provider", key+":default_model")
-				return nil
-			},
+			Get:       cur,
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(c map[string]string) []Option {
 				return append(atomcodeOwnModels(path, c["model"]), viaMagpie("atomcode", magpieID+"/")...)
 			},

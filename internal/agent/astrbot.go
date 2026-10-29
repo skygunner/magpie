@@ -197,24 +197,33 @@ func astrbotAt(at place) *Agent {
 	// unwire takes magpie's source and models out, and AstrBot back to the
 	// default chat model it was on — when it is still on one of magpie's: a
 	// pick the user made in AstrBot since is theirs and stands
-	unwire := func() error {
+	unwire := func(g *rewireGuard) error {
 		if !isFile(path) {
-			forget(keyPick)
+			g.forget(keyPick)
 			return nil
 		}
 		if ours() {
-			if err := setPick(unstash(keyPick)); err != nil {
+			kept, err := peekStash(keyPick)
+			if err != nil {
 				return err
 			}
+			if err := setPick(kept); err != nil {
+				return err
+			}
+			if err := lists(false); err != nil {
+				return err
+			}
+			g.forgetIfUnchanged(keyPick, kept)
+			return nil
 		} else {
-			forget(keyPick)
+			g.forget(keyPick)
 		}
 		return lists(false)
 	}
 	// put is magpie's source and models in, and AstrBot's default chat model
 	// the one picked (magpie/<provider>/<model>). What AstrBot was on is
 	// saved before it is written over, and only then.
-	put := func(v string) error {
+	put := func(g *rewireGuard, v string) error {
 		raw, _, err := read()
 		if errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("AstrBot has no %s yet: start AstrBot once so it writes its settings (or start magpie with ASTRBOT_ROOT set to the folder AstrBot runs in), then connect it", path)
@@ -235,15 +244,33 @@ func astrbotAt(at place) *Agent {
 			}
 		}
 		if !ours() {
-			stash(map[string]string{keyPick: pick()})
+			if err := g.stash(map[string]string{keyPick: pick()}); err != nil {
+				return err
+			}
 		}
 		if err := lists(true); err != nil {
 			return err
 		}
 		return setPick(v)
 	}
+	setModel := func(g *rewireGuard, v string) error {
+		if v == "" {
+			if ours() {
+				return unwire(g)
+			}
+			return setPick("")
+		}
+		if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+			return put(g, v)
+		}
+		if ours() {
+			g.forget(keyPick)
+		}
+		return setPick(v)
+	}
 	return atomic(&Agent{
-		ID: "astrbot", Name: "AstrBot", Icon: "astrbot", Spelled: prefixed, NoNames: true,
+		reapplyRewire: true,
+		ID:            "astrbot", Name: "AstrBot", Icon: "astrbot", Spelled: prefixed, NoNames: true,
 		Bin: "astrbot", Dir: data, Path: path,
 		Notice: func() string {
 			return noticeAstrbot.String()
@@ -253,7 +280,7 @@ func astrbotAt(at place) *Agent {
 			if !wired() {
 				return nil
 			}
-			return unwire()
+			return unwire(nil)
 		},
 		Check: func() string {
 			if !ours() {
@@ -283,24 +310,9 @@ func astrbotAt(at place) *Agent {
 			// its entry in provider, which is "<source>/<model>" as
 			// AstrBot's own WebUI names them
 			Key: "model", Label: "model",
-			Get: pick,
-			Set: func(v string) error {
-				if v == "" {
-					if ours() {
-						return unwire()
-					}
-					return setPick("")
-				}
-				if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-					return put(v)
-				}
-				// one of the user's own: AstrBot goes onto it, magpie's
-				// models left beside it in its list until Disconnect
-				if ours() {
-					forget(keyPick)
-				}
-				return setPick(v)
-			},
+			Get:       pick,
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(cur map[string]string) []Option {
 				return append(astrbotOwn(path, cur["model"]), viaMagpie("astrbot", magpieID+"/")...)
 			},

@@ -71,6 +71,31 @@ func TestAsideStatePassesNeverReadRuntime(t *testing.T) {
 	}
 }
 
+// Aside reconnects its actual provider while an unrelated stash write proceeds.
+func TestAsideRewireAllowsConcurrentStash(t *testing.T) {
+	t.Setenv("MAGPIE_ADDR", "")
+	_, models := asideHome(t)
+	a := mustFindAside(t)
+	if err := a.Connect(); err != nil {
+		t.Fatal(err)
+	}
+	setPort(t, 3592)
+	connect := a.Native.connectRewire
+	a.Native.connectRewire = func() error {
+		done := make(chan error, 1)
+		go func() { done <- stash(map[string]string{"other.original": "concurrent"}) }()
+		if err := <-done; err != nil {
+			return err
+		}
+		return connect()
+	}
+	moved, errs := setAgain([]*Agent{a})
+	url, _ := edit.GetJSON(models, "providers.magpie.baseUrl")
+	if len(errs) != 0 || len(moved) != 1 || stashLoad()["other.original"] != "concurrent" || url != gateway.URL()+"/v1" {
+		t.Fatalf("rewire failed: moved=%v errors=%v URL=%q stash=%v", moved, errs, url, stashLoad())
+	}
+}
+
 func TestAsideRewireWithoutDaemonOnlyMovesProvider(t *testing.T) {
 	t.Setenv("MAGPIE_ADDR", "")
 	settings, models := asideHome(t)

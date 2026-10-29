@@ -3,7 +3,7 @@ package agent
 import (
 	"context"
 	"fmt"
-	"strings"
+	"sync"
 )
 
 // The gateway's port is set in Settings (Magic_zero on Discord): every
@@ -68,6 +68,8 @@ func Rekey(as []*Agent) (moved []string, err error) {
 	return moved, joinErrs(errs)
 }
 
+var rewireMu sync.Mutex
+
 // setAgain sets each agent's wiring again, keeping what it had before
 // magpie, and says the names of those it set and what one failed with.
 func setAgain(as []*Agent) (moved []string, errs []error) {
@@ -76,15 +78,39 @@ func setAgain(as []*Agent) (moved []string, errs []error) {
 		// magpie yet, and its set notes the old URL, magpie's token and
 		// model as what it had before magpie: what it really had is kept,
 		// for switching it off to put back
-		was := stashLoad()
-		e := reset(a)
-		// the address magpie wrote follows it (wiredAt)
-		for k, v := range stashLoad() {
-			if strings.HasSuffix(k, wiredAt) {
-				was[k] = v
-			}
+		rewireMu.Lock()
+		unlock, lockErr := stashLock()
+		if lockErr != nil {
+			rewireMu.Unlock()
+			errs = append(errs, fmt.Errorf("%s: %w", a.Name, lockErr))
+			continue
 		}
-		stashPut(was)
+		before, readErr := stepcodeReadStash()
+		if readErr != nil {
+			unlock()
+			rewireMu.Unlock()
+			errs = append(errs, fmt.Errorf("%s: %w", a.Name, readErr))
+			continue
+		}
+		guard := &rewireGuard{wiredAt: before}
+		if a.resetRewire == nil && a.joinRewire == nil && !a.reapplyRewire && (a.Native == nil || a.Native.connectRewire == nil) {
+			rewireStash = &guard.blocked
+			rewireWiredAt = before
+		}
+		unlock()
+		e := func() error {
+			defer func() {
+				stashMu.Lock()
+				rewireStash = nil
+				rewireWiredAt = nil
+				stashMu.Unlock()
+				rewireMu.Unlock()
+			}()
+			return reset(a, guard)
+		}()
+		if guard.blocked && e == nil {
+			e = fmt.Errorf("rewire would change saved stash values")
+		}
 		if e != nil {
 			errs = append(errs, fmt.Errorf("%s: %w", a.Name, e))
 			continue
@@ -110,15 +136,31 @@ func joinErrs(errs []error) (err error) {
 
 // reset sets an agent's wiring again: one joined beside its own models
 // joined again, any other's fields set again.
-func reset(a *Agent) error {
+func reset(a *Agent, guard *rewireGuard) error {
+	if a.resetRewire != nil {
+		return a.resetRewire(guard)
+	}
 	if a.Native != nil {
+		if a.Native.connectRewire != nil {
+			return a.Native.connectRewire()
+		}
 		return a.Native.Connect()
 	}
 	if a.Join != nil && a.Joined != nil && a.Joined() {
-		ok, err := a.Join()
+		join := a.Join
+		if a.joinRewire != nil {
+			join = func() (bool, error) { return a.joinRewire(guard) }
+		}
+		ok, err := join()
 		if err != nil || ok {
 			return err
 		}
+		if a.joinRewire != nil {
+			return fmt.Errorf("rewire fallback lacks stash ownership")
+		}
+	}
+	if a.reapplyRewire {
+		return a.reapply(guard)
 	}
 	return a.Reapply()
 }
@@ -126,10 +168,3 @@ func reset(a *Agent) error {
 // wiredAt ends a stash key holding the gateway address magpie last wrote
 // into an agent's config, which a move of the gateway updates.
 const wiredAt = ".wired_at"
-
-// stashPut writes the stash as m has it.
-func stashPut(m map[string]string) {
-	stashMu.Lock()
-	defer stashMu.Unlock()
-	stashWrite(m)
-}

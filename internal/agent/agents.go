@@ -893,8 +893,9 @@ func openCodeLike(at place, id, name, icon, bin, dir, auth string, ua []string, 
 	}
 	return &Agent{
 		ID: id, Name: name, Icon: icon, Aliases: aliases, Spelled: openCodeSpelled(path, at.v1),
-		UA:  ua,
-		Bin: bin, Dir: dir, Path: path,
+		reapplyRewire: true,
+		UA:            ua,
+		Bin:           bin, Dir: dir, Path: path,
 		Check: func() string {
 			if !usesMagpie(get("model"), get("small_model")) {
 				return ""
@@ -1116,35 +1117,76 @@ type beforeMagpie struct {
 	files  []string
 }
 
-// take copies each file aside, or notes it absent; a file that can't be
-// read is neither, and isn't put back.
-func (b beforeMagpie) take() {
+// take copies each file aside, or notes it absent. Any read or backup
+// failure stops magpie before it writes over the user's files.
+func (b beforeMagpie) take() error {
+	return b.takeFor(nil)
+}
+
+func (b beforeMagpie) takeFor(g *rewireGuard) error {
+	if g != nil {
+		return errors.New("rewire cannot replace saved pre-magpie files")
+	}
 	var gone []string
 	for _, f := range b.files {
 		raw, err := os.ReadFile(f)
 		switch {
 		case err == nil:
-			if edit.WriteAtomic(f+".before-magpie", raw) != nil {
-				os.Remove(f + ".before-magpie")
+			backup := f + ".before-magpie"
+			old, err := os.ReadFile(backup)
+			if err == nil {
+				if !bytes.Equal(old, raw) {
+					return fmt.Errorf("backup %s already holds different data", backup)
+				}
+			} else if !errors.Is(err, fs.ErrNotExist) {
+				return fmt.Errorf("read backup %s: %w", backup, err)
+			} else {
+				if err := os.MkdirAll(filepath.Dir(backup), 0700); err != nil {
+					return fmt.Errorf("create backup directory: %w", err)
+				}
+				out, err := os.CreateTemp(filepath.Dir(backup), ".magpie-backup-*")
+				if err != nil {
+					return fmt.Errorf("create backup for %s: %w", f, err)
+				}
+				tmp := out.Name()
+				defer os.Remove(tmp)
+				_, writeErr := out.Write(raw)
+				closeErr := out.Close()
+				if err := errors.Join(writeErr, closeErr); err != nil {
+					return fmt.Errorf("back up %s: %w", f, err)
+				}
+				if err := os.Link(tmp, backup); err != nil {
+					return fmt.Errorf("save backup %s: %w", backup, err)
+				}
 			}
 		case errors.Is(err, fs.ErrNotExist):
-			os.Remove(f + ".before-magpie")
+			if _, err := os.Lstat(f + ".before-magpie"); err == nil {
+				return fmt.Errorf("backup %s exists for missing file", f+".before-magpie")
+			} else if !errors.Is(err, fs.ErrNotExist) {
+				return fmt.Errorf("check backup %s: %w", f, err)
+			}
 			gone = append(gone, filepath.Base(f))
 		default:
-			os.Remove(f + ".before-magpie")
+			return fmt.Errorf("read %s for backup: %w", f, err)
 		}
 	}
-	stash(map[string]string{b.absent: strings.Join(gone, "\n")})
+	return stash(map[string]string{b.absent: strings.Join(gone, "\n")})
 }
 
 // restore puts back what take kept, where Disconnect left the same.
 func (b beforeMagpie) restore() error {
-	gone := strings.Split(unstash(b.absent), "\n")
+	kept, err := peekStash(b.absent)
+	if err != nil {
+		return err
+	}
+	gone := strings.Split(kept, "\n")
 	for _, f := range b.files {
 		cur, err := os.ReadFile(f)
-		if err != nil {
-			os.Remove(f + ".before-magpie")
+		if errors.Is(err, fs.ErrNotExist) {
 			continue
+		}
+		if err != nil {
+			return fmt.Errorf("read %s during restore: %w", f, err)
 		}
 		var now any
 		if json.Unmarshal(edit.TrimBOM(cur), &now) != nil { // a BOM is the user's own (#1534)
@@ -1166,7 +1208,8 @@ func (b beforeMagpie) restore() error {
 			}
 		}
 	}
-	return nil
+	_, err = unstash(b.absent)
+	return err
 }
 
 // emptyJSON says v is an object holding nothing but empty objects.
@@ -1215,9 +1258,38 @@ func piLikeKeyed(at place, id, name, dir string, key func() string) *Agent {
 	before := beforeMagpie{at.key(id + ".before.absent"), []string{path, modelsPath}}
 	// the entries of enabledModels a sync took out (scope_gone.go)
 	gone := at.key(id + ".scope.gone")
+	setModel := func(g *rewireGuard, v string) error {
+		if v == "" {
+			if err := edit.DelJSON(path, "defaultProvider", "defaultModel"); err != nil {
+				return err
+			}
+			if err := edit.DelJSON(modelsPath, "providers."+magpieID); err != nil {
+				return err
+			}
+			g.forget(gone)
+			return piScopeWithout(path)
+		}
+		if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+			if _, has := edit.GetJSON(modelsPath, "providers."+magpieID); !has {
+				if p, _ := get("defaultProvider"); p != magpieID {
+					if err := before.takeFor(g); err != nil {
+						return err
+					}
+				}
+			}
+			if err := writeMagpie(); err != nil {
+				return err
+			}
+		}
+		if err := pair(v); err != nil {
+			return err
+		}
+		return piScopeWith(path, v)
+	}
 	return &Agent{
 		ID: id, Name: name, Icon: id, Bin: id, Dir: dir, Path: path, Spelled: prefixed,
-		Restore: before.restore,
+		reapplyRewire: true,
+		Restore:       before.restore,
 		Check: func() string {
 			if p, _ := get("defaultProvider"); p != magpieID {
 				return ""
@@ -1237,7 +1309,9 @@ func piLikeKeyed(at place, id, name, dir string, key func() string) *Agent {
 		// with it: an entry left on the old id names nothing, and Pi would
 		// leave that model out of Ctrl+P (#1919, #1828)
 		RenameRefs: func(from, to string) (bool, error) {
-			scopeGoneRename(gone, from, to)
+			if err := scopeGoneRename(gone, from, to); err != nil {
+				return false, err
+			}
 			next, ok := renameRefList(piScope(path), from, to)
 			if !ok {
 				return false, nil
@@ -1248,34 +1322,9 @@ func piLikeKeyed(at place, id, name, dir string, key func() string) *Agent {
 			{
 				Key: "model", Label: "model",
 				// what a new session starts on, which enabledModels decides
-				Get: startup,
-				Set: func(v string) error {
-					if v == "" {
-						if err := edit.DelJSON(path, "defaultProvider", "defaultModel"); err != nil {
-							return err
-						}
-						if err := edit.DelJSON(modelsPath, "providers."+magpieID); err != nil {
-							return err
-						}
-						forget(gone)
-						return piScopeWithout(path)
-					}
-					if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-						if _, has := edit.GetJSON(modelsPath, "providers."+magpieID); !has {
-							if p, _ := get("defaultProvider"); p != magpieID {
-								before.take()
-							}
-						}
-						if err := writeMagpie(); err != nil {
-							return err
-						}
-					}
-					if err := pair(v); err != nil {
-						return err
-					}
-					// a model outside the user's Ctrl+P list would never start
-					return piScopeWith(path, v)
-				},
+				Get:       startup,
+				Set:       func(v string) error { return setModel(nil, v) },
+				setRewire: setModel,
 				Options: func(cur map[string]string) []Option {
 					return append(ownOptionsFrom(piRegistry(id), auth, cur["model"]), viaMagpie(id, magpieID+"/")...)
 				},
@@ -1345,7 +1394,8 @@ func gooseIn(at place, cfg string) *Agent {
 		keyEnv = func(string) string { return "" }
 	}
 	return &Agent{
-		ID: "goose", Name: "Goose", Icon: "goose", Bin: "goose", Dir: filepath.Dir(path), Path: path, Spelled: prefixed, NoNames: true,
+		reapplyRewire: true,
+		ID:            "goose", Name: "Goose", Icon: "goose", Bin: "goose", Dir: filepath.Dir(path), Path: path, Spelled: prefixed, NoNames: true,
 		UA: []string{"goose"},
 		Check: func() string {
 			if p, _ := gooseActive(path); p != gooseProviderID {
@@ -1422,7 +1472,8 @@ func cursor(home string) *Agent {
 		// Cursor CLI, not Cursor: the row is cursor-agent, and the Cursor
 		// editor is not on it (@G_Z_Y on X looked for Cursor CLI on the
 		// Agents page and took "Cursor" for the editor)
-		ID: "cursor", Name: "Cursor CLI", Icon: "cursor", Aliases: []string{"cursor-agent"},
+		reapplyRewire: true,
+		ID:            "cursor", Name: "Cursor CLI", Icon: "cursor", Aliases: []string{"cursor-agent"},
 		UA:  []string{"cursor"},
 		Bin: "cursor-agent", Dir: filepath.Dir(path), Path: path,
 		// the editor reads ~/.cursor's mcp.json, skills and hooks, and its
@@ -1458,7 +1509,8 @@ func copilot(home string) *Agent {
 	dir := filepath.Join(home, ".copilot")
 	path := filepath.Join(dir, "settings.json")
 	return &Agent{
-		ID: "copilot", Name: "Copilot CLI", Icon: "githubcopilot", Aliases: []string{"gh-copilot"},
+		reapplyRewire: true,
+		ID:            "copilot", Name: "Copilot CLI", Icon: "githubcopilot", Aliases: []string{"gh-copilot"},
 		UA:  []string{"copilot", "github-copilot"},
 		Bin: "copilot", Dir: dir, Path: path,
 		// GitHub Copilot's JetBrains and VS Code plugins write ~/.copilot
@@ -1624,7 +1676,8 @@ func crushAt(at place, path, data string) *Agent {
 		}
 	}
 	return &Agent{
-		ID: "crush", Name: "Crush", Icon: "crush", Bin: "crush", Dir: filepath.Dir(path), Path: path, Spelled: prefixed,
+		reapplyRewire: true,
+		ID:            "crush", Name: "Crush", Icon: "crush", Bin: "crush", Dir: filepath.Dir(path), Path: path, Spelled: prefixed,
 		UA: []string{"crush"},
 		Check: func() string {
 			large, _ := pick("models.large.provider")

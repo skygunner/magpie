@@ -192,7 +192,7 @@ func grokApp(home string) *Agent {
 	// releaseRoute puts back a route an older magpie set to itself, once.
 	// The App stops working when that route is magpie. A route the user
 	// picks in the App after this stays.
-	releaseRoute := func() error {
+	releaseRoute := func(g *rewireGuard) error {
 		if stashLoad()[grokAppReleased] == "1" {
 			return nil
 		}
@@ -201,11 +201,17 @@ func grokApp(home string) *Agent {
 			return err
 		}
 		if def == magpieID {
-			if err := setDefault(unstash(keyDefault)); err != nil {
+			kept, err := g.unstash(keyDefault)
+			if err != nil {
+				return err
+			}
+			if err := setDefault(kept); err != nil {
 				return err
 			}
 		}
-		stash(map[string]string{grokAppReleased: "1"})
+		if err := g.stash(map[string]string{grokAppReleased: "1"}); err != nil {
+			return err
+		}
 		return nil
 	}
 	// wire writes magpie's channel, model, if given, its model, and
@@ -298,33 +304,73 @@ func grokApp(home string) *Agent {
 	// back if the route was magpie. An empty route can't be stashed (the
 	// stash drops an empty value), and magpie's own route is never remembered
 	// over the one it replaced.
-	rememberRoute := func() error {
+	rememberRoute := func(g *rewireGuard) error {
 		def, _, err := grokAppRead(path)
 		if err != nil || def == "" || def == magpieID || stashLoad()[keyDefault] != "" {
 			return err
 		}
-		stash(map[string]string{keyDefault: def})
+		if err := g.stash(map[string]string{keyDefault: def}); err != nil {
+			return err
+		}
 		return nil
 	}
 	// unwire takes magpie's channel out. The route is touched only when it
 	// still names magpie, which is a route that doesn't run: put back the
 	// one remembered, or clear it. Any other route is the App's and stays.
-	unwire := func() error {
+	unwire := func(g *rewireGuard) error {
 		def, _, err := grokAppRead(path)
 		if err != nil {
 			return err
 		}
 		if def == magpieID {
-			if err := setDefault(unstash(keyDefault)); err != nil {
+			kept, err := g.unstash(keyDefault)
+			if err != nil {
+				return err
+			}
+			if err := setDefault(kept); err != nil {
 				return err
 			}
 		} else {
-			forget(keyDefault)
+			g.forget(keyDefault)
 		}
 		return edit.SetTOMLTablesMatching(path, []string{grokAppChannel}, []string{grokAppChannel + "."}, nil)
 	}
+	setModel := func(g *rewireGuard, v string) error {
+		if _, _, err := grokAppRead(path); err != nil {
+			return err
+		}
+		if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+			if err := rememberRoute(g); err != nil {
+				return err
+			}
+			if err := releaseRoute(g); err != nil {
+				return err
+			}
+			return wire(ref)
+		}
+		if v == "" {
+			return unwire(g)
+		}
+		def, ch, err := grokAppRead(path)
+		if err != nil {
+			return err
+		}
+		if ch != nil {
+			if err := unwire(g); err != nil {
+				return err
+			}
+			if def, _, err = grokAppRead(path); err != nil {
+				return err
+			}
+		}
+		if def == v {
+			return nil
+		}
+		return setDefault(v)
+	}
 	return atomic(&Agent{
-		ID: "grok-app", Name: "Grok App", Icon: "grok", Aliases: []string{"grokapp"}, Spelled: prefixed,
+		reapplyRewire: true,
+		ID:            "grok-app", Name: "Grok App", Icon: "grok", Aliases: []string{"grokapp"}, Spelled: prefixed,
 		Dir: dir, Path: path,
 		Notice: func() string {
 			if Running(`(^|/)grok-app( |$)`) {
@@ -340,10 +386,10 @@ func grokApp(home string) *Agent {
 			if err != nil || (ch == nil && def != magpieID) {
 				return err
 			}
-			if err := rememberRoute(); err != nil {
+			if err := rememberRoute(nil); err != nil {
 				return err
 			}
-			if err := releaseRoute(); err != nil {
+			if err := releaseRoute(nil); err != nil {
 				return err
 			}
 			if ch == nil {
@@ -373,44 +419,9 @@ func grokApp(home string) *Agent {
 			// Settings › Account. One of the App's own routes picked here
 			// is written as the route, with magpie's channel taken out.
 			Key: "model", Label: "model",
-			Get: get,
-			Set: func(v string) error {
-				if _, _, err := grokAppRead(path); err != nil {
-					return err
-				}
-				if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-					if err := rememberRoute(); err != nil {
-						return err
-					}
-					if err := releaseRoute(); err != nil {
-						return err
-					}
-					return wire(ref)
-				}
-				if v == "" {
-					return unwire()
-				}
-				// one of the App's own routes: magpie's channel goes, the
-				// way picking another provider leaves magpie elsewhere, and
-				// the route is the one picked. Disconnect comes here to put
-				// back the route the App had before.
-				def, ch, err := grokAppRead(path)
-				if err != nil {
-					return err
-				}
-				if ch != nil {
-					if err := unwire(); err != nil {
-						return err
-					}
-					if def, _, err = grokAppRead(path); err != nil {
-						return err
-					}
-				}
-				if def == v {
-					return nil
-				}
-				return setDefault(v)
-			},
+			Get:       get,
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(cur map[string]string) []Option {
 				return append(grokAppOwn(path, keyDefault, cur["model"]), viaMagpie("grok-app", magpieID+"/")...)
 			},

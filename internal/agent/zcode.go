@@ -74,7 +74,8 @@ func zcode(home string) *Agent {
 		return ok || zcodeRuled(rules)
 	}
 	return &Agent{
-		ID: "zcode", Name: "ZCode", Icon: "zcode", Aliases: []string{"z-code"},
+		reapplyRewire: true,
+		ID:            "zcode", Name: "ZCode", Icon: "zcode", Aliases: []string{"z-code"},
 		UA:  []string{"zcode"},
 		Dir: dir, Path: path,
 		// its picker lists the models picked for it, in both files (#1508)
@@ -107,22 +108,27 @@ func zcode(home string) *Agent {
 				return ""
 			},
 			Set: func(v string) error {
-				if err := zcodeRules(rules, v != "", false); err != nil {
-					return err
-				}
-				if v == "" {
-					if _, ok := stashLoad()[zcodeSearchedKey]; ok {
-						forget(zcodeSearchedKey)
-					}
-					return edit.DelJSON(path, key)
-				}
-				return edit.SetJSON(path, edit.KV{Path: key, Value: zcodeProviderJSON(path, false)})
+				return setZcode(nil, path, rules, key, v)
 			},
+			setRewire: func(g *rewireGuard, v string) error { return setZcode(g, path, rules, key, v) },
 			Options: func(map[string]string) []Option {
 				return []Option{{Value: magpieID, Label: "magpie", Icon: "magpie", Note: "every magpie model in ZCode's picker"}}
 			},
 		}},
 	}
+}
+
+func setZcode(g *rewireGuard, path, rules, key, v string) error {
+	if err := zcodeRules(rules, v != "", false); err != nil {
+		return err
+	}
+	if v == "" {
+		if _, ok := stashLoad()[zcodeSearchedKey]; ok {
+			g.forget(zcodeSearchedKey)
+		}
+		return edit.DelJSON(path, key)
+	}
+	return edit.SetJSON(path, edit.KV{Path: key, Value: zcodeProviderJSON(path, false)})
 }
 
 // zcodeProviderJSON is magpie's provider in config.json at path; one
@@ -475,7 +481,9 @@ func zcodeRules(path string, on, keep bool) error {
 			ids = []string{}
 		}
 		if known {
-			zcodeSearchedPut(searched, ids)
+			if err := zcodeSearchedPut(searched, ids); err != nil {
+				return err
+			}
 		}
 		base, token := gateway.URL(), hereKey()
 		if keep {
@@ -605,7 +613,7 @@ func zcodeSearched() (map[string]bool, bool) {
 
 // zcodeSearchedPut keeps searched in the stash, only for models magpie
 // still lists (ids), and writes it only when that changes it.
-func zcodeSearchedPut(searched map[string]bool, ids []string) {
+func zcodeSearchedPut(searched map[string]bool, ids []string) error {
 	var keep []string
 	for _, id := range ids {
 		if searched[id] {
@@ -614,8 +622,9 @@ func zcodeSearchedPut(searched map[string]bool, ids []string) {
 	}
 	v := strings.Join(keep, "\n")
 	if stashLoad()[zcodeSearchedKey] != v {
-		stash(map[string]string{zcodeSearchedKey: v})
+		return stash(map[string]string{zcodeSearchedKey: v})
 	}
+	return nil
 }
 
 func zcodeObj(m map[string]any, k string) map[string]any {

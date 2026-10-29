@@ -186,7 +186,7 @@ func codexAsyncNow(path string) (feature any, provider map[string]any, err error
 // capability is written for a feature the user turned on in the config
 // themselves too: on magpie's provider it would never run without it
 // (#2493).
-func codexAsyncSync(path, key string, routed, on bool, percent int, tableOK bool) error {
+func codexAsyncSync(g *rewireGuard, path, key string, routed, on bool, percent int, tableOK bool) error {
 	feature, provider, err := codexAsyncNow(path)
 	var bad *toml.DecodeError
 	if errors.As(err, &bad) {
@@ -323,10 +323,12 @@ func codexAsyncSync(path, key string, routed, on bool, percent int, tableOK bool
 
 	if st != was {
 		if st == (codexAsyncStash{}) {
-			forget(key)
+			g.forget(key)
 		} else {
 			b, _ := json.Marshal(st)
-			stash(map[string]string{key: string(b)})
+			if err := g.stash(map[string]string{key: string(b)}); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

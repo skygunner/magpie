@@ -101,7 +101,9 @@ func longApply(n int) error {
 	}
 	st.Set = n
 	b, _ := json.Marshal(st)
-	stash(map[string]string{tuneLongKey: string(b)})
+	if err := stash(map[string]string{tuneLongKey: string(b)}); err != nil {
+		return err
+	}
 	return provider.SetCompactAt(n) // Full window off too
 }
 
@@ -363,12 +365,16 @@ func TuneApply(home, agent, knob, model, value string) error {
 	if _, ok := tuneStashed(agent, knob, model); !ok {
 		raw, had := p.get()
 		b, _ := json.Marshal(tuneStash{Had: had, Raw: raw, Set: value})
-		stash(map[string]string{key: string(b)})
+		if err := stash(map[string]string{key: string(b)}); err != nil {
+			return err
+		}
 	} else {
 		st, _ := tuneStashed(agent, knob, model)
 		st.Set = value
 		b, _ := json.Marshal(st)
-		stash(map[string]string{key: string(b)})
+		if err := stash(map[string]string{key: string(b)}); err != nil {
+			return err
+		}
 	}
 	if p.toml {
 		return edit.SetTOMLTop(p.path, edit.KV{Path: p.key, Value: v})

@@ -222,7 +222,7 @@ func kimiIn(at place) *Agent {
 	key := "kimi:" + path + ":default_model"
 	get := func() string { v, _ := edit.GetTOMLTop(path, "default_model"); return v }
 	providerTable := "providers." + magpieID
-	writeMagpie := func() error {
+	writeMagpie := func(g *rewireGuard) error {
 		if err := kimiProvider(path, providerTable,
 			edit.KV{Path: "type", Value: "kimi"},
 			edit.KV{Path: "base_url", Value: at.v1()},
@@ -235,14 +235,16 @@ func kimiIn(at place) *Agent {
 			return err
 		}
 		b, _ := json.Marshal(wrote)
-		stash(map[string]string{kimiWroteKey(path): string(b)})
+		if err := g.stash(map[string]string{kimiWroteKey(path): string(b)}); err != nil {
+			return err
+		}
 		return nil
 	}
-	dropMagpie := func() error {
+	dropMagpie := func(g *rewireGuard) error {
 		if err := edit.SetTOMLTables(path, []string{kimiModelTable}, nil); err != nil {
 			return err
 		}
-		forget(kimiWroteKey(path))
+		g.forget(kimiWroteKey(path))
 		return edit.DelTOMLTable(path, providerTable)
 	}
 	// setDefault sets default_model, or takes it out for ""
@@ -257,8 +259,36 @@ func kimiIn(at place) *Agent {
 		t, err := kimiModelTableForKey(path, k)
 		return err == nil && t != nil
 	}
+	setModel := func(g *rewireGuard, v string) error {
+		cur := get()
+		if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+			if !usesMagpie(cur) {
+				if err := g.stash(map[string]string{key: cur}); err != nil {
+					return err
+				}
+			}
+			if err := writeMagpie(g); err != nil {
+				return err
+			}
+			return setDefault(v)
+		}
+		if v == "" && usesMagpie(cur) {
+			was, err := g.unstash(key)
+			if err != nil {
+				return err
+			}
+			if was != "" && !usesMagpie(was) && ownModel(was) {
+				v = was
+			}
+		}
+		if err := setDefault(v); err != nil {
+			return err
+		}
+		return dropMagpie(g)
+	}
 	return atomic(&Agent{
-		ID: "kimi", Name: "Kimi Code", Icon: "kimi", Aliases: []string{"kimi-code", "kimi-cli"}, Spelled: prefixed,
+		reapplyRewire: true,
+		ID:            "kimi", Name: "Kimi Code", Icon: "kimi", Aliases: []string{"kimi-code", "kimi-cli"}, Spelled: prefixed,
 		UA:  []string{"kimicli"},
 		Bin: "kimi", Dir: dir, Path: path,
 		Sync: func() error {
@@ -266,7 +296,7 @@ func kimiIn(at place) *Agent {
 			if err != nil || t == nil {
 				return err
 			}
-			return writeMagpie()
+			return writeMagpie(nil)
 		},
 		Notice: func() string {
 			if Running(`(^|/)kimi( |$)`, `(^|/)kimi-cli( |$)`) {
@@ -298,29 +328,9 @@ func kimiIn(at place) *Agent {
 		},
 		Fields: []Field{{
 			Key: "model", Label: "model",
-			Get: get,
-			Set: func(v string) error {
-				cur := get()
-				if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-					if !usesMagpie(cur) {
-						stash(map[string]string{key: cur})
-					}
-					if err := writeMagpie(); err != nil {
-						return err
-					}
-					return setDefault(v)
-				}
-				if v == "" && usesMagpie(cur) {
-					// back to the default the user had, if Kimi still has it
-					if was := unstash(key); was != "" && !usesMagpie(was) && ownModel(was) {
-						v = was
-					}
-				}
-				if err := setDefault(v); err != nil {
-					return err
-				}
-				return dropMagpie()
-			},
+			Get:       get,
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(cur map[string]string) []Option {
 				return append(kimiOwnOptions(path, cur["model"]), viaMagpie("kimi", magpieID+"/")...)
 			},

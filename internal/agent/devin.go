@@ -31,7 +31,8 @@ func devin(home, cfg string) *Agent {
 	path := filepath.Join(dir, "config.json")
 	get, set := jsonGet(path, "agent.model"), jsonSet(path, "agent.model")
 	return &Agent{
-		ID: "devin", Name: "Devin", Icon: "devin",
+		reapplyRewire: true,
+		ID:            "devin", Name: "Devin", Icon: "devin",
 		Bin: "devin", Dir: dir, Path: path,
 		Notice: func() string {
 			if Running(`(^|/)devin( |$)`) {

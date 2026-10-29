@@ -116,6 +116,41 @@ func TestDesktopDirs(t *testing.T) {
 }
 
 // A fresh Claude Desktop: its folder and nothing magpie writes in it yet.
+// Desktop rewire keeps the user's deployment mode while an unrelated stash write proceeds.
+func TestClaudeDesktopRewireConcurrentStash(t *testing.T) {
+	t.Setenv("MAGPIE_ADDR", "")
+	home, p := desktopSandbox(t)
+	desktopWrite(t, p.config, `{"deploymentMode":"claudeai"}`)
+	setPort(t, 3591)
+	a := claudeDesktop(home)
+	if err := a.Apply("provider", magpieID); err != nil {
+		t.Fatal(err)
+	}
+	setPort(t, 3592)
+	field := a.Field("provider")
+	set := field.setRewire
+	field.setRewire = func(g *rewireGuard, v string) error {
+		done := make(chan error, 1)
+		go func() { done <- stash(map[string]string{"other.original": "concurrent"}) }()
+		if err := <-done; err != nil {
+			return err
+		}
+		return set(g, v)
+	}
+	moved, errs := setAgain([]*Agent{a})
+	url, _ := edit.GetJSON(p.prof, "inferenceGatewayBaseUrl")
+	if len(errs) != 0 || len(moved) != 1 || url != "http://127.0.0.1:3592" || stashLoad()["other.original"] != "concurrent" {
+		t.Fatalf("rewire: moved=%v errors=%v URL=%q", moved, errs, url)
+	}
+	if err := a.Apply("provider", ""); err != nil {
+		t.Fatal(err)
+	}
+	mode, _ := edit.GetJSON(p.config, "deploymentMode")
+	if mode != "claudeai" {
+		t.Fatalf("deployment mode lost: %q", mode)
+	}
+}
+
 func TestClaudeDesktopFresh(t *testing.T) {
 	home, p := desktopSandbox(t)
 	a := claudeDesktop(home)
@@ -565,7 +600,7 @@ func TestClaudeDesktopMSIXStashBefore(t *testing.T) {
 	desktopWrite(t, p.config3p, `{"deploymentMode":"1p"}`)
 	before := desktopTree(t, p)
 	// as the magpie before wrote it: the package's set, the plain keys
-	if err := desktopOn(p); err != nil {
+	if err := desktopOn(nil, p); err != nil {
 		t.Fatal(err)
 	}
 	r := desktopPathsOf(filepath.Join(local, "Claude"), filepath.Join(local, "Claude-3p"))

@@ -85,13 +85,19 @@ func clineIn(at place) *Agent {
 	}
 	// wireState points the extension's state, when there is one, at model
 	// on magpie's openai-compatible
-	wireState := func(model string) error {
+	wireState := func(g *rewireGuard, model string) error {
 		if _, err := os.Stat(state); err != nil {
 			return nil
 		}
 		if !stateOnMagpie() {
 			k, _ := edit.GetJSON(secrets, "openAiApiKey")
-			stash(map[string]string{key + "state": clineSnapshot(state), key + "secret": k, key + "stated": "1"})
+			oldURL, _ := edit.GetJSON(state, "openAiBaseUrl")
+			oldProviderURL := get(slot + ".settings.baseUrl")
+			if g != nil && onMagpie() && oldURL != "" && oldURL == oldProviderURL && ourKey(k) {
+				// Both Cline stores still point to the same old magpie provider.
+			} else if err := g.stash(map[string]string{key + "state": clineSnapshot(state), key + "secret": k, key + "stated": "1"}); err != nil {
+				return err
+			}
 		}
 		// the model info a pick leaves is the old model's; magpie's is in
 		// models.json
@@ -110,7 +116,18 @@ func clineIn(at place) *Agent {
 	// restoreState puts back the extension's state from before magpie;
 	// magpie's keys go when nothing was stashed
 	restoreState := func() error {
-		saved, secret, stated := unstash(key+"state"), unstash(key+"secret"), unstash(key+"stated")
+		saved, err := peekStash(key + "state")
+		if err != nil {
+			return err
+		}
+		secret, err := peekStash(key + "secret")
+		if err != nil {
+			return err
+		}
+		stated, err := peekStash(key + "stated")
+		if err != nil {
+			return err
+		}
 		if stated == "" && !stateOnMagpie() {
 			return nil
 		}
@@ -119,22 +136,48 @@ func clineIn(at place) *Agent {
 				return err
 			}
 		}
-		if _, err := os.Stat(secrets); err != nil {
-			return nil
+		if _, err := os.Stat(secrets); err == nil {
+			if secret != "" {
+				if err := edit.SetJSON(secrets, edit.KV{Path: "openAiApiKey", Value: secret}); err != nil {
+					return err
+				}
+			} else if err := edit.DelJSON(secrets, "openAiApiKey"); err != nil {
+				return err
+			}
 		}
-		if secret != "" {
-			return edit.SetJSON(secrets, edit.KV{Path: "openAiApiKey", Value: secret})
-		}
-		return edit.DelJSON(secrets, "openAiApiKey")
+		return nil
 	}
 	// restore puts back the openai-compatible provider and the provider in
 	// use the user had before magpie
-	restore := func() error {
+	restore := func(g *rewireGuard) error {
+		stateBefore, err := peekStash(key + "state")
+		if err != nil {
+			return err
+		}
+		secretBefore, err := peekStash(key + "secret")
+		if err != nil {
+			return err
+		}
+		statedBefore, err := peekStash(key + "stated")
+		if err != nil {
+			return err
+		}
 		if err := restoreState(); err != nil {
 			return err
 		}
-		entry, last := unstash(key+"entry"), unstash(key+"lastUsedProvider")
-		if list := unstash(key + "models"); list != "" {
+		entry, err := peekStash(key + "entry")
+		if err != nil {
+			return err
+		}
+		last, err := peekStash(key + "lastUsedProvider")
+		if err != nil {
+			return err
+		}
+		list, err := peekStash(key + "models")
+		if err != nil {
+			return err
+		}
+		if list != "" {
 			if err := edit.SetJSON(models, edit.KV{Path: "providers." + clineSlot, Value: json.RawMessage(list)}); err != nil {
 				return err
 			}
@@ -149,9 +192,21 @@ func clineIn(at place) *Agent {
 			return err
 		}
 		if last != "" {
-			return edit.SetJSON(path, edit.KV{Path: "lastUsedProvider", Value: last})
+			if err := edit.SetJSON(path, edit.KV{Path: "lastUsedProvider", Value: last}); err != nil {
+				return err
+			}
+		} else if err := edit.DelJSON(path, "lastUsedProvider"); err != nil {
+			return err
 		}
-		return edit.DelJSON(path, "lastUsedProvider")
+		g.forgetIfUnchanged(key+"state", stateBefore)
+		if _, err := os.Stat(secrets); err == nil {
+			g.forgetIfUnchanged(key+"secret", secretBefore)
+		}
+		g.forgetIfUnchanged(key+"stated", statedBefore)
+		g.forgetIfUnchanged(key+"entry", entry)
+		g.forgetIfUnchanged(key+"lastUsedProvider", last)
+		g.forgetIfUnchanged(key+"models", list)
+		return nil
 	}
 	// own is the provider a model or effort of Cline's own is set on: the
 	// one in use, else Cline's default
@@ -161,8 +216,43 @@ func clineIn(at place) *Agent {
 		}
 		return "cline"
 	}
+	setModel := func(g *rewireGuard, v string) error {
+		if v == "" {
+			if onMagpie() {
+				return restore(g)
+			}
+			if p := inUse(); p != "" {
+				return edit.DelJSON(path, "providers."+p+".settings.model")
+			}
+			return nil
+		}
+		if ref, ok := cutMagpie(v); ok {
+			effort := clineEffort(get("providers." + own() + ".settings.reasoning"))
+			if !onMagpie() {
+				list, _ := edit.GetJSON(models, "providers."+clineSlot)
+				if err := g.stash(map[string]string{key + "entry": get(slot), key + "lastUsedProvider": inUse(), key + "models": list}); err != nil {
+					return err
+				}
+			}
+			if err := clineWrite(models, `{"version":1,"providers":{}}`, edit.KV{Path: "providers." + clineSlot, Value: clineKept(models, clineModelsAt(ref, at.v1()))}); err != nil {
+				return err
+			}
+			if err := wireState(g, ref); err != nil {
+				return err
+			}
+			return clineWrite(path, providersEmpty, edit.KV{Path: slot, Value: clineProvider(ref, effort, at)}, edit.KV{Path: "lastUsedProvider", Value: clineSlot})
+		}
+		if onMagpie() {
+			if err := restore(g); err != nil {
+				return err
+			}
+		}
+		p := own()
+		return clineWrite(path, providersEmpty, edit.KV{Path: "providers." + p + ".settings.provider", Value: p}, edit.KV{Path: "providers." + p + ".settings.model", Value: v})
+	}
 	return &Agent{
-		ID: "cline", Name: "Cline", Icon: "cline", Aliases: []string{"cline-cli"}, Spelled: prefixed,
+		reapplyRewire: true,
+		ID:            "cline", Name: "Cline", Icon: "cline", Aliases: []string{"cline-cli"}, Spelled: prefixed,
 		UA:  []string{"cline"},
 		Bin: "cline", Dir: dir, Path: path,
 		Sync: func() error {
@@ -212,47 +302,8 @@ func clineIn(at place) *Agent {
 				}
 				return v
 			},
-			Set: func(v string) error {
-				if v == "" {
-					if onMagpie() {
-						return restore()
-					}
-					if p := inUse(); p != "" {
-						return edit.DelJSON(path, "providers."+p+".settings.model")
-					}
-					return nil
-				}
-				if ref, ok := cutMagpie(v); ok {
-					effort := clineEffort(get("providers." + own() + ".settings.reasoning"))
-					if !onMagpie() {
-						list, _ := edit.GetJSON(models, "providers."+clineSlot)
-						stash(map[string]string{
-							key + "entry":            get(slot),
-							key + "lastUsedProvider": inUse(),
-							key + "models":           list,
-						})
-					}
-					if err := clineWrite(models, `{"version":1,"providers":{}}`,
-						edit.KV{Path: "providers." + clineSlot, Value: clineKept(models, clineModelsAt(ref, at.v1()))}); err != nil {
-						return err
-					}
-					if err := wireState(ref); err != nil {
-						return err
-					}
-					return clineWrite(path, providersEmpty,
-						edit.KV{Path: slot, Value: clineProvider(ref, effort, at)},
-						edit.KV{Path: "lastUsedProvider", Value: clineSlot})
-				}
-				if onMagpie() {
-					if err := restore(); err != nil {
-						return err
-					}
-				}
-				p := own()
-				return clineWrite(path, providersEmpty,
-					edit.KV{Path: "providers." + p + ".settings.provider", Value: p},
-					edit.KV{Path: "providers." + p + ".settings.model", Value: v})
-			},
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(cur map[string]string) []Option {
 				return append(ownOptions("", cur["model"]), viaMagpie("cline", magpieID+"/")...)
 			},

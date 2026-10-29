@@ -39,7 +39,8 @@ func commandCodeIn(at place) *Agent {
 		return edit.DelJSON(providers, "provider."+magpieID)
 	}
 	return &Agent{
-		ID: "commandcode", Name: "Command Code", Icon: "commandcode", Aliases: []string{"command-code", "cmd"}, Spelled: prefixed,
+		reapplyRewire: true,
+		ID:            "commandcode", Name: "Command Code", Icon: "commandcode", Aliases: []string{"command-code", "cmd"}, Spelled: prefixed,
 		UA:  []string{"command-code", "commandcode"},
 		Bin: "command-code", Dir: dir, Path: path,
 		Sync: func() error {

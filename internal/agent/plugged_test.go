@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/yetone/magpie/internal/agentplug"
+	"github.com/yetone/magpie/internal/edit"
 	"github.com/yetone/magpie/internal/gateway"
 	"github.com/yetone/magpie/internal/plugin"
 	"github.com/yetone/magpie/internal/provider"
@@ -53,6 +54,61 @@ export function connect({ gateway, model }) {
   return { "openai-api-base": gateway.v1, "openai-api-key": gateway.key, "map-tokens": model.id.endsWith("pro") ? 2048 : 4096 };
 }
 `
+
+// A plugin rewire must keep its original values and an unrelated concurrent stash write.
+func TestPluggedRewireConcurrentStash(t *testing.T) {
+	t.Setenv("MAGPIE_ADDR", "")
+	home := pluggedHome(t, aiderSrc)
+	path := filepath.Join(home, ".aider.conf.yml")
+	if err := os.WriteFile(path, []byte("model: native\nopenai-api-key: original\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	setPort(t, 3591)
+	a, err := Find("aider")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := a.Apply("model", "magpie/deepseek/pro"); err != nil {
+		t.Fatal(err)
+	}
+	setPort(t, 3592)
+	ready, release := make(chan struct{}), make(chan struct{})
+	done := make(chan struct{})
+	var moved []string
+	var errs []error
+	go func() {
+		defer close(done)
+		blocked := false
+		_ = edit.Filtered(func(p string, data []byte) []byte {
+			if p == path && !blocked {
+				blocked = true
+				close(ready)
+				<-release
+			}
+			return data
+		}, func() error { moved, errs = setAgain([]*Agent{a}); return nil })
+	}()
+	<-ready
+	if err := stash(map[string]string{"other.original": "concurrent"}); err != nil {
+		close(release)
+		<-done
+		t.Fatal(err)
+	}
+	close(release)
+	<-done
+	url, _ := edit.GetYAML(path, "openai-api-base")
+	if len(errs) != 0 || len(moved) != 1 || url != "http://127.0.0.1:3592/v1" || stashLoad()["other.original"] != "concurrent" {
+		t.Fatalf("rewire: moved=%v errors=%v URL=%q", moved, errs, url)
+	}
+	if err := a.Unwire(); err != nil {
+		t.Fatal(err)
+	}
+	key, _ := edit.GetYAML(path, "openai-api-key")
+	model, _ := edit.GetYAML(path, "model")
+	if key != "original" || model != "native" {
+		t.Fatalf("original values not restored: key=%q model=%q", key, model)
+	}
+}
 
 func TestPluggedYAML(t *testing.T) {
 	home := pluggedHome(t, aiderSrc)

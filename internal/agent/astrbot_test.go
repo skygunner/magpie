@@ -6,12 +6,14 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/tidwall/gjson"
 
 	"github.com/yetone/magpie/internal/catalog"
+	"github.com/yetone/magpie/internal/edit"
 	"github.com/yetone/magpie/internal/provider"
 )
 
@@ -176,6 +178,41 @@ func astrbotEdit(t *testing.T, path string, change func(m map[string]any)) {
 
 func astrbotPick(m map[string]any) any {
 	return m["agent_runner"].(map[string]any)["config"].(map[string]any)["model"].(map[string]any)["provider_id"]
+}
+
+func TestAstrBotRestoreFailureKeepsOriginal(t *testing.T) {
+	if runtime.GOOS == "windows" || os.Geteuid() == 0 {
+		t.Skip("directory permissions cannot force this failure")
+	}
+	home, path := astrbotHome(t, astrbotConfig)
+	a := astrbot(home)
+	if err := a.Pick("model", "magpie/kimi/k2"); err != nil {
+		t.Fatal(err)
+	}
+	dir := filepath.Dir(path)
+	t.Cleanup(func() { _ = os.Chmod(dir, 0o700) })
+	var chmodErr error
+	err := edit.Filtered(func(p string, b []byte) []byte {
+		if p == path {
+			chmodErr = os.Chmod(dir, 0o500)
+		}
+		return b
+	}, func() error { return a.Field("model").Set("") })
+	if chmodErr != nil {
+		t.Fatal(chmodErr)
+	}
+	if err := os.Chmod(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err == nil {
+		t.Fatal("restore succeeded despite unwritable config directory")
+	}
+	if err := a.Field("model").Set(""); err != nil {
+		t.Fatal(err)
+	}
+	if got := a.Field("model").Get(); got != "deepseek/deepseek-chat" {
+		t.Fatalf("retry lost original model: %q", got)
+	}
 }
 
 // Connecting AstrBot adds magpie's provider source and one model entry for

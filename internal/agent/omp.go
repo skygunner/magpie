@@ -252,7 +252,7 @@ func ompAt(at place, dir string, entry func() ompProviderEntry) *Agent {
 	// (omp_scope.go), don't count: once nothing else is on magpie they go
 	// with its provider (#1769). Those scoped to folders are the user's, and
 	// count.
-	dropMagpie := func() error {
+	dropMagpie := func(g *rewireGuard) error {
 		used := false
 		err := edit.EditYAMLStrings(path, slices.DeleteFunc(slices.Clone(ompRefKeys), func(k string) bool { return k == "enabledModels" }), func(v string) string {
 			ompRefs(v, func(m string) string { used = used || usesMagpie(m); return m })
@@ -270,7 +270,7 @@ func ompAt(at place, dir string, entry func() ompProviderEntry) *Agent {
 		if err := ompScopeWithout(path); err != nil {
 			return err
 		}
-		forget(gone)
+		g.forget(gone)
 		return edit.DelYAML(pick("models"), "providers."+magpieID)
 	}
 	// was are the stash's keys for the roles, one each
@@ -292,55 +292,63 @@ func ompAt(at place, dir string, entry func() ompProviderEntry) *Agent {
 			v, _ := edit.GetYAMLText(path, k)
 			return v
 		}
-		return Field{
-			Key: key, Label: label, Quiet: quiet,
-			Get: get,
-			Set: func(v string) error {
-				cur := get()
-				if v == "" {
-					if ompOnMagpie(cur) {
-						v = unstash(w)
-					}
-					if v == "" {
-						if err := edit.DelYAML(path, k); err != nil {
-							return err
-						}
-						return dropMagpie()
-					}
-					if ompYAMLList(v) {
-						if err := edit.SetYAML(path, edit.KV{Path: k, Value: edit.YAMLText(v)}); err != nil {
-							return err
-						}
-						return dropMagpie()
-					}
-				} else if _, level, one := ompSplit(v); one && level == "" {
-					// another model keeps the role's thinking level; omp
-					// clamps one the model lacks to the highest it has below
-					// it (its lowest when none is) and drops it for a model
-					// that doesn't reason (pi-catalog model-thinking.ts),
-					// never fails.
-					// The same model picked without one is the way to have
-					// none: its option with the level beside it keeps it
-					if model, level := ompLevel(cur); level != "" && model != v {
-						v += level
-					}
-				}
-				model, _, one := ompSplit(v)
-				if ref, ok := strings.CutPrefix(model, magpieID+"/"); one && ok && isMagpie(ref) {
-					if !ompOnMagpie(cur) {
-						stash(map[string]string{w: kept()})
-					}
-					if err := writeMagpie(); err != nil {
+		set := func(g *rewireGuard, v string) error {
+			cur := get()
+			if v == "" {
+				if ompOnMagpie(cur) {
+					was, err := g.unstash(w)
+					if err != nil {
 						return err
 					}
-					return edit.SetYAML(path, edit.KV{Path: k, Value: v})
+					v = was
 				}
-				forget(w)
-				if err := edit.SetYAML(path, edit.KV{Path: k, Value: v}); err != nil {
+				if v == "" {
+					if err := edit.DelYAML(path, k); err != nil {
+						return err
+					}
+					return dropMagpie(g)
+				}
+				if ompYAMLList(v) {
+					if err := edit.SetYAML(path, edit.KV{Path: k, Value: edit.YAMLText(v)}); err != nil {
+						return err
+					}
+					return dropMagpie(g)
+				}
+			} else if _, level, one := ompSplit(v); one && level == "" {
+				// another model keeps the role's thinking level; omp
+				// clamps one the model lacks to the highest it has below
+				// it (its lowest when none is) and drops it for a model
+				// that doesn't reason (pi-catalog model-thinking.ts),
+				// never fails.
+				// The same model picked without one is the way to have
+				// none: its option with the level beside it keeps it
+				if model, level := ompLevel(cur); level != "" && model != v {
+					v += level
+				}
+			}
+			model, _, one := ompSplit(v)
+			if ref, ok := strings.CutPrefix(model, magpieID+"/"); one && ok && isMagpie(ref) {
+				if !ompOnMagpie(cur) {
+					if err := g.stash(map[string]string{w: kept()}); err != nil {
+						return err
+					}
+				}
+				if err := writeMagpie(); err != nil {
 					return err
 				}
-				return dropMagpie()
-			},
+				return edit.SetYAML(path, edit.KV{Path: k, Value: v})
+			}
+			g.forget(w)
+			if err := edit.SetYAML(path, edit.KV{Path: k, Value: v}); err != nil {
+				return err
+			}
+			return dropMagpie(g)
+		}
+		return Field{
+			Key: key, Label: label, Quiet: quiet,
+			Get:       get,
+			Set:       func(v string) error { return set(nil, v) },
+			setRewire: set,
 			Options: func(cur map[string]string) []Option {
 				opts := append(ompOwnOptions(pick("models"), cur[key]), viaMagpie("omp", magpieID+"/")...)
 				// a catalog model with a thinking level is offered as it
@@ -395,9 +403,9 @@ func ompAt(at place, dir string, entry func() ompProviderEntry) *Agent {
 	// enabledModels takes it in, so a model picked for it joins the list
 	// there is (omp_scope.go, #1769); a reset puts back what the user had,
 	// which is theirs to have scoped or not
-	setDefault := roles[0].Set
-	roles[0].Set = func(v string) error {
-		if err := setDefault(v); err != nil || v == "" {
+	setDefault := roles[0].setRewire
+	setDefaultScoped := func(g *rewireGuard, v string) error {
+		if err := setDefault(g, v); err != nil || v == "" {
 			return err
 		}
 		if model, _, one := ompSplit(roleGet("default")()); one && model != "" {
@@ -405,6 +413,8 @@ func ompAt(at place, dir string, entry func() ompProviderEntry) *Agent {
 		}
 		return nil
 	}
+	roles[0].Set = func(v string) error { return setDefaultScoped(nil, v) }
+	roles[0].setRewire = setDefaultScoped
 	// each role but the default one has a thinking level of its own, the
 	// ":level" omp reads off the end of the role's model
 	// (splitThinkingSuffix, resolveModelRoleValue): #1397, the slow role at
@@ -415,6 +425,23 @@ func ompAt(at place, dir string, entry func() ompProviderEntry) *Agent {
 	// the role runs at the session's level
 	fields := []Field{roles[0]}
 	for _, r := range roles[1:] {
+		setThinking := func(g *rewireGuard, v string) error {
+			cur := r.Get()
+			model, _, one := ompSplit(cur)
+			if cur == "" || !one {
+				if v == "" {
+					return nil
+				}
+				return fmt.Errorf("omp's %s role is not on one model: pick its model first", r.Label)
+			}
+			if v != "" && v != "off" && v != "auto" && !slices.Contains(ompEfforts, v) {
+				return fmt.Errorf("%q is not one of omp's thinking levels", v)
+			}
+			if v != "" {
+				model += ":" + v
+			}
+			return r.setRewire(g, model)
+		}
 		fields = append(fields, r, Field{
 			Key: r.Key + "_thinking", Label: r.Label + " thinking", Quiet: true,
 			Get: func() string {
@@ -423,23 +450,8 @@ func ompAt(at place, dir string, entry func() ompProviderEntry) *Agent {
 				}
 				return ""
 			},
-			Set: func(v string) error {
-				cur := r.Get()
-				model, _, one := ompSplit(cur)
-				if cur == "" || !one {
-					if v == "" {
-						return nil
-					}
-					return fmt.Errorf("omp's %s role is not on one model: pick its model first", r.Label)
-				}
-				if v != "" && v != "off" && v != "auto" && !slices.Contains(ompEfforts, v) {
-					return fmt.Errorf("%q is not one of omp's thinking levels", v)
-				}
-				if v != "" {
-					model += ":" + v
-				}
-				return r.Set(model)
-			},
+			Set:       func(v string) error { return setThinking(nil, v) },
+			setRewire: setThinking,
 			Options: func(cur map[string]string) []Option {
 				if _, _, one := ompSplit(cur[r.Key]); cur[r.Key] == "" || !one {
 					return nil
@@ -449,7 +461,8 @@ func ompAt(at place, dir string, entry func() ompProviderEntry) *Agent {
 		})
 	}
 	return &Agent{
-		ID: "omp", Name: "omp", Icon: "omp", Aliases: []string{"oh-my-pi"}, Spelled: prefixed,
+		reapplyRewire: true,
+		ID:            "omp", Name: "omp", Icon: "omp", Aliases: []string{"oh-my-pi"}, Spelled: prefixed,
 		UA:  []string{"oh-my-pi"},
 		Bin: "omp", Dir: dir, Path: path,
 		// a role's thinking level is omp's, after whichever model it is on;
@@ -489,7 +502,9 @@ func ompAt(at place, dir string, entry func() ompProviderEntry) *Agent {
 			if err := ompScopeOnce(path); err != nil {
 				return moved, err
 			}
-			scopeGoneRename(gone, from, to)
+			if err := scopeGoneRename(gone, from, to); err != nil {
+				return false, err
+			}
 			for _, w := range was {
 				s := stashLoad()[w]
 				ns := move(s)
@@ -501,7 +516,9 @@ func ompAt(at place, dir string, entry func() ompProviderEntry) *Agent {
 					ns = string(t)
 				}
 				if ns != s {
-					stash(map[string]string{w: ns})
+					if err := stash(map[string]string{w: ns}); err != nil {
+						return moved, err
+					}
 				}
 			}
 			return moved, nil

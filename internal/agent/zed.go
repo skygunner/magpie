@@ -53,8 +53,57 @@ func zedAtWith(dir, bin string, processes []string) *Agent {
 	get := func(k string) string { v, _ := edit.GetJSON(path, k); return v }
 	model := pairGet(func(k string) (string, bool) { return edit.GetJSON(path, k) }, zedModel+".provider", zedModel+".model")
 	key := "zed:" + path + ":"
+	setModel := func(g *rewireGuard, v string) error {
+		if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+			if err := zedCredential(gatewayV1()); err != nil {
+				return fmt.Errorf("configure Zed gateway credential: %w", err)
+			}
+			if !usesMagpie(model()) {
+				previous := map[string]string{key + "model": get(zedModel)}
+				if get(zedProvider+".api_url") != gatewayV1() {
+					previous[key+"provider"] = get(zedProvider)
+				}
+				if err := g.stash(previous); err != nil {
+					return err
+				}
+			}
+			return edit.SetJSON(path, edit.KV{Path: zedProvider, Value: zedProviderJSON(path)}, edit.KV{Path: zedModel, Value: map[string]string{"provider": magpieID, "model": ref}})
+		}
+		p, m, ok := strings.Cut(v, "/")
+		if v != "" && (!ok || p == "" || m == "") {
+			return fmt.Errorf("expected provider/model, got %q", v)
+		}
+		if get(zedProvider+".api_url") == gatewayV1() || usesMagpie(model()) {
+			for _, entry := range []struct{ name, field string }{{"provider", zedProvider}, {"model", zedModel}} {
+				if entry.name == "model" && !usesMagpie(model()) {
+					g.forget(key + entry.name)
+					continue
+				}
+				was, err := g.unstash(key + entry.name)
+				if err != nil {
+					return err
+				}
+				if was != "" {
+					if err := edit.SetJSON(path, edit.KV{Path: entry.field, Value: json.RawMessage(was)}); err != nil {
+						return err
+					}
+				} else if entry.name == "provider" || usesMagpie(model()) {
+					if err := edit.DelJSON(path, entry.field); err != nil {
+						return err
+					}
+				}
+			}
+		} else if v == "" {
+			return edit.DelJSON(path, zedModel)
+		}
+		if v == "" {
+			return nil
+		}
+		return edit.SetJSON(path, edit.KV{Path: zedModel, Value: map[string]string{"provider": p, "model": m}})
+	}
 	return atomic(&Agent{
-		ID: "zed", Name: "Zed", Icon: "zed", Bin: bin, Dir: dir, Path: path, Spelled: prefixed,
+		reapplyRewire: true,
+		ID:            "zed", Name: "Zed", Icon: "zed", Bin: bin, Dir: dir, Path: path, Spelled: prefixed,
 		UA: []string{"zed"},
 		Notice: func() string {
 			if usesMagpie(model()) && Running(processes...) {
@@ -78,51 +127,8 @@ func zedAtWith(dir, bin string, processes []string) *Agent {
 		},
 		Fields: []Field{{
 			Key: "model", Label: "model", Get: model,
-			Set: func(v string) error {
-				if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-					if err := zedCredential(gatewayV1()); err != nil {
-						return fmt.Errorf("configure Zed gateway credential: %w", err)
-					}
-					if !usesMagpie(model()) {
-						previous := map[string]string{key + "model": get(zedModel)}
-						if get(zedProvider+".api_url") != gatewayV1() {
-							previous[key+"provider"] = get(zedProvider)
-						}
-						stash(previous)
-					}
-					return edit.SetJSON(path,
-						edit.KV{Path: zedProvider, Value: zedProviderJSON(path)},
-						edit.KV{Path: zedModel, Value: map[string]string{"provider": magpieID, "model": ref}})
-				}
-				// Validate a native selection before removing magpie's wiring.
-				p, m, ok := strings.Cut(v, "/")
-				if v != "" && (!ok || p == "" || m == "") {
-					return fmt.Errorf("expected provider/model, got %q", v)
-				}
-				if get(zedProvider+".api_url") == gatewayV1() || usesMagpie(model()) {
-					for _, entry := range []struct{ name, field string }{{"provider", zedProvider}, {"model", zedModel}} {
-						if entry.name == "model" && !usesMagpie(model()) {
-							forget(key + entry.name)
-							continue
-						}
-						if was := unstash(key + entry.name); was != "" {
-							if err := edit.SetJSON(path, edit.KV{Path: entry.field, Value: json.RawMessage(was)}); err != nil {
-								return err
-							}
-						} else if entry.name == "provider" || usesMagpie(model()) {
-							if err := edit.DelJSON(path, entry.field); err != nil {
-								return err
-							}
-						}
-					}
-				} else if v == "" {
-					return edit.DelJSON(path, zedModel)
-				}
-				if v == "" {
-					return nil
-				}
-				return edit.SetJSON(path, edit.KV{Path: zedModel, Value: map[string]string{"provider": p, "model": m}})
-			},
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(cur map[string]string) []Option {
 				var own []Option
 				if v := cur["model"]; v != "" && !usesMagpie(v) {

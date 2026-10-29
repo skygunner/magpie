@@ -23,6 +23,7 @@ import (
 func TestPluginSignInReachesPiModels(t *testing.T) {
 	home := syncHome(t)
 	t.Setenv("MAGPIE_BUN", "")
+	plugin.Told()
 	catalog.Changed = SyncCatalog
 	t.Cleanup(func() { plugin.Told(); catalog.Changed = nil })
 	if err := provider.Save(provider.Provider{ID: "deepseek", Name: "DeepSeek", Chat: "https://api.deepseek.com/v1", Key: "k", Models: []string{"pro"}}); err != nil {

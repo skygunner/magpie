@@ -88,7 +88,8 @@ func openPencil(home, cfg string) *Agent {
 		return openPencilWire(path, openPencilEntry(gateway.URL()))
 	}
 	return atomic(&Agent{
-		ID: "openpencil", Name: "OpenPencil", Icon: "generic", Aliases: []string{"open-pencil", "openpencil-desktop"},
+		reapplyRewire: true,
+		ID:            "openpencil", Name: "OpenPencil", Icon: "generic", Aliases: []string{"open-pencil", "openpencil-desktop"},
 		Dir: dir, Path: path,
 		// its settings folder once it has run, ~/.openpencil once its op
 		// CLI or MCP server has, else its app. No command: op is its CLI's

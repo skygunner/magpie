@@ -67,6 +67,79 @@ func TestStepCodeRegistered(t *testing.T) {
 	}
 }
 
+// A stale rewire cannot replace a newer saved scope.
+func TestStepCodeRewireRejectsConcurrentScope(t *testing.T) {
+	home, _ := museHome(t)
+	at := here(home)
+	oldProvider, oldModel := "native", "original"
+	initial := &stepcodeState{OrigProvider: &oldProvider, OrigModel: &oldModel, LastHasScope: true, LastScope: []string{"native/*"}}
+	if err := stepcodeStoreState(at, initial); err != nil {
+		t.Fatal(err)
+	}
+	baseline, err := loadStepcodeState(at)
+	if err != nil {
+		t.Fatal(err)
+	}
+	concurrent, err := loadStepcodeState(at)
+	if err != nil {
+		t.Fatal(err)
+	}
+	concurrent.LastScope = []string{"native/updated"}
+	if err := stepcodeStoreState(at, concurrent); err != nil {
+		t.Fatal(err)
+	}
+	proposed := *baseline
+	proposed.LastScope = []string{"magpie/model"}
+	guard := &rewireGuard{}
+	if err := stepcodeStoreStateFor(at, &proposed, baseline, guard); err == nil || !guard.blocked {
+		t.Fatal("stale scope update accepted")
+	}
+	current, err := loadStepcodeState(at)
+	if err != nil || !slices.Equal(current.LastScope, []string{"native/updated"}) || stepcodeValue(current.OrigProvider) != "native" || stepcodeValue(current.OrigModel) != "original" {
+		t.Fatalf("concurrent update lost: state=%+v err=%v", current, err)
+	}
+}
+
+// Rewire updates scope bookkeeping without replacing the saved native defaults.
+func TestStepCodeRewireConcurrentStashAndRestore(t *testing.T) {
+	home, _ := museHome(t)
+	dir := filepath.Join(home, ".stepcode")
+	configPath := filepath.Join(dir, "config.toml")
+	stepcodeWriteTestFile(t, configPath, "defaultProvider = \"anthropic\"\ndefaultModel = \"original\"\nenabledModels = [\"anthropic/*\"]\n")
+	stepcodeWriteTestFile(t, filepath.Join(dir, "models.json"), `{"providers":{}}`)
+	setPort(t, 3591)
+	a := stepcode(home)
+	if err := a.Connect(); err != nil {
+		t.Fatal(err)
+	}
+	setPort(t, 3592)
+	f := a.Field("model")
+	original := f.setRewire
+	f.setRewire = func(g *rewireGuard, value string) error {
+		done := make(chan error, 1)
+		go func() { done <- stash(map[string]string{"other.original": "concurrent"}) }()
+		if err := <-done; err != nil {
+			return err
+		}
+		return original(g, value)
+	}
+	moved, errs := setAgain([]*Agent{a})
+	if len(errs) != 0 || len(moved) != 1 || stashLoad()["other.original"] != "concurrent" {
+		t.Fatalf("rewire: moved=%v errors=%v", moved, errs)
+	}
+	state, err := loadStepcodeState(here(home))
+	if err != nil || state == nil || stepcodeValue(state.OrigProvider) != "anthropic" || stepcodeValue(state.OrigModel) != "original" {
+		t.Fatalf("original defaults changed: state=%+v err=%v", state, err)
+	}
+	if err := a.Disconnect(); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := readStepcodeTOML(configPath)
+	if err != nil || stepcodeValue(cfg.Provider) != "anthropic" || stepcodeValue(cfg.Model) != "original" {
+		t.Fatalf("defaults not restored: cfg=%+v err=%v", cfg, err)
+	}
+}
+
 func TestStepCodeLifecycle(t *testing.T) {
 	home, _ := museHome(t)
 	dir := filepath.Join(home, ".stepcode")

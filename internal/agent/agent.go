@@ -95,11 +95,12 @@ type Option struct {
 // the field back to the agent's own default: anything magpie wired in (the
 // gateway as a provider, its model catalog) comes out and the key is removed.
 type Field struct {
-	Key     string
-	Label   string
-	Get     func() string
-	Set     func(string) error
-	Options func(cur map[string]string) []Option
+	Key       string
+	Label     string
+	Get       func() string
+	Set       func(string) error
+	setRewire func(*rewireGuard, string) error
+	Options   func(cur map[string]string) []Option
 	// Quiet fields are left out of listings while empty: they follow
 	// another field until set (Claude Code's per-tier models).
 	Quiet bool
@@ -159,6 +160,14 @@ type Agent struct {
 	// kept: the endpoint, provider and model the user had. Disconnect runs
 	// it before the fields' defaults.
 	Unwire func() error
+	// disconnectConflict detects changes that an unfinished Unwire would overwrite.
+	disconnectConflict func(string) bool
+	// disconnectSnapshot captures settings Unwire can overwrite on retry.
+	disconnectSnapshot func() (string, error)
+	// disconnectUnwired reports that the agent's own restoration is complete.
+	disconnectUnwired func() (bool, error)
+	// disconnectResume handles a verified partial restoration on retry.
+	disconnectResume func(map[string]string, *string) (bool, error)
 	// Restore, for an agent whose files magpie copied aside before its
 	// first write (beforeMagpie), puts them back as they were where what
 	// Disconnect left says the same. Disconnect runs it last.
@@ -168,6 +177,11 @@ type Agent struct {
 	// connects it so, its model left as its own last pick; false where it
 	// can't, and Connect then picks one of magpie's.
 	Join func() (bool, error)
+	// joinRewire carries the stash guard through a rewire-specific join.
+	joinRewire    func(*rewireGuard) (bool, error)
+	reapplyRewire bool
+	// resetRewire resolves a stopped WSL agent's actual route after it starts.
+	resetRewire func(*rewireGuard) error
 	// Joined reports an agent Join connected: magpie is in its config
 	// though no field is on one of magpie's models.
 	Joined func() bool
@@ -735,6 +749,11 @@ func atomic(a *Agent, paths ...string) *Agent {
 		if set := a.Fields[i].Set; set != nil {
 			a.Fields[i].Set = func(v string) error {
 				return edit.Atomically(func() error { return set(v) }, paths...)
+			}
+		}
+		if set := a.Fields[i].setRewire; set != nil {
+			a.Fields[i].setRewire = func(g *rewireGuard, v string) error {
+				return edit.Atomically(func() error { return set(g, v) }, paths...)
 			}
 		}
 	}

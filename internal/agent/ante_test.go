@@ -666,6 +666,14 @@ func TestAnteWriteFailureRollsBothFilesBack(t *testing.T) {
 	if got := readFile(settings); got != beforeSettings {
 		t.Fatalf("settings.json kept half of a change that failed:\n%s\n---\n%s", beforeSettings, got)
 	}
+	writeFile(t, path, `{"providers":{"magpie":{}}}`)
+	if err := f.Set(""); err != nil {
+		t.Fatal(err)
+	}
+	got := anteRead(t, settings)
+	if got["provider"] != "together" || got["model"] != "moonshotai/Kimi-K2-Instruct" {
+		t.Fatalf("retry lost the original provider and model: %v", got)
+	}
 }
 
 // The same pair is written coming the other way: a settings.json that can't be

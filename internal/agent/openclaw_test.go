@@ -2,6 +2,7 @@ package agent
 
 import (
 	"encoding/json"
+	"github.com/yetone/magpie/internal/edit"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -160,6 +161,41 @@ func openClawAt_(m map[string]any, keys ...string) any {
 		v = o[k]
 	}
 	return v
+}
+
+func TestOpenClawRestoreWriteFailureKeepsOriginal(t *testing.T) {
+	if runtime.GOOS == "windows" || os.Geteuid() == 0 {
+		t.Skip("directory permissions cannot force this failure")
+	}
+	home, path := openClawHomeWith(t, openClawConfig)
+	a := openClaw(home)
+	if err := a.Pick("model", "magpie/kimi/k2"); err != nil {
+		t.Fatal(err)
+	}
+	dir := filepath.Dir(path)
+	t.Cleanup(func() { _ = os.Chmod(dir, 0o700) })
+	var chmodErr error
+	err := edit.Filtered(func(p string, b []byte) []byte {
+		if p == path {
+			chmodErr = os.Chmod(dir, 0o500)
+		}
+		return b
+	}, func() error { return a.Field("model").Set("") })
+	if chmodErr != nil {
+		t.Fatal(chmodErr)
+	}
+	if err := os.Chmod(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err == nil {
+		t.Fatal("restore succeeded despite unwritable config directory")
+	}
+	if err := a.Field("model").Set(""); err != nil {
+		t.Fatal(err)
+	}
+	if got := a.Field("model").Get(); got != "deepseek/deepseek-v4-pro" {
+		t.Fatalf("retry lost original model: %q", got)
+	}
 }
 
 // Connecting OpenClaw adds magpie as a provider of its own — the gateway,

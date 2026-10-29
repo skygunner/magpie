@@ -101,8 +101,57 @@ func empryoAt(at place) *Agent {
 		}
 		return edit.SetJSON(path, edit.KV{Path: empryoModel, Value: v})
 	}
+	setModel := func(g *rewireGuard, v string) error {
+		if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+			if !on() {
+				g.forget(keyModel, keyNew)
+				if err := g.stash(map[string]string{keyModel: model()}); err != nil {
+					return err
+				}
+				if !isFile(path) {
+					if err := g.stash(map[string]string{keyNew: "1"}); err != nil {
+						return err
+					}
+				}
+			}
+			if err := providers(true); err != nil {
+				return err
+			}
+			return put(v)
+		}
+		made := false
+		if on() || ours() != "" {
+			new, err := g.unstash(keyNew)
+			if err != nil {
+				return err
+			}
+			made = new != ""
+			if v == "" {
+				kept, err := g.unstash(keyModel)
+				if err != nil {
+					return err
+				}
+				v = kept
+			} else {
+				g.forget(keyModel)
+			}
+			if err := providers(false); err != nil {
+				return err
+			}
+		}
+		if err := put(v); err != nil {
+			return err
+		}
+		if made {
+			if raw, err := edit.Read(path); err == nil && len(gjson.ParseBytes(raw).Map()) == 0 {
+				return edit.Remove(path)
+			}
+		}
+		return nil
+	}
 	return atomic(&Agent{
-		ID: "empryo", Name: "Empryo", Icon: "empryo-color", Aliases: []string{"soulforge"}, Spelled: prefixed, NoNames: true,
+		reapplyRewire: true,
+		ID:            "empryo", Name: "Empryo", Icon: "empryo-color", Aliases: []string{"soulforge"}, Spelled: prefixed, NoNames: true,
 		Bin: "empryo", Dir: dir, Path: path,
 		Notice: func() string {
 			if Running(`(^|/)empryo( |$)`) {
@@ -125,45 +174,9 @@ func empryoAt(at place) *Agent {
 		},
 		Fields: []Field{{
 			Key: "model", Label: "model",
-			Get: model,
-			Set: func(v string) error {
-				if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-					// what the user had, unless magpie stashed it already
-					if !on() {
-						forget(keyModel, keyNew)
-						stash(map[string]string{keyModel: model()})
-						if !isFile(path) {
-							stash(map[string]string{keyNew: "1"})
-						}
-					}
-					if err := providers(true); err != nil {
-						return err
-					}
-					return put(v)
-				}
-				made := false
-				if on() || ours() != "" {
-					made = unstash(keyNew) != ""
-					// back to what the user had
-					if v == "" {
-						v = unstash(keyModel)
-					} else {
-						forget(keyModel)
-					}
-					if err := providers(false); err != nil {
-						return err
-					}
-				}
-				if err := put(v); err != nil {
-					return err
-				}
-				if made {
-					if raw, err := edit.Read(path); err == nil && len(gjson.ParseBytes(raw).Map()) == 0 {
-						return edit.Remove(path)
-					}
-				}
-				return nil
-			},
+			Get:       model,
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(cur map[string]string) []Option {
 				var own []Option
 				if c := cur["model"]; c != "" && !usesMagpie(c) {

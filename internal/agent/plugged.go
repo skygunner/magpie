@@ -12,6 +12,7 @@ package agent
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -257,9 +258,38 @@ func plugged(home string, p *agentplug.Agent) *Agent {
 		v := stashLoad()[key]
 		return st, v != "" && json.Unmarshal([]byte(v), &st) == nil
 	}
-	save := func(st pluggedStash) {
-		b, _ := json.Marshal(st)
-		stash(map[string]string{key: string(b)})
+	save := func(g *rewireGuard, st pluggedStash, baseline string) error {
+		b, err := json.Marshal(st)
+		if err != nil {
+			return err
+		}
+		if g == nil {
+			return stash(map[string]string{key: string(b)})
+		}
+		unlock, err := stashLock()
+		if err != nil {
+			return err
+		}
+		defer unlock()
+		m, err := stepcodeReadStash()
+		if err != nil {
+			return err
+		}
+		if m[key] != baseline || baseline == "" {
+			g.blocked = true
+			return fmt.Errorf("plugin rewire found changed saved originals")
+		}
+		var old pluggedStash
+		if err := json.Unmarshal([]byte(baseline), &old); err != nil {
+			g.blocked = true
+			return fmt.Errorf("plugin rewire cannot read saved originals: %w", err)
+		}
+		if !maps.Equal(st.Had, old.Had) {
+			g.blocked = true
+			return fmt.Errorf("plugin rewire would change saved originals")
+		}
+		m[key] = string(b)
+		return stashWriteGuard(m, nil, nil)
 	}
 	// onMagpie: magpie wrote the file, and the gateway's key it wrote is
 	// still there
@@ -273,7 +303,8 @@ func plugged(home string, p *agentplug.Agent) *Agent {
 	only := d.Model == ""
 	// wire writes ref and connect's keys, stashing what each key had; a
 	// connect-only agent's ref is ""
-	wire := func(ref string) error {
+	wire := func(g *rewireGuard, ref string) error {
+		baseline := stashLoad()[key]
 		var model map[string]any
 		var models []map[string]any
 		for _, m := range magpieModels(id) {
@@ -364,13 +395,15 @@ func plugged(home string, p *agentplug.Agent) *Agent {
 		}
 		st.Ref, st.Mark, st.Value, st.Wrote = ref, mark, gk, strs
 		st.Spec, st.Format = p.Spec, f.format
+		if err := save(g, st, baseline); err != nil {
+			return err
+		}
 		if err := f.del(del); err != nil {
 			return err
 		}
 		if err := f.set(kvs); err != nil {
 			return err
 		}
-		save(st)
 		return nil
 	}
 	get := func() string {
@@ -383,8 +416,9 @@ func plugged(home string, p *agentplug.Agent) *Agent {
 	icon := pluggedIcon(p)
 	a := &Agent{
 		ID: id, Name: d.Name, Icon: icon, Spelled: prefixed,
-		UA:  d.UA,
-		Bin: d.Bin, Path: f.path,
+		reapplyRewire: true,
+		UA:            d.UA,
+		Bin:           d.Bin, Path: f.path,
 		Plugin: p.Spec,
 		Notice: func() string { return d.Notice },
 		Check: func() string {
@@ -407,7 +441,7 @@ func plugged(home string, p *agentplug.Agent) *Agent {
 			Get: get,
 			Set: func(v string) error {
 				if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-					return wire(ref)
+					return wire(nil, ref)
 				}
 				if st, ok := onMagpie(); ok {
 					if err := restore(st); err != nil {
@@ -419,6 +453,12 @@ func plugged(home string, p *agentplug.Agent) *Agent {
 				}
 				return f.set([]edit.KV{{Path: d.Model, Value: v}})
 			},
+			setRewire: func(g *rewireGuard, v string) error {
+				if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+					return wire(g, ref)
+				}
+				return fmt.Errorf("plugin rewire cannot restore saved originals")
+			},
 			Options: func(cur map[string]string) []Option {
 				return append(ownOptions("", cur["model"]), viaMagpie(id, magpieID+"/")...)
 			},
@@ -427,10 +467,15 @@ func plugged(home string, p *agentplug.Agent) *Agent {
 		Sync: func() error {
 			if st, ok := onMagpie(); ok {
 				if v, _ := f.get(d.Model); only || v == d.Prefix+st.Ref {
-					return wire(st.Ref)
+					return wire(nil, st.Ref)
 				}
 			}
 			return nil
+		},
+		disconnectSnapshot: func() (string, error) { return disconnectFileSnapshot(f.path) },
+		disconnectUnwired: func() (bool, error) {
+			v, err := peekStash(key)
+			return v == "" && err == nil, err
 		},
 		Unwire: func() error {
 			if st, ok := onMagpie(); ok {
@@ -452,12 +497,18 @@ func plugged(home string, p *agentplug.Agent) *Agent {
 			},
 			Set: func(v string) error {
 				if v == magpieID {
-					return wire("")
+					return wire(nil, "")
 				}
 				if st, ok := onMagpie(); ok {
 					return restore(st)
 				}
 				return nil
+			},
+			setRewire: func(g *rewireGuard, v string) error {
+				if v == magpieID {
+					return wire(g, "")
+				}
+				return fmt.Errorf("plugin rewire cannot restore saved originals")
 			},
 			Options: func(map[string]string) []Option {
 				return []Option{{Value: magpieID, Label: "magpie", Icon: "magpie"}}

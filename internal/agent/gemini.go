@@ -50,41 +50,59 @@ func geminiIn(at place) *Agent {
 		return ""
 	}
 	// unroute puts back what routing through the gateway replaced
-	unroute := func() error {
-		if !routed() {
-			return nil
-		}
-		if err := edit.DelEnvFile(envPath, "GOOGLE_GEMINI_BASE_URL", "GEMINI_API_KEY"); err != nil {
-			return err
-		}
-		var env []edit.KV
-		if u := unstash(at.key("gemini.base_url")); u != "" {
-			env = append(env, edit.KV{Path: "GOOGLE_GEMINI_BASE_URL", Value: u})
-		}
-		if k := unstash(at.key("gemini.api_key")); k != "" {
-			env = append(env, edit.KV{Path: "GEMINI_API_KEY", Value: k})
-		}
-		if len(env) > 0 {
-			if err := edit.SetEnvFile(envPath, env...); err != nil {
+	unroute := func(force bool) error {
+		return edit.Atomically(func() error {
+			if !force && !routed() {
+				return nil
+			}
+			if err := edit.DelEnvFile(envPath, "GOOGLE_GEMINI_BASE_URL", "GEMINI_API_KEY"); err != nil {
 				return err
 			}
-		}
-		if a := unstash(at.key("gemini.auth")); a != "" {
-			if err := edit.SetJSON(path, edit.KV{Path: "security.auth.selectedType", Value: a}); err != nil {
+			var env []edit.KV
+			u, err := peekStash(at.key("gemini.base_url"))
+			if err != nil {
 				return err
 			}
-		} else if err := edit.DelJSON(path, "security.auth.selectedType"); err != nil {
-			return err
-		}
-		if m := unstash(at.key("gemini.model")); m != "" {
-			return edit.SetJSON(path, edit.KV{Path: "model.name", Value: m})
-		}
-		return delModelName(path)
+			if u != "" {
+				env = append(env, edit.KV{Path: "GOOGLE_GEMINI_BASE_URL", Value: u})
+			}
+			k, err := peekStash(at.key("gemini.api_key"))
+			if err != nil {
+				return err
+			}
+			if k != "" {
+				env = append(env, edit.KV{Path: "GEMINI_API_KEY", Value: k})
+			}
+			if len(env) > 0 {
+				if err := edit.SetEnvFile(envPath, env...); err != nil {
+					return err
+				}
+			}
+			a, err := peekStash(at.key("gemini.auth"))
+			if err != nil {
+				return err
+			}
+			if a != "" {
+				if err := edit.SetJSON(path, edit.KV{Path: "security.auth.selectedType", Value: a}); err != nil {
+					return err
+				}
+			} else if err := edit.DelJSON(path, "security.auth.selectedType"); err != nil {
+				return err
+			}
+			m, err := peekStash(at.key("gemini.model"))
+			if err != nil {
+				return err
+			}
+			if m != "" {
+				return edit.SetJSON(path, edit.KV{Path: "model.name", Value: m})
+			}
+			return delModelName(path)
+		}, envPath, path)
 	}
-	setModel := func(v string) error {
+	setModel := func(g *rewireGuard, v string) error {
 		if v == "" {
 			if routed() {
-				forget(at.key("gemini.base_url"), at.key("gemini.api_key"), at.key("gemini.auth"), at.key("gemini.model"))
+				g.forget(at.key("gemini.base_url"), at.key("gemini.api_key"), at.key("gemini.auth"), at.key("gemini.model"))
 				if err := edit.DelEnvFile(envPath, "GOOGLE_GEMINI_BASE_URL", "GEMINI_API_KEY"); err != nil {
 					return err
 				}
@@ -96,14 +114,16 @@ func geminiIn(at place) *Agent {
 		}
 		if isMagpie(v) {
 			if !routed() {
-				stash(map[string]string{at.key("gemini.base_url"): base(), at.key("gemini.api_key"): envKey(), at.key("gemini.auth"): auth(), at.key("gemini.model"): model()})
+				if err := g.stash(map[string]string{at.key("gemini.base_url"): base(), at.key("gemini.api_key"): envKey(), at.key("gemini.auth"): auth(), at.key("gemini.model"): model()}); err != nil {
+					return err
+				}
 			}
 			if err := edit.SetEnvFile(envPath, edit.KV{Path: "GOOGLE_GEMINI_BASE_URL", Value: at.gw()}, edit.KV{Path: "GEMINI_API_KEY", Value: at.gwKey()}); err != nil {
 				return err
 			}
 			return edit.SetJSON(path, edit.KV{Path: "security.auth.selectedType", Value: "gemini-api-key"}, edit.KV{Path: "model.name", Value: v})
 		}
-		if err := unroute(); err != nil {
+		if err := unroute(false); err != nil {
 			return err
 		}
 		return edit.SetJSON(path, edit.KV{Path: "model.name", Value: v})
@@ -144,7 +164,7 @@ func geminiIn(at place) *Agent {
 		default:
 			return fmt.Errorf("%q is neither one of Gemini CLI's models nor an auth (google, api-key, vertex): nothing was changed", id)
 		}
-		if err := unroute(); err != nil {
+		if err := unroute(false); err != nil {
 			return err
 		}
 		switch id {
@@ -183,11 +203,60 @@ func geminiIn(at place) *Agent {
 
 	return &Agent{
 		ID: "gemini", Name: "Gemini CLI", Icon: "geminicli-color", Aliases: []string{"gemini-cli"}, NoNames: true,
-		UA:  []string{"geminicli", "gemini-cli"},
-		Bin: "gemini", Dir: dir, Path: path,
+		reapplyRewire: true,
+		UA:            []string{"geminicli", "gemini-cli"},
+		Bin:           "gemini", Dir: dir, Path: path,
 		// its model's default forgets what it had before magpie, its
 		// sign-in's default forgets the sign-in: this puts both back
-		Unwire: unroute,
+		Unwire:             func() error { return unroute(false) },
+		disconnectSnapshot: func() (string, error) { return disconnectFileSnapshot(path) },
+		disconnectResume: func(before map[string]string, snapshot *string) (bool, error) {
+			if snapshot == nil {
+				return false, nil
+			}
+			current, err := disconnectFileSnapshot(path)
+			if err != nil {
+				return false, err
+			}
+			if current != *snapshot {
+				return false, nil
+			}
+			if routed() || base() != "" || envKey() != "" {
+				return false, nil
+			}
+			if auth() != "gemini-api-key" || model() != before["model"] {
+				return false, nil
+			}
+			if err := unroute(true); err != nil {
+				return false, err
+			}
+			return true, nil
+		},
+		disconnectUnwired: func() (bool, error) {
+			if routed() {
+				return false, nil
+			}
+			u, err := peekStash(at.key("gemini.base_url"))
+			if err != nil {
+				return false, err
+			}
+			k, err := peekStash(at.key("gemini.api_key"))
+			if err != nil {
+				return false, err
+			}
+			a, err := peekStash(at.key("gemini.auth"))
+			if err != nil {
+				return false, err
+			}
+			m, err := peekStash(at.key("gemini.model"))
+			if err != nil {
+				return false, err
+			}
+			if base() == u && envKey() == k && auth() == a && model() == m {
+				return true, nil
+			}
+			return false, fmt.Errorf("Gemini CLI disconnect is incomplete or settings changed; back up %s, %s and %s, restore the original settings manually, then remove only %q from the stash", path, envPath, stashPath(), at.key("gemini.disconnect.pending"))
+		},
 		// Gemini CLI is its binary. What it leaves in ~/.gemini stays when it
 		// is uninstalled (#230), and Antigravity keeps its folders there too
 		// (antigravity, antigravity-cli, config) and reads GEMINI.md (#330),
@@ -251,8 +320,9 @@ func geminiIn(at place) *Agent {
 			},
 			{
 				Key: "model", Label: "model",
-				Get: model,
-				Set: setModel,
+				Get:       model,
+				Set:       func(v string) error { return setModel(nil, v) },
+				setRewire: setModel,
 				Options: func(map[string]string) []Option {
 					var ms []catalog.Model
 					for _, m := range catalog.Provider("google") {

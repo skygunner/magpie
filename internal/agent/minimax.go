@@ -110,8 +110,51 @@ func miniMaxAt(at place, dir string) *Agent {
 		}
 		return edit.SetYAML(path, kvs...)
 	}
+	setModel := func(g *rewireGuard, v string) error {
+		if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+			if !onMagpie() {
+				if err := g.stash(map[string]string{key + "defaultModel": get("defaultModel"), key + "defaultModelVariant": get("defaultModelVariant")}); err != nil {
+					return err
+				}
+			}
+			if err := writeMiniMaxEntry(path); err != nil {
+				return err
+			}
+			return setDefault(mcodeProvider+"/"+mcodeKey(provider.Flattened(), ref), "")
+		}
+		variant := ""
+		if onMagpie() {
+			was, err := g.unstash(key + "defaultModel")
+			if err != nil {
+				return err
+			}
+			wasVariant, err := g.unstash(key + "defaultModelVariant")
+			if err != nil {
+				return err
+			}
+			if v == "" {
+				v = was
+			}
+			if v == was {
+				variant = wasVariant
+			}
+		} else if v == get("defaultModel") {
+			variant = get("defaultModelVariant")
+		}
+		if err := setDefault(v, variant); err != nil {
+			return err
+		}
+		if err := edit.DelYAML(path, mcodeEntry); err != nil {
+			return err
+		}
+		if t, ok := edit.GetYAMLText(path, "custom_provider"); ok && strings.TrimSpace(t) == "{}" {
+			return edit.DelYAML(path, "custom_provider")
+		}
+		return nil
+	}
 	return atomic(&Agent{
-		ID: "minimax-code", Name: "MiniMax Code", Icon: "minimax-color", Aliases: []string{"mcode"}, Spelled: prefixed,
+		reapplyRewire: true,
+		ID:            "minimax-code", Name: "MiniMax Code", Icon: "minimax-color", Aliases: []string{"mcode"}, Spelled: prefixed,
 		UA:  []string{mcodeUA, "minimaxcode"},
 		Bin: "mcode", Dir: dir, Path: path,
 		Sync: func() error {
@@ -148,45 +191,8 @@ func miniMaxAt(at place, dir string) *Agent {
 				}
 				return v
 			},
-			Set: func(v string) error {
-				if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-					if !onMagpie() {
-						stash(map[string]string{
-							key + "defaultModel":        get("defaultModel"),
-							key + "defaultModelVariant": get("defaultModelVariant"),
-						})
-					}
-					if err := writeMiniMaxEntry(path); err != nil {
-						return err
-					}
-					// a variant is the last model's ("thinking"), none of magpie's
-					return setDefault(mcodeProvider+"/"+mcodeKey(provider.Flattened(), ref), "")
-				}
-				// the variant goes with the model it was picked for
-				variant := ""
-				if onMagpie() {
-					was, wasVariant := unstash(key+"defaultModel"), unstash(key+"defaultModelVariant")
-					if v == "" {
-						v = was // back to the default the user had
-					}
-					if v == was {
-						variant = wasVariant
-					}
-				} else if v == get("defaultModel") {
-					variant = get("defaultModelVariant")
-				}
-				if err := setDefault(v, variant); err != nil {
-					return err
-				}
-				if err := edit.DelYAML(path, mcodeEntry); err != nil {
-					return err
-				}
-				// nor an empty custom_provider left where magpie's was the one
-				if t, ok := edit.GetYAMLText(path, "custom_provider"); ok && strings.TrimSpace(t) == "{}" {
-					return edit.DelYAML(path, "custom_provider")
-				}
-				return nil
-			},
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(cur map[string]string) []Option {
 				return append(miniMaxOwnOptions(path, cur["model"]), viaMagpie("minimax-code", magpieID+"/")...)
 			},

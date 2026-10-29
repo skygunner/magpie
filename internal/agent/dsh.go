@@ -106,8 +106,21 @@ func dshAt(at place) *Agent {
 	} else if desktop() {
 		path = dshDesktopFile(dir)
 	}
+	setModel := func(g *rewireGuard, v string) error {
+		// the desktop app not opened yet: its profile is made as
+		// it makes it, and it keeps the patch list it finds (#2279)
+		if v != "" && len(dshProfiles(dir)) == 0 && desktop() {
+			if err := dshMakeDesktop(dir); err != nil {
+				return err
+			}
+		}
+		return dshSet(g, dir, v, gw())
+
+	}
+
 	return &Agent{
-		ID: "dsh", Name: "DeepSeek Harness", Icon: "deepseek-color", Aliases: []string{"deepseek-harness"}, Spelled: prefixed,
+		reapplyRewire: true,
+		ID:            "dsh", Name: "DeepSeek Harness", Icon: "deepseek-color", Aliases: []string{"deepseek-harness"}, Spelled: prefixed,
 		UA:  []string{"deepseek-harness"},
 		Bin: "dsh", Dir: dir, Path: path,
 		// the desktop app installed and not opened yet has no ~/.dsh (#2279)
@@ -160,30 +173,22 @@ func dshAt(at place) *Agent {
 				if err := dshKeepPick(f); err != nil {
 					return err
 				}
-				if err := dshSetFile(f, "", true, nil, gw()); err != nil {
+				if err := dshSetFile(nil, f, "", true, nil, gw()); err != nil {
 					return err
 				}
 			}
-			if err := dshMirrorHome(dir, nil, gw(), true); err != nil {
+			if err := dshMirrorHome(nil, dir, nil, gw(), true); err != nil {
 				return err
 			}
-			return dshEnv(dir, gw(), false, false)
+			return dshEnv(nil, dir, gw(), false, false)
 		},
 		// what magpie made for a desktop app never opened goes (#2279)
 		Restore: func() error { return dshTidyUnopened(dir) },
 		Fields: []Field{{
 			Key: "model", Label: "model",
-			Get: func() string { return dshGet(dir) },
-			Set: func(v string) error {
-				// the desktop app not opened yet: its profile is made as
-				// it makes it, and it keeps the patch list it finds (#2279)
-				if v != "" && len(dshProfiles(dir)) == 0 && desktop() {
-					if err := dshMakeDesktop(dir); err != nil {
-						return err
-					}
-				}
-				return dshSet(dir, v, gw())
-			},
+			Get:       func() string { return dshGet(dir) },
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(map[string]string) []Option {
 				own := append([]Option{}, dshModels...)
 				// since 0.1.5 dsh's own go to DeepSeek on its own key, its
@@ -202,8 +207,9 @@ func dshAt(at place) *Agent {
 			// own levels), llm-deepseek's before (off, low, high or max;
 			// dsh's own default is high)
 			Key: "effort", Label: "thinking",
-			Get: func() string { return dshGetEffort(dir) },
-			Set: func(v string) error { return dshSetEffort(dir, v, gw()) },
+			Get:       func() string { return dshGetEffort(dir) },
+			Set:       func(v string) error { return dshSetEffort(nil, dir, v, gw()) },
+			setRewire: func(g *rewireGuard, v string) error { return dshSetEffort(g, dir, v, gw()) },
 			Options: func(cur map[string]string) []Option {
 				// a model through magpie that lists no levels has none in
 				// dsh (its route gives it no reasoningEfforts), so none is
@@ -372,7 +378,7 @@ func dshHomeHas(dir, id string) bool {
 // have is not added: the profiles' own then apply, as written. start is
 // true only for an explicit model pick or disconnect. Catalog refreshes
 // leave the home layer's start model alone, as they do the profiles'.
-func dshMirrorHome(dir string, models []catalog.Model, gw string, start bool) error {
+func dshMirrorHome(g *rewireGuard, dir string, models []catalog.Model, gw string, start bool) error {
 	files := dshProfiles(dir)
 	if len(files) == 0 {
 		return nil
@@ -405,12 +411,18 @@ func dshMirrorHome(dir string, models []catalog.Model, gw string, start bool) er
 		switch {
 		case j >= 0 && dshOurs(web[j]):
 			if !dshOurs(items[i]) {
-				stash(map[string]string{dshStashKey(home, "agent-default-model"): strings.Join(items[i].lines, "\n")})
+				if err := g.stash(map[string]string{dshStashKey(home, "agent-default-model"): strings.Join(items[i].lines, "\n")}); err != nil {
+					return err
+				}
 			}
 			items[i] = dshItem{id: "agent-default-model", magpie: true, lines: append([]string{}, web[j].lines...)}
 		case dshOurs(items[i]):
 			// magpie's start gone from the profiles: the user's back, or none
-			if old := unstash(dshStashKey(home, "agent-default-model")); old != "" {
+			old, err := g.unstash(dshStashKey(home, "agent-default-model"))
+			if err != nil {
+				return err
+			}
+			if old != "" {
 				items[i] = dshItem{id: "agent-default-model", lines: strings.Split(old, "\n")}
 			} else {
 				items = append(items[:i], items[i+1:]...)
@@ -942,7 +954,7 @@ var dshWrites sync.Mutex
 // dshSet writes v as the model new sessions start on: a catalog model
 // through the gateway, one of dsh's own models directly, or "" for dsh's own
 // default. Every profile gets it; config.yaml only where there are none.
-func dshSet(dir, v, gw string) error {
+func dshSet(g *rewireGuard, dir, v, gw string) error {
 	dshWrites.Lock()
 	defer dshWrites.Unlock()
 	ref, viaGateway := strings.CutPrefix(v, magpieID+"/")
@@ -953,23 +965,23 @@ func dshSet(dir, v, gw string) error {
 	models := magpieModels("dsh")
 	files := dshProfiles(dir)
 	if len(files) == 0 {
-		return dshSetFile(legacy, v, false, models, gw)
+		return dshSetFile(g, legacy, v, false, models, gw)
 	}
 	for _, f := range files {
-		if err := dshSetFile(f, v, true, models, gw); err != nil {
+		if err := dshSetFile(g, f, v, true, models, gw); err != nil {
 			return err
 		}
 	}
-	if err := dshMirrorHome(dir, models, gw, true); err != nil {
+	if err := dshMirrorHome(g, dir, models, gw, true); err != nil {
 		return err
 	}
 	// what an older dsh was given is no use now
 	if _, err := os.Stat(legacy); err == nil {
-		if err := dshSetFile(legacy, "", false, models, gw); err != nil {
+		if err := dshSetFile(g, legacy, "", false, models, gw); err != nil {
 			return err
 		}
 	}
-	if err := dshEnv(dir, gw, viaGateway, true); err != nil {
+	if err := dshEnv(g, dir, gw, viaGateway, true); err != nil {
 		return err
 	}
 	// a model picked in dsh 0.1.x is saved in its settings and goes over
@@ -1006,15 +1018,17 @@ func dshKeepPick(f string) error {
 	lines := append([]string{}, items[i].lines...)
 	lines[0] = strings.TrimRight(strings.Replace(lines[0], dshMark, "", 1), " ")
 	items[i] = dshItem{id: items[i].id, lines: lines}
-	unstash(dshStashKey(f, "agent-default-model"))
+	if _, err := unstash(dshStashKey(f, "agent-default-model")); err != nil {
+		return err
+	}
 	return dshWrite(f, head, items)
 }
 
 // dshEnv puts the key for the gateway in $DSH_HOME/.env and dsh's own key
 // store, or with on false takes it out; the name magpie's llm-deepseek entry
 // used goes either way.
-func dshEnv(dir, gw string, on, take bool) error {
-	if err := dshCreds(dir, gw, on, take); err != nil {
+func dshEnv(g *rewireGuard, dir, gw string, on, take bool) error {
+	if err := dshCreds(g, dir, gw, on, take); err != nil {
 		return err
 	}
 	env := filepath.Join(dir, ".env")
@@ -1051,7 +1065,7 @@ func dshEnv(dir, gw string, on, take bool) error {
 // dsh refuses a store any other user can read, so a new one is made
 // owner-only; one in a layout other than version 1 is dsh's to move and
 // isn't touched.
-func dshCreds(dir, gw string, on, take bool) error {
+func dshCreds(g *rewireGuard, dir, gw string, on, take bool) error {
 	creds := filepath.Join(dir, ".credentials.yaml")
 	raw, err := os.ReadFile(creds)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
@@ -1069,7 +1083,9 @@ func dshCreds(dir, gw string, on, take bool) error {
 			if !take || gatewayTakes(v) || onAnotherMachine(gw) {
 				return nil
 			}
-			stash(map[string]string{dshStashKey(creds, dshKeyRef): v})
+			if err := g.stash(map[string]string{dshStashKey(creds, dshKeyRef): v}); err != nil {
+				return err
+			}
 		}
 		if len(bytes.TrimSpace(raw)) == 0 {
 			if err := os.MkdirAll(dir, 0o755); err != nil {
@@ -1088,7 +1104,11 @@ func dshCreds(dir, gw string, on, take bool) error {
 			}
 		}
 	}
-	if v := unstash(dshStashKey(creds, dshKeyRef)); v != "" {
+	v, err := g.unstash(dshStashKey(creds, dshKeyRef))
+	if err != nil {
+		return err
+	}
+	if v != "" {
 		if _, ok := edit.GetYAML(creds, "refs."+dshKeyRef); !ok {
 			return edit.SetYAML(creds, edit.KV{Path: "refs." + dshKeyRef, Value: v})
 		}
@@ -1115,7 +1135,7 @@ func dshCredsOurs(creds string) bool {
 
 // dshSetFile writes v into one patch list; modern is the layout of dsh
 // 0.1.5 on.
-func dshSetFile(path, v string, modern bool, models []catalog.Model, gw string) error {
+func dshSetFile(g *rewireGuard, path, v string, modern bool, models []catalog.Model, gw string) error {
 	head, items, err := dshRead(path)
 	if err != nil {
 		return err
@@ -1127,10 +1147,12 @@ func dshSetFile(path, v string, modern bool, models []catalog.Model, gw string) 
 	} else {
 		effort = dshEffortIn(items)
 	}
-	put := func(id string, lines []string) {
+	put := func(id string, lines []string) error {
 		i := dshFind(items, id)
 		if i >= 0 && !dshOurs(items[i]) {
-			stash(map[string]string{dshStashKey(path, id): strings.Join(items[i].lines, "\n")})
+			if err := g.stash(map[string]string{dshStashKey(path, id): strings.Join(items[i].lines, "\n")}); err != nil {
+				return err
+			}
 		}
 		it := dshItem{id: id, magpie: true, lines: lines}
 		if i >= 0 {
@@ -1138,25 +1160,32 @@ func dshSetFile(path, v string, modern bool, models []catalog.Model, gw string) 
 		} else {
 			items = append(items, it)
 		}
+		return nil
 	}
-	drop := func(id string) {
+	drop := func(id string) error {
 		i := dshFind(items, id)
 		if i < 0 || !dshOurs(items[i]) {
-			return
+			return nil
 		}
-		if old := unstash(dshStashKey(path, id)); old != "" {
+		old, err := g.unstash(dshStashKey(path, id))
+		if err != nil {
+			return err
+		}
+		if old != "" {
 			items[i] = dshItem{id: id, lines: strings.Split(old, "\n")}
-			return
+			return nil
 		}
 		items = append(items[:i], items[i+1:]...)
+		return nil
 	}
 
 	switch {
 	case v == "":
-		drop("agent-default-model")
-		drop("api-gateway")
-		drop("agent-loop")
-		drop("llm-deepseek")
+		for _, id := range []string{"agent-default-model", "api-gateway", "agent-loop", "llm-deepseek"} {
+			if err := drop(id); err != nil {
+				return err
+			}
+		}
 		if items, err = dshPutRoute(items, false, nil, gw); err != nil {
 			return err
 		}
@@ -1164,17 +1193,23 @@ func dshSetFile(path, v string, modern bool, models []catalog.Model, gw string) 
 			items = dshPutSearch(items, dshProfileHome(path), "", gw)
 		}
 	case modern && viaGateway:
-		drop("llm-deepseek") // magpie's before it was a provider of its own
+		if err := drop("llm-deepseek"); err != nil { // magpie's before it was a provider of its own
+			return err
+		}
 		if items, err = dshPutRoute(items, true, models, gw); err != nil {
 			return err
 		}
 		if !contains(dshLevels(ref), effort) {
 			effort = ""
 		}
-		put("agent-default-model", dshDefaultLines(dshRouteFor(ref, models), ref, effort))
+		if err := put("agent-default-model", dshDefaultLines(dshRouteFor(ref, models), ref, effort)); err != nil {
+			return err
+		}
 		items = dshPutSearch(items, dshProfileHome(path), dshSearchModel(ref), gw)
 	case modern:
-		drop("llm-deepseek")
+		if err := drop("llm-deepseek"); err != nil {
+			return err
+		}
 		if items, err = dshPutRoute(items, false, nil, gw); err != nil {
 			return err
 		}
@@ -1182,15 +1217,29 @@ func dshSetFile(path, v string, modern bool, models []catalog.Model, gw string) 
 		if !contains(dshEfforts, effort) {
 			effort = ""
 		}
-		put("agent-default-model", dshDefaultLines("deepseek-official", v, effort))
+		if err := put("agent-default-model", dshDefaultLines("deepseek-official", v, effort)); err != nil {
+			return err
+		}
 	case viaGateway:
-		put("llm-deepseek", dshProviderLines(effort, models, gw))
-		put("agent-loop", dshLoopLines(ref))
-		put("api-gateway", dshRouteLines(ref))
+		if err := put("llm-deepseek", dshProviderLines(effort, models, gw)); err != nil {
+			return err
+		}
+		if err := put("agent-loop", dshLoopLines(ref)); err != nil {
+			return err
+		}
+		if err := put("api-gateway", dshRouteLines(ref)); err != nil {
+			return err
+		}
 	default:
-		drop("api-gateway")
-		drop("llm-deepseek")
-		put("agent-loop", dshLoopLines(v))
+		if err := drop("api-gateway"); err != nil {
+			return err
+		}
+		if err := drop("llm-deepseek"); err != nil {
+			return err
+		}
+		if err := put("agent-loop", dshLoopLines(v)); err != nil {
+			return err
+		}
 	}
 	return dshWrite(path, head, items)
 }
@@ -1710,7 +1759,7 @@ func dshSync(dir, gw string) error {
 	defer func() {
 		// the key under the name the route gives it, moved from the old one
 		if _, items, err := dshRead(files[0]); err == nil && dshWired(items) {
-			dshEnv(dir, gw, true, false)
+			dshEnv(nil, dir, gw, true, false)
 		}
 	}()
 	for _, f := range files {
@@ -1734,7 +1783,7 @@ func dshSync(dir, gw string) error {
 	if err := dshFillNewProfiles(files, models, gw); err != nil {
 		return err
 	}
-	return dshMirrorHome(dir, models, gw, false)
+	return dshMirrorHome(nil, dir, models, gw, false)
 }
 
 // dshStartsOnMagpie reports whether the model a profile's sessions start on
@@ -2068,7 +2117,11 @@ func dshMove(f string, items []dshItem, models []catalog.Model, gw string) error
 		if err != nil {
 			return err
 		}
-		if old := unstash(dshStashKey(f, "llm-deepseek")); old != "" {
+		old, err := unstash(dshStashKey(f, "llm-deepseek"))
+		if err != nil {
+			return err
+		}
+		if old != "" {
 			items[dshFind(items, "llm-deepseek")] = dshItem{id: "llm-deepseek", lines: strings.Split(old, "\n")}
 		} else {
 			i := dshFind(items, "llm-deepseek")
@@ -2076,7 +2129,7 @@ func dshMove(f string, items []dshItem, models []catalog.Model, gw string) error
 		}
 		return dshWrite(f, head, items)
 	}
-	return dshSetFile(f, magpieID+"/"+model, true, models, gw)
+	return dshSetFile(nil, f, magpieID+"/"+model, true, models, gw)
 }
 
 // dshSyncLegacy is dshSync on a config.yaml before 0.1.5.
@@ -2134,7 +2187,7 @@ func dshFillNewProfiles(files []string, models []catalog.Model, gw string) error
 			continue
 		}
 		if i := dshFind(items, "agent-default-model"); i < 0 || dshOurs(items[i]) {
-			if err := dshSetFile(f, magpieID+"/"+model, true, models, gw); err != nil {
+			if err := dshSetFile(nil, f, magpieID+"/"+model, true, models, gw); err != nil {
 				return err
 			}
 			continue
@@ -2214,7 +2267,7 @@ func dshGetEffort(dir string) string {
 // dshSetEffort writes v as the effort sessions start with: into
 // agent-default-model (0.1.5 on), or into magpie's llm-deepseek entry
 // before, dsh's own row being used whole when there is none.
-func dshSetEffort(dir, v, gw string) error {
+func dshSetEffort(g *rewireGuard, dir, v, gw string) error {
 	dshWrites.Lock()
 	defer dshWrites.Unlock()
 	files := dshProfiles(dir)
@@ -2264,7 +2317,9 @@ func dshSetEffort(dir, v, gw string) error {
 				i = dshFindLast(items, "agent-default-model")
 			}
 			if i >= 0 && !dshOurs(items[i]) {
-				stash(map[string]string{dshStashKey(f, "agent-default-model"): strings.Join(items[i].lines, "\n")})
+				if err := g.stash(map[string]string{dshStashKey(f, "agent-default-model"): strings.Join(items[i].lines, "\n")}); err != nil {
+					return err
+				}
 			}
 			it := dshItem{id: "agent-default-model", magpie: true, lines: dshDefaultLines(p, m, v)}
 			if i >= 0 {

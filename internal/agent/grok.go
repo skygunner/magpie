@@ -190,7 +190,7 @@ func grokIn(at place) *Agent {
 	// keyWindows is the context_window magpie last gave each of its models,
 	// so one the user set by hand since is told from it and kept
 	keyWindows := "grok:" + path + ":windows"
-	writeMagpie := func() error {
+	writeMagpie := func(g *rewireGuard) error {
 		had, err := grokWindowsIn(path)
 		if err != nil {
 			return err
@@ -206,15 +206,17 @@ func grokIn(at place) *Agent {
 		}
 		if !maps.Equal(gave, wrote) || saved == "" {
 			b, _ := json.Marshal(gave)
-			stash(map[string]string{keyWindows: string(b)})
+			if err := g.stash(map[string]string{keyWindows: string(b)}); err != nil {
+				return err
+			}
 		}
 		return nil
 	}
-	dropMagpie := func() error {
+	dropMagpie := func(g *rewireGuard) error {
 		if err := edit.SetTOMLTables(path, []string{grokModelTable}, nil); err != nil {
 			return err
 		}
-		forget(keyWindows)
+		g.forget(keyWindows)
 		return nil
 	}
 	// the default model is the user's, not a campaign's
@@ -232,8 +234,50 @@ func grokIn(at place) *Agent {
 		}
 		return catalog.Efforts(magpieModels("grok"), ref)
 	}
+	setModel := func(g *rewireGuard, v string) error {
+		e, err := get("default_reasoning_effort")
+		if err != nil {
+			return err
+		}
+		features, err := edit.GetTOMLTable(path, "features")
+		if err != nil {
+			return err
+		}
+		if v == "" {
+			if err := edit.DelTOMLKey(path, "models", "default"); err != nil {
+				return err
+			}
+			if err := edit.DelTOMLKey(path, "features", "campaigns"); err != nil {
+				return err
+			}
+			return dropMagpie(g)
+		}
+		if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+			if err := writeMagpie(g); err != nil {
+				return err
+			}
+		} else if err := dropMagpie(g); err != nil {
+			return err
+		}
+		if e != "" {
+			if es := efforts(v); es != nil && !contains(es, e) {
+				if n := catalog.NearestEffort(e, es); contains(es, n) {
+					if err := edit.SetTOMLKey(path, "models", "default_reasoning_effort", n); err != nil {
+						return err
+					}
+				} else if err := edit.DelTOMLKey(path, "models", "default_reasoning_effort"); err != nil {
+					return err
+				}
+			}
+		}
+		if err := ownDefault(features); err != nil {
+			return err
+		}
+		return edit.SetTOMLKey(path, "models", "default", v)
+	}
 	return atomic(&Agent{
-		ID: "grok", Name: "Grok Build", Icon: "xai", Aliases: []string{"grok-build", "grok-cli"}, Spelled: prefixed,
+		reapplyRewire: true,
+		ID:            "grok", Name: "Grok Build", Icon: "xai", Aliases: []string{"grok-build", "grok-cli"}, Spelled: prefixed,
 		UA:  []string{"grok-shell", "grok-pager", "xai-grok-build"}, // grok-pager: its terminal front end
 		Dir: dir, Path: path,
 		Sync: func() error {
@@ -254,7 +298,7 @@ func grokIn(at place) *Agent {
 					return err
 				}
 			}
-			return writeMagpie()
+			return writeMagpie(nil)
 		},
 		Notice: func() string {
 			if Running(`(^|/)grok( |$)`) {
@@ -283,52 +327,9 @@ func grokIn(at place) *Agent {
 		Fields: []Field{
 			{
 				Key: "model", Label: "model",
-				Get: func() string { v, _ := get("default"); return v },
-				Set: func(v string) error {
-					e, err := get("default_reasoning_effort")
-					if err != nil {
-						return err
-					}
-					features, err := edit.GetTOMLTable(path, "features")
-					if err != nil {
-						return err
-					}
-					if v == "" {
-						if err := edit.DelTOMLKey(path, "models", "default"); err != nil {
-							return err
-						}
-						if err := edit.DelTOMLKey(path, "features", "campaigns"); err != nil {
-							return err
-						}
-						return dropMagpie()
-					}
-					if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-						if err := writeMagpie(); err != nil {
-							return err
-						}
-					} else if err := dropMagpie(); err != nil {
-						return err
-					}
-					if e != "" {
-						// a model without the chosen effort starts at its
-						// nearest one (a tie goes up), not at Grok's default:
-						// switching to a group of low/medium/high from xhigh
-						// keeps high (Creat.wu on Discord)
-						if es := efforts(v); es != nil && !contains(es, e) {
-							if n := catalog.NearestEffort(e, es); contains(es, n) {
-								if err := edit.SetTOMLKey(path, "models", "default_reasoning_effort", n); err != nil {
-									return err
-								}
-							} else if err := edit.DelTOMLKey(path, "models", "default_reasoning_effort"); err != nil {
-								return err
-							}
-						}
-					}
-					if err := ownDefault(features); err != nil {
-						return err
-					}
-					return edit.SetTOMLKey(path, "models", "default", v)
-				},
+				Get:       func() string { v, _ := get("default"); return v },
+				Set:       func(v string) error { return setModel(nil, v) },
+				setRewire: setModel,
 				Options: func(cur map[string]string) []Option {
 					// magpie's rows for the account Grok Build is signed in
 					// to are its own models a second time: they fold into

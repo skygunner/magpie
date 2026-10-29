@@ -272,8 +272,52 @@ func agyIn(at place) *Agent {
 		}
 		return agyLaunchAt(gw(), key(), model, false)
 	}
+	setModel := func(g *rewireGuard, v string) error {
+		cur := get()
+		if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+			if !usesMagpie(cur) {
+				if err := g.stash(map[string]string{stashModel: cur, stashProvider: provider()}); err != nil {
+					return err
+				}
+			}
+			if err := setModels(true); err != nil {
+				return err
+			}
+			if err := edit.SetJSON(path, edit.KV{Path: "modelProvider", Value: "gemini"}, edit.KV{Path: "model", Value: v}); err != nil {
+				return err
+			}
+			shell(true)
+			return nil
+		}
+		if usesMagpie(cur) {
+			if v == "" {
+				was, err := g.unstash(stashModel)
+				if err != nil {
+					return err
+				}
+				v = was
+			} else {
+				g.forget(stashModel)
+			}
+			was, err := g.unstash(stashProvider)
+			if err != nil {
+				return err
+			}
+			if err := put("modelProvider", was); err != nil {
+				return err
+			}
+		}
+		if err := put("model", v); err != nil {
+			return err
+		}
+		if usesMagpie(cur) {
+			shell(false)
+		}
+		return setModels(false)
+	}
 	return &Agent{
-		ID: "agy", Name: "Antigravity CLI", Icon: "antigravity-color", Aliases: []string{"antigravity-cli"}, Spelled: prefixed, NoNames: true,
+		reapplyRewire: true,
+		ID:            "agy", Name: "Antigravity CLI", Icon: "antigravity-color", Aliases: []string{"antigravity-cli"}, Spelled: prefixed, NoNames: true,
 		Bin: "agy", Dir: dir, Path: path,
 		Launch: func() string {
 			if v := get(); usesMagpie(v) {
@@ -336,41 +380,9 @@ func agyIn(at place) *Agent {
 		},
 		Fields: []Field{{
 			Key: "model", Label: "model",
-			Get: get,
-			Set: func(v string) error {
-				cur := get()
-				if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-					if !usesMagpie(cur) {
-						stash(map[string]string{stashModel: cur, stashProvider: provider()})
-					}
-					if err := setModels(true); err != nil {
-						return err
-					}
-					if err := edit.SetJSON(path, edit.KV{Path: "modelProvider", Value: "gemini"}, edit.KV{Path: "model", Value: v}); err != nil {
-						return err
-					}
-					shell(true)
-					return nil
-				}
-				if usesMagpie(cur) {
-					// back to what the user had
-					if v == "" {
-						v = unstash(stashModel)
-					} else {
-						forget(stashModel)
-					}
-					if err := put("modelProvider", unstash(stashProvider)); err != nil {
-						return err
-					}
-				}
-				if err := put("model", v); err != nil {
-					return err
-				}
-				if usesMagpie(cur) {
-					shell(false)
-				}
-				return setModels(false)
-			},
+			Get:       get,
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(cur map[string]string) []Option {
 				custom := agyCustom(path)
 				// its own say they go to their provider, not through magpie,

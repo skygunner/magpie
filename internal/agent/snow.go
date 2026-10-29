@@ -141,7 +141,7 @@ func snowIn(at place) *Agent {
 
 	// write makes magpie.json for the model ref, from the profile the user
 	// is on (base) where there is one, and points it at the gateway
-	write := func(ref, base string) error {
+	write := func(g *rewireGuard, ref, base string) error {
 		var raw []byte
 		var wrote map[string]any
 		mine := false
@@ -165,16 +165,22 @@ func snowIn(at place) *Agent {
 			return err
 		}
 		b, _ := json.Marshal(now)
-		stash(map[string]string{keyWrote: string(b)})
+		if err := g.stash(map[string]string{keyWrote: string(b)}); err != nil {
+			return err
+		}
 		return nil
 	}
 
 	// leave puts Snow back on the profile the user had (to, or the stashed
 	// one), takes magpie.json away (or puts back the user's own of that
 	// name), and copies the profile it is on to config.json
-	leave := func(to string) error {
-		was, none := unstash(keyActive), stashLoad()[keyNone] != ""
-		forget(keyNone, keyWrote)
+	leave := func(g *rewireGuard, to string) error {
+		was, err := g.unstash(keyActive)
+		if err != nil {
+			return err
+		}
+		none := stashLoad()[keyNone] != ""
+		g.forget(keyNone, keyWrote)
 		// a profile asked for by name is made the active one; else the one
 		// the user was on, or none at all when Snow had no active file
 		if to == "" && !none {
@@ -194,7 +200,11 @@ func snowIn(at place) *Agent {
 				return err
 			}
 		}
-		if had := unstash(keyHad); had != "" {
+		had, err := g.unstash(keyHad)
+		if err != nil {
+			return err
+		}
+		if had != "" {
 			if err := edit.WriteAtomic(ours, []byte(had)); err != nil {
 				return err
 			}
@@ -217,8 +227,78 @@ func snowIn(at place) *Agent {
 		return nil
 	}
 
+	setModel := func(g *rewireGuard, v string) error {
+		ref, through := strings.CutPrefix(v, magpieID+"/")
+		if through && !isMagpie(ref) {
+			return fmt.Errorf("%s isn't a model in magpie's catalog (magpie models snow lists them)", ref)
+		}
+		if through {
+			base := active()
+			if !onOurs() {
+				if b, err := edit.Read(ours); err == nil && b != nil && !snowIsOurs(b) {
+					if err := g.stash(map[string]string{keyHad: string(b)}); err != nil {
+						return err
+					}
+				}
+				if _, err := os.Stat(activeFile); errors.Is(err, fs.ErrNotExist) {
+					if _, err := os.Stat(legacyActive); errors.Is(err, fs.ErrNotExist) {
+						if err := g.stash(map[string]string{keyNone: "1"}); err != nil {
+							return err
+						}
+					}
+				}
+				if err := g.stash(map[string]string{keyActive: base}); err != nil {
+					return err
+				}
+				if _, err := os.Stat(defaultProfile); errors.Is(err, fs.ErrNotExist) {
+					if b, err := edit.Read(config); err == nil && b != nil && !snowIsOurs(b) {
+						if err := edit.WriteAtomic(defaultProfile, b); err != nil {
+							return err
+						}
+					}
+				}
+			} else {
+				base = ""
+			}
+			if err := write(g, ref, base); err != nil {
+				return err
+			}
+			if err := setActive(snowProfile); err != nil {
+				return err
+			}
+			return mirror(snowProfile)
+		}
+		if !onOurs() {
+			if v == "" {
+				return nil
+			}
+			name := active()
+			if p := snowFindProfile(profiles, v, name); p != "" && p != name {
+				if err := setActive(p); err != nil {
+					return err
+				}
+				return mirror(p)
+			}
+			if _, err := os.Stat(profileOf(name)); err != nil {
+				return edit.SetJSON(config, edit.KV{Path: "snowcfg.advancedModel", Value: v})
+			}
+			if err := edit.SetJSON(profileOf(name), edit.KV{Path: "snowcfg.advancedModel", Value: v}); err != nil {
+				return err
+			}
+			return mirror(name)
+		}
+		to := ""
+		if v != "" {
+			to = snowFindProfile(profiles, v, stashLoad()[keyActive])
+			if to == "" {
+				return fmt.Errorf("%q is neither a model through magpie nor the model of one of Snow CLI's profiles: nothing was changed (magpie models snow lists them; magpie snow default goes back to your own profile)", v)
+			}
+		}
+		return leave(g, to)
+	}
 	return atomic(&Agent{
-		ID: "snow", Name: "Snow CLI", Icon: "snow", Aliases: []string{"snow-cli", "snow-ai", "snow-app"}, Spelled: prefixed, NoNames: true,
+		reapplyRewire: true,
+		ID:            "snow", Name: "Snow CLI", Icon: "snow", Aliases: []string{"snow-cli", "snow-ai", "snow-app"}, Spelled: prefixed, NoNames: true,
 		Bin: "snow", Dir: dir, Path: ours,
 		Sync: func() error {
 			b, err := edit.Read(ours)
@@ -226,7 +306,7 @@ func snowIn(at place) *Agent {
 				return err
 			}
 			ref := gjson.GetBytes(jsonc.ToJSONInPlace(b), "snowcfg.advancedModel").String()
-			if err := write(ref, ""); err != nil {
+			if err := write(nil, ref, ""); err != nil {
 				return err
 			}
 			if active() == snowProfile {
@@ -262,82 +342,9 @@ func snowIn(at place) *Agent {
 		},
 		Fields: []Field{{
 			Key: "model", Label: "model",
-			Get: get,
-			Set: func(v string) error {
-				ref, through := strings.CutPrefix(v, magpieID+"/")
-				if through && !isMagpie(ref) {
-					return fmt.Errorf("%s isn't a model in magpie's catalog (magpie models snow lists them)", ref)
-				}
-				if through {
-					base := active()
-					if !onOurs() {
-						if b, err := edit.Read(ours); err == nil && b != nil && !snowIsOurs(b) {
-							stash(map[string]string{keyHad: string(b)})
-						}
-						if _, err := os.Stat(activeFile); errors.Is(err, fs.ErrNotExist) {
-							if _, err := os.Stat(legacyActive); errors.Is(err, fs.ErrNotExist) {
-								stash(map[string]string{keyNone: "1"})
-							}
-						}
-						stash(map[string]string{keyActive: base})
-						// a Snow from before profiles copies config.json
-						// into a new default profile at its next start and
-						// makes that the active one: done here, so it is
-						// the user's config that is copied, not magpie's
-						if _, err := os.Stat(defaultProfile); errors.Is(err, fs.ErrNotExist) {
-							if b, err := edit.Read(config); err == nil && b != nil && !snowIsOurs(b) {
-								if err := edit.WriteAtomic(defaultProfile, b); err != nil {
-									return err
-								}
-							}
-						}
-					} else {
-						base = ""
-					}
-					if err := write(ref, base); err != nil {
-						return err
-					}
-					if err := setActive(snowProfile); err != nil {
-						return err
-					}
-					return mirror(snowProfile)
-				}
-				if !onOurs() {
-					// on a profile of the user's own: its model is theirs
-					// to change, as Snow's own model picker does
-					if v == "" {
-						return nil
-					}
-					name := active()
-					if p := snowFindProfile(profiles, v, name); p != "" && p != name {
-						if err := setActive(p); err != nil {
-							return err
-						}
-						return mirror(p)
-					}
-					if _, err := os.Stat(profileOf(name)); err != nil {
-						return edit.SetJSON(config, edit.KV{Path: "snowcfg.advancedModel", Value: v})
-					}
-					if err := edit.SetJSON(profileOf(name), edit.KV{Path: "snowcfg.advancedModel", Value: v}); err != nil {
-						return err
-					}
-					return mirror(name)
-				}
-				// leaving magpie's profile: for the user's profile with
-				// that model. A model no profile of theirs is on is
-				// refused rather than written into one on the way out:
-				// `magpie snow --help` took magpie out of Snow and left
-				// "--help" as the model of the profile it went back to
-				// (#1457). An empty value goes back to the one they were on.
-				to := ""
-				if v != "" {
-					to = snowFindProfile(profiles, v, stashLoad()[keyActive])
-					if to == "" {
-						return fmt.Errorf("%q is neither a model through magpie nor the model of one of Snow CLI's profiles: nothing was changed (magpie models snow lists them; magpie snow default goes back to your own profile)", v)
-					}
-				}
-				return leave(to)
-			},
+			Get:       get,
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(cur map[string]string) []Option {
 				return append(snowOwnOptions(profiles, cur["model"]), viaMagpie("snow", magpieID+"/")...)
 			},

@@ -683,7 +683,7 @@ func claudeIn(at place) *Agent {
 	// magpie has looked, kept to give back when magpie steps out (an older
 	// magpie routed Claude Code without taking it), else a tier's whose
 	// model changes
-	staleAbout := func(tiers map[string]string) []string {
+	staleAbout := func(g *rewireGuard, tiers map[string]string) ([]string, error) {
 		before := stashLoad()[aboutKey] == ""
 		keep := map[string]string{}
 		var keys []string
@@ -704,17 +704,25 @@ func claudeIn(at place) *Agent {
 			}
 		}
 		if len(keep) > 0 {
-			stash(keep)
+			if err := g.stash(keep); err != nil {
+				return nil, err
+			}
 		}
-		return keys
+		return keys, nil
 	}
-	dropAbout := func(tiers map[string]string) error {
-		if keys := staleAbout(tiers); len(keys) > 0 {
+	dropAbout := func(g *rewireGuard, tiers map[string]string) error {
+		keys, err := staleAbout(g, tiers)
+		if err != nil {
+			return err
+		}
+		if len(keys) > 0 {
 			if err := edit.DelJSON(path, keys...); err != nil {
 				return err
 			}
 		}
-		stash(map[string]string{aboutKey: "1"})
+		if err := g.stash(map[string]string{aboutKey: "1"}); err != nil {
+			return err
+		}
 		return nil
 	}
 	// follows says a tier on model m (its effort apart) follows the main
@@ -763,7 +771,7 @@ func claudeIn(at place) *Agent {
 	}
 	// writeBudgets puts in entries and the default (0 for none), and takes
 	// out what magpie wrote before that they no longer have
-	writeBudgets := func(def int, entries map[string]int) error {
+	writeBudgets := func(g *rewireGuard, def int, entries map[string]int) error {
 		raw, _ := edit.GetJSON(path, "modelSettings")
 		cur := budgetsRead(raw)
 		var del []string
@@ -806,36 +814,40 @@ func claudeIn(at place) *Agent {
 		}
 		if len(entries) > 0 {
 			b, _ := json.Marshal(entries)
-			stash(map[string]string{budgetsKey: string(b)})
+			if err := g.stash(map[string]string{budgetsKey: string(b)}); err != nil {
+				return err
+			}
 		} else {
-			forget(budgetsKey)
+			g.forget(budgetsKey)
 		}
 		top, has := edit.GetJSON(path, "autoCompactWindow")
 		switch {
 		case def > 0 && (!has || defaultOurs()):
-			stash(map[string]string{defaultKey: strconv.Itoa(def)})
+			if err := g.stash(map[string]string{defaultKey: strconv.Itoa(def)}); err != nil {
+				return err
+			}
 			if top != strconv.Itoa(def) {
 				kvs = append(kvs, edit.KV{Path: "autoCompactWindow", Value: def})
 			}
 		case def > 0:
-			forget(defaultKey)
+			g.forget(defaultKey)
 		default:
 			if defaultOurs() {
 				if err := edit.DelJSON(path, "autoCompactWindow"); err != nil {
 					return err
 				}
 			}
-			forget(defaultKey)
+			g.forget(defaultKey)
 		}
 		if len(kvs) == 0 {
 			return nil
 		}
 		return edit.SetJSON(path, kvs...)
 	}
-	dropBudgets := func() error { return writeBudgets(0, nil) }
-	dropWindow := func() error {
-		defer forget(windowKey)
-		if err := dropBudgets(); err != nil {
+	dropBudgets := func(g *rewireGuard) error { return writeBudgets(g, 0, nil) }
+	dropWindow := func(g *rewireGuard) error {
+		defer g.forget(windowKey)
+		if err := dropBudgets(g); err != nil {
 			return err
 		}
 		if windowOurs() {
@@ -850,8 +862,8 @@ func claudeIn(at place) *Agent {
 		cur := env(claudeOutputEnv)
 		return cur != "" && cur == stashLoad()[outputKey]
 	}
-	dropOutput := func() error {
-		defer forget(outputKey)
+	dropOutput := func(g *rewireGuard) error {
+		defer g.forget(outputKey)
 		if outputOurs() {
 			return edit.DelJSON(path, "env."+claudeOutputEnv)
 		}
@@ -864,8 +876,8 @@ func claudeIn(at place) *Agent {
 		cur := env(claudeCapsEnv)
 		return cur != "" && cur == stashLoad()[capsKey]
 	}
-	dropCaps := func() error {
-		defer forget(capsKey)
+	dropCaps := func(g *rewireGuard) error {
+		defer g.forget(capsKey)
 		if capsOurs() {
 			return edit.DelJSON(path, "env."+claudeCapsEnv)
 		}
@@ -881,8 +893,8 @@ func claudeIn(at place) *Agent {
 	// set while the window magpie wrote is Long conversations' (not a
 	// provider's Compact at): tune's card reads it as that one value
 	compactLongKey := at.key("claude.compact_long")
-	dropCompact := func() error {
-		defer forget(compactKey, compactLongKey)
+	dropCompact := func(g *rewireGuard) error {
+		defer g.forget(compactKey, compactLongKey)
 		if compactOurs() {
 			return edit.DelJSON(path, "env."+claudeCompactEnv)
 		}
@@ -898,13 +910,13 @@ func claudeIn(at place) *Agent {
 	// one to its whole 1M, so it gets its own window (Max on Discord: a
 	// [1m] model stopped at 272K), or a routing group made only of
 	// them (provider.ClaudeGroup, #1741)
-	writeCompact := func() error {
+	writeCompact := func(g *rewireGuard) error {
 		if env(claudeCompactEnv) != "" && !compactOurs() {
-			forget(compactKey)
+			g.forget(compactKey)
 			return nil
 		}
 		if budgeted {
-			return dropCompact()
+			return dropCompact(g)
 		}
 		// a threshold the user set on the main model or its provider comes
 		// first (#876), a Claude model's included; then the one for every
@@ -926,14 +938,18 @@ func claudeIn(at place) *Agent {
 			}
 		}
 		if n == 0 {
-			return dropCompact()
+			return dropCompact(g)
 		}
 		w := strconv.Itoa(n)
-		stash(map[string]string{compactKey: w})
+		if err := g.stash(map[string]string{compactKey: w}); err != nil {
+			return err
+		}
 		if long {
-			stash(map[string]string{compactLongKey: "1"})
+			if err := g.stash(map[string]string{compactLongKey: "1"}); err != nil {
+				return err
+			}
 		} else {
-			forget(compactLongKey)
+			g.forget(compactLongKey)
 		}
 		if env(claudeCompactEnv) == w {
 			return nil
@@ -952,14 +968,14 @@ func claudeIn(at place) *Agent {
 	// (#2046, cjyrainbow).
 	pickerKey := at.key("claude.model_picker")
 	pickerOurs := func() bool { return stashLoad()[pickerKey] != "" || magpiesPicker(path) }
-	dropPicker := func() error {
-		defer forget(pickerKey)
+	dropPicker := func(g *rewireGuard) error {
+		defer g.forget(pickerKey)
 		if _, has := edit.GetJSON(path, "modelPicker"); has && pickerOurs() {
 			return edit.DelJSON(path, "modelPicker")
 		}
 		return nil
 	}
-	writePicker := func() error {
+	writePicker := func(g *rewireGuard) error {
 		if _, has := edit.GetJSON(path, "modelPicker"); has && !pickerOurs() {
 			return nil
 		}
@@ -1004,9 +1020,11 @@ func claudeIn(at place) *Agent {
 			rows = append(rows, map[string]any{"model": spell(mark1M(o.Value)), "label": label, "description": note})
 		}
 		if len(rows) == 0 {
-			return dropPicker()
+			return dropPicker(g)
 		}
-		stash(map[string]string{pickerKey: "1"})
+		if err := g.stash(map[string]string{pickerKey: "1"}); err != nil {
+			return err
+		}
 		return edit.SetJSON(path, edit.KV{Path: "modelPicker", Value: map[string]any{"options": rows}})
 	}
 	// writeCaps says what magpie's models can do, the ones in models first;
@@ -1018,7 +1036,7 @@ func claudeIn(at place) *Agent {
 	// Desktop's Explore compatibility flag has its own ownership: taking
 	// Claude Code off magpie must leave it while Desktop still needs it.
 	exploreKey := at.key("claude.explore_inherit_cap")
-	writeExplore := func() error {
+	writeExplore := func(g *rewireGuard) error {
 		cur, has := edit.GetJSON(path, "env."+claudeExploreEnv)
 		ours := has && cur == "1" && stashLoad()[exploreKey] == "1"
 		if !desktopOn() {
@@ -1028,41 +1046,45 @@ func claudeIn(at place) *Agent {
 				}
 			}
 			if stashLoad()[exploreKey] != "" {
-				forget(exploreKey)
+				g.forget(exploreKey)
 			}
 			return nil
 		}
 		// Presence matters: an explicit empty value is the user's too.
 		if has {
 			if !ours && stashLoad()[exploreKey] != "" {
-				forget(exploreKey)
+				g.forget(exploreKey)
 			}
 			return nil
 		}
 		if err := edit.SetJSON(path, edit.KV{Path: "env." + claudeExploreEnv, Value: "1"}); err != nil {
 			return err
 		}
-		stash(map[string]string{exploreKey: "1"})
+		if err := g.stash(map[string]string{exploreKey: "1"}); err != nil {
+			return err
+		}
 		return nil
 	}
 	// putCaps is writeCaps with own saying whether Claude Code's own
 	// models are among them, as they are while it runs on magpie
-	putCaps := func(own bool, models ...string) error {
+	putCaps := func(g *rewireGuard, own bool, models ...string) error {
 		if env(claudeCapsEnv) != "" && !capsOurs() {
-			forget(capsKey)
+			g.forget(capsKey)
 			return nil
 		}
 		v := claudeCapabilities(models, own, desktopOn())
 		if v == "" {
-			return dropCaps()
+			return dropCaps(g)
 		}
 		if v == env(claudeCapsEnv) {
 			return nil
 		}
-		stash(map[string]string{capsKey: v})
+		if err := g.stash(map[string]string{capsKey: v}); err != nil {
+			return err
+		}
 		return edit.SetJSON(path, edit.KV{Path: "env." + claudeCapsEnv, Value: v})
 	}
-	writeCaps := func(models ...string) error { return putCaps(true, models...) }
+	writeCaps := func(g *rewireGuard, models ...string) error { return putCaps(g, true, models...) }
 	// the auto mode review magpie turned off (claudeReviewEnv), kept apart
 	// from the user's own in the same way
 	reviewKey := at.key("claude.auto_mode_server")
@@ -1070,8 +1092,8 @@ func claudeIn(at place) *Agent {
 		cur := rawEnv(claudeReviewEnv)
 		return cur != "" && cur == stashLoad()[reviewKey]
 	}
-	dropReview := func() error {
-		defer forget(reviewKey)
+	dropReview := func(g *rewireGuard) error {
+		defer g.forget(reviewKey)
 		if reviewOurs() {
 			return edit.DelJSON(path, "env."+claudeReviewEnv)
 		}
@@ -1079,9 +1101,9 @@ func claudeIn(at place) *Agent {
 	}
 	// writeReview turns the review off while no model Claude Code can reach
 	// through magpie runs it, and back on (unset) once one does
-	writeReview := func(models ...string) error {
+	writeReview := func(g *rewireGuard, models ...string) error {
 		if rawEnv(claudeReviewEnv) != "" && !reviewOurs() {
-			forget(reviewKey)
+			g.forget(reviewKey)
 			return nil
 		}
 		catalogs := []string{"claude"}
@@ -1089,9 +1111,11 @@ func claudeIn(at place) *Agent {
 			catalogs = append(catalogs, "claude-desktop")
 		}
 		if claudeReviewed(catalogs, models...) {
-			return dropReview()
+			return dropReview(g)
 		}
-		stash(map[string]string{reviewKey: "0"})
+		if err := g.stash(map[string]string{reviewKey: "0"}); err != nil {
+			return err
+		}
 		if rawEnv(claudeReviewEnv) == "0" {
 			return nil
 		}
@@ -1197,29 +1221,31 @@ func claudeIn(at place) *Agent {
 	// CLAUDE_CODE_AUTO_COMPACT_WINDOW of the user's, which takes
 	// precedence over those, the least of them, as one value serves them
 	// all. One the user set is theirs.
-	writeWindow := func(main string, tiers map[string]string) error {
+	writeWindow := func(g *rewireGuard, main string, tiers map[string]string) error {
 		budgeted = false
 		if env(claudeContextEnv) != "" && !windowOurs() {
-			forget(windowKey)
-			return dropBudgets()
+			g.forget(windowKey)
+			return dropBudgets(g)
 		}
 		if (desktopOn() || claudeLongMain(main) && claudeWindow(main, tiers) > 0) && (env(claudeCompactEnv) == "" || compactOurs()) {
 			top, def, entries := desktopPlan(main, tiers)
 			if top <= 0 {
-				return dropWindow()
+				return dropWindow(g)
 			}
-			if err := writeBudgets(def, entries); err != nil {
+			if err := writeBudgets(g, def, entries); err != nil {
 				return err
 			}
 			budgeted = true
 			v := strconv.Itoa(top)
-			stash(map[string]string{windowKey: v})
+			if err := g.stash(map[string]string{windowKey: v}); err != nil {
+				return err
+			}
 			if v == env(claudeContextEnv) {
 				return nil
 			}
 			return edit.SetJSON(path, edit.KV{Path: "env." + claudeContextEnv, Value: v})
 		}
-		if err := dropBudgets(); err != nil {
+		if err := dropBudgets(g); err != nil {
 			return err
 		}
 		w := claudeWindow(main, tiers)
@@ -1229,10 +1255,12 @@ func claudeIn(at place) *Agent {
 			}
 		}
 		if w <= 0 {
-			return dropWindow()
+			return dropWindow(g)
 		}
 		v := strconv.Itoa(w)
-		stash(map[string]string{windowKey: v})
+		if err := g.stash(map[string]string{windowKey: v}); err != nil {
+			return err
+		}
 		if v == env(claudeContextEnv) {
 			return nil
 		}
@@ -1244,25 +1272,25 @@ func claudeIn(at place) *Agent {
 	// Desktop's models alone; none at all when Desktop isn't either. Only
 	// Claude Code's being wired in wrote them before, so a user who wired
 	// in Desktop alone had 200K for every Desktop model (#1458).
-	desktopOnly := func() error {
-		if err := writeExplore(); err != nil {
+	desktopOnly := func(g *rewireGuard) error {
+		if err := writeExplore(g); err != nil {
 			return err
 		}
 		// the review is turned off only for Claude Code's own requests to
 		// magpie
-		if err := dropReview(); err != nil {
+		if err := dropReview(g); err != nil {
 			return err
 		}
 		if !desktopOn() {
-			if err := dropWindow(); err != nil {
+			if err := dropWindow(g); err != nil {
 				return err
 			}
-			return dropCaps()
+			return dropCaps(g)
 		}
-		if err := writeWindow("", nil); err != nil {
+		if err := writeWindow(g, "", nil); err != nil {
 			return err
 		}
-		return putCaps(false)
+		return putCaps(g, false)
 	}
 	// what was last written that an open Claude Code session doesn't see:
 	// it reads settings.json at start-up, only its env as it goes
@@ -1329,7 +1357,7 @@ func claudeIn(at place) *Agent {
 	// ANTHROPIC_VERTEX_PROJECT_ID, …) stay: without the switch Claude Code
 	// doesn't read them. One that is off stays as it is.
 	cloudKey := func(k string) string { return at.key("claude.cloud." + k) }
-	dropClouds := func() error {
+	dropClouds := func(g *rewireGuard) error {
 		var gone []string
 		kept := map[string]string{}
 		for _, k := range agentenv.ClaudeProviders {
@@ -1343,13 +1371,18 @@ func claudeIn(at place) *Agent {
 		if len(gone) == 0 {
 			return nil
 		}
-		stash(kept)
+		if err := g.stash(kept); err != nil {
+			return err
+		}
 		return edit.DelJSON(path, gone...)
 	}
-	putClouds := func() error {
+	putClouds := func(g *rewireGuard) error {
 		var back []edit.KV
 		for _, k := range agentenv.ClaudeProviders {
-			raw := unstash(cloudKey(k))
+			raw, err := g.unstash(cloudKey(k))
+			if err != nil {
+				return err
+			}
 			if raw == "" || !json.Valid([]byte(raw)) {
 				continue
 			}
@@ -1368,26 +1401,72 @@ func claudeIn(at place) *Agent {
 	// and puts back the endpoint and token the stash kept from before magpie
 	// was wired in; it answers the model Claude Code was on then, for
 	// Unwire to go back to
-	unroute := func() (string, error) {
-		if err := dropOutput(); err != nil {
+	unroute := func(g *rewireGuard) (string, error) {
+		if err := dropOutput(g); err != nil {
 			return "", err
 		}
-		if err := dropCompact(); err != nil {
+		if err := dropCompact(g); err != nil {
 			return "", err
 		}
 		// the window and capabilities stay as Claude Desktop's Code tab
 		// needs them while Desktop is on magpie (#1458)
-		if err := desktopOnly(); err != nil {
+		if err := desktopOnly(g); err != nil {
 			return "", err
 		}
-		if err := dropPicker(); err != nil {
+		if err := dropPicker(g); err != nil {
 			return "", err
 		}
-		if err := putClouds(); err != nil {
+		if err := putClouds(g); err != nil {
 			return "", err
 		}
 		if !routed() {
-			return "", nil
+			was, err := peekStash(at.key("claude.model"))
+			if err != nil {
+				return "", err
+			}
+			var back []edit.KV
+			kept := map[string]string{}
+			for _, k := range claudeOwnEnv {
+				v, err := peekStash(at.key("claude.env." + k))
+				if err != nil {
+					return "", err
+				}
+				kept[at.key("claude.env."+k)] = v
+				if v != "" && rawEnv(k) == "" {
+					back = append(back, edit.KV{Path: "env." + k, Value: v})
+				}
+			}
+			u, err := peekStash(at.key("claude.base_url"))
+			if err != nil {
+				return "", err
+			}
+			if u != "" && rawEnv("ANTHROPIC_BASE_URL") == "" {
+				back = append(back, edit.KV{Path: "env.ANTHROPIC_BASE_URL", Value: u})
+			}
+			t, err := peekStash(at.key("claude.auth_token"))
+			if err != nil {
+				return "", err
+			}
+			if t != "" && rawEnv("ANTHROPIC_AUTH_TOKEN") == "" {
+				back = append(back, edit.KV{Path: "env.ANTHROPIC_AUTH_TOKEN", Value: t})
+			}
+			if len(back) > 0 {
+				if err := edit.SetJSON(path, back...); err != nil {
+					return "", err
+				}
+			}
+			for key, value := range kept {
+				g.forgetIfUnchanged(key, value)
+			}
+			g.forgetIfUnchanged(at.key("claude.base_url"), u)
+			g.forgetIfUnchanged(at.key("claude.auth_token"), t)
+			if was != "" && !isMagpie(was) {
+				if err := edit.SetJSON(path, edit.KV{Path: "model", Value: was}); err != nil {
+					return "", err
+				}
+				g.forgetIfUnchanged(at.key("claude.model"), was)
+			}
+			return was, nil
 		}
 		keys := make([]string, len(claudeEnv))
 		for i, k := range claudeEnv {
@@ -1396,26 +1475,43 @@ func claudeIn(at place) *Agent {
 		if err := edit.DelJSON(path, keys...); err != nil {
 			return "", err
 		}
-		forget(aboutKey)
+		g.forget(aboutKey)
 		// the auto mode classifier's model goes only where it is magpie's
 		if autoOurs() {
 			if err := edit.DelJSON(path, "env."+claudeAutoModeEnv); err != nil {
 				return "", err
 			}
 		}
-		forget(autoKey)
-		was := unstash(at.key("claude.model"))
+		g.forget(autoKey)
+		was, err := peekStash(at.key("claude.model"))
+		if err != nil {
+			return "", err
+		}
 		var back []edit.KV
+		kept := map[string]string{}
 		for _, k := range claudeOwnEnv {
 			// one the user set again since is theirs as it is
-			if v := unstash(at.key("claude.env." + k)); v != "" && rawEnv(k) == "" {
+			v, err := peekStash(at.key("claude.env." + k))
+			if err != nil {
+				return "", err
+			}
+			kept[at.key("claude.env."+k)] = v
+			if v != "" && rawEnv(k) == "" {
 				back = append(back, edit.KV{Path: "env." + k, Value: v})
 			}
 		}
-		if u := unstash(at.key("claude.base_url")); u != "" {
+		u, err := peekStash(at.key("claude.base_url"))
+		if err != nil {
+			return "", err
+		}
+		if u != "" {
 			back = append(back, edit.KV{Path: "env.ANTHROPIC_BASE_URL", Value: u})
 		}
-		if t := unstash(at.key("claude.auth_token")); t != "" {
+		t, err := peekStash(at.key("claude.auth_token"))
+		if err != nil {
+			return "", err
+		}
+		if t != "" {
 			back = append(back, edit.KV{Path: "env.ANTHROPIC_AUTH_TOKEN", Value: t})
 		}
 		if len(back) > 0 {
@@ -1423,17 +1519,22 @@ func claudeIn(at place) *Agent {
 				return "", err
 			}
 		}
+		for key, value := range kept {
+			g.forgetIfUnchanged(key, value)
+		}
+		g.forgetIfUnchanged(at.key("claude.base_url"), u)
+		g.forgetIfUnchanged(at.key("claude.auth_token"), t)
 		return was, nil
 	}
-	var writeTiers func(main string, tiers map[string]string) error
-	set := func(v string) error {
+	var writeTiers func(g *rewireGuard, main string, tiers map[string]string) error
+	set := func(g *rewireGuard, v string) error {
 		if v == "" {
 			// Claude Code's own model, on the endpoint the user had before
 			// magpie: magpie steps out, putting back their endpoint and
 			// token, which stay theirs (__jingling on X: magpie claude
 			// model default took their ANTHROPIC_BASE_URL and token away
 			// for good)
-			if _, err := unroute(); err != nil {
+			if _, err := unroute(g); err != nil {
 				return err
 			}
 			keys := []string{"model"}
@@ -1445,9 +1546,9 @@ func claudeIn(at place) *Agent {
 					keys = append(keys, "env."+k)
 				}
 			}
-			forget(at.key("claude.model"), at.key("claude.base_url"), at.key("claude.auth_token"), mainKey, wroteAt, aboutKey)
+			g.forget(at.key("claude.model"), at.key("claude.base_url"), at.key("claude.auth_token"), mainKey, wroteAt, aboutKey)
 			for _, k := range claudeOwnEnv {
-				forget(at.key("claude.env." + k))
+				g.forget(at.key("claude.env." + k))
 			}
 			return edit.DelJSON(path, keys...)
 		}
@@ -1475,7 +1576,9 @@ func claudeIn(at place) *Agent {
 					if !theirs {
 						kept[at.key("claude.env."+claudeAutoModeEnv)] = ""
 					}
-					stash(kept)
+					if err := g.stash(kept); err != nil {
+						return err
+					}
 					if theirs {
 						if err := edit.DelJSON(path, "env."+claudeAutoModeEnv); err != nil {
 							return err
@@ -1497,15 +1600,17 @@ func claudeIn(at place) *Agent {
 				return m == strings.TrimSuffix(v, "[1m]") || m == strings.TrimSuffix(follow(t, v), "[1m]")
 			}
 			if !routed() {
-				forget(ownKey("subagent"))
+				g.forget(ownKey("subagent"))
 			} else if m, _ := subagentAt(); m != "" && same("subagent", m) {
-				stash(map[string]string{ownKey("subagent"): "1"})
+				if err := g.stash(map[string]string{ownKey("subagent"): "1"}); err != nil {
+					return err
+				}
 			}
 			tiers := map[string]string{}
 			for _, t := range claudeTiers {
 				tiers[t] = follow(t, v)
 				if !routed() {
-					forget(ownKey(t))
+					g.forget(ownKey(t))
 				}
 				if w := env(tierEnv(t)); routed() && w != "" {
 					// at an effort of its own, it keeps that on the new model
@@ -1514,14 +1619,16 @@ func claudeIn(at place) *Agent {
 					if m, e := tierAt(w); !follows(t, m) && (isMagpie(m) || follow(t, v) == "") {
 						tiers[t] = w
 						if same(t, m) {
-							stash(map[string]string{ownKey(t): "1"})
+							if err := g.stash(map[string]string{ownKey(t): "1"}); err != nil {
+								return err
+							}
 						}
 					} else if e != "" {
 						tiers[t] = followAt(t, v, e)
 					}
 				}
 			}
-			return writeTiers(v, tiers)
+			return writeTiers(g, v, tiers)
 		}
 		// a word that is no model: an effort level the model doesn't take,
 		// ultracode (magpie claude ultra), a typo. Another endpoint's
@@ -1531,7 +1638,7 @@ func claudeIn(at place) *Agent {
 				return err
 			}
 		}
-		if _, err := unroute(); err != nil {
+		if _, err := unroute(g); err != nil {
 			return err
 		}
 		return edit.SetJSON(path, edit.KV{Path: "model", Value: v})
@@ -1539,7 +1646,7 @@ func claudeIn(at place) *Agent {
 
 	// writeTiers routes Claude Code through the gateway with main as its
 	// model and each tier on the model given.
-	writeTiers = func(main string, tiers map[string]string) error {
+	writeTiers = func(g *rewireGuard, main string, tiers map[string]string) error {
 		// a 1M model goes in marked [1m] however it was named, or Claude
 		// Code takes it for 200K
 		mark1M := claude1M()
@@ -1549,17 +1656,19 @@ func claudeIn(at place) *Agent {
 			tiers[t] = mark(v)
 		}
 		// what the env says about a tier's model goes with the model
-		if err := dropAbout(tiers); err != nil {
+		if err := dropAbout(g, tiers); err != nil {
 			return err
 		}
-		if err := dropClouds(); err != nil {
+		if err := dropClouds(g); err != nil {
 			return err
 		}
 		// subagents given a model of their own keep it; the others run on
 		// the session's, whatever /model picked, or on the tier they ask for.
 		// An older magpie's effort on the main model goes out, kept unwritten.
 		if e := subagentFollowing(); e != "" && stashLoad()[subEffortKey] == "" {
-			stash(map[string]string{subEffortKey: e})
+			if err := g.stash(map[string]string{subEffortKey: e}); err != nil {
+				return err
+			}
 		}
 		sub := subagentOwn()
 		// the main model is settings.json's alone: ANTHROPIC_MODEL would
@@ -1606,10 +1715,12 @@ func claudeIn(at place) *Agent {
 		} else if err := edit.DelJSON(path, "env.CLAUDE_CODE_SUBAGENT_MODEL"); err != nil {
 			return err
 		}
-		stash(map[string]string{mainKey: main, wroteAt: gw})
+		if err := g.stash(map[string]string{mainKey: main, wroteAt: gw}); err != nil {
+			return err
+		}
 		// the new model's window replaces the old one's, when magpie knows
 		// it; one the user set is theirs
-		if err := writeWindow(main, tiers); err != nil {
+		if err := writeWindow(g, main, tiers); err != nil {
 			return err
 		}
 		models := []string{main}
@@ -1627,35 +1738,38 @@ func claudeIn(at place) *Agent {
 		if env(claudeOutputEnv) == "" || outputOurs() {
 			if n := claudeOutput(outModels...); n > 0 {
 				kvs = append(kvs, edit.KV{Path: "env." + claudeOutputEnv, Value: strconv.Itoa(n)})
-				stash(map[string]string{outputKey: strconv.Itoa(n)})
-			} else if err := dropOutput(); err != nil {
+				if err := g.stash(map[string]string{outputKey: strconv.Itoa(n)}); err != nil {
+					return err
+				}
+			} else if err := dropOutput(g); err != nil {
 				return err
 			}
 		} else {
-			forget(outputKey)
+			g.forget(outputKey)
 		}
 		if err := edit.SetJSON(path, kvs...); err != nil {
 			return err
 		}
-		if err := writeCompact(); err != nil {
+		if err := writeCompact(g); err != nil {
 			return err
 		}
-		if err := writePicker(); err != nil {
+		if err := writePicker(g); err != nil {
 			return err
 		}
-		if err := writeReview(models...); err != nil {
+		if err := writeReview(g, models...); err != nil {
 			return err
 		}
-		if err := writeExplore(); err != nil {
+		if err := writeExplore(g); err != nil {
 			return err
 		}
-		return writeCaps(models...)
+		return writeCaps(g, models...)
 	}
 
 	fields := []Field{{
 		Key: "model", Label: "model",
-		Get: get,
-		Set: set,
+		Get:       get,
+		Set:       func(v string) error { return set(nil, v) },
+		setRewire: set,
 		Options: func(cur map[string]string) []Option {
 			name, direct := "Claude Code", "Anthropic"
 			if u := env("ANTHROPIC_BASE_URL"); u != "" && !routed() {
@@ -1794,6 +1908,35 @@ func claudeIn(at place) *Agent {
 		},
 	}}
 	for _, tier := range claudeTiers {
+		setTier := func(g *rewireGuard, v string) error {
+			if !routed() {
+				if v == "" {
+					return nil
+				}
+				return fmt.Errorf("pick a model through magpie for Claude Code first; %s can then have its own", tier)
+			}
+			if v != "" && !isMagpie(v) {
+				return fmt.Errorf("%s: %q is not a model magpie serves", tier, v)
+			}
+			main, tiers := curTiers()
+			// its effort, if it has one, goes with it to the new model
+			_, e := tierAt(tiers[tier])
+			// a model picked is the user's own, the main model or the
+			// one the tier would follow too, so it stays when the main
+			// model moves (#2654: a sonnet tier given the main model
+			// read as "Same as main model" and went with its next
+			// move); only "Same as main model" follows
+			if v != "" {
+				if err := g.stash(map[string]string{ownKey(tier): "1"}); err != nil {
+					return err
+				}
+				tiers[tier] = tierWith(v, e)
+			} else {
+				g.forget(ownKey(tier))
+				tiers[tier] = followAt(tier, main, e)
+			}
+			return writeTiers(g, main, tiers)
+		}
 		fields = append(fields, Field{
 			Key: tier, Label: tier, Quiet: true, Follows: "model",
 			// empty while the tier follows the main model
@@ -1803,33 +1946,8 @@ func claudeIn(at place) *Agent {
 				}
 				return ""
 			},
-			Set: func(v string) error {
-				if !routed() {
-					if v == "" {
-						return nil
-					}
-					return fmt.Errorf("pick a model through magpie for Claude Code first; %s can then have its own", tier)
-				}
-				if v != "" && !isMagpie(v) {
-					return fmt.Errorf("%s: %q is not a model magpie serves", tier, v)
-				}
-				main, tiers := curTiers()
-				// its effort, if it has one, goes with it to the new model
-				_, e := tierAt(tiers[tier])
-				// a model picked is the user's own, the main model or the
-				// one the tier would follow too, so it stays when the main
-				// model moves (#2654: a sonnet tier given the main model
-				// read as "Same as main model" and went with its next
-				// move); only "Same as main model" follows
-				if v != "" {
-					stash(map[string]string{ownKey(tier): "1"})
-					tiers[tier] = tierWith(v, e)
-				} else {
-					forget(ownKey(tier))
-					tiers[tier] = followAt(tier, main, e)
-				}
-				return writeTiers(main, tiers)
-			},
+			Set:       func(v string) error { return setTier(nil, v) },
+			setRewire: setTier,
 			Options: func(map[string]string) []Option {
 				if !routed() {
 					return nil
@@ -1844,52 +1962,59 @@ func claudeIn(at place) *Agent {
 	// setSubagent writes the subagents' model and effort. With no model,
 	// the variable goes and the effort is kept unwritten (subagentSaved):
 	// the main model at an effort would pin every subagent to it.
-	setSubagent := func(model, effort string) error {
+	setSubagent := func(g *rewireGuard, model, effort string) error {
 		if model == "" {
 			if effort != "" {
-				stash(map[string]string{subEffortKey: effort})
+				if err := g.stash(map[string]string{subEffortKey: effort}); err != nil {
+					return err
+				}
 			} else {
-				forget(subEffortKey)
+				g.forget(subEffortKey)
 			}
 			if err := edit.DelJSON(path, "env.CLAUDE_CODE_SUBAGENT_MODEL"); err != nil {
 				return err
 			}
 		} else {
-			forget(subEffortKey)
+			g.forget(subEffortKey)
 			if err := edit.SetJSON(path, edit.KV{Path: "env.CLAUDE_CODE_SUBAGENT_MODEL", Value: spell(tierWith(model, effort))}); err != nil {
 				return err
 			}
 		}
-		return writeTiers(curTiers())
+		main, tiers := curTiers()
+		return writeTiers(g, main, tiers)
+	}
+	setSubagentField := func(g *rewireGuard, v string) error {
+		if !routed() {
+			if v == "" {
+				return nil
+			}
+			return fmt.Errorf("pick a model through magpie for Claude Code first; its subagents can then have one of their own")
+		}
+		if v != "" && !isMagpie(v) {
+			return fmt.Errorf("subagents: %q is not a model magpie serves", v)
+		}
+		m, e := subagentAt()
+		if m == "" {
+			e = subagentSaved()
+		}
+		// a model picked is the user's own, the main model too
+		// (#2654: given the main model, the subagents' was left out
+		// and they followed the main model's next move); only "Same
+		// as main model" follows
+		if v != "" {
+			if err := g.stash(map[string]string{ownKey("subagent"): "1"}); err != nil {
+				return err
+			}
+		} else {
+			g.forget(ownKey("subagent"))
+		}
+		return setSubagent(g, v, e)
 	}
 	fields = append(fields, Field{
 		Key: "subagent", Label: "subagents", Quiet: true, Follows: "model",
-		Get: func() string { m, _ := subagentAt(); return m },
-		Set: func(v string) error {
-			if !routed() {
-				if v == "" {
-					return nil
-				}
-				return fmt.Errorf("pick a model through magpie for Claude Code first; its subagents can then have one of their own")
-			}
-			if v != "" && !isMagpie(v) {
-				return fmt.Errorf("subagents: %q is not a model magpie serves", v)
-			}
-			m, e := subagentAt()
-			if m == "" {
-				e = subagentSaved()
-			}
-			// a model picked is the user's own, the main model too
-			// (#2654: given the main model, the subagents' was left out
-			// and they followed the main model's next move); only "Same
-			// as main model" follows
-			if v != "" {
-				stash(map[string]string{ownKey("subagent"): "1"})
-			} else {
-				forget(ownKey("subagent"))
-			}
-			return setSubagent(v, e)
-		},
+		Get:       func() string { m, _ := subagentAt(); return m },
+		Set:       func(v string) error { return setSubagentField(nil, v) },
+		setRewire: setSubagentField,
 		Options: func(map[string]string) []Option {
 			if !routed() {
 				return nil
@@ -1900,7 +2025,21 @@ func claudeIn(at place) *Agent {
 
 	// each tier's effort, and the subagents', fixed by magpie's gateway on
 	// the model it is on (#536); empty, the session's effort as before
-	effortField := func(key, label, who string, at func() (string, string), put func(model, effort string) error) Field {
+	effortField := func(key, label, who string, at func() (string, string), put func(*rewireGuard, string, string) error) Field {
+		setEffort := func(g *rewireGuard, v string) error {
+			v = strings.ToLower(strings.TrimSpace(v))
+			if !routed() {
+				if v == "" {
+					return nil
+				}
+				return fmt.Errorf("pick a model through magpie for Claude Code first; %s can then have an effort of its own", who)
+			}
+			if v != "" && !contains(provider.MemberEfforts, v) {
+				return fmt.Errorf("%s: an effort is one of %s, not %q", label, strings.Join(provider.MemberEfforts, ", "), v)
+			}
+			m, _ := at()
+			return put(g, m, v)
+		}
 		return Field{
 			Key: key, Label: label, Quiet: true,
 			Get: func() string {
@@ -1910,20 +2049,8 @@ func claudeIn(at place) *Agent {
 				_, e := at()
 				return e
 			},
-			Set: func(v string) error {
-				v = strings.ToLower(strings.TrimSpace(v))
-				if !routed() {
-					if v == "" {
-						return nil
-					}
-					return fmt.Errorf("pick a model through magpie for Claude Code first; %s can then have an effort of its own", who)
-				}
-				if v != "" && !contains(provider.MemberEfforts, v) {
-					return fmt.Errorf("%s: an effort is one of %s, not %q", label, strings.Join(provider.MemberEfforts, ", "), v)
-				}
-				m, _ := at()
-				return put(m, v)
-			},
+			Set:       func(v string) error { return setEffort(nil, v) },
+			setRewire: setEffort,
 			Options: func(map[string]string) []Option {
 				if !routed() {
 					return nil
@@ -1941,14 +2068,14 @@ func claudeIn(at place) *Agent {
 			}
 			return m, e
 		}
-		put := func(model, effort string) error {
+		put := func(g *rewireGuard, model, effort string) error {
 			main, tiers := curTiers()
 			if model != "" {
 				tiers[tier] = tierWith(model, effort)
 			} else {
 				tiers[tier] = followAt(tier, main, effort)
 			}
-			return writeTiers(main, tiers)
+			return writeTiers(g, main, tiers)
 		}
 		fields = append(fields, effortField(tier+"_effort", tier+" effort", tier, at, put))
 	}
@@ -1957,6 +2084,30 @@ func claudeIn(at place) *Agent {
 	// runs on (claudeAutoModeEnv). Unset, Claude Code's own pick; it
 	// follows no field, so it isn't Follows "model". The env is read as a
 	// session goes, so a pick needs no restart.
+	setAutoMode := func(g *rewireGuard, v string) error {
+		v = strings.TrimSpace(v)
+		if !routed() {
+			if v == "" {
+				return nil
+			}
+			return fmt.Errorf("pick a model through magpie for Claude Code first; its auto mode can then have a model of its own")
+		}
+		if v != "" && !isMagpie(v) {
+			return fmt.Errorf("auto mode: %q is not a model magpie serves", v)
+		}
+		if contains(claudeNoClassifier, claudeName(v)) {
+			return fmt.Errorf("auto mode: Claude Code doesn't run its classifier on %s, and would take its own pick instead", v)
+		}
+		if v == "" {
+			g.forget(autoKey)
+			return edit.DelJSON(path, "env."+claudeAutoModeEnv)
+		}
+		w := spell(v)
+		if err := g.stash(map[string]string{autoKey: w}); err != nil {
+			return err
+		}
+		return edit.SetJSON(path, edit.KV{Path: "env." + claudeAutoModeEnv, Value: w})
+	}
 	fields = append(fields, Field{
 		Key: "auto_mode", Label: "auto mode", Quiet: true,
 		Get: func() string {
@@ -1965,28 +2116,8 @@ func claudeIn(at place) *Agent {
 			}
 			return env(claudeAutoModeEnv)
 		},
-		Set: func(v string) error {
-			v = strings.TrimSpace(v)
-			if !routed() {
-				if v == "" {
-					return nil
-				}
-				return fmt.Errorf("pick a model through magpie for Claude Code first; its auto mode can then have a model of its own")
-			}
-			if v != "" && !isMagpie(v) {
-				return fmt.Errorf("auto mode: %q is not a model magpie serves", v)
-			}
-			if contains(claudeNoClassifier, claudeName(v)) {
-				return fmt.Errorf("auto mode: Claude Code doesn't run its classifier on %s, and would take its own pick instead", v)
-			}
-			if v == "" {
-				forget(autoKey)
-				return edit.DelJSON(path, "env."+claudeAutoModeEnv)
-			}
-			w := spell(v)
-			stash(map[string]string{autoKey: w})
-			return edit.SetJSON(path, edit.KV{Path: "env." + claudeAutoModeEnv, Value: w})
-		},
+		Set:       func(v string) error { return setAutoMode(nil, v) },
+		setRewire: setAutoMode,
 		Options: func(map[string]string) []Option {
 			if !routed() {
 				return nil
@@ -1998,6 +2129,28 @@ func claudeIn(at place) *Agent {
 	})
 	// its sign-in while it runs through magpie: magpie's key, or its own
 	// claude.ai sign-in kept (loginKey), where the gateway takes any key
+	setLogin := func(g *rewireGuard, v string) error {
+		if v != "" && v != "claudeai" {
+			return fmt.Errorf("sign-in is claudeai or empty (magpie's key), not %q", v)
+		}
+		if !routed() {
+			if v == "" {
+				if err := g.stash(map[string]string{loginKey: ""}); err != nil {
+					return err
+				}
+				return nil
+			}
+			return fmt.Errorf("pick a model through magpie for Claude Code first; it can then keep its claude.ai sign-in")
+		}
+		// one kept before stays so, taking effect where it can again
+		if v != "" && !signInHere() && stashLoad()[loginKey] != v {
+			return fmt.Errorf("Claude Code reaches magpie from another machine (%s), where magpie, shared, takes only its sharing key, so it can't keep its claude.ai sign-in there", at.gw())
+		}
+		if err := g.stash(map[string]string{loginKey: v, wroteAt: at.gw()}); err != nil {
+			return err
+		}
+		return edit.SetJSON(path, edit.KV{Path: "env.ANTHROPIC_AUTH_TOKEN", Value: wiredKey()})
+	}
 	fields = append(fields, Field{
 		Key: "login", Label: "sign-in", Quiet: true,
 		Get: func() string {
@@ -2006,24 +2159,8 @@ func claudeIn(at place) *Agent {
 			}
 			return ""
 		},
-		Set: func(v string) error {
-			if v != "" && v != "claudeai" {
-				return fmt.Errorf("sign-in is claudeai or empty (magpie's key), not %q", v)
-			}
-			if !routed() {
-				if v == "" {
-					stash(map[string]string{loginKey: ""})
-					return nil
-				}
-				return fmt.Errorf("pick a model through magpie for Claude Code first; it can then keep its claude.ai sign-in")
-			}
-			// one kept before stays so, taking effect where it can again
-			if v != "" && !signInHere() && stashLoad()[loginKey] != v {
-				return fmt.Errorf("Claude Code reaches magpie from another machine (%s), where magpie, shared, takes only its sharing key, so it can't keep its claude.ai sign-in there", at.gw())
-			}
-			stash(map[string]string{loginKey: v, wroteAt: at.gw()})
-			return edit.SetJSON(path, edit.KV{Path: "env.ANTHROPIC_AUTH_TOKEN", Value: wiredKey()})
-		},
+		Set:       func(v string) error { return setLogin(nil, v) },
+		setRewire: setLogin,
 		Options: func(map[string]string) []Option {
 			if !routed() || !signInHere() {
 				return nil
@@ -2037,20 +2174,25 @@ func claudeIn(at place) *Agent {
 		ID: "claude", Name: "Claude Code", Icon: "claudecode-color", Aliases: []string{"cc", "claude-code"},
 		UA:  []string{"claude-cli", "claude-code"},
 		Bin: "claude", Dir: filepath.Dir(path), Path: path,
-		Fields:       fields,
-		ModelAliases: claudeAliases,
+		Fields:        fields,
+		reapplyRewire: true,
+		ModelAliases:  claudeAliases,
 		// Claude Code as it was before magpie: its default puts it back as
 		// installed, on Anthropic's endpoint, where this brings back the
 		// endpoint, token and model the user had
+		disconnectConflict: func(before string) bool { return routed() && model() != before },
 		Unwire: func() error {
-			was, err := unroute()
+			was, err := unroute(nil)
 			if err != nil {
 				return err
 			}
-			forget(at.key("claude.model"), at.key("claude.base_url"), at.key("claude.auth_token"), mainKey, wroteAt, aboutKey)
-			for _, k := range claudeOwnEnv {
-				forget(at.key("claude.env." + k))
+			if was != "" && !isMagpie(was) {
+				if err := edit.SetJSON(path, edit.KV{Path: "model", Value: was}); err != nil {
+					return err
+				}
+				forgetIfUnchanged(at.key("claude.model"), was)
 			}
+			forget(mainKey, wroteAt, aboutKey)
 			// magpie's level in the env goes alone: the effortLevel under
 			// it is the user's own, which Claude Code is back on
 			if e := env(claudeEffortEnv); e != "" && appliedOf(self.ID).Fields["effort"] == e {
@@ -2059,11 +2201,10 @@ func claudeIn(at place) *Agent {
 				}
 			}
 			// the model left alone where magpie had none to take over
-			switch {
-			case was != "" && !isMagpie(was):
-				return edit.SetJSON(path, edit.KV{Path: "model", Value: was})
-			case isMagpie(get()):
-				return edit.DelJSON(path, "model")
+			if isMagpie(get()) {
+				if err := edit.DelJSON(path, "model"); err != nil {
+					return err
+				}
 			}
 			return nil
 		},
@@ -2071,23 +2212,23 @@ func claudeIn(at place) *Agent {
 		// them, while magpie's are the ones it has
 		Sync: func() error {
 			if !routed() {
-				return desktopOnly()
+				return desktopOnly(nil)
 			}
 			// a switch turned on since, or left by an older magpie
-			if err := dropClouds(); err != nil {
+			if err := dropClouds(nil); err != nil {
 				return err
 			}
 			// routed by an older magpie: what was said about the models
 			// before it is taken out as it is now when magpie is wired in
 			if stashLoad()[aboutKey] == "" {
-				if err := dropAbout(nil); err != nil {
+				if err := dropAbout(nil, nil); err != nil {
 					return err
 				}
 			}
 			// subagents an older magpie pinned to the main model at an
 			// effort of theirs follow it again, the effort kept unwritten
 			if subagentFollowing() != "" {
-				return writeTiers(curTiers())
+				return func() error { main, tiers := curTiers(); return writeTiers(nil, main, tiers) }()
 			}
 			// a model of magpie's an older magpie wrote with a dotted Claude
 			// version goes in as Claude Code is given it now (spell)
@@ -2099,7 +2240,7 @@ func claudeIn(at place) *Agent {
 				m, _ := tierAt(provider.ClaudeRead(v))
 				return v != "" && isMagpie(m) && spell(provider.ClaudeRead(v)) != v
 			}) {
-				return writeTiers(curTiers())
+				return func() error { main, tiers := curTiers(); return writeTiers(nil, main, tiers) }()
 			}
 			models := []string{mainModel()}
 			tiers := map[string]string{}
@@ -2109,22 +2250,22 @@ func claudeIn(at place) *Agent {
 			}
 			// the windows of the models as they are now, Claude Desktop's
 			// among them (#1458)
-			if err := writeWindow(mainModel(), tiers); err != nil {
+			if err := writeWindow(nil, mainModel(), tiers); err != nil {
 				return err
 			}
-			if err := writeCompact(); err != nil {
+			if err := writeCompact(nil); err != nil {
 				return err
 			}
-			if err := writePicker(); err != nil {
+			if err := writePicker(nil); err != nil {
 				return err
 			}
-			if err := writeReview(models...); err != nil {
+			if err := writeReview(nil, models...); err != nil {
 				return err
 			}
-			if err := writeExplore(); err != nil {
+			if err := writeExplore(nil); err != nil {
 				return err
 			}
-			return writeCaps(models...)
+			return writeCaps(nil, models...)
 		},
 		// a model picked in Claude Code's /model is its main model: the tiers
 		// and subagents that followed the one before go with it, and an
@@ -2148,7 +2289,7 @@ func claudeIn(at place) *Agent {
 			if _, has := edit.GetJSON(path, "env.ANTHROPIC_MODEL"); !has && main == stashLoad()[mainKey] && stays {
 				return nil
 			}
-			return set(bare)
+			return set(nil, bare)
 		},
 		Check: func() string {
 			if !isMagpie(get()) {

@@ -98,8 +98,12 @@ func zooCodeAt(dir, exts string) *Agent {
 		return ""
 	}
 	// restore puts back the setting a settings.json had before magpie's
-	restore := func(p string) error {
-		if was := unstash(key(p)); was != "" {
+	restore := func(g *rewireGuard, p string) error {
+		was, err := g.unstash(key(p))
+		if err != nil {
+			return err
+		}
+		if was != "" {
 			return edit.SetJSON(p, edit.KV{Path: zooImport, Value: was})
 		}
 		return edit.DelJSON(p, zooImport)
@@ -121,14 +125,14 @@ func zooCodeAt(dir, exts string) *Agent {
 	write := func(ref string) error {
 		return edit.SetJSON(file, edit.KV{Path: "providerProfiles", Value: zooCodeProfiles(ref)})
 	}
-	off := func() error {
+	off := func(g *rewireGuard) error {
 		err := each(func(p string) error {
 			if ours(p) {
-				if err := restore(p); err != nil {
+				if err := restore(g, p); err != nil {
 					return err
 				}
 			}
-			forget(key(p))
+			g.forget(key(p))
 			return nil
 		})
 		if err != nil {
@@ -139,8 +143,26 @@ func zooCodeAt(dir, exts string) *Agent {
 		}
 		return nil
 	}
+	setModel := func(g *rewireGuard, v string) error {
+		ref, ok := strings.CutPrefix(v, magpieID+"/")
+		if !ok || !isMagpie(ref) {
+			return off(g)
+		}
+		if err := write(ref); err != nil {
+			return err
+		}
+		return each(func(p string) error {
+			if !ours(p) {
+				if err := g.stash(map[string]string{key(p): getAt(p)}); err != nil {
+					return err
+				}
+			}
+			return edit.SetJSON(p, edit.KV{Path: zooImport, Value: file})
+		})
+	}
 	return atomic(&Agent{
-		ID: "zoo-code", Name: "Zoo Code", Icon: "zoo-code", Spelled: prefixed,
+		reapplyRewire: true,
+		ID:            "zoo-code", Name: "Zoo Code", Icon: "zoo-code", Spelled: prefixed,
 		// its requests say "ZooCode/<version>" (DEFAULT_HEADERS,
 		// src/api/providers/constants.ts): usage names them by the word
 		// before the slash
@@ -153,7 +175,7 @@ func zooCodeAt(dir, exts string) *Agent {
 			}
 			return ""
 		},
-		Unwire: off,
+		Unwire: func() error { return off(nil) },
 		// the file is read again at every start: it follows the catalog and
 		// the key, and a profile made since is pointed at it too
 		Sync: func() error {
@@ -170,7 +192,9 @@ func zooCodeAt(dir, exts string) *Agent {
 				if ours(p) {
 					return nil
 				}
-				stash(map[string]string{key(p): getAt(p)})
+				if err := stash(map[string]string{key(p): getAt(p)}); err != nil {
+					return err
+				}
 				return edit.SetJSON(p, edit.KV{Path: zooImport, Value: file})
 			})
 		},
@@ -185,23 +209,8 @@ func zooCodeAt(dir, exts string) *Agent {
 		},
 		Fields: []Field{{
 			Key: "model", Label: "model", Get: model,
-			Set: func(v string) error {
-				ref, ok := strings.CutPrefix(v, magpieID+"/")
-				if !ok || !isMagpie(ref) {
-					// Zoo Code's own profiles are in its secret storage:
-					// magpie stops the import and leaves them to it
-					return off()
-				}
-				if err := write(ref); err != nil {
-					return err
-				}
-				return each(func(p string) error {
-					if !ours(p) {
-						stash(map[string]string{key(p): getAt(p)})
-					}
-					return edit.SetJSON(p, edit.KV{Path: zooImport, Value: file})
-				})
-			},
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(map[string]string) []Option {
 				return viaMagpie("zoo-code", magpieID+"/")
 			},

@@ -175,8 +175,12 @@ func vscodeKindAt(k vscodeKind, dir string) *Agent {
 	}
 	// restore puts back the chat.defaultModel a settings.json had before
 	// magpie's
-	restore := func(p string) error {
-		if was := unstash(key(p)); was != "" {
+	restore := func(g *rewireGuard, p string) error {
+		was, err := g.unstash(key(p))
+		if err != nil {
+			return err
+		}
+		if was != "" {
 			return edit.SetJSON(p, edit.KV{Path: vscodeDefault, Value: was})
 		}
 		return edit.DelJSON(p, vscodeDefault)
@@ -213,8 +217,44 @@ func vscodeKindAt(k vscodeKind, dir string) *Agent {
 		}
 		return nil
 	}
+	setModel := func(g *rewireGuard, v string) error {
+		return profiles(func(settings, lms []string) error {
+			if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+				if err := setGroup(lms); err != nil {
+					return err
+				}
+				for _, p := range append([]string{path}, settings...) {
+					if !inGroup(getAt(p)) {
+						if err := g.stash(map[string]string{key(p): getAt(p)}); err != nil {
+							return err
+						}
+					}
+					if err := edit.SetJSON(p, edit.KV{Path: vscodeDefault, Value: ref}); err != nil {
+						return err
+					}
+				}
+				return nil
+			}
+			for _, p := range settings {
+				if inGroup(getAt(p)) {
+					if err := restore(g, p); err != nil {
+						return err
+					}
+				}
+			}
+			if v == "" {
+				if inGroup(get()) {
+					return restore(g, path)
+				}
+				return edit.DelJSON(path, vscodeDefault)
+			}
+			g.forget(key(path))
+			return edit.SetJSON(path, edit.KV{Path: vscodeDefault, Value: v})
+		})
+	}
 	return atomic(&Agent{
-		ID: k.id, Name: k.name, Icon: "vscode", Aliases: k.aliases, Spelled: prefixed,
+		reapplyRewire: true,
+		ID:            k.id, Name: k.name, Icon: "vscode", Aliases: k.aliases, Spelled: prefixed,
 		Bin: k.bin, Dir: dir, Path: path,
 		UA: k.ua,
 		detect: func() bool {
@@ -243,7 +283,7 @@ func vscodeKindAt(k vscodeKind, dir string) *Agent {
 			return profiles(func(settings, lms []string) error {
 				for _, p := range append([]string{path}, settings...) {
 					if inGroup(getAt(p)) {
-						if err := restore(p); err != nil {
+						if err := restore(nil, p); err != nil {
 							return err
 						}
 					}
@@ -287,42 +327,8 @@ func vscodeKindAt(k vscodeKind, dir string) *Agent {
 		},
 		Fields: []Field{{
 			Key: "model", Label: "model", Get: model,
-			Set: func(v string) error {
-				return profiles(func(settings, lms []string) error {
-					if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-						if err := setGroup(lms); err != nil {
-							return err
-						}
-						// a new chat in each profile starts on it
-						for _, p := range append([]string{path}, settings...) {
-							if !inGroup(getAt(p)) {
-								stash(map[string]string{key(p): getAt(p)})
-							}
-							if err := edit.SetJSON(p, edit.KV{Path: vscodeDefault, Value: ref}); err != nil {
-								return err
-							}
-						}
-						return nil
-					}
-					// one of VS Code's own: the profiles go back to theirs
-					for _, p := range settings {
-						if inGroup(getAt(p)) {
-							if err := restore(p); err != nil {
-								return err
-							}
-						}
-					}
-					// VS Code's own: its default, where magpie's group stays
-					if v == "" {
-						if inGroup(get()) {
-							return restore(path)
-						}
-						return edit.DelJSON(path, vscodeDefault)
-					}
-					forget(key(path))
-					return edit.SetJSON(path, edit.KV{Path: vscodeDefault, Value: v})
-				})
-			},
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(cur map[string]string) []Option {
 				// auto: Copilot's Auto, for one signed in to it
 				own := []Option{{Value: "auto", Label: "Auto"}}

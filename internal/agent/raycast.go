@@ -61,7 +61,8 @@ func raycast(home string) *Agent {
 		return raycastWire(path, raycastProviderYAML(gateway.URL()))
 	}
 	return &Agent{
-		ID: "raycast", Name: "Raycast", Icon: "raycast", Aliases: []string{"raycast-ai"},
+		reapplyRewire: true,
+		ID:            "raycast", Name: "Raycast", Icon: "raycast", Aliases: []string{"raycast-ai"},
 		Dir: dir, Path: path,
 		// the app on a Mac; its config folder elsewhere, which Raycast for
 		// Windows makes at Reveal Providers Config. No command: Raycast

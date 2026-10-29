@@ -821,6 +821,16 @@ func wslAgent(k wslKind, d distro) *Agent {
 				return err
 			}
 		}
+		if set := f.setRewire; set != nil {
+			f.setRewire = func(guard *rewireGuard, v string) error {
+				err := set(guard, v)
+				for _, g := range a.Fields {
+					g.Get()
+				}
+				wslSave()
+				return err
+			}
+		}
 	}
 	return a
 }
@@ -831,7 +841,7 @@ func wslAgent(k wslKind, d distro) *Agent {
 // files, which starts the distro.
 func asleep(live *Agent, k wslKind, d distro) *Agent {
 	started := false
-	a := &Agent{ID: live.ID, Name: live.Name, Icon: live.Icon, WSL: d.Name, detect: live.detect, Spelled: live.Spelled, ModelAliases: live.ModelAliases, NoNames: live.NoNames,
+	a := &Agent{ID: live.ID, Name: live.Name, Icon: live.Icon, WSL: d.Name, detect: live.detect, Spelled: live.Spelled, ModelAliases: live.ModelAliases, NoNames: live.NoNames, reapplyRewire: live.reapplyRewire || live.joinRewire != nil,
 		Notice: func() string {
 			if started {
 				return live.Notice()
@@ -840,33 +850,42 @@ func asleep(live *Agent, k wslKind, d distro) *Agent {
 		}}
 	for _, lf := range live.Fields {
 		key := lf.Key
+		set := func(guard *rewireGuard, v string) error {
+			// opening a stopped distro's files is aborted rather than
+			// waiting for it to start, so it is started first
+			if _, err := wslRun(time.Minute, "-d", d.Name, "-e", "true"); err != nil {
+				return fmt.Errorf("start WSL %s: %w", d.Name, err)
+			}
+			started = true
+			// the agent again, now its files can be looked at: which of
+			// them it reads (opencode.jsonc or .json, ~/.kimi-code or
+			// ~/.kimi) is theirs to say, not the defaults it was built on
+			w := d
+			w.Running = true
+			warm := k.in(w.place(live.ID))
+			wf := warm.Field(key)
+			if wf == nil || wf.Set == nil {
+				return fmt.Errorf("%s has no %s", live.Name, key)
+			}
+			var err error
+			if guard != nil && wf.setRewire != nil {
+				err = wf.setRewire(guard, v)
+			} else {
+				err = wf.Set(v)
+			}
+			// a model settles the effort too
+			for _, f := range warm.Fields {
+				wslRemember(d.Name, k.memo(f.Key), f.Get())
+			}
+			wslSave()
+			return err
+		}
 		f := Field{Key: key, Label: lf.Label, Quiet: lf.Quiet, Live: lf.Live, Follows: lf.Follows, Options: lf.Options,
 			Get: func() string { return wslLastSeen(d.Name, k.memo(key)) },
-			Set: func(v string) error {
-				// opening a stopped distro's files is aborted rather than
-				// waiting for it to start, so it is started first
-				if _, err := wslRun(time.Minute, "-d", d.Name, "-e", "true"); err != nil {
-					return fmt.Errorf("start WSL %s: %w", d.Name, err)
-				}
-				started = true
-				// the agent again, now its files can be looked at: which of
-				// them it reads (opencode.jsonc or .json, ~/.kimi-code or
-				// ~/.kimi) is theirs to say, not the defaults it was built on
-				w := d
-				w.Running = true
-				warm := k.in(w.place(live.ID))
-				wf := warm.Field(key)
-				if wf == nil || wf.Set == nil {
-					return fmt.Errorf("%s has no %s", live.Name, key)
-				}
-				err := wf.Set(v)
-				// a model settles the effort too
-				for _, f := range warm.Fields {
-					wslRemember(d.Name, k.memo(f.Key), f.Get())
-				}
-				wslSave()
-				return err
-			}}
+			Set: func(v string) error { return set(nil, v) }}
+		if live.reapplyRewire || lf.setRewire != nil {
+			f.setRewire = set
+		}
 		if k.asleep != nil {
 			if o := k.asleep(key); o != nil {
 				f.Options = o
@@ -878,6 +897,37 @@ func asleep(live *Agent, k wslKind, d distro) *Agent {
 			f.Options = func(map[string]string) []Option { return nil }
 		}
 		a.Fields = append(a.Fields, f)
+	}
+	if live.joinRewire != nil {
+		a.resetRewire = func(g *rewireGuard) error {
+			if _, err := wslRun(time.Minute, "-d", d.Name, "-e", "true"); err != nil {
+				return fmt.Errorf("start WSL %s: %w", d.Name, err)
+			}
+			started = true
+			w := d
+			w.Running = true
+			warm := k.in(w.place(live.ID))
+			var err error
+			if warm.Joined != nil && warm.Joined() {
+				var joined bool
+				joined, err = warm.joinRewire(g)
+				if err == nil && !joined {
+					err = fmt.Errorf("%s wiring changed before rewire", live.Name)
+				}
+			} else {
+				f := warm.Field("model")
+				if f == nil || f.setRewire == nil {
+					err = fmt.Errorf("%s has no guarded model", live.Name)
+				} else {
+					err = warm.apply("model", f.Get(), g)
+				}
+			}
+			for _, f := range warm.Fields {
+				wslRemember(d.Name, k.memo(f.Key), f.Get())
+			}
+			wslSave()
+			return err
+		}
 	}
 	return a
 }

@@ -2,6 +2,7 @@ package agent
 
 import (
 	"bufio"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -27,6 +28,17 @@ import (
 // (applied.json, beside the stash) and says when that no longer holds —
 // Drift — with the way to set it again.
 
+func disconnectFileSnapshot(path string) (string, error) {
+	b, err := os.ReadFile(path)
+	if err != nil && !os.IsNotExist(err) {
+		return "", err
+	}
+	if os.IsNotExist(err) {
+		return "missing", nil
+	}
+	return fmt.Sprintf("%x", sha256.Sum256(b)), nil
+}
+
 var appliedMu sync.Mutex
 
 // applied is what magpie last set on one agent, and when.
@@ -50,14 +62,18 @@ func appliedLoad() map[string]applied {
 // agent, and appliedLoad reads a file that doesn't parse as empty: such a
 // file is copied aside first, and one that can't be copied isn't written
 // over (#2263).
-func appliedSave(m map[string]applied) {
+func appliedSave(m map[string]applied) error {
 	if err := lastgood.KeepUnparsed(appliedPath(), lastgood.Into[map[string]applied]); err != nil {
-		log.Printf("applied.json wasn't written over: %v", err)
-		return
+		return err
 	}
-	b, _ := json.MarshalIndent(m, "", "  ")
-	os.MkdirAll(filepath.Dir(appliedPath()), 0o755)
-	os.WriteFile(appliedPath(), b, 0o600)
+	b, err := json.MarshalIndent(m, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(appliedPath()), 0o755); err != nil {
+		return err
+	}
+	return edit.WriteAtomic(appliedPath(), b)
 }
 
 func appliedOf(id string) applied {
@@ -83,7 +99,9 @@ func record(id, key, v string) {
 	}
 	a.At = time.Now()
 	m[id] = a
-	appliedSave(m)
+	if err := appliedSave(m); err != nil {
+		log.Printf("applied.json wasn't written over: %v", err)
+	}
 }
 
 // Apply sets one of the agent's fields and remembers it as magpie's, so it
@@ -94,6 +112,10 @@ func record(id, key, v string) {
 // which read as changed outside magpie, and the drift kept the row up
 // among the connected ones while it said Not connected (#834).
 func (a *Agent) Apply(key, v string) error {
+	return a.apply(key, v, nil)
+}
+
+func (a *Agent) apply(key, v string, guard *rewireGuard) error {
 	if a.Native != nil {
 		return a.Native.Apply(key, v)
 	}
@@ -107,7 +129,13 @@ func (a *Agent) Apply(key, v string) error {
 		v = pub
 	}
 	was := a.Values()
-	if err := f.Set(v); err != nil {
+	var err error
+	if guard != nil && f.setRewire != nil {
+		err = f.setRewire(guard, v)
+	} else {
+		err = f.Set(v)
+	}
+	if err != nil {
 		return err
 	}
 	now := a.Values()
@@ -120,7 +148,7 @@ func (a *Agent) Apply(key, v string) error {
 	// magpie picked in by the user's own hand (magpie model, a pick in
 	// the CLI) connects it again
 	if a.Wired() {
-		forget(a.ID + disconnectedKey)
+		guard.forget(a.ID + disconnectedKey)
 	}
 	return nil
 }
@@ -359,6 +387,10 @@ func orDefault(v string) string {
 // catches. A replaced field brings back the others magpie set with it.
 // Either way the record is renewed, so a use before now no longer counts.
 func (a *Agent) Reapply() error {
+	return a.reapply(nil)
+}
+
+func (a *Agent) reapply(guard *rewireGuard) error {
 	if a.Native != nil {
 		return a.Native.Connect()
 	}
@@ -369,12 +401,12 @@ func (a *Agent) Reapply() error {
 	if d != nil && d.Kind == "replaced" {
 		rec := appliedOf(a.ID)
 		// the model first: the others (an effort) are checked against it
-		if err := a.Apply(d.Field, d.Want); err != nil {
+		if err := a.apply(d.Field, d.Want, guard); err != nil {
 			return err
 		}
 		for _, f := range a.Fields {
 			if v, ok := rec.Fields[f.Key]; ok && f.Key != d.Field && f.Get() != v {
-				if err := a.Apply(f.Key, v); err != nil {
+				if err := a.apply(f.Key, v, guard); err != nil {
 					return err
 				}
 			}
@@ -388,7 +420,7 @@ func (a *Agent) Reapply() error {
 		// left out, Reconnect set the tiers again and never the gateway
 		// Check found off (dumplings on Discord)
 		if v := vals[f.Key]; v != "" && (d != nil && f.Key == d.Field || v == magpieID || magpieValue(a, f, v, vals)) {
-			if err := a.Apply(f.Key, v); err != nil {
+			if err := a.apply(f.Key, v, guard); err != nil {
 				return err
 			}
 		}
@@ -399,14 +431,20 @@ func (a *Agent) Reapply() error {
 // Keep takes the agent's config as it is now: what magpie set before is
 // forgotten, and no longer said to have been changed.
 func (a *Agent) Keep() {
+	if err := a.keep(); err != nil {
+		log.Printf("applied.json wasn't written over: %v", err)
+	}
+}
+
+func (a *Agent) keep() error {
 	appliedMu.Lock()
 	defer appliedMu.Unlock()
 	m := appliedLoad()
 	if _, ok := m[a.ID]; !ok {
-		return
+		return nil
 	}
 	delete(m, a.ID)
-	appliedSave(m)
+	return appliedSave(m)
 }
 
 // Wired reports whether magpie is in the agent's config: a field on one of
@@ -434,6 +472,17 @@ func (a *Agent) Wired() bool {
 // model picked in magpie in one click, both): the agent gets magpie's whole
 // list, and Disconnect puts back what it had before.
 func (a *Agent) Pick(key, v string) error {
+	if a.Native == nil {
+		pending, err := peekStash(a.ID + ".disconnect.pending")
+		if err != nil {
+			return err
+		}
+		if pending != "" {
+			if err := a.Disconnect(); err != nil {
+				return err
+			}
+		}
+	}
 	if a.Native != nil {
 		value, err := a.Spell(key, v)
 		if err != nil {
@@ -528,7 +577,22 @@ func (a *Agent) ConnectHow() (c Connection, err error) {
 	if a.Native != nil {
 		return Connection{How: "joined"}, a.Native.Connect()
 	}
-	if len(a.Fields) == 0 || a.Wired() {
+	if len(a.Fields) == 0 {
+		return Connection{How: "kept"}, nil
+	}
+	pending, err := peekStash(a.ID + ".disconnect.pending")
+	if err != nil {
+		return Connection{}, err
+	}
+	if pending != "" {
+		if err := a.Disconnect(); err != nil {
+			return Connection{}, err
+		}
+		if left, err := peekStash(a.ID + ".disconnect.pending"); err != nil || left != "" {
+			return Connection{}, fmt.Errorf("%s disconnect is still pending", a.Name)
+		}
+	}
+	if a.Wired() {
 		return Connection{How: "kept"}, nil
 	}
 	return a.connect()
@@ -568,7 +632,9 @@ func (a *Agent) connect() (Connection, error) {
 	// otherwise (Goose's own model)
 	now := a.Values()
 	b, _ := json.Marshal(now)
-	stash(map[string]string{a.ID + ".connect.was": string(b)})
+	if err := stash(map[string]string{a.ID + ".connect.was": string(b)}); err != nil {
+		return Connection{}, err
+	}
 	// switched off and on again: the models it was on, as they were
 	if ok, err := a.reconnect(now); ok || err != nil {
 		return Connection{How: "again"}, err
@@ -741,63 +807,214 @@ func (a *Agent) Disconnect() (err error) {
 		}
 		return a.Native.Execute(plan)
 	}
-	if !a.Wired() {
+	pendingKey := a.ID + ".disconnect.pending"
+	pending, err := peekStash(pendingKey)
+	if err != nil {
+		return err
+	}
+	if !a.Wired() && pending == "" {
 		return nil
 	}
-	// the user's say, kept till they connect it again: nothing magpie does
-	// by itself (a start's Sync, Codex's account failover) puts magpie back
-	// in, this Disconnect's own writes included (paynezhuang on Discord)
-	stash(map[string]string{a.ID + disconnectedKey: "1"})
-	// the user's own say over a harness Kiro Crew's connect put on
-	kiroCrewUserLeft(a.ID)
 	before, rec := a.Values(), appliedOf(a.ID)
-	if a.Unwire != nil {
-		if err := a.Unwire(); err != nil {
+	var completed struct {
+		Started  bool              `json:"started,omitempty"`
+		Model    string            `json:"model,omitempty"`
+		Values   map[string]string `json:"values,omitempty"`
+		Snapshot *string           `json:"snapshot,omitempty"`
+		Unwired  bool              `json:"unwired,omitempty"`
+		Back     *reconnection     `json:"back"`
+	}
+	backOf := func(before, left map[string]string) reconnection {
+		back := reconnection{Magpie: map[string]string{}, Left: left}
+		for _, f := range a.Fields {
+			if v := before[f.Key]; v != left[f.Key] {
+				back.Magpie[f.Key] = v
+				if v == magpieID || magpieValue(a, f, v, before) {
+					back.Routed = append(back.Routed, f.Key)
+				}
+			}
+		}
+		return back
+	}
+	if pending != "" {
+		if err := json.Unmarshal([]byte(pending), &completed); err != nil {
+			return fmt.Errorf("read pending disconnect for %s: %w", a.Name, err)
+		}
+		if completed.Values != nil {
+			before = completed.Values
+		} else if !completed.Started && !completed.Unwired && completed.Back == nil {
+			if err := json.Unmarshal([]byte(pending), &before); err != nil {
+				return fmt.Errorf("read pending disconnect for %s: %w", a.Name, err)
+			}
+		}
+	} else {
+		b, err := json.Marshal(before)
+		if err != nil {
+			return err
+		}
+		if err := stash(map[string]string{pendingKey: string(b)}); err != nil {
 			return err
 		}
 	}
-	for _, f := range a.Fields {
-		vals := a.Values()
-		v := vals[f.Key]
-		// set by magpie: as it set it, or its group by the model's name
-		set := v != "" && (rec.Fields[f.Key] == v || sameGroup(rec.Fields[f.Key], v)) && before[f.Key] == v
-		if v == "" || !set && v != magpieID && !magpieValue(a, f, v, vals) {
-			continue
+	if completed.Started && a.disconnectResume != nil {
+		resumed, err := a.disconnectResume(before, completed.Snapshot)
+		if err != nil {
+			return err
 		}
-		if err := f.Set(""); err != nil {
-			return fmt.Errorf("%s: %w", f.Label, err)
+		if resumed {
+			back := backOf(before, a.Values())
+			completed.Unwired = true
+			completed.Back = &back
 		}
 	}
-	// a field its own Set left empty goes back to what it was on before
-	// Connect (Goose's own provider and model)
-	var was map[string]string
-	json.Unmarshal([]byte(unstash(a.ID+".connect.was")), &was)
-	after := a.Values()
-	for _, f := range a.Fields {
-		if w := was[f.Key]; w != "" && after[f.Key] == "" && w != magpieID && !magpieValue(a, f, w, was) {
-			if err := f.Set(w); err != nil {
+	if completed.Started && !completed.Unwired && a.disconnectUnwired != nil {
+		unwired, err := a.disconnectUnwired()
+		if err != nil {
+			return err
+		}
+		if unwired {
+			back := backOf(before, a.Values())
+			completed.Unwired = true
+			completed.Back = &back
+		}
+	}
+	if completed.Unwired || completed.Back != nil {
+		completed.Unwired = true
+	} else {
+		// the user's say, kept till they connect it again: nothing magpie does
+		// by itself (a start's Sync, Codex's account failover) puts magpie back
+		// in, this Disconnect's own writes included (paynezhuang on Discord)
+		if err := stash(map[string]string{a.ID + disconnectedKey: "1"}); err != nil {
+			return err
+		}
+		// the user's own say over a harness Kiro Crew's connect put on
+		kiroCrewUserLeft(a.ID)
+		back := backOf(before, nil)
+		b, err := json.Marshal(back)
+		if err != nil {
+			return err
+		}
+		if !completed.Started {
+			var snapshot *string
+			if a.disconnectSnapshot != nil {
+				value, err := a.disconnectSnapshot()
+				if err != nil {
+					return err
+				}
+				snapshot = &value
+			}
+			model, _ := edit.GetJSON(a.Path, "model")
+			started, err := json.Marshal(struct {
+				Started  bool              `json:"started"`
+				Model    string            `json:"model"`
+				Values   map[string]string `json:"values"`
+				Snapshot *string           `json:"snapshot,omitempty"`
+			}{true, model, before, snapshot})
+			if err != nil {
+				return err
+			}
+			if err := stash(map[string]string{a.ID + ".reconnect": string(b), pendingKey: string(started)}); err != nil {
+				return err
+			}
+		}
+		if completed.Started {
+			if a.disconnectSnapshot != nil {
+				if completed.Snapshot == nil {
+					return fmt.Errorf("%s disconnect has an older recovery record without a settings snapshot; settings were left unchanged. Back up the agent configuration and magpie stash, then restore the agent's original settings and remove only %q from stash.json before retrying", a.Name, pendingKey)
+				}
+				current, err := a.disconnectSnapshot()
+				if err != nil {
+					return err
+				}
+				if current != *completed.Snapshot {
+					return fmt.Errorf("%s settings changed or disconnect was interrupted; nothing was overwritten. Back up the agent configuration and %s, restore the agent's original settings manually, then remove only %q from the stash", a.Name, stashPath(), pendingKey)
+				}
+			}
+			if a.disconnectConflict != nil && a.disconnectConflict(completed.Model) {
+				return fmt.Errorf("%s model changed during disconnect; retry left it unchanged", a.Name)
+			}
+			current := a.Values()
+			if _, hasModel := before["model"]; hasModel && current["provider"] == magpieID && before["provider"] == magpieID && current["model"] != before["model"] {
+				return fmt.Errorf("%s model changed during disconnect; retry left it unchanged", a.Name)
+			}
+			for _, f := range a.Fields {
+				v := current[f.Key]
+				if v != before[f.Key] && v != "" && (v == magpieID || magpieValue(a, f, v, current)) {
+					return fmt.Errorf("%s %s changed during disconnect; retry left it unchanged", a.Name, f.Label)
+				}
+			}
+		}
+		if a.Unwire != nil {
+			if err := a.Unwire(); err != nil {
+				return err
+			}
+		}
+		for _, f := range a.Fields {
+			vals := a.Values()
+			v := vals[f.Key]
+			// set by magpie: as it set it, or its group by the model's name.
+			// A retry already has the original snapshot; a different value is the user's.
+			set := !completed.Started && v != "" && (rec.Fields[f.Key] == v || sameGroup(rec.Fields[f.Key], v)) && before[f.Key] == v
+			if v == "" || !set && v != magpieID && !magpieValue(a, f, v, vals) {
+				continue
+			}
+			if err := f.Set(""); err != nil {
 				return fmt.Errorf("%s: %w", f.Label, err)
 			}
 		}
-	}
-	if a.Restore != nil {
-		if err := a.Restore(); err != nil {
+		// a field its own Set left empty goes back to what it was on before
+		// Connect (Goose's own provider and model)
+		var was map[string]string
+		kept, err := peekStash(a.ID + ".connect.was")
+		if err != nil {
 			return err
 		}
-	}
-	// what it was on through magpie, for switching it on again
-	back := reconnection{Magpie: map[string]string{}, Left: a.Values()}
-	for _, f := range a.Fields {
-		if v := before[f.Key]; v != back.Left[f.Key] {
-			back.Magpie[f.Key] = v
-			if v == magpieID || magpieValue(a, f, v, before) {
-				back.Routed = append(back.Routed, f.Key)
+		json.Unmarshal([]byte(kept), &was)
+		after := a.Values()
+		for _, f := range a.Fields {
+			if w := was[f.Key]; w != "" && after[f.Key] == "" && w != magpieID && !magpieValue(a, f, w, was) {
+				if err := f.Set(w); err != nil {
+					return fmt.Errorf("%s: %w", f.Label, err)
+				}
 			}
 		}
+		if a.Restore != nil {
+			if err := a.Restore(); err != nil {
+				return err
+			}
+		}
+		// what it was on through magpie, for switching it on again
+		back = backOf(before, a.Values())
+		b, err = json.Marshal(back)
+		if err != nil {
+			return err
+		}
+		checkpoint, err := json.Marshal(struct {
+			Unwired bool          `json:"unwired"`
+			Back    *reconnection `json:"back"`
+		}{true, &back})
+		if err != nil {
+			return err
+		}
+		if err := stash(map[string]string{pendingKey: string(checkpoint), a.ID + ".reconnect": string(b)}); err != nil {
+			return err
+		}
+		completed.Unwired = true
+		completed.Back = &back
 	}
-	b, _ := json.Marshal(back)
-	stash(map[string]string{a.ID + ".reconnect": string(b)})
-	a.Keep()
+	b, err := json.Marshal(completed.Back)
+	if err != nil {
+		return err
+	}
+	if err := stash(map[string]string{a.ID + ".reconnect": string(b)}); err != nil {
+		return err
+	}
+	if err := a.keep(); err != nil {
+		return err
+	}
+	if _, err := unstash(pendingKey); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -828,7 +1045,11 @@ type reconnection struct {
 // it since and magpie still routes them; false when it doesn't apply.
 func (a *Agent) reconnect(now map[string]string) (bool, error) {
 	var rec reconnection
-	if json.Unmarshal([]byte(unstash(a.ID+".reconnect")), &rec) != nil || len(rec.Routed) == 0 {
+	kept, err := unstash(a.ID + ".reconnect")
+	if err != nil {
+		return false, err
+	}
+	if json.Unmarshal([]byte(kept), &rec) != nil || len(rec.Routed) == 0 {
 		return false, nil
 	}
 	for k, v := range rec.Left {

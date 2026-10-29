@@ -62,8 +62,36 @@ func mothxIn(at place) *Agent {
 	// the file as it was before magpie's first write, put back byte for
 	// byte by Disconnect where it leaves it saying the same
 	before := beforeMagpie{at.key("mothx.before.absent"), []string{path}}
+	setModel := func(g *rewireGuard, v string) error {
+		if v == "" {
+			if err := edit.DelJSON(path, "defaultProvider", "defaultModel"); err != nil {
+				return err
+			}
+			if err := edit.DelJSON(path, "providers."+magpieID); err != nil {
+				return err
+			}
+			if raw, ok := get("providers"); ok && strings.TrimSpace(raw) == "{}" {
+				return edit.DelJSON(path, "providers")
+			}
+			return nil
+		}
+		if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+			if _, has := get("providers." + magpieID); !has {
+				if p, _ := get("defaultProvider"); p != magpieID {
+					if err := before.takeFor(g); err != nil {
+						return err
+					}
+				}
+			}
+			if err := writeMagpie(); err != nil {
+				return err
+			}
+		}
+		return pair(v)
+	}
 	return atomic(&Agent{
-		ID: "mothx", Name: "MothX", Icon: "mothx", Bin: "mothx", Dir: dir, Path: path, Spelled: prefixed,
+		reapplyRewire: true,
+		ID:            "mothx", Name: "MothX", Icon: "mothx", Bin: "mothx", Dir: dir, Path: path, Spelled: prefixed,
 		// the command and the package were vibecoding before (its npm
 		// vibecoding-installer still installs it under that name), and
 		// its requests still say "Vibecoding Client/<version>": usage
@@ -88,35 +116,9 @@ func mothxIn(at place) *Agent {
 			{
 				// defaultProvider and defaultModel, as one provider/model
 				Key: "model", Label: "model",
-				Get: pairGet(get, "defaultProvider", "defaultModel"),
-				Set: func(v string) error {
-					if v == "" {
-						if err := edit.DelJSON(path, "defaultProvider", "defaultModel"); err != nil {
-							return err
-						}
-						if err := edit.DelJSON(path, "providers."+magpieID); err != nil {
-							return err
-						}
-						// providers left empty is magpie's: MothX writes none
-						// (omitempty), and reads none the same as {}
-						if raw, ok := get("providers"); ok && strings.TrimSpace(raw) == "{}" {
-							return edit.DelJSON(path, "providers")
-						}
-						return nil
-					}
-					// a model of magpie's: its provider block goes in beside the pick
-					if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-						if _, has := get("providers." + magpieID); !has {
-							if p, _ := get("defaultProvider"); p != magpieID {
-								before.take()
-							}
-						}
-						if err := writeMagpie(); err != nil {
-							return err
-						}
-					}
-					return pair(v)
-				},
+				Get:       pairGet(get, "defaultProvider", "defaultModel"),
+				Set:       func(v string) error { return setModel(nil, v) },
+				setRewire: setModel,
 				Options: func(cur map[string]string) []Option {
 					return append(mothxOwn(path, cur["model"]), viaMagpie("mothx", magpieID+"/")...)
 				},

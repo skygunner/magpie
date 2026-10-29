@@ -2,6 +2,7 @@ package agent
 
 import (
 	"encoding/json"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -141,6 +142,38 @@ func TestWSLMoreAgentsDiscovered(t *testing.T) {
 	}
 	if got := strings.Join(ids, ","); got != strings.Join(want, ",") {
 		t.Fatalf("agents %s\nwant %s", got, strings.Join(want, ","))
+	}
+}
+
+// WSL constructors retain their actual rewire support, including named omp profiles.
+func TestWSLRewireConstructorInventory(t *testing.T) {
+	syncHome(t)
+	root := t.TempDir()
+	has := map[string]bool{}
+	for _, k := range wslKinds {
+		if k.dir != "" {
+			has["dir:"+k.dir] = true
+		}
+		if k.bin != "" {
+			has["bin:"+k.bin] = true
+		}
+	}
+	d := distro{Name: "Ubuntu", Root: root, Home: "/home/me", Has: has, Versions: map[string]string{"reasonix": "2.0"}, Running: true, OmpProfiles: []string{"work"}}
+	want := map[string]bool{"codex": true, "pi": true, "omo": true, "prime-agent": true, "stepcode": true, "claude": true, "opencode": true, "mimocode": true, "hermes": true, "dsh": true, "gemini": true, "omp": true, "omp#work": true, "atomcode": true, "qoder": true, "qoder-cn": true, "morph": true, "crush": true, "goose": true, "penguin": true, "fx": true, "commandcode": true, "reasonix": true, "empryo": true, "ante": true, "mothx": true, "minimax-code": true, "codebuddy": true, "droid": true, "qwen": true, "kimi": true, "muse": true, "cline": true, "grok": true, "agy": true, "snow": true}
+	for _, running := range []bool{true, false} {
+		d.Running = running
+		remaining := maps.Clone(want)
+		for _, a := range wslAgentsOf([]distro{d}) {
+			id, _, _ := strings.Cut(a.ID, "@wsl:")
+			got := a.joinRewire != nil || a.reapplyRewire || a.Native != nil && a.Native.connectRewire != nil
+			if got != remaining[id] {
+				t.Errorf("%s running=%v: explicit=%v want=%v", id, running, got, remaining[id])
+			}
+			delete(remaining, id)
+		}
+		if len(remaining) != 0 {
+			t.Fatalf("running=%v: expected constructors missing: %v", running, remaining)
+		}
 	}
 }
 

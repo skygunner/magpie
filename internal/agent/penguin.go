@@ -187,8 +187,52 @@ func penguinIn(at place) *Agent {
 		}
 		return false
 	}
+	setModel := func(g *rewireGuard, v string) error {
+		cur := get()
+		if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+			if !usesMagpie(cur) {
+				kept := map[string]string{stashKey: cur}
+				if t, _ := edit.GetTOMLTable(path, providerTable); t == nil {
+					if _, err := os.Stat(path); errors.Is(err, fs.ErrNotExist) {
+						kept[absentKey] = "1"
+					} else {
+						kept[absentKey] = ""
+					}
+				}
+				if err := g.stash(kept); err != nil {
+					return err
+				}
+			}
+			if err := writeMagpie(); err != nil {
+				return err
+			}
+			return setRef("default_model", v)
+		}
+		if v != "" && !strings.Contains(strings.Trim(v, "/"), "/") {
+			return errors.New("expected provider/model_id, got " + strconv.Quote(v))
+		}
+		if v == "" && usesMagpie(cur) {
+			was, err := g.unstash(stashKey)
+			if err != nil {
+				return err
+			}
+			if was != "" && !usesMagpie(was) && own(was) {
+				v = was
+			}
+		}
+		if err := setRef("default_model", v); err != nil {
+			return err
+		}
+		if c, err := readPenguin(path); err == nil && c.VisionModel != nil && c.VisionModel.Provider == magpieID {
+			if err := setRef("vision_model", ""); err != nil {
+				return err
+			}
+		}
+		return dropMagpie()
+	}
 	return atomic(&Agent{
-		ID: "penguin", Name: "PenguinHarness", Icon: "penguin-color", Bin: "penguin",
+		reapplyRewire: true,
+		ID:            "penguin", Name: "PenguinHarness", Icon: "penguin-color", Bin: "penguin",
 		Aliases: []string{"penguin-harness", "penguinharness"}, Spelled: prefixed,
 		Dir: filepath.Dir(root), Path: path,
 		// the desktop app, on this machine (a distro has none): installed
@@ -228,7 +272,11 @@ func penguinIn(at place) *Agent {
 		},
 		// a file magpie made is taken away again once nothing is left in it
 		Restore: func() error {
-			if unstash(absentKey) != "1" {
+			absent, err := unstash(absentKey)
+			if err != nil {
+				return err
+			}
+			if absent != "1" {
 				return nil
 			}
 			raw, err := os.ReadFile(path)
@@ -247,46 +295,9 @@ func penguinIn(at place) *Agent {
 		Fields: []Field{{
 			// default_model, as provider/model_id
 			Key: "model", Label: "model",
-			Get: get,
-			Set: func(v string) error {
-				cur := get()
-				if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-					if !usesMagpie(cur) {
-						kept := map[string]string{stashKey: cur}
-						if t, _ := edit.GetTOMLTable(path, providerTable); t == nil {
-							if _, err := os.Stat(path); errors.Is(err, fs.ErrNotExist) {
-								kept[absentKey] = "1"
-							} else {
-								kept[absentKey] = ""
-							}
-						}
-						stash(kept)
-					}
-					if err := writeMagpie(); err != nil {
-						return err
-					}
-					return setRef("default_model", v)
-				}
-				if v != "" && !strings.Contains(strings.Trim(v, "/"), "/") {
-					return errors.New("expected provider/model_id, got " + strconv.Quote(v))
-				}
-				if v == "" && usesMagpie(cur) {
-					// back to the default the user had, if Penguin still has it
-					if was := unstash(stashKey); was != "" && !usesMagpie(was) && own(was) {
-						v = was
-					}
-				}
-				if err := setRef("default_model", v); err != nil {
-					return err
-				}
-				// a vision model picked among magpie's in Penguin goes with them
-				if c, err := readPenguin(path); err == nil && c.VisionModel != nil && c.VisionModel.Provider == magpieID {
-					if err := setRef("vision_model", ""); err != nil {
-						return err
-					}
-				}
-				return dropMagpie()
-			},
+			Get:       get,
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(cur map[string]string) []Option {
 				return append(penguinOwnOptions(path, cur["model"]), viaMagpie("penguin", magpieID+"/")...)
 			},

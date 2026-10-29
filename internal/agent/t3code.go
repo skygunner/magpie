@@ -63,7 +63,8 @@ func t3code(home string) *Agent {
 	path := filepath.Join(base, "userdata", "settings.json")
 	wired := func() bool { _, ok := edit.GetJSON(path, t3Instance); return ok }
 	return &Agent{
-		ID: "t3code", Name: "T3 Code", Icon: "t3code", Aliases: []string{"t3", "t3-code"},
+		reapplyRewire: true,
+		ID:            "t3code", Name: "T3 Code", Icon: "t3code", Aliases: []string{"t3", "t3-code"},
 		Dir: base, Path: path,
 		// ~/.t3 is made at its first start; a Mac app never opened yet is
 		// found by its bundle. No command: `t3` is a common name.

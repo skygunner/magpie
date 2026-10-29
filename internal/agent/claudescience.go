@@ -369,7 +369,8 @@ func ScienceLaunch(bin, gw string) string {
 
 func claudeScience() *Agent {
 	return &Agent{
-		ID: ScienceID, Name: scienceName, Icon: "claude-color", Aliases: []string{"operon", "science"},
+		reapplyRewire: true,
+		ID:            ScienceID, Name: scienceName, Icon: "claude-color", Aliases: []string{"operon", "science"},
 		// its picker lists the gateway's /v1/models as it is shown them
 		// (gateway/science.go), which the row's Models button picks
 		ListsModels: true,

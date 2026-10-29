@@ -117,8 +117,42 @@ func qoderAt(at place, b qoderBuild) *Agent {
 		_, ok := cutMagpie(get("model.name"))
 		return ok && qoderKeyed(get(slot+".apiKey"), b.id)
 	}
+	setModel := func(g *rewireGuard, v string) error {
+		if ref, ok := cutMagpie(v); ok {
+			if !onMagpie() {
+				if err := g.stash(map[string]string{key + "model": get("model.name")}); err != nil {
+					return err
+				}
+			}
+			was := effort()
+			if err := edit.SetJSON(path, edit.KV{Path: slot, Value: qoderProvider(b.id, ref)}, edit.KV{Path: "model.name", Value: v}); err != nil {
+				return err
+			}
+			if was == "" || qoderEffort(get("model.preferences"), v) != "" {
+				return nil
+			}
+			return setEffort(v, was)
+		}
+		if onMagpie() || qoderKeyed(get(slot+".apiKey"), b.id) {
+			if err := edit.DelJSON(path, slot); err != nil {
+				return err
+			}
+			if v == "" {
+				was, err := g.unstash(key + "model")
+				if err != nil {
+					return err
+				}
+				v = was
+			}
+		}
+		if v == "" {
+			return edit.DelJSON(path, "model.name")
+		}
+		return edit.SetJSON(path, edit.KV{Path: "model.name", Value: v})
+	}
 	return &Agent{
-		ID: b.id, Name: b.name, Icon: "qoder", Aliases: b.aliases, Spelled: prefixed,
+		reapplyRewire: true,
+		ID:            b.id, Name: b.name, Icon: "qoder", Aliases: b.aliases, Spelled: prefixed,
 		Bin: b.bin, Dir: dir, Path: path,
 		// Qoder's JetBrains plugin keeps its indexer, app/ and plugins/ in
 		// the same folder, and writes a settings.json of enabledPlugins
@@ -154,40 +188,9 @@ func qoderAt(at place, b qoderBuild) *Agent {
 		},
 		Fields: []Field{{
 			Key: "model", Label: "model",
-			Get: func() string { return get("model.name") },
-			Set: func(v string) error {
-				if ref, ok := cutMagpie(v); ok {
-					if !onMagpie() {
-						stash(map[string]string{key + "model": get("model.name")})
-					}
-					// the effort in use goes with it to a model with none of
-					// its own
-					was := effort()
-					if err := edit.SetJSON(path,
-						edit.KV{Path: slot, Value: qoderProvider(b.id, ref)},
-						edit.KV{Path: "model.name", Value: v}); err != nil {
-						return err
-					}
-					if was == "" || qoderEffort(get("model.preferences"), v) != "" {
-						return nil
-					}
-					return setEffort(v, was)
-				}
-				// out of magpie: its provider goes, and the model the user
-				// had comes back when none is asked for
-				if onMagpie() || qoderKeyed(get(slot+".apiKey"), b.id) {
-					if err := edit.DelJSON(path, slot); err != nil {
-						return err
-					}
-					if v == "" {
-						v = unstash(key + "model")
-					}
-				}
-				if v == "" {
-					return edit.DelJSON(path, "model.name")
-				}
-				return edit.SetJSON(path, edit.KV{Path: "model.name", Value: v})
-			},
+			Get:       func() string { return get("model.name") },
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(cur map[string]string) []Option {
 				return append(ownOptions("", cur["model"]), viaMagpie(b.id, magpieID+"/")...)
 			},

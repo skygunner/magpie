@@ -115,8 +115,36 @@ func claudeDesktop(home string) *Agent {
 	sets := desktopdir.Sets(desktopdir.OS, home, os.Getenv)
 	ps := desktopSets(desktopdir.OS, home, os.Getenv)
 	p := ps[0]
+	setDesktop := func(g *rewireGuard, v string) error {
+		on := func(p desktopPaths) error { return desktopOn(g, p) }
+		if v == "" {
+			if g != nil {
+				return fmt.Errorf("rewire cannot disconnect Desktop")
+			}
+			on = desktopOff
+		}
+		if err := desktopAdoptStash(g, ps); err != nil {
+			return err
+		}
+		src := desktopLocaleFrom(ps)
+		for _, p := range ps {
+			if src != "" {
+				p.app = src
+			}
+			if err := on(p); err != nil {
+				return err
+			}
+		}
+		// its Code tab is Claude Code, told what Desktop's ids for
+		// magpie's models can do while that one runs on magpie
+		_ = claude(home).Sync()
+		return nil
+
+	}
+
 	return &Agent{
-		ID: "claude-desktop", Name: "Claude Desktop", Icon: "claude-color", Aliases: []string{"claude-app"},
+		reapplyRewire: true,
+		ID:            "claude-desktop", Name: "Claude Desktop", Icon: "claude-color", Aliases: []string{"claude-app"},
 		Dir: p.dir, Path: p.config,
 		detect: func() bool {
 			// its own data (%APPDATA%\Claude on Windows, or the MSIX
@@ -159,26 +187,8 @@ func claudeDesktop(home string) *Agent {
 				}
 				return ""
 			},
-			Set: func(v string) error {
-				on := desktopOn
-				if v == "" {
-					on = desktopOff
-				}
-				desktopAdoptStash(ps)
-				src := desktopLocaleFrom(ps)
-				for _, p := range ps {
-					if src != "" {
-						p.app = src
-					}
-					if err := on(p); err != nil {
-						return err
-					}
-				}
-				// its Code tab is Claude Code, told what Desktop's ids for
-				// magpie's models can do while that one runs on magpie
-				_ = claude(home).Sync()
-				return nil
-			},
+			Set:       func(v string) error { return setDesktop(nil, v) },
+			setRewire: setDesktop,
 			Options: func(map[string]string) []Option {
 				return []Option{{Value: magpieID, Label: "magpie", Icon: "magpie",
 					Note: "Desktop's third-party gateway: Code and Cowork on magpie's models, no Anthropic sign-in (restart Desktop)"}}
@@ -191,7 +201,7 @@ func claudeDesktop(home string) *Agent {
 			var errs []error
 			for _, p := range ps {
 				if desktopWired(p) {
-					if err := desktopSeedImport(p); err != nil {
+					if err := desktopSeedImport(nil, p); err != nil {
 						errs = append(errs, err)
 					}
 					if err := desktopKeyApplied(p); err != nil {
@@ -200,7 +210,7 @@ func claudeDesktop(home string) *Agent {
 					// a Desktop on magpie from before the servers were
 					// carried gets them once
 					if stashLoad()[desktopMCPSeen+p.key] == "" {
-						if err := desktopCarryMCP(p); err != nil {
+						if err := desktopCarryMCP(nil, p); err != nil {
 							errs = append(errs, err)
 						}
 					}
@@ -490,7 +500,7 @@ var desktopStashKeys = []string{desktopStashed, desktopMode, desktopMode3p, desk
 // before they had keys of their own (when magpie wrote only one set) onto
 // the package's keys: the stash is theirs when the package's folders are
 // on magpie and the real ones aren't.
-func desktopAdoptStash(ps []desktopPaths) {
+func desktopAdoptStash(g *rewireGuard, ps []desktopPaths) error {
 	var pkg, real *desktopPaths
 	for i := range ps {
 		if ps[i].key == ".package" {
@@ -500,23 +510,23 @@ func desktopAdoptStash(ps []desktopPaths) {
 		}
 	}
 	if pkg == nil || real == nil || !desktopWired(*pkg) || desktopWired(*real) {
-		return
+		return nil
 	}
 	m := stashLoad()
 	if m[desktopStashed] == "" || m[desktopStashed+pkg.key] != "" {
-		return
+		return nil
 	}
 	kv := map[string]string{}
 	for _, k := range desktopStashKeys {
 		kv[k+pkg.key], kv[k] = m[k], ""
 	}
-	stash(kv)
+	return g.stash(kv)
 }
 
 // desktopOn points Claude Desktop at the gateway: deploymentMode 3p in both
 // config files, magpie's profile written and applied. Every other key, and
 // every other profile, stays as it is.
-func desktopOn(p desktopPaths) error {
+func desktopOn(g *rewireGuard, p desktopPaths) error {
 	// nothing is written unless every file can be
 	for _, f := range []string{p.config, p.config3p, p.prof} {
 		if err := desktopObject(f); err != nil {
@@ -539,9 +549,11 @@ func desktopOn(p desktopPaths) error {
 		mode3p, _ := edit.GetJSON(p.config3p, "deploymentMode")
 		applied, _ := edit.GetJSON(p.meta, "appliedId")
 		k := p.key
-		forget(desktopMode+k, desktopMode3p+k, desktopApplied+k, desktopMade+k, desktopLocale+k)
-		stash(map[string]string{desktopStashed + k: "1", desktopMode + k: mode, desktopMode3p + k: mode3p,
-			desktopApplied + k: applied, desktopMade + k: strings.Join(made, "\n")})
+		g.forget(desktopMode+k, desktopMode3p+k, desktopApplied+k, desktopMade+k, desktopLocale+k)
+		if err := g.stash(map[string]string{desktopStashed + k: "1", desktopMode + k: mode, desktopMode3p + k: mode3p,
+			desktopApplied + k: applied, desktopMade + k: strings.Join(made, "\n")}); err != nil {
+			return err
+		}
 	}
 
 	// the profile: the gateway's address and key set, Desktop's own
@@ -552,10 +564,20 @@ func desktopOn(p desktopPaths) error {
 			return err
 		}
 		was := []byte("{}\n")
-		if kept := unstash(desktopProfile + p.key); kept != "" && desktopObjectBytes([]byte(kept)) {
+		kept, err := g.unstash(desktopProfile + p.key)
+		if err != nil {
+			return err
+		}
+		if kept != "" && desktopObjectBytes([]byte(kept)) {
 			was = []byte(kept)
-		} else if own := desktopOwnGatewayProfile(p); own != nil {
-			was = own
+		} else {
+			own, err := desktopOwnGatewayProfile(g, p)
+			if err != nil {
+				return err
+			}
+			if own != nil {
+				was = own
+			}
 		}
 		if err := os.WriteFile(p.prof, was, 0o600); err != nil {
 			return err
@@ -577,7 +599,7 @@ func desktopOn(p desktopPaths) error {
 	if err := edit.SetJSON(p.prof, kvs...); err != nil {
 		return err
 	}
-	if err := desktopSeedImport(p); err != nil {
+	if err := desktopSeedImport(g, p); err != nil {
 		return err
 	}
 
@@ -606,8 +628,10 @@ func desktopOn(p desktopPaths) error {
 		}
 	}
 
-	desktopCarryLocale(p)
-	if err := desktopCarryMCP(p); err != nil {
+	if err := desktopCarryLocale(g, p); err != nil {
+		return err
+	}
+	if err := desktopCarryMCP(g, p); err != nil {
 		return err
 	}
 
@@ -642,7 +666,7 @@ var desktopImportOn = map[string]any{"enabled": true, "bannerBehavior": "detect"
 // Sync, so a Desktop already on magpie gets it at magpie's next start.
 // The mark is read, never unstashed: it outlives the check and a switch
 // off, or the next Sync would write the policy back.
-func desktopSeedImport(p desktopPaths) error {
+func desktopSeedImport(g *rewireGuard, p desktopPaths) error {
 	if stashLoad()[desktopImport+p.key] != "" {
 		return nil
 	}
@@ -654,7 +678,9 @@ func desktopSeedImport(p desktopPaths) error {
 			return err
 		}
 	}
-	stash(map[string]string{desktopImport + p.key: "1"})
+	if err := g.stash(map[string]string{desktopImport + p.key: "1"}); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -683,8 +709,10 @@ func desktopServers(path string) map[string]json.RawMessage {
 // was copied. The connectors of a claude.ai account don't come along:
 // Desktop reaches them through claude.ai with that account
 // (/api/organizations/<org>/mcp/servers/…), and 3p mode has none.
-func desktopCarryMCP(p desktopPaths) error {
-	stash(map[string]string{desktopMCPSeen + p.key: "1"})
+func desktopCarryMCP(g *rewireGuard, p desktopPaths) error {
+	if err := g.stash(map[string]string{desktopMCPSeen + p.key: "1"}); err != nil {
+		return err
+	}
 	own := desktopServers(p.config)
 	if len(own) == 0 || desktopObject(p.config3p) != nil {
 		return nil
@@ -716,7 +744,9 @@ func desktopCarryMCP(p desktopPaths) error {
 		return err
 	}
 	b, _ := json.Marshal(carried)
-	stash(map[string]string{desktopMCP + p.key: string(b)})
+	if err := g.stash(map[string]string{desktopMCP + p.key: string(b)}); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -724,7 +754,10 @@ func desktopCarryMCP(p desktopPaths) error {
 // Claude-3p again, each only while it is still as copied: one the user
 // changed since is theirs. An mcpServers left empty goes with them.
 func desktopUncarryMCP(p desktopPaths) error {
-	prev := unstash(desktopMCP + p.key)
+	prev, err := unstash(desktopMCP + p.key)
+	if err != nil {
+		return err
+	}
 	var carried map[string]json.RawMessage
 	if prev == "" || json.Unmarshal([]byte(prev), &carried) != nil || len(carried) == 0 {
 		return nil
@@ -790,26 +823,27 @@ func desktopLocaleFrom(ps []desktopPaths) string {
 // Claude-3p/config.json. So a Chinese "locale" there, carried or set by
 // hand, is "en-US" again after each start, by Desktop and not by magpie
 // (Dx25 on Discord, Windows), and nothing magpie writes can keep it.
-func desktopCarryLocale(p desktopPaths) {
+func desktopCarryLocale(g *rewireGuard, p desktopPaths) error {
 	if p.app == "" || p.app3p == "" || p.app == p.app3p {
-		return
+		return nil
 	}
 	loc, ok := edit.GetJSON(p.app, "locale")
 	if !ok || !desktopLocaleName.MatchString(loc) {
-		return
+		return nil
 	}
 	if desktopObject(p.app3p) != nil {
-		return
+		return nil
 	}
 	if _, has := edit.GetJSON(p.app3p, "locale"); has {
-		return
+		return nil
 	}
 	if err := os.MkdirAll(p.dir3p, 0o755); err != nil {
-		return
+		return nil
 	}
 	if edit.SetJSON(p.app3p, edit.KV{Path: "locale", Value: loc}) == nil {
-		stash(map[string]string{desktopLocale + p.key: loc})
+		return g.stash(map[string]string{desktopLocale + p.key: loc})
 	}
+	return nil
 }
 
 // desktopOff puts Claude Desktop back as it was before magpie: each
@@ -822,11 +856,30 @@ func desktopOff(p desktopPaths) error {
 		return err
 	}
 	k := p.key
-	stashed := unstash(desktopStashed+k) != ""
-	mode, mode3p, applied := unstash(desktopMode+k), unstash(desktopMode3p+k), unstash(desktopApplied+k)
+	stashedAs, err := unstash(desktopStashed + k)
+	if err != nil {
+		return err
+	}
+	stashed := stashedAs != ""
+	mode, err := unstash(desktopMode + k)
+	if err != nil {
+		return err
+	}
+	mode3p, err := unstash(desktopMode3p + k)
+	if err != nil {
+		return err
+	}
+	applied, err := unstash(desktopApplied + k)
+	if err != nil {
+		return err
+	}
+	madeRaw, err := unstash(desktopMade + k)
+	if err != nil {
+		return err
+	}
 	var made []string
-	if m := unstash(desktopMade + k); m != "" {
-		made = strings.Split(m, "\n")
+	if madeRaw != "" {
+		made = strings.Split(madeRaw, "\n")
 	}
 	if !stashed && !slices.ContainsFunc(entries, desktopOurs) {
 		return nil
@@ -881,7 +934,9 @@ func desktopOff(p desktopPaths) error {
 	// the profile goes, and what is in it is kept for the next on: the
 	// settings the user made in it are theirs (#2035)
 	if b, err := os.ReadFile(p.prof); err == nil && desktopObjectBytes(b) && !desktopEmpty(b) {
-		stash(map[string]string{desktopProfile + k: string(b)})
+		if err := stash(map[string]string{desktopProfile + k: string(b)}); err != nil {
+			return err
+		}
 	}
 	if err := os.Remove(p.prof); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
@@ -893,7 +948,11 @@ func desktopOff(p desktopPaths) error {
 
 	// Claude-3p's config.json magpie made only to carry the language:
 	// gone again when it still holds nothing but that language
-	if loc := unstash(desktopLocale + k); loc != "" && slices.Contains(made, p.app3p) {
+	loc, err := unstash(desktopLocale + k)
+	if err != nil {
+		return err
+	}
+	if loc != "" && slices.Contains(made, p.app3p) {
 		if b, err := os.ReadFile(p.app3p); err == nil {
 			var m map[string]json.RawMessage
 			var only string
@@ -928,26 +987,30 @@ func desktopOff(p desktopPaths) error {
 // doesn't trade them for magpie's defaults (#2035). A profile for another
 // gateway, Bedrock or Vertex is not one: its models and settings are for
 // somewhere else. nil when there is none.
-func desktopOwnGatewayProfile(p desktopPaths) []byte {
+func desktopOwnGatewayProfile(g *rewireGuard, p desktopPaths) ([]byte, error) {
 	id, _ := edit.GetJSON(p.meta, "appliedId")
 	if id == desktopProfileID {
-		id = unstash(desktopApplied + p.key)
+		var err error
+		id, err = g.unstash(desktopApplied + p.key)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if id == "" || id == desktopProfileID || filepath.Base(id) != id || strings.HasPrefix(id, ".") {
-		return nil
+		return nil, nil
 	}
 	b, err := os.ReadFile(filepath.Join(p.library, id+".json"))
 	if err != nil || !desktopObjectBytes(b) {
-		return nil
+		return nil, nil
 	}
 	var prof struct {
 		Provider string `json:"inferenceProvider"`
 		BaseURL  string `json:"inferenceGatewayBaseUrl"`
 	}
 	if json.Unmarshal(b, &prof) != nil || prof.Provider != "gateway" || !desktopIsOurGateway(prof.BaseURL) {
-		return nil
+		return nil, nil
 	}
-	return b
+	return b, nil
 }
 
 // desktopIsOurGateway: u is magpie's gateway, by its port on this machine

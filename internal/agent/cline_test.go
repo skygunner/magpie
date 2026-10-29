@@ -14,6 +14,63 @@ import (
 	"github.com/yetone/magpie/internal/provider"
 )
 
+func TestClineRestoreFailureKeepsOriginal(t *testing.T) {
+	if runtime.GOOS == "windows" || os.Geteuid() == 0 {
+		t.Skip("directory permissions cannot force this failure")
+	}
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	t.Setenv("CLINE_DIR", "")
+	t.Setenv("CLINE_DATA_DIR", "")
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
+	data := filepath.Join(home, ".cline", "data")
+	path := filepath.Join(data, "settings", "providers.json")
+	models := filepath.Join(data, "settings", "models.json")
+	writeFile(t, path, `{"version":1,"lastUsedProvider":"anthropic","providers":{"anthropic":{"settings":{"model":"mine"}}}}`)
+	writeFile(t, models, `{"version":1,"providers":{"openai-compatible":{"provider":{"name":"mine"},"models":{}}}}`)
+	state := filepath.Join(data, "globalState.json")
+	secrets := filepath.Join(data, "secrets.json")
+	writeFile(t, state, `{"openAiBaseUrl":"https://original.example"}`)
+	writeFile(t, secrets, `{"openAiApiKey":"original-secret"}`)
+	if err := provider.Save(provider.Provider{ID: "deepseek", Name: "DeepSeek", Chat: "https://api.deepseek.com/v1", Key: "k", Models: []string{"pro"}}); err != nil {
+		t.Fatal(err)
+	}
+	a := cline(home)
+	if err := a.Field("model").Set("magpie/deepseek/pro"); err != nil {
+		t.Fatal(err)
+	}
+	dir := filepath.Dir(path)
+	t.Cleanup(func() { _ = os.Chmod(dir, 0o700) })
+	var chmodErr error
+	err := edit.Filtered(func(p string, b []byte) []byte {
+		if p == models {
+			chmodErr = os.Chmod(dir, 0o500)
+		}
+		return b
+	}, func() error { return a.Field("model").Set("") })
+	if chmodErr != nil {
+		t.Fatal(chmodErr)
+	}
+	if err := os.Chmod(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err == nil {
+		t.Fatal("restore succeeded despite unwritable models directory")
+	}
+	saved := stashLoad()
+	key := "cline:" + path + ":"
+	if saved[key+"state"] == "" || saved[key+"secret"] != "original-secret" || saved[key+"stated"] != "1" {
+		t.Fatalf("extension originals lost after provider failure: %v", saved)
+	}
+	if err := a.Field("model").Set(""); err != nil {
+		t.Fatal(err)
+	}
+	if got := a.Field("model").Get(); got != "mine" {
+		t.Fatalf("retry lost original model: %q", got)
+	}
+}
+
 func TestCline(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)

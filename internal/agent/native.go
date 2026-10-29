@@ -11,8 +11,10 @@ import (
 // NativeConnection registers a provider independently of model selection.
 // Its plan describes file and runtime changes without performing either.
 type NativeConnection struct {
-	Read           func() NativeState
-	Connect        func() error
+	Read    func() NativeState
+	Connect func() error
+	// connectRewire is set when Connect does not use the shared stash.
+	connectRewire  func() error
 	Apply          func(key, value string) error
 	Stage          func(key, value string) error
 	Disconnect     func() (*DisconnectPlan, error)

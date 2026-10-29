@@ -127,9 +127,16 @@ func anteAt(at place) *Agent {
 	// there is nothing to undo, which is how this survives Disconnect
 	// returning every field to its default: the first call takes the whole
 	// wiring out.
-	unwire := func() error {
+	unwire := func(g *rewireGuard) error {
 		if get(anteProviderKey) == magpieID {
-			was, mine := unstash(keyProvider), unstash(keyModel)
+			was, err := peekStash(keyProvider)
+			if err != nil {
+				return err
+			}
+			mine, err := peekStash(keyModel)
+			if err != nil {
+				return err
+			}
 			if err := set(anteProviderKey, was); err != nil {
 				return err
 			}
@@ -137,14 +144,20 @@ func anteAt(at place) *Agent {
 				return err
 			}
 		} else {
-			forget(keyProvider, keyModel)
+			g.forget(keyProvider, keyModel)
 		}
 		// settings.json holding neither of magpie's keys, and magpie having
 		// made it, is magpie's file to take away
-		if get(anteProviderKey) == "" && get(anteModelKey) == "" && unstash(keyNewSettings) != "" {
-			if raw, err := edit.Read(settingsPath); err == nil && len(gjson.ParseBytes(raw).Map()) == 0 {
-				if err := edit.Remove(settingsPath); err != nil {
-					return err
+		if get(anteProviderKey) == "" && get(anteModelKey) == "" {
+			made, err := g.unstash(keyNewSettings)
+			if err != nil {
+				return err
+			}
+			if made != "" {
+				if raw, err := edit.Read(settingsPath); err == nil && len(gjson.ParseBytes(raw).Map()) == 0 {
+					if err := edit.Remove(settingsPath); err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -164,7 +177,11 @@ func anteAt(at place) *Agent {
 			}
 		}
 		// a file magpie made goes with its last entry
-		if unstash(keyNew) != "" {
+		made, err := g.unstash(keyNew)
+		if err != nil {
+			return err
+		}
+		if made != "" {
 			if raw, err := edit.Read(path); err == nil && len(gjson.ParseBytes(raw).Map()) == 0 {
 				return edit.Remove(path)
 			}
@@ -177,18 +194,24 @@ func anteAt(at place) *Agent {
 	// only then — a value the user chose in Ante while magpie was wired is
 	// theirs and is what comes back. An empty one is no value to restore,
 	// which leaves Ante to its auto-detection.
-	put := func(model string) error {
+	put := func(g *rewireGuard, model string) error {
 		if get(anteProviderKey) != magpieID {
-			stash(map[string]string{keyProvider: get(anteProviderKey), keyModel: get(anteModelKey)})
+			if err := g.stash(map[string]string{keyProvider: get(anteProviderKey), keyModel: get(anteModelKey)}); err != nil {
+				return err
+			}
 		} else if m := get(anteModelKey); model == "" && isMagpie(m) {
 			// already on magpie: the model it was started on stays
 			model = m
 		}
 		if !wired() && !isFile(path) {
-			stash(map[string]string{keyNew: "1"})
+			if err := g.stash(map[string]string{keyNew: "1"}); err != nil {
+				return err
+			}
 		}
 		if !isFile(settingsPath) {
-			stash(map[string]string{keyNewSettings: "1"})
+			if err := g.stash(map[string]string{keyNewSettings: "1"}); err != nil {
+				return err
+			}
 		}
 		if err := edit.SetJSON(path, edit.KV{Path: anteProvider, Value: entry()}); err != nil {
 			return err
@@ -198,8 +221,30 @@ func anteAt(at place) *Agent {
 		}
 		return set(anteModelKey, model)
 	}
+	setProvider := func(g *rewireGuard, v string) error {
+		if v == "" {
+			return unwire(g)
+		}
+		return put(g, "")
+	}
+	setModel := func(g *rewireGuard, v string) error {
+		if v == "" {
+			if ours() {
+				return set(anteModelKey, "")
+			}
+			return unwire(g)
+		}
+		if !isMagpie(v) {
+			if err := unwire(g); err != nil {
+				return err
+			}
+			return set(anteModelKey, v)
+		}
+		return put(g, v)
+	}
 	return atomic(&Agent{
-		ID: "ante", Name: "Ante", Icon: "generic",
+		reapplyRewire: true,
+		ID:            "ante", Name: "Ante", Icon: "generic",
 		Bin: "ante", Dir: dir, Path: path,
 		Notice: func() string {
 			if Running(`(^|/)ante( |$)`) {
@@ -250,12 +295,8 @@ func anteAt(at place) *Agent {
 				}
 				return ""
 			},
-			Set: func(v string) error {
-				if v == "" {
-					return unwire()
-				}
-				return put("")
-			},
+			Set:       func(v string) error { return setProvider(nil, v) },
+			setRewire: setProvider,
 			Options: func(map[string]string) []Option {
 				return []Option{{Value: magpieID, Label: "magpie", Icon: "magpie", Note: "every magpie model in Ante's model picker, and Ante starts on magpie"}}
 			},
@@ -274,26 +315,8 @@ func anteAt(at place) *Agent {
 				}
 				return ""
 			},
-			Set: func(v string) error {
-				if v == "" {
-					// no model of its own: Ante starts on magpie and takes
-					// the default of preferred_models, one of magpie's
-					if ours() {
-						return set(anteModelKey, "")
-					}
-					return unwire()
-				}
-				if !isMagpie(v) {
-					// a model of Ante's own: magpie steps out and Ante is
-					// left on it — with no provider named, which is how Ante
-					// reaches the provider whose list holds that id
-					if err := unwire(); err != nil {
-						return err
-					}
-					return set(anteModelKey, v)
-				}
-				return put(v)
-			},
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(map[string]string) []Option {
 				return viaMagpie("ante", "")
 			},

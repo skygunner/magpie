@@ -176,7 +176,9 @@ var kiroCrewJoin = func(id string) (bool, error) {
 		return false, err
 	}
 	b, _ := json.Marshal(kiroCrewJoined{Agent: id, Off: off})
-	stash(map[string]string{kiroCrewJoinedKey: string(b)})
+	if err := stash(map[string]string{kiroCrewJoinedKey: string(b)}); err != nil {
+		return false, err
+	}
 	return true, nil
 }
 
@@ -411,7 +413,9 @@ func kiroCrew(home string) *Agent {
 		if !had {
 			s := kiroCrewStash{Backend: kiroCrewWasOf(path, kiroCrewBackend), Member: kiroCrewWasOf(path, kiroCrewMember), Made: !isFile(path)}
 			b, _ := json.Marshal(s)
-			stash(map[string]string{kiroCrewWasKey: string(b)})
+			if err := stash(map[string]string{kiroCrewWasKey: string(b)}); err != nil {
+				return err
+			}
 			w = kiroCrewWrote{}
 		}
 		kvs := []edit.KV{{Path: kiroCrewBackend, Value: h.id}}
@@ -427,7 +431,9 @@ func kiroCrew(home string) *Agent {
 			return err
 		}
 		b, _ := json.Marshal(w)
-		stash(map[string]string{kiroCrewWroteKey: string(b)})
+		if err := stash(map[string]string{kiroCrewWroteKey: string(b)}); err != nil {
+			return err
+		}
 		return nil
 	}
 	// unwire puts back what the keys said before magpie set them, a key the
@@ -511,8 +517,18 @@ func kiroCrew(home string) *Agent {
 		}
 		return hs[0], false, nil
 	}
+	setRewire := func(g *rewireGuard, key, v string) error {
+		if key == "provider" && v == magpieID {
+			if wrote, kept := kiroCrewWroteNow(); kept && wrote.Backend == backend() {
+				return nil
+			}
+		}
+		g.blocked = true
+		return errors.New("Kiro Crew's harness changed during rewire")
+	}
 	return atomic(&Agent{
-		ID: "kirocrew", Name: "Kiro Crew", Icon: "generic", Aliases: []string{"kiro-crew", "crew"},
+		reapplyRewire: true,
+		ID:            "kirocrew", Name: "Kiro Crew", Icon: "generic", Aliases: []string{"kiro-crew", "crew"},
 		Dir: dir, Path: path,
 		// its app, its command, or its home with its settings in it; never
 		// ~/.kiro alone, which is Kiro's and kiro-cli's
@@ -571,6 +587,7 @@ func kiroCrew(home string) *Agent {
 				}
 				return nil
 			},
+			setRewire: func(g *rewireGuard, v string) error { return setRewire(g, "provider", v) },
 			Options: func(map[string]string) []Option {
 				note := kiroCrewNote
 				if pinned() && on() == "" {
@@ -594,6 +611,7 @@ func kiroCrew(home string) *Agent {
 				}
 				return write(h)
 			},
+			setRewire: func(g *rewireGuard, v string) error { return setRewire(g, "harness", v) },
 			Options: func(map[string]string) []Option {
 				var out []Option
 				for _, h := range connected() {

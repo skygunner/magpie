@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -181,7 +182,9 @@ func (a *Agent) changedAt(files []string, reads func() string) time.Time {
 	if ok && err == nil && !mod.After(time.Unix(0, n)) {
 		mod = time.Now()
 	}
-	stash(map[string]string{key: digest + " " + strconv.FormatInt(mod.UnixNano(), 10)})
+	if err := stashFor(map[string]string{key: digest + " " + strconv.FormatInt(mod.UnixNano(), 10)}, nil, true); err != nil {
+		log.Printf("agent changed time not saved: %v", err)
+	}
 	return mod
 }
 

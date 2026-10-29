@@ -47,11 +47,14 @@ func morphIn(at place) *Agent {
 	// gateway's port
 	onMagpie := func() bool { return ourKey(getKey("api_key")) }
 	// restore puts back what the user had under llm before magpie
-	restore := func() error {
+	restore := func(g *rewireGuard) error {
 		var del []string
 		var kvs []edit.KV
 		for _, k := range morphKeys {
-			v := unstash(key + k)
+			v, err := g.unstash(key + k)
+			if err != nil {
+				return err
+			}
 			switch {
 			case v == "":
 				del = append(del, "llm."+k)
@@ -88,8 +91,47 @@ func morphIn(at place) *Agent {
 		}
 		return 0
 	}
+	setModel := func(g *rewireGuard, v string) error {
+		if v == "" {
+			if onMagpie() {
+				return restore(g)
+			}
+			return edit.DelYAML(path, "llm.model")
+		}
+		if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+			if !onMagpie() {
+				kv := map[string]string{}
+				for _, k := range morphKeys {
+					kv[key+k] = getKey(k)
+				}
+				if err := g.stash(kv); err != nil {
+					return err
+				}
+			}
+			kvs := []edit.KV{
+				{Path: "llm.inference_provider", Value: "openai_response_compatible"},
+				{Path: "llm.endpoint", Value: at.v1()},
+				{Path: "llm.api_key", Value: at.gwKey()},
+				{Path: "llm.model", Value: ref},
+				{Path: "llm.headers.User-Agent", Value: morphUA},
+			}
+			if n := window(ref); n > 0 {
+				kvs = append(kvs, edit.KV{Path: "llm.context_window_tokens", Value: n})
+			} else if err := edit.DelYAML(path, "llm.context_window_tokens"); err != nil {
+				return err
+			}
+			return edit.SetYAML(path, kvs...)
+		}
+		if onMagpie() {
+			if err := restore(g); err != nil {
+				return err
+			}
+		}
+		return edit.SetYAML(path, edit.KV{Path: "llm.model", Value: v})
+	}
 	return &Agent{
-		ID: "morph", Name: "Mister Morph", Icon: "mistermorph-color", Aliases: []string{"mistermorph", "mister-morph"}, Spelled: prefixed, NoNames: true,
+		reapplyRewire: true,
+		ID:            "morph", Name: "Mister Morph", Icon: "mistermorph-color", Aliases: []string{"mistermorph", "mister-morph"}, Spelled: prefixed, NoNames: true,
 		UA: []string{morphUA},
 		// no Bin: morph is other tools' name too; ~/.morph is made by its
 		// first run, `morph install` or the desktop app's setup
@@ -116,42 +158,8 @@ func morphIn(at place) *Agent {
 				}
 				return v
 			},
-			Set: func(v string) error {
-				if v == "" {
-					if onMagpie() {
-						return restore()
-					}
-					return edit.DelYAML(path, "llm.model")
-				}
-				if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-					if !onMagpie() {
-						kv := map[string]string{}
-						for _, k := range morphKeys {
-							kv[key+k] = getKey(k)
-						}
-						stash(kv)
-					}
-					kvs := []edit.KV{
-						{Path: "llm.inference_provider", Value: "openai_response_compatible"},
-						{Path: "llm.endpoint", Value: at.v1()},
-						{Path: "llm.api_key", Value: at.gwKey()},
-						{Path: "llm.model", Value: ref},
-						{Path: "llm.headers.User-Agent", Value: morphUA},
-					}
-					if n := window(ref); n > 0 {
-						kvs = append(kvs, edit.KV{Path: "llm.context_window_tokens", Value: n})
-					} else if err := edit.DelYAML(path, "llm.context_window_tokens"); err != nil {
-						return err
-					}
-					return edit.SetYAML(path, kvs...)
-				}
-				if onMagpie() {
-					if err := restore(); err != nil {
-						return err
-					}
-				}
-				return edit.SetYAML(path, edit.KV{Path: "llm.model", Value: v})
-			},
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(cur map[string]string) []Option {
 				return append(ownOptions("", cur["model"]), viaMagpie("morph", magpieID+"/")...)
 			},

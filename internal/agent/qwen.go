@@ -184,14 +184,20 @@ func qwenIn(at place) *Agent {
 	// puts back what was stashed, or takes the key out where it still is
 	// magpie's. A value of the user's own under that name is stashed before
 	// it is replaced and never removed: magpie only removes what it wrote.
-	setEnvKey := func(with bool) error {
+	setEnvKey := func(g *rewireGuard, with bool) error {
 		if with {
 			if v, ok := edit.GetJSON(path, qwenEnv); ok && v != at.gwKey() {
-				stash(map[string]string{keyEnv: v})
+				if err := g.stash(map[string]string{keyEnv: v}); err != nil {
+					return err
+				}
 			}
 			return edit.SetJSON(path, edit.KV{Path: qwenEnv, Value: at.gwKey()})
 		}
-		if was := unstash(keyEnv); was != "" {
+		was, err := g.unstash(keyEnv)
+		if err != nil {
+			return err
+		}
+		if was != "" {
 			return edit.SetJSON(path, edit.KV{Path: qwenEnv, Value: was})
 		}
 		if v, ok := edit.GetJSON(path, qwenEnv); ok && v == at.gwKey() {
@@ -207,7 +213,7 @@ func qwenIn(at place) *Agent {
 	// models are the pick (skipping the /auth prompt), stashing the user's
 	// own; with=false puts it back, or takes the key out where it never
 	// was, pruning the empty security.auth and security it would leave.
-	setAuth := func(with bool) error {
+	setAuth := func(g *rewireGuard, with bool) error {
 		if with {
 			// the user's own value is stashed once, whatever it is —
 			// "openai" of their own too, or it can't be told from
@@ -217,12 +223,18 @@ func qwenIn(at place) *Agent {
 				if v, ok := edit.GetJSON(path, qwenAuth); ok {
 					kv[keyAuth] = v
 				}
-				stash(kv)
+				if err := g.stash(kv); err != nil {
+					return err
+				}
 			}
 			return edit.SetJSON(path, edit.KV{Path: qwenAuth, Value: "openai"})
 		}
-		forget(keyAuthSeen)
-		if was := unstash(keyAuth); was != "" {
+		g.forget(keyAuthSeen)
+		was, err := g.unstash(keyAuth)
+		if err != nil {
+			return err
+		}
+		if was != "" {
 			return edit.SetJSON(path, edit.KV{Path: qwenAuth, Value: was})
 		}
 		if err := edit.DelJSON(path, qwenAuth); err != nil {
@@ -237,7 +249,7 @@ func qwenIn(at place) *Agent {
 	// setProviders writes modelProviders.openai with the user's own and,
 	// when with, magpie's after them; none left takes the array out. A
 	// with=false when none were magpie's changes nothing.
-	setProviders := func(with bool) error {
+	setProviders := func(g *rewireGuard, with bool) error {
 		var ms []any
 		var had bool
 		for _, c := range qwenCustoms(path) {
@@ -248,10 +260,10 @@ func qwenIn(at place) *Agent {
 			ms = append(ms, c.raw)
 		}
 		if with {
-			if err := setEnvKey(true); err != nil {
+			if err := setEnvKey(g, true); err != nil {
 				return err
 			}
-			if err := setAuth(true); err != nil {
+			if err := setAuth(g, true); err != nil {
 				return err
 			}
 			for _, e := range entries() {
@@ -260,10 +272,10 @@ func qwenIn(at place) *Agent {
 		} else if !had {
 			// nothing of magpie's left: a key it left behind, and the
 			// auth type it set, still go
-			if err := setEnvKey(false); err != nil {
+			if err := setEnvKey(g, false); err != nil {
 				return err
 			}
-			return setAuth(false)
+			return setAuth(g, false)
 		}
 		if len(ms) > 0 {
 			if err := edit.SetJSON(path, edit.KV{Path: qwenModels, Value: ms}); err != nil {
@@ -273,10 +285,10 @@ func qwenIn(at place) *Agent {
 			return err
 		}
 		if !with {
-			if err := setEnvKey(false); err != nil {
+			if err := setEnvKey(g, false); err != nil {
 				return err
 			}
-			if err := setAuth(false); err != nil {
+			if err := setAuth(g, false); err != nil {
 				return err
 			}
 			return qwenPrune(path, "modelProviders")
@@ -312,8 +324,57 @@ func qwenIn(at place) *Agent {
 		return nil
 	}
 
+	setModel := func(g *rewireGuard, v string) error {
+		curName, curBase := qwenModelOf(path)
+		ours := qwenFind(qwenCustoms(path), curName, curBase)
+		onOurs := ours != nil && ours.ours
+		if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+			if !onOurs {
+				kv := map[string]string{keyBase: curBase}
+				if curName != "" {
+					kv[keyName] = curName
+				} else {
+					g.forget(keyName)
+				}
+				if err := g.stash(kv); err != nil {
+					return err
+				}
+			}
+			if err := setProviders(g, true); err != nil {
+				return err
+			}
+			return put(ref, at.v1())
+		}
+		base := ""
+		fromStash := false
+		if onOurs {
+			if v == "" {
+				name, err := g.unstash(keyName)
+				if err != nil {
+					return err
+				}
+				base, err = g.unstash(keyBase)
+				if err != nil {
+					return err
+				}
+				v, fromStash = name, true
+			} else {
+				g.forget(keyName, keyBase)
+			}
+		}
+		if v != "" && !fromStash {
+			if c := qwenFind(qwenCustoms(path), v, ""); c != nil {
+				base = c.base
+			}
+		}
+		if err := put(v, base); err != nil {
+			return err
+		}
+		return setProviders(g, false)
+	}
 	return atomic(&Agent{
-		ID: "qwen", Name: "Qwen Code", Icon: "qwen-color", Aliases: []string{"qwen-code", "qwen-cli"}, Spelled: prefixed,
+		reapplyRewire: true,
+		ID:            "qwen", Name: "Qwen Code", Icon: "qwen-color", Aliases: []string{"qwen-code", "qwen-cli"}, Spelled: prefixed,
 		// qwen's requests carry QwenCode/<version> (packages/core/src/core/
 		// openaiContentGenerator/provider/default.ts buildHeaders)
 		UA:  []string{"qwencode"},
@@ -321,7 +382,7 @@ func qwenIn(at place) *Agent {
 		Sync: func() error {
 			for _, c := range qwenCustoms(path) {
 				if c.ours {
-					return setProviders(true)
+					return setProviders(nil, true)
 				}
 			}
 			return nil
@@ -364,46 +425,9 @@ func qwenIn(at place) *Agent {
 		},
 		Fields: []Field{{
 			Key: "model", Label: "model",
-			Get: get,
-			Set: func(v string) error {
-				curName, curBase := qwenModelOf(path)
-				ours := qwenFind(qwenCustoms(path), curName, curBase)
-				onOurs := ours != nil && ours.ours
-				if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-					if !onOurs {
-						kv := map[string]string{keyBase: curBase}
-						if curName != "" {
-							kv[keyName] = curName
-						} else {
-							forget(keyName)
-						}
-						stash(kv)
-					}
-					if err := setProviders(true); err != nil {
-						return err
-					}
-					return put(ref, at.v1())
-				}
-				base := ""
-				fromStash := false
-				if onOurs {
-					// back to what the user had, name and its baseUrl
-					if v == "" {
-						v, base, fromStash = unstash(keyName), unstash(keyBase), true
-					} else {
-						forget(keyName, keyBase)
-					}
-				}
-				if v != "" && !fromStash {
-					if c := qwenFind(qwenCustoms(path), v, ""); c != nil {
-						base = c.base
-					}
-				}
-				if err := put(v, base); err != nil {
-					return err
-				}
-				return setProviders(false)
-			},
+			Get:       get,
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(cur map[string]string) []Option {
 				return append(qwenOwnOptions(path, cur["model"]), viaMagpie("qwen", magpieID+"/")...)
 			},

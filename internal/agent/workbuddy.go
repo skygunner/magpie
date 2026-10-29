@@ -97,7 +97,8 @@ func workbuddyBuild(id, name, dir string, aliases []string, app desktopApp) *Age
 	path := filepath.Join(dir, "models.json")
 	write := func(on bool) error { return buddyWrite(path, id, on) }
 	return &Agent{
-		ID: id, Name: name, Icon: "workbuddy-color", Aliases: aliases,
+		reapplyRewire: true,
+		ID:            id, Name: name, Icon: "workbuddy-color", Aliases: aliases,
 		UA:  []string{id},
 		Dir: dir, Path: path,
 		detect: func() bool { return workbuddyHere(dir, path, app) },

@@ -116,7 +116,8 @@ func copilotJBInstalled(home string) bool {
 func copilotJetBrainsAt(path string, installed func() bool) *Agent {
 	wired := func() bool { _, ok := edit.GetJSON(path, copilotJBConfig); return ok }
 	return atomic(&Agent{
-		ID: copilotJBID, Name: "Copilot (JetBrains)", Icon: "githubcopilot",
+		reapplyRewire: true,
+		ID:            copilotJBID, Name: "Copilot (JetBrains)", Icon: "githubcopilot",
 		Aliases: []string{"jetbrains", "jetbrains-copilot", "copilot-idea", "copilot-intellij", "intellij", "idea"},
 		Dir:     filepath.Dir(path), Path: path,
 		// the folder is every Copilot's (VS Code's sign-in too): the

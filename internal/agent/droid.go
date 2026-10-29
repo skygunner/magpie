@@ -204,8 +204,43 @@ func droidIn(at place) *Agent {
 		}
 		return droidCustom{}, false
 	}
+	setModel := func(g *rewireGuard, v string) error {
+		cur := raw()
+		ours := strings.HasPrefix(cur, droidID)
+		if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
+			if !ours {
+				if sd, ok := edit.GetJSON(path, droidModel); ok {
+					if err := g.stash(map[string]string{key: sd}); err != nil {
+						return err
+					}
+				} else {
+					g.forget(key)
+				}
+			}
+			if err := setModels(true); err != nil {
+				return err
+			}
+			return put(droidID + ref)
+		}
+		if ours {
+			if v == "" {
+				was, err := g.unstash(key)
+				if err != nil {
+					return err
+				}
+				v = was
+			} else {
+				g.forget(key)
+			}
+		}
+		if err := put(v); err != nil {
+			return err
+		}
+		return setModels(false)
+	}
 	return &Agent{
-		ID: "droid", Name: "Droid", Icon: "factory", Aliases: []string{"factory", "factory-droid"}, Spelled: prefixed,
+		reapplyRewire: true,
+		ID:            "droid", Name: "Droid", Icon: "factory", Aliases: []string{"factory", "factory-droid"}, Spelled: prefixed,
 		// droid's requests to a custom model carry factory-cli/<version>
 		UA:  []string{"factory-cli"},
 		Bin: "droid", Dir: dir, Path: path,
@@ -242,36 +277,9 @@ func droidIn(at place) *Agent {
 		},
 		Fields: []Field{{
 			Key: "model", Label: "model",
-			Get: get,
-			Set: func(v string) error {
-				cur := raw()
-				ours := strings.HasPrefix(cur, droidID)
-				if ref, ok := strings.CutPrefix(v, magpieID+"/"); ok && isMagpie(ref) {
-					if !ours {
-						if sd, ok := edit.GetJSON(path, droidModel); ok {
-							stash(map[string]string{key: sd})
-						} else {
-							forget(key)
-						}
-					}
-					if err := setModels(true); err != nil {
-						return err
-					}
-					return put(droidID + ref)
-				}
-				if ours {
-					// back to what the user had
-					if v == "" {
-						v = unstash(key)
-					} else {
-						forget(key)
-					}
-				}
-				if err := put(v); err != nil {
-					return err
-				}
-				return setModels(false)
-			},
+			Get:       get,
+			Set:       func(v string) error { return setModel(nil, v) },
+			setRewire: setModel,
 			Options: func(cur map[string]string) []Option {
 				var own []Option
 				seen := map[string]bool{}

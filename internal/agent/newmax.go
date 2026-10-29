@@ -93,7 +93,8 @@ func newMax(home string) *Agent {
 		return newMaxEdit(path, func(app []byte, had bool) ([]byte, error) { return newMaxWire(app, had, e) })
 	}
 	return &Agent{
-		ID: "newmax", Name: "NewMax", Icon: "generic", Aliases: []string{"newmax-ai", "newmaxai"},
+		reapplyRewire: true,
+		ID:            "newmax", Name: "NewMax", Icon: "generic", Aliases: []string{"newmax-ai", "newmaxai"},
 		Dir: dir, Path: path,
 		detect: func() bool { return isDir(dir) || macBundle(newMaxApp) },
 		Notice: func() string {
