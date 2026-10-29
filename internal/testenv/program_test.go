@@ -29,9 +29,21 @@ func TestProgram(t *testing.T) {
 		if out, err := exec.Command(p).Output(); err != nil || string(out) != "two\n" {
 			t.Fatalf("ran again: %q %v", out, err)
 		}
+		wantMode := os.FileMode(0o755)
+		if runtime.GOOS != "darwin" {
+			ref := filepath.Join(t.TempDir(), "reference")
+			if err := os.WriteFile(ref, nil, 0o755); err != nil {
+				t.Fatal(err)
+			}
+			info, err := os.Stat(ref)
+			if err != nil {
+				t.Fatal(err)
+			}
+			wantMode = info.Mode().Perm()
+		}
 		fi, err := os.Stat(p)
-		if err != nil || fi.Mode().Perm() != 0o755 {
-			t.Fatalf("mode: %v %v", fi, err)
+		if err != nil || fi.Mode().Perm() != wantMode {
+			t.Fatalf("mode: %v %v, want %v", fi, err, wantMode)
 		}
 		first = fi
 	})

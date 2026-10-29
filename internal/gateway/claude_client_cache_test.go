@@ -287,7 +287,21 @@ func TestClaudeClientCacheAbsentUnchanged(t *testing.T) {
 		if !strings.Contains(log, "cache-disabled 0") || strings.Contains(log, "apply_flag_settings") {
 			t.Fatalf("ordinary environment/settings changed: %s", log)
 		}
-		if !strings.Contains(log, "\"cache_control\":{\"ttl\":\"1h\",\"type\":\"ephemeral\"},\"text\":\"\\u003cexternal_system_instructions\\u003e\nshared\n\\u003c/external_system_instructions\\u003e\n\n\"") {
+		var prompt struct {
+			Message struct {
+				Content []struct {
+					Text         string            `json:"text"`
+					CacheControl map[string]string `json:"cache_control"`
+				} `json:"content"`
+			} `json:"message"`
+		}
+		found := false
+		for _, line := range strings.Split(log, "\n") {
+			if strings.HasPrefix(line, "told ") && json.Unmarshal([]byte(strings.TrimPrefix(line, "told ")), &prompt) == nil {
+				found = true
+			}
+		}
+		if !found || len(prompt.Message.Content) == 0 || prompt.Message.Content[0].Text != "<external_system_instructions>\nshared\n</external_system_instructions>\n\n" || prompt.Message.Content[0].CacheControl["ttl"] != "1h" || prompt.Message.Content[0].CacheControl["type"] != "ephemeral" {
 			t.Fatalf("ordinary prompt changed: %s", log)
 		}
 	}

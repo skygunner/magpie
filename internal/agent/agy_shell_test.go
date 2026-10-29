@@ -28,7 +28,10 @@ func TestAgyShell(t *testing.T) {
 		t.Fatal(err)
 	}
 	mine := "alias ll='ls -l'\n"
-	rcs := []string{".zshrc", ".bashrc", ".bash_profile"}
+	rcs := []string{".zshrc", ".bashrc", ".bash_profile", filepath.Join(".config", "fish", "config.fish")}
+	if err := os.MkdirAll(filepath.Join(home, ".config", "fish"), 0o755); err != nil {
+		t.Fatal(err)
+	}
 	for _, n := range rcs {
 		os.WriteFile(filepath.Join(home, n), []byte(mine), 0o644)
 	}
@@ -48,7 +51,12 @@ func TestAgyShell(t *testing.T) {
 	}
 	for _, p := range in {
 		b, _ := os.ReadFile(p)
-		if s := string(b); !strings.HasPrefix(s, mine+"\n# >>> magpie agy >>>\nfunction agy {\n") || !strings.Contains(s, ` agy run "$@"; else command agy "$@"; fi`) || !strings.HasSuffix(s, "}\n# <<< magpie agy <<<\n") {
+		s := string(b)
+		if strings.HasSuffix(p, "config.fish") {
+			if !strings.HasPrefix(s, mine+"\n# >>> magpie agy >>>\nfunction agy\n") || !strings.Contains(s, " agy run $argv\n") || !strings.Contains(s, "command agy $argv\n") || !strings.HasSuffix(s, "end\n# <<< magpie agy <<<\n") {
+				t.Fatalf("%s:\n%s", p, s)
+			}
+		} else if !strings.HasPrefix(s, mine+"\n# >>> magpie agy >>>\nfunction agy {\n") || !strings.Contains(s, ` agy run "$@"; else command agy "$@"; fi`) || !strings.HasSuffix(s, "}\n# <<< magpie agy <<<\n") {
 			t.Fatalf("%s:\n%s", p, s)
 		}
 	}

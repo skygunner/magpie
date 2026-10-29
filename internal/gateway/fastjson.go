@@ -1378,6 +1378,16 @@ func appendRawJSON(dst []byte, raw json.RawMessage, escapeHTML bool) ([]byte, bo
 	if !jsonCheck(raw) {
 		return dst, false
 	}
+	// Let encoding/json decide how these separators are escaped on this Go version.
+	if !escapeHTML && (bytes.Contains(raw, []byte("\u2028")) || bytes.Contains(raw, []byte("\u2029"))) {
+		var b bytes.Buffer
+		enc := json.NewEncoder(&b)
+		enc.SetEscapeHTML(false)
+		if enc.Encode(raw) != nil {
+			return dst, false
+		}
+		return append(dst, bytes.TrimSuffix(b.Bytes(), []byte("\n"))...), true
+	}
 	return appendCompactJSON(dst, raw, escapeHTML), true
 }
 
