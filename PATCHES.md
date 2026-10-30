@@ -66,9 +66,9 @@ Each round:
 8. Accept: healthy, 401/200 auth pair, model count equal before/after, a
    real `group/fast-cheap` request 200. Push `prod` and the tag.
 
-## Carried patches (as of v0.1.2134-p1, 2026-10-30)
+## Carried patches (as of v0.1.2170-p1, 2026-10-30)
 
-Checked against v0.1.2134 (2026-10-30): eleven carried entries — nine
+Checked against v0.1.2170 (2026-10-30): eleven carried entries — nine
 patch rows, #3623's attempt chain (joined at 0.1.2051-p3) and the
 cooldown-settings surface (joined at 0.1.2051-p4) — plus #3487's
 card-display and millisecond-span remainder, re-expressed at the
@@ -194,6 +194,14 @@ the table above.
   cooldown button beside the acc-line restructure, this line's core
   budgets raised to measured values for upstream's own growth). No
   sweep movement, none absorbed.
+- `prod/0.1.2170-p1` — 2026-10-30. Rolling merge of v0.1.2170 (38
+  commits); three conflicts, both sides kept (Usage detail's
+  client-reported/protocol-error wording beside upstream's mcp-source
+  condition, gateway-routing.md's fork policy bullets beside upstream's
+  newest prose, core budgets raised to measured values for upstream's
+  own growth). The v0.1.2134 budget raise, left unstaged when
+  0.1.2134-p1 was cut, is committed here (the deployed image had it;
+  the tag had not). No sweep movement, none absorbed.
 
 ## Non-streaming SSE regression follow-up (2026-10-28)
 
