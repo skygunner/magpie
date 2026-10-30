@@ -52,6 +52,9 @@ func init() {
 	// and when Codex is connected or disconnected, or its route otherwise
 	// changes, so a running app sends where its config now says
 	provider.CodexAppRoute = codexAppRoute
+	// but not when Codex's account is switched while its provider takes
+	// no ChatGPT account: the app-server goes by none
+	provider.CodexNoAccount = codexNoAccount
 	// and when none starts in place of the one ended, the app is
 	// reopened on Windows, where its stdout was held open
 	provider.CodexAppOpen = codexAppOpen
@@ -104,6 +107,37 @@ func codexAppRoute() (route string, out, known bool) {
 		b.WriteString("out\n")
 	}
 	return b.String(), out, true
+}
+
+// codexNoAccount is whether the provider Codex's config.toml names takes
+// no ChatGPT account: a model_provider whose [model_providers] table
+// doesn't say requires_openai_auth = true (magpie's with the user's own
+// false, or magpie as the provider with no sign-in to keep). Codex then
+// sends the table's own key and its app-server reads no account
+// (codex-rs ModelProviderInfo::account_state, resolve_provider_auth), so
+// switching the account in auth.json changes nothing a running Codex
+// goes by. The built-in openai provider, a provider with no table here, a
+// profile (which may name another provider) or a config that can't be
+// read is false: those may go by the account.
+func codexNoAccount() bool {
+	defer filememo.Hold()()
+	home, _ := homes()
+	a := codex(home)
+	if _, err := os.ReadFile(a.Path); err != nil {
+		return false
+	}
+	if p, _ := edit.GetTOMLTop(a.Path, "profile"); p != "" {
+		return false
+	}
+	id, _ := edit.GetTOMLTop(a.Path, "model_provider")
+	if id == "" || id == "openai" {
+		return false
+	}
+	t, err := edit.GetTOMLTable(a.Path, "model_providers."+id)
+	if err != nil || t == nil {
+		return false
+	}
+	return t["requires_openai_auth"] != "true"
 }
 
 // others are clients that reach the gateway without being agents magpie
@@ -512,7 +546,7 @@ func magpieProviderJSONAt(shape, catalog, gw string) any {
 	case "pi":
 		var ms []map[string]any
 		for _, m := range models {
-			ms = append(ms, piModelJSON(m, gw, true))
+			ms = append(ms, piModelJSON(piAsked(catalog, m), gw, true))
 		}
 		if ms == nil {
 			ms = []map[string]any{}
@@ -613,6 +647,31 @@ func objectPairs(raw []byte) orderedJSON {
 		out = append(out, jsonPair{k, v})
 	}
 	return out
+}
+
+// piAsked is m as agentID's models.json can ask it: without the Gemini API
+// where nothing that reads the file can be trusted to stream
+// google-generative-ai, so such a model stays on the provider's Chat,
+// which the gateway translates.
+//
+//   - StepCode registers no google-generative-ai stream, only Pi's
+//     anthropic-messages, openai-completions and openai-responses
+//     (packages/providers/src/compat.ts BUILTIN_APIS, Step-Code at
+//     90a57820), though its docs list it (#3282).
+//   - Pi's own agent folder is read by every app that runs Pi's SDK on it,
+//     not by Pi alone. Raft (slock's raft-daemon, the Pi runtime of its
+//     agents) opens ~/.pi/agent/models.json (or PI_CODING_AGENT_DIR's) and
+//     hands every request its own fetch (installProviderHttpClient), which
+//     pi-ai's Google adapter refuses before sending: "Custom fetch is not
+//     supported by the Google Generative AI adapter" (pi-ai 0.83.0 and
+//     1.4.0, api/google-generative-ai.js; yunfei9958 on X). Per-request
+//     fetch is a feature of Pi's SDK, so any other host of it can do the
+//     same. OmO's and Prime Agent's folders are their own, and keep it.
+func piAsked(agentID string, m catalog.Model) catalog.Model {
+	if agentID == "stepcode" || agentID == "pi" {
+		m.APIs = slices.DeleteFunc(slices.Clone(m.APIs), func(a string) bool { return a == string(provider.Gemini) })
+	}
+	return m
 }
 
 // piModelJSON is one of magpie's models as an entry of Pi's models.json.
