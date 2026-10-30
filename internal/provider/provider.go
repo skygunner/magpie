@@ -219,8 +219,9 @@ type Provider struct {
 	// price as listed; at most three decimals (PriceRateOK).
 	PriceRate float64 `json:"priceRate,omitempty"`
 
-	// Headers are extra HTTP request headers sent to the vendor, exactly as
-	// the user typed them. They ride on every request magpie makes to a plain
+	// Headers are extra HTTP request headers sent to the vendor, as the user
+	// typed them but for ${sessionId} and ${threadId} in a value, the
+	// request's conversation ids (SentHeaders, conversation.go). They ride on every request magpie makes to a plain
 	// key+URL provider — forwarded calls, connectivity tests, and model-list
 	// fetches — applied after the auth headers, so the user can override those
 	// when a gateway insists on a private scheme. Signed-in agent accounts
@@ -229,8 +230,8 @@ type Provider struct {
 
 	// ExtraBody are JSON fields added to the body of every request to the
 	// vendor (#1604), filling in what the body lacks, or replacing it for a
-	// name written "!name"; ${sessionId} in a value is the conversation's
-	// id (extrabody.go). Signed-in agent accounts ignore it, as Headers.
+	// name written "!name"; ${sessionId} and ${threadId} in a value are the
+	// conversation's ids (extrabody.go, conversation.go). Signed-in agent accounts ignore it, as Headers.
 	ExtraBody ExtraBody `json:"extraBody,omitempty"`
 
 	// ReplyHeaders are headers of the vendor's reply passed on to the
@@ -427,6 +428,14 @@ type Provider struct {
 	// are still read and shown. Without it, no picks is the vendor's list
 	// as ever, so a file saved before it reads as it did. A pick clears it.
 	NoModels bool `json:"noModels,omitempty"`
+	// BestInFamily is the editor's Best in family (Steven on Discord): with
+	// no Models picked, of the vendor's list only the newest model of each
+	// family is served (catalog.BestInFamily), so Opus 5.6, once listed,
+	// takes Opus 5.5's place by itself. A request that names another of its
+	// models is still served, as one that names a model left unpicked is. A
+	// pick or Select none clears it (normalize); a file without it reads as
+	// the vendor's list, as before.
+	BestInFamily bool `json:"bestInFamily,omitempty"`
 	// PickedFrom are the models the vendor listed when Models were saved: one
 	// listed since is served beside picks that held every one listed then
 	// (withNewlyListed), and one listed then and left unpicked stays out.
@@ -778,7 +787,7 @@ func withPicks(a, pk Provider) Provider {
 	a.PickedFrom, a.Delisted = pk.PickedFrom, pk.Delisted
 	a.Models, a.Unlisted, a.Off, a.Fallback, a.Routing, a.Affinity, a.KeepLogin, a.KeepLoginAs, a.Contexts, a.Family = pk.Models, pk.Unlisted, pk.Off, pk.Fallback, pk.Routing, pk.Affinity, pk.KeepLogin, pk.KeepLoginAs, pk.Contexts, pk.Family
 	a.SwitchOnly = pk.SwitchOnly
-	a.Sink, a.NoModels = pk.Sink, pk.NoModels
+	a.Sink, a.NoModels, a.BestInFamily = pk.Sink, pk.NoModels, pk.BestInFamily
 	a.NativeCompaction = pk.NativeCompaction
 	a.PromptAsWritten = pk.PromptAsWritten
 	a.Proxy, a.AccountProxies, a.AccountModels = pk.Proxy, pk.AccountProxies, pk.AccountModels
@@ -935,7 +944,8 @@ func Save(p Provider) error {
 		if p.ID == "kiro" {
 			key = p.Key
 		}
-		p = Provider{ID: p.ID, Key: key, Models: p.Models, NoModels: p.NoModels, PickedFrom: p.PickedFrom, Delisted: p.Delisted, Unlisted: p.Unlisted, HiddenDrawers: p.HiddenDrawers, Off: p.Off, Fallback: p.Fallback, Routing: p.Routing, Sink: p.Sink, Affinity: p.Affinity, KeepLogin: p.KeepLogin, KeepLoginAs: p.KeepLoginAs, SwitchOnly: p.SwitchOnly, Contexts: p.Contexts, Family: p.Family, Proxy: p.Proxy, AccountProxies: p.AccountProxies, AccountModels: p.AccountModels, AccountCaps: p.AccountCaps, AccountWindowCaps: p.AccountWindowCaps, CapStop: p.CapStop, CapCareful: p.CapCareful, AccountNames: p.AccountNames, MaxConcurrency: p.MaxConcurrency, AccountConcurrency: p.AccountConcurrency, QueueLimit: p.QueueLimit, QueueWait: p.QueueWait, MaxRPM: p.MaxRPM, PriceRate: p.PriceRate, QuotaRest: p.QuotaRest, QuotaResetAt: p.QuotaResetAt, RestCap: p.RestCap, ModelCooldown: p.ModelCooldown, LimitRestOff: p.LimitRestOff, Cooldown: p.Cooldown, AccountCooldown: p.AccountCooldown, PinUpstream: p.PinUpstream, NativeCompaction: p.NativeCompaction, PromptAsWritten: p.PromptAsWritten, Hidden: hiddenAccount(p.ID), Quiet: quietAccount(p.ID), Tucked: tuckedAccount(p.ID)}
+		p = Provider{ID: p.ID, Key: key, Models: p.Models, NoModels: p.NoModels, BestInFamily: p.BestInFamily, PickedFrom: p.PickedFrom, Delisted: p.Delisted, Unlisted: p.Unlisted, HiddenDrawers: p.HiddenDrawers, Off: p.Off, Fallback: p.Fallback, Routing: p.Routing, Sink: p.Sink, Affinity: p.Affinity, KeepLogin: p.KeepLogin, KeepLoginAs: p.KeepLoginAs, SwitchOnly: p.SwitchOnly, Contexts: p.Contexts, Family: p.Family, Proxy: p.Proxy, AccountProxies: p.AccountProxies, AccountModels: p.AccountModels, AccountCaps: p.AccountCaps, AccountWindowCaps: p.AccountWindowCaps, CapStop: p.CapStop, CapCareful: p.CapCareful, AccountNames: p.AccountNames, MaxConcurrency: p.MaxConcurrency, AccountConcurrency: p.AccountConcurrency, QueueLimit: p.QueueLimit, QueueWait: p.QueueWait, MaxRPM: p.MaxRPM, PriceRate: p.PriceRate, QuotaRest: p.QuotaRest, QuotaResetAt: p.QuotaResetAt, RestCap: p.RestCap, AccountCooldown: p.AccountCooldown, LimitRestOff: p.LimitRestOff, ModelCooldown: p.ModelCooldown, PinUpstream: p.PinUpstream, NativeCompaction: p.NativeCompaction, PromptAsWritten: p.PromptAsWritten, Hidden: hiddenAccount(p.ID), Quiet: quietAccount(p.ID), Tucked: tuckedAccount(p.ID)}
+
 	} else {
 		p.AccountProxies = keyProxies(p) // a provider of keys proxies each key apart
 		if subscriptionID(p.ID) && !stored(p.ID) {
@@ -1389,6 +1399,9 @@ func normalize(p Provider) Provider {
 	p.AccountNames = normalAccountNames(p.AccountNames)
 	if len(p.Models) > 0 {
 		p.NoModels = false // a pick is no longer Select none
+	}
+	if len(p.Models) > 0 || p.NoModels {
+		p.BestInFamily = false // nor Best in family
 	}
 	p.ZhipuTeam = p.ZhipuTeam.normal()
 	p.Vertex = p.Vertex.Normal()

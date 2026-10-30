@@ -460,6 +460,8 @@ type Server struct {
 	// the connections taken whose first request isn't read yet, which a
 	// handover's end waits for (handover.go)
 	unread unreadConns
+	// sockets are the Responses WebSockets being served (responses_ws.go)
+	sockets clientSockets
 	// what it serves other computers TLS with, nil without (tls.go)
 	tls *tls.Config
 	// the images described for models that can't see them (vision.go)
@@ -720,7 +722,12 @@ func (s *Server) ListenAndServe(ctx context.Context) error {
 			s.stopAccepting()
 			s.unread.wait(c)
 		}
+		// a socket's connection was taken from the server (hijacked), so
+		// Shutdown doesn't wait for it: each ends after its turn in flight
+		sockets := make(chan struct{})
+		go func() { defer close(sockets); s.sockets.drain(c) }()
 		srv.Shutdown(c)
+		<-sockets
 		s.subscription.abortAll()
 		provider.FlushServed() // what answered last, kept for the next start and the CLI
 		flushSticks()          // who answered which conversation, for the next start or the magpie handed over to
@@ -800,8 +807,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /chat/completions", s.handle(provider.Chat))
 	mux.HandleFunc("POST /v1/responses", s.handle(provider.Responses))
 	mux.HandleFunc("POST /responses", s.handle(provider.Responses))
-	mux.HandleFunc("GET /v1/responses", responsesOverHTTP)
-	mux.HandleFunc("GET /responses", responsesOverHTTP)
+	mux.HandleFunc("GET /v1/responses", s.responsesOverHTTP)
+	mux.HandleFunc("GET /responses", s.responsesOverHTTP)
 	mux.HandleFunc("POST /v1/messages", keepsSignIn(s.handle(provider.Anthropic)))
 	mux.HandleFunc("POST /messages", keepsSignIn(s.handle(provider.Anthropic)))
 	mux.HandleFunc("POST /v1/systemone", s.serveSystemOne)
@@ -849,16 +856,17 @@ func (s *Server) Handler() http.Handler {
 	})
 	// the goroutine dump first, ahead of every lock the rest can be stuck
 	// on (dumpFirst)
-	return s.dumpFirst(s.counted(holdCatalog(corsGuard(callerGuard(withCaller(keyLimited(mux)))))))
+	// a socket's turns go through all of it again (socketEntry)
+	return socketEntry(s.dumpFirst(s.counted(holdCatalog(corsGuard(callerGuard(withCaller(keyLimited(mux))))))))
 }
 
-// responsesOverHTTP answers a GET on /v1/responses, which is how a client
-// opens Responses over a WebSocket (#1005): magpie relays Responses over
-// HTTP alone, its stream as SSE, so the upgrade is told 426 — the answer a
-// client falls back to HTTP on at once (Codex does, as on CodexPath) — in
-// place of the 404 every unknown path gets, which read as a broken
-// gateway. A plain GET is told to POST.
-func responsesOverHTTP(w http.ResponseWriter, r *http.Request) {
+// responsesOverHTTP answers a GET on /v1/responses. A WebSocket upgrade
+// is Responses over a WebSocket (#1005, #4058), each turn served as its
+// POST is (responses_ws.go). A plain GET is told to POST.
+func (s *Server) responsesOverHTTP(w http.ResponseWriter, r *http.Request) {
+	if wantsSocket(r) && s.serveResponsesSocket(w, r) {
+		return
+	}
 	if strings.EqualFold(r.Header.Get("Upgrade"), "websocket") {
 		writeError(w, provider.Responses, http.StatusUpgradeRequired, "magpie relays Responses over HTTP only: send POST /v1/responses (streamed as SSE); Responses over a WebSocket is not served")
 		return
@@ -1446,12 +1454,18 @@ func (s *Server) countTokens(w http.ResponseWriter, r *http.Request) {
 	// and the one as written where generation sends that, masked only
 	// then (#3973)
 	if _, ms, isGroup := provider.FindGroup(id); !ok || !unredactedRoute(p, isGroup, ms) {
-		var unmask func()
-		w, body, unmask, err = redacted(r.Context(), w, body)
-		defer unmask()
+		rw, b, done, hits, err := redactedHits(maskedFor(r.Context(), p, isGroup, ms), w, body)
 		if err != nil {
 			writeError(w, provider.Anthropic, maskStatus(err), err.Error())
 			return
+		}
+		// counted where generation goes: the model set for a request
+		// masking would change, as written (maskRouteFor)
+		if to := maskRouteFor(agentTurn(r), hits); to != "" {
+			p, model, ok = provider.Resolve(to)
+		} else {
+			w, body = rw, b
+			defer done()
 		}
 	}
 	if level := desktopSubagentEffort(r, agentOf(r), body, pick); level != "" && ok && !provider.Reasonless(p.ID, model) {
@@ -1590,6 +1604,18 @@ func (s *Server) handle(from provider.Protocol) http.HandlerFunc {
 			return
 		}
 		noteAsked(r.Context(), model)
+		// a thread Codex started on magpie, on one of Codex's own models
+		// magpie serves nothing for: on Codex's own sign-in, as the
+		// ChatGPT backend's route sends it (codexOwnOffMagpie)
+		if from == provider.Responses {
+			if r2, why := codexOwnOffMagpie(r, body, model); r2 != nil {
+				s.codexBackend(w, r2)
+				return
+			} else if why != "" {
+				writeError(w, from, 404, why)
+				return
+			}
+		}
 		// Codex with magpie as its provider: spawn_agent names every
 		// model a subagent may be put on, not only Codex's first five
 		// (Gearclickist on Discord)
@@ -2012,15 +2038,29 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 	// are, and an observer that wants the bodies is handed a copy masked
 	// when it is first handed one, after the try (maskIn, #3973)
 	if sentWhole = unredactedRoute(p, isGroup, ms); !sentWhole {
-		rw, b, done, hits, err := redactedHits(r.Context(), capture.ResponseWriter, body)
+		rw, b, done, hits, err := redactedHits(maskedFor(r.Context(), p, isGroup, ms), capture.ResponseWriter, body)
 		if err != nil { // fails closed: never sent unmasked
 			log.Printf("gateway: %v", err)
 			call.Status, call.Error = maskStatus(err), err.Error()
 			writeError(w, from, call.Status, err.Error())
 			return
 		}
-		capture.ResponseWriter, body, unmask, maskedHits = rw, b, done, hits
-	} else if usage.ObservedBodies() != usage.NoBodies {
+		if to := maskRouteFor(r, hits); to != "" {
+			// masking would change it, and the user set a model of
+			// their own for that (Settings › Privacy, jessyoungyu on
+			// X): it goes there as written, the masked copy and its
+			// writer let go unused, and on from there only where
+			// unmasked requests may go; its failure is the answer
+			log.Printf("gateway: %d value(s) masking would change, sent as written to %s (Settings › Privacy)", hits.n, to)
+			p, model, _ = provider.Resolve(to)
+			g, ms, isGroup = provider.FindGroup(to)
+			g = g.Live()
+			sentWhole = true
+		} else {
+			capture.ResponseWriter, body, unmask, maskedHits = rw, b, done, hits
+		}
+	}
+	if sentWhole && usage.ObservedBodies() != usage.NoBodies {
 		call.maskIn = &laterMasked{ctx: context.WithoutCancel(r.Context()), plain: body}
 	}
 	maskDone = true
@@ -2827,7 +2867,7 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 		// member fixed at an effort keeps its own
 		ruled := ""
 		if c.effort == "" {
-			if ruled = ruleEffort(c, hit, nested); ruled != "" {
+			if ruled = ruleEffort(c, hit, nested, ms); ruled != "" {
 				fixed = ""
 			}
 		}
@@ -3133,7 +3173,7 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 		ended = time.Now()
 		try := Try{ID: c.rest, Model: c.model, Effort: wentAt, Picked: picked, Fixed: fixed, RuleEffort: ruled, Fast: fast, Start: began, Done: true, Status: call.Status, Millis: ended.Sub(began).Milliseconds(), Error: call.Error, Queued: queued,
 			Served: call.Usage.Served, Upstream: call.Usage.Upstream, Pin: c.p.ClinePassAsked(c.model), Tier: wentTier, TierServed: call.Usage.Tier, Auto: autoPicked(),
-			Net: nt.timing(began, queued)}
+			Net: nt.timing(began, queued), SentBy: sentBy(c.p)}
 		if resetFirst != nil {
 			// the reset spent for it before it was asked
 			try.Reset, resetFirst = resetFirst, nil
@@ -4077,6 +4117,13 @@ func (s *Server) attempt(w http.ResponseWriter, r *http.Request, from provider.P
 		// translation and a plugin's fetch alike
 		body = chatCallIDs(body)
 	}
+	// a response the request named that magpie doesn't hold goes only to
+	// a provider it is relayed to as written (prev_response.go): Claude's
+	// and the ChatGPT backend's accounts drop it, as a translation does
+	noteAnswered(r, "")
+	if id := prevLost(r); id != "" && p.Account != nil && (p.Account.Agent == "claude" || p.Account.Agent == "codex") {
+		return writePrevNotFound(w, id)
+	}
 	// every request to the provider goes through its own proxy, if it has
 	// one (#237)
 	r = r.WithContext(p.Via(r.Context()))
@@ -4216,6 +4263,9 @@ func (s *Server) attempt(w http.ResponseWriter, r *http.Request, from provider.P
 	}
 	if ownAPI && slices.Contains(to, from) && !firstElsewhere(p, model, from) {
 		to = []provider.Protocol{from}
+	}
+	if id := prevLost(r); id != "" {
+		return writePrevNotFound(w, id)
 	}
 	call.To = to[0]
 	return s.translate(w, r, p, from, to[0], model, body, &call.Usage)
@@ -4400,11 +4450,18 @@ func (s *Server) forwardOnce(ctx context.Context, p provider.Provider, to provid
 		// auto mode's review goes to Claude alone (automode.go)
 		betas, body = s.serverReview(p, asked, body)
 	}
+	// the conversation ${sessionId} and ${threadId} stand for in the
+	// user's own fields and headers for the provider (conversation.go)
+	conv := provider.Conversation{Session: cmp.Or(sessionOf(in), conversationID(in, body))}
+	if p.AsksThread() {
+		conv.Thread = threadOf(in, body)
+	}
+	ctx = provider.WithConversation(ctx, conv)
 	if !countsTokens(path) {
 		// the user's own fields for the provider (#1604), last, so the
 		// body is as it goes out when they fill in what it lacks, and
 		// before it is signed
-		extra := p.WithExtraBody(body, cmp.Or(sessionOf(in), conversationID(in, body)))
+		extra := p.WithExtraBody(body, conv)
 		if to == provider.Anthropic && !bytes.Equal(extra, body) {
 			// a thinking budget the user's fields put in is fitted to a
 			// model that thinks only adaptively as the agent's is, its
@@ -4885,9 +4942,30 @@ func (s *Server) passthrough(w http.ResponseWriter, r *http.Request, p provider.
 	if proto == provider.Responses && p.Account != nil && (p.Account.Agent == "grok" || p.PluginProvider() == "grok" || p.PluginProvider() == "zed") {
 		named = namespacedIn(body)
 	}
+	// the new input alone, after the id the provider keeps the previous
+	// response under, when it answered that one (prev_response.go)
+	sentWhole, delta := body, false
+	if proto == provider.Responses {
+		body, delta = prevDelta(r, p, body)
+	}
 	res, err := s.forward(r.Context(), p, proto, path, p.Prepare(body), r.Header)
 	if err != nil {
 		return writeError(w, proto, 502, p.Name+": "+err.Error()), err.Error(), true
+	}
+	if delta && badRequest(res.StatusCode) || delta && res.StatusCode == http.StatusNotFound {
+		// one it no longer holds: the conversation whole
+		b, _ := io.ReadAll(io.LimitReader(res.Body, 1<<20))
+		res.Body.Close()
+		res.Body = io.NopCloser(bytes.NewReader(b))
+		if prevRefused(res.StatusCode, b) {
+			body = sentWhole
+			if res, err = s.forward(r.Context(), p, proto, path, p.Prepare(body), r.Header); err != nil {
+				return writeError(w, proto, 502, p.Name+": "+err.Error()), err.Error(), true
+			}
+		}
+	}
+	if proto == provider.Responses && prevKeptBy(p) && !storeOff(body) {
+		noteAnswered(r, prevRoute(p))
 	}
 	// structured output turned away (Xiaomi MiMo's Token Plan takes no
 	// json_schema, only text and json_object, #2126): a schema is asked

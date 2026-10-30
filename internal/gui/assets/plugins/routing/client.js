@@ -1047,10 +1047,24 @@ function routingPage(part) {
       : t("{by} was asked which of {kinds} turn {turn} is, and said “{intent}” ({took}).", { by, kinds, turn: r.rule.turn, intent: c.intent, took: when + sure })) + told;
     return effort ? `${said} ${effort}` : said;
   }
+  // intentOf is the intent a rule's condition asks for, as the gateway
+  // writes it (intent "…"); undefined for another condition
+  const intentOf = (c) => /^intent "(.*)"$/.exec(c)?.[1].replace(/\\"/g, '"').replace(/\\\\/g, "\\");
+  // smartFor is the intent the decision model said the turn is, when a
+  // rule by that intent put the request's first where it is, in the group
+  // or a group in it: the row routing chose says it where an account's
+  // allowance goes (joey_xue on Discord)
+  function smartFor(r) {
+    for (const x of [r.rule, ...(r.nested || []).map((n) => n.rule)]) {
+      if (!x?.use || x.unready) continue;
+      for (const c of x.when || []) { const m = intentOf(c); if (m) return m; }
+    }
+    return "";
+  }
   // a rule's condition as the gateway writes it, in the page's words
   function condText(c) {
     let m;
-    if ((m = /^intent "(.*)"$/.exec(c))) return t("asks for “{intent}”", { intent: m[1].replace(/\\"/g, '"').replace(/\\\\/g, "\\") });
+    if ((m = intentOf(c)) != null) return t("asks for “{intent}”", { intent: m });
     if ((m = /^tokens ≥ (\d+)$/.exec(c))) return t("≥ {n} tokens", { n: Number(m[1]).toLocaleString(intlLang()) });
     if (c === "images") return t("has an image");
     if (c === "reasoning") return t("reasoning on");
@@ -1192,6 +1206,11 @@ function routingPage(part) {
     return out;
   }
   const WHO = { magpie: "magpie {ms}", net: "network {ms}", vendor: "vendor {ms}" };
+  // why a try that went out some other way has no split (gateway.sentBy)
+  const SENT_BY = {
+    plugin: "Its plugin sent this request itself, so magpie can't split its time",
+    claude: "Claude Code sent this request itself, so magpie can't split its time",
+  };
   function timeSaid(tr) {
     const parts = timeParts(tr);
     if (!parts.length) return "";
@@ -2515,18 +2534,21 @@ function routingPage(part) {
       // rest with it (#1960)
       const r = src().get(row.rid) || pinned || cur, { answered, rests, gave, went } = findings(r);
       const w = row.w, rest = rests.get(w.id) || rests.get(w.id + "\u0000" + (w.model || "")), resting = rest && at(rest.until) > n;
+      const smart = r.order[0] && id === seat(r.order[0]) && smartFor(r), said = smart ? t("picked for “{intent}”", { intent: smart }) : "";
       let s, b;
       if (w.unlisted) s = unlistedWord(w);
       else if (resting) s = `${failWord(rest.why)} · ${restWhen(rest)}`;
       else if (w.window) s = t("request longer than its {n} window · passed over", { n: ctxShort(w.window) });
       // a row another request weighed, answering that one: the header
       // tells of this request, so it says the answer is not this one's
-      else if (trying.has(id)) s = r.id !== cur.id && agents.size <= 1 ? t("answering another request…") : t("answering…");
-      else if (answered.has(id)) s = agents.size > 1 ? t("answered {agent}", { agent: agentName(r.agent) }) : t("answered this request");
+      else if (trying.has(id)) s = (r.id !== cur.id && agents.size <= 1 ? t("answering another request…") : t("answering…")) + (said && " · " + said);
+      else if (answered.has(id)) s = (agents.size > 1 ? t("answered {agent}", { agent: agentName(r.agent) }) : t("answered this request")) + (said && " · " + said);
       else if (gave.has(id)) s = t("{status} · {fail} · passed to {agent}", { status: gave.get(id).status, fail: failWord(gave.get(id).fail), agent: agentName(r.agent) });
       else if (went.has(id)) s = t("{status} · {fail} · went on to the next", { status: went.get(id).status, fail: failWord(went.get(id).fail) });
       else if (w.noURL) s = noURLWord(w);
       else if (w.sunk && !lifted(sunkKey(w), at(w.sunk))) s = t("rate limited at {time} · at the back", { time: clock(w.sunk) });
+      // the row smart routing's intent put first says the intent instead
+      else if (said) s = said;
       // a model its vendor serves at no cost is no share of the account's
       // allowance: the windows are what the rest of it costs, so "100%
       // used" and its bar said the seat that always can answer was spent
@@ -2870,6 +2892,9 @@ function routingPage(part) {
       const timed = i === 0 && r.masking > 0 ? { ...tr, masking: r.masking } : tr;
       const when = tr.done && timeSaid(timed);
       if (when) items.push([when, "aside time", timed]);
+      // a plugin or Claude Code sent it, out of magpie's sight: said, so
+      // its missing split doesn't read as a request that lost it (lute)
+      if (tr.done && !tr.net && tryOk(tr) && SENT_BY[tr.sentBy]) items.push([t(SENT_BY[tr.sentBy]), "aside"]);
       // each model Copilot's Auto picked for it, where from, and whether
       // Copilot refused it, on which API and with Auto's session token or
       // without (#256)
@@ -3201,7 +3226,9 @@ function routingPage(part) {
   };
   async function loadDays(d) {
     try {
-      const res = await (await fetch("/api/gateway/history?day=" + encodeURIComponent(d || ""))).json();
+      const got = await fetch("/api/gateway/history?day=" + encodeURIComponent(d || ""));
+      await window.skelHold?.();
+      const res = await got.json();
       days = res.days || [];
       noteAccounts(res.routes);
       if (d && d === day) { past = (res.routes || []).map(whole); pastCut = !!res.cut; }
@@ -4995,7 +5022,15 @@ function routingPage(part) {
     renderGroups();
     return true;
   };
-  const groupIcons = (g) => [...new Map((g.memberInfo || []).filter((i) => i.icon).map((i) => [i.provider || i.icon, i.icon])).values()];
+  // offIn: the members of a group magpie found whose provider is switched
+  // off (XYenon on Discord). magpie keeps them in the group so agents on it
+  // aren't moved while one is off (#2671), but the gateway skips them, so a
+  // found group's card and logos leave them out, as every model list leaves
+  // a provider switched off out, and say how many in a tag; the editor still
+  // has them, greyed with why. A group of the user's lists what they put in.
+  const offIn = (g) => g.auto ? (g.memberInfo || []).filter((i) => i.providerOff && g.members.includes(i.id)) : [];
+  const shownMembers = (g) => { const off = offIn(g).map((i) => i.id); const left = g.members.filter((id) => !off.includes(id)); return left.length ? left : g.members; };
+  const groupIcons = (g) => { const shown = shownMembers(g); return [...new Map((g.memberInfo || []).filter((i) => i.icon && shown.includes(i.id)).map((i) => [i.provider || i.icon, i.icon])).values()]; };
   // offOf: a member whose provider is switched off (groupsState's
   // providerOff), said by its provider's name and model rather than a bare
   // id: the group skips it until the provider is on again
@@ -5470,7 +5505,7 @@ function routingPage(part) {
     const main = el("div", "main"), nm = el("div", "nm");
     nm.append(el("b", "", g.name), el("code", "mdl", g.ref || "group/" + g.id));
     if (g.auto) nm.append(el("small", "auto", t("found by magpie")));
-    main.append(nm, el("div", "mem", g.members.map((id) => memberLabel(g, id)).join(g.routing === "order" ? " → " : " · ")));
+    main.append(nm, el("div", "mem", shownMembers(g).map((id) => memberLabel(g, id)).join(g.routing === "order" ? " → " : " · ")));
     row.append(cb, ics, main);
     return row;
   }
@@ -5528,7 +5563,7 @@ function routingPage(part) {
     if (g.auto) nm.append(el("small", "auto", t("found by magpie")));
     const manual = g.routing === "manual";
     const sep = g.routing === "order" ? " → " : " · ";
-    const mem = manual ? pickRow(g) : el("div", "mem", g.members.map((id) => memberLabel(g, id) + (g.off?.includes(id) ? ` (${t("off")})` : "")).join(sep));
+    const mem = manual ? pickRow(g) : el("div", "mem", shownMembers(g).map((id) => memberLabel(g, id) + (g.off?.includes(id) ? ` (${t("off")})` : "")).join(sep));
     main.append(nm, mem);
     for (const p of g.patterns || []) {
       const line = el("div", "mem pat" + (p.models ? "" : " none"));
@@ -5565,6 +5600,12 @@ function routingPage(part) {
       const r = el("span", "tag" + (manual ? " idle" : ""), t(g.rules.length === 1 ? "1 rule" : "{n} rules", { n: g.rules.length }));
       r.title = (manual ? t("The rules wait while you pick the model by hand.") + "\n" : "") + g.rules.map((x, i) => `${i + 1}. ${ruleText(x)} → ${x.pause ? t("pause") + " " : ""}${rUses(x).map((u) => memberLabel(g, u)).join(", ")}${x.useEffort ? " · " + t("{level} reasoning", { level: x.useEffort }) : ""}`).join("\n");
       tags.append(r);
+    }
+    const offs = manual ? [] : offIn(g);
+    if (offs.length && shownMembers(g).length < g.members.length) {
+      const k = el("span", "tag idle rt-goff", t("{n} switched off", { n: offs.length }));
+      k.title = offs.map(offWords).join("\n");
+      tags.append(k);
     }
     if (g.disabled) tags.append(el("span", "tag idle", t("switched off")));
     else if (!g.ready) tags.append(el("span", "tag bad", t("no member ready")));
