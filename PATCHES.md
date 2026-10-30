@@ -66,9 +66,9 @@ Each round:
 8. Accept: healthy, 401/200 auth pair, model count equal before/after, a
    real `group/fast-cheap` request 200. Push `prod` and the tag.
 
-## Carried patches (as of v0.1.2170-p1, 2026-10-30)
+## Carried patches (as of v0.1.2214-p1, 2026-10-30)
 
-Checked against v0.1.2170 (2026-10-30): eleven carried entries — nine
+Checked against v0.1.2214 (2026-10-30): eleven carried entries — nine
 patch rows, #3623's attempt chain (joined at 0.1.2051-p3) and the
 cooldown-settings surface (joined at 0.1.2051-p4) — plus #3487's
 card-display and millisecond-span remainder, re-expressed at the
@@ -202,6 +202,17 @@ the table above.
   own growth). The v0.1.2134 budget raise, left unstaged when
   0.1.2134-p1 was cut, is committed here (the deployed image had it;
   the tag had not). No sweep movement, none absorbed.
+- `prod/0.1.2214-p1` — 2026-10-30. Rolling merge of v0.1.2214 (71
+  commits); four conflicts, both sides kept: the account pick's
+  cooldown-policy assignments beside upstream's reworded billing
+  comment (the split account literals collapsed onto upstream's, this
+  line's fields added), Unrest keeping the release-an-active-rate-rest
+  behavior beside upstream's saveRests bookkeeping, gateway-routing.md
+  taking upstream's newest candidate-loop prose, and this line's core
+  budgets standing (upstream's growth in this range fit under them).
+  No sweep movement, none absorbed. A new upstream awake test
+  (`TestKeepOffWaitsForTheSetting`) proved timing-flaky under the full
+  suite: it passes standalone on both this line and the clean base.
 
 ## Non-streaming SSE regression follow-up (2026-10-28)
 
