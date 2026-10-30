@@ -107,7 +107,7 @@ commit is docs-only.
 | upstream | fix of record (skygunner/magpie) | source to track | what it does |
 | --- | --- | --- | --- |
 | yetone/magpie#3035 | `8f931a28` + `223f9b0a` | `fix/sensenova-grammar-refusal`, `fix/bare-request-failover` | recognize SenseNova's guided_grammar compile_grammar refusal and retry the schema as json_object; an otherwise unexplained 400/422 `Invalid request` also fails over to the next candidate, resting nothing |
-| yetone/magpie#3417 | `e75480ec` | `fix/codex-expiry-window` | Codex expiry-only resets stay inside the expiry window |
+| yetone/magpie#3417 | absorbed at v0.1.2264 | — | Codex expiry-only resets stay inside the expiry window: upstream made the spend deadline's lead configurable (settings' `CodexResetLead`) and evolved the held-up behavior (a reset held up past its spend point is spent at once); this line's fixed-lead variant (`e75480ec`) and its test were superseded and removed at the merge |
 | yetone/magpie#3487 | merge-carried (was `d4944ace`) | `fix/issue-batch-1025a` | quota card: a limit with no count is not a full allowance — on upstream's bare-amount model (plugins#468) the card and tray treat an amount of 0 as not said; a millisecond span is not charted as seconds (`quotaSpanLimit`, upstream lacks it) |
 | yetone/magpie#3635 | `ad3badd3` + `4f7e63a8` | `fix/nvidia-parameters-routing` | NVIDIA parameter-list repair keeps reasoning effort; duplicate effort controls stay aligned through routing |
 | yetone/magpie#3636 | `0d3dca3d` | `fix/nvidia-parameters-routing` | an explicit unsupported-parameter 400 fails over to the group's remaining members |
@@ -203,14 +203,22 @@ the table above.
   0.1.2134-p1 was cut, is committed here (the deployed image had it;
   the tag had not). No sweep movement, none absorbed.
 - `prod/0.1.2214-p1` — 2026-10-30. Rolling merge of v0.1.2214 (71
-  commits); four conflicts, both sides kept: the account pick's
+  commits); four conflicts, both sides kept: (this entry's
+  conflicts as before). None absorbed.
+- `prod/0.1.2264-p1` — 2026-10-30. Rolling merge of v0.1.2264 (66
+  commits); seven conflicted files, both sides kept — except #3417,
+  which is upstream's now: settings' `CodexResetLead` makes the spend
+  deadline's lead configurable and a reset held up past its spend point
+  is spent at once; this line's fixed-lead variant and its test were
+  superseded and removed at the merge. No sweep movement otherwise.
+ the account pick's
   cooldown-policy assignments beside upstream's reworded billing
   comment (the split account literals collapsed onto upstream's, this
   line's fields added), Unrest keeping the release-an-active-rate-rest
   behavior beside upstream's saveRests bookkeeping, gateway-routing.md
   taking upstream's newest candidate-loop prose, and this line's core
   budgets standing (upstream's growth in this range fit under them).
-  No sweep movement, none absorbed. A new upstream awake test
+  No sweep movement. A new upstream awake test
   (`TestKeepOffWaitsForTheSetting`) proved timing-flaky under the full
   suite: it passes standalone on both this line and the clean base.
 
