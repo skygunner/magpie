@@ -36,6 +36,12 @@ const (
 	// lately — first token, then how fast it wrote — first; one not
 	// measured lately gets a turn now and then to be (routes.Fastest).
 	Fastest = "fast"
+	// Cheapest goes by price: the member whose model costs least at the
+	// request's time first — its vendor's peak hours and the provider's
+	// rate windows read then — those alike in their listed order
+	// (routes.Cheapest). A group's only: a provider's keys and accounts
+	// all bill its one price.
+	Cheapest = "cheap"
 )
 
 // pluginRouting is a routing a plugin serves: "<plugin>/<name>".
@@ -252,17 +258,37 @@ func (a Allowance) WeekUsedUp(now time.Time) bool {
 
 // Restarts is when an auto-used reset starts the account's windows again,
 // as the Codex reset about to run out is spent (expiringResetSpent):
-// resetExpiryLead before it runs out, or now within that window.
-// What they have left then is lost, as at their own reset, so
+// resetLead before it runs out, or now when the account is held up
+// past then. What they have left then is lost, as at their own reset, so
 // Weekly pace and Smart take it for their renewal when it comes sooner
 // (#717, #718). Zero when none will be.
 func (a Allowance) Restarts(now time.Time) time.Time {
 	for _, l := range a {
 		if !l.ResetRunsOut.IsZero() {
-			return expiringResetSpent(l.ResetRunsOut, now)
+			stopped, back := a.heldUp()
+			return expiringResetSpent(l.ResetRunsOut, now, stopped, back)
 		}
 	}
 	return time.Time{}
+}
+
+// heldUp is usedUp and BackAt by an allowance: whether a window that
+// stops the account, for every model, is used up, and when the last of
+// those starts again (zero when one doesn't say).
+func (a Allowance) heldUp() (stopped bool, back time.Time) {
+	for _, l := range a {
+		if l.Model != "" || l.matches != nil || l.Used < 100 {
+			continue
+		}
+		if l.Resets.IsZero() {
+			return true, time.Time{}
+		}
+		if !stopped || l.Resets.After(back) {
+			back = l.Resets
+		}
+		stopped = true
+	}
+	return stopped, back
 }
 
 // restarted is when a window that renews at renews (zero: not known) is

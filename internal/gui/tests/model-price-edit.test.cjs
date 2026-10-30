@@ -61,6 +61,7 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         await browser.close();
       });
       page.setDefaultTimeout(5000);
+      page.setDefaultNavigationTimeout(60000);
       const errors = [], posts = [];
       page.on("pageerror", (e) => errors.push(e.message));
       await page.route("**/*", serve(lang, posts));
@@ -82,9 +83,10 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       // whose list price it is: models.dev's, or the other magpie's
       assert.match(await row("model-1").locator(".mprice").getAttribute("title"), zh ? /留空即官方价格/ : /empty: its list price/);
       assert.match(await row("model-4").locator(".mprice").getAttribute("title"), zh ? /留空即另一台 magpie 计费用的价格/ : /empty: what the other magpie counts it at/);
-      // an off-peak list price says when it counts double, DeepSeek's own
-      // but for China's public holidays
-      const peak = zh ? /闲时价/ : /Off-peak list price/, holiday = zh ? /节假日除外/ : /Chinese public holidays/;
+      // an off-peak list price says when it counts double, and that a
+      // price set here does too; DeepSeek's own but for China's public
+      // holidays
+      const peak = zh ? /闲时价（官方价格或在此设置的价格）/ : /Off-peak price, the list's or one set here/, holiday = zh ? /节假日除外/ : /Chinese public holidays/;
       assert.doesNotMatch(await row("model-1").locator(".mprice").getAttribute("title"), peak);
       assert.match(await row("model-5").locator(".mprice").getAttribute("title"), holiday);
       assert.match(await row("model-6").locator(".mprice").getAttribute("title"), peak);

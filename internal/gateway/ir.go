@@ -82,6 +82,12 @@ type Part struct {
 	Hits []Hit
 
 	cache string // opted-in Claude bridge breakpoint TTL; empty for none
+
+	// block reports the part came from one content block of the client's
+	// own: a client-marks prompt ends a rendered block there even when the
+	// client put no mark on it, or an earlier round's marked boundary is
+	// merged away and its cache write is found no more (#3835)
+	block bool
 }
 
 // The APIs a Part's Sealed reasoning is in.
@@ -118,7 +124,7 @@ func attachmentText(p Part) string {
 
 // Message is one turn.
 type Message struct {
-	Role  string // user | assistant
+	Role  string // user | assistant; system | developer on Responses-to-Responses
 	Parts []Part
 }
 
@@ -175,6 +181,10 @@ type Request struct {
 	// Windows with Claude Code in WSL), so the run's own prompt describes
 	// another machine than the one the tools run on (envElsewhereNote).
 	envElsewhere bool
+	// envInTurns: that working directory is named in a message (Claude
+	// Code's environment as a {role: "system"} message), not in the
+	// caller's instructions (envTurnsNote).
+	envInTurns bool
 	// envUnknown: the caller is on another computer (remoteCaller) and its
 	// instructions name no working directory, so the run's own prompt
 	// describes a machine no tool runs on, and nothing says which does
@@ -312,6 +322,11 @@ type Request struct {
 	// arguments reach the client with their zero fractions dropped
 	// (grok_integral.go).
 	Grok bool
+	// CR is set when the model asked is one of the glm-5.3-flash* routes
+	// whose replicas stitch CR into a call's arguments (#4256): the
+	// arguments reach the client with the stitched CR dropped
+	// (tool_args_cr.go).
+	CR bool
 }
 
 // nsTool is a tool as a Responses client knows it: by its namespace and its

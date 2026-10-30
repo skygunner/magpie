@@ -7,7 +7,7 @@ import (
 )
 
 // An account that spends a Codex reset about to run out by itself has its
-// windows started again then, resetExpiryLead before the reset runs out:
+// windows started again then, resetLead before the reset runs out:
 // Weekly pace goes by the hours until that, when it is sooner than the week
 // renews, and Smart's renewals do too (#717, #718). A reset that runs out
 // after the week renews, or has run out, changes nothing.
@@ -116,7 +116,7 @@ func TestResetRunsOutForRouting(t *testing.T) {
 	firstWait = 5 * time.Second
 	t.Cleanup(func() { firstWait = oldWait })
 	all := Allowances("codex")
-	if got := all["me@example.com"].Restarts(now); !got.Equal(until.Add(-resetExpiryLead)) {
+	if got := all["me@example.com"].Restarts(now); !got.Equal(until.Add(-resetLead())) {
 		t.Fatalf("allowance read: restarts %v", got)
 	}
 	if got := all["other@example.com"].Restarts(now); !got.IsZero() {
@@ -125,7 +125,7 @@ func TestResetRunsOutForRouting(t *testing.T) {
 }
 
 // Routing takes the reset as spent when check spends it: half an hour
-// before it runs out, even when the account is held up past then (#3417).
+// before it runs out, or now when the account is held up past then (#718).
 func TestRestartsWhenHeldUp(t *testing.T) {
 	now := time.Now()
 	acct := func(fiveUsed float64, fiveBack time.Duration) Allowance {
@@ -140,8 +140,8 @@ func TestRestartsWhenHeldUp(t *testing.T) {
 		want time.Time
 	}{
 		"free again before it is spent":  {acct(100, 110*time.Minute), now.Add(150 * time.Minute)},
-		"held up past it":                {acct(100, 160*time.Minute), now.Add(150 * time.Minute)},
-		"held up, not saying until when": {acct(100, 0), now.Add(150 * time.Minute)},
+		"held up past it":                {acct(100, 160*time.Minute), now},
+		"held up, not saying until when": {acct(100, 0), now},
 		"not held up":                    {acct(60, 110*time.Minute), now.Add(150 * time.Minute)},
 	} {
 		if got := c.a.Restarts(now); !got.Equal(c.want) {

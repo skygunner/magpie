@@ -276,8 +276,8 @@ type Settings struct {
 	// of their rate-limit resets by themselves once their weekly window is
 	// used up and no other account can take the request: at most one a
 	// week each (see provider.AutoUseCodexReset); and one about to run out
-	// unused half an hour before it does, never earlier for exhausted
-	// windows (provider.SpendExpiringCodexResets).
+	// unused CodexResetLead before it does, or at once when the account is
+	// held up past then (provider.SpendExpiringCodexResets).
 	CodexAutoReset []string `json:"codexAutoReset,omitempty"`
 	// CodexAutoResetOnly narrows an account in CodexAutoReset to one of
 	// those two times (#2078, alanwalk: Codex's own resets come often, so
@@ -286,6 +286,15 @@ type Settings struct {
 	// about to run out only. An account not in it uses one at both, as
 	// every account did before the two were split.
 	CodexAutoResetOnly map[string]string `json:"codexAutoResetOnly,omitempty"`
+	// CodexResetLead is how many minutes before a reset about to run out
+	// unused an account with CodexAutoReset's "expiring" spends it (the
+	// owner, 10-30: 把提前用卡的时间做成可配置的): from CodexResetLeadLeast
+	// to CodexResetLeadMost, 0 for CodexResetLeadDefault. Earlier loses
+	// what the windows have left then (#718), so the default is late.
+	// One for every account: whether an account spends one is its own
+	// say, how early is the same trade for each. Read through
+	// ResetLead, which takes a value out of range for the default.
+	CodexResetLead int `json:"codexResetLead,omitempty"`
 	// CodexNoCredits are the ChatGPT accounts (lower-case) that don't
 	// spend their credits: once a usage window is used up, routing holds
 	// the account as used up and goes on to the user's other accounts,
@@ -364,6 +373,13 @@ type Settings struct {
 	// as by default, subscriptions are found as ever. This computer's own
 	// (KeepOwn), set only by its own switch or `magpie accounts discovery`.
 	NoAccountDiscovery bool `json:"noAccountDiscovery,omitempty"`
+	// SignInLinkOnly keeps an account's sign-in page out of the default
+	// browser: the window (and the command line) shows its link to copy
+	// into a browser the user picks, a separate or fingerprint browser
+	// (max2020 on Discord). Off, as by default, the page opens as ever. A
+	// plugin whose own CLI opens its page (Grok Build on macOS and
+	// Windows) still does: magpie can't stop that.
+	SignInLinkOnly bool `json:"signInLinkOnly,omitempty"`
 	// NoStats stops the one event a day that counts magpie's users (see
 	// internal/stats).
 	NoStats bool `json:"noStats,omitempty"`
@@ -478,6 +494,14 @@ type Settings struct {
 	// no cards say the tokens alone (BussanQ on Discord); off by default,
 	// the cost shown.
 	TrayNoCost bool `json:"trayNoCost,omitempty"`
+	// TrayWindows are, by subscription or plan (a provider's id, every
+	// account of it alike), the windows its menu bar card shows, each by
+	// how long it runs ("5h", "7d", "month": gui.trayWindowKind), so a
+	// vendor reordering or renaming them changes nothing (StrikingRaw on
+	// X: Claude's 5h alone, not two small numbers). A provider not named
+	// shows every window, as before; one whose named windows are all gone
+	// shows every window too, never an empty card.
+	TrayWindows map[string][]string `json:"trayWindows,omitempty"`
 	// Lightweight lets the webview of a window closed — the tray panel or
 	// the main window — go once it has stayed closed a while, and makes it
 	// again when it is opened (#580): less memory, a moment's wait. This
@@ -849,6 +873,14 @@ type Settings struct {
 	// when it last settled, so it opens maximised again; Window is still the
 	// size it is restored to.
 	WindowMaximised bool `json:"windowMaximised,omitempty"`
+	// WindowAt is where the main window was last left, its top left corner
+	// x and y in the system's coordinates across every screen (points on
+	// the Mac, DIPs on Windows, X11's pixels on Linux), so it opens there
+	// again after a restart rather than in the middle (jorbenzhu on
+	// Discord). Kept only while it isn't maximised, full screen or
+	// minimised; not at all under Wayland, where a window can't place
+	// itself. gui's openAt moves it onto a screen there now.
+	WindowAt []int `json:"windowAt,omitempty"`
 }
 
 // ModelPrice is the price of one model as the user states it. Each part is a
@@ -1009,6 +1041,28 @@ func (s Settings) ImageWait() time.Duration {
 		m = ImageTimeoutDefault
 	}
 	return time.Duration(min(m, ImageTimeoutMost)) * time.Minute
+}
+
+// CodexResetLeadDefault is CodexResetLead's minutes when it is unset, and
+// CodexResetLeadLeast and CodexResetLeadMost the range it can be set in;
+// CodexResetLeads the choices the app and the CLI's words offer.
+const (
+	CodexResetLeadDefault = 30
+	CodexResetLeadLeast   = 15
+	CodexResetLeadMost    = 24 * 60
+)
+
+var CodexResetLeads = []int{15, 30, 60, 120, 180, 360, 720, 1440}
+
+// ResetLead is how long before a Codex reset about to run out unused it
+// is spent by itself: CodexResetLead's minutes, CodexResetLeadDefault's
+// when it is 0 or out of range (written by hand), never none.
+func (s Settings) ResetLead() time.Duration {
+	m := s.CodexResetLead
+	if m < CodexResetLeadLeast || m > CodexResetLeadMost {
+		m = CodexResetLeadDefault
+	}
+	return time.Duration(m) * time.Minute
 }
 
 // ClassifyTimeoutDefault is the seconds a classifier is given when
@@ -1173,8 +1227,8 @@ func (s Settings) Compact() int {
 }
 
 // KeepOwn puts back cur's settings that are this computer's own, which a
-// sync or a restored backup never brings from another: the window's size
-// and whether it was maximised, the proxy, the gateway's port, whether it
+// sync or a restored backup never brings from another: the window's size,
+// place and whether it was maximised, the proxy, the gateway's port, whether it
 // is shared on the local network and the addresses let in to it, the
 // Dock, gateway mode, whether WSL is looked in, whether agents' sign-ins
 // are read, when allowances are read, the terminal app a session resumes
@@ -1191,7 +1245,9 @@ func (s *Settings) KeepOwn(cur Settings) {
 	s.DockNever, s.DockSettled = cur.DockNever, cur.DockSettled
 	s.ProxyCustom = cur.ProxyCustom
 	s.WindowMaximised, s.KeepAwake, s.KeepAwakeDisplay = cur.WindowMaximised, cur.KeepAwake, cur.KeepAwakeDisplay
+	s.WindowAt = cur.WindowAt
 	s.TrayUsages, s.TrayUsage, s.TrayUsageEvery, s.TrayNoLogos, s.TrayNoBird, s.TrayPace, s.TrayNoCost = cur.TrayUsages, cur.TrayUsage, cur.TrayUsageEvery, cur.TrayNoLogos, cur.TrayNoBird, cur.TrayPace, cur.TrayNoCost
+	s.TrayWindows = cur.TrayWindows
 	s.GatewayMode = cur.GatewayMode
 	s.NoWSLAgents = cur.NoWSLAgents
 	s.QuotaReads = cur.QuotaReads
@@ -1821,6 +1877,7 @@ func saveOwn(s Settings, recording, reads bool) error {
 	s.ClientAgents = clientAgents(s.ClientAgents)
 	s.UsageCleared = usageCleared(s.UsageCleared)
 	s.TrayUsages = ids(s.TrayUsages)
+	s.TrayWindows = trayWindows(s.TrayWindows)
 	for i, u := range s.CodexAutoReset {
 		s.CodexAutoReset[i] = strings.ToLower(u)
 	}
@@ -2020,6 +2077,21 @@ func ids(in []string) []string {
 		if x = strings.TrimSpace(x); x != "" && !slices.Contains(out, x) {
 			out = append(out, x)
 		}
+	}
+	return out
+}
+
+// trayWindows is TrayWindows as kept: each provider's kinds trimmed, once
+// each, and a provider with none left out, as it shows every window.
+func trayWindows(m map[string][]string) map[string][]string {
+	out := map[string][]string{}
+	for p, kinds := range m {
+		if p, kinds = strings.TrimSpace(p), ids(kinds); p != "" && len(kinds) > 0 {
+			out[p] = kinds
+		}
+	}
+	if len(out) == 0 {
+		return nil
 	}
 	return out
 }
