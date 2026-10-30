@@ -108,12 +108,9 @@ func sessionRoutes(mux *http.ServeMux, w Windows) {
 		list := sessions.List(sessions.All)
 		nativeKeys := make(map[string]bool, len(list))
 		for _, s := range list {
+			// its copies' and subagents' ids among them
 			for _, k := range sessions.GatewayKeys(s) {
 				nativeKeys[k] = true
-			}
-			// a copy of its conversation is the agent's own too
-			for _, id := range s.Copies {
-				nativeKeys[s.Agent+"|"+id] = true
 			}
 		}
 		gateway := listedGateway(usage.GatewaySessions(time.Time{}, nativeKeys))
@@ -146,8 +143,10 @@ func sessionRoutes(mux *http.ServeMux, w Windows) {
 		// was copied through every size on the way, ~140 MB of eight (#2278)
 		out.Sessions = make([]sessionJSON, 0, len(list))
 		for _, s := range list {
+			// drawn as the agent it ran in: Claude Desktop's Code tab's
+			// sessions are in Claude Code's folder (Session.App)
 			j := sessionJSON{Session: s, Name: s.Agent, Icon: "generic", Via: viaOf(vias, s)}
-			if a := agents[s.Agent]; a != nil {
+			if a := agents[cmp.Or(s.App, s.Agent)]; a != nil {
 				j.Name, j.Icon = a.SharedName(), a.Icon
 			}
 			j.Name = wslName(j.Name, s)
@@ -267,7 +266,7 @@ func sessionRoutes(mux *http.ServeMux, w Windows) {
 		}
 		j := sessionJSON{Session: s, Name: s.Agent, Icon: "generic"}
 		for _, a := range agent.Clients() {
-			if a.ID == s.Agent {
+			if a.ID == cmp.Or(s.App, s.Agent) {
 				j.Name, j.Icon = a.SharedName(), a.Icon
 			}
 		}

@@ -2293,6 +2293,8 @@ function renderLedger() {
     // one that tested the provider (the editor's Test, Detect APIs, a model
     // list) is counted nowhere, and says so (neiko on Discord)
     const probe = r.source === "probe";
+    // an agent's call to a tool of magpie's MCP servers (ferock on Discord)
+    const mcp = r.source === "mcp";
     if (r.agent === "magpie") {
       const own = ownBadge();
       if (probe) own.title = probeWhy();
@@ -2308,7 +2310,9 @@ function renderLedger() {
     // resolved to a provider's name, which would promote an unknown request
     // to an official provider — and the row keeps saying it is a local
     // session. A row whose file names none says only that.
-    const where = local ? (r.session_account || r.session_provider || t("Local session")) : t(r.providerName) + (r.host ? " · " + r.host : "");
+    const where = local ? (r.session_account || r.session_provider || t("Local session"))
+      : mcp ? [r.providerName && t(r.providerName), r.host].filter(Boolean).join(" · ") || "—"
+      : t(r.providerName) + (r.host ? " · " + r.host : "");
     const wc = td(el("div", "where-name", where), "where", where);
     const badges = el("div", "source-badges");
     if (local && r.session_account && r.session_official_login) {
@@ -2344,6 +2348,11 @@ function renderLedger() {
     if (probe) {
       const k = el("span", "src probe", window.kindName ? window.kindName(r.kind) : r.kind);
       k.title = probeWhy();
+      badges.append(k);
+    }
+    if (mcp) {
+      const k = el("span", "src mcp", "MCP");
+      k.title = t("{agent} called the tool {tool} of magpie's MCP server {server}. Its arguments are not kept, and it is not counted in any total: the model requests it made are rows of their own.", { agent: name, tool: r.req || "—", server: r.host || "magpie" });
       badges.append(k);
     }
     if (badges.childElementCount) wc.append(badges);
@@ -2393,7 +2402,7 @@ function renderLedger() {
     const st = el("span", "st");
     // a status when the gateway logged the call; a session file has none,
     // and says only whether it went well
-    let word = r.status ? String(r.status) : r.source === "log" ? (bad ? r.err_type || t("Failed") : t("Succeeded")) : bad ? (r.source === "reported" ? t("Client-reported error") : r.err_type || t("Failed")) : "—";
+    let word = r.status ? String(r.status) : r.source === "log" || mcp ? (bad ? r.err_type || t("Failed") : t("Succeeded")) : bad ? (r.source === "reported" ? t("Client-reported error") : r.err_type || t("Failed")) : "—";
     if (r.status && bad) word += " · " + (r.source === "reported" ? t("Client-reported error") : r.err_type === "protocol_error" ? t("Protocol error") : r.err_type || t("Failed"));
     if (r.handed_on) word += " · " + t("handed on");
     else if (r.tries > 1) word += " · " + t("{n} tries", { n: r.tries });
@@ -2982,11 +2991,13 @@ function renderSessions() {
   // the agent filter is a menu, as the model and folder ones beside it: a
   // strip of a segment per agent ran past the window with a dozen of them
   // in range, and scrolled sideways to reach the last
-  const agents = [...new Map([...all.map((s) => [s.agent, s.name]), ...Object.entries(st.agents || {})]).entries()];
+  // a session is under the agent it ran in: s.app, when its files are
+  // another's (Claude Desktop's Code tab's, in Claude Code's folder)
+  const agents = [...new Map([...all.map((s) => [s.app || s.agent, s.name]), ...Object.entries(st.agents || {})]).entries()];
   if (sessAgent !== "all" && !agents.some(([id]) => id === sessAgent)) sessAgent = "all";
 
   // the model and folder filters offer what the range has, under the other filters
-  const byAgent = (x) => sessAgent === "all" || x.agent === sessAgent;
+  const byAgent = (x) => sessAgent === "all" || (x.app || x.agent) === sessAgent;
   const byModel = (x) => !sessModel || x.model === sessModel;
   const byFolder = (x) => !sessFolder || x.cwd === sessFolder;
   const spent = (list, key) => {
@@ -3490,7 +3501,7 @@ function renderSessTop() {
   const list = ov.top?.[sessTopBy] || [];
   const body = el("div", "sess-tops");
   if (!list.length) body.append(el("div", "sess-none", ov.top ? t("Nothing in this range.") : "…"));
-  const icons = new Map((sessions?.sessions || []).map((s) => [s.agent, s.icon]));
+  const icons = new Map((sessions?.sessions || []).map((s) => [s.app || s.agent, s.icon]));
   const names = sessStats?.agents || {};
   for (const s of list) {
     const open = sessTopOpen === s.key;

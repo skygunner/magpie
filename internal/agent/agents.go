@@ -52,6 +52,10 @@ func init() {
 	// and when Codex is connected or disconnected, or its route otherwise
 	// changes, so a running app sends where its config now says
 	provider.CodexAppRoute = codexAppRoute
+	// and when none starts in place of the one ended, the app is
+	// reopened on Windows, where its stdout was held open
+	provider.CodexAppOpen = codexAppOpen
+	provider.CodexAppReopen = codexAppReopen
 	// and what the Codex app holds is read while Codex takes magpie's
 	// models beside its sign-in, Codex switched off in magpie or not
 	provider.CodexHoldMatters = func() bool {
@@ -466,6 +470,12 @@ func magpieProviderJSONAt(shape, catalog, gw string) any {
 				e["reasoning"] = true
 			}
 			e["variants"] = openCodeVariants(m.Efforts, m.CodexFast)
+			// OpenCode counts a session's cost by it, in USD per million
+			// tokens (models.dev's cost; OpenCode 2.0.25 reads input,
+			// output, cache_read, cache_write), and counted 0 without it
+			if p := m.Price; p != nil {
+				e["cost"] = map[string]any{"input": p.Input, "output": p.Output, "cache_read": p.CacheRead, "cache_write": p.CacheWrite}
+			}
 			ms[m.ID] = e
 		}
 		return map[string]any{"npm": "@ai-sdk/openai-compatible", "name": "magpie",
@@ -485,8 +495,15 @@ func magpieProviderJSONAt(shape, catalog, gw string) any {
 			if tokens == 0 {
 				tokens = 16384
 			}
-			ms = append(ms, map[string]any{"id": m.ID, "name": m.Name, "context_window": window, "default_max_tokens": tokens,
-				"can_reason": len(m.Efforts) > 0})
+			cm := map[string]any{"id": m.ID, "name": m.Name, "context_window": window, "default_max_tokens": tokens,
+				"can_reason": len(m.Efforts) > 0}
+			// Crush counts a session's cost by it (catwalk's cost_per_1m_*,
+			// Crush 0.39.3): in_cached is a cache write, out_cached a read
+			if p := m.Price; p != nil {
+				cm["cost_per_1m_in"], cm["cost_per_1m_out"] = p.Input, p.Output
+				cm["cost_per_1m_in_cached"], cm["cost_per_1m_out_cached"] = p.CacheWrite, p.CacheRead
+			}
+			ms = append(ms, cm)
 		}
 		if ms == nil {
 			ms = []map[string]any{}
@@ -926,6 +943,7 @@ func openCodeLike(at place, id, name, icon, bin, dir, auth string, ua []string, 
 			return wiringOff(name, path, func(k string) (string, bool) { return edit.GetJSON(path, "provider."+magpieID+".options."+k) },
 				"baseURL", at.v1(), "apiKey", openCodeKeyAt(id, at.gw()))
 		},
+		ListOnly: true,
 		Sync: func() error {
 			// a model of magpie's chosen, but its provider gone from the
 			// file: put it back, or the agent has nothing to send it to
@@ -1249,6 +1267,7 @@ func piLikeKeyed(at place, id, name, dir string, key func() string) *Agent {
 			return wiringOff(name, modelsPath, func(k string) (string, bool) { return edit.GetJSON(modelsPath, "providers."+magpieID+"."+k) },
 				"baseUrl", at.v1(), "apiKey", key())
 		},
+		ListOnly: true,
 		Sync: func() error {
 			if err := syncJSON(modelsPath, "providers."+magpieID, block); err != nil {
 				return err
@@ -1378,7 +1397,8 @@ func gooseIn(at place, cfg string) *Agent {
 			return wiringOff("Goose", provider, func(k string) (string, bool) { return edit.GetJSON(provider, k) },
 				"base_url", at.v1(), "headers.Authorization", "Bearer "+gooseKey(at))
 		},
-		Sync: func() error { return syncGooseProvider(provider, at) },
+		ListOnly: true,
+		Sync:     func() error { return syncGooseProvider(provider, at) },
 		// goose loads custom_providers when it starts
 		Notice: func() string {
 			if p, _ := gooseActive(path); p == gooseProviderID && Running(`Goose\.app/`, `(^|/)goose( |$)`) {
@@ -1659,6 +1679,7 @@ func crushAt(at place, path, data string) *Agent {
 			return wiringOff("Crush", path, func(k string) (string, bool) { return get("providers." + magpieID + "." + k) },
 				"base_url", at.v1(), "api_key", at.gwKey())
 		},
+		ListOnly: true,
 		Sync: func() error {
 			return syncJSON(path, "providers."+magpieID, provider)
 		},

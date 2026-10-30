@@ -2182,6 +2182,15 @@ func providerRoutes(mux *http.ServeMux, w Windows) {
 			provider.DismissCodexDaemon()
 		case "dismiss-app":
 			provider.DismissCodexApp()
+		case "restart-app":
+			// the Codex app left on the account before: its app-server
+			// restarted now, after the user said yes (nb5p_hQ on X)
+			ctx, cancel := context.WithTimeout(r.Context(), 2*time.Minute)
+			defer cancel()
+			if err := agent.RestartSwitchedCodexApp(ctx); err != nil {
+				fail(rw, err)
+				return
+			}
 		default:
 			http.NotFound(rw, r)
 			return
@@ -2317,6 +2326,22 @@ func providerRoutes(mux *http.ServeMux, w Windows) {
 			return
 		}
 		rw.WriteHeader(http.StatusNoContent)
+	})
+	// A Claude account from a setup-token (`claude setup-token`), which
+	// Claude Code takes in CLAUDE_CODE_OAUTH_TOKEN: nothing is asked of
+	// Anthropic, and the token is never echoed back.
+	mux.HandleFunc("POST /api/signin/claude-token", func(rw http.ResponseWriter, r *http.Request) {
+		var in struct{ Token string }
+		if err := json.NewDecoder(io.LimitReader(r.Body, 16<<10)).Decode(&in); err != nil {
+			fail(rw, err)
+			return
+		}
+		user, err := provider.AddClaudeSetupToken(in.Token)
+		if err != nil {
+			fail(rw, err)
+			return
+		}
+		writeJSON(rw, map[string]string{"user": user})
 	})
 	// Accounts brought in from another tool's export (Antigravity's, from
 	// Antigravity Cockpit, Antigravity Manager, CLIProxyAPI; ChatGPT's and

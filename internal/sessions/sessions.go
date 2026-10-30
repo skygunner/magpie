@@ -137,6 +137,11 @@ type Session struct {
 	Unpriced int     `json:"unpriced"` // models that spent tokens but have no known price
 	Resume   string  `json:"resume"`   // the command that picks the session up again
 	Path     string  `json:"path"`     // its (main) file
+	// App is the agent the session ran in when it isn't the one whose files
+	// hold it: claude-desktop for a Claude Code session Claude Desktop's Code
+	// tab ran (its entrypoint, desktopEntrypoint). Usage counts the session
+	// under App; the key, resume and transcript stay Agent's.
+	App string `json:"app,omitempty"`
 	// Carry are the other agents that can carry the session on, reading its
 	// file as it is (carry.go)
 	Carry []Carry `json:"carry,omitempty"`
@@ -154,6 +159,10 @@ type Session struct {
 	// Copies are the ids of the sessions that are copies of its
 	// conversation, not listed apart from it (ccCopies)
 	Copies []string `json:"-"`
+	// Subs are the ids its subagents' and advisor's own files name
+	// themselves by (omp), each one the session its requests tell the
+	// gateway, while their tokens are counted in this session (subIDs)
+	Subs []string `json:"-"`
 	// BranchOf is the main file of the session a Claude-format session
 	// is a branch of (ccFamily): it is listed under that one, and read
 	// from that one's start up to where it went its own way
@@ -209,6 +218,9 @@ type state struct {
 	// Days is Models again, split by the local date each message was
 	// written on: a session that runs past midnight counts on both days.
 	Days named[*day] `json:"days,omitempty"`
+	// Claude Code: the entrypoint its first line naming one says, which
+	// tells a session Claude Desktop's Code tab ran (desktopEntrypoint)
+	Entry string `json:"entry,omitempty"`
 	// Claude Code: the message last counted, whose later lines repeat it,
 	// and the day it was counted on
 	Msg      string `json:"msg,omitempty"`
@@ -519,8 +531,8 @@ func statFiles(files []file, follow bool) []file {
 			f.size, f.mod, ok[i] = fi.Size(), fi.ModTime(), true
 		}
 	})
-	for _, l := range listed {
-		l.Done()
+	for i, l := range listed {
+		l.Done(order[i])
 	}
 	kept := files[:0]
 	for i, f := range files {
@@ -580,9 +592,17 @@ func ccFiles(agent, dir string) []file {
 	return heldFiles("cc\x00"+agent+"\x00"+dir, func() []file { return listCCFiles(agent, dir) })
 }
 
+// ccListed is how many files each folder's last listCCFiles found: its
+// listing grown from none, a file at a time, was ~35 MB of a minute of the
+// page's polls over 13 GB of Claude Code history (#2278).
+var ccListed sync.Map // dir → int
+
 func listCCFiles(agent, dir string) []file {
 	projects := filepath.Join(dir, "projects")
-	var out []file
+	n, _ := ccListed.Load(dir)
+	last, _ := n.(int)
+	out := make([]file, 0, last+last/8)
+	defer func() { ccListed.Store(dir, len(out)) }()
 	for _, project := range readDirectory(projects) {
 		if !dirent.IsFolder(projects, project) {
 			continue
@@ -670,14 +690,21 @@ func distinctInto(out []file, lists ...[]file) []file {
 // back after it: a set of every session file's path, made new on each of
 // a poll's several passes (distinctOf, refresh, pruneCalls), was ~100 MB
 // of what a minute of polls allocated over ~34k files (#2278). A set
-// keeps its room when cleared.
-var pathSets = sync.Pool{New: func() any { return map[string]struct{}{} }}
+// keeps its room when cleared. They are kept on a shelf: a poll collects
+// garbage about twice a second, which emptied a sync.Pool of them before
+// the next pass.
+var pathSets shelf[map[string]struct{}]
 
-func pathSet() map[string]struct{} { return pathSets.Get().(map[string]struct{}) }
+func pathSet() map[string]struct{} {
+	if m, ok := pathSets.take(nil); ok {
+		return m
+	}
+	return map[string]struct{}{}
+}
 
 func putPathSet(m map[string]struct{}) {
 	clear(m)
-	pathSets.Put(m)
+	pathSets.give(m, nil)
 }
 
 // distinctPaths is fs with each path kept once, the first time it is
@@ -685,11 +712,12 @@ func putPathSet(m map[string]struct{}) {
 // holds twice under one id (a TEXT and a BLOB row, #2932), or a folder
 // two agents are told to share, would otherwise be counted twice.
 func distinctPaths(fs []file) []file {
-	seen := make(map[string]bool, len(fs))
+	seen := pathSet()
+	defer putPathSet(seen)
 	out := fs[:0]
 	for _, f := range fs {
-		if !seen[f.path] {
-			seen[f.path] = true
+		if _, ok := seen[f.path]; !ok {
+			seen[f.path] = struct{}{}
 			out = append(out, f)
 		}
 	}
@@ -925,7 +953,7 @@ func listedRollouts(root string) (out []file, ok bool) {
 		if !ok {
 			return false
 		}
-		defer entries.Done()
+		defer entries.Done(real)
 		prev, _ := rolloutsSeen.Load(shown)
 		seen, _ := prev.([]file)
 		start, made, leaf := len(out), false, true
@@ -1026,7 +1054,8 @@ func CachePath() string { return filepath.Join(filepath.Dir(catalog.CachePath())
 // 26: Grok Build's tool calls and skills.
 // 27: Factory Droid's skills (its Skill tool and /<name> prompts).
 // 28: OpenCode 2's, Cline's and dsh's tool calls and skills.
-const cacheVersion = 28
+// 29: Claude Code's entrypoint (Entry), Desktop's Code tab apart.
+const cacheVersion = 29
 
 type cacheFile struct {
 	Version int               `json:"version"`
@@ -1583,6 +1612,26 @@ func sessionID(fs []file) string {
 	return id
 }
 
+// subIDs are the ids a session's other files (an omp subagent's or
+// advisor's) give in their own header, other than its own id. Each of
+// those files is an agent of its own to its vendor: omp sends its id as
+// the request's session (x-session-affinity), so the gateway records the
+// subagent's calls under that id, while this session counts the same
+// calls from the file. GatewayKeys keeps the gateway from counting them
+// a second time.
+func subIDs(fs []file, id string) []string {
+	var out []string
+	for _, f := range fs {
+		if f.main || !idInFile(f.agent) {
+			continue
+		}
+		if st := cache[f.path]; st != nil && st.ID != "" && st.ID != id && !slices.Contains(out, st.ID) {
+			out = append(out, st.ID)
+		}
+	}
+	return out
+}
+
 // assemble puts a session together from its files' parses.
 func assemble(fs []file, price func(string) *catalog.Price, codexTitle func(string) string) (Session, bool) {
 	s, ok := assembleListed(fs, price, codexTitle)
@@ -1611,6 +1660,7 @@ func assembleListed(fs []file, price func(string) *catalog.Price, codexTitle fun
 		s.ReadOnly = s.ReadOnly || f.readOnly
 	}
 	s.ID = sessionID(fs)
+	s.Subs = subIDs(fs, s.ID)
 	var custom, named, first string
 	models := map[string]*Model{}
 	for _, f := range fs {
@@ -1633,6 +1683,9 @@ func assembleListed(fs []file, price func(string) *catalog.Price, codexTitle fun
 			}
 			if first == "" {
 				first = st.First
+			}
+			if s.Agent == "claude" && s.App == "" && desktopEntrypoint(st.Entry) {
+				s.App = "claude-desktop"
 			}
 			s.Convs = append(s.Convs, st.Convs...)
 		}

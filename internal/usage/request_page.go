@@ -70,18 +70,25 @@ type packedRow struct {
 	Time time.Time
 	// Varied are the strings of rowVaried, and Shape the chunk's Shapes
 	// entry that holds the row's other strings
-	Varied                         [len(rowVaried)]uint32
-	Shape                          uint32
-	Tokens                         [6]int64
-	Millis, TTFT, FirstText, Order int64
-	Sent, Flow, FirstReasoning     int64
-	Own, Retried, Queued           int64
-	RouteID                        int64
-	Cost, Credits                  float64
-	Status, Tries                  int32
-	Masking                        int32 // ms (Record.Masking)
-	Flags                          uint16
+	Varied         [len(rowVaried)]uint32
+	Shape          uint32
+	Tokens         [6]int64
+	Order, RouteID int64
+	Cost, Credits  float64
+	// the times of the call, in ms as in Record, kept in 32 bits (msOf):
+	// a page holds every row of its period, and they were 36 of a row's
+	// 216 bytes as int64s (#2278)
+	Millis, TTFT, FirstText    int32
+	Sent, Flow, FirstReasoning int32
+	Own, Retried, Queued       int32
+	Masking                    int32 // ms (Record.Masking)
+	Status, Tries              int32
+	Flags                      uint16
 }
+
+// msOf is a time in ms as a packedRow keeps it: one past 24 days, which
+// no call takes, is kept as the longest it can be.
+func msOf(ms int64) int32 { return int32(max(min(ms, math.MaxInt32), math.MinInt32)) }
 
 // rowHandedOn is the Flags bit of Record.HandedOn, rowReasoningHidden
 // Record.ReasoningHidden's: 64 is block_price.go's swapKnown, 256
@@ -231,7 +238,7 @@ func (c *rowChunk) add(r Row, msg string, order int64, failed bool) {
 		c.Bytes += int64(len(s) + 48)
 		return id
 	}
-	p := packedRow{Time: r.Time, Tokens: [6]int64{int64(r.Input), int64(r.Output), int64(r.CacheRead), int64(r.CacheWrite), int64(r.Reasoning), int64(r.CacheWrite1h)}, Millis: r.Millis, TTFT: r.TTFT, FirstText: r.FirstText, FirstReasoning: r.FirstReasoning, Sent: r.Sent, Flow: r.Flow, Own: r.Own, Masking: int32(min(r.Masking, math.MaxInt32)), Retried: r.Retried, Queued: r.Queued, Order: order, RouteID: r.RouteID, Cost: r.Cost, Status: int32(r.Status), Tries: int32(r.Tries)}
+	p := packedRow{Time: r.Time, Tokens: [6]int64{int64(r.Input), int64(r.Output), int64(r.CacheRead), int64(r.CacheWrite), int64(r.Reasoning), int64(r.CacheWrite1h)}, Millis: msOf(r.Millis), TTFT: msOf(r.TTFT), FirstText: msOf(r.FirstText), FirstReasoning: msOf(r.FirstReasoning), Sent: msOf(r.Sent), Flow: msOf(r.Flow), Own: msOf(r.Own), Masking: int32(min(r.Masking, math.MaxInt32)), Retried: msOf(r.Retried), Queued: msOf(r.Queued), Order: order, RouteID: r.RouteID, Cost: r.Cost, Status: int32(r.Status), Tries: int32(r.Tries)}
 	var t [rowTexts]uint32
 	for i, s := range rowText(&r) {
 		t[i] = intern(*s)
@@ -296,7 +303,7 @@ func (c *rowChunk) add(r Row, msg string, order int64, failed bool) {
 }
 func (c *rowChunk) row(i int) Row {
 	p := &c.Rows[i]
-	r := Row{Record: Record{RouteID: p.RouteID, Time: p.Time, Input: int(p.Tokens[0]), Output: int(p.Tokens[1]), CacheRead: int(p.Tokens[2]), CacheWrite: int(p.Tokens[3]), CacheWrite1h: int(p.Tokens[5]), Reasoning: int(p.Tokens[4]), Millis: p.Millis, TTFT: p.TTFT, FirstText: p.FirstText, FirstReasoning: p.FirstReasoning, ReasoningHidden: p.Flags&rowReasoningHidden != 0, CacheUnknown: p.Flags&rowCacheUnknown != 0, Sent: p.Sent, Flow: p.Flow, Own: p.Own, Masking: int64(p.Masking), Retried: p.Retried, Queued: p.Queued, Status: int(p.Status), Tries: int(p.Tries), HandedOn: p.Flags&rowHandedOn != 0, Rejected: p.Flags&4 != 0, SessionOfficialLogin: p.Flags&8 != 0}, Cost: p.Cost, Priced: p.Flags&1 != 0, Swapped: p.Flags&2 != 0, Routed: p.Flags&32 != 0}
+	r := Row{Record: Record{RouteID: p.RouteID, Time: p.Time, Input: int(p.Tokens[0]), Output: int(p.Tokens[1]), CacheRead: int(p.Tokens[2]), CacheWrite: int(p.Tokens[3]), CacheWrite1h: int(p.Tokens[5]), Reasoning: int(p.Tokens[4]), Millis: int64(p.Millis), TTFT: int64(p.TTFT), FirstText: int64(p.FirstText), FirstReasoning: int64(p.FirstReasoning), ReasoningHidden: p.Flags&rowReasoningHidden != 0, CacheUnknown: p.Flags&rowCacheUnknown != 0, Sent: int64(p.Sent), Flow: int64(p.Flow), Own: int64(p.Own), Masking: int64(p.Masking), Retried: int64(p.Retried), Queued: int64(p.Queued), Status: int(p.Status), Tries: int(p.Tries), HandedOn: p.Flags&rowHandedOn != 0, Rejected: p.Flags&4 != 0, SessionOfficialLogin: p.Flags&8 != 0}, Cost: p.Cost, Priced: p.Flags&1 != 0, Swapped: p.Flags&2 != 0, Routed: p.Flags&32 != 0}
 	if p.Flags&rowCredits != 0 {
 		credits := p.Credits
 		r.Credits = &credits
@@ -781,7 +788,7 @@ func queryPageOf(p Period, f Filter, offset, limit int, readSource func(sessions
 	var cache *partCache
 	pk := partKey{p: p, f: f, since: p.Since(now), until: p.Until(now), loc: now.Location()}
 	if p == heatmapPeriod {
-		cache = &partCache{old: idx.heatParts[pk], next: map[uint64]*chunkPart{}, heatOld: idx.heatOld[pk]}
+		cache = &partCache{old: idx.heatParts[pk], next: map[uint64]*chunkPart{}, heatOld: idx.heatOld[pk], disk: heatDiskRef{root: idx.root, meta: idx.meta}}
 	} else if p.Last() == 0 {
 		cache = &partCache{old: idx.parts[pk], next: map[uint64]*chunkPart{}, pairs: idx.pairs[p]}
 	}
@@ -857,17 +864,26 @@ func codexEffortOfIndex(st requestState, p Period, now time.Time) map[string][]s
 	defer b.priced.release()
 	sums := effortSums{}
 	var next *pairMemo
+	paired := false
 	func() {
 		defer holdBigBuild(b.gateways, b.chunks, b.others)()
-		var ps *pairedRows
-		ps, next = pairRowsMemo(p, now, b.gateways, b.chunks, b.others, st.codexIdentities, memo)
-		ps.visitActors(func(r *Row) { sums.add(r) })
+		full := func() *pairedRows {
+			var ps *pairedRows
+			ps, next = pairRowsMemo(p, now, b.gateways, b.chunks, b.others, st.codexIdentities, memo)
+			paired = true
+			return ps
+		}
+		if !effortSplit(sums, p, now, b.gateways, b.chunks, b.others, st.codexIdentities, heatDiskRef{root: st.root, meta: st.meta}, full) {
+			full().visitActors(func(r *Row) { sums.add(r) })
+		}
 	}()
 	b.priced.release()
 	shared.Lock()
 	if shared.keep(idx, b.on) {
 		shared.noteBuilt(b)
-		shared.keepPairs(p, next)
+		if paired {
+			shared.keepPairs(p, next)
+		}
 		shared.trim(requestCacheBytes)
 	}
 	shared.Unlock()
@@ -1314,8 +1330,8 @@ func (idx *requestIndex) trim(bound int64) {
 
 // localRefs visits first occurrences of Claude message IDs. It stores only
 // references for matches, never a full hydrated row for every call.
-func visibleLocal(chunks []*rowChunk) map[rowRef]bool {
-	duplicates := map[rowRef]bool{}
+func visibleLocal(chunks []*rowChunk) refSet {
+	duplicates := refSet{}
 	// a message id seen is kept as two 64-bit hashes of it, not a copy of
 	// the decoded chunk's string: a long history's ~400k ids held ~7MB of
 	// copies at the start's peak, and a key of these is a string header's
@@ -1342,7 +1358,7 @@ func visibleLocal(chunks []*rowChunk) map[rowRef]bool {
 			}
 			k := [2]uint64{maphash.String(msgSeeds[0], msg), maphash.String(msgSeeds[1], msg)}
 			if _, ok := seen[k]; ok {
-				duplicates[rowRef{c, i}] = true
+				duplicates.add(rowRef{c, i})
 			} else {
 				seen[k] = struct{}{}
 			}
@@ -1390,6 +1406,33 @@ type matchKey struct {
 	failed, hasID bool
 }
 
+// sum is k as two hashes of it, ~1e-28 likely alike for two keys. The
+// session is followed by bytes of a fixed length, so two keys never read
+// as the same bytes.
+func (k matchKey) sum() [2]uint64 {
+	var tail [26]byte
+	for i, t := range k.tokens {
+		binary.LittleEndian.PutUint64(tail[8*i:], uint64(t))
+	}
+	if k.failed {
+		tail[24] = 1
+	}
+	if k.hasID {
+		tail[25] = 1
+	}
+	var out [2]uint64
+	for i, seed := range matchKeySeeds {
+		var h maphash.Hash
+		h.SetSeed(seed)
+		h.WriteString(k.session)
+		h.Write(tail[:])
+		out[i] = h.Sum64()
+	}
+	return out
+}
+
+var matchKeySeeds = [2]maphash.Seed{maphash.MakeSeed(), maphash.MakeSeed()}
+
 // matchTokens is what a call's tokens are matched by: its input with what it
 // wrote to the cache in it, its output and what it read from the cache. The
 // two logs needn't split a cache write out of the input alike (#589): a
@@ -1426,14 +1469,14 @@ type matchCandidate struct {
 // kept until ReleaseScratch, which the window calls once its reads rest,
 // or until no pairing has used it for scratchLinger.
 type matchScratch struct {
-	reserved   map[rowRef]bool
+	reserved   refSet
 	byID       map[string]int32
 	calls      []idCalls
 	ids        map[uint32]struct{}
 	found      []idLocal
-	used       map[rowRef]bool
+	used       refSet
 	refs       []timedRef
-	groupOf    map[matchKey]int32
+	groupOf    map[[2]uint64]int32
 	groups     []matchGroup
 	ks         []int32
 	ends       []matchEnd
@@ -1538,17 +1581,18 @@ const agyMatchSession = "\x00agy"
 // second, where every other session file's time is when its call ended.
 const agyStepLongest = 30 * time.Minute
 
-func matchedLocal(gateway *rowChunk, chunks []*rowChunk, skip map[rowRef]bool, since time.Time) map[rowRef]bool {
+func matchedLocal(gateway *rowChunk, chunks []*rowChunk, skip refSet, since time.Time) refSet {
 	return matchedBlocks([]*rowChunk{gateway}, chunks, skip, nil, since, true)
 }
 
-func matchedBlocks(gateways []*rowChunk, chunks []*rowChunk, skip map[rowRef]bool, responsePairs map[rowRef]rowRef, since time.Time, newestIDs bool) map[rowRef]bool {
+func matchedBlocks(gateways []*rowChunk, chunks []*rowChunk, skip refSet, responsePairs map[rowRef]rowRef, since time.Time, newestIDs bool) refSet {
 	scratch := matchScratchFor()
 	defer scratch.release()
-	scratch.reserved = mapFor(scratch.reserved, len(responsePairs)*2)
+	scratch.reserved = mapFor(scratch.reserved, 0)
 	reserved := scratch.reserved
 	for gateway, local := range responsePairs {
-		reserved[gateway], reserved[local] = true, true
+		reserved.add(gateway)
+		reserved.add(local)
 	}
 	gatewaySince := since
 	if !since.IsZero() {
@@ -1577,7 +1621,7 @@ func matchedBlocks(gateways []*rowChunk, chunks []*rowChunk, skip map[rowRef]boo
 	for _, gateway := range gateways {
 		for i := range gateway.Rows {
 			ref := rowRef{gateway, i}
-			if reserved[ref] || !matchable(gateway, i) {
+			if reserved.has(ref) || !matchable(gateway, i) {
 				continue
 			}
 			p := &gateway.Rows[i]
@@ -1614,7 +1658,7 @@ func matchedBlocks(gateways []*rowChunk, chunks []*rowChunk, skip map[rowRef]boo
 		for i := range open.Rows {
 			p := &open.Rows[i]
 			ref := rowRef{c, i}
-			if skip[ref] || reserved[ref] || p.Time.Before(since) {
+			if skip.has(ref) || reserved.has(ref) || p.Time.Before(since) {
 				continue
 			}
 			if open.text(p, 11) == 0 {
@@ -1626,13 +1670,11 @@ func matchedBlocks(gateways []*rowChunk, chunks []*rowChunk, skip map[rowRef]boo
 			}
 		}
 	}
-	// made once the calls matched by id are known: grown from the response
-	// pairs alone, it was ~300 MB of what 80 s of polls allocated
-	matched := make(map[rowRef]bool, len(responsePairs)+len(found))
+	matched := refSet{}
 	for _, local := range responsePairs {
-		matched[local] = true
+		matched.add(local)
 	}
-	scratch.used = mapFor(scratch.used, len(found))
+	scratch.used = mapFor(scratch.used, 0)
 	used := scratch.used
 	refs := scratch.refs
 	defer func() { scratch.refs = refs }()
@@ -1657,13 +1699,14 @@ func matchedBlocks(gateways []*rowChunk, chunks []*rowChunk, skip map[rowRef]boo
 			if j >= calls[k].len() {
 				break
 			}
-			matched[ref.rowRef], used[calls[k].at(j)] = true, true
+			matched.add(ref.rowRef)
+			used.add(calls[k].at(j))
 		}
 	}
 	// keyOf is the key of a gateway call the local calls left without a
 	// request id may match, ok false for one they never do
 	keyOf := func(gateway *rowChunk, i int) (matchKey, bool) {
-		if reserved[rowRef{gateway, i}] || used[rowRef{gateway, i}] {
+		if reserved.has(rowRef{gateway, i}) || used.has(rowRef{gateway, i}) {
 			return matchKey{}, false
 		}
 		p := &gateway.Rows[i]
@@ -1690,8 +1733,14 @@ func matchedBlocks(gateways []*rowChunk, chunks []*rowChunk, skip map[rowRef]boo
 			}
 		}
 	}
+	// a key's place in groups, by its sum: keyed by the key, a session
+	// header, three counts and two flags, a whole history's calls held
+	// ~29 MB of the start's peak, kept with the scratch (#2278)
 	scratch.groupOf = mapFor(scratch.groupOf, kept)
-	groupOf := scratch.groupOf // a key's place in groups
+	groupOf := scratch.groupOf
+	// the sessions the groups name
+	scratch.named = mapFor(scratch.named, 0)
+	named := scratch.named
 	groups := scratch.groups
 	defer func() { scratch.groups = groups }()
 	ks := slices.Grow(scratch.ks, kept) // each kept call's group, in the order read
@@ -1701,11 +1750,13 @@ func matchedBlocks(gateways []*rowChunk, chunks []*rowChunk, skip map[rowRef]boo
 			if !ok {
 				continue
 			}
-			k, ok := groupOf[key]
+			sum := key.sum()
+			k, ok := groupOf[sum]
 			if !ok {
 				k = int32(len(groups))
-				groupOf[key] = k
+				groupOf[sum] = k
 				groups = append(groups, matchGroup{})
+				named[matchHash(key.session)] = struct{}{}
 			}
 			groups[k].n++
 			ks = append(ks, k)
@@ -1737,11 +1788,6 @@ func matchedBlocks(gateways []*rowChunk, chunks []*rowChunk, skip map[rowRef]boo
 	}
 	counts := sized(scratch.counts, len(ends)+len(groups))
 	scratch.counts = counts
-	scratch.named = mapFor(scratch.named, len(groups))
-	named := scratch.named
-	for key := range groupOf {
-		named[matchHash(key.session)] = struct{}{}
-	}
 	candidates := scratch.candidates
 	defer func() { scratch.candidates = candidates }()
 	for n, chunk := range chunks {
@@ -1755,7 +1801,7 @@ func matchedBlocks(gateways []*rowChunk, chunks []*rowChunk, skip map[rowRef]boo
 		for j := range c.Rows {
 			p := &c.Rows[j]
 			ref := rowRef{chunk, j}
-			if skip[ref] || reserved[ref] || matched[ref] || p.Time.Before(since) {
+			if skip.has(ref) || reserved.has(ref) || matched.has(ref) || p.Time.Before(since) {
 				continue
 			}
 			failed := p.Flags&16 != 0
@@ -1775,7 +1821,7 @@ func matchedBlocks(gateways []*rowChunk, chunks []*rowChunk, skip map[rowRef]boo
 					continue
 				}
 				key.hasID = hasID
-				k, ok := groupOf[key]
+				k, ok := groupOf[key.sum()]
 				if !ok {
 					continue
 				}
@@ -1811,7 +1857,7 @@ func matchedBlocks(gateways []*rowChunk, chunks []*rowChunk, skip map[rowRef]boo
 	}
 	for _, c := range candidates {
 		if unique[c.at] {
-			matched[c.ref] = true
+			matched.add(c.ref)
 		}
 	}
 	return matched
@@ -1892,15 +1938,15 @@ func ownStrings(v reflect.Value) {
 }
 
 // pairedRows are the page's rows of p: each gateway call told the Codex
-// thread of the session file's call it is paired with (pairs), and the
-// session files' calls a gateway call matched, or another file's copy,
-// left out (matched, skip). visit hands each row on in all's order. The
-// chunks are copies, so the cached ones are left as they are.
+// thread of the session file's call it is paired with, and the session
+// files' calls a gateway call matched, or another file's copy, left out
+// (matched, skip). visit hands each row on in all's order. The chunks are
+// copies, so the cached ones are left as they are. The pairs themselves
+// are told the chunks and not kept: nothing read them, and a whole
+// history's were held while its rows were visited (#2278).
 type pairedRows struct {
 	all           []*rowChunk
-	skip, matched map[rowRef]bool
-	pairs         map[rowRef]rowRef
-	compactions   map[rowRef]*bool
+	skip, matched refSet
 	since, until  time.Time
 }
 
@@ -1925,8 +1971,8 @@ func pairRowsIn(since, until time.Time, gateways, chunks, others []*rowChunk, id
 		}
 	}
 	skip := visibleLocal(chunks)
-	for ref := range duplicateSkip {
-		skip[ref] = true
+	for ref := range duplicateSkip.all() {
+		skip.add(ref)
 	}
 	matched := matchedBlocks(gateways, chunks, skip, pairs, since, true)
 	for gateway, local := range pairs {
@@ -1934,7 +1980,7 @@ func pairRowsIn(since, until time.Time, gateways, chunks, others []*rowChunk, id
 		gateway.Chunk.setCodexCompaction(gateway.Index, compactions[local])
 	}
 	all := append(append(slices.Clone(gateways), chunks...), others...)
-	return &pairedRows{all: all, skip: skip, matched: matched, pairs: pairs, compactions: compactions, since: since, until: until}
+	return &pairedRows{all: all, skip: skip, matched: matched, since: since, until: until}
 }
 
 // visitActors is visit of the rows of the chunks a Codex thread is known
@@ -1965,7 +2011,7 @@ func (ps *pairedRows) visitChunk(rows *chunkRows, c *rowChunk, r *Row, fn func(t
 	for i := range open.Rows {
 		pr := &open.Rows[i] // not a copy: a row is 216 bytes
 		ref := rowRef{c, i}
-		if pr.Time.Before(ps.since) || after(ps.until, pr.Time) || len(ps.skip) > 0 && ps.skip[ref] || len(ps.matched) > 0 && ps.matched[ref] {
+		if pr.Time.Before(ps.since) || after(ps.until, pr.Time) || ps.skip.has(ref) || ps.matched.has(ref) {
 			continue
 		}
 		*r = open.row(i)
