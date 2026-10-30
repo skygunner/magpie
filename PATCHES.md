@@ -66,11 +66,13 @@ Each round:
 8. Accept: healthy, 401/200 auth pair, model count equal before/after, a
    real `group/fast-cheap` request 200. Push `prod` and the tag.
 
-## Carried patches (as of v0.1.2051-p1, 2026-10-29)
+## Carried patches (as of v0.1.2134-p1, 2026-10-30)
 
-Checked against v0.1.2051 (2026-10-29): nine patches carried as cherry-
-picks plus #3487's remainder, re-expressed at the v0.1.1948 merge
-(#3948 joined at 0.1.1767-p3). The v0.1.2051 merge kept both sides of
+Checked against v0.1.2134 (2026-10-30): eleven carried entries — nine
+patch rows, #3623's attempt chain (joined at 0.1.2051-p3) and the
+cooldown-settings surface (joined at 0.1.2051-p4) — plus #3487's
+card-display and millisecond-span remainder, re-expressed at the
+v0.1.1948 merge. The v0.1.2051 merge kept both sides of
 four collisions: the Provider literal (ModelCooldown beside upstream's
 HiddenDrawers), the usage plugin's i18n.js (#3948's four language
 blocks beside upstream's hide-from-Overview strings), gateway-routing.md
@@ -176,6 +178,22 @@ the table above.
   Codex auto-reset strings, i18n.js and their test were restored to
   upstream's held-up wording, which an earlier round's conflict
   resolution had trimmed here. No patch movement.
+- `prod/0.1.2051-p2` — 2026-10-29. Same upstream, plus the build-line
+  fix: a `-pN` build compares as its base release in What's new and the
+  update check (`update.parse` strips the suffix; the site is asked in
+  whole release numbers). History had run to p1 only — this and the
+  next two lines were back-filled at 0.1.2134-p1.
+- `prod/0.1.2051-p3` — 2026-10-29. Same upstream, plus #3623
+  (`33c0ade7a`, attempt chain in Usage details).
+- `prod/0.1.2051-p4` — 2026-10-29. Same upstream, plus the cooldown
+  settings surface (`1da2e1391`, `feature/cooldown-settings`),
+  fork-only trial, no upstream feature request.
+- `prod/0.1.2134-p1` — 2026-10-30. Rolling merge of v0.1.2134 (99
+  commits); three conflicts, both sides kept (the Provider literal's
+  cooldown fields beside upstream's `BestInFamily`, the account row's
+  cooldown button beside the acc-line restructure, this line's core
+  budgets raised to measured values for upstream's own growth). No
+  sweep movement, none absorbed.
 
 ## Non-streaming SSE regression follow-up (2026-10-28)
 
