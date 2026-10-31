@@ -202,6 +202,16 @@ the table above.
   tests proved timing-flaky under the full suite on both this line and
   the clean base (`TestColdTurnsTaken`, `TestKeepOffWaitsForTheSetting`,
   `TestOpenCodeSessionOnEveryCall`).
+- `prod/0.1.2344-p1` — 2026-10-31. Rolling merge of v0.1.2344 (61
+  commits); three conflicts, both sides kept (Usage detail's
+  client-reported/protocol-error wording beside upstream's new
+  search-source condition, the account literal's cooldown fields
+  re-inventoried, core budgets standing). No sweep movement, none
+  absorbed. Two of upstream's own reds joined the known set, both
+  verified on the clean base: `TestSettingsSaveKeepsWhatItDoesNotSend`
+  (b09349d17 added the `SearchAll` setting without teaching the
+  keep-test) and `TestNoCommandBypassesProc` (new
+  `internal/claudetui/child_unix.go` bypasses `proc.Command`).
  the account pick's
   cooldown-policy assignments beside upstream's reworded billing
   comment (the split account literals collapsed onto upstream's, this
