@@ -211,6 +211,15 @@ the table above.
   deadline's lead configurable and a reset held up past its spend point
   is spent at once; this line's fixed-lead variant and its test were
   superseded and removed at the merge. No sweep movement otherwise.
+- `prod/0.1.2289-p1` — 2026-10-31. Rolling merge of v0.1.2289 (30
+  commits); three conflicts, both sides kept or upstream's (the account
+  literal's cooldown fields re-inventoried, providerInfoWith taking
+  upstream's `CountFree`/`LimitRestOff` — the GUI's cooldown policies
+  come from `/api/cooldown`, not this literal — core budgets standing).
+  No sweep movement, none absorbed. Upstream's new awake/turn-taking
+  tests proved timing-flaky under the full suite on both this line and
+  the clean base (`TestColdTurnsTaken`, `TestKeepOffWaitsForTheSetting`,
+  `TestOpenCodeSessionOnEveryCall`).
  the account pick's
   cooldown-policy assignments beside upstream's reworded billing
   comment (the split account literals collapsed onto upstream's, this
