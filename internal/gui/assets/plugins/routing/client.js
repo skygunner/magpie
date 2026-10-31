@@ -510,6 +510,11 @@ function routingPage(part) {
   const fill = (w) => Math.max(0, Math.min(100, share(w))) + "%";
   const FAIL = { rate: "rate limited", credit: "out of credit", quota: "quota used up", other: "failed", auth: "sign-in required", canceled: "canceled", foreign: "another account's reasoning", floor: "reply too short", verify: "needs verification", refused: "refused (safety filter)", shape: "request not understood", sight: "images not taken", proxy: "proxy not reachable", effort: "reasoning effort not in its plan", overflow: "too long for its model", room: "reply asked past the window left", slow: "slow to start", prompt: "agent's prompt turned away", restricted: "account restricted by the vendor" };
   const failWord = (why) => t(FAIL[why] || "failed");
+  // a resting row: a failure that names no kind says the status it
+  // answered, and the vendor's own words are over it (restTip), as
+  // "failed · back in 16s" alone said nothing of why (GanHei37443 on X)
+  const restSay = (rest) => `${!FAIL[rest.why] || rest.why === "other" ? (rest.status ? rest.status + " · " : "") : ""}${failWord(rest.why)} · ${restWhen(rest)}`;
+  const restTip = (rest) => (typeof rest.error === "string" && rest.error) || "";
   // a try that answered: one whose reply broke off after it began (its 200
   // sent, then the vendor's error, #733) didn't, and has a fail
   const tryOk = (tr) => tr.status < 400 && !tr.fail;
@@ -521,10 +526,10 @@ function routingPage(part) {
     usage: ["Least used", "Least used first: the account with the most of its allowance left goes first; a key by the tokens magpie sent it lately."],
     pace: ["Weekly pace", "Weekly pace: the account with the most of its week left per hour until it renews goes first — the one with the most to lose at its reset; an account with five hours and no week by what its five hours have left per hour. One at 90% or more waits until the others can't answer; a key by the tokens magpie sent it lately."],
     manual: ["Manual", "Manual: every request goes to the model picked on the group's card, over its own accounts or keys."],
-    // the provider's key routing (#841); both strings as the provider
-    // editor's routing options say them (app.js ROUTINGS), so every
-    // language is already spoken
-    weight: ["By weight", "Requests spread over the keys by the weight set beside each: a key weighing 3 takes three requests for every one a key weighing 1 takes, evenly over a few requests. One that fails is passed over while it rests, and the others share its requests; a conversation stays with its key as Stays says."],
+    // a provider's keys or a subscription's accounts by weight (#841,
+    // rubbzha on X); both strings as the provider editor's routing options
+    // say them (app.js ROUTINGS), so every language is already spoken
+    weight: ["By weight", "Requests spread over the keys or accounts by the weight set beside each: one weighing 3 takes three requests for every one weighing 1 takes, evenly over a few requests. One that fails is passed over while it rests, and the others share its requests; a conversation stays with it as Stays says."],
     free: ["Free first", "Requests go to what costs nothing first: the models their vendor serves at no cost to this subscription's allowance or credits, in their listed order, and only when those can't answer to one that spends them. Nothing that cost nothing is left unused."],
     cheap: ["Cheapest first", "Requests go to the member whose model costs least now, by its price a million tokens in and out at this hour — DeepSeek's peak hours count double — and the cheaper cache read when two cost the same; those that cost the same keep their listed order, and one with no known price goes last."],
     fast: ["Speed first", "Requests go to the one that has answered this model fastest lately, by its time to the first token and how fast it writes; those within a tenth of each other keep their listed order. One not measured lately gets one request in five, so it is measured again, and one that fails is passed over while it rests."],
@@ -731,7 +736,7 @@ function routingPage(part) {
         ? t("In order: with {rested} resting after a failure, {who} is the first that can answer.", { rested: rested.join(", "), who: w })
         : t("In order: {who} is first, and answers everything while it can.", { who: w });
       case "rotate": return t("In turn: it's {who}'s turn — each request starts one further along.", { who: w });
-      case "weight": return t("By weight: it's {who}'s share — each key takes requests as its weight says.", { who: w });
+      case "weight": return t(f.kind === "account" ? "By weight: it's {who}'s share — each account takes requests as its weight says." : "By weight: it's {who}'s share — each key takes requests as its weight says.", { who: w });
       case "free":
         if (f.free) return restedTo(t("it costs nothing there, so it's spent first."))
           || t("Free first: {model} costs nothing on {who}, so it's tried before any that spends the allowance.", { model: f.model, who: w });
@@ -945,6 +950,8 @@ function routingPage(part) {
       case "resting": return t("{who} answered this conversation last, but it is resting, so the conversation moves.", { who: last });
       case "spent": return t("{who} answered this conversation last, but its allowance is all but used up, so the conversation moves.", { who: last });
       case "gone": return t("{who} answered this conversation last, but it is no longer one to route to.", { who: last });
+      case "order": return t("{who} answered this conversation last, but the group goes in order and {first}, ahead of it, is ready again, so turn {n} goes back to {first}.", { who: last, first: who(r.order[0]), n: a.turn });
+      case "main": return t("{who}, a fallback, answered this conversation last, but the provider's own {first} is ready again, so turn {n} goes back to it.", { who: last, first: who(r.order[0]), n: a.turn });
       case "no-cache": return t("{who} answered this conversation last, but the vendor then read only {r} tokens of it from its cache and wrote {w} — not worth staying for.", { who: last, r: tokens(a.cacheRead || 0), w: tokens(a.cacheWrite || 0) });
       case "cold": return t("{who} answered this conversation {d} ago, longer than the 5 minutes a vendor keeps a prompt cached — so routing decides afresh.", { who: last, d: ago });
       case "off": return t("Affinity is off: each request is routed afresh, whoever answered its conversation before.");
@@ -1437,6 +1444,7 @@ function routingPage(part) {
   const playing = new Map(); // the routes being played → the gen playing each
   let rp = null;            // a replay playing: see replay
   let day = "", days = [], past = [], pastCut = false; // a kept day looked at ("" for live), the days kept, its routes
+  let tallies = null; // today's counts per account or key, from the history read (#3351); live only
   const src = () => rp ? rp.routes : routes; // the routes the stage plays from
   const LINGER = 12e3;      // how long an agent's last request stays on the stage
   let gen = 0, trips = [], waiters = [];
@@ -2554,7 +2562,7 @@ function routingPage(part) {
       const smart = r.order[0] && id === seat(r.order[0]) && smartFor(r), said = smart ? t("picked for “{intent}”", { intent: smart }) : "";
       let s, b;
       if (w.unlisted) s = unlistedWord(w);
-      else if (resting) s = `${failWord(rest.why)} · ${restWhen(rest)}`;
+      else if (resting) s = restSay(rest);
       else if (w.window) s = t("request longer than its {n} window · passed over", { n: ctxShort(w.window) });
       // a row another request weighed, answering that one: the header
       // tells of this request, so it says the answer is not this one's
@@ -2587,7 +2595,7 @@ function routingPage(part) {
       if (row.st.textContent !== s) row.st.textContent = s;
       // the intent is the user's own words, of any length: cut short on
       // the row (routing.css), read whole over it
-      const full = said && s.includes(said) ? s : "";
+      const full = said && s.includes(said) ? s : resting && !w.unlisted ? restTip(rest) : "";
       if (row.st.title !== full) { if (full) row.st.title = full; else row.st.removeAttribute("title"); } // an empty title would hide the row's own
       // an account's windows each, with when they reset, in its tooltip
       // (#1835): the row says the fullest one while idle and what it is
@@ -3270,6 +3278,7 @@ function routingPage(part) {
       days = res.days || [];
       noteAccounts(res.routes);
       if (d && d === day) { past = (res.routes || []).map(whole); pastCut = !!res.cut; }
+      else if (!d) { tallies = res.tallies || null; actsFold = { rs: [], by: null }; } // the fold memo holds the pre-tallies list: drop it, the next fold seeds from the day (#3351)
     } catch {}
     renderHist(); // shown once there are days, though none are live
   }
@@ -3902,6 +3911,17 @@ function routingPage(part) {
     // Group accounts by their identity, resolving each try in its own route.
     const keyOf = (w) => w.kind === "account" && w.who
       ? JSON.stringify([w.provider, w.who.trim().toLowerCase()]) : w.id;
+    // Live: the day's counts come with the history read the page already
+    // asks for (#3351) — the Usage page's own reading of the day, not the
+    // last few requests the gateway keeps. What that read cannot say (the
+    // readings its latest request was weighed by, one model resting alone)
+    // the kept requests below still do. A day looked at, or a purpose
+    // picked, counts its own list as before.
+    const seed = !day && !purpose.length && tallies && Object.keys(tallies).length ? tallies : null;
+    if (seed) for (const [k, x] of Object.entries(seed)) {
+      by.set(k, { w: x, tried: x.tried, ok: x.ok, fails: { ...x.fails }, last: x.last || 0,
+        rest: x.rest || null, restAt: x.restAt || 0, seen: 0, pos: 0, at: 0, models: new Set(x.models || []), mrests: new Map() });
+    }
     for (const r of [...rs].reverse()) { // oldest first, so the latest wins
       const candidates = new Map();
       r.order.forEach((w, i) => {
@@ -3921,10 +3941,14 @@ function routingPage(part) {
       for (const tr of r.tries) {
         const a = candidates.get(tr.id);
         if (!a || !tr.done || tr.fail === "canceled") continue; // the agent's doing, not its
-        a.tried++;
         const end = at(tr.start) + (tr.ms || 0);
-        if (tryOk(tr)) { a.ok++; a.last = Math.max(a.last, end); const m = tr.model || r.order.find((x) => x.id === tr.id)?.model; if (m) a.models.add(m); }
-        else a.fails[tr.fail || "other"] = (a.fails[tr.fail || "other"] || 0) + 1;
+        if (seed) { // counted from the day already; when it last answered is news all the same
+          if (tryOk(tr)) a.last = Math.max(a.last, end);
+        } else {
+          a.tried++;
+          if (tryOk(tr)) { a.ok++; a.last = Math.max(a.last, end); const m = tr.model || r.order.find((x) => x.id === tr.id)?.model; if (m) a.models.add(m); }
+          else a.fails[tr.fail || "other"] = (a.fails[tr.fail || "other"] || 0) + 1;
+        }
         const rm = tr.rest ? restModel(tr.rest, tr.model || r.order.find((x) => x.id === tr.id)?.model) : "";
         if (rm) modelRest(a, rm, tr.rest, end);
         else if (tr.rest && end >= a.restAt) { a.rest = tr.rest; a.restAt = end; }
@@ -3944,7 +3968,7 @@ function routingPage(part) {
       return rest === a.rest && mrests === a.mrests ? a : { ...a, rest, mrests };
     }).sort((x, y) => (x.w.name || "").localeCompare(y.w.name || "") || x.w.provider.localeCompare(y.w.provider) || rankOf(x.w) - rankOf(y.w) || x.pos - y.pos);
     setText(actLabel, t("Accounts and keys"));
-    setText(actNote, t("over those requests"));
+    setText(actNote, t(!day && tallies && Object.keys(tallies).length ? "over today's requests" : "over those requests"));
     // live, with a subscription account listed: a kept day's were weighed
     // by readings long gone, and a key has no allowance to read
     actRead.hidden = !!day || !list.some((a) => a.w.kind === "account");
@@ -3997,7 +4021,7 @@ function routingPage(part) {
       // a line of their own, naming them, under what the account has left
       const parts = resting ? [] : [...a.mrests].filter(([, x]) => at(x.rest.until) > n)
         .sort(([m, x], [l, y]) => at(x.rest.until) - at(y.rest.until) || m.localeCompare(l));
-      if (resting) { st = `${failWord(a.rest.why)} · ${restWhen(a.rest)}`; cls = "rest"; }
+      if (resting) { st = restSay(a.rest); cls = "rest"; }
       else if (w.unlisted) { st = unlistedWord(w); cls = "left"; }
       else if (w.noURL) st = noURLWord(w);
       else if (w.known) {
@@ -4013,10 +4037,14 @@ function routingPage(part) {
         el("span", "ok", t("answered {n}", { n: a.ok })),
         ...(fails.length ? [el("span", "bad", fails.join(", "))] : []),
         ...(a.last ? [el("span", "", t("last answered {time}", { time: clock(a.last) }))] : []));
-      row.append(name, el("div", "st " + cls, st));
+      const stEl = el("div", "st " + cls, st);
+      if (resting && restTip(a.rest)) stEl.title = restTip(a.rest);
+      row.append(name, stEl);
       if (parts.length) {
         const r0 = parts[0][1].rest;
-        row.append(el("div", "st rest part", `${parts.map(([m]) => m).join(", ")} · ${failWord(r0.why)} · ${restWhen(r0)}`));
+        const part = el("div", "st rest part", `${parts.map(([m]) => m).join(", ")} · ${restSay(r0)}`);
+        if (restTip(r0)) part.title = restTip(r0);
+        row.append(part);
       }
       // a subscription account's windows each, with when they reset, as
       // the Usage page read them (#1833): the figure above is the one
@@ -7143,8 +7171,8 @@ function routingPage(part) {
         try { await api("provider/" + what, body); status(ok, "ok"); groups = groupsFrom(await api("groups")); load(); } catch (e) { status(e.message, "err"); }
       };
       const lab = (s, c) => { const w = el("span", "lab"); w.append(el("small", "", s), c); return w; };
-      // by weight is a key's share (#841), set beside each key in the provider's editor
-      const opts = withJS(p.kind === "account" ? ROUTE_OPTS : [...ROUTE_OPTS, ["weight", "By weight"]], p.routing);
+      // by weight: each key's or account's share (#841), set beside it in the provider's editor
+      const opts = withJS([...ROUTE_OPTS, ["weight", "By weight"]], p.routing);
       ctl.append(
         lab(t("Routing"), routingSegs(opts.map(([id, n, js]) => [id, t(n), , js]), p.routing || "", (v) => set("route", { id: p.provider, routing: v }, t("{name}: {routing}", { name: p.name, routing: t(opts.find(([id]) => id === v)[1]) })))),
         lab(t("Stays"), segs(AFF_OPTS.map(([id, n]) => [id, t(n)]), p.affinity || "", (v) => set("affinity", { id: p.provider, affinity: v }, t("{name}: {routing}", { name: p.name, routing: t(AFF_OPTS.find(([id]) => id === v)[1]) })))));

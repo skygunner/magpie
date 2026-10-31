@@ -144,10 +144,11 @@ node --test --test-concurrency=1 internal/gui/tests/gateway-caller-keys.test.cjs
 
 ## Other Browser Regressions
 
-`mask-alert.test.cjs` checks Settings › Usage's Masking alert (Must2333 on
-X): after the task done alert, Off to begin with; On saves `maskAlert`,
-another setting saved later keeps it, Off saves false, no click moves the
-page, and the row goes while masking is switched off. Every language at 900
+`mask-alert.test.cjs` checks Insights › Masking's Masking alert (Must2333 on
+X): after the page's list and not in Settings › Usage (nb5p on Discord), Off
+to begin with; On saves `maskAlert`, another setting saved later keeps it,
+Off saves false, no click moves the page, and the row goes while masking is
+switched off. Every language at 900
 and 380 wide, in Chromium and WebKit, with the API faked.
 
 `local-address.test.cjs` checks the Address of a local server's provider
@@ -262,6 +263,14 @@ last pill, whose menu lists each with its count; the oldest picked from it is
 asked for and names the pill, with the bar held where it was; three days need
 no such pill; a window narrowed then widened fits again. Chromium and WebKit,
 in English, Chinese, Japanese and German.
+
+`routing-day-tallies.test.cjs` checks #3351: live, an account's row under
+Accounts and keys counts its day from the tallies the history read brings
+(the Usage page's own files), not the kept requests — an account in no
+request the gateway keeps still shows its day and its failures, the
+kept account says its day's twelve over the kept ten, and the note says
+the counts are today's. Chromium and WebKit, in English, Chinese,
+Traditional Chinese, Japanese and German.
 
 `dates-gui-lang.test.cjs` checks that dates and times read in the GUI's
 language, not the system's (#1843): English on a zh-CN browser, English on

@@ -31,6 +31,7 @@ import (
 
 	"github.com/yetone/magpie/internal/access"
 	"github.com/yetone/magpie/internal/agent"
+	"github.com/yetone/magpie/internal/applog"
 	"github.com/yetone/magpie/internal/autostart"
 	"github.com/yetone/magpie/internal/catalog"
 	"github.com/yetone/magpie/internal/filememo"
@@ -397,6 +398,9 @@ type settingsJSON struct {
 	OnNetwork       bool     `json:"onNetwork,omitempty"`
 	// Dir is the data folder beside a portable magpie (#508)
 	Portable bool `json:"portable,omitempty"`
+	// Log is the log the desktop app writes (applog), as shown; "" for a
+	// magpie writing none (magpie web)
+	Log string `json:"log,omitempty"`
 	// WSL is whether there is WSL to look in for agents (Windows), for
 	// Settings' Detect agents in WSL (#1264)
 	WSL bool `json:"wsl,omitempty"`
@@ -519,8 +523,9 @@ type settingsJSON struct {
 	CodexAsyncHeld []agent.CodexReader `json:"codexAsyncHeld,omitempty"`
 	// the keys this machine's Codex config has that Codex reads before
 	// Long conversations (model_context_window,
-	// model_auto_compact_token_limit; agent.CodexCompactHeld)
-	CodexCompactHeld []agent.CodexCompactHold `json:"codexCompactHeld,omitempty"`
+	// model_auto_compact_token_limit; agent.CodexCompactHeld), written
+	// as the row names them: "[profiles.p] key = value, ..."
+	CodexCompactKeys string `json:"codexCompactKeys,omitempty"`
 	// the magpie model Codex's config runs, when its own window is no
 	// larger than Long conversations' threshold: Codex compacts it at 90%
 	// of that window (codexWindowUnder)
@@ -654,6 +659,33 @@ var loginState = autostart.Enabled
 type codexRunWindow struct {
 	Model  string `json:"model"`
 	Window int    `json:"window"`
+	// Size is Window as the page writes a window (contextsText): 128K, 1M;
+	// "n" is its slot in the row's words, which take the struct whole
+	Size string `json:"n"`
+}
+
+func tokensSize(n int) string {
+	switch {
+	case n%1_000_000 == 0:
+		return strconv.Itoa(n/1_000_000) + "M"
+	case n%1000 == 0:
+		return strconv.Itoa(n/1000) + "K"
+	}
+	return strconv.Itoa(n)
+}
+
+// codexKeysText names Codex's config keys as the Long conversations row
+// shows them, each with its profile and value.
+func codexKeysText(hs []agent.CodexCompactHold) string {
+	var b []string
+	for _, h := range hs {
+		k := h.Key + " = " + h.Value
+		if h.Profile != "" {
+			k = "[profiles." + h.Profile + "] " + k
+		}
+		b = append(b, k)
+	}
+	return strings.Join(b, ", ")
 }
 
 // codexWindowUnder is model's window when Long conversations' threshold
@@ -675,12 +707,13 @@ func codexWindowUnder(st settings.Settings, model string) *codexRunWindow {
 	if !ok || e.Context <= 0 || provider.CompactFor(st, e, provider.GroupFinder()) > 0 || st.Working(e.Context) < e.Context {
 		return nil
 	}
-	return &codexRunWindow{Model: model, Window: e.Context}
+	return &codexRunWindow{Model: model, Window: e.Context, Size: tokensSize(e.Context)}
 }
 
 func settingsState() settingsJSON {
 	s := settingsJSON{Settings: settings.Load(), Version: Version, Dir: tilde(settings.Dir()), Portable: settings.Portable() != "", Gateway: gateway.URL()}
 	s.AddrEnv = os.Getenv("MAGPIE_ADDR")
+	s.Log = tilde(applog.Current())
 	s.Builtins = builtinsState()
 	s.PanelKeys = panelKeysState()
 	s.JSRoutings = middleware.Routings()
@@ -732,7 +765,7 @@ func settingsState() settingsJSON {
 	s.CodexWarmed, s.ClaudeWarmed = latest(provider.CodexWarmed()), latest(provider.ClaudeWarmed())
 	s.CodexUsers, s.ClaudeUsers = loginUsers("codex"), loginUsers("claude")
 	s.CodexAsyncHeld = agent.CodexAsyncHeld()
-	s.CodexCompactHeld = agent.CodexCompactHeld("")
+	s.CodexCompactKeys = codexKeysText(agent.CodexCompactHeld(""))
 	s.CodexWindow = codexWindowUnder(s.Settings, agent.CodexModel(""))
 	s.WorkBuddy, s.WorkBuddyCheckins = provider.HasWorkBuddy(), provider.WorkBuddyCheckins()
 	s.Trae, s.TraeCheckins = provider.HasTrae(), provider.TraeCheckins()
@@ -1444,6 +1477,7 @@ func Handler(w Windows, gw *gateway.Server) http.Handler {
 		// used or left is the Usage page's toggle as much as Settings', set on its own
 		in.QuotaLeft = cur.QuotaLeft
 		in.QuotaReads = cur.QuotaReads // set on its own (quota-reads below)
+		in.SearchAll = cur.SearchAll   // set on its own (search-all below)
 		in.UsageOrder = cur.UsageOrder // the Usage page's, dragged there
 		// and what the tray panel's Allowances tab leaves out, set there
 		in.PanelUsageHidden = cur.PanelUsageHidden
@@ -1607,6 +1641,24 @@ func Handler(w Windows, gw *gateway.Server) http.Handler {
 		}
 		s := settings.Load()
 		s.QuotaReads = in.Reads
+		if err := settings.Save(s); err != nil {
+			fail(rw, err)
+			return
+		}
+		writeJSON(rw, settingsState())
+	})
+	// whether magpie searches for a model whose provider searches by itself
+	// too (Settings › Models › Web search)
+	mux.HandleFunc("POST /api/settings/search-all", func(rw http.ResponseWriter, r *http.Request) {
+		var in struct {
+			On bool `json:"on"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+			fail(rw, err)
+			return
+		}
+		s := settings.Load()
+		s.SearchAll = in.On
 		if err := settings.Save(s); err != nil {
 			fail(rw, err)
 			return
@@ -2595,6 +2647,20 @@ func Handler(w Windows, gw *gateway.Server) http.Handler {
 	// the config folder only: the page names no path, so it can't open others
 	mux.HandleFunc("POST /api/settings/reveal", func(rw http.ResponseWriter, r *http.Request) {
 		if err := w.OpenFolder(settings.Dir()); err != nil {
+			fail(rw, err)
+			return
+		}
+		rw.WriteHeader(http.StatusNoContent)
+	})
+	// the app's log folder (applog), from Settings › About's Log row; the
+	// page names no path here either
+	mux.HandleFunc("POST /api/settings/log/reveal", func(rw http.ResponseWriter, r *http.Request) {
+		path := applog.Current()
+		if path == "" {
+			fail(rw, errors.New("this magpie writes no log file"))
+			return
+		}
+		if err := w.OpenFolder(filepath.Dir(path)); err != nil {
 			fail(rw, err)
 			return
 		}
