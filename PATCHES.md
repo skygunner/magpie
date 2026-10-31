@@ -66,35 +66,17 @@ Each round:
 8. Accept: healthy, 401/200 auth pair, model count equal before/after, a
    real `group/fast-cheap` request 200. Push `prod` and the tag.
 
-## Carried patches (as of v0.1.2214-p1, 2026-10-30)
+## Carried patches (as of v0.1.2344-p1, 2026-10-31)
 
-Checked against v0.1.2214 (2026-10-30): eleven carried entries — nine
+Checked against v0.1.2344 (2026-10-31): eleven carried entries — nine
 patch rows, #3623's attempt chain (joined at 0.1.2051-p3) and the
-cooldown-settings surface (joined at 0.1.2051-p4) — plus #3487's
-card-display and millisecond-span remainder, re-expressed at the
-v0.1.1948 merge. The v0.1.2051 merge kept both sides of
-four collisions: the Provider literal (ModelCooldown beside upstream's
-HiddenDrawers), the usage plugin's i18n.js (#3948's four language
-blocks beside upstream's hide-from-Overview strings), gateway-routing.md
-(our FirstToken/modelCooldown bullets beside upstream's new
-fallback-header bullet) and the quota CLI's wording, which takes
-upstream's newest. This round also restored the held-up wording of the
-Codex auto-reset strings, i18n.js and their test, which an earlier
-round's conflict resolution had trimmed on this line. Upstream `1390aa458` (community plugins#468) took #3487's
-point over its own way — a plugin window's `Amount` is a bare count
-again, where 0 is what a count left out reads as and a limit alone says
-nothing — so the carried pointer form (`d4944ace`'s `amountUnknown`
-flag) could not sit beside the type change and was taken over: this
-merge carries only what upstream lacks, the quota card and tray
-refusing to draw a full allowance for a limit with no count (`quotaCount`
-and `QuotaWindow.Count` treat an amount of 0 as not said) and the
-millisecond-span guard (`quotaSpanLimit`), plus the fake plugin's
-`Daily` (`amount: null`) window as the pipeline regression; told
-upstream in the issue. The other three conflicts kept both sides:
-`fallback.go`'s `shapeRefused`/`retryable` (our `refusedParameterList`
-beside upstream's `creditWords` guard) and the usage plugin's `i18n.js`
-(our #3948 strings beside upstream's clear-usage strings). The #3788
-issue's comments are our own integration announcements, no rework.
+cooldown-settings surface (joined at 0.1.2051-p4) — plus the build-line
+fix and #3487's card-display and millisecond-span remainder, re-
+expressed at the v0.1.1948 merge. #3417 left the list at 0.1.2264-p1:
+upstream made the spend deadline's lead configurable (settings'
+`CodexResetLead`) and evolved the held-up behavior, superseding this
+line's fixed-lead variant. This header had silently stayed at
+v0.1.2214 for two rounds (unasserted replaces); fixed here.
 
 Equivalence notes for the sweep: `fix/hindsight-nonstream-cooldown`'s
 tip `b48a91bb` and `dfd128ca` are the same SSE fix on different bases —
