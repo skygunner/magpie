@@ -46,7 +46,7 @@ func init() {
 		return agy(home).Launch()
 	}
 	// a Copilot CLI signed in inside a running distro (#723)
-	provider.CopilotWSLHomes = copilotWSLHomes
+	provider.CopilotWSLDirs = copilotWSLDirs
 	// the Codex app's app-server is restarted when magpie becomes Codex's
 	// provider for its used-up ChatGPT account, and when it stops being it;
 	// and when Codex is connected or disconnected, or its route otherwise
@@ -70,21 +70,34 @@ func init() {
 
 // codexAppRoute is where Codex's config sends it, as the app-server reads
 // it at its start: the keys magpie writes for that, never one the Codex
-// app writes itself (model); and whether magpie is Codex's provider for
-// its used-up ChatGPT account (AppOut). Not known when Codex's config
-// can't be read.
+// app writes itself (model, model_reasoning_effort); and whether magpie
+// is Codex's provider for its used-up ChatGPT account (AppOut). Not known
+// when Codex's config can't be read.
+//
+// The model list (model_catalog_json, the file and what it holds) is not
+// in it. A change of route ends the app's app-server, and the ChatGPT app
+// takes that as a crash and relaunches. The catalog follows magpie's names
+// and the effort new sessions start at, which the app saves on each pick,
+// so a route that hashed it ended the app every few minutes
+// (indekkusu141209 on X, #4550). A new list is read at the app's next
+// launch, and the Agents row offers a Restart for it (StaleCopies).
 func codexAppRoute() (route string, out, known bool) {
 	// asked every 3s for as long as magpie runs: the config looked at once
 	// for its keys, not once for each (#1665)
 	defer filememo.Hold()()
 	home, _ := homes()
 	a := codex(home)
-	if _, err := os.ReadFile(a.Path); err != nil && !errors.Is(err, fs.ErrNotExist) {
+	// opened, not read: a config.toml of 1.5 MB (Codex keeps every
+	// project's trust level in it) read whole every 3s was 1.55 GB of a
+	// live magpie's 33 GB in 53 minutes; the keys below come from filememo
+	if f, err := os.Open(a.Path); err == nil {
+		f.Close()
+	} else if !errors.Is(err, fs.ErrNotExist) {
 		return "", false, false
 	}
 	out = a.AppOut != nil && a.AppOut()
 	var b strings.Builder
-	for _, k := range []string{"model_provider", "openai_base_url", "model_catalog_json"} {
+	for _, k := range []string{"model_provider", "openai_base_url"} {
 		v, _ := edit.GetTOMLTop(a.Path, k)
 		b.WriteString(k + "=" + v + "\n")
 	}
@@ -94,15 +107,6 @@ func codexAppRoute() (route string, out, known bool) {
 	// has its ChatGPT account at all (openaiAuth in codex.go): read as the
 	// app-server starts, like the rest
 	b.WriteString("magpie.requires_openai_auth=" + t["requires_openai_auth"] + "\n")
-	// and the list in that catalog, which the app-server also reads only
-	// as it starts: a provider or group renamed, or a model added, left
-	// the app on the names and models it started with (lucis0116 on X)
-	if c, _ := edit.GetTOMLTop(a.Path, "model_catalog_json"); c != "" {
-		if !filepath.IsAbs(c) {
-			c = filepath.Join(filepath.Dir(a.Path), c)
-		}
-		b.WriteString("catalog=" + codexCatalogTag(c) + "\n")
-	}
 	if out {
 		b.WriteString("out\n")
 	}
@@ -489,7 +493,10 @@ func magpieProviderJSONAt(shape, catalog, gw string) any {
 	models := magpieModels(catalog) // the catalog is the agent's
 	switch shape {
 	case "opencode":
-		ms := map[string]any{}
+		// models in the order magpieModels has them (#4575): OpenCode lists
+		// the models in the file's key order, and a map's keys marshal
+		// sorted — the variants under each kept theirs since #713
+		ms := orderedJSON{}
 		for _, m := range models {
 			e := map[string]any{"name": m.Name}
 			// modalities alone says a model takes images: OpenCode 1 takes
@@ -515,7 +522,7 @@ func magpieProviderJSONAt(shape, catalog, gw string) any {
 			if p := m.Price; p != nil {
 				e["cost"] = map[string]any{"input": p.Input, "output": p.Output, "cache_read": p.CacheRead, "cache_write": p.CacheWrite}
 			}
-			ms[m.ID] = e
+			ms = append(ms, jsonPair{m.ID, e})
 		}
 		return map[string]any{"npm": "@ai-sdk/openai-compatible", "name": "magpie",
 			"options": map[string]any{"baseURL": gw + "/v1", "apiKey": openCodeKeyAt(catalog, gw)}, "models": ms}
@@ -605,12 +612,16 @@ func openCodeKept(path string, value func() any) func() any {
 		}
 		var have map[string]json.RawMessage
 		block, _ := v.(map[string]any)
-		ms, _ := block["models"].(map[string]any)
+		ms, _ := block["models"].(orderedJSON)
 		if json.Unmarshal([]byte(raw), &have) != nil || ms == nil {
 			return v
 		}
 		for id, h := range have {
-			e, _ := ms[id].(map[string]any)
+			i := slices.IndexFunc(ms, func(p jsonPair) bool { return p.k == id })
+			if i < 0 {
+				continue
+			}
+			e, _ := ms[i].v.(map[string]any)
 			ours, ok := e["variants"].(orderedJSON)
 			var was struct {
 				Variants json.RawMessage `json:"variants"`
@@ -1110,7 +1121,7 @@ func opencode(home, cfg string) *Agent {
 // distro's variables, aren't read; OpenChamber, a Windows app, isn't there.
 func opencodeIn(at place) *Agent {
 	return openCodeLike(at, "opencode", "OpenCode", "opencode", "opencode",
-		filepath.Join(at.home, ".config", "opencode"), filepath.Join(at.home, ".local", "share", "opencode", "auth.json"),
+		at.join(".config", "opencode"), at.join(".local", "share", "opencode", "auth.json"),
 		[]string{"opencode"}, "oc")
 }
 
@@ -1118,7 +1129,7 @@ func opencodeIn(at place) *Agent {
 // MIMOCODE_HOME isn't read there.
 func mimocodeIn(at place) *Agent {
 	return openCodeLike(at, "mimocode", "MiMo Code", "mimocode", "mimo",
-		filepath.Join(at.home, ".config", "mimocode"), filepath.Join(at.home, ".local", "share", "mimocode", "auth.json"),
+		at.join(".config", "mimocode"), at.join(".local", "share", "mimocode", "auth.json"),
 		[]string{"mimocode"}, "mimo")
 }
 
@@ -1195,7 +1206,7 @@ func piDir(at place) string {
 			return d
 		}
 	}
-	return filepath.Join(at.home, ".pi", "agent")
+	return at.join(".pi", "agent")
 }
 
 // homeDir is the folder an agent's variable names, "~" and "~/…" expanded
@@ -1436,7 +1447,7 @@ func goose(home, cfg string) *Agent { return gooseIn(here(home), cfg) }
 // layout and its custom provider names the gateway as the distro reaches
 // it, with the key it takes from there.
 func gooseIn(at place, cfg string) *Agent {
-	path := filepath.Join(cfg, "goose", "config.yaml")
+	path := filepath.Join(at.open(filepath.Join(cfg, "goose")), "config.yaml")
 	if runtime.GOOS == "windows" && at.spell == nil {
 		if app := appdir.Getenv("APPDATA"); app != "" {
 			path = filepath.Join(app, "Block", "goose", "config", "config.yaml")
@@ -1672,8 +1683,8 @@ func crush(home, cfg string) *Agent {
 // place for it.
 func crushIn(at place) *Agent {
 	// Crush's data file is in Linux's place there too
-	return crushAt(at, filepath.Join(at.home, ".config", "crush", "crush.json"),
-		filepath.Join(at.home, ".local", "share", "crush", "crush.json"))
+	return crushAt(at, at.join(".config", "crush", "crush.json"),
+		at.join(".local", "share", "crush", "crush.json"))
 }
 
 // crushAt is Crush with its config at path and its data file at data,

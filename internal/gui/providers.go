@@ -57,6 +57,11 @@ type modelJSON struct {
 	Same       string   `json:"same,omitempty"`      // the model the user said it is the same as, for the groups magpie finds (#583)
 	Merge      string   `json:"merge,omitempty"`     // what those groups merge it by when the user says nothing
 	Kind       string   `json:"kind,omitempty"`      // what the user said it makes: image or video (#1399)
+	// Vendor is the provider's own id of a model the user lists by
+	// another (provider.SetModelID), "" for one listed by its own; IDs
+	// says the provider's models can be given ids at all (a key's)
+	Vendor string `json:"vendor,omitempty"`
+	IDs    bool   `json:"ids,omitempty"`
 	// Desktop is the number Claude Desktop's menu says beside this model
 	// (gateway.DesktopNumber), so a row of that menu can be matched to its
 	// provider (#2578): only for a model Claude Desktop, installed here,
@@ -279,7 +284,11 @@ type providerJSON struct {
 	// Groups are the routing groups ("group/<id>") each of its models is
 	// in, by model id: what an unlisted one is still used through, and the
 	// editor names those in none
-	Groups   map[string][]string `json:"groups,omitempty"`
+	Groups map[string][]string `json:"groups,omitempty"`
+	// KeptBy are the routing groups listing alone (Group.Unlists) that
+	// keep each of its models out of agents' lists, by model id: its own
+	// "Only through routing groups" switched off doesn't bring those back
+	KeptBy   map[string][]string `json:"keptBy,omitempty"`
 	Off      bool                `json:"off"`                // switched off: kept, but agents get none of its models
 	Contexts map[string]int      `json:"contexts,omitempty"` // the windows the user set, "*" for all its models
 	Outputs  map[string]int      `json:"outputs,omitempty"`  // the reply limits the user set (provider.OutputsOf)
@@ -642,12 +651,15 @@ func providerInfo(p provider.Provider, agents []agentUse) providerJSON {
 // providerInfoWith is providerInfo with the Claude Desktop numbers read
 // once for the whole list (desktopNumbers).
 func providerInfoWith(p provider.Provider, agents []agentUse, desktop map[string]string) providerJSON {
+	// the vendor's list read once for the picks, what is exposed and the
+	// newest of each family: each read builds it whole
+	avail := p.Available()
 	out := providerJSON{
 		ID: p.ID, Name: p.Name, Icon: p.Icon, Preset: p.Preset, Host: p.Host(),
 		Chat: p.Chat, Responses: p.Responses, Anthropic: p.Anthropic, Gemini: p.Gemini, Decide: p.Decide, BaseAPI: p.BaseAPI, ModelTest: p.ModelTest(), TestsAs: p.TestClients(), DecideTest: p.AsksDecideModels(), MarksKinds: p.MarksKinds(),
 		Catalog: p.Catalog, Website: p.Website, KeysURL: p.KeysURL,
 		Proxy: p.Proxy, AccountProxies: p.AccountProxies, AccountModels: p.AccountModels, AccountCaps: p.AccountCaps, AccountWindowCaps: p.AccountWindowCaps, AccountNames: p.AccountNames, Headers: p.Headers, ExtraBody: p.ExtraBody, ReplyHeaders: p.ReplyHeaders, Searches: p.Searches, Cline: p.ClinePinnable(), PinUpstream: p.PinUpstream, Unredacted: p.Unredacted, CountFree: p.CountFree, InsecureTLS: p.InsecureTLS, TakesInsecureTLS: p.TakesInsecureTLS(), LimitRestOff: p.LimitRestOff, NativeCompaction: p.NativeCompaction, CarriesCompaction: p.CarriesCompaction(), PassUserAgent: p.PassUserAgent, OwnClient: p.OwnClient(), AuthHeader: p.AuthHeader, BothAuth: p.BothAuth(), BalanceURL: p.BalanceURL, BalancePath: p.BalancePath, BalanceMethod: p.BalanceMethod, ModelsURL: p.ModelsURL,
-		Ready: p.Ready(), Chosen: p.Picks(), Models: []modelJSON{}, Agents: []providerAgent{},
+		Ready: p.Ready(), Chosen: p.PicksOf(avail), Models: []modelJSON{}, Agents: []providerAgent{},
 		Fallback: p.Fallback, Routing: p.Routing, Sink: p.Sink, Affinity: p.Affinity, KeepLogin: p.KeepLogin, KeepLoginAs: p.KeepLoginAs, SwitchOnly: p.SwitchOnly, CapStop: p.CapStop, CapCareful: p.CapCareful, Unlisted: p.Unlisted, NoModels: p.ServesNone(), BestInFamily: p.BestInFamily && len(p.Models) == 0 && !p.NoModels, Off: p.Off, Contexts: p.Contexts,
 		MaxConcurrency: p.MaxConcurrency, PluginConcurrency: p.PluginConcurrency(), PriceRate: p.PriceRate,
 		RateWindows: p.RateWindows, RateNow: rateNowOf(p, time.Now()),
@@ -752,6 +764,14 @@ func providerInfoWith(p provider.Provider, agents []agentUse, desktop map[string
 			out.Groups[m] = gs
 		}
 	}
+	for id, gs := range provider.GroupKept() {
+		if m, ok := strings.CutPrefix(id, p.ID+"/"); ok {
+			if out.KeptBy == nil {
+				out.KeptBy = map[string][]string{}
+			}
+			out.KeptBy[m] = gs
+		}
+	}
 	if a := p.Account; a != nil {
 		out.Account = &accountJSON{Account: *a, Agent: a.Agent}
 		out.Account.Name, out.Account.Icon = accountLabel(p)
@@ -769,10 +789,10 @@ func providerInfoWith(p provider.Provider, agents []agentUse, desktop map[string
 		}
 	}
 	exposed := map[string]bool{}
-	for _, m := range p.Exposed() {
+	exposedList := p.ExposedOf(avail)
+	for _, m := range exposedList {
 		exposed[m.ID] = true
 	}
-	avail := p.Available()
 	newest := map[string]bool{}
 	for _, m := range p.NewestInFamily(avail) {
 		newest[m.ID] = true
@@ -822,6 +842,10 @@ func providerInfoWith(p provider.Provider, agents []agentUse, desktop map[string
 		}
 		j.NoAPI = p.NoAPIFor(m.ID)
 		j.Same = sames[p.ID+"/"+m.ID]
+		if own := p.OwnModelID(m.ID); own != m.ID {
+			j.Vendor = own
+		}
+		j.IDs = p.TakesModelIDs()
 		j.Kind = p.ModelKind(m.ID)
 		j.Merge = provider.MergeName(m.ID)
 		j.Desktop = desktop[p.ID+"/"+m.ID]
@@ -876,7 +900,7 @@ func providerInfoWith(p provider.Provider, agents []agentUse, desktop map[string
 		out.Deciders = &deciders
 	}
 	// picks the vendor list does not know go first, so they are visible
-	for _, m := range p.Exposed() {
+	for _, m := range exposedList {
 		if !seen[m.ID] {
 			out.Models = append([]modelJSON{named(m, true)}, out.Models...)
 		}
@@ -1220,6 +1244,21 @@ func providerRoutes(mux *http.ServeMux, w Windows) {
 			return
 		}
 		writeJSON(rw, map[string]string{"icon": icon})
+	})
+	// a picture's address typed for the icon, or with none the letter tile;
+	// one that can't be used gives the tile too, and failed says why
+	mux.HandleFunc("POST /api/icons/url", func(rw http.ResponseWriter, r *http.Request) {
+		var in struct{ URL, Name, Base string }
+		if err := json.NewDecoder(io.LimitReader(r.Body, 64<<10)).Decode(&in); err != nil {
+			fail(rw, err)
+			return
+		}
+		icon, failed, err := provider.IconFromURL(r.Context(), in.URL, in.Name, in.Base)
+		if err != nil {
+			fail(rw, err)
+			return
+		}
+		writeJSON(rw, map[string]string{"icon": icon, "failed": failed})
 	})
 	mux.HandleFunc("GET /api/icons/{name}", func(rw http.ResponseWriter, r *http.Request) {
 		// a big picture comes scaled to what the window draws (#909)
@@ -2269,6 +2308,12 @@ func providerRoutes(mux *http.ServeMux, w Windows) {
 		st.Moved = moved
 		writeJSON(rw, st)
 		keepProviders(st) // as a provider action's: the panel's switch draws it
+	})
+	// whether a Claude subscription's runs are Claude Code's interactive
+	// mode or -p, and why -p, for the Claude Code provider page; read when
+	// the page opens, not in /api/providers' polls
+	mux.HandleFunc("GET /api/claude/mode", func(rw http.ResponseWriter, r *http.Request) {
+		writeJSON(rw, gateway.ClaudeModeNow())
 	})
 	// Codex's background app-server, left on the account before a switch
 	// or on the model list before a change (the Agents row's Restart):

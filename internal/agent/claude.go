@@ -136,8 +136,8 @@ func claudeCloud(at place, path string) string {
 	}
 	dir := filepath.Dir(path)
 	global := filepath.Join(dir, ".claude.json")
-	if dir == filepath.Join(at.home, ".claude") {
-		global = filepath.Join(at.home, ".claude.json")
+	if dir == at.join(".claude") {
+		global = at.join(".claude.json")
 	}
 	for _, k := range agentenv.ClaudeProviders {
 		set := false
@@ -969,8 +969,16 @@ func claudeIn(at place) *Agent {
 		// ids whole, so a tier fixed at an effort (codex/gpt-6-luna:max)
 		// kept its model's row as a second entry (#1616, iTanX). That row
 		// is left out here; a tier at no effort Claude Code matches itself.
+		// With the own-models switch on, replaceBuiltInOptions takes the
+		// tier rows out of /model with the built-in lineup (Claude Code
+		// keeps only the Default row and the picker's own), so a tier's
+		// model keeps its row then, or it would be in /model nowhere.
+		replace := provider.OwnModelsHidden("claude")
 		var onTier []string
 		for _, t := range claudeTiers {
+			if replace {
+				break
+			}
 			if v := env(tierEnv(t)); v != "" {
 				if _, e := tierAt(v); e != "" {
 					onTier = append(onTier, v)
@@ -1006,8 +1014,18 @@ func claudeIn(at place) *Agent {
 		if len(rows) == 0 {
 			return dropPicker()
 		}
+		// the switch that leaves a picker's own models out (#1642) reaches
+		// here too (#4548, raclen): /model is fed by magpie all the same, so
+		// with the switch off it says replaceBuiltInOptions, which takes
+		// Claude Code's built-in lineup rows back out of /model — the Default
+		// row stays, Claude Code keeping it as its own fallback. The flag
+		// goes again with the switch on, the whole picker written either way.
+		picker := map[string]any{"options": rows}
+		if replace {
+			picker["replaceBuiltInOptions"] = true
+		}
 		stash(map[string]string{pickerKey: "1"})
-		return edit.SetJSON(path, edit.KV{Path: "modelPicker", Value: map[string]any{"options": rows}})
+		return edit.SetJSON(path, edit.KV{Path: "modelPicker", Value: picker})
 	}
 	// pickerRefs are the models writePicker lists in /model, as it lists
 	// them ("[1m]" on a 1M one), none while the picker is the user's.
@@ -1030,7 +1048,16 @@ func claudeIn(at place) *Agent {
 	// Claude Desktop's ids too while it runs on magpie, its Code tab being
 	// Claude Code on this settings.json
 	desktopOn := func() bool {
-		return at.id == "" && at.sys == nil && desktopWiredAny(desktopSets(desktopdir.OS, at.home, os.Getenv))
+		// a distro's: Claude Desktop on Windows runs a Code tab session
+		// whose host is WSL on the distro's Claude Code, which reads
+		// ${CLAUDE_CONFIG_DIR:-$HOME/.claude} there (4.29.0's remote
+		// probe), not Windows' settings.json, and is handed the same
+		// mythos-magpie id and no window; only Windows' Desktop wired
+		// tells (young02036 on Discord: 500K group at "/ 200k" in WSL)
+		if at.sys != nil {
+			return desktopWiredAny(desktopSetsHere())
+		}
+		return at.id == "" && desktopWiredAny(desktopSets(desktopdir.OS, at.home, os.Getenv))
 	}
 	// Desktop's Explore compatibility flag has its own ownership: taking
 	// Claude Code off magpie must leave it while Desktop still needs it.
