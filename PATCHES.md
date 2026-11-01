@@ -56,13 +56,27 @@ Each round:
    at the newest round), push both, and refresh the repo's README — the
    version header, the patch table, and the source tag link come from
    this file's current round.
-7. On docker1: back up the volume and container config under
-   `/home/hermes/backups/magpie/pre-<tag>-<ts>/` (volume tar + container
-   inspect), stop and rename the running container to
-   `magpie-pre-<tag>-<ts>` (kept stopped), run the new image with the same
-   flags (`-p 3425:3425 -p 3430:3430 -v magpie-config:/config:z --user
-   nonroot --restart unless-stopped`, the two MAGPIE_* env vars,
-   `web --addr 0.0.0.0:3430 --no-open`).
+7. On docker1: **the switch is one batched script, run detached** —
+   `scripts/deploy-docker1.sh` on this branch. It backs up (container
+   inspect + stopped-volume tar), stops, renames to
+   `magpie-pre-<tag>-<ts>` (kept stopped), starts the new image with the
+   same flags (`-p 3425:3425 -p 3430:3430 -v magpie-config:/config:z
+   --user nonroot --restart unless-stopped`, the two MAGPIE_* env vars
+   read from the old container, `web --addr 0.0.0.0:3430 --no-open`),
+   waits for healthy, and rolls itself back if the new container does not
+   come up:
+
+       scp scripts/deploy-docker1.sh docker1:/tmp/
+       ssh docker1 'nohup bash /tmp/deploy-docker1.sh magpie:<tag>-pN >/tmp/deploy-<tag>.log 2>&1 &'
+       ssh docker1 'tail -n 40 /tmp/deploy-<tag>.log'
+
+   Why detached and never split: the agent's own model route may go
+   through this gateway, so `docker stop magpie` cuts the agent's session
+   (2026-11-01: the stop ended the round mid-deploy and the operator had
+   to roll the container by hand). A single script that does stop, swap
+   and start keeps running on docker1 regardless; when it brings magpie
+   back, the agent's route returns and the round continues by polling the
+   log. Never issue the stop in one turn and the run in a later one.
 8. Accept: healthy, 401/200 auth pair, model count equal before/after, a
    real `group/fast-cheap` request 200. Push `prod` and the tag.
 
