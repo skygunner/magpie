@@ -66,9 +66,9 @@ Each round:
 8. Accept: healthy, 401/200 auth pair, model count equal before/after, a
    real `group/fast-cheap` request 200. Push `prod` and the tag.
 
-## Carried patches (as of v0.1.2344-p1, 2026-10-31)
+## Carried patches (as of v0.1.2450-p1, 2026-11-01)
 
-Checked against v0.1.2344 (2026-10-31): eleven carried entries — nine
+Checked against v0.1.2450 (2026-11-01): eleven carried entries — nine
 patch rows, #3623's attempt chain (joined at 0.1.2051-p3) and the
 cooldown-settings surface (joined at 0.1.2051-p4) — plus the build-line
 fix and #3487's card-display and millisecond-span remainder, re-
@@ -115,6 +115,31 @@ registered on 2026-10-29 and its fix (`33c0ade7a`,
 the table above.
 
 ## Deployment history
+
+- `prod/0.1.2450-p1` — 2026-11-01. Rolling merge of v0.1.2450 (150
+  commits; three conflicts, both sides kept: app.js `openModal`'s new
+  `quiet` beside the cooldown close guard, i18n's four language blocks
+  unioned, core budgets re-measured to 1,326,038 / 1,547,127 — upstream
+  moved Usage fragments out of the core). Freshness sweep all negative:
+  every carried branch tip equals its fix of record; nvidia's extras are
+  the three fixes already carried plus a docs-only commit; the 1025a
+  branch's six newer commits are other issues' fixes touching none of
+  #3487's files; no issue comments after 10-31; plugin PR #366 head
+  still `38ddeb1`, test-only. Gate: 9 reds all reproduced on the clean
+  v0.1.2450 baseline (fastjson escapes, WSL/SOCKS network, umask 0640,
+  upstream's `SearchAll` keep-test gap); `TestNoCommandBypassesProc` now
+  green (upstream fixed it). **Deployed by hand**: the scheduled round
+  stopped the old container, which cut the agent's own gateway route and
+  ended the session; the operator rolled the container onto the pushed
+  image himself. Verified on the running container: healthy, 0 restarts,
+  version 0.1.2450-p1, no-key 401 / cookie 200, providers 31 / groups 49
+  / 1200 model ids equal before and after, `/api/cooldown` 200, real
+  `group/fast-cheap` 200 ("OK"), 40 minutes of logs with zero
+  panic/fatal/5xx/protocol_error. Published to Docker Hub as
+  `bigshort/magpie-patched:0.1.2450-p1` and `:latest`, digest
+  `sha256:b8e6db5d…`, README updated. Backup
+  `/home/hermes/backups/magpie/pre-0.1.2450-<ts>` (volume.tgz taken with
+  the container stopped).
 
 - `prod/0.1.1556-p1` — 2026-10-26. First patched build: the six bug
   patches above at v0.1.1556.
