@@ -80,9 +80,9 @@ Each round:
 8. Accept: healthy, 401/200 auth pair, model count equal before/after, a
    real `group/fast-cheap` request 200. Push `prod` and the tag.
 
-## Carried patches (as of v0.1.2657-p1, 2026-11-02)
+## Carried patches (as of v0.1.2753-p1, 2026-11-03)
 
-Checked against v0.1.2657 (2026-11-02): eleven carried entries — nine
+Checked against v0.1.2753 (2026-11-03): eleven carried entries — nine
 patch rows, #3623's attempt chain (joined at 0.1.2051-p3) and the
 cooldown-settings surface (joined at 0.1.2051-p4) — plus the build-line
 fix and #3487's card-display and millisecond-span remainder, re-
@@ -129,6 +129,36 @@ registered on 2026-10-29 and its fix (`33c0ade7a`,
 the table above.
 
 ## Deployment history
+
+- `prod/0.1.2753-p1` — 2026-11-03. Rolling merge of v0.1.2753 (127
+  commits; seven conflict files, both sides kept: fallback.go's refusal
+  predicates now also carry upstream's new `zhipuImageRefusal` (GLM's webp
+  refusal, #4732) beside our `refusedParameterList` and
+  `upstreamFailedWords`; gateway.go's shape-refused block gains upstream's
+  webp-re-as-JPEG re-ask while keeping our `bareRequest` disjunct; the
+  docs' textcalls line went to upstream's superset (relayed Responses
+  replies are read too, `textcalls_relay.go`) while the format line kept
+  our #3035 SenseNova wording; both i18n files unioned; the Usage ledger
+  test's labels kept our attempt-chain columns with upstream's renamed
+  word 接口地址). Budgets re-measured 1,326,629 / 1,548,303. Freshness
+  sweep all negative; none absorbed. Gate: ours 10 reds all inside the
+  clean baseline's 11 (the two extras there were the known load-sensitive
+  `TestOpenCodeSessionOnEveryCall` and allocation-counting
+  `TestCCListingKeepsItsNames`); GUI 134/136 with the same two webkit-de
+  `codex-auto-reset` reds reproducing on the baseline. Deployed by the
+  batched script (second round on it, no session loss, healthy in 30s);
+  accepted with providers 32 / groups 49 / 1202 model ids equal before
+  and after and six real probes 200 across 46 minutes, 10 samples healthy
+  with zero panic/fatal/5xx/protocol_error. Published to Docker Hub as
+  `bigshort/magpie-patched:0.1.2753-p1` and `:latest`, digest
+  `sha256:4b144f66…`. Hub README updated fetch→edit→PATCH→verify in one
+  step and written back to /tmp/hub-readme.md (the JWT expired mid-PATCH;
+  after re-login the first write again used a stale re-fetched template —
+  the round's lesson is now do fetch, edit, PATCH and verify inside one
+  script so the local template cannot be overwritten by a stale fetch
+  between steps). Backup
+  `/home/hermes/backups/magpie/pre-0.1.2753-p1-20261102-192605`; old
+  container kept stopped as `magpie-pre-0.1.2753-p1-20261102-192605`.
 
 - `prod/0.1.2657-p1` — 2026-11-02. Rolling merge of v0.1.2657 (344
   commits; six conflict files, both sides kept: fallback.go's imports and
