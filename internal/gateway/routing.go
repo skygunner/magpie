@@ -746,21 +746,25 @@ func renewed(agent, user string) {
 }
 
 // restarted lifts what a reading's word alone may not: the rests the
-// vendor itself gave the time of. Told as renewed is, when a window
-// stands started again in fact, or a reset was spent.
+// vendor itself gave the time of, a rate limit's among them when its own
+// refusal named the comeback (a window exhaustion wrapped as a rate
+// limit was rested so before its words were read as quota, and stays so
+// till the window starts again, #3266). Told as renewed is, when a
+// window stands started again in fact, or a reset was spent.
 func restarted(agent, user string) {
 	liftRests(agent, user, true)
 }
 
-// liftRests lifts an account's rests out of quota, or of a window read
-// full: those no vendor timed by renewed's word alone, and those it did
-// only by restarted's.
+// liftRests lifts an account's rests out of quota, of a window read
+// full, or of a rate limit its refusal itself timed ("resets"): those no
+// vendor timed by renewed's word alone, and those it did only by
+// restarted's.
 func liftRests(agent, user string, vendorTill bool) {
 	restingUntil.Lock()
 	defer restingUntil.Unlock()
 	now := time.Now()
 	for k, r := range restingUntil.note {
-		if r.agent != agent || !strings.EqualFold(r.user, user) || !(r.Why == failQuota || r.By == "window" || r.Why == failCredit && agent == "codex") {
+		if r.agent != agent || !strings.EqualFold(r.user, user) || !(r.Why == failQuota || r.By == "window" || r.By == "resets" || r.Why == failCredit && agent == "codex") {
 			continue
 		}
 		if vendorTill != (r.By == "resets" || r.By == "retry-after") {

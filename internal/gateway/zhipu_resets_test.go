@@ -214,3 +214,53 @@ func TestZcodeWindowRenewalLiftsQuotaRest(t *testing.T) {
 		})
 	}
 }
+
+// A rate limit whose refusal named its comeback rests `rate / resets` —
+// the shape the wrapped Zcode 1308 was persisted under before its words
+// were read as quota (#3266) — and a window standing started again in
+// fact (restarted, as a reset spent at the vendor is) lifts it, so a
+// reset at the vendor no longer leaves such a rest benched past its
+// window. A reading that merely finds the window less full (renewed)
+// does not (#2718), and a per-minute Retry-After rate rest lifts neither
+// way (reported and patched by hibaliqya-yonma).
+func TestWindowRestartLiftsLegacyRateResets(t *testing.T) {
+	fresh(t)
+	if err := os.MkdirAll(filepath.Dir(restsPath()), 0700); err != nil {
+		t.Fatal(err)
+	}
+	old, oldStale := allowances, staleAllowance
+	t.Cleanup(func() { allowances, staleAllowance = old, oldStale })
+	allowances = func(string) map[string]provider.Allowance {
+		return map[string]provider.Allowance{"a@x.com": {{Used: 100, Resets: time.Now().Add(3 * time.Hour), Span: 5 * time.Hour}}}
+	}
+	staleAllowance = func(string, string) {}
+	for _, c := range []struct {
+		name, body string
+		header     http.Header
+		by         string
+		lifted     bool
+	}{
+		{"named-reset rate refusal", `{"error":{"type":"rate_limit_error","message":"Too many requests","resets_at":` + strconv.FormatInt(time.Now().Add(2*time.Hour).Unix(), 10) + `}}`, http.Header{}, "resets", true},
+		{"Retry-After rate refusal", `{"error":{"type":"rate_limit_error","message":"Too many requests"}}`, http.Header{"Retry-After": {"60"}}, "retry-after", false},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			forgetRouting()
+			restingUntil.Lock()
+			restingUntil.m, restingUntil.note = map[string]time.Time{}, map[string]Rest{}
+			restingUntil.Unlock()
+			acct := candidate{p: provider.Provider{ID: "zcode", Account: &provider.Account{Agent: "plugin:zcode", User: "a@x.com"}}, model: "GLM-5.3-Flash", rest: "zcode"}
+			r := (&Server{}).restAfter(acct, 429, c.header, []byte(c.body))
+			if r.Why != failRate || r.By != c.by {
+				t.Fatalf("rest %+v, want a rate rest by %s", r, c.by)
+			}
+			renewed(acct.p.Account.UsageAgent(), "A@x.com")
+			if _, ok := restingOf(acct); !ok {
+				t.Errorf("rest lifted by a reading alone, want it standing till the window starts again in fact")
+			}
+			restarted(acct.p.Account.UsageAgent(), "A@x.com")
+			if _, ok := restingOf(acct); ok == c.lifted {
+				t.Errorf("rest remains %v after the window stands started again, want %v", ok, !c.lifted)
+			}
+		})
+	}
+}
