@@ -53,7 +53,13 @@ settings `CodexTitles` and `CodexDescriptions` select their models separately;
 an empty setting preserves the requested model. On a Magpie model, both
 paths wrap plain model text in the object Codex requested. Titles use
 `{"title": ...}`; descriptions use `{"description": ...}` with nonempty text
-and no invented maximum length. Each has its own Off (`off`): magpie answers
+and no invented maximum length. A title request that offered a function
+tool may be answered with the call (#4942: a Codex title hook's
+`set_thread_title`, which the wrapper dropped, so the hook saw it never
+invoked): the call goes back as a normal turn's `function_call` item, its
+`call_id`, name and arguments as the model made them (`titleCallItems`),
+ahead of any text, and the turn is no failed title; a text answer is
+wrapped as before. Each has its own Off (`off`): magpie answers
 the request itself with a finished reply holding no message, sends nothing
 upstream and records it as answered here (`sentNowhere`); the Codex app reads
 that as no title or no description (its side-turn helper's "empty" result,

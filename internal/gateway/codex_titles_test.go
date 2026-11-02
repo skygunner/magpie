@@ -427,6 +427,88 @@ func TestNoDescription(t *testing.T) {
 	}
 }
 
+// codexTitleToolRequest is a title request that offers a function tool, as
+// Codex's app-server sends one for a title hook: an ephemeral thread_title
+// turn with a dynamic set_thread_title tool (#4942).
+func codexTitleToolRequest(t *testing.T, s *Server) *httptest.ResponseRecorder {
+	t.Helper()
+	body := `{"model":"gpt-5.6-luna","stream":true,"input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"Generate a concise title. User prompt:\nfix the login bug"}]}],` +
+		`"tools":[{"type":"function","name":"set_thread_title","description":"Set the thread's title","parameters":{"type":"object","properties":{"title":{"type":"string"}},"required":["title"]}}],` +
+		`"text":{"format":{"type":"json_schema","name":"codex_output_schema","strict":true,"schema":{"type":"object","properties":{"title":{"type":"string"}},"required":["title"],"additionalProperties":false}}}}`
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("POST", CodexPath+"/responses", strings.NewReader(body))
+	req.Header.Set("Authorization", "Bearer chatgpt-token")
+	req.Header.Set("x-codex-turn-metadata", `{"thread_source":"thread_title","parent_thread_id":"main-chat"}`)
+	s.Handler().ServeHTTP(rec, req)
+	return rec
+}
+
+// A title request that offers a function tool may be answered with the
+// call (#4942): a Codex title hook hands the model set_thread_title, whose
+// call the title wrapper dropped — the hook saw it never invoked although
+// the model chose it. The call goes back as a normal turn's function_call
+// item, its call_id, name and arguments as the model made them, and the
+// turn is not a failed title; a text answer still comes back the
+// {"title": …} Codex reads.
+func TestCodexTitleForwardsAFunctionCall(t *testing.T) {
+	toolCall := sse(
+		`data: {"id":"c1","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"id":"call_1","type":"function","function":{"name":"set_thread_title","arguments":"{\"title\":\"Fix login bug\"}"}}]}}]}`,
+		`data: {"id":"c1","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}],"usage":{"prompt_tokens":30,"completion_tokens":4}}`,
+		`data: [DONE]`)
+	f := &fake{t: t, reply: toolCall}
+	setup(t, provider.Chat, f)
+	st := settings.Load()
+	st.CodexTitles = "fake/m1"
+	if err := settings.Save(st); err != nil {
+		t.Fatal(err)
+	}
+	s := New()
+	rec := codexTitleToolRequest(t, s)
+	if rec.Code != 200 {
+		t.Fatalf("%d %s", rec.Code, rec.Body.String())
+	}
+	var call map[string]any
+	for _, ev := range events(rec.Body.String()) {
+		if ev["type"] != "response.completed" {
+			continue
+		}
+		resp, _ := ev["response"].(map[string]any)
+		out, _ := resp["output"].([]any)
+		if len(out) != 1 {
+			t.Fatalf("output %#v, want the one function_call", out)
+		}
+		call, _ = out[0].(map[string]any)
+	}
+	if call == nil {
+		t.Fatalf("no response.completed in %s", rec.Body.String())
+	}
+	if call["type"] != "function_call" || call["call_id"] != "call_1" ||
+		call["name"] != "set_thread_title" || call["arguments"] != `{"title":"Fix login bug"}` {
+		t.Fatalf("the call went back as %#v", call)
+	}
+	if id, _ := call["id"].(string); !strings.HasPrefix(id, "fc_") {
+		t.Errorf("the call's item id %q, want the fc_ prefix a normal turn's has", id)
+	}
+	// the call answered as Codex's hook does is no failed title
+	var last usage.Record
+	for _, u := range usage.Load(time.Time{}) {
+		last = u
+	}
+	if last.Kind != "thread_title" || last.Error != "" {
+		t.Errorf("the ledger's tool-called title %+v", last)
+	}
+
+	// a text answer still comes back the {"title": …} Codex reads
+	f.reply = sse(
+		`data: {"id":"c1","choices":[{"index":0,"delta":{"content":"Fix login bug"}}]}`,
+		`data: {"id":"c1","choices":[{"index":0,"delta":{},"finish_reason":"stop"}],"usage":{"prompt_tokens":30,"completion_tokens":4}}`,
+		`data: [DONE]`)
+	rec = codexTitleToolRequest(t, s)
+	if text, _ := outputText(t, rec.Body.String()); text != `{"title":"Fix login bug"}` {
+		t.Fatalf("a text answer came back %q", text)
+	}
+}
+
 func TestDescriptionJSON(t *testing.T) {
 	for in, want := range map[string]string{
 		"A short note":                               `{"description":"A short note"}`,

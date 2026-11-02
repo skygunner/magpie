@@ -148,7 +148,7 @@ func (s *Server) codexTitle(w http.ResponseWriter, r *http.Request, body []byte,
 	body, _ = codexInput(body, true)
 	rec := &recorder{header: http.Header{}, status: 200}
 	check := func(reply string) string {
-		if res, err := compactReply([]byte(reply)); err == nil && titleJSON(messageText(res), shape) == "" {
+		if res, err := compactReply([]byte(reply)); err == nil && !calledTool(res.Output) && titleJSON(messageText(res), shape) == "" {
 			return noTitle(messageText(res))
 		}
 		return ""
@@ -179,7 +179,13 @@ func (s *Server) codexTitle(w http.ResponseWriter, r *http.Request, body []byte,
 		id = fmt.Sprintf("resp_magpie_%d", time.Now().UnixNano())
 	}
 	var out []any
-	if t := titleJSON(messageText(res), shape); t != "" {
+	if calls := titleCallItems(res.Output); len(calls) > 0 {
+		// the model answered a tool the request offered with the call
+		// (#4942: a title hook's set_thread_title, dropped before, so the
+		// hook saw it never invoked): the call goes to Codex as a normal
+		// turn's would, ahead of any text — its answer is another turn's
+		out = append(out, calls...)
+	} else if t := titleJSON(messageText(res), shape); t != "" {
 		out = append(out, map[string]any{"type": "message", "id": "msg_" + strings.TrimPrefix(id, "resp_"), "role": "assistant", "status": "completed",
 			"content": []any{map[string]any{"type": "output_text", "text": t, "annotations": []any{}}}})
 	} else if res.Status == "incomplete" {
@@ -485,6 +491,30 @@ func messageText(res compactResult) string {
 		}
 	}
 	return said.String()
+}
+
+// titleCallItems is a reply's function calls as Responses function_call
+// items, their call_id, name and arguments as the model made them and an
+// item id minted as a normal turn's is (itemPrefix, #4942). A title
+// request that offers a function tool — Codex's set_thread_title — may be
+// answered with the call; the title wrapper rebuilt the reply by hand and
+// dropped it, where a normal turn's encoder hands every call through.
+func titleCallItems(out []compactOutput) []any {
+	var items []any
+	for _, o := range out {
+		if o.Type != "function_call" {
+			continue
+		}
+		callID := o.CallID
+		if callID == "" {
+			callID = "call_" + newID()
+		}
+		item := map[string]any{"type": "function_call", "status": "completed",
+			"call_id": callID, "name": o.Name, "arguments": o.Arguments}
+		item["id"] = itemPrefix(item) + newID()
+		items = append(items, item)
+	}
+	return items
 }
 
 // noTitle is why an answer to a title request gave Codex no title: what
