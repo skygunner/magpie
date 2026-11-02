@@ -14,7 +14,11 @@ package gateway
 // Only a reply no tool call of has begun goes on: a call's arguments
 // can't be prefilled, so one begun ends the reply as it used to. A
 // refusal isn't asked again, and a model that turned the prefill away
-// isn't asked to go on (prefill.go).
+// isn't asked to go on (prefill.go). A Responses upstream takes no
+// prefill at all — a conversation ending with the assistant's message is
+// a turn already said — so its cut reply goes on with the shown part sent
+// back and a user turn asking it on (continueMode), once: the model may
+// answer anew, and one re-ask is what an agent's own "continue" is (#3166).
 
 import (
 	"bytes"
@@ -244,9 +248,20 @@ func prefillHow(p provider.Provider, to provider.Protocol, model string) string 
 		return "anthropic"
 	case provider.Chat:
 		return chatPrefill(p.Host(), model)
+	case provider.Responses:
+		// no prefill there: the shown part goes back with a user turn
+		// asking the model on (request, continueMode)
+		return continueMode
 	}
 	return ""
 }
+
+// continueMode is a continuation whose upstream can't be prefilled: the
+// reply's shown part goes back as the conversation's last assistant
+// message and a user turn asks it on, as an agent told "continue" does.
+// Asked once: a reworded answer spliced onto the shown part is the risk
+// there, which a second ask would only double.
+const continueMode = "continue"
 
 // chatPrefill is the prefill mode of a Chat upstream at host serving
 // model: DeepSeek's prefix (its own API, where the mode is served under
@@ -300,13 +315,23 @@ func (c *continuation) possible() bool {
 	return c.mode != "" && !c.tools && (c.think.Len() > 0 || c.text.Len() > 0)
 }
 
+// tries is how many times the cut reply goes on with another try: as
+// many as streamRetries where the upstream goes on from the shown part
+// itself, one where it can only be asked on (continueMode).
+func (c *continuation) tries() int {
+	if c.mode == continueMode {
+		return 1
+	}
+	return streamRetries
+}
+
 // again says whether the cut reply goes on with another try, and readies
 // it: not the vendor's refusal (code), nor the request itself turned away
 // (a 400 the same ask gets again, a 404 — the mode's endpoint isn't
 // there), the tries not up, the client still there.
 func (c *continuation) again(status int, code string, again int, ctx context.Context) bool {
 	if code != "" || status == http.StatusBadRequest || status == http.StatusUnprocessableEntity ||
-		status == http.StatusNotFound || again >= streamRetries || ctx.Err() != nil || !c.possible() {
+		status == http.StatusNotFound || again >= c.tries() || ctx.Err() != nil || !c.possible() {
 		return false
 	}
 	c.resume, c.echo, c.seen = true, c.prefillText(), ""
@@ -334,6 +359,12 @@ func (c *continuation) request(orig *Request) *Request {
 		parts = append(parts, Part{Kind: Text, Text: s})
 	}
 	r.Messages = append(slices.Clone(orig.Messages), Message{Role: "assistant", Parts: parts})
+	if c.mode == continueMode {
+		// the same user turn a model that takes no prefill is asked with
+		// (prefill.go): nothing is put in the model's mouth that the
+		// client doesn't already have
+		r.Messages = append(r.Messages, Message{Role: "user", Parts: []Part{{Kind: Text, Text: continueText}}})
+	}
 	r.Resume = true
 	return &r
 }

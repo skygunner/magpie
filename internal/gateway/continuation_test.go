@@ -692,8 +692,9 @@ func TestChatPrefill(t *testing.T) {
 }
 
 // prefillHow: an Anthropic Messages upstream goes on from a trailing
-// assistant message natively, a Chat one in its vendor's own mode, and
-// every other API not at all.
+// assistant message natively, a Chat one in its vendor's own mode, a
+// Responses one not from a prefill at all: it is asked on with a user
+// turn after the shown part (continueMode).
 func TestPrefillHow(t *testing.T) {
 	chat := provider.Provider{Chat: "https://api.moonshot.cn/v1"}
 	if got := prefillHow(chat, provider.Chat, "kimi-k3"); got != "partial" {
@@ -702,8 +703,8 @@ func TestPrefillHow(t *testing.T) {
 	if got := prefillHow(chat, provider.Anthropic, "kimi-k3"); got != "anthropic" {
 		t.Errorf("prefillHow(moonshot, Anthropic) = %q, want anthropic", got)
 	}
-	if got := prefillHow(chat, provider.Responses, "kimi-k3"); got != "" {
-		t.Errorf("prefillHow(moonshot, Responses) = %q, want none", got)
+	if got := prefillHow(chat, provider.Responses, "kimi-k3"); got != continueMode {
+		t.Errorf("prefillHow(moonshot, Responses) = %q, want %q", got, continueMode)
 	}
 	plain := provider.Provider{Chat: "https://api.openai.com/v1"}
 	if got := prefillHow(plain, provider.Chat, "gpt-5"); got != "" {
