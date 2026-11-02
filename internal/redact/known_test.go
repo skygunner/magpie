@@ -1,6 +1,7 @@
 package redact
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -99,5 +100,54 @@ func TestKnownReindexed(t *testing.T) {
 	mu.Unlock()
 	if out, _ := Mask("it is "+secret, o); out != "it is "+strings.TrimPrefix(p, "API_TOKEN=") {
 		t.Fatalf("%q", out)
+	}
+}
+
+// The word an example credential is given that names the credential
+// itself — postgresql://example:password@localhost/test — is masked in
+// the URL's password slot, as ever, and not learned: the ordinary
+// sentences that use the word went as {{PASSWORD_…}} afterwards (#3365,
+// Phantomthedog, 4,888 request records).
+func TestCredentialOwnNameNotLearned(t *testing.T) {
+	Forget()
+	t.Cleanup(Forget)
+	o := Options{Secrets: true, Personal: true}
+	seed := "postgresql://example:password@localhost/test"
+	if out, n := Mask(seed, o); n != 1 || !regexp.MustCompile(`^postgresql://example:\{\{PASSWORD_[a-z2-7]{8}\}\}@localhost/test$`).MatchString(out) {
+		t.Fatalf("%d masked: %q", n, out)
+	}
+	// the word alone is no credential: a sentence and an assignment alike
+	// go as written
+	for _, s := range []string{
+		"Review SSH password authentication now.",
+		"DB_PASSWORD=password",
+	} {
+		if out, n := Mask(s, o); out != s || n != 0 {
+			t.Errorf("%d masked: %q went as %q", n, s, out)
+		}
+	}
+
+	// a real password still learns from the same slot, and is masked in
+	// prose after
+	if _, n := Mask("postgresql://example:Tr0ub4dor3@localhost/test", o); n != 1 {
+		t.Fatalf("the rule should mask it")
+	}
+	if out, n := Mask("the password is Tr0ub4dor3, changed yesterday", o); n != 1 || strings.Contains(out, "Tr0ub4dor3") {
+		t.Errorf("%d masked: %q", n, out)
+	}
+
+	// a bare word the list does not name is a password like any other:
+	// learned, masked wherever it is next. The list is closed; whether a
+	// dictionary of ordinary words should keep their look from learning is
+	// a wider choice than this fix makes.
+	Mask("postgresql://example:strawberry@localhost/test", o)
+	if out, n := Mask("cd ~/src/strawberry && ls", o); n != 1 || strings.Contains(out, "strawberry") {
+		t.Errorf("%d masked: %q", n, out)
+	}
+	// a capital in it is enough: Password is someone's password too,
+	// learned as before, and masked in prose that spells it so
+	Mask("postgresql://example:Password@localhost/test", o)
+	if out, n := Mask("Review SSH Password authentication now.", o); n != 1 || strings.Contains(out, "Password") {
+		t.Errorf("%d masked: %q", n, out)
 	}
 }

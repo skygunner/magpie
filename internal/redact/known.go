@@ -28,6 +28,24 @@ import (
 // for a password in an assignment asks of its value.
 const minKnown = 8
 
+// credentialWords are the words an example credential is given that name
+// the credential itself: postgresql://example:password@localhost/test,
+// "password": "password". The URL's password slot is masked as ever and
+// the value learned, and the word then went as {{PASSWORD_…}} in every
+// ordinary sentence that uses it — "Review SSH {{PASSWORD_…}}
+// authentication now." — across 4,888 of one user's request records
+// (Phantomthedog, #3365). Such a word names the thing, it is not the
+// thing: not learned, whatever placeholder masked it there. Every word in
+// the list is lower-case letters alone, so a value with a digit, a symbol
+// or a capital in it is learned as before, and so is a bare word the list
+// does not name (opensesame, strawberry), for a real password can be any
+// word and the list is closed. The shorter names of credentials (token,
+// secret, key, admin, root) are under minKnown already.
+var credentialWords = map[string]bool{
+	"password": true, "passphrase": true, "username": true,
+	"credential": true, "credentials": true,
+}
+
 type knownValue struct{ v, p, kind string }
 
 var (
@@ -54,6 +72,9 @@ func addKnown(p, v string) {
 	kind := kindOf(p)
 	if kind == "TERM" || len(v) < minKnown {
 		return
+	}
+	if credentialWords[v] {
+		return // the word names a credential, it is not one (#3365)
 	}
 	head := v[:minKnown]
 	for i, k := range known[head] {
