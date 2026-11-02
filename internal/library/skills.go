@@ -1588,12 +1588,16 @@ func updateSkills(names []string) (*Result, error) {
 }
 
 // updatable is whether a skill can be fetched again: one from GitHub or
-// another git repository, or one CC Switch installed from GitHub.
+// another git repository, or one CC Switch or the skills CLI installed
+// from GitHub.
 func updatable(s *Skill) bool {
 	if s.Source.remote() {
 		return true
 	}
-	_, ok := ccSwitchOrigin(s)
+	if _, ok := ccSwitchOrigin(s); ok {
+		return true
+	}
+	_, ok := lockOrigin(s)
 	return ok
 }
 
@@ -1671,6 +1675,11 @@ func (f *fetcher) prepare(s *Skill) (*skillUpdate, error) {
 		// one CC Switch installed from GitHub becomes the library's own,
 		// fetched from there, leaving CC Switch's folder as it is
 		o, ok := ccSwitchOrigin(s)
+		if !ok {
+			// one the skills CLI installed does too, fetched from where
+			// its lock says it came (#4645)
+			o, ok = lockOrigin(s)
+		}
 		if !ok {
 			return nil, fmt.Errorf("%s isn't from GitHub or a git repository; it's kept as it is", name)
 		}
@@ -1909,6 +1918,9 @@ func removeSkill(l *Library, name, stamp string) error {
 	for _, p := range l.Projects {
 		delete(p.Skills, name)
 	}
+	// a group the user put it in is its, not its name's: another skill
+	// called so later is not in it
+	l.pruneSkillGroups()
 	return nil
 }
 
@@ -2206,8 +2218,14 @@ func importSkill(l *Library, found []FoundSkill, name string) error {
 		return err
 	}
 	// where it came from is told before it is moved: a copy leaves its
-	// .git behind, and the skills CLI's lock names it where it was
-	from := (&tracer{}).folder(f.real)
+	// .git behind, and the skills CLI's lock names it where it was, or
+	// names a copy it gave the agent when the CLI wrote that very folder
+	// (lockRepo), kept as From so an edit made later leaves it grouped
+	tr := &tracer{}
+	from := tr.folder(f.real)
+	if from == "" && f.Library == "" && f.Link == "" && !linked(f.at) {
+		from = tr.lockRepo(name, f.real)
+	}
 	src := &Source{Kind: "folder", Dir: f.real}
 	// one in the shared ~/.agents/skills (or a link into it) stays
 	// there, linked to: the shared folder is the user's, never emptied
