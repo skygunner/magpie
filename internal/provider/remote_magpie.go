@@ -71,6 +71,19 @@ const RemoteMagpiePreset = "remote-magpie"
 // IsRemoteMagpie reports whether the provider is another magpie.
 func (p Provider) IsRemoteMagpie() bool { return p.Preset == RemoteMagpiePreset }
 
+// RemoteNested says the model id already carries a remote-magpie
+// qualification: it begins "remote-magpie/", the prefix a magpie puts
+// before a model it listed from another magpie under a provider of this
+// preset's own id. Taken from a list and served on to yet another one, the
+// id would come back with one more of the same prefix each round of model
+// discovery — a sync can leave a Remote magpie provider pointing into its
+// own chain (#3834), where ids hundreds of prefixes deep filled the model
+// cache in minutes. Such an id is neither kept from a remote magpie's
+// list nor served to one: one remote-magpie qualification in an id is all
+// a chained model ever needs, and a request looped around the chain is
+// ended by the hop guard on the gateway.
+func RemoteNested(id string) bool { return strings.HasPrefix(id, RemoteMagpiePreset+"/") }
+
 // remoteMagpieEndpoints puts every API on the address given, however it
 // was typed: the bare host and port (plain http, which magpie serves),
 // …/v1, or the Anthropic root.

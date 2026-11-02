@@ -1312,6 +1312,13 @@ func drawerObjects(r *http.Request) []map[string]any {
 		}
 		// less those unticked in its editor, as Settings › Images lists them
 		for _, m := range OfferedDrawers(p) {
+			// and less one whose id already carries a remote-magpie
+			// qualification of this magpie's own (RemoteNested): served on to
+			// another magpie it would come back one prefix deeper every round
+			// of discovery (#3834)
+			if provider.RemoteNested(m.ID) {
+				continue
+			}
 			if held && (!modelAllowed(who, p, m.ID) || !accountServes(who, p, m.ID)) {
 				continue
 			}
@@ -1340,6 +1347,11 @@ func videomakerObjects(r *http.Request) []map[string]any {
 			continue
 		}
 		for _, m := range Videomakers(p) {
+			// as the image models above: an id already remote-nested is
+			// not served to another magpie (#3834)
+			if provider.RemoteNested(m.ID) {
+				continue
+			}
 			if held && (!modelAllowed(who, p, m.ID) || !accountServes(who, p, m.ID)) {
 				continue
 			}
@@ -1366,9 +1378,17 @@ func (s *Server) models(w http.ResponseWriter, r *http.Request) {
 	} else if agent == ScienceID {
 		data = scienceModels(shown)
 	} else {
-		labels := provider.Labels(shown)
 		// for another magpie: how it searches the web for each model
 		magpie := r.Header.Get(provider.DrawersHeader) != ""
+		// and not a model whose id already carries a remote-magpie
+		// qualification of this one's own (RemoteNested): served to a
+		// magpie whose provider points back into this chain, the id would
+		// gain one more prefix every round of discovery (#3834). This
+		// magpie's own agents are shown it still.
+		if magpie {
+			shown = slices.DeleteFunc(shown, func(e provider.Entry) bool { return provider.RemoteNested(e.Model) })
+		}
+		labels := provider.Labels(shown)
 		searches := magpie && canSearch()
 		// for another magpie, what each model costs here, so its usage
 		// there is counted at the same price: told only to this computer

@@ -716,7 +716,27 @@ type fetched struct {
 // base, its GPT models at its Chat base). Keeping only the first list that
 // answered left every other endpoint's models out of the catalog, and so out
 // of the agents' model lists and of a model's own protocol setting.
+//
+// Another magpie's list is that magpie's own, its ids qualified with its
+// providers, and a model of its whose id already carries a remote-magpie
+// qualification (RemoteNested) is dropped here: kept, a provider pointing
+// back into the same chain — one a sync can leave behind (#3834) — would
+// list the id again as its remote's own and be served it back with one
+// more of the prefix each round, without end.
 func (p Provider) fetchOne(ctx context.Context) (fetched, error) {
+	l, err := p.fetchMerged(ctx)
+	if err == nil && p.IsRemoteMagpie() {
+		l.models = slices.DeleteFunc(l.models, func(m catalog.Model) bool { return RemoteNested(m.ID) })
+		for b, ms := range l.sides {
+			l.sides[b] = slices.DeleteFunc(ms, func(m catalog.Model) bool { return RemoteNested(m.ID) })
+		}
+	}
+	return l, err
+}
+
+// fetchMerged is fetchOne's asking and merging, before a remote magpie's
+// list is kept.
+func (p Provider) fetchMerged(ctx context.Context) (fetched, error) {
 	ctx = p.ownRequests(ctx, probelog.KindList) // a detection's list too
 	if u := strings.TrimSpace(p.ModelsURL); u != "" {
 		// asked where the user said, and nowhere else: the base URLs

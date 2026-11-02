@@ -95,6 +95,19 @@ list has no separate retrieval kind: these entries remain in `Catalog` and
 agent model lists, just as on the remote. Keeping them makes retrieval
 routing possible; their presence does not mean they support conversations.
 
+A model id that already carries a `remote-magpie/` qualification
+(`provider.RemoteNested`) is dropped from a remote magpie's fetched list
+(`fetchOne` in [`models.go`](../../internal/provider/models.go)) and left
+out of the chat, image and video rows the gateway serves to another magpie
+(`models`, `drawerObjects`, `videomakerObjects` in
+[`gateway.go`](../../internal/gateway/gateway.go)): kept and served on
+around a provider that points back into its own chain — one configuration
+sync can leave (#3834) — the id gained one more prefix on every round of
+model discovery, until ids hundreds of prefixes deep filled the model
+cache. This magpie's own agents are still shown such a model; a looped
+request is ended by the hop guard in
+[gateway routing](gateway-routing.md#model-routing).
+
 `DecidesModel` uses the remote's explicit decision marker, so Clef and custom
 names work and a chat model named Jev Router stays a chat model. `Deciders`
 lists, and the gateway answers, these decisions even when the user's local
