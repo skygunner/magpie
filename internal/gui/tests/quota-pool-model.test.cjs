@@ -20,19 +20,19 @@ const model = (name, family, pool, used, h) => ({ name, family, pool, used, rese
 const pool = (pool, name, used, h) => ({ name, pool, used, resetsAt: at(h) });
 // as magpie reports it: the models, then each group's windows as Google
 // lists the groups, Argon's last with its week alone
-const ag = (user) => ({
+const ag = (user, [g5, g7, c5, c7, a7]) => ({
   provider: "antigravity", name: "Antigravity", icon: "antigravity-color", user, plan: "Google AI Pro",
   windows: [
-    model("Claude Sonnet 4.6", "Claude", "Claude & GPT", 30, 3),
-    model("Gemini 3 Flash", "Gemini", "Gemini", 0, 2),
-    model("Gemini 4 Argon", "Gemini", "Gemini 4 Argon", 47, 150),
-    pool("Gemini", "7 days", 1, 100), pool("Gemini", "5 hours", 0, 2),
-    pool("Claude & GPT", "7 days", 40, 90), pool("Claude & GPT", "5 hours", 30, 3),
-    pool("Gemini 4 Argon", "7 days", 47, 150),
+    model("Claude Sonnet 4.6", "Claude", "Claude & GPT", c5, 3),
+    model("Gemini 3 Flash", "Gemini", "Gemini", g5, 2),
+    model("Gemini 4 Argon", "Gemini", "Gemini 4 Argon", a7, 150),
+    pool("Gemini", "7 days", g7, 100), pool("Gemini", "5 hours", g5, 2),
+    pool("Claude & GPT", "7 days", c7, 90), pool("Claude & GPT", "5 hours", c5, 3),
+    pool("Gemini 4 Argon", "7 days", a7, 150),
   ],
 });
-const quotas = [ag("ada@example.com")];
-const logins = [{ user: "ada@example.com", plan: "Google AI Pro", active: true, on: true }];
+const quotas = [ag("ada@example.com", [0, 1, 30, 40, 47]), ag("bob@example.com", [10, 19, 10, 60, 13])];
+const logins = quotas.map((q, i) => ({ user: q.user, plan: q.plan, active: i === 0, on: true }));
 const antigravity = {
   id: "antigravity", name: "Antigravity", icon: "antigravity-color", chat: "", responses: "", anthropic: "", catalog: "",
   models: [{ id: "gemini-3-flash", name: "Gemini 3 Flash", on: true }], agents: [], fallback: [], headers: {}, keyList: [],
@@ -82,21 +82,30 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         return page;
       };
       const fill = (loc) => loc.evaluateAll((es) => es.map((e) => Math.round(parseFloat(e.style.width))));
+      const poolNames = [`Gemini · ${w.five}`, `Gemini · ${w.week}`, `Claude & GPT · ${w.five}`, `Claude & GPT · ${w.week}`, `Gemini 4 Argon · ${w.week}`];
 
       // the Usage page: every group's windows, Claude & GPT before Argon
       const page = await open("http://magpie.test/?view=usage", { width: 900, height: 700 });
-      const box = page.locator(".subscription-card", { hasText: "Antigravity" }).locator(".quota-windows").first();
+      const subCard = page.locator(".subscription-card", { hasText: "Antigravity" });
+      const box = subCard.locator(".quota-windows").first();
       await box.waitFor();
-      assert.deepEqual(await box.locator(".quota-labels > span:first-child").allTextContents(),
-        [`Gemini · ${w.five}`, `Gemini · ${w.week}`, `Claude & GPT · ${w.five}`, `Claude & GPT · ${w.week}`, `Gemini 4 Argon · ${w.week}`]);
+      assert.deepEqual(await box.locator(".quota-labels > span:first-child").allTextContents(), poolNames);
+      await subCard.locator(".quota-all").waitFor();
+      assert.deepEqual(await subCard.locator(".quota-all .quota-all-name").allTextContents(), poolNames);
       const tip = await box.locator(".quota").nth(1).getAttribute("title");
       assert(tip.includes("Gemini 3 Flash") && !tip.includes("Gemini 4 Argon"), "Gemini's pool is the other Gemini models': " + tip);
 
       // the menu bar panel: five rings, Claude's among them, Argon's named for it
       const panel = await open("http://magpie.test/?mode=panel", { width: 440, height: 640 });
       await panel.locator('#ptabs [data-ptab="usage"]').click();
-      const card = panel.locator(".pq-group", { hasText: "Antigravity" }).locator(".pq-card").first();
+      const pgroup = panel.locator(".pq-group", { hasText: "Antigravity" });
+      const card = pgroup.locator(".pq-card").first();
       await card.locator(".pq-ring").first().waitFor();
+      await pgroup.locator(".pq-all").waitFor();
+      assert.deepEqual(await pgroup.locator(".pq-all .quota-all-name").allTextContents(), poolNames);
+      assert.deepEqual(await fill(pgroup.locator(".pq-all .quota-all-bar i")), [5, 10, 20, 50, 30]);
+      const allTip = await pgroup.locator(".pq-all .quota-all-w").nth(4).getAttribute("title");
+      assert(allTip.includes("Gemini 4 Argon"), "the pool summary tooltip names Argon: " + allTip);
       assert.deepEqual(await card.locator(".pq-rn").evaluateAll((es) => es.map((e) => [...e.children].map((c) => c.textContent).join(" "))),
         ["Gemini 5h", "Gemini 7d", "Claude 5h", "Claude 7d", "Gemini 4 7d"]);
       assert.deepEqual(await card.locator(".pq-dial b").allTextContents(), ["0%", "1%", "30%", "40%", "47%"]);

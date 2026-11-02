@@ -5469,7 +5469,8 @@ function routingPage(part) {
       // mergeQuotas is quotaall.js's: once it is in, the groups are drawn again
       if (!window.mergeQuotas) { quotaAllJS().then(() => { groupsQuotas = null; }); return []; }
       const all = mergeQuotas(subs);
-      const ws = (familyWindows(all.windows) || []).slice(0, 3);
+      const fam = familyWindows(all.windows) || [];
+      const ws = fam.slice(0, fam.some((w) => w.members) ? Math.max(4, fam.filter((w) => w.members).length) : 3);
       if (!ws.length) continue;
       const figs = ws.map((w) => t(w.name) + (w.plan ? " · " + w.plan : "") + " " + quotaText(w)).join(" · ");
       const text = t("{name}, {n} accounts: {windows}", { name: i.name || i.provider, n: subs.length, windows: figs });

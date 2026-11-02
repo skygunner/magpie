@@ -78,7 +78,8 @@ function quotaAll(subs, cls = "", max = Infinity) {
   lead.title = t("These accounts' windows together: amounts of one unit are added up; a window said only as a share is the mean of the accounts on one plan, which have the same allowance. Each account is below.");
   box.append(lead);
   const ws = familyWindows(all.windows);
-  for (const w of ws.slice(0, max)) {
+  const lim = ws.some((w) => w.members) ? Math.max(4, max, ws.filter((w) => w.members).length) : max;
+  for (const w of ws.slice(0, lim)) {
     const item = el("span", "quota-all-w");
     const name = t(w.name) + (w.plan ? " · " + w.plan : "");
     item.append(el("span", "quota-all-name", name), el("span", "quota-all-n", quotaText(w)));
@@ -95,7 +96,8 @@ function quotaAll(subs, cls = "", max = Infinity) {
       w.unknown && t("{n} more read before it started again: left out", { n: w.unknown }),
       w.held && t("{n} of them can't spend theirs before a longer window used up starts again: counted as none left", { n: w.held }),
       w.firstReset && t("The first of them starts again {when}", { when: resetClock(new Date(w.firstReset)) }),
-      w.tiers && "\n" + tiersText(w));
+      w.tiers && "\n" + tiersText(w),
+      w.members && "\n" + poolTip(w));
     box.append(item);
   }
   if (all.unknown) {
