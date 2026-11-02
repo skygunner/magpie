@@ -3,6 +3,7 @@ package gateway
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -45,6 +46,54 @@ func TestRequestCallKindBody(t *testing.T) {
 	body, _ := json.Marshal(map[string]any{"client_metadata": map[string]string{"x-codex-turn-metadata": string(meta)}})
 	if got := requestCallKind(http.Header{}, requestSessionMetadata(http.Header{}, body)); got != "thread_title" {
 		t.Fatalf("body-only title kind=%q", got)
+	}
+}
+
+// A thread_sample turn names a prediction by its turn_trigger, read on
+// every transport thread_source is (#3903, zhouhaochengZz): the metadata
+// blob in the body, as an object or a JSON string, the flat
+// client_metadata projections, and the header. The report's client sent
+// no trigger; a trigger other than composer_predictions is some other
+// sample, not a prediction; and a subagent turn stays a subagent turn.
+func TestThreadSampleTurnTrigger(t *testing.T) {
+	for _, tc := range []struct{ name, trigger, want string }{
+		{"no trigger", "", "composer_predictions"},
+		{"the prediction's own trigger", "composer_predictions", "composer_predictions"},
+		{"padded", " composer_predictions ", "composer_predictions"},
+		{"another trigger", "user_submit", "thread_sample"},
+	} {
+		for _, transport := range []string{"blob object", "blob string", "flat", "header"} {
+			t.Run(tc.name+"/"+transport, func(t *testing.T) {
+				blob := `{"thread_source":"thread_sample"`
+				flat := ""
+				if tc.trigger != "" {
+					blob += `,"turn_trigger":` + strconv.Quote(tc.trigger)
+					flat = `,"turn_trigger":` + strconv.Quote(tc.trigger)
+				}
+				blob += `,"forked_from_thread_id":"main"}`
+				h := http.Header{}
+				var body []byte
+				switch transport {
+				case "blob object":
+					body, _ = json.Marshal(map[string]any{"client_metadata": map[string]json.RawMessage{"x-codex-turn-metadata": json.RawMessage(blob)}})
+				case "blob string":
+					body, _ = json.Marshal(map[string]any{"client_metadata": map[string]string{"x-codex-turn-metadata": blob}})
+				case "flat":
+					body = []byte(`{"client_metadata":{"thread_source":"thread_sample"` + flat + `}}`)
+				case "header":
+					h.Set("x-codex-turn-metadata", blob)
+				}
+				if got := requestCallKind(h, requestSessionMetadata(h, body)); got != tc.want {
+					t.Fatalf("%s: kind=%q, want %q", transport, got, tc.want)
+				}
+			})
+		}
+	}
+	h := http.Header{}
+	h.Set("x-codex-turn-metadata", `{"thread_source":"thread_sample","turn_trigger":"composer_predictions"}`)
+	h.Set("x-openai-subagent", "review")
+	if got := requestCallKind(h, requestSessionMetadata(h, nil)); got != "review" {
+		t.Fatalf("a subagent turn under a prediction's names: kind=%q", got)
 	}
 }
 

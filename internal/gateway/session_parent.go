@@ -34,6 +34,7 @@ type sessionMetadata struct {
 	Turn         string `json:"turn_id"`
 	Thread       string `json:"thread_id"`
 	Source       string `json:"thread_source"`
+	Trigger      string `json:"turn_trigger"`
 	Parent       string `json:"parent_thread_id"`
 	Forked       string `json:"forked_from_thread_id"`
 	Installation string `json:"installation_id"`
@@ -61,6 +62,7 @@ func requestSessionMetadata(h http.Header, body []byte) sessionMetadata {
 			_ = json.Unmarshal(metadata["thread_id"], &m.Thread)
 			// Compatibility projections used by clients without the full blob.
 			_ = json.Unmarshal(metadata["thread_source"], &m.Source)
+			_ = json.Unmarshal(metadata["turn_trigger"], &m.Trigger)
 			_ = json.Unmarshal(metadata["parent_thread_id"], &m.Parent)
 			if m.Parent == "" {
 				_ = json.Unmarshal(metadata["x-codex-parent-thread-id"], &m.Parent)
@@ -98,7 +100,18 @@ func requestCallKind(h http.Header, m sessionMetadata) string {
 	if h.Get("x-openai-subagent") != "" || h.Get("x-openai-memgen-request") != "" {
 		return callKind(h)
 	}
-	switch source := strings.TrimSpace(m.Source); source {
+	source := strings.TrimSpace(m.Source)
+	// ChatGPT desktop 26.1021 asks for its composer prediction as a
+	// thread_sample (#3903): zhouhaochengZz's 0.1.1909 client named the
+	// trigger composer_predictions, the report's carried none, and either
+	// shape is the same prediction as composer_predictions. A thread_sample
+	// under another trigger is some other sample, not a prediction.
+	if source == "thread_sample" {
+		if trigger := strings.TrimSpace(m.Trigger); trigger == "" || trigger == "composer_predictions" {
+			return "composer_predictions"
+		}
+	}
+	switch source {
 	case "", "user", "subagent":
 		return callKind(h)
 	default:
