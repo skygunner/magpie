@@ -520,12 +520,19 @@ func TestGeminiURLIsItsHost(t *testing.T) {
 		t.Fatalf("the same relay was added again as %q", id)
 	}
 
-	// an import entry at the relay over another protocol is the provider
-	// already here at its Gemini URL, the same key in hand
+	// an import entry at the relay over another protocol brings an API
+	// the Gemini provider is not asked at: offered, to fold the endpoint
+	// in at import (#4904); one that brings none of its own is the
+	// provider already here at its Gemini URL, the same key in hand
 	it := settle([]AppImport{{Ref: "r", Provider: Provider{
 		ID: "gr", Name: "Gemini Relay", Key: "sk-g", Chat: "https://g.example.com/v1",
 	}}}, All(), map[string]bool{})[0]
-	if it.Status != "same" || it.Existing != "Gemini Relay" {
+	if it.Status != "new" {
+		t.Fatalf("the relay's entry over Chat: %+v", it)
+	}
+	if it := settle([]AppImport{{Ref: "r", Provider: Provider{
+		ID: "gr", Name: "Gemini Relay", Key: "sk-g", Gemini: "https://g.example.com",
+	}}}, All(), map[string]bool{})[0]; it.Status != "same" || it.Existing != "Gemini Relay" {
 		t.Fatalf("the relay's import entry: %+v", it)
 	}
 }
@@ -573,5 +580,68 @@ func TestClaudeImportWhileRoutedTakesTheStashedEnv(t *testing.T) {
 		if !slices.Contains(it.Provider.Models, m) {
 			t.Fatalf("models %v miss %s", it.Provider.Models, m)
 		}
+	}
+}
+
+// An entry with an API the provider holding its key and host has not is
+// not "Already added" with that endpoint dropped (#4904, the sibling of
+// the Add fix's servesAll): it is offered, and its endpoint folds into
+// the provider at import, as merge folds one account's two entries within
+// one source (#1486) — not a second provider.
+func TestImportEntryWithAPITheProviderLacks(t *testing.T) {
+	existing := Provider{ID: "relay", Key: "sk-relay", Chat: "https://relay.example.com/v1"}
+	entry := AppImport{Provider: Provider{Key: "sk-relay", Anthropic: "https://relay.example.com"}}
+	items := settle([]AppImport{entry}, []Provider{existing}, map[string]bool{})
+	if items[0].Status != "new" || items[0].KeyOf != "" {
+		t.Fatalf("an entry bringing an API the provider lacks should be importable: %+v", items[0])
+	}
+	both := existing
+	both.Anthropic = "https://relay.example.com"
+	items = settle([]AppImport{entry}, []Provider{both}, map[string]bool{})
+	if items[0].Status != "same" {
+		t.Fatalf("with both endpoints held it is the provider already: %+v", items[0])
+	}
+}
+
+// The import folds the entry's endpoint into the provider that holds its
+// account, instead of showing it "Already added" and dropping the
+// endpoint (#4904): a relay whose OpenAI endpoint magpie already has, its
+// Claude Code entry (same key, same host) saves the Anthropic endpoint
+// there, and no second provider is added.
+func TestImportFoldsTheEndpointItBrings(t *testing.T) {
+	isolate(t)
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)                                  // Windows
+	t.Setenv("APPDATA", filepath.Join(home, "AppData", "Roaming")) // Windows: never the real Alma
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
+	t.Setenv("XDG_CACHE_HOME", filepath.Join(home, ".cache"))
+	t.Setenv("CLAUDE_CONFIG_DIR", filepath.Join(home, ".claude"))
+	if err := Save(Provider{ID: "relay", Name: "Some Relay", Key: "sk-relay", Chat: "https://relay.example.com/v1"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(home, ".claude"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(home, ".claude", "settings.json"),
+		[]byte(`{"env":{"ANTHROPIC_BASE_URL":"https://relay.example.com","ANTHROPIC_AUTH_TOKEN":"sk-relay"}}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if it := itemsOf(t, "claude-code")["settings"]; it.Skip != "" || it.Status != "new" {
+		t.Fatalf("the relay's Claude Code entry: %+v", it)
+	}
+	added, err := ImportFromApps([]AppPick{{Source: "claude-code", Ref: "settings"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(added) != 1 {
+		t.Fatalf("added %v", added)
+	}
+	ps := load().Providers
+	if len(ps) != 1 || ps[0].ID != "relay" || ps[0].Chat != "https://relay.example.com/v1" || ps[0].Anthropic != "https://relay.example.com" {
+		t.Fatalf("the provider after import: %+v", ps)
+	}
+	if it := itemsOf(t, "claude-code")["settings"]; it.Status != "same" {
+		t.Fatalf("after the fold: %+v", it)
 	}
 }

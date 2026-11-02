@@ -195,6 +195,24 @@ func ImportFromApps(picks []AppPick) (added []string, err error) {
 			// Code's settings.json points at, and both are picked at once.
 			// Two of it were added, and once one was removed the other made
 			// the entry "Already added" (#1486)
+			//
+			// One that brings an API the provider holding it has not folds
+			// that endpoint in instead (#4904, the sibling of the Add
+			// form's servesAll): the entry said "Already added" and its
+			// endpoint was dropped, so requests kept going through the
+			// endpoint already there, with translation.
+			if h, lacks := holdsLacking(p); lacks {
+				for _, f := range []struct{ dst, src *string }{{&h.Chat, &p.Chat}, {&h.Responses, &p.Responses}, {&h.Anthropic, &p.Anthropic}, {&h.Gemini, &p.Gemini}} {
+					if *f.src != "" && *f.dst == "" {
+						*f.dst = *f.src
+					}
+				}
+				if err := Save(h); err != nil {
+					return added, errorf("%s: %v", p.Name, err)
+				}
+				added = append(added, p.Name+" ("+h.Name+")")
+				continue
+			}
 			if holds(p) {
 				continue
 			}
@@ -237,6 +255,20 @@ func holds(p Provider) bool {
 		}
 	}
 	return false
+}
+
+// holdsLacking is the provider that has p's account (holds) and is asked
+// at none of its own for an API p brings (bringsAPI), when there is one:
+// the entry's endpoint folds into it at import (ImportFromApps), as merge
+// folds one account's two entries within one source (#1486), not a second
+// provider (#4904).
+func holdsLacking(p Provider) (Provider, bool) {
+	for _, h := range load().Providers {
+		if !h.Hidden && h.Account == nil && sameProvider(h, p) && bringsAPI(h, p) {
+			return h, true
+		}
+	}
+	return Provider{}, false
 }
 
 // freeID is id, or id-2, id-3… whichever no provider has.
@@ -298,6 +330,12 @@ func settle(items []AppImport, have []Provider, used map[string]bool) []AppImpor
 				continue
 			}
 			if sameProvider(h, *p) {
+				// an entry that brings an API this provider is not asked at
+				// is not it already (#4904): the endpoint folds into the
+				// provider at import (holdsLacking), it is not dropped
+				if bringsAPI(h, *p) {
+					continue
+				}
 				it.Status, it.Existing = "same", h.Name
 				break
 			}
@@ -354,6 +392,22 @@ func sameProvider(a, b Provider) bool {
 	}
 	for _, u := range []string{b.Chat, b.Responses, b.Anthropic, b.Gemini} {
 		if hosts[hostOf(u)] {
+			return true
+		}
+	}
+	return false
+}
+
+// bringsAPI says p has the address of an API h is asked at none of its
+// own for: what the entry folds into h at import (#4904). A same-kind
+// address spelled differently (…/v1 beside the bare host) brings nothing
+// — that stays the account it already is, as it did before. The Add form
+// tells the same two apart with servesAll, and lets the second format be
+// a provider of its own; the import treats one key at one host as one
+// account (#1486), so it folds instead.
+func bringsAPI(h, p Provider) bool {
+	for _, f := range [][2]string{{h.Chat, p.Chat}, {h.Responses, p.Responses}, {h.Anthropic, p.Anthropic}, {h.Gemini, p.Gemini}} {
+		if f[1] != "" && f[0] == "" {
 			return true
 		}
 	}
