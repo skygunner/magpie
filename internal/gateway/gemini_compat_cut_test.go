@@ -50,7 +50,7 @@ var compatBare = strings.Replace(compatCall, `,"usage":{"completion_tokens":1110
 // was cut, and the client is told so, as a Gemini stream's is (#1644).
 func TestGeminiCompatRelayEndedShort(t *testing.T) {
 	const ask = `{"model":"MODEL","stream":true,"stream_options":{"include_usage":true},"messages":[{"role":"user","content":"hi"}]}`
-	const cut = `data: {"error":{"message":"UP: the reply ended before it was complete","type":"api_error"}}`
+	const cut = `data: {"error":{"code":"server_error","message":"UP: the reply ended before it was complete","status":502,"type":"api_error"}}`
 
 	code, body := compatServer(t, "gemini-4-argon", compatCall, "/v1/chat/completions", ask)
 	if code != 200 || !strings.Contains(body, `"codemode"`) || strings.Contains(body, "ended before") {

@@ -2237,7 +2237,7 @@ func (h *holdWriter) pass() {
 	}
 	dst := h.w.Header()
 	for k, v := range h.header {
-		if k != resetsHeader && k != refusedHeader && k != zdrHeader && k != answeredThereHeader && k != keyLimitThereHeader { // magpie's own notes, for restAfter and settle
+		if k != resetsHeader && k != refusedHeader && k != zdrHeader && k != answeredThereHeader && k != keyLimitThereHeader && k != namedStatusHeader { // magpie's own notes, for restAfter and settle
 			dst[k] = v
 		}
 	}
@@ -2760,7 +2760,7 @@ func (h *holdWriter) keepAlive() {
 		}
 		dst := h.w.Header()
 		for k, v := range src {
-			if k != resetsHeader && k != refusedHeader && k != zdrHeader && k != answeredThereHeader && k != keyLimitThereHeader && k != "Content-Length" {
+			if k != resetsHeader && k != refusedHeader && k != zdrHeader && k != answeredThereHeader && k != keyLimitThereHeader && k != namedStatusHeader && k != "Content-Length" {
 				dst[k] = slices.Clone(v)
 			}
 		}
@@ -3477,6 +3477,11 @@ func streamEvent(ev []byte) (kind, status int, msg string) {
 		if json.Unmarshal(v.Message, &m) == nil && m != "" {
 			msg += " " + m
 		}
+		if said := namedStatusOf(raw); said != 0 {
+			// the error names its own status, and it is the one it fails
+			// as (#4855), not the one its words guess
+			return eventError, said, msg
+		}
 		return eventError, streamStatus(msg), msg
 	}
 	refusal := func(reason string) (int, int, string) {
@@ -3956,7 +3961,58 @@ func errorReply(body []byte) (status int, msg string, ok bool) {
 	} else if json.Unmarshal(v.Error, &e) != nil || e.Message == nil && e.Type == nil && e.Code == nil && e.Status == nil {
 		return 0, "", false
 	}
+	if said := namedStatusOf(v.Error); said != 0 {
+		// the error names its own status (#4855)
+		return said, provider.APIError(b, "the upstream reported an error"), true
+	}
 	return streamStatus(string(wordsOf(b))), provider.APIError(b, "the upstream reported an error"), true
+}
+
+// namedStatus is the status a reply's error object names for itself
+// (#4855), 0 when it names none or has no error object.
+func namedStatus(body []byte) int {
+	var v struct {
+		Error json.RawMessage `json:"error"`
+	}
+	if json.Unmarshal(body, &v) != nil {
+		return 0
+	}
+	return namedStatusOf(v.Error)
+}
+
+// namedStatusOf is the status an error object names for itself, on a
+// member of its own: a plugin that ends an OpenAI-compatible stream can
+// only say what went wrong in the frame, and the status it names there is
+// the routing signal; Gemini's own relays carry theirs as code. A string
+// code is not a status, and neither is a number outside 400–599. 0 when
+// it names none.
+func namedStatusOf(errRaw []byte) int {
+	if len(errRaw) == 0 || string(errRaw) == "null" {
+		return 0
+	}
+	var e struct {
+		Code   json.RawMessage `json:"code"`
+		Status json.RawMessage `json:"status"`
+	}
+	if json.Unmarshal(errRaw, &e) != nil {
+		return 0
+	}
+	num := func(raw json.RawMessage) int {
+		var n json.Number
+		if json.Unmarshal(raw, &n) != nil { // a string code is not a status
+			return 0
+		}
+		if i, err := n.Int64(); err == nil && i >= 400 && i < 600 {
+			return int(i)
+		}
+		return 0
+	}
+	for _, raw := range []json.RawMessage{e.Status, e.Code} {
+		if n := num(raw); n != 0 {
+			return n
+		}
+	}
+	return 0
 }
 
 // streamStatus is the status an error in a stream stands for, as a vendor
