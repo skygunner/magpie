@@ -84,8 +84,22 @@ the full name, which is the client's own, when the cut name maps to
 nothing and isn't in `subscriptionRun.tools`: handed over cut, as
 `<server>__<tool>`, the client answered "No such tool available" and the
 model had to load it and call again (packinggoods, 11-02,
-`TestClaudeBridgeHandsOverAnUnloadedMagpieTool`). A deferred tool of
-another client MCP server (`mcp__linear__…`) is still not handed over.
+`TestClaudeBridgeHandsOverAnUnloadedMagpieTool`).
+
+A tool of the client's own MCP server, called by its own name with no
+`mcp__magpie__` before it — `mcp__linear__get_issue` before a ToolSearch
+loads it (#4956), `mcp__yfinance__get_stock_info` after one (#4854) — is
+handed to the client under the name the run's model called, which is the
+client's own, when that name is one the client said: a tool it sent
+(`subscriptionRun.tools`) or one its conversation names
+(`subscriptionRun.announced`, `clientMCPTools`: the deferred-tools
+reminder's `mcp__…` names, and the tools a result loads, #2660).
+Answered by the run instead, the client never saw the call and the model
+retried under the helper's full name ("No MCP server provides it", "No
+such tool available"). The run's own claude.ai connectors carry such
+names too and stay the run's, which alone can answer them: a name the
+client neither sent nor announced is not handed over
+(`TestClaudeBridgeHandsOverAClientMCPToolByItsOwnName`).
 
 A turn with `tool_choice` none is offered every tool the client sent, as
 any other turn is (bbfatx on X). Anthropic caches a prompt as tools, then

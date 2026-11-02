@@ -192,6 +192,12 @@ type subscriptionRun struct {
 	// names is the caller's name of each tool by the name the run's agent
 	// has it under (bridgeToolName), for those it differs: under r.mu
 	names map[string]string
+	// announced is the MCP tools the client has said are its own — those
+	// it sent in tools and those its conversation names without sending
+	// them (clientMCPTools): a call of one is the client's, though the
+	// run's agent knows it no other way than the name it read there.
+	// Under r.mu.
+	announced map[string]bool
 
 	mu sync.Mutex
 	// sending is held across a send to the segment and taken before it is
@@ -1116,6 +1122,7 @@ func (b *subscriptionBridge) startRun(ctx context.Context, req *Request, model, 
 	run := &subscriptionRun{bridge: b, token: token, model: model, cmd: cmd, tmp: tmp, schema: len(req.Format.schema()) > 0, pending: map[string]chan mcpToolResult{}, stdin: stdin, effort: req.Effort, sessions: sessions, started: time.Now()}
 	run.owner.Store(&owner)
 	run.names = bridgeNames(req.Tools)
+	run.announced = clientMCPTools(req)
 	run.safeguardBeta = req.SafeguardBeta
 	run.clientMarks = req.clientCache != nil
 	run.lean = req.leanPrompt
@@ -1654,6 +1661,7 @@ func (b *subscriptionBridge) resume(req *Request, owner string) (*subscriptionRu
 	run.active = time.Now()
 	run.turnUUID, run.backKey, run.backLine = turn, key, run.lastLine
 	run.allowed = allowedTools(req)
+	run.announced = clientMCPTools(req)
 	run.mu.Unlock()
 	run.endIn(runTimeout)
 	// a turn the router picked another effort for (#502) goes on in the
@@ -3142,6 +3150,18 @@ func (r *subscriptionRun) readOutput(rd io.Reader) {
 		if ok && !search && name == rest && r.tools != nil && !r.tools[rest] {
 			name = called
 		}
+		// a tool of the client's own MCP server, called by its own name
+		// — mcp__linear__…, mcp__yfinance__…, no mcp__magpie__ before
+		// it: the run's model read the name where the client said it
+		// (its deferred-tools reminder before a load, #4956; what a
+		// ToolSearch loaded, #4854) and called it as told. Answered by
+		// the run, the client never saw the call and the model retried
+		// under the helper's full name. Only a name the client sent or
+		// its conversation announced is the client's: the run's own
+		// claude.ai connectors carry such names too, and stay the run's
+		if !ok && (r.announced[name] || r.tools != nil && r.tools[name]) {
+			ok = true
+		}
 		r.mu.Unlock()
 		// magpie answers its own web search, as Claude Code does
 		// its WebSearch, and a call of a tool the turn may not call
@@ -4231,6 +4251,69 @@ func offeredTools(tools []Tool) map[string]bool {
 		offered[t.Name] = true
 	}
 	return offered
+}
+
+// mcpToolName is an MCP tool's name as a client names one,
+// mcp__<server>__<tool>: the shape Claude Code lists its MCP servers'
+// tools by, in tools and in its deferred-tools reminder alike.
+var mcpToolName = regexp.MustCompile(`\bmcp__[A-Za-z0-9_-]+__[A-Za-z0-9_-]+\b`)
+
+// clientMCPTools are the MCP tools the client has said are its own: those
+// it sent in tools, and those its conversation names without sending them
+// (announcedTools). The run's model reads the names in the conversation
+// and calls them as told, no mcp__magpie__ before them; a call of one is
+// the client's to answer (#4956 before a ToolSearch loads it, #4854
+// after). The run's own claude.ai connectors carry the same shape and are
+// the run's alone: only names the client said are its.
+func clientMCPTools(req *Request) map[string]bool {
+	said := announcedTools(req.Messages)
+	for _, t := range req.Tools {
+		if !mcpToolName.MatchString(t.Name) {
+			continue
+		}
+		if said == nil {
+			said = map[string]bool{}
+		}
+		said[t.Name] = true
+	}
+	return said
+}
+
+// announcedTools are the MCP tools the client's conversation names as its
+// own while offering them nowhere in the request: Claude Code, tool search
+// on, tells the deferred ones by name in a system reminder and leaves them
+// out of tools until a ToolSearch loads them (#4956), and a tool's result
+// loads some by name (#2660).
+func announcedTools(msgs []Message) map[string]bool {
+	var announced map[string]bool
+	say := func(name string) {
+		if name == "" {
+			return
+		}
+		if announced == nil {
+			announced = map[string]bool{}
+		}
+		announced[name] = true
+	}
+	for _, m := range msgs {
+		for _, p := range m.Parts {
+			for _, name := range p.Loads {
+				say(name)
+			}
+			if p.Kind != Text || !strings.Contains(p.Text, "<system-reminder>") {
+				continue
+			}
+			for i, chunk := range reminderTag.Split(p.Text, -1) {
+				if i%2 == 0 {
+					continue // between the reminders, not in one
+				}
+				for _, name := range mcpToolName.FindAllString(chunk, -1) {
+					say(name)
+				}
+			}
+		}
+	}
+	return announced
 }
 
 // withoutBillingHeader is a system prompt without the billing line Claude
@@ -5839,6 +5922,7 @@ func (s *Server) serveSubscription(w http.ResponseWriter, r *http.Request, from 
 				run.names = map[string]string{}
 			}
 			maps.Copy(run.names, bridgeNames(req.Tools))
+			run.announced = clientMCPTools(req)
 			run.mu.Unlock()
 		}
 		if err == nil {
