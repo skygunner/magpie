@@ -1972,6 +1972,15 @@ func DrawsID(id string) bool {
 	return false
 }
 
+// FilmsID is whether a model's id names one that makes videos, for a
+// vendor's own list's model it marks no kind of: Volcengine Ark's
+// Seedance (doubao-seedance-1-0-pro-250528…), which Ark offers beside its
+// chat models and serves only at its content-generation tasks (#4955,
+// axelburks on Discord).
+func FilmsID(id string) bool {
+	return strings.Contains(strings.ToLower(id), "seedance")
+}
+
 // ImagesAPI is whether a model draws on an images API rather than answering
 // in chat with pictures: gpt-image, dall-e, imagen, flux, seedream… — not
 // gemini-*-image or gpt-5-image, which chat.

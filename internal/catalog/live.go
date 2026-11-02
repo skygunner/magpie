@@ -637,7 +637,9 @@ func fetchPage(ctx context.Context, url, key string, anthropic bool, headers map
 		// its retrieval models too; a vendor's general list still leaves
 		// out models agents can't chat with.
 		decision := r.Kind == "decision"
-		films := r.Kind == "video"
+		// a Seedance id is a video model its list marks no kind of
+		// (FilmsID): kept for the video models, out of the chat ones
+		films := r.Kind == "video" || FilmsID(id)
 		drawer := !films && !decision && (DrawsID(id) && !strings.Contains(strings.ToLower(id), "deep-research") || r.Kind == "image")
 		if !drawer && !films && !decision && headers["X-Magpie-Drawers"] == "" && !textModel(mdModel{ID: id}) {
 			continue

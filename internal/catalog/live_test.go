@@ -309,3 +309,31 @@ func TestFetchRelayDrawerNames(t *testing.T) {
 		t.Errorf("the chat list lost a model: omni_flash-10s %v, claude-sonnet-4-5 %v", chat["omni_flash-10s"], chat["claude-sonnet-4-5"])
 	}
 }
+
+// A vendor list's Seedance ids (Volcengine Ark's video models, which its
+// list marks no kind of, offered as videos beside them) are films models,
+// not chat ones: they can't chat, and an agent picking one gets an error
+// from Ark (#4955, axelburks on Discord).
+func TestFetchSeedanceIsFilms(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Fprint(w, `{"data":[
+			{"id":"doubao-seedance-2-0-260128"},
+			{"id":"doubao-seed-2.1-pro"}]}`)
+	}))
+	defer srv.Close()
+	ms, err := FetchURL(context.Background(), srv.URL+"/v1/models", "", false, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(ms) != 2 {
+		t.Fatalf("models %v", ms)
+	}
+	for _, m := range ms {
+		if strings.Contains(strings.ToLower(m.ID), "seedance") != m.Films {
+			t.Errorf("%s: films %v, chat %v", m.ID, m.Films, !m.Films)
+		}
+		if m.Films && m.Draws {
+			t.Errorf("%s: films and draws", m.ID)
+		}
+	}
+}

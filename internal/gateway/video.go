@@ -163,9 +163,10 @@ func filmsCustom(p provider.Provider, model string) bool {
 
 // arkVideoModel is whether id, a model of a Volcengine Ark key's list, is
 // one of Ark's Seedance video models (doubao-seedance-1-0-pro-250528,
-// doubao-seedance-2-0-260128…).
+// doubao-seedance-2-0-260128…), as its list's own rows are marked too
+// (catalog.FilmsID, #4955).
 func arkVideoModel(id string) bool {
-	return strings.Contains(strings.ToLower(id), "seedance")
+	return catalog.FilmsID(id)
 }
 
 // arkFilms is whether p makes model at Volcengine Ark's asynchronous

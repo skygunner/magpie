@@ -182,3 +182,36 @@ func TestArkVideoTakesLastFrameAndItsOwnFields(t *testing.T) {
 		t.Fatalf("sent %s", a.bodies[0])
 	}
 }
+
+// An Ark key's list offers its Seedance video models beside its chat
+// models, marking no kind (#4955, axelburks on Discord): they stay video
+// models, and are no longer listed as chat ones an agent would pick and
+// be refused by Ark.
+func TestArkKeySeedanceNotChatModels(t *testing.T) {
+	fresh(t)
+	up := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		io.WriteString(w, `{"data":[
+			{"id":"doubao-seed-2.1-pro"},
+			{"id":"doubao-seedance-1-0-pro-250528"},
+			{"id":"doubao-seedance-2-0-260128"}]}`)
+	}))
+	defer up.Close()
+	was := isArk
+	isArk = func(p provider.Provider) bool { return p.ID == "ark" }
+	t.Cleanup(func() { isArk = was })
+	p := saveFetched(t, provider.Provider{ID: "ark", Name: "Volcengine Ark", Chat: up.URL + "/api/v3", Key: "key"})
+	for _, m := range p.Available() {
+		if strings.Contains(strings.ToLower(m.ID), "seedance") {
+			t.Errorf("%s: a Seedance video model listed as a chat one", m.ID)
+		}
+	}
+	if !slices.ContainsFunc(p.Available(), func(m catalog.Model) bool { return m.ID == "doubao-seed-2.1-pro" }) {
+		t.Errorf("chat models %v", p.Available())
+	}
+	videos := Videomakers(p)
+	for _, id := range []string{"doubao-seedance-1-0-pro-250528", "doubao-seedance-2-0-260128"} {
+		if !slices.ContainsFunc(videos, func(m catalog.Model) bool { return m.ID == id }) {
+			t.Errorf("%s: not a video model (%v)", id, videos)
+		}
+	}
+}
