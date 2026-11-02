@@ -367,6 +367,15 @@ var (
 	// model's glitch, not the account's, and asked again it mostly answers
 	// (magpie-community/plugins#579)
 	cutWords = regexp.MustCompile(`(?i)tool call, written as text, was cut short|native tool call has no name; it is not sent on as a tool`)
+	// runLifeWords: a plugin's own error for a native Run that outlived
+	// its lifetime: Cursor's plugin gives a Run 15 minutes, and the
+	// deadline that cuts a turn mid-answer ends it as a failure "the
+	// gateway can retry or fail over" — "native Run lifetime expired: the
+	// Run timed out; retry your request" (0.2.37, plugins#616; the words
+	// before it said the same without the asking). The lifetime is the
+	// Run's, not the account's — the next request starts a fresh Run on
+	// the same account and works (#4829)
+	runLifeWords = regexp.MustCompile(`(?i)native run lifetime expired`)
 )
 
 // Why a candidate failed, as rest tells it.
@@ -439,7 +448,9 @@ const (
 	// died mid-call, and the tool call it was reading, written as text,
 	// can't go on as the answer (plugins#38: the turn ends as an error
 	// "the gateway can retry or fail over"). The cut isn't the account's
-	// doing: the request is asked again, and nobody rests (#2873)
+	// doing: the request is asked again, and nobody rests (#2873). So is
+	// a native Run that outlived its lifetime (runLifeWords, #4829): the
+	// deadline is per request, and the account answers the next one
 	failCut = "cut"
 )
 
@@ -498,12 +509,14 @@ func failure(status int, body []byte) string {
 	// the words are matched decoded, too
 	body = wordsOf(body)
 	switch {
-	case cutWords.Match(body):
+	case cutWords.Match(body), runLifeWords.Match(body):
 		// a plugin ended the turn on purpose: its upstream's stream died
 		// mid-call, and the call it was reading isn't the answer
 		// (plugins#38). The cut is transient and nobody's fault — the next
 		// answer mostly isn't one — so the request is asked again, and
-		// nobody rests (#2873)
+		// nobody rests (#2873). So is a native Run that outlived its
+		// lifetime (runLifeWords, #4829): the deadline is per request, and
+		// the next one on the same account works
 		return failCut
 	case restrictedSaid(status, body):
 		return failRestricted
