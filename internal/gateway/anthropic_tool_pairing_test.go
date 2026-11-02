@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"encoding/json"
+	"net/http/httptest"
 	"strconv"
 	"strings"
 	"testing"
@@ -35,7 +36,12 @@ type aMessageProbe struct {
 // e.g. "user assistant(A) user[A] user".
 func messagesTrace(t *testing.T, r *Request) (string, []aMessageProbe) {
 	t.Helper()
-	body := buildAnthropic(r, "claude-sonnet-4-5")
+	return traceOfMessages(t, buildAnthropic(r, "claude-sonnet-4-5"))
+}
+
+// traceOfMessages is messagesTrace of a request already built.
+func traceOfMessages(t *testing.T, body []byte) (string, []aMessageProbe) {
+	t.Helper()
 	var q struct {
 		Messages []aMessageProbe `json:"messages"`
 	}
@@ -341,5 +347,148 @@ func TestMessagesSecondAnswerDropped(t *testing.T) {
 	}
 	if got := string(msgs[2].Content[0].Content); got != `"first"` {
 		t.Fatalf("the first answer didn't stand: %s", got)
+	}
+}
+
+// refuseParallelToolUse refuses a Messages request the way DeepSeek's
+// Anthropic-format API refuses a parallel tool exchange: an assistant
+// message with two or more tool_use blocks is turned away even when the
+// next message answers every one of them (deepseek-ai/DeepSeek-V3#967,
+// #4945), which Anthropic's own API takes.
+func refuseParallelToolUse(body []byte) (int, string) {
+	var q struct {
+		Messages []struct {
+			Content json.RawMessage `json:"content"`
+		} `json:"messages"`
+	}
+	if err := json.Unmarshal(body, &q); err != nil {
+		return 400, `{"type":"error","error":{"type":"invalid_request_error","message":"could not parse the request"}}`
+	}
+	for i, m := range q.Messages {
+		var blocks []aBlockProbe
+		if json.Unmarshal(m.Content, &blocks) != nil {
+			continue
+		}
+		var ids []string
+		for _, c := range blocks {
+			if c.Type == "tool_use" {
+				ids = append(ids, c.ID)
+			}
+		}
+		if len(ids) > 1 {
+			msg := "`tool_use` ids were found without `tool_result` blocks immediately after: " +
+				strings.Join(ids, ", ") + ". Each `tool_use` block must have a corresponding `tool_result` block in the next message."
+			return 400, messagesRefused(i, msg)
+		}
+	}
+	return 0, ""
+}
+
+// DeepSeek's Anthropic-format API turns a parallel tool exchange away —
+// one assistant message whose calls the next user message answers together,
+// the shape Claude Code sends for parallel tool calls — although
+// Anthropic's own API takes it (deepseek-ai/DeepSeek-V3#967, checked
+// against it with the raw SDK there). A Messages request relayed to it is
+// asked in sequential exchanges instead: one call an assistant message,
+// its result the user message after it (#4945).
+func TestMessagesParallelToolUsesSplitForDeepSeekUpstream(t *testing.T) {
+	f := &fake{t: t, refuse: refuseParallelToolUse, reply: sse(
+		`data: {"type":"message_start","message":{"id":"m","type":"message","role":"assistant","model":"x","content":[],"usage":{"input_tokens":1,"output_tokens":0}}}`,
+		`data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}`,
+		`data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"ok"}}`,
+		`data: {"type":"content_block_stop","index":0}`,
+		`data: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":1}}`,
+		`data: {"type":"message_stop"}`,
+	)}
+	noRests()
+	t.Cleanup(noRests)
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	up := httptest.NewServer(f)
+	t.Cleanup(up.Close)
+	p := provider.Provider{ID: "fake", Name: "Fake", Key: "k", Models: []string{"deepseek-flash"}, Anthropic: up.URL}
+	if err := provider.Save(p); err != nil {
+		t.Fatal(err)
+	}
+	body := `{"model":"fake/deepseek-flash","stream":true,"max_tokens":64,` +
+		`"tools":[{"name":"Bash","description":"Run a command","input_schema":{"type":"object","properties":{"command":{"type":"string"}}}}],` +
+		`"messages":[` +
+		`{"role":"user","content":"List the files twice."},` +
+		`{"role":"assistant","content":[` +
+		`{"type":"thinking","thinking":"I should run ls.","signature":"sig"},` +
+		`{"type":"tool_use","id":"call_00_YpfcrnrrW1pl5ZnBPhbn8836","name":"Bash","input":{"command":"ls"}},` +
+		`{"type":"tool_use","id":"call_01_CmdsQ2CAdkIsdARwuwAB4684","name":"Bash","input":{"command":"ls -a"}}]},` +
+		`{"role":"user","content":[` +
+		`{"type":"tool_result","tool_use_id":"call_00_YpfcrnrrW1pl5ZnBPhbn8836","content":"file a"},` +
+		`{"type":"tool_result","tool_use_id":"call_01_CmdsQ2CAdkIsdARwuwAB4684","content":"file b"},` +
+		`{"type":"text","text":"<system-reminder>both ran</system-reminder>"}]}]}`
+	if code, out := post(t, "/v1/messages", body); code != 200 {
+		t.Fatalf("status %d: %s", code, out)
+	}
+	if !strings.Contains(string(f.got), `"tool_use_id":"call_01_CmdsQ2CAdkIsdARwuwAB4684"`) {
+		t.Fatalf("the second call's result never reached the upstream: %s", f.got)
+	}
+}
+
+// The same split on the translated path: a request built for DeepSeek's
+// Messages endpoint is asked in sequential exchanges, one call each.
+func TestTranslatedMessagesParallelToolUsesSplitForDeepSeek(t *testing.T) {
+	r := &Request{Messages: []Message{
+		{Role: "user", Parts: []Part{{Kind: Text, Text: "run them both"}}},
+		{Role: "assistant", Parts: []Part{call("A"), call("B")}},
+		{Role: "user", Parts: []Part{result("B", "second"), result("A", "first"), {Kind: Text, Text: "done"}}},
+	}}
+	body, err := build(provider.Anthropic, r, "deepseek-flash", "api.deepseek.com", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	trace, msgs := traceOfMessages(t, body)
+	if want := "user assistant(A) user[A] assistant(B) user[B]"; trace != want {
+		t.Fatalf("trace = %q, want %q", trace, want)
+	}
+	if !anthropicValid(msgs) {
+		t.Fatal("sequence fails Anthropic's tool exchange validation")
+	}
+}
+
+// The split itself, on the body a Messages client sent: results out of
+// order and text beside them, an exchange of one call, and one whose
+// results don't answer every call, all as splitParallelToolUses leaves or
+// mends them for DeepSeek's Anthropic-format API (#4945).
+func TestSplitParallelToolUsesOnARelayedBody(t *testing.T) {
+	parallel := `{"model":"deepseek-flash","messages":[` +
+		`{"role":"user","content":[{"type":"text","text":"run them both"}]},` +
+		`{"role":"assistant","content":[` +
+		`{"type":"text","text":"two calls"},` +
+		`{"type":"tool_use","id":"A","name":"run","input":{}},` +
+		`{"type":"tool_use","id":"B","name":"run","input":{}}]},` +
+		`{"role":"user","content":[` +
+		`{"type":"tool_result","tool_use_id":"B","content":"second"},` +
+		`{"type":"text","text":"both ran"},` +
+		`{"type":"tool_result","tool_use_id":"A","content":"first"}]}]}`
+	body := splitParallelToolUses([]byte(parallel))
+	trace, msgs := traceOfMessages(t, body)
+	if want := "user assistant(A) user[A] assistant(B) user[B]"; trace != want {
+		t.Fatalf("trace = %q, want %q", trace, want)
+	}
+	if !anthropicValid(msgs) {
+		t.Fatal("sequence fails Anthropic's tool exchange validation")
+	}
+	if got := msgs[1].Content[0].Text; got != "two calls" {
+		t.Fatalf("the assistant's words didn't stay with its first call: %q", got)
+	}
+	last := msgs[4].Content
+	if last[0].ToolUseID != "B" || string(last[0].Content) != `"second"` || last[1].Text != "both ran" {
+		t.Fatalf("the second result and what the user said are not together after it: %+v", last)
+	}
+	// an exchange of one call, and a body with no calls, come back as they were
+	for name, b := range map[string]string{
+		"one call":   `{"model":"m","messages":[{"role":"user","content":"run"},{"role":"assistant","content":[{"type":"tool_use","id":"A","name":"run","input":{}}]},{"role":"user","content":[{"type":"tool_result","tool_use_id":"A","content":"ok"}]}]}`,
+		"no calls":   `{"model":"m","messages":[{"role":"user","content":"hi"},{"role":"assistant","content":[{"type":"text","text":"hello"}]}]}`,
+		"unanswered": `{"model":"m","messages":[{"role":"user","content":"run"},{"role":"assistant","content":[{"type":"tool_use","id":"A","name":"run","input":{}},{"type":"tool_use","id":"B","name":"run","input":{}}]},{"role":"user","content":[{"type":"tool_result","tool_use_id":"A","content":"ok"}]}]}`,
+	} {
+		if got := string(splitParallelToolUses([]byte(b))); got != b {
+			t.Fatalf("%s: a body with nothing to split changed: %s", name, got)
+		}
 	}
 }

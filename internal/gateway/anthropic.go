@@ -418,6 +418,146 @@ func withThinkingOnToolTurns(body []byte) []byte {
 	return nb
 }
 
+// splitParallelToolUses turns a parallel tool exchange of a Messages
+// request — one assistant message with several tool_use blocks, its results
+// the tool_result blocks of the user message after it, the shape Claude
+// Code sends for parallel tool calls — into the sequential exchanges
+// DeepSeek's Anthropic-format API alone answers: one call an assistant
+// message, its result the user message after it. It refuses the parallel
+// one however the results are sent ("tool_use ids were found without
+// tool_result blocks immediately after", deepseek-ai/DeepSeek-V3#967,
+// checked with the raw SDK there), although Anthropic's own API takes it
+// (#4945). What the user said beside the results stays in the last
+// exchange's user message, after its result. An exchange of one call, or
+// one the next message doesn't fully answer, goes as it was, and a body
+// with nothing to split comes back byte for byte.
+func splitParallelToolUses(body []byte) []byte {
+	if !bytes.Contains(body, []byte(`"tool_use"`)) {
+		return body
+	}
+	var q map[string]json.RawMessage
+	var msgs []json.RawMessage
+	if decodeJSON(body, &q) != nil || decodeJSON(q["messages"], &msgs) != nil {
+		return body
+	}
+	blockIDs := func(m json.RawMessage) (role string, blocks []json.RawMessage) {
+		var msg struct {
+			Role    string            `json:"role"`
+			Content []json.RawMessage `json:"content"`
+		}
+		if decodeJSON(m, &msg) != nil {
+			return "", nil
+		}
+		return msg.Role, msg.Content
+	}
+	message := func(role string, blocks []json.RawMessage) json.RawMessage {
+		b, _ := json.Marshal(map[string]any{"role": role, "content": blocks})
+		return b
+	}
+	var out []json.RawMessage
+	changed := false
+	for i := 0; i < len(msgs); i++ {
+		role, blocks := blockIDs(msgs[i])
+		var calls []json.RawMessage
+		if role == "assistant" {
+			for _, b := range blocks {
+				var t struct {
+					Type string `json:"type"`
+				}
+				if decodeJSON(b, &t) == nil && t.Type == "tool_use" {
+					calls = append(calls, b)
+				}
+			}
+		}
+		if len(calls) < 2 || i+1 >= len(msgs) {
+			out = append(out, msgs[i])
+			continue
+		}
+		// the calls' ids, and their results in the user message after
+		ids := make([]string, len(calls))
+		for k, c := range calls {
+			var call struct {
+				ID string `json:"id"`
+			}
+			decodeJSON(c, &call)
+			ids[k] = call.ID
+		}
+		nextRole, results := blockIDs(msgs[i+1])
+		if nextRole != "user" {
+			out = append(out, msgs[i])
+			continue
+		}
+		byID := map[string]json.RawMessage{}
+		var rest []json.RawMessage
+		paired := true
+		for _, b := range results {
+			var r struct {
+				Type      string `json:"type"`
+				ToolUseID string `json:"tool_use_id"`
+			}
+			if decodeJSON(b, &r) != nil || r.Type != "tool_result" {
+				rest = append(rest, b)
+				continue
+			}
+			if _, answered := byID[r.ToolUseID]; answered || !slices.Contains(ids, r.ToolUseID) {
+				paired = false // answered twice, or answers no call of this exchange
+				break
+			}
+			byID[r.ToolUseID] = b
+		}
+		for _, id := range ids {
+			if byID[id] == nil {
+				paired = false // a call with no result: another mend's business
+			}
+		}
+		if !paired {
+			out = append(out, msgs[i])
+			continue
+		}
+		// the exchange split: each call an assistant message of its own,
+		// its result the user message after it, what the user said beside
+		// them after the last result
+		var first []json.RawMessage
+		seen := 0
+		for _, b := range blocks {
+			var t struct {
+				Type string `json:"type"`
+			}
+			decodeJSON(b, &t)
+			if t.Type == "tool_use" {
+				if seen > 0 {
+					continue
+				}
+				seen++
+			}
+			first = append(first, b)
+		}
+		out = append(out, message("assistant", first))
+		for k, id := range ids {
+			if k > 0 {
+				out = append(out, message("assistant", []json.RawMessage{calls[k]}))
+			}
+			last := k == len(ids)-1
+			content := []json.RawMessage{byID[id]}
+			if last && len(rest) > 0 {
+				content = append(content, rest...)
+			}
+			out = append(out, message("user", content))
+		}
+		changed = true
+		i++ // the user message of the exchange went with it
+	}
+	if !changed {
+		return body
+	}
+	q["messages"], _ = json.Marshal(out)
+	nb, err := marshalJSON(q)
+	if err != nil {
+		return body
+	}
+	return nb
+}
+
 // anthropicModel is one of Anthropic's own models, which think only when asked,
 // so a request for one is left as the agent sent it.
 var anthropicModel = regexp.MustCompile(`(?i)(?:^|[/.:-])claude-`)

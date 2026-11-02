@@ -5596,6 +5596,10 @@ func (s *Server) passthrough(w http.ResponseWriter, r *http.Request, p provider.
 			body = withoutBillingLine(body)
 		}
 		if anthropicReplaysThinking(p.Host(), model) || anthropicReplaysThinking(p.Host(), upstream) {
+			// a parallel tool exchange, which DeepSeek's Anthropic-format
+			// API alone refuses (#4945), becomes the sequential ones it
+			// takes
+			body = splitParallelToolUses(body)
 			// a tool_use turn with no thinking, or Claude's redacted
 			// thinking (a routing group's Claude turn), which DeepSeek
 			// turns the whole request away for (#1611)
@@ -8001,6 +8005,9 @@ func build(proto provider.Protocol, r *Request, model, host string, rejectTemp b
 	replay := anthropicReplaysThinking(host, model)
 	out := anthropicBody(r, model, host, replay)
 	if replay {
+		// a parallel tool exchange, which DeepSeek's Anthropic-format API
+		// alone refuses (#4945), becomes the sequential ones it takes
+		out = splitParallelToolUses(out)
 		// a tool call with no thinking before it, which DeepSeek turns
 		// the whole request away for (#1611)
 		out = withThinkingOnToolTurns(out)
