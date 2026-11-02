@@ -1,0 +1,2 @@
+GitHub issue state read-back: #4118, #4136, #4137, #4141, #4144 all open (gh api repos/yetone/magpie/issues/<number>). B4 pending.
+B5 #4144 issue body re-read: contains inline diff and explicitly says it does not automatically recover data after corrupted frame.

@@ -1,5 +1,12 @@
 # Notes for coding agents
 
+## Hermes upstream issue fixes
+
+For `NousResearch/hermes-agent`, external pull requests are not accepted.
+Keep our fixes in the `skygunner/hermes-agent` fork and follow up on the
+upstream issue with a link to the fix and relevant verification. Do not open
+upstream PRs. Check existing issue replies before posting to avoid duplicates.
+
 ## Subsystem design and review
 
 Before changing a documented subsystem, read its

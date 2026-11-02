@@ -1,0 +1,85 @@
+=== 2026-10-29T10:58:28+10:00 worktree /tmp/mg-fix-davsync-read-cap on fix/wip-davsync-read-cap at 926ef769f ===
+--- bug ---
+A backup (or a usage file) read from WebDAV, S3 or GitHub with
+io.ReadAll(io.LimitReader(body, 64<<20)) is silently cut at 64 MiB. backup.Open
+takes a body cut inside the sealed data for a damaged backup (ErrCorrupt), so a
+sync's recovery treats an intact bigger file as damage: with this computer's
+cached copy as the version that broke, it keeps the body as server-damaged and
+writes the merged result over the file; where no cached copy matches,
+described() still names the cut body a cut backup that Upload may replace.
+--- fix ---
+readCapped (internal/davsync/notbackup.go) reads maxRead+1 bytes and returns
+errFileTooLarge when there is more: an error of its own, neither ErrCorrupt nor
+ErrNotBackup, so sync, Restore and Upload return it and write nothing.
+Call sites now use it: dav.go get, s3.go get, usage.go dav.read and s3.read,
+and readAll (gzip/zstd/deflate results). unpacked's zlib try keeps that error
+instead of falling back to raw flate. The 64 MiB cap is unchanged.
+--- RED run ---
+Production diff reverse-applied (git apply --reverse of the 4 files, so the
+tree is exactly 926ef769f), the new test file set aside, and a temporary shim
+test (readcap_red_test.go, upstream API only, removed before the commit) run:
+  go test ./internal/davsync -run 'TestRedReadCapDAV|TestRedReadCapSync' -count=1 -v
+=== RUN   TestRedReadCapDAV
+    readcap_red_test.go:45: RED: a backup over the cap came back cut at 67108864 bytes with no error
+--- FAIL: TestRedReadCapDAV (0.04s)
+=== RUN   TestRedReadCapSync
+    readcap_red_test.go:88: RED: the sync took an intact backup it couldn't read whole for damage and wrote over it (1 writes)
+--- FAIL: TestRedReadCapSync (1.01s)
+FAIL
+FAIL	github.com/yetone/magpie/internal/davsync	1.070s
+FAIL
+RED: PASS (both fail on 926ef769f, exit 1; patch restored after)
+--- GREEN run: go test ./internal/davsync -run 'TestReadSaysTooLargeRatherThanCut|TestReadCappedBoundary|TestCutBackupStillReadsAsCorrupt|TestSyncSaysTooLargeRatherThanRebuilding' -count=1 -v ---
+=== RUN   TestReadSaysTooLargeRatherThanCut
+--- PASS: TestReadSaysTooLargeRatherThanCut (0.19s)
+=== RUN   TestReadCappedBoundary
+--- PASS: TestReadCappedBoundary (0.05s)
+=== RUN   TestCutBackupStillReadsAsCorrupt
+--- PASS: TestCutBackupStillReadsAsCorrupt (0.06s)
+=== RUN   TestSyncSaysTooLargeRatherThanRebuilding
+--- PASS: TestSyncSaysTooLargeRatherThanRebuilding (0.20s)
+PASS
+ok  	github.com/yetone/magpie/internal/davsync	0.527s
+GREEN: PASS (targeted tests, exit 0)
+--- go test ./internal/davsync -count=1 ---
+ok  	github.com/yetone/magpie/internal/davsync	19.762s
+DAVSYNC TESTS: PASS
+--- go build ./... ---
+BUILD: PASS
+--- go vet ./... ---
+VET: PASS
+--- gofmt -l internal/davsync ---
+(empty)
+GOFMT: PASS
+[fix/wip-davsync-read-cap 3630d16b7] davsync: a file past the 64 MiB read cap is said too large, not read cut, so a sync no longer rebuilds over an intact bigger backup
+ 5 files changed, 187 insertions(+), 7 deletions(-)
+ create mode 100644 internal/davsync/readcap_test.go
+COMMIT: PASS
+COMMIT: 3630d16b77dbbb42640b390d4950602e3c70356c davsync: a file past the 64 MiB read cap is said too large, not read cut, so a sync no longer rebuilds over an intact bigger backup
+--- final tree (clean) ---
+3630d16b7 davsync: a file past the 64 MiB read cap is said too large, not read cut, so a sync no longer rebuilds over an intact bigger backup
+ internal/davsync/dav.go          |   2 +-
+ internal/davsync/notbackup.go    |  28 ++++++-
+ internal/davsync/readcap_test.go | 158 +++++++++++++++++++++++++++++++++++++++
+ internal/davsync/s3.go           |   2 +-
+ internal/davsync/usage.go        |   4 +-
+ 5 files changed, 187 insertions(+), 7 deletions(-)
+--- not tried ---
+A real >64 MiB backup against a real WebDAV or S3 server; the cap is unchanged,
+so such a backup still can't be read through a sync — it is said too large
+instead of the server's file being rebuilt over. docs/subsystems/sync-backup.md
+says "empty, damaged or another app's format"; too-large is now its own error
+and the page was not changed.
+
+--- P1-2 write-side follow-up, uncommitted on 3630d16b7 ---
+Audit P1-2 explicitly requires refusing oversized backups at the push side. WebDAV and S3 put previously accepted them.
+RED: go test ./internal/davsync -run '^TestWriteBackupSizeLimit$' -count=1 -v
+FAIL WebDAV: oversized backup: <nil>, want errFileTooLarge
+FAIL S3: oversized backup: <nil>, want errFileTooLarge
+GREEN: same command: PASS (WebDAV and S3); verifies no request above 64 MiB and a request at exactly 64 MiB.
+go test ./internal/davsync -count=1: PASS (239 tests)
+go build ./...: PASS
+go vet ./...: PASS
+gofmt -l internal/davsync: empty
+git diff --check: PASS
+Changed docs/subsystems/sync-backup.md and internal/davsync/{dav.go,s3.go,notbackup.go,readcap_test.go}. No push.
