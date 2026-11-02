@@ -80,9 +80,9 @@ Each round:
 8. Accept: healthy, 401/200 auth pair, model count equal before/after, a
    real `group/fast-cheap` request 200. Push `prod` and the tag.
 
-## Carried patches (as of v0.1.2450-p1, 2026-11-01)
+## Carried patches (as of v0.1.2657-p1, 2026-11-02)
 
-Checked against v0.1.2450 (2026-11-01): eleven carried entries — nine
+Checked against v0.1.2657 (2026-11-02): eleven carried entries — nine
 patch rows, #3623's attempt chain (joined at 0.1.2051-p3) and the
 cooldown-settings surface (joined at 0.1.2051-p4) — plus the build-line
 fix and #3487's card-display and millisecond-span remainder, re-
@@ -129,6 +129,40 @@ registered on 2026-10-29 and its fix (`33c0ade7a`,
 the table above.
 
 ## Deployment history
+
+- `prod/0.1.2657-p1` — 2026-11-02. Rolling merge of v0.1.2657 (344
+  commits; six conflict files, both sides kept: fallback.go's imports and
+  the refusal predicates (`refusedParameterList` beside upstream's new
+  `upstreamFailedWords`), gateway.go's cooldown hard hold beside
+  upstream's `handed.release` restructure of laneMate, provider.go's
+  cooldown field assignments beside `Patience` and upstream's new
+  `accountSettings()` literal (our four fields ride in
+  `accountSettings`, not the literal), and the docs bullets. **Upstream
+  refactored the settings keep-what-not-sent list into
+  `settingsapi.Apply`/`Merge` (#4745): the cooldown editor's ownership
+  line moved with it into `settingsapi.Merge`** — caught by the audit
+  (api.go left the carried set; a first scripted insert had silently not
+  fired because the old anchor line no longer exists). Freshness sweep
+  all negative (every branch tip equals its fix of record; no issue
+  comments after 10-29; plugin PR #366 head still `38ddeb1`, test-only);
+  none absorbed. Gate: full suite 9 reds identical to the clean
+  v0.1.2657 baseline (fastjson escapes, Claude cache, Codex pool version,
+  DSH umask, WSL, SOCKS, route-command naming); GUI 134/136 with the two
+  webkit-de `codex-auto-reset` reds reproducing on the baseline too.
+  Deployed with `scripts/deploy-docker1.sh` run detached on docker1 — the
+  first round on the batched switch: stop, stopped-volume tar, rename,
+  run, healthy after 30s, no session loss. Accepted: version
+  0.1.2657-p1, no-key 401 / cookie 200, providers 32 / groups 49 / 1202
+  model ids equal before and after, `/api/cooldown` 200, five real
+  `group/fast-cheap` probes 200 across 46 minutes, 10 observation samples
+  healthy with zero panic/fatal/5xx/protocol_error. Published to Docker
+  Hub as `bigshort/magpie-patched:0.1.2657-p1` and `:latest`, digest
+  `sha256:eec9eb8b…`, README updated and written back to
+  /tmp/hub-readme.md (after one mis-PATCH: re-fetching the template over
+  the local edit published the stale text once; re-patched and verified
+  from the live API). Backup
+  `/home/hermes/backups/magpie/pre-0.1.2657-p1-20261102-172853` (old
+  container kept stopped as `magpie-pre-0.1.2657-p1-20261102-172853`).
 
 - `prod/0.1.2450-p1` — 2026-11-01. Rolling merge of v0.1.2450 (150
   commits; three conflicts, both sides kept: app.js `openModal`'s new
