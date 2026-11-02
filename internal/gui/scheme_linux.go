@@ -40,10 +40,11 @@ func registerScheme() error {
 	if os.Getenv("FLATPAK_ID") != "" {
 		return nil
 	}
-	exe, err := os.Executable()
+	exe, err := launcherOf()
 	if err != nil {
 		return err
 	}
+	exec := execKey(exe)
 	data := dataHome()
 	iconErr := installIcon(data)
 	dir := filepath.Join(data, "applications")
@@ -52,14 +53,14 @@ func registerScheme() error {
 Type=Application
 Name=magpie
 Comment=Every agent's model. One place.
-Exec=` + exe + ` %u
+` + exec + `
 Icon=magpie
 StartupWMClass=` + programName + `
 Categories=Development;Utility;
 MimeType=x-scheme-handler/magpie;
 Terminal=false
 `
-	if old, err := os.ReadFile(path); err == nil && strings.Contains(string(old), "Exec="+exe+" %u") && strings.Contains(string(old), "x-scheme-handler/magpie") &&
+	if old, err := os.ReadFile(path); err == nil && strings.Contains(string(old), exec) && strings.Contains(string(old), "x-scheme-handler/magpie") &&
 		strings.Contains(string(old), "\nStartupWMClass="+programName+"\n") {
 		return iconErr
 	}
@@ -71,6 +72,29 @@ Terminal=false
 	}
 	_ = proc.Command("update-desktop-database", dir).Run()
 	return errors.Join(iconErr, proc.Command("xdg-mime", "default", "magpie.desktop", "x-scheme-handler/magpie").Run())
+}
+
+// launcherOf is the program the entry starts: a packager's launcher, where
+// MAGPIE_EXECUTABLE names one (Nix's wrapGAppsHook, Guix's ld wrapper run
+// this binary with an environment of their own, which an entry that named
+// the binary itself would leave out, #1747) — used as written, never
+// resolved to the binary inside it; else this executable.
+func launcherOf() (string, error) {
+	if p := os.Getenv("MAGPIE_EXECUTABLE"); p != "" {
+		return p, nil
+	}
+	return os.Executable()
+}
+
+// execKey is the entry's Exec key for exe, with %u for the link, quoted
+// as the key takes a program whose path has a space in it, as a
+// launcher's can.
+func execKey(exe string) string {
+	if !strings.Contains(exe, " ") {
+		return "Exec=" + exe + " %u"
+	}
+	q := strings.NewReplacer(`\`, `\\`, `"`, `\"`, "`", "\\`", `$`, `\$`).Replace(exe)
+	return `Exec="` + q + `" %u`
 }
 
 // installIcon puts magpie's icon where the entry's Icon=magpie is looked

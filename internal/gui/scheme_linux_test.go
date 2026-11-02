@@ -202,3 +202,51 @@ func TestKeepWebData(t *testing.T) {
 		})
 	}
 }
+
+// A packager's launcher runs this binary with an environment of its own
+// (Nix's wrapGAppsHook, Guix's ld wrapper), which an entry that named the
+// binary itself would leave out (#1747): MAGPIE_EXECUTABLE names the
+// launcher, and the entry starts it, as written — a path with a space in
+// it quoted the way the Exec key takes one — never resolved to the binary
+// inside.
+func TestRegisterSchemeNamesThePackagersLauncher(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		launcher string
+		exec     string
+	}{
+		{"a wrapper path", "/nix/store/0000000000000000000000000000000-magpie-app/bin/magpie-app", "Exec=/nix/store/0000000000000000000000000000000-magpie-app/bin/magpie-app %u\n"},
+		{"one with a space in it", "/opt/my apps/magpie", `Exec="/opt/my apps/magpie" %u` + "\n"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("FLATPAK_ID", "")
+			t.Setenv("MAGPIE_EXECUTABLE", tc.launcher)
+			root := t.TempDir()
+			data := filepath.Join(root, "data")
+			t.Setenv("XDG_DATA_HOME", data)
+			bin := filepath.Join(root, "bin")
+			if err := os.Mkdir(bin, 0o755); err != nil {
+				t.Fatal(err)
+			}
+			calls := filepath.Join(root, "calls")
+			t.Setenv("MAGPIE_SCHEME_TEST_CALLS", calls)
+			t.Setenv("PATH", bin)
+			for _, name := range []string{"update-desktop-database", "xdg-mime"} {
+				testenv.Program(t, filepath.Join(bin, name), "#!/bin/sh\nprintf '%s\\n' '"+name+"' >> \"$MAGPIE_SCHEME_TEST_CALLS\"\n")
+			}
+			if err := registerScheme(); err != nil {
+				t.Fatal(err)
+			}
+			got, err := os.ReadFile(filepath.Join(data, "applications", "magpie.desktop"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(string(got), tc.exec) {
+				t.Fatalf("the entry doesn't name the launcher:\n%s", got)
+			}
+			if exe, err := os.Executable(); err == nil && strings.Contains(string(got), exe) {
+				t.Fatalf("the entry names the binary inside the launcher:\n%s", got)
+			}
+		})
+	}
+}

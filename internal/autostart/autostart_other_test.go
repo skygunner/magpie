@@ -53,3 +53,27 @@ func TestSetThenTruncatedRecordReadsAsOff(t *testing.T) {
 		t.Error("a desktop entry with an empty Exec reads as on")
 	}
 }
+
+// A packager's launcher runs this binary with an environment of its own
+// (Nix's wrapGAppsHook, Guix's ld wrapper), which an entry that named the
+// binary itself would leave out (#1747): MAGPIE_EXECUTABLE names the
+// launcher, and the record starts it, as written, never resolved to the
+// binary inside.
+func TestSetNamesThePackagersLauncher(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	t.Setenv("XDG_CONFIG_HOME", home+"/.config")
+	const launcher = "/nix/store/0000000000000000000000000000000-magpie-app/bin/.magpie-app-wrapped"
+	t.Setenv("MAGPIE_EXECUTABLE", launcher)
+	if err := Set(true); err != nil {
+		t.Fatal(err)
+	}
+	b, err := os.ReadFile(record())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(b), "Exec=\""+launcher+"\" "+Arg+"\n") {
+		t.Fatalf("the record doesn't name the launcher:\n%s", b)
+	}
+}
