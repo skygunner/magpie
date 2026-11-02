@@ -200,3 +200,51 @@ func TestAsideWindowWithoutUsedDrawsNoLine(t *testing.T) {
 		t.Errorf("history lines %v, want %v", lines, want)
 	}
 }
+
+// A prepaid wallet's window (#3950: a balance, no used) says no share
+// either, and its Used stayed 0 for want of one, which quota history took
+// for a reading: a flat 100% left line at every reading of the account,
+// saying nothing of the wallet was ever spent (#4831, the non-aside
+// sibling of #4825). A wallet's history would be its balance over time,
+// not a percent left; until one is kept, history draws no line for it.
+// Routing still knows the wallet by its balance, and one that said a
+// share keeps its line.
+func TestWalletWindowWithoutUsedDrawsNoLine(t *testing.T) {
+	var u plugin.Usage
+	if err := json.Unmarshal([]byte(`{"windows":[
+		{"name":"积分","balance":6291,"unit":"积分"},
+		{"name":"Cash","balance":12.5,"unit":"$","used":40}]}`), &u); err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now()
+	q := quotaOfPlugin(SubscriptionQuota{Provider: "acme-plugin", User: "u"}, u)
+	if _, ok := pointOf(q.Windows[0], now, now); ok {
+		t.Errorf("%s: a history point for a balance that said no share", q.Windows[0].Name)
+	}
+	if _, ok := pointOf(q.Windows[1], now, now); !ok {
+		t.Errorf("%s: no history point for a wallet that said a share", q.Windows[1].Name)
+	}
+	// routing still knows the wallet by its balance, the least of the
+	// windows that tell one (#3950)
+	a, ok := routedAllowance("plugin:acme", "u", q, now)
+	if !ok {
+		t.Fatal("routing doesn't know the account")
+	}
+	if left, unit, ok := a.Left(""); !ok || left != 12.5 || unit != "$" {
+		t.Errorf("routing's wallet: left %v %v (known %v), want 12.5 $", left, unit, ok)
+	}
+	// the whole way to what the chart reads: the reading noted, the
+	// history read back has the share-said wallet's line alone
+	testenv.SetHome(t, t.TempDir())
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	noteQuotaHistory([]SubscriptionQuota{q}, now)
+	var lines []string
+	for _, h := range QuotaHistories(time.Time{}, "acme-plugin", "u") {
+		for _, l := range h.Lines {
+			lines = append(lines, l.Name)
+		}
+	}
+	if want := []string{"Cash"}; !slices.Equal(lines, want) {
+		t.Errorf("history lines %v, want %v", lines, want)
+	}
+}

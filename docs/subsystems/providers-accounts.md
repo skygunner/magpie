@@ -257,7 +257,11 @@ pool's window, or the Cursor plugin's Weekly and Grok Bot, #4612); a
 text-only one tells no share and is not, and neither is a plugin's aside
 window that leaves `used` out with no count to reckon one from: its `Used`
 is 0 for want of a share, not a reading, and drew a flat 100%-left line
-(`noShare`, #4825). `newCycle` preserves a boundary
+(`noShare`, #4825). Nor is a plugin's wallet window, which tells a
+`balance` and no share (#3950): what it would have to say over time is
+the balance, not a percent left, so until a balance history is kept it
+draws no line either (#4831); routing still knows it by its balance.
+`newCycle` preserves a boundary
 when the previous deadline passes,
 appears/disappears, moves backward by more than five minutes or forward by
 more than the elapsed sampling time plus five minutes. A refill of more
