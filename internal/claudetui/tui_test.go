@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -38,7 +39,9 @@ func TestMain(m *testing.M) {
 // fakeTrust asks whether to trust the folder as Claude Code 2.1.314 does:
 // its words placed by cursor moves, "No, exit" chosen, and drawn again on
 // No once it listens, the keys before that lost. Enter on No exits.
-func fakeTrust(r *bufio.Reader) {
+// With always, it never listens, as a question whose answer never goes
+// through.
+func fakeTrust(r *bufio.Reader, always bool) {
 	var mu sync.Mutex
 	yes, deaf := false, true
 	draw := func() {
@@ -47,6 +50,9 @@ func fakeTrust(r *bufio.Reader) {
 	}
 	draw()
 	time.AfterFunc(150*time.Millisecond, func() {
+		if always {
+			return
+		}
 		mu.Lock()
 		defer mu.Unlock()
 		deaf, yes = false, false
@@ -148,6 +154,12 @@ func fakeClaude(args []string) {
 		fmt.Print("something went wrong\n")
 		os.Exit(3)
 	}
+	if os.Getenv("FAKE_STALL") == "1" {
+		// drawn, but no prompt ever comes
+		fmt.Print("\r\nStarting up…\r\n")
+		time.Sleep(time.Minute)
+		os.Exit(0)
+	}
 	if os.Getenv("FAKE_LOGIN") == "1" {
 		// signed in for -p alone: the interactive mode asks how to sign in
 		fmt.Print("\r\nSelect login method:\r\n\r\n ❯ 1. Claude account with subscription\r\n   2. Anthropic Console account\r\n")
@@ -167,8 +179,8 @@ func fakeClaude(args []string) {
 	if v := os.Getenv("FAKE_ONBOARD"); v != "" {
 		fakeOnboard(r, v)
 	}
-	if os.Getenv("FAKE_TRUST") == "1" {
-		fakeTrust(r)
+	if v := os.Getenv("FAKE_TRUST"); v != "" {
+		fakeTrust(r, v == "deaf")
 	}
 	// what it was started with, for the test to read
 	_ = os.WriteFile(filepath.Join(os.Getenv("CLAUDE_CONFIG_DIR"), "args"), []byte(strings.Join(args, "\n")), 0o600)
@@ -267,6 +279,17 @@ func fakeClaude(args []string) {
 			_, _ = fmt.Fprintf(tapped, `{"s":%d,"end":"done"}`+"\n", n)
 		}
 		if line == "/usage" {
+			// Claude Code drawn again before a slow /usage's panel: its
+			// banner and folder, as ikunbots' read told them (v0.1.2738)
+			if after := os.Getenv("FAKE_USAGE_BANNER"); after != "" {
+				fmt.Print("\x1b[2J\x1b[H ▐▛███▜▌   Claude Code v2.1.316\r\n▝▜█████▛▘  Opus 4.8 · Claude Pro\r\n  ▘▘ ▝▝    /private/var/folders/3d/qhyx6qps/T/magpie-claude-work-501\r\n\r\n" +
+					strings.Repeat("─", 80) + "\r\n❯ \r\n" + strings.Repeat("─", 80) + "\r\n")
+				ms, err := strconv.Atoi(after)
+				if err != nil {
+					continue
+				}
+				time.Sleep(time.Duration(ms) * time.Millisecond)
+			}
 			// its panel, as Claude Code 2.1.316 drew it
 			b, _ := os.ReadFile(os.Getenv("FAKE_USAGE"))
 			_, _ = os.Stdout.Write(b)
@@ -477,6 +500,13 @@ func TestDropLeft(t *testing.T) {
 // exits or answers: what it wrote, its stderr, and how it ended.
 func runEnds(t *testing.T, home string, env []string) (out, stderr string, err error) {
 	t.Helper()
+	b, _ := json.Marshal(map[string]any{"type": "user", "message": map[string]any{"role": "user", "content": "hello"}})
+	return runEndsTold(t, home, env, string(b))
+}
+
+// runEndsTold is runEnds told line, a stream-json line, for "hello".
+func runEndsTold(t *testing.T, home string, env []string, line string) (out, stderr string, err error) {
+	t.Helper()
 	exe, _ := os.Executable()
 	cfg := filepath.Join(home, "claude")
 	tmp := filepath.Join(home, "tmp")
@@ -496,8 +526,7 @@ func runEnds(t *testing.T, home string, env []string) (out, stderr string, err e
 		_ = cmd.Process.Kill()
 		_ = cmd.Wait()
 	})
-	b, _ := json.Marshal(map[string]any{"type": "user", "message": map[string]any{"role": "user", "content": "hello"}})
-	_, _ = stdin.Write(append(b, '\n'))
+	_, _ = io.WriteString(stdin, line+"\n")
 	done := make(chan string, 1)
 	go func() {
 		var all strings.Builder
@@ -597,6 +626,46 @@ func TestShimGoesThroughOnboarding(t *testing.T) {
 			}
 			if _, err := os.Stat(filepath.Join(cfg, "terminal-set-up")); err == nil {
 				t.Fatal("the user's terminal was set up")
+			}
+		})
+	}
+}
+
+// A one-off run's caller (a /usage read, a test's "hi") tells the helper
+// when it stops waiting (DeadlineEnv), and the helper ends then on its
+// own, saying what Claude Code hadn't done and what it last drew. Killed
+// at the caller's deadline instead, it said nothing, and the reading's
+// error was "exit status 1" (#4830, mydosu, Windows).
+func TestShimEndsAtItsCallersDeadline(t *testing.T) {
+	wd, _ := os.Getwd()
+	for _, c := range []struct {
+		name, line, why, screen string
+		env                     []string
+	}{
+		{"no prompt", `{"type":"user","message":{"role":"user","content":"hello"}}`, "showed no prompt in the", "Starting up", []string{"FAKE_STALL=1"}},
+		// the question a saved account's reads waited out on (#4830,
+		// mydosu): said, with the folder, never "showed no prompt"
+		{"trust unanswered", `{"type":"user","message":{"role":"user","content":"hello"}}`, "asked whether to trust " + wd + ", not answered in the", "trust this folder", []string{"FAKE_TRUST=deaf", TrustEnv + "=1"}},
+		// FAKE_USAGE names no panel: nothing is drawn for /usage
+		{"no /usage panel", `{"type":"command","command":"/usage"}`, "hadn't drawn /usage's panel in the", "", []string{"FAKE_USAGE=" + filepath.Join(t.TempDir(), "none")}},
+		// the banner drawn again and no panel after it: never told as one
+		{"banner, no /usage panel", `{"type":"command","command":"/usage"}`, "hadn't drawn /usage's panel in the", "magpie-claude-work-501", []string{"FAKE_USAGE_BANNER=never"}},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			start := time.Now()
+			by := start.Add(3 * time.Second).UnixMilli()
+			out, stderr, err := runEndsTold(t, t.TempDir(), append(c.env, DeadlineEnv+"="+strconv.FormatInt(by, 10)), c.line)
+			d := time.Since(start)
+			if err == nil || strings.Contains(out, `"type":"result"`) {
+				t.Fatalf("ended %v, wrote %q", err, out)
+			}
+			if !strings.Contains(stderr, "claude-tui: Claude Code "+c.why) || !strings.Contains(stderr, c.screen) {
+				t.Fatalf("stderr %q", stderr)
+			}
+			// at the deadline, with room for a slow machine to start it,
+			// and well before the helper's own waits (20s, 45s)
+			if d < 2500*time.Millisecond || d > 15*time.Second {
+				t.Fatalf("ended after %s, the deadline 3s", d)
 			}
 		})
 	}
@@ -727,6 +796,38 @@ func TestShimReadsUsage(t *testing.T) {
 	want := "Current session: 0% used · resets 12am (Asia/Shanghai)\nCurrent week (all models): 81% used · resets Nov 4 at 6am (Asia/Shanghai)"
 	if r := out[1]; r["type"] != "result" || r["is_error"] != false || r["local_command"] != "usage" || r["result"] != want {
 		t.Fatalf("told %v", r)
+	}
+}
+
+// Claude Code draws its banner again before /usage's panel, and a slow
+// /usage leaves it still for seconds. It is waited past, never told as the
+// panel: read as one, the banner was an allowance's error (ikunbots on X,
+// v0.1.2738, "/usage told no allowance: ▘▘ ▝▝ /private/var/folders/…").
+func TestShimWaitsPastTheBanner(t *testing.T) {
+	panel, _ := filepath.Abs(filepath.Join("testdata", "usage-2.1.316.bin"))
+	out := runShim(t, []string{"FAKE_USAGE=" + panel, "FAKE_USAGE_BANNER=4500"}, append([]string{fakePath(t)}, pArgs...), []string{`raw:{"type":"command","command":"/usage"}`}, 2)
+	want := "Current session: 0% used · resets 12am (Asia/Shanghai)\nCurrent week (all models): 81% used · resets Nov 4 at 6am (Asia/Shanghai)"
+	if r := out[1]; r["type"] != "result" || r["is_error"] != false || r["result"] != want {
+		t.Fatalf("told %v", r)
+	}
+}
+
+func TestUsageDrawn(t *testing.T) {
+	b, err := os.ReadFile(filepath.Join("testdata", "usage-2.1.316.bin"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !usageDrawn(ansi.ReplaceAllString(string(b), " ")) {
+		t.Fatal("2.1.316's panel isn't taken as drawn")
+	}
+	for screen, want := range map[string]bool{
+		"▐▛███▜▌ Claude Code v2.1.316 ▘▘ ▝▝ /private/var/folders/3d/x/T/magpie-claude-work-501 ──── ❯ ────": false,
+		"Settings Status Config Usage Stats Loading usage…":               false,
+		"Settings Usage /usage is only available for subscription plans.": true,
+	} {
+		if got := usageDrawn(screen); got != want {
+			t.Errorf("usageDrawn(%q) = %v, want %v", screen, got, want)
+		}
 	}
 }
 

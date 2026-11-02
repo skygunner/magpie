@@ -18,6 +18,50 @@ function headersPanel(label, first, headers) {
   return panel;
 }
 
+// A call's HTTP headers both ways (usrname1833 on Discord: 查看原始请求和
+// 原始响应的http头, to debug what a capture would show), as the gateway
+// read them out, secrets taken out: the client's, then each request magpie
+// sent upstream for it and the head of its answer. Folded under the bodies
+// on the Gateway page's recent calls and on Routing; open when open is.
+// h is /api/gateway/call's headers, or the archive's upstream ones.
+function wireHeadersView(h, open, toggle) {
+  const box = el("section", "call-wire" + (open ? " open" : ""));
+  const b = el("button", "text call-wire-toggle");
+  b.setAttribute("aria-expanded", String(open));
+  const chev = el("span", "call-chev");
+  chev.append(svg(CHEV_R, 11, 1.6));
+  b.append(chev, el("span", "", t("HTTP headers")));
+  b.onclick = (ev) => { ev.stopPropagation(); toggle(); };
+  box.append(b);
+  if (!open) return box;
+  box.append(wireHeadersGrid(h, true));
+  return box;
+}
+
+// the panels: the client's request (when withClient), and each upstream
+// request with its answer
+function wireHeadersGrid(h, withClient) {
+  const grid = el("div", "call-details call-wire-grid");
+  if (withClient) {
+    const client = headersPanel(t("From the client"), "", h.request);
+    client.classList.add("call-wire-wide");
+    grid.append(client);
+  }
+  const ups = h.upstream || [];
+  if (!ups.length) grid.append(el("p", "call-wire-note", t("No request went upstream.")));
+  let plugin = false;
+  for (const u of ups) {
+    plugin ||= !!u.plugin;
+    grid.append(
+      headersPanel(u.plugin ? t("Handed to plugin {name}", { name: u.plugin }) : t("Sent upstream"), `${u.method} ${u.url}`, u.request),
+      headersPanel(t("Upstream response"), u.error ? u.error : `${u.proto || "HTTP"} ${u.status} · ${ledTook(u.ms)}`, u.response),
+    );
+  }
+  if (h.more) grid.append(el("p", "call-wire-note", t("{n} more requests upstream, not kept", { n: h.more })));
+  if (plugin) grid.append(el("p", "call-wire-note", t("A plugin sends a request on to its vendor with headers of its own, which magpie doesn't see.")));
+  return grid;
+}
+
 // The archived file, whole, however large: to the browser in magpie web,
 // to Downloads in the app (#447).
 async function downloadArchive(name, b) {
@@ -102,6 +146,8 @@ function archivePanel(name, id, redraw) {
     archiveBodyPanel("Response Body", got.response, id + "|archive"),
   );
   box.append(grid);
+  // what magpie sent upstream for it, and the heads that came back
+  if (got.upstream?.length) box.append(wireHeadersGrid({ upstream: got.upstream, more: got.upstreamMore }, false));
   return box;
 }
 
@@ -751,6 +797,7 @@ function renderUsage() {
         ...(countable(g.id) ? [{ name: "Count as an agent…", icon: COUNT_AS, run: () => pickCountAs(b, g) }] : []),
         ...counted.map((c) => ({ name: t("Count {client} on its own", { client: c }), icon: OUT, run: () => countClientAs(c, "") })),
         { name: "Hide from this list", icon: EYE_OFF, sep: countable(g.id) || counted.length > 0, run: () => hideUsageAgent(g.id, true) },
+        ...(hidden.length ? [{ name: t("Show {n} Hidden", { n: hidden.length }), literal: true, icon: EYE, sep: true, run: (e) => openHidden(e, "usageAgentsHid", () => { usageHidOpen = true; renderUsage(); }) }] : []),
       ]);
     };
     if (counted.length) {
@@ -862,6 +909,18 @@ async function countClientAs(client, as) {
   }
 }
 
+// openHidden opens a list's hidden ones from a row's menu (yuu003348 on
+// Discord: 从概览中隐藏 后 无法取消隐藏): the line under the list, opened, with
+// the keyboard on it, brought into sight when the menu's click asks
+function openHidden(e, id, open) {
+  open();
+  const line = $("#" + id + " .us-hidline");
+  if (!line || line.closest("[hidden]")) return;
+  line.focus({ preventScroll: true });
+  const box = $("#" + id), v = $("#view-usage"), r = box.getBoundingClientRect(), b = v.getBoundingClientRect();
+  if ((r.top < b.top || r.bottom > b.bottom) && scrollOnPurpose(e, 400)) box.scrollIntoView({ block: "nearest" });
+}
+
 // hideUsageAgent takes a client out of the Usage page's Agents list, or
 // puts it back: drawn at once, put back if the save fails. Its calls stay
 // in the ledger and in every total.
@@ -954,18 +1013,29 @@ function quotaCardMenu(target, card, subs) {
   closeAgentMenu();
   if (again) return;
   const one = of.length === 1 && of[0];
+  // a card shown though hidden, a menu bar cell having asked for it
+  // (usagePeek): its way back, not Hide again
+  const hid = hiddenCards(), peeked = of.flatMap(cardHideKeys).filter((k) => hid.has(k));
+  const others = hiddenQuotas().length;
   openRowMenu(anchor, [
-    { name: who && subs.length > 1 ? "Hide this account from Overview" : "Hide from Overview", icon: EYE_OFF, run: () => hideQuotaCards(of.flatMap(cardHideKeys), true) },
+    ...(peeked.length ? [{ name: "Show in Overview", icon: EYE, run: () => hideQuotaCards(peeked, false) }]
+      : [{ name: who && subs.length > 1 ? "Hide this account from Overview" : "Hide from Overview", icon: EYE_OFF, run: () => hideQuotaCards(of.flatMap(cardHideKeys), true) }]),
     // a plan's card showing its key's balance: the balance alone
-    ...(one?.balanceCard ? [{ name: "Hide its balance from Overview", icon: EYE_OFF, run: () => hideQuotaCards([one.balanceCard + "|balance"], true) }] : []),
+    ...(one?.balanceCard && !peeked.length ? [{ name: "Hide its balance from Overview", icon: EYE_OFF, run: () => hideQuotaCards([one.balanceCard + "|balance"], true) }] : []),
+    // the ones hidden already, from the menu that hid them
+    ...(others ? [{ name: t("Show {n} Hidden", { n: others }), literal: true, icon: EYE, sep: true, run: (e) => openHidden(e, "quotaHid", () => { quotaHidOpen = true; renderQuotaHid(); }) }] : []),
   ]);
+}
+// hiddenQuotas: the cards the Overview leaves out, those the line lists
+function hiddenQuotas() {
+  const hid = hiddenCards();
+  return quotas && hid.size ? sharedBalances(quotas).filter((q) => hid.has(cardHideKey(q)) && !cardPeeked(q)) : [];
 }
 // renderQuotaHid: the line under the cards saying how many are hidden,
 // opening them, each with Unhide, and Show all
 function renderQuotaHid() {
   const hb = $("#quotaHid");
-  const hid = hiddenCards();
-  const hidden = quotas && hid.size ? sharedBalances(quotas).filter((q) => hid.has(cardHideKey(q)) && !cardPeeked(q)) : [];
+  const hidden = hiddenQuotas();
   hb.hidden = !hidden.length;
   if (!hidden.length) { quotaHidOpen = false; return; }
   const line = hb.querySelector(".us-hidline"), hl = hb.querySelector(".list");

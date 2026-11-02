@@ -566,6 +566,12 @@ type Settings struct {
 	// opening was too slow to have by default (the owner, 10-21: "太卡");
 	// one who turned it on keeps it on (LightweightOn).
 	Lightweight *bool `json:"lightweight,omitempty"`
+	// QuitNoAsk lets a Quit the user chooses quit at once while agents go
+	// through magpie, without the question that names them (gui's
+	// quitask.go). Off by default, it asks; the question's "Don't ask
+	// again" sets it, and Settings › General › Ask before quitting turns
+	// it back off (zhujiu on Discord).
+	QuitNoAsk bool `json:"quitNoAsk,omitempty"`
 	// KeepAwake keeps this computer from going to sleep by itself while
 	// agents work through the gateway and for a while after (xiao_wang24004
 	// on X; internal/awake). This computer's own (KeepOwn).
@@ -752,6 +758,11 @@ type Settings struct {
 	AgentOrder   []string `json:"agentOrder,omitempty"`
 	AgentsHidden []string `json:"agentsHidden,omitempty"`
 	AgentsShown  []string `json:"agentsShown,omitempty"`
+	// AgentsHere are the agents, by id, whose picks (model, effort…) stay
+	// on this computer (chenxiang0010 on Discord), as an MCP server can:
+	// sync, a Restore and a backup file neither bring another computer's
+	// picks in for one nor take this computer's up. This computer's own.
+	AgentsHere []string `json:"agentsHere,omitempty"`
 	// UsageOrder is how the Usage page's cards are listed, by provider id,
 	// as they were dragged there; one it doesn't name follows in magpie's
 	// own order. Only the page's: the order providers are tried in is the
@@ -1339,6 +1350,7 @@ func (s *Settings) KeepOwn(cur Settings) {
 	s.RedactModelOff, s.RedactModelAuto = cur.RedactModelOff, cur.RedactModelAuto
 	s.ClaudeRunsMost = cur.ClaudeRunsMost
 	s.RequestArchiveLocal, s.RequestArchiveLocalMB = cur.RequestArchiveLocal, cur.RequestArchiveLocalMB
+	s.AgentsHere = cur.AgentsHere
 }
 
 // Wires is ModelWires with the provider's own id of each model the user
@@ -1802,6 +1814,19 @@ func SetGatewayConversations(on bool) error {
 	return save(s, true)
 }
 
+// SetQuitNoAsk sets QuitNoAsk alone, from what the file holds now (the
+// Quit question's "Don't ask again"). A settings file that can't be read
+// is left as it is, with the error.
+func SetQuitNoAsk(on bool) error {
+	defer lockFile()()
+	s, err := loadChecked()
+	if err != nil {
+		return err
+	}
+	s.QuitNoAsk = on
+	return save(s, false)
+}
+
 // RouterNoteMost is how many characters RouterNote keeps: a few words,
 // said before every tool's description.
 const RouterNoteMost = 80
@@ -2132,6 +2157,7 @@ func saveOwn(s Settings, recording, reads bool) error {
 		return err
 	}
 	s.AgentOrder, s.AgentsHidden, s.AgentsShown = ids(s.AgentOrder), ids(s.AgentsHidden), ids(s.AgentsShown)
+	s.AgentsHere = ids(s.AgentsHere)
 	s.UsageOrder = ids(s.UsageOrder)
 	s.PanelUsageHidden = ids(s.PanelUsageHidden)
 	s.UsageAgentsHidden = ids(s.UsageAgentsHidden)

@@ -75,6 +75,18 @@ run was offered it. `subscriptionRun.names` (`bridgeNames`) maps it back
 to the declared name in `toolStart`, for streamed and whole messages, and
 in `mcpCall` (#2649).
 
+A client's MCP tool that it announced but hasn't loaded (Claude Code's
+tool search names deferred tools in a reminder and leaves them out of
+`tools` until `ToolSearch` loads them) is no tool of the run's, but the
+run's model reads its name in the conversation and calls it,
+`mcp__magpie__<server>__<tool>`. `toolStart` hands that call over under
+the full name, which is the client's own, when the cut name maps to
+nothing and isn't in `subscriptionRun.tools`: handed over cut, as
+`<server>__<tool>`, the client answered "No such tool available" and the
+model had to load it and call again (packinggoods, 11-02,
+`TestClaudeBridgeHandsOverAnUnloadedMagpieTool`). A deferred tool of
+another client MCP server (`mcp__linear__…`) is still not handed over.
+
 A turn with `tool_choice` none is offered every tool the client sent, as
 any other turn is (bbfatx on X). Anthropic caches a prompt as tools, then
 system, then messages, so a turn offered fewer tools (a title or summary
@@ -350,11 +362,58 @@ closed at the first result. Reading the plan's allowance (`/usage`,
 `claudeUsageTUI`) types `/usage` in the interactive mode too: the helper
 is told `{"type":"command","command":"/usage"}`, types it, waits for the
 panel's windows ("NN% used", `commandSettle` still) and closes it with
-Esc. Its result (`local_command: "usage"`) says each window as -p's lines
+Esc. A panel with no window (its words saying why) is taken as drawn only
+once its Settings tabs show and nothing is loading (`usageDrawn`), still
+for three `commandSettle`s: Claude Code draws its banner and folder again
+first, which stays still while a slow /usage loads, and taken as the
+panel it was read as an allowance's error (ikunbots on X, v0.1.2738).
+With no panel by `commandWait`, the result is an error saying what was
+last drawn (`TestShimWaitsPastTheBanner`, `TestUsageDrawn`). Its result (`local_command: "usage"`) says each window as -p's lines
 do, "Current session: 99% used · resets 7pm (Asia/Shanghai)" (`usageText`,
 tested on the bytes Claude Code 2.1.316 drew, `testdata/usage-2.1.316.bin`),
 for `provider.parseClaudeUsage`. Claude Code 2.1.316's `-p /usage`
 printed only the session's cost there, no window, in a real run.
+
+These one-off interactive runs (`askClaudeTUI`, `claudeUsageTUI`) work in
+magpie's shared work folder (`oneOffDir`: `claudeWorkDir`, a fresh temp
+folder only when it can't be made), where the helper may answer the trust
+question, so a config directory holds one trusted entry for it instead of
+a new `magpie-claude-<n>` entry each read (#4830, mydosu): 67 had piled up
+in one `~/.claude.json`. Entries left by older magpies stay; magpie
+doesn't write that file. In a saved account's config directory, magpie
+writes the folder's entry itself before each run there (`trustWork`,
+`provider.ClaudeTrustFolder`), and so before a bridge run of that
+account in magpie's folder: on mydosu's Windows (#4830) the helper's
+answer was never recorded there, and every read of the account waited
+out its time on the question. The entry is keyed as Claude Code 2.1.316
+looks a folder up (`claudeTrustKeys`): the path in NFC, with forward
+slashes on Windows (`C:/Users/<me>/AppData/Local/Temp/magpie-claude-work`),
+also with its links resolved (`/private/var/…` on a Mac), and the WSL
+mount path for a Claude Code in WSL. Only a direct child of
+`claude-accounts` is written, never `~/.claude.json`; every other key
+is kept, a file that can't be parsed is left alone, and a run's own
+fallback folder isn't recorded. The run's own session file in that folder is
+removed by the `session_id` the helper's init line names (`dropOneOff`),
+so the folder's project doesn't fill with "hi"s. The helper is told when
+its caller stops waiting (`claudetui.DeadlineEnv`, the context's deadline
+less `oneOffMargin`, at most a quarter of what is left) and ends then on
+its own, saying what Claude Code hadn't done and its last screen ("Claude
+Code hadn't drawn /usage's panel in the 16.9s its caller waits for it:
+…"). Killed at the deadline instead, it said nothing, and on Windows the
+reading's error was "exit status 1" alone. A run that still says nothing
+is "Claude Code's interactive mode said nothing before magpie stopped
+waiting for it" (`oneOffErr`), and the card says the reason
+(`quotaError`'s "Allowance unavailable: {why}"), its full text kept for the
+tooltip. A question about trust left unanswered at the deadline is named
+with its folder ("Claude Code asked whether to trust <folder>, not answered
+in the 16.8s …"), where it said "showed no prompt" before (#4830). A failed
+run also goes to app.log (`logOneOff`: "claude: a /usage read of saved
+account <dir> failed: …"), with the helper's whole reason, which the card
+clips to 300 bytes, on one line: the home folder and any
+`/Users/<name>` or `C:\Users\<name>` become `~`, secrets go through
+`redact.Scrub`, and past 800 bytes it keeps the first 300 and the last 500,
+so the end of the last screen stays. The `-p` asks keep a temp folder
+each, which they remove: `-p` asks nothing about trust.
 
 The Claude Code provider editor's "Claude Code runs as" row
 (`claudeModeRow` in app.js, drawn by claudemode.js, which it loads with
@@ -525,6 +584,23 @@ Code's billing line, plus the tool-choice line. The first message then holds
 the conversation alone. Claude Code still sends its billing block and its
 identity line, so requests come from the real binary. They no longer carry
 Claude Code's prompt, and that is the ban risk the setting names.
+
+A one-off ask in the interactive mode (no tools, no reply before it, not
+lean, no client marks: `appendsPrompt`) gets its caller's instructions by
+`--append-system-prompt-file` instead (`append.md`, the same `leanSystem`
+text), after Claude Code's own prompt, and its first message holds the ask
+alone. The helper pastes a first message as one text without marks, so the
+instructions pasted there were written to the cache by every ask: Claude
+Code's auto mode classifier read 1,197 tokens and wrote 80k on every check
+of one conversation (#2432). Appended, they end the system block Claude
+Code marks itself, which is the same for every ask under the same
+instructions (only the unmarked billing line differs; recorded from Claude
+Code 2.1.316 on 2026-11-03). Such a run is let go after its reply
+(`ended`) and is never shelved or branched (`run.appended`), since a
+session resumed without the file would have no instructions. Every other
+run keeps them in the first message. Tested by
+`TestClaudeTUIOneOffAskAppendsInstructions` and
+`TestClaudeAppendOnlyForInteractiveOneOffs`.
 
 A request with client cache marks (#1717) is never lean: its system marks
 are placed in the first message. The mode is part of the run's identity

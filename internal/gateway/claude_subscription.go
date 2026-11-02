@@ -211,10 +211,14 @@ type subscriptionRun struct {
 	safeguardBeta string
 	clientMarks   bool
 	lean          bool // started with leanSystem as its system prompt
-	tui           bool // Claude Code's interactive mode (claudeTUI)
-	cacheTail     string
-	cachePrefix   cachePrefix
-	timer         *time.Timer
+	// appended: started with the caller's instructions after Claude
+	// Code's own system prompt (req.appendPrompt), not in its first
+	// message; its session, resumed, would have none
+	appended    bool
+	tui         bool // Claude Code's interactive mode (claudeTUI)
+	cacheTail   string
+	cachePrefix cachePrefix
+	timer       *time.Timer
 
 	// Claude Code's input, kept open for the next turn; owner is the account
 	// it runs as (owned, named once in its life when it started unnamed:
@@ -924,6 +928,9 @@ func (b *subscriptionBridge) startRun(ctx context.Context, req *Request, model, 
 		}
 		args = append(args, "--system-prompt-file", binary.file(systemPath))
 	}
+	// set below for a run that appends them: a request asked again
+	// starts anew, and a transcript replayed has them (replaySession)
+	req.appendPrompt = false
 	var sessions []string
 	switch {
 	case err != nil:
@@ -989,6 +996,23 @@ func (b *subscriptionBridge) startRun(ctx context.Context, req *Request, model, 
 		// no run had the conversation: this one is told it whole, in one
 		// message, its earlier turns marked as such (renderClaudePrompt)
 		log.Printf("claude: a new Claude Code is told the whole conversation: %d messages, %d images, the last turn marked as the one to answer", len(req.Messages), countImages(req.Messages))
+	}
+	if from == nil && appendsPrompt(req, binary) {
+		// a one-off ask in the interactive mode, Claude Code's auto mode
+		// classifier above all: pasted, the caller's instructions lose
+		// their cache mark (the paste is one text), and every ask wrote
+		// them to the cache anew, 80k tokens an ask with 1,197 read
+		// (#2432). After Claude Code's own system prompt they are in the
+		// block it marks itself, and the next ask under the same
+		// instructions reads them; a file of the run's own, as a lean
+		// run's
+		appendPath := filepath.Join(tmp, "append.md")
+		req.appendPrompt = true
+		if err := os.WriteFile(appendPath, []byte(leanSystem(req)), 0o600); err != nil {
+			cleanup()
+			return nil, nil, err
+		}
+		args = append(args, "--append-system-prompt-file", binary.file(appendPath))
 	}
 	req.clientCache.selected(from == nil)
 	var prompt []map[string]any
@@ -1059,6 +1083,10 @@ func (b *subscriptionBridge) startRun(ctx context.Context, req *Request, model, 
 		// (startTrusted)
 		env = append(env, claudetui.TrustEnv+"=1")
 	}
+	if tui && !client {
+		// a saved account's run in magpie's folder is never asked (#4830)
+		trustWork(binary, configDir, work)
+	}
 	cmd.Env = binary.env(binary.asRoot(env), configDir)
 	if tui {
 		cmd.Env = binary.tuiEnv(cmd.Env, configDir)
@@ -1091,6 +1119,7 @@ func (b *subscriptionBridge) startRun(ctx context.Context, req *Request, model, 
 	run.safeguardBeta = req.SafeguardBeta
 	run.clientMarks = req.clientCache != nil
 	run.lean = req.leanPrompt
+	run.appended = req.appendPrompt
 	run.tui = tui
 	run.cachePrefix = prefix
 	if tuiBody != "" {
@@ -1506,6 +1535,19 @@ func (r *subscriptionRun) claimResume() bool {
 	}
 	r.resuming = true
 	return true
+}
+
+// released gives up a claimed handoff whose request turned out to carry
+// another conversation's rewrite of the run's: the run goes on waiting for
+// the results of the client that has not rewritten anything, parkLongest
+// more, as a run whose caller stopped does (#2933).
+func (r *subscriptionRun) released() {
+	r.mu.Lock()
+	r.resuming = false
+	r.mu.Unlock()
+	if r.timer != nil {
+		r.endIn(parkLongest)
+	}
 }
 
 // resume hands a conversation's next turn to the run that had its last
@@ -2084,7 +2126,7 @@ func (b *subscriptionBridge) shelve(run *subscriptionRun) {
 	run.mu.Lock()
 	sid, sessions, rewound, tools := run.sessionID, run.sessions, run.rewound, maps.Clone(run.tools)
 	run.mu.Unlock()
-	if sid == "" || len(sessions) == 0 || rewound || run.idleKey == "" {
+	if sid == "" || len(sessions) == 0 || rewound || run.idleKey == "" || run.appended {
 		return
 	}
 	key := run.idleKey
@@ -2245,7 +2287,7 @@ func (b *subscriptionBridge) branch(req *Request, owner string) *savedSession {
 			}
 		}
 		sid, sessions := run.sessionID, slices.Clone(run.sessions)
-		usable := !run.closed && !run.rewound && run.lean == req.leanPrompt && !run.clientMarks && (run.tui || !claudeTUIOn())
+		usable := !run.closed && !run.rewound && run.lean == req.leanPrompt && !run.appended && !run.clientMarks && (run.tui || !claudeTUIOn())
 		run.mu.Unlock()
 		if at == "" {
 			continue
@@ -3085,11 +3127,21 @@ func (r *subscriptionRun) readOutput(rd io.Reader) {
 			own[index] = true
 			return "", false
 		}
-		name, ok := strings.CutPrefix(name, "mcp__magpie__")
+		rest, ok := strings.CutPrefix(name, "mcp__magpie__")
 		r.mu.Lock()
-		name = declaredName(r.names, name)
+		called := name
+		name = declaredName(r.names, rest)
 		search := r.search != nil && name == r.searchName || r.answerName != "" && name == r.answerName
 		refused := r.allowed != nil && !r.allowed[name]
+		// a tool the client announced but hasn't loaded yet (Claude
+		// Code's deferred MCP tools, told by name in the conversation
+		// and not in tools until a ToolSearch) is called by the
+		// client's own name, which is the name the run's agent called:
+		// the bare name cut from it is no tool the client has, and it
+		// answered "No such tool available" before a retry (packinggoods)
+		if ok && !search && name == rest && r.tools != nil && !r.tools[rest] {
+			name = called
+		}
 		r.mu.Unlock()
 		// magpie answers its own web search, as Claude Code does
 		// its WebSearch, and a call of a tool the turn may not call
@@ -3140,9 +3192,13 @@ func (r *subscriptionRun) readOutput(rd io.Reader) {
 	// its MCP calls one at a time), and the message written later is left
 	// out, its usage told with the next reply's. That message is the first
 	// written after such a call: Claude Code writes no other before it.
+	// Calls of one message may now come in side by side (#4611), and a
+	// second one before its input is written: such a call is held back and
+	// told by the message itself, which carries its input whole.
 	told := map[string]bool{}    // the client's calls it was shown
 	awaited := map[string]bool{} // calls told by themselves, their message not written yet
 	written := map[string]bool{} // calls in a message left out, not made yet
+	unheard := map[string]bool{} // calls held back: no reply to tell them in, or their input not written yet
 	lateID := ""                 // the message left out
 	over := false                // the output has ended
 	if r.tui {
@@ -3158,7 +3214,13 @@ func (r *subscriptionRun) readOutput(rd io.Reader) {
 				r.mu.Lock()
 				waits := r.segment != nil && r.pending[id] != nil
 				r.mu.Unlock()
-				if !waits {
+				if !waits || len(args) == 0 || string(args) == "null" {
+					// A call the client is not hearing now, or one with no
+					// arguments to run (#4611: Claude Code calls a second
+					// tool while its input is still being streamed), would
+					// reach the client broken. The message written after it
+					// carries its input whole: it tells the call from there.
+					unheard[id] = true
 					return
 				}
 				begin("msg_"+strings.ReplaceAll(newUUID(), "-", ""), r.model, cliUsage{})
@@ -3423,17 +3485,24 @@ func (r *subscriptionRun) readOutput(rd io.Reader) {
 			if !next {
 				return
 			}
+			anyUnheard := false
+			for _, c := range whole.Content {
+				if c.Type == "tool_use" && unheard[c.ID] {
+					anyUnheard = true
+					break
+				}
+			}
 			if whole.ID != lateID && whole.ID != unstreamed {
 				if lateID != "" && len(awaited) > 0 {
 					log.Printf("claude: %d calls told by themselves were not in the message written after them", len(awaited))
 					clear(awaited)
 				}
 				lateID = ""
-				if len(awaited) > 0 {
+				if len(awaited) > 0 && !anyUnheard {
 					lateID = whole.ID
 				}
 			}
-			if whole.ID == lateID {
+			if whole.ID == lateID && !anyUnheard {
 				lateUsage = whole.Usage
 				for _, c := range whole.Content {
 					if c.Type != "tool_use" {
@@ -3480,6 +3549,12 @@ func (r *subscriptionRun) readOutput(rd io.Reader) {
 				case "text":
 					said(c.Text)
 				case "tool_use":
+					delete(awaited, c.ID)
+					if told[c.ID] {
+						continue // its call told the client itself already
+					}
+					// a call held back (#4611) is told here, whole
+					delete(unheard, c.ID)
 					name, theirs := toolStart(index, c.Name)
 					if !theirs {
 						continue
@@ -3723,8 +3798,9 @@ func (u cliUsage) gateway() Usage {
 func renderClaudePrompt(req *Request) ([]map[string]any, error) {
 	var blocks []map[string]any
 	var text strings.Builder
-	// a lean run has them as its system prompt (leanSystem)
-	if !req.leanPrompt && (req.System != "" || req.ToolChoice == "required" || strings.HasPrefix(req.ToolChoice, "name:") || envNote(req) != "") {
+	// a lean run has them as its system prompt (leanSystem), an appending
+	// one after Claude Code's (appendsPrompt)
+	if !req.leanPrompt && !req.appendPrompt && (req.System != "" || req.ToolChoice == "required" || strings.HasPrefix(req.ToolChoice, "name:") || envNote(req) != "") {
 		text.WriteString("<external_system_instructions>\n")
 		system := withoutBillingHeader(req.System)
 		pos := 0
@@ -3882,7 +3958,7 @@ func envNote(req *Request) string {
 	switch {
 	case req.envElsewhere && req.envInTurns:
 		return envTurnsNote(req.envDir)
-	case req.envElsewhere && req.leanPrompt:
+	case req.envElsewhere && (req.leanPrompt || req.appendPrompt):
 		return envElsewhereLeanNote
 	case req.envElsewhere:
 		return envElsewhereNote
@@ -3900,6 +3976,18 @@ func toolChoiceAsk(req *Request) string {
 		return fmt.Sprintf("\nYou must call the %s tool.", bridgeName(strings.TrimPrefix(req.ToolChoice, "name:")))
 	}
 	return ""
+}
+
+// appendsPrompt: a new run for req gives the caller's instructions after
+// Claude Code's own system prompt (--append-system-prompt-file), not in
+// its first message. Only a one-off ask in the interactive mode, which
+// pastes its first message without the marks renderClaudePrompt puts on
+// it: such a run is let go after its reply (ended), never resumed, so no
+// later turn needs the instructions in its session. A lean run has them
+// as its system prompt already, and a client's own marks keep theirs.
+func appendsPrompt(req *Request, binary claudeCLI) bool {
+	return !req.leanPrompt && req.clientCache == nil && len(req.Tools) == 0 && !hasReply(req.Messages) &&
+		withoutBillingHeader(req.System)+envNote(req)+toolChoiceAsk(req) != "" && claudePrintWhy(req, binary) == ""
 }
 
 // leanSystem is a lean run's system prompt (ClaudeLeanPrompt): the
@@ -4264,7 +4352,8 @@ func imageBlocks(blocks []map[string]any, text *strings.Builder, p Part) []map[s
 	}
 	switch {
 	case p.Data != "":
-		blocks = append(blocks, map[string]any{"type": "image", "source": map[string]any{"type": "base64", "media_type": p.MediaType, "data": p.Data}})
+		mediaType, data := claudeImage(p.MediaType, p.Data)
+		blocks = append(blocks, map[string]any{"type": "image", "source": map[string]any{"type": "base64", "media_type": mediaType, "data": data}})
 	case p.URL != "":
 		blocks = append(blocks, map[string]any{"type": "image", "source": map[string]any{"type": "url", "url": p.URL}})
 	}
@@ -4809,7 +4898,8 @@ func mcpResult(p Part) mcpToolResult {
 	for _, im := range p.Images {
 		switch {
 		case im.Data != "":
-			content = append(content, map[string]any{"type": "image", "data": im.Data, "mimeType": imageMediaType(im)})
+			mimeType, data := claudeImage(imageMediaType(im), im.Data)
+			content = append(content, map[string]any{"type": "image", "data": data, "mimeType": mimeType})
 		case im.URL != "":
 			content = append(content, map[string]any{"type": "text", "text": "[image: " + im.URL + "]"})
 		}
@@ -5613,6 +5703,17 @@ func (s *Server) serveSubscription(w http.ResponseWriter, r *http.Request, from 
 	if err != nil {
 		return writeError(w, from, 400, err.Error()), err.Error()
 	}
+	// output_config's effort is the level the CLI thinks at (--effort), which
+	// works whatever the turn thinks: taken also when the request asks no
+	// thinking, which upstream a reasoning ask would turn on though the
+	// request never asked for it (Claude Code's title requests carry an
+	// effort and no thinking) (#2899). Claude Code's auto mode classifier
+	// is still asked at low (#250), whatever effort it carries.
+	if from == provider.Anthropic && req.Effort == "" && !req.ThinkOff && !autoModeClassifier(req) {
+		if e := outputConfigEffort(body); e != "" {
+			req.Effort = e
+		}
+	}
 	req.Model = model
 	if req.clientCache != nil {
 		req.clientCache.report = func() { cacheReportReady(w, req) }
@@ -5694,14 +5795,21 @@ func (s *Server) serveSubscription(w http.ResponseWriter, r *http.Request, from 
 		run.abort()
 		run, how = nil, accountChanged
 	}
-	// the client rewrote the conversation since the run's last reply, as Pi
-	// does compacting it mid-turn: the run's agent holds the one from before,
-	// would answer from it, and tell the client a context as large as ever,
-	// so the client compacts again at each tool call. It is let go, and a
-	// run started anew is told the conversation as the client now has it.
+	// the request's conversation was rewritten since the run's last reply —
+	// the client's own, as Pi does compacting it mid-turn, or another
+	// session's: Claude Code's fork sub-agents and resumed sessions answer
+	// the very calls the run waits on, by their ids, and theirs is the
+	// history this request carries. The run's agent holds the conversation
+	// from before, would answer from it, and tell the client a context as
+	// large as ever, so the client compacted again at each tool call: these
+	// results go on in a run of their own, told the conversation as the
+	// request has it. The run that made the calls is not ended for them
+	// (#2933): the results of the client that has not rewritten anything are
+	// still to come, and it goes on waiting for them, parkLongest more, as a
+	// run whose caller stopped does.
 	if run != nil && !run.follows(req.Messages) {
-		log.Printf("%s run on %s let go: earlier messages changed while it waited for tool results", name, model)
-		run.abort()
+		log.Printf("%s on %s: tool results go on in a run of their own: earlier messages changed while the run that made the calls waits for them", name, model)
+		run.released()
 		run, how = nil, ""
 	}
 	// the client offers a tool the run's agent was never told of, as Claude
