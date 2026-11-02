@@ -309,9 +309,19 @@ func codexBody(body []byte) []byte {
 	}
 
 	// the client's instructions go first as a developer message, Codex's
-	// in their place — unless they are Codex's, from Codex itself
+	// in their place — unless they are Codex's, from Codex itself, or the
+	// input already carries them: a newer Codex sends the model's base
+	// instructions as a leading developer message (marked so in the
+	// metadata it sends beside them), and another copy over them as
+	// instructions had the backend read the base prompt twice (#4953)
 	codex := codexInstructions(model)
-	if strings.TrimSpace(own) != "" {
+	if base, in := codexInputBase(input, codex); in {
+		codex = ""
+		if s := strings.TrimSpace(own); s != "" && own != base {
+			input = append([]any{map[string]any{"type": "message", "role": "developer",
+				"content": []any{map[string]any{"type": "input_text", "text": own}}}}, input...)
+		}
+	} else if strings.TrimSpace(own) != "" {
 		if firstLine(own) == firstLine(codex) {
 			codex = own
 		} else {
@@ -325,6 +335,8 @@ func codexBody(body []byte) []byte {
 	m["input"] = input
 	if codex != "" {
 		m["instructions"] = codex
+	} else {
+		delete(m, "instructions")
 	}
 	m["store"] = false
 	m["stream"] = true
@@ -366,6 +378,58 @@ func codexBody(body []byte) []byte {
 		return body
 	}
 	return out
+}
+
+// codexInputBase is the base instructions input already carries as its
+// leading developer messages — a newer Codex sends them there (#4953) —
+// and whether it does: the developer messages of the leading run, text
+// whole (a string, or one input_text part), are the base when they are
+// the model's own instructions or say so in the passthrough metadata
+// Codex marks them with (content_item_kinds "model.base_instructions",
+// which lets a Codex whose template differs from magpie's copy be known
+// too). An additional_tools item stands aside; the first item that is
+// neither ends the look. "" when the input carries no base.
+func codexInputBase(input []any, instructions string) (string, bool) {
+	for _, item := range input {
+		it, ok := item.(map[string]any)
+		if !ok {
+			break
+		}
+		if it["type"] == "additional_tools" {
+			continue
+		}
+		if it["role"] != "developer" || it["type"] != nil && it["type"] != "message" {
+			break
+		}
+		var text string
+		switch content := it["content"].(type) {
+		case string:
+			text = content
+		case []any:
+			if len(content) != 1 {
+				continue
+			}
+			part, _ := content[0].(map[string]any)
+			if part["type"] != "input_text" {
+				continue
+			}
+			text, _ = part["text"].(string)
+		}
+		if text == "" {
+			continue
+		}
+		if instructions != "" && text == instructions {
+			return text, true
+		}
+		meta, _ := it["internal_chat_message_metadata_passthrough"].(map[string]any)
+		kinds, _ := meta["content_item_kinds"].([]any)
+		for _, k := range kinds {
+			if k == "model.base_instructions" {
+				return text, true
+			}
+		}
+	}
+	return "", false
 }
 
 // conversationKey names the conversation a request belongs to, for a client
