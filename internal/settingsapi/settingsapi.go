@@ -163,6 +163,8 @@ func Merge(body []byte, cur settings.Settings, web bool) (settings.Settings, err
 	}
 	var fields map[string]json.RawMessage
 	_ = json.Unmarshal(raw, &fields)
+	// The dedicated cooldown editor owns this policy.
+	in.Cooldown = cur.Cooldown
 	// the Settings page sends its own choices; how the agents are
 	// arranged is the Agents page's, and the window's size its own; both stay as they are.
 	// Older pages do not send fonts. An explicit null restores the
