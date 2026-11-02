@@ -5,6 +5,7 @@ package proc
 import (
 	"bufio"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -34,13 +35,34 @@ func startSh(t *testing.T, script string) (*Tree, int) {
 	return tree, pid
 }
 
+// gone tells whether pid has ended. A process that has died but not been
+// reaped still answers kill(pid, 0), and under load the reaper of an
+// orphan can be slow, which once failed a kill that had worked (#3848):
+// a zombie — ps's Z — is dead, not still there.
 func gone(pid int) bool {
 	for end := time.Now().Add(3 * time.Second); time.Now().Before(end); time.Sleep(20 * time.Millisecond) {
 		if syscall.Kill(pid, 0) != nil {
 			return true
 		}
+		out, _ := exec.Command("ps", "-o", "stat=", "-p", strconv.Itoa(pid)).Output()
+		if strings.HasPrefix(strings.TrimSpace(string(out)), "Z") {
+			return true
+		}
 	}
 	return false
+}
+
+// gone counts a process that has died but not been reaped, as a killed
+// orphan is until whoever reaps orphans gets to it (#3848): this child is
+// never waited for, so it stays a zombie — dead, not still running.
+func TestGoneCountsTheUnreaped(t *testing.T) {
+	p, err := os.StartProcess("/bin/sh", []string{"sh", "-c", "exit 0"}, &os.ProcAttr{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !gone(p.Pid) {
+		t.Fatalf("a dead process nobody reaped (pid %d) counted as running", p.Pid)
+	}
 }
 
 // Killing a command ends what it started, not only the command.
