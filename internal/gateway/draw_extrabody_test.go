@@ -3,6 +3,7 @@ package gateway
 import (
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/tidwall/gjson"
 	"github.com/yetone/magpie/internal/provider"
@@ -56,5 +57,40 @@ func TestExtraBodyReachesDrawnImage(t *testing.T) {
 	}
 	if got := gjson.Get(chat[0], "watermark"); got.Type != gjson.False {
 		t.Errorf("chat drawing sent without watermark false: %s", chat[0])
+	}
+}
+
+// chenmonster's WorkBuddy (#3914): a plan's drawing is a body magpie
+// builds and the plugin's fetch only signs, so the fields reach it as a
+// key provider's do — a plan's chat body is the agent's own and keeps
+// none, its drawing is magpie's. Whether WorkBuddy's own images API
+// answers a field is the vendor's word, not magpie's; LogoAdd is what
+// Tencent's official Hunyuan API names its watermark switch.
+func TestExtraBodyReachesAPlansDrawing(t *testing.T) {
+	st := &wbStudio{models: wbHunyuanModels, answer: func(path string, body map[string]any) string {
+		return `{"code":0,"msg":"OK","data":{"created":1,"data":[{"url":"https://cos.example/wb-1.png"}],"usage":{"input_tokens":1,"output_tokens":1}}}`
+	}}
+	p := wbSignedIn(t, "workbuddy", st)
+	withExtraBody(t, "workbuddy", `{"LogoAdd":0}`)
+
+	Drawers(p)
+	deadline := time.Now().Add(5 * time.Second)
+	for len(Drawers(p)) == 0 && time.Now().Before(deadline) {
+		time.Sleep(20 * time.Millisecond)
+	}
+	s := New()
+	code, _, raw := postImages(t, s, "/v1/images/generations", "application/json", `{"model":"workbuddy/hunyuan-image-v3.0-art","prompt":"a magpie"}`)
+	if code != 200 {
+		t.Fatalf("status %d: %s", code, raw)
+	}
+	sent, _ := st.got("/v1/images/generations")
+	if sent == nil {
+		t.Fatal("the plan was sent no drawing request")
+	}
+	if got, ok := sent["LogoAdd"]; !ok || got != 0.0 {
+		t.Errorf("sent without LogoAdd 0: %v", sent)
+	}
+	if got := sent["model"]; got != "hunyuan-image-v3.0-art" {
+		t.Errorf("model %v in %v", got, sent)
 	}
 }

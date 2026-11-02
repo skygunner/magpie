@@ -26,9 +26,11 @@ package provider
 // answers its Test. A request that only counts tokens gets none of them,
 // nor one to another API (embeddings, video, a decision API's): the fields
 // are for asking the model for a reply. An image request takes them too
-// (#3914), except a multipart edit, whose fields are form data, not JSON.
-// Neither does a
-// signed-in account's: its body is the agent's own, as its headers are —
+// (#3914), except a multipart edit, whose fields are form data, not JSON —
+// a signed-in plan's drawings among them (WorkBuddy's, #3914), for the
+// body magpie builds for a drawing is magpie's, not the agent's own
+// (WithExtraBodyDraw). A signed-in account's chat takes none: its body is
+// the agent's own, as its headers are —
 // except a ChatGPT (Codex) account's, whose requests magpie builds as Codex
 // CLI would (codexBody), and which take fields Codex CLI adds by choice
 // (access_programs, OpenAI's Daybreak, magpie-releases#18). On it the
@@ -145,7 +147,25 @@ func cleanExtraBody(e ExtraBody) ExtraBody {
 // ${sessionId}. A body that isn't a JSON object goes as it came.
 func (p Provider) WithExtraBody(body []byte, session string) []byte {
 	owned, takes := p.extraBodyTakes()
-	if len(p.ExtraBody) == 0 || !takes {
+	if !takes {
+		return body
+	}
+	return p.mergeExtraBody(body, session, owned)
+}
+
+// WithExtraBodyDraw is WithExtraBody on an image request's body, which
+// magpie builds itself: a signed-in plan's drawings take the fields too
+// (chenmonster's WorkBuddy, #3914), for that body is magpie's, not the
+// agent's own — its chat body is the agent's, relayed as it came. None of
+// codexOwned applies: a drawing's body has none of codexBody's fields.
+func (p Provider) WithExtraBodyDraw(body []byte, session string) []byte {
+	return p.mergeExtraBody(body, session, nil)
+}
+
+// mergeExtraBody is WithExtraBody's merge, beside the fields owned that
+// this body can't set.
+func (p Provider) mergeExtraBody(body []byte, session string, owned []string) []byte {
+	if len(p.ExtraBody) == 0 {
 		return body
 	}
 	dec := json.NewDecoder(bytes.NewReader(body))

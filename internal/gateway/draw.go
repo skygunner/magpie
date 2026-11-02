@@ -1329,7 +1329,7 @@ func (s *Server) drawImages(ctx context.Context, p provider.Provider, model stri
 	// an image request carries the user's own fields too (#3914); a
 	// multipart edit's fields are form data, not JSON, so it has none
 	if strings.HasPrefix(ct, "application/json") {
-		body = p.WithExtraBody(body, d.Session)
+		body = p.WithExtraBodyDraw(body, d.Session)
 	}
 	b, code, err := s.send(ctx, p, url, ct, body, true)
 	if err != nil {
@@ -1367,7 +1367,7 @@ func (s *Server) drawOpenRouterImages(ctx context.Context, p provider.Provider, 
 		req["input_references"] = refs
 	}
 	body, _ := json.Marshal(req)
-	body = p.WithExtraBody(body, d.Session)
+	body = p.WithExtraBodyDraw(body, d.Session)
 	url := strings.TrimRight(p.Base(provider.Chat), "/") + "/images"
 	b, code, err := s.send(ctx, p, url, "application/json", body, true)
 	if err != nil {
@@ -1576,7 +1576,7 @@ func (s *Server) drawChat(ctx context.Context, p provider.Provider, model string
 		req["image_config"] = map[string]string{"aspect_ratio": r}
 	}
 	body, _ := json.Marshal(req)
-	body = p.Prepare(p.WithExtraBody(body, d.Session))
+	body = p.Prepare(p.WithExtraBodyDraw(body, d.Session))
 	url := strings.TrimRight(p.Base(provider.Chat), "/") + "/chat/completions"
 	return s.eachDrawing(d.N, func() (drawn, int, error) {
 		b, code, err := s.send(ctx, p, url, "application/json", body, true)
@@ -1675,7 +1675,7 @@ func (s *Server) drawGemini(ctx context.Context, p provider.Provider, model stri
 		cfg["imageConfig"] = map[string]string{"aspectRatio": r}
 	}
 	body, _ := json.Marshal(map[string]any{"contents": []map[string]any{{"role": "user", "parts": parts}}, "generationConfig": cfg})
-	body = p.WithExtraBody(body, d.Session)
+	body = p.WithExtraBodyDraw(body, d.Session)
 	base := strings.TrimSuffix(strings.TrimRight(p.Base(provider.Chat), "/"), "/openai")
 	url := base + "/models/" + model + ":generateContent"
 	return s.eachDrawing(d.N, func() (drawn, int, error) {
