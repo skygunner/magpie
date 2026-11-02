@@ -5176,6 +5176,14 @@ func (s *Server) forwardOnce(ctx context.Context, p provider.Provider, to provid
 				continue
 			}
 			if codexClientHeader(k) {
+				if strings.EqualFold(k, "originator") {
+					// a thread made in the TUI and resumed in Desktop
+					// carries the TUI's originator under a Desktop
+					// User-Agent, which an upstream that checks Codex's
+					// client identity answers 403 (#3851): the originator
+					// goes on as the client the User-Agent names
+					vs = []string{codexClientIdentity(in)}
+				}
 				req.Header[k] = slices.Clone(vs)
 				seen[k] = vs
 			}
@@ -5374,12 +5382,33 @@ func fromCodex(in http.Header) bool {
 // a test asked as Codex (provider.SawClient).
 func codexNamed(in http.Header) bool {
 	for _, v := range []string{in.Get("User-Agent"), in.Get("originator")} {
-		v = strings.ToLower(v)
-		if strings.HasPrefix(v, "codex") || strings.HasPrefix(v, "acp-extension-codex") {
+		if codexOwnName(v) {
 			return true
 		}
 	}
 	return false
+}
+
+// codexOwnName is one of the names Codex names itself by, as it names
+// itself in a User-Agent or an originator: codex-tui, codex_cli_rs,
+// codex_exec, Codex Desktop, acp-extension-codex.
+func codexOwnName(v string) bool {
+	v = strings.ToLower(v)
+	return strings.HasPrefix(v, "codex") || strings.HasPrefix(v, "acp-extension-codex")
+}
+
+// codexClientIdentity is the client a request's originator should name:
+// its own, unless a Desktop User-Agent carries another Codex client's
+// originator — a thread made in the TUI, resumed in Codex Desktop
+// (#3851) — which goes on as the Desktop client the User-Agent names,
+// for an upstream that answers the mix 403.
+func codexClientIdentity(in http.Header) string {
+	orig := in.Get("originator")
+	if strings.HasPrefix(strings.ToLower(in.Get("User-Agent")), "codex desktop") &&
+		codexOwnName(orig) && !strings.HasPrefix(strings.ToLower(orig), "codex desktop") {
+		return "Codex Desktop"
+	}
+	return orig
 }
 
 // hostedCodex is a Codex an app runs under the app's own name and that

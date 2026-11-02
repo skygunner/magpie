@@ -124,3 +124,37 @@ func TestCodexHeadersReachKeyedRelay(t *testing.T) {
 		}
 	}
 }
+
+// A thread made in the TUI and resumed in Codex Desktop carries the TUI's
+// originator under a Desktop User-Agent, and an upstream that checks
+// Codex's client identity answers the mix 403 (#3851): the originator
+// goes on as the client the User-Agent names, while a request already
+// consistent — the TUI's own, Desktop's own — is left as Codex sent it.
+func TestCodexDesktopResumedTUIThreadOriginator(t *testing.T) {
+	desktopUA := "Codex Desktop/0.162.3 (Windows 10.0.26100; x86_64) unknown"
+	tuiUA := "codex_cli_rs/0.159.2 (Mac OS 26.6.0; arm64) kitty"
+	f := &fake{t: t, ctype: "application/json", reply: `{"id":"r","object":"response","status":"completed","output":[]}`}
+	setup(t, provider.Responses, f)
+	for _, c := range []struct{ name, ua, originator, want string }{
+		{"resumed in desktop", desktopUA, "codex-tui", "Codex Desktop"},
+		{"the tui's own", tuiUA, "codex-tui", "codex-tui"},
+		{"desktop's own", desktopUA, "Codex Desktop", "Codex Desktop"},
+	} {
+		t.Run(c.name, func(t *testing.T) {
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequest("POST", "/v1/responses", strings.NewReader(`{"model":"fake/m1","input":"hi","stream":false}`))
+			req.Header.Set("User-Agent", c.ua)
+			req.Header.Set("Originator", c.originator)
+			New().Handler().ServeHTTP(rec, req)
+			if rec.Code != 200 || f.calls == 0 {
+				t.Fatalf("%s: %d %s", c.name, rec.Code, rec.Body.String())
+			}
+			if got := f.head.Get("Originator"); got != c.want {
+				t.Errorf("%s: originator %q, want %q", c.name, got, c.want)
+			}
+			if got := f.head.Get("User-Agent"); got != c.ua {
+				t.Errorf("%s: user-agent %q, want %q", c.name, got, c.ua)
+			}
+		})
+	}
+}
