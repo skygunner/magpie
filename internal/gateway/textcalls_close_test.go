@@ -1,7 +1,10 @@
 package gateway
 
 import (
+	"encoding/json"
 	"net/http/httptest"
+	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"unicode/utf8"
@@ -156,5 +159,85 @@ func TestDSMLCloseAlone(t *testing.T) {
 	text2, _, _, _ = relayedChat(t, chat, nativeExec, chunkOf(prose), stopChunk)
 	if text2 != prose {
 		t.Fatalf("prose after a call: text %q", text2)
+	}
+}
+
+// blockMarks is the (event, index) of every content-block start and stop
+// a Messages client read, as #4874's fixture reads them.
+func blockMarks(t *testing.T, raw string) [][2]string {
+	t.Helper()
+	var seen [][2]string
+	for _, line := range strings.Split(raw, "\n") {
+		data, ok := strings.CutPrefix(line, "data: ")
+		if !ok {
+			continue
+		}
+		var ev struct {
+			Type  string `json:"type"`
+			Index int    `json:"index"`
+		}
+		if json.Unmarshal([]byte(data), &ev) != nil {
+			continue
+		}
+		switch ev.Type {
+		case "content_block_start", "content_block_stop":
+			seen = append(seen, [2]string{ev.Type, strconv.Itoa(ev.Index)})
+		}
+	}
+	return seen
+}
+
+// A Messages reply whose empty text block is overlapped by a tool block —
+// the tool starts before the text block stops — keeps the text block's
+// held start, so the client never gets a stop for a block it never saw
+// start (#4874: an isolated Claude Code replay lost the first tool call of
+// the reply for it). The fixture sends whole frames, and an ordered
+// control keeps both events too.
+func TestOverlapKeepsTheHeldTextStart(t *testing.T) {
+	fresh(t)
+	a := &scripted{}
+	scriptedOn(t, "a", provider.Anthropic, a)
+	ev := func(typ string, v any) string {
+		b, _ := json.Marshal(v)
+		return "event: " + typ + "\ndata: " + string(b)
+	}
+	head := []string{
+		ev("message_start", map[string]any{"type": "message_start", "message": map[string]any{"id": "msg_fixture", "type": "message", "role": "assistant", "model": "m", "content": []any{}, "usage": map[string]any{"input_tokens": 1, "output_tokens": 0}}}),
+		ev("content_block_start", map[string]any{"type": "content_block_start", "index": 0, "content_block": map[string]any{"type": "thinking", "thinking": "", "signature": ""}}),
+		ev("content_block_delta", map[string]any{"type": "content_block_delta", "index": 0, "delta": map[string]any{"type": "thinking_delta", "thinking": "fixture"}}),
+		ev("content_block_stop", map[string]any{"type": "content_block_stop", "index": 0}),
+		ev("content_block_start", map[string]any{"type": "content_block_start", "index": 1, "content_block": map[string]any{"type": "text", "text": ""}}),
+	}
+	stop1 := ev("content_block_stop", map[string]any{"type": "content_block_stop", "index": 1})
+	tail := []string{
+		ev("content_block_start", map[string]any{"type": "content_block_start", "index": 2, "content_block": map[string]any{"type": "tool_use", "id": "toolu_fixture", "name": "echo", "input": map[string]any{}}}),
+		ev("content_block_delta", map[string]any{"type": "content_block_delta", "index": 2, "delta": map[string]any{"type": "input_json_delta", "partial_json": `{"value":"ping"}`}}),
+		ev("content_block_stop", map[string]any{"type": "content_block_stop", "index": 2}),
+		ev("message_delta", map[string]any{"type": "message_delta", "delta": map[string]any{"stop_reason": "tool_use", "stop_sequence": nil}, "usage": map[string]any{"output_tokens": 5}}),
+		ev("message_stop", map[string]any{"type": "message_stop"}),
+	}
+	for _, c := range []struct {
+		name   string
+		frames []string
+	}{
+		{"overlap", append(append(append([]string{}, head...), tail[:2]...), append([]string{stop1}, tail[2:]...)...)},
+		{"ordered", append(append([]string{}, head...), append([]string{stop1}, tail...)...)},
+	} {
+		a.replies, a.n = []reply{{200, "text/event-stream", sse(c.frames...)}}, 0
+		rec := httptest.NewRecorder()
+		New().Handler().ServeHTTP(rec, httptest.NewRequest("POST", "/v1/messages", strings.NewReader(
+			`{"model":"a/m","max_tokens":128,"stream":true,"messages":[{"role":"user","content":"Call echo with ping."}],"tools":[{"name":"echo","description":"Echo a value","input_schema":{"type":"object","properties":{"value":{"type":"string"}}}}]}`)))
+		if rec.Code != 200 {
+			t.Fatalf("%s: %d %s", c.name, rec.Code, rec.Body.String())
+		}
+		seen := blockMarks(t, rec.Body.String())
+		has := func(mark [2]string) bool { return slices.Contains(seen, mark) }
+		for _, mark := range [][2]string{{"content_block_start", "0"}, {"content_block_stop", "0"},
+			{"content_block_start", "1"}, {"content_block_stop", "1"},
+			{"content_block_start", "2"}, {"content_block_stop", "2"}} {
+			if !has(mark) {
+				t.Fatalf("%s: %s %s never reached the client\n%s", c.name, mark[0], mark[1], rec.Body.String())
+			}
+		}
 	}
 }

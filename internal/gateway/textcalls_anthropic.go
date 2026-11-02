@@ -111,6 +111,14 @@ func (t *anthropicTextCalls) event(ev []byte) []byte {
 	switch typ {
 	case "content_block_start":
 		pre := t.release()
+		if t.startHeld != nil {
+			// another block began before the held one, empty so far,
+			// stopped: its start goes on, or its stop — which can still
+			// come, out of order — would reach the client with no start
+			// of its own (#4874)
+			pre = append(pre, t.startHeld...)
+			t.startHeld = nil
+		}
 		t.top = max(t.top, index+1)
 		var cb struct {
 			Type string `json:"type"`
