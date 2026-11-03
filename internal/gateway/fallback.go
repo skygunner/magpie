@@ -1733,7 +1733,7 @@ func tooLongUnsaid(p provider.Provider, model string, tokens, status int, body [
 	msg := fmt.Sprintf("prompt is too long: about %d tokens, more than %s's context window of %d", tokens, model, window)
 	said := strings.TrimSpace(vendorMessage(body))
 	if len(said) > 200 {
-		said = said[:200] + "…"
+		said = clip(said, 200)
 	}
 	// the vendor's words, unless they'd read as a limit of another kind
 	if full := fmt.Sprintf("%s (%s answered %d: %s)", msg, p.Name, status, said); said != "" && tooLong(400, full) {

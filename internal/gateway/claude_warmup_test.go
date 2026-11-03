@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/yetone/magpie/internal/provider"
 	"github.com/yetone/magpie/internal/testenv"
@@ -266,6 +267,53 @@ func TestClaudeRunEndsWhatItStarted(t *testing.T) {
 				if time.Now().After(end) {
 					t.Fatalf("what Claude Code started is still running (%d)", pid)
 				}
+			}
+		})
+	}
+}
+
+// TestOneOffErrCutsItsReasonAtARune: the card's reason clips to 300 bytes,
+// and a reason whose 300th byte falls inside a multi-byte rune (Claude
+// Code's screens are full of ─ and ❯) ends whole at a rune, not cut in two
+// (#4878).
+func TestOneOffErrCutsItsReasonAtARune(t *testing.T) {
+	stderr := strings.Repeat("a", 299) + "❯" + "more of the screen"
+	err := oneOffErr(context.Background(), stderr, nil)
+	if err == nil {
+		t.Fatal("a failed one-off that said why passed as nil")
+	}
+	said := err.Error()
+	if !utf8.ValidString(said) {
+		t.Fatalf("the card's reason is not valid UTF-8, a rune was cut in two: %q", said)
+	}
+	if !strings.HasPrefix(said, "Claude Code: ") {
+		t.Fatalf("the reason does not say who said it: %q", said)
+	}
+	if !strings.HasSuffix(said, "…") {
+		t.Fatalf("a reason over the budget is not clipped: %q", said)
+	}
+	if body := strings.TrimSuffix(strings.TrimPrefix(said, "Claude Code: "), "…"); len(body) > 300 {
+		t.Fatalf("the clip kept %d bytes, over the 300-byte budget", len(body))
+	}
+}
+
+// TestClipCutsAtARune pins the shared byte clip: the budget is bytes, the
+// cut lands on a rune.
+func TestClipCutsAtARune(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		in   string
+		n    int
+		want string
+	}{
+		{"short stays whole", "abc", 300, "abc"},
+		{"ascii cuts at the budget", strings.Repeat("a", 301), 300, strings.Repeat("a", 300) + "…"},
+		{"a rune across the cut backs up", strings.Repeat("a", 299) + "❯❯", 300, strings.Repeat("a", 299) + "…"},
+		{"the cut lands on a rune start", strings.Repeat("a", 297) + "❯a", 300, strings.Repeat("a", 297) + "❯…"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := clip(tt.in, tt.n); got != tt.want {
+				t.Fatalf("clip = %q, want %q", got, tt.want)
 			}
 		})
 	}

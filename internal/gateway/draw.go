@@ -749,7 +749,7 @@ func vendorSaid(text string) string {
 		return ""
 	}
 	if len(text) > 300 {
-		text = text[:300] + "…"
+		text = clip(text, 300)
 	}
 	return ": " + text
 }

@@ -85,7 +85,7 @@ func (f *compactFails) failed(key string, status int, why string) {
 		return
 	}
 	if len(why) > 300 {
-		why = why[:300] + "…"
+		why = clip(why, 300)
 	}
 	f.mu.Lock()
 	defer f.mu.Unlock()

@@ -74,7 +74,7 @@ func askClaude(ctx context.Context, configDir, model string) error {
 	cmd.Stdout, cmd.Stderr = &out, &stderr
 	runErr := runClaudeTree(ctx, cmd, "a Claude Code test on "+model)
 	if res, ok := claudeResult(out.Bytes()); ok && res.IsError {
-		return errors.New("Claude Code: " + clip(res.Result))
+		return errors.New("Claude Code: " + clip(res.Result, 300))
 	}
 	if runErr != nil {
 		msg := strings.TrimSpace(stderr.String())
@@ -84,7 +84,7 @@ func askClaude(ctx context.Context, configDir, model string) error {
 		if msg == "" {
 			return runErr
 		}
-		return errors.New("Claude Code: " + clip(msg))
+		return errors.New("Claude Code: " + clip(msg, 300))
 	}
 	return nil
 }
@@ -130,7 +130,7 @@ func askClaudeTUI(ctx context.Context, binary claudeCLI, configDir, model string
 	dropOneOff(binary, configDir, work, out.sid)
 	if out.res != nil {
 		if out.res.IsError {
-			return errors.New("Claude Code: " + clip(out.res.Result))
+			return errors.New("Claude Code: " + clip(out.res.Result, 300))
 		}
 		return nil
 	}
@@ -214,7 +214,7 @@ func claudeUsage(ctx context.Context, configDir string) (string, error) {
 	}
 	if res, ok := claudeResult(out.Bytes()); ok {
 		if res.IsError {
-			return "", errors.New("Claude Code: " + clip(res.Result))
+			return "", errors.New("Claude Code: " + clip(res.Result, 300))
 		}
 		return res.Result, nil
 	}
@@ -225,7 +225,7 @@ func claudeUsage(ctx context.Context, configDir string) (string, error) {
 	if msg == "" && runErr != nil {
 		return "", runErr
 	}
-	return "", errors.New("Claude Code: " + clip(msg))
+	return "", errors.New("Claude Code: " + clip(msg, 300))
 }
 
 // claudeUsageEnv is the environment a /usage read runs Claude Code in:
@@ -286,7 +286,7 @@ func claudeUsageTUI(ctx context.Context, binary claudeCLI, configDir string) (st
 	}
 	if out.res != nil {
 		if out.res.IsError {
-			return "", errors.New("Claude Code: " + clip(out.res.Result))
+			return "", errors.New("Claude Code: " + clip(out.res.Result, 300))
 		}
 		return out.res.Result, nil
 	}
@@ -390,7 +390,7 @@ func helperDeadline(ctx context.Context) []string {
 // exit status its kill left (on Windows "exit status 1", #4830).
 func oneOffErr(ctx context.Context, stderr string, runErr error) error {
 	if msg := strings.TrimSpace(stderr); msg != "" {
-		return errors.New("Claude Code: " + clip(msg))
+		return errors.New("Claude Code: " + clip(msg, 300))
 	}
 	if ctx.Err() != nil {
 		return fmt.Errorf("Claude Code's interactive mode said nothing before magpie stopped waiting for it (%v)", ctx.Err())
@@ -532,9 +532,16 @@ func claudeTUIWarmArgs(model string) []string {
 		"--tools", "", "--strict-mcp-config", "--setting-sources", "", "--settings", disableDeepLinkSettings}
 }
 
-func clip(s string) string {
-	if len(s) > 300 {
-		return s[:300] + "…"
+// clip is s's first n bytes at most, cut at a rune: a cut whose last byte
+// falls inside a multi-byte rune ends the text on U+FFFD, so the cut backs
+// up to the rune's start (#4878).
+func clip(s string, n int) string {
+	if len(s) > n {
+		i := n
+		for i > 0 && !utf8.RuneStart(s[i]) {
+			i--
+		}
+		return s[:i] + "…"
 	}
 	return s
 }
