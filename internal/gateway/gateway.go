@@ -2045,6 +2045,10 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 	}
 	defer discardArchive(capture)
 	r, watched := observeRequest(r, call.Kind, body)
+	// what the request's tries send up to the vendor is summed in its
+	// context, where forwardOnce and codexBackend add each try's bytes,
+	// for the ledger row to read (#4456)
+	r = r.WithContext(context.WithValue(r.Context(), upBytesKey{}, &upBytes{}))
 	defer func() { watched.end(call, time.Since(start).Milliseconds()) }()
 	switch call.Kind {
 	case "web_search":
@@ -4667,6 +4671,9 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 			// counts it once, as the request it is (小一 on Discord)
 			rec.Tries = tries
 		}
+		if up := upBytesOf(r.Context()); up != nil {
+			rec.UpBytes, rec.PlainBytes = up.wire, up.plain
+		}
 		failedWith(&rec, call.Status, call.Error, call.Usage.ErrType)
 		withBodies(&rec, &call)
 		appendUsage(r, rec)
@@ -5307,6 +5314,19 @@ func (s *Server) forwardOnce(ctx context.Context, p provider.Provider, to provid
 		// sent plain, ChatGPT answered a 1.1 MB one 503 (ylorn on X)
 		sent = provider.CodexCompressed(req, body)
 	}
+	// the bytes go on the wire whether the vendor answers or not, counted
+	// for the request's ledger row (#4456)
+	sentUp(ctx, sent, len(body))
+	// a request asked again in the same ask (RetryOneAuth and the others
+	// below) goes on the wire again too, as long as it went
+	again := func(r *http.Request) (*http.Response, error) {
+		n := sent
+		if r.ContentLength > 0 {
+			n = int(r.ContentLength)
+		}
+		sentUp(ctx, n, len(body))
+		return p.Do(s.client, r)
+	}
 	res, err := p.Do(s.client, req)
 	if err == nil && res.StatusCode >= 400 && provider.OpenCodeURL(req.URL.String()) {
 		logOpenCodeRefusal(p, req, res.StatusCode)
@@ -5314,21 +5334,21 @@ func (s *Server) forwardOnce(ctx context.Context, p provider.Provider, to provid
 	if err == nil && to == provider.Anthropic {
 		// a vendor that takes the key in x-api-key or Authorization
 		// alone, refusing both (Aloha on Discord): asked again with one
-		res, err = provider.RetryOneAuth(p, req, res, func(r *http.Request) (*http.Response, error) { return p.Do(s.client, r) })
+		res, err = provider.RetryOneAuth(p, req, res, again)
 	}
 	if err == nil && to == provider.Chat {
 		// a GLM Coding Plan's key at Zhipu's or Z.ai's pay-as-you-go
 		// endpoint, refused there for want of a balance (1113): asked at
 		// the plan's endpoint, and the provider moved there when it serves
 		// it; else the refusal says what to change (@cleverpigo on X)
-		res, err = provider.RetryZhipuCoding(p, req, res, func(r *http.Request) (*http.Response, error) { return p.Do(s.client, r) })
+		res, err = provider.RetryZhipuCoding(p, req, res, again)
 	}
 	if err == nil && provider.OpenCodeURL(req.URL.String()) {
 		// a model OpenCode Go answers "Model is unavailable": one of Zen's
 		// free models asked at Zen's free tier, signed out as OpenCode
 		// asks it; else the refusal says where it is served (51bit.eth on
 		// Discord)
-		res, err = provider.RetryOpenCodeFreeOnZen(p, to, req, res, func(r *http.Request) (*http.Response, error) { return p.Do(s.client, r) })
+		res, err = provider.RetryOpenCodeFreeOnZen(p, to, req, res, again)
 	}
 	if err != nil {
 		return res, err
@@ -5474,8 +5494,9 @@ func (s *Server) passthrough(w http.ResponseWriter, r *http.Request, p provider.
 		gather = &gathered{h: http.Header{}, status: http.StatusOK}
 		body = withFields(body, map[string]any{"stream": true})
 	}
-	searchFn := false    // Codex's tool search sent as a function
-	geminiWhole := false // a Gemini client's generateContent
+	searchFn := false            // Codex's tool search sent as a function
+	geminiWhole := false         // a Gemini client's generateContent
+	var toolSeen map[string]bool // the call ids the client holds (tool_use_ids.go)
 	// a model that wants its reasoning text back (#388, #1104)
 	replay := proto == provider.Responses && (replaysReasoning(model, p.Host()) || replaysReasoning(upstream, p.Host()))
 	switch proto {
@@ -5522,6 +5543,14 @@ func (s *Server) passthrough(w http.ResponseWriter, r *http.Request, p provider.
 				// ChatGPT backend take only empty, nor does an upstream
 				// that has turned it away before (#1411)
 				body = withoutReasoningText(body)
+			}
+			if strings.HasSuffix(p.Host(), "openai.com") || p.IsAzure() || p.Account != nil && p.Account.Agent == "codex" || !s.fits(p.ID, citationOffsetRefused(model), proto) {
+				// a citation another vendor's reply wrote without the
+				// offsets OpenAI's schema wants (Volcengine Ark's
+				// url_citation, #4921), which the ChatGPT backend
+				// refuses the whole replay over, nor does an upstream
+				// that has turned one away before
+				body = withoutOffsetlessCitations(body)
 			}
 		}
 		// Relays enforce OpenAI's item ID prefixes too, including during
@@ -5609,6 +5638,11 @@ func (s *Server) passthrough(w http.ResponseWriter, r *http.Request, p provider.
 		geminiWhole = !streamOf(body)
 		body = withoutFields(body, "stream")
 	case provider.Anthropic:
+		// what the client holds, taken before the upstream gets its own
+		// call ids back below, and those given back to it (tool_use_ids.go,
+		// #4910)
+		toolSeen = clientToolUseIDs(body)
+		body = saltedCallIDsBack(body)
 		// Claude Code's advisor, named by magpie's id (advisor.go)
 		body = advisorTools(body, p, upstream, wiresOf(r.Context()))
 		if p.IsBedrock() {
@@ -5924,6 +5958,21 @@ func (s *Server) passthrough(w http.ResponseWriter, r *http.Request, p provider.
 				continue
 			}
 		}
+		if len(fs) == 0 && len(ms) == 0 && proto == provider.Responses && refusesCitationOffsets(res.StatusCode, b) {
+			// and a citation without the offsets OpenAI's schema wants,
+			// which the ChatGPT backend and the relays in front of it
+			// turn the whole replay away over ("Missing required
+			// parameter: 'input[n].content[m].annotations[k].start_index'",
+			// #4921): asked once more without it, and not sent one again
+			if nb := withoutOffsetlessCitations(body); !bytes.Equal(nb, body) {
+				refused = append(refused, citationOffsetRefused(model))
+				body = nb
+				if res, err = s.forward(r.Context(), p, proto, path, p.Prepare(body), r.Header); err != nil {
+					return writeError(w, proto, 502, p.Name+": "+err.Error()), err.Error(), true
+				}
+				continue
+			}
+		}
 		if len(fs) == 0 && len(ms) == 0 && proto == provider.Responses && itemIDRefusal.Match(b) {
 			// and an input item's id with a character OpenAI's don't
 			// have, which a relay in front of OpenAI turns away as it
@@ -6199,13 +6248,23 @@ func (s *Server) passthrough(w http.ResponseWriter, r *http.Request, p provider.
 	if proto == provider.Anthropic {
 		thinkSigs = &sigFieldTidy{sse: sse}
 	}
-	// out is what a filter let through, through ids, phases and thinkSigs
+	// and a tool_use id the client has seen again is salted, so Claude
+	// Code's Set of the session keeps both (#4910, tool_use_ids.go)
+	var toolIDs *toolUseIDs
+	if proto == provider.Anthropic {
+		toolIDs = &toolUseIDs{seen: toolSeen, sse: sse}
+	}
+	// out is what a filter let through, through ids, phases, toolIDs and
+	// thinkSigs
 	out := func(b []byte) []byte {
 		if ids != nil {
 			b = ids.write(b)
 		}
 		if phases != nil {
 			b = phases.write(b)
+		}
+		if toolIDs != nil {
+			b = toolIDs.write(b)
 		}
 		if thinkSigs != nil {
 			b = thinkSigs.write(b)
@@ -6325,6 +6384,9 @@ func (s *Server) passthrough(w http.ResponseWriter, r *http.Request, p provider.
 			if phases != nil {
 				out = phases.write(out)
 			}
+			if toolIDs != nil {
+				out = toolIDs.write(out)
+			}
 			if thinkSigs != nil {
 				out = thinkSigs.write(out)
 			}
@@ -6431,6 +6493,15 @@ func (s *Server) passthrough(w http.ResponseWriter, r *http.Request, p provider.
 	}
 	if phases != nil {
 		write(phases.flush())
+	}
+	if toolIDs != nil {
+		// the salted tail goes on through thinkSigs, which holds a whole
+		// reply until its own drain below
+		b := toolIDs.flush()
+		if thinkSigs != nil {
+			b = thinkSigs.write(b)
+		}
+		write(b)
 	}
 	if thinkSigs != nil {
 		write(thinkSigs.flush())
