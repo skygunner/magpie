@@ -80,9 +80,9 @@ Each round:
 8. Accept: healthy, 401/200 auth pair, model count equal before/after, a
    real `group/fast-cheap` request 200. Push `prod` and the tag.
 
-## Carried patches (as of v0.1.2753-p1, 2026-11-03)
+## Carried patches (as of v0.1.2767-p1, 2026-11-03)
 
-Checked against v0.1.2753 (2026-11-03): eleven carried entries — nine
+Checked against v0.1.2767 (2026-11-03): eleven carried entries — nine
 patch rows, #3623's attempt chain (joined at 0.1.2051-p3) and the
 cooldown-settings surface (joined at 0.1.2051-p4) — plus the build-line
 fix and #3487's card-display and millisecond-span remainder, re-
@@ -129,6 +129,30 @@ registered on 2026-10-29 and its fix (`33c0ade7a`,
 the table above.
 
 ## Deployment history
+
+- `prod/0.1.2767-p1` — 2026-11-03. Rolling merge of v0.1.2767 (32
+  commits since v0.1.2753); two conflicts, both sides kept: shapeRefused
+  now also checks upstream's new `reasoningBackRefused` (Beam's missing
+  required parameter refusal) beside our existing `refusedParameterList`,
+  `zhipuImageRefusal`, `upstreamFailedWords`; the notes site client
+  (`update/notes.go`) rides upstream's `NotesBetweenTotal` refactor
+  while keeping our `base()` stripping on both `after` and `upto`
+  parameters. Budgets re-measured 1,326,801 / 1,548,546 (upstream moved
+  some words/translation code out of the core). Freshness sweep all
+  negative; none absorbed. Gate: ours 9 reds all inside the clean
+  baseline's 10 (the extra there is the known load-sensitive
+  `TestOpenCodeSessionOnEveryCall`); GUI 134/136 with the same two
+  webkit-de `codex-auto-reset` reds reproducing on the baseline. Deployed
+  by the batched script (third round on it, healthy in 30s); accepted
+  with providers 32 / groups 49 / 1201 model ids equal before and after
+  and three real probes 200 across 46 minutes, 10 samples healthy with
+  zero panic/fatal/5xx/protocol_error. Published to Docker Hub as
+  `bigshort/magpie-patched:0.1.2767-p1` and `:latest`, digest
+  `sha256:bbc221d0…`. Hub README updated via one-shot fetch→edit→PATCH→
+  verify (JWT expired once, re-login re-PATCH and verified from live
+  API). Backup
+  `/home/hermes/backups/magpie/pre-0.1.2767-p1-20261103-070823`; old
+  container kept stopped as `magpie-pre-0.1.2767-p1-20261103-070823`.
 
 - `prod/0.1.2753-p1` — 2026-11-03. Rolling merge of v0.1.2753 (127
   commits; seven conflict files, both sides kept: fallback.go's refusal
