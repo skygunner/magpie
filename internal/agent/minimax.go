@@ -22,7 +22,10 @@ package agent
 // one of its models, stays.
 
 import (
+	"encoding/json"
+	"os"
 	"path/filepath"
+	"runtime"
 	"slices"
 	"strings"
 
@@ -72,12 +75,79 @@ func mcodeID(key string) string {
 // it too (#1605: a provider pointed at magpie by hand).
 const mcodeUA = "minimax-code"
 
-// MiniMaxDir is the folder MiniMax Code keeps its config.yaml in.
+// MiniMaxDir is the folder MiniMax Code keeps its config.yaml in:
+// MINIMAX_DATA_DIR, the data folder Desktop moved in its settings, or
+// ~/.minimax.
 func MiniMaxDir(home string) string {
 	if d := strings.TrimSpace(appdir.Getenv("MINIMAX_DATA_DIR")); d != "" {
 		return d
 	}
+	if d := miniMaxDesktopDir(); d != "" {
+		return d
+	}
 	return filepath.Join(home, ".minimax")
+}
+
+// miniMaxDesktopStores are MiniMax Code Desktop's own store files, the
+// build's electron-store in its userData (app-identity.js: userData MiniMax
+// for the China build, MiniMax Agent for the overseas one; storage.ipc.js:
+// minimax-agent-cn-config.json / minimax-agent-config.json); a var so tests
+// can point it elsewhere.
+var miniMaxDesktopStores = func() []string {
+	var base string
+	switch runtime.GOOS {
+	case "darwin":
+		home, _ := os.UserHomeDir()
+		base = filepath.Join(home, "Library", "Application Support")
+	case "windows":
+		base = appdir.Getenv("APPDATA")
+	default:
+		if base = appdir.Getenv("XDG_CONFIG_HOME"); base == "" {
+			home, _ := os.UserHomeDir()
+			base = filepath.Join(home, ".config")
+		}
+	}
+	if base == "" {
+		return nil
+	}
+	return []string{
+		filepath.Join(base, "MiniMax", "minimax-agent-cn-config.json"),
+		filepath.Join(base, "MiniMax Agent", "minimax-agent-config.json"),
+	}
+}
+
+// miniMaxDesktopDir is the data folder MiniMax Code Desktop moved in its
+// settings (its data-dir relocation, 3.1.10's storage.ipc.js; Windows only
+// there): the localRuntimeDataParentDir its store keeps, whose .minimax its
+// runtime is pinned to through MINIMAX_DATA_DIR — where the switch magpie
+// writes has to land, ~/.minimax being a file Desktop no longer reads
+// (#4870). "" when Desktop says none: not installed (its store is dead
+// state then), no store, or its default still.
+func miniMaxDesktopDir() string {
+	if !(&Agent{ID: "minimax-code"}).HasApp() {
+		return ""
+	}
+	for _, f := range miniMaxDesktopStores() {
+		b, err := os.ReadFile(f)
+		if err != nil {
+			continue
+		}
+		var store struct {
+			Config struct {
+				Parent *string `json:"localRuntimeDataParentDir"`
+			} `json:"config"`
+		}
+		if json.Unmarshal(b, &store) != nil {
+			continue
+		}
+		if store.Config.Parent == nil {
+			continue
+		}
+		if d := strings.TrimSpace(*store.Config.Parent); d != "" {
+			return filepath.Join(d, ".minimax")
+		}
+	}
+	return ""
 }
 
 func miniMax(home string) *Agent { return miniMaxAt(here(home), MiniMaxDir(home)) }
