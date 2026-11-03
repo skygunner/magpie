@@ -260,13 +260,25 @@ func printDaemonWeb(addr, key string) {
 	fmt.Println(muted.Render("  page   "), webLink(addr, key))
 	host, port, _ := net.SplitHostPort(addr)
 	q := "/?k=" + key
-	if ip := net.ParseIP(host); host == "" || ip != nil && !ip.IsLoopback() {
+	ip := net.ParseIP(host)
+	switch {
+	case host == "" || ip != nil && ip.IsUnspecified():
 		for _, l := range gui.NetworkLinks(port, q) {
 			fmt.Println(muted.Render("  on the network"), l)
 		}
 		fmt.Println(amber.Render("!"), lanWarning())
-	} else if l := proxyLink(q); l != "" {
-		fmt.Println(muted.Render("  through your proxy"), l)
+	case ip != nil && !ip.IsLoopback():
+		// the service bound the page to this one address (--web=1.2.3.4:80,
+		// #4843): the computer's other addresses refuse it, so only a proxy
+		// fronting it is named, not links where nothing listens
+		if l := proxyLink(q); l != "" {
+			fmt.Println(muted.Render("  through your proxy"), l)
+		}
+		fmt.Println(amber.Render("!"), lanWarning())
+	default:
+		if l := proxyLink(q); l != "" {
+			fmt.Println(muted.Render("  through your proxy"), l)
+		}
 	}
 }
 

@@ -131,7 +131,9 @@ func printWeb(w *gui.Web) {
 	}
 	host, port, _ := net.SplitHostPort(w.Addr)
 	key := w.Link[strings.Index(w.Link, "/?k="):]
-	if ip := net.ParseIP(host); ip != nil && !ip.IsLoopback() {
+	ip := net.ParseIP(host)
+	switch {
+	case ip != nil && ip.IsUnspecified():
 		for _, l := range gui.NetworkLinks(port, key) {
 			fmt.Println(muted.Render("  on the network"), l)
 		}
@@ -139,8 +141,18 @@ func printWeb(w *gui.Web) {
 			fmt.Println(muted.Render("  " + containerNote))
 		}
 		fmt.Println(amber.Render("!"), lanWarning())
-	} else if l := proxyLink(key); l != "" {
-		fmt.Println(muted.Render("  through your proxy"), l)
+	case ip != nil && !ip.IsLoopback():
+		// the page was bound to this one address (--addr=1.2.3.4:80, #4843):
+		// the computer's other addresses refuse it, so only a proxy fronting
+		// it is named, not links where nothing listens
+		if l := proxyLink(key); l != "" {
+			fmt.Println(muted.Render("  through your proxy"), l)
+		}
+		fmt.Println(amber.Render("!"), lanWarning())
+	default:
+		if l := proxyLink(key); l != "" {
+			fmt.Println(muted.Render("  through your proxy"), l)
+		}
 	}
 	carries := "this run's key (MAGPIE_WEB_KEY keeps one across runs)"
 	if os.Getenv("MAGPIE_WEB_KEY") != "" {
