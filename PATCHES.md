@@ -85,8 +85,10 @@ Each round:
 
 > **In progress (2026-11-04):** v0.1.2950 is merged into this branch and its
 > gate is running; the Deployment history entry below is not written yet.
-> Do not start another round from this checkout, do not tag or deploy, until
-> this notice is replaced by the round's history entry.
+> Do not start another round from this checkout while this round is active.
+> This round may tag and deploy only after the complete gate passes. The
+> v0.1.2877 candidate was rolled back for its first inference timeout; the
+> cause of that timeout is unknown, including whether it involved #3487.
 
 Checked against v0.1.2767 (2026-11-03): eleven carried entries — nine
 patch rows, #3623's attempt chain (joined at 0.1.2051-p3) and the
