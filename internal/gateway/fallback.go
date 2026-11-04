@@ -336,6 +336,36 @@ func keepAtOnce(n int, out, aside []candidate) ([]candidate, []candidate) {
 	return keptOf(out, 0), append(keptOf(aside, len(out)), reserves...)
 }
 
+// accountsOn are the accounts of p (signed in: p.Account) a request may
+// take, in the user's order: the one signed in to, unless the user paused
+// it for the others on (#263), then the others on; kept signed in to an
+// account of the user's choosing, the one signed in to stands at its own
+// place in the order, not first (#524). A search API that signs in as a
+// plugin's provider takes its accounts so too (search_signin.go).
+func accountsOn(p provider.Provider, model string) []candidate {
+	also := p.AlsoOn()
+	var all []candidate
+	if len(also) == 0 || !p.OwnPaused() {
+		all = append(all, candidate{p: p, model: model, rest: p.ID})
+	}
+	for i, q := range also {
+		all = append(all, candidate{p: q, model: model, rest: p.ID + "@" + q.Account.User, rank: i + 1})
+	}
+	if ranks := p.LoginRanks(); ranks != nil {
+		at := func(c candidate) int {
+			if r, ok := ranks[strings.ToLower(c.p.Account.User)]; ok {
+				return r
+			}
+			return len(ranks)
+		}
+		slices.SortStableFunc(all, func(a, b candidate) int { return at(a) - at(b) })
+		for i := range all {
+			all[i].rank = i
+		}
+	}
+	return all
+}
+
 // perKeyEvery is perKeyBarred with every account or key routed over, the
 // provider's AtOnce aside.
 func perKeyEvery(p provider.Provider, model string, from provider.Protocol) (out, aside, left, barred []candidate) {
@@ -343,31 +373,7 @@ func perKeyEvery(p provider.Provider, model string, from provider.Protocol) (out
 		return nil, nil, nil, nil // the user disabled it (#1867): never planned, a fallback no more than the model asked
 	}
 	if p.Account != nil {
-		also := p.AlsoOn()
-		var all []candidate
-		// the account the agent is signed in to, unless the user paused
-		// it for the others on (#263)
-		if len(also) == 0 || !p.OwnPaused() {
-			all = append(all, candidate{p: p, model: model, rest: p.ID})
-		}
-		for i, q := range also {
-			all = append(all, candidate{p: q, model: model, rest: p.ID + "@" + q.Account.User, rank: i + 1})
-		}
-		// kept signed in to an account of the user's choosing, the one
-		// signed in to stands at its own place in the order, not first
-		// (#524)
-		if ranks := p.LoginRanks(); ranks != nil {
-			at := func(c candidate) int {
-				if r, ok := ranks[strings.ToLower(c.p.Account.User)]; ok {
-					return r
-				}
-				return len(ranks)
-			}
-			slices.SortStableFunc(all, func(a, b candidate) int { return at(a) - at(b) })
-			for i := range all {
-				all[i].rank = i
-			}
-		}
+		all := accountsOn(p, model)
 		all = slices.DeleteFunc(all, func(c candidate) bool {
 			if p.AccountServes(c.p.Account.User, model) {
 				return false
@@ -1806,6 +1812,41 @@ func elsewhere(left []candidate, c candidate) []candidate {
 	return out
 }
 
+// riskRefused says c's vendor refused it for the account's safety — its
+// risk control restricted or blocked the account (failRestricted:
+// WorkBuddy's 11140, ZCode's 3012, or any plugin's refusal ending in
+// provider.WBRestrictedHint or provider.ZCodeRestrictedHint) — rather
+// than for quota or a passing fault. A vendor's risk control reads the
+// request as well as the account, so the same request sent on to another
+// of its accounts trips it there too. Another computer's magpie that
+// says so (remoteModelRest) speaks for one account of its own, and its
+// other models may be other vendors: it walls off nothing here.
+func riskRefused(c candidate, status int, header http.Header, body []byte) bool {
+	return failureOf(c, status, body) == failRestricted && !remoteModelRest(c, failRestricted, header)
+}
+
+// elsewhereWeighed is elsewhere on a list of candidates beside their
+// weights (roomy's left out as too small), the two kept paired: weights
+// that don't pair with the list are kept as they are.
+func elsewhereWeighed(left []candidate, w []Weighed, c candidate) ([]candidate, []Weighed) {
+	paired := len(w) == len(left)
+	var out []candidate
+	var outW []Weighed
+	for k, x := range left {
+		if x.p.ID == c.p.ID {
+			continue
+		}
+		out = append(out, x)
+		if paired {
+			outW = append(outW, w[k])
+		}
+	}
+	if !paired {
+		outW = w
+	}
+	return out, outW
+}
+
 // retryable says whether another provider may do better with a request
 // that failed this way: the vendor was busy, out of quota or failing, or
 // this key or provider can't serve it — not the request itself at fault.
@@ -2682,8 +2723,8 @@ func refusesAfterThinking(model string) bool {
 // deepseekAfterThinking tells whether the model is DeepSeek's, the one
 // vendor whose reasoning the refusal hold lets go once the member has
 // gone on from its thinking to an answer enough times running
-// (holdsThinking): Claude's, GPT's and Gemini's is held whatever the
-// member has answered lately (#248).
+// (holdsThinking) whether or not a refusal after it can be handed over:
+// Claude's, GPT's and Gemini's only where it can (#248, #4166).
 func deepseekAfterThinking(model string) bool {
 	m := strings.ToLower(model)
 	if i := strings.LastIndex(m, "/"); i >= 0 {
@@ -2693,8 +2734,8 @@ func deepseekAfterThinking(model string) bool {
 }
 
 // thoughtCleanMost is how many thinking replies in a row that went on to
-// an answer trust a DeepSeek member with its reasoning as it comes
-// (holdsThinking): its filter refuses after thinking hardly ever (#4512:
+// an answer trust a member with its reasoning as it comes
+// (holdsThinking): DeepSeek's filter refuses after thinking hardly ever (#4512:
 // one content_filter in 33,245 group requests over 7 days), and held,
 // every one of those requests kept the agent waiting its whole thinking
 // out. A refusal of its own takes the trust back (thoughtRefused).
@@ -2704,13 +2745,16 @@ const thoughtCleanMost = 3
 // refusal after it while another candidate could answer. DeepSeek's is,
 // until the member's thinking has gone on to an answer thoughtCleanMost
 // times running; past that it goes through as it comes, GLM's way.
-// Claude's, GPT's and Gemini's is held whatever the member answered
-// lately (#248).
-func (s *Server) holdsThinking(c candidate) bool {
+// Claude's, GPT's and Gemini's is trusted the same way only where a
+// refusal after it is handed to the next candidate in the same stream
+// (handsOver, refusalHandover), and is held whatever the member answered
+// lately where it isn't (#248): told to the agent, such a refusal would
+// end the turn with nothing said (#4166).
+func (s *Server) holdsThinking(c candidate, handsOver bool) bool {
 	if !refusesAfterThinking(c.model) {
 		return false
 	}
-	if !deepseekAfterThinking(c.model) {
+	if !deepseekAfterThinking(c.model) && !handsOver {
 		return true
 	}
 	s.thoughtMu.Lock()
@@ -2721,7 +2765,7 @@ func (s *Server) holdsThinking(c candidate) bool {
 // thoughtAnswered counts a thinking reply that went on to an answer, for
 // holdsThinking's trust to run out on.
 func (s *Server) thoughtAnswered(c candidate) {
-	if !deepseekAfterThinking(c.model) {
+	if !refusesAfterThinking(c.model) {
 		return
 	}
 	s.thoughtMu.Lock()
@@ -2737,7 +2781,7 @@ func (s *Server) thoughtAnswered(c candidate) {
 // is held again for the next requests, until it has answered
 // thoughtCleanMost times running.
 func (s *Server) thoughtRefused(c candidate) {
-	if !deepseekAfterThinking(c.model) {
+	if !refusesAfterThinking(c.model) {
 		return
 	}
 	s.thoughtMu.Lock()

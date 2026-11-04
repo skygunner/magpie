@@ -1,10 +1,9 @@
 // Run with Node's test runner and Playwright on the module path; see README.md.
 // #3487: a window the vendor gave a limit but no count of what was used
-// (a plugin's "amount": null) is not a full allowance. The card says the
-// count is not said — "— / 10,000 Neurons" — beside whatever share it
-// knows, never "10,000 / 10,000" with everything left; a window whose
-// count is said goes on as it was. Both engines, English and Chinese;
-// no backend, the API is faked here.
+// (a plugin's "amount": null reads as Go's 0, omitted from JSON) is not a
+// full allowance. The card says "— / 10,000 Neurons" or the vendor's text,
+// beside whatever share it knows. A positive count reads as before.
+// Both engines and all five languages; the API is faked here.
 const assert = require("node:assert/strict");
 const fs = require("node:fs/promises");
 const path = require("node:path");
@@ -14,9 +13,10 @@ const { chromium, webkit } = require("playwright");
 const assets = path.resolve(__dirname, "../assets");
 const resetsAt = new Date(Date.now() + 12 * 3600e3).toISOString();
 const quotas = [
-  { provider: "cloudflare-workers-ai", name: "Workers AI", icon: "generic", plan: "Free", user: "a", windows: [
-    { name: "Daily", used: 0, resetsAt, limit: 10000, unit: "Neurons" }, // no amount: a count left out reads as 0 (upstream's plugins#468 model)
-  ] },
+  { provider: "cloudflare-workers-ai", name: "Workers AI", icon: "generic", plan: "Free", user: "a", windows:
+    [{}, { amount: null }, { amount: 0 }, { amount: 0, display: "Waiting for vendor count" }, { amount: 0, display: "0 / 10,000" }]
+      .map((w) => ({ name: "Daily", used: 0, resetsAt, limit: 10000, unit: "Neurons", ...w })),
+  },
   { provider: "workbuddy", name: "WorkBuddy", icon: "workbuddy-color", plan: "Free", user: "b", windows: [
     { name: "Credits", used: 71, resetsAt, amount: 3550, limit: 5000, unit: "credits" },
   ] },
@@ -48,7 +48,7 @@ function serve(lang, left) {
 const squash = (s) => s.replace(/\s+/g, " ").trim();
 
 for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"])) {
-  for (const lang of ["en", "zh"]) {
+  for (const lang of ["en", "zh", "zh-TW", "ja", "de"]) {
     for (const left of [false, true]) {
       test(`${engine} ${lang} ${left ? "left" : "used"}: an unknown count is not a full allowance (#3487)`, async () => {
         const browser = await { chromium, webkit }[engine].launch();
@@ -59,9 +59,15 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
           await page.goto("http://magpie.test/?view=usage");
           const cards = page.locator(".subscription-card");
           await cards.nth(1).locator(".quota-n").waitFor();
-          const unknown = squash(await cards.first().locator(".quota-n").first().textContent());
-          assert.ok(unknown.includes("— / 10,000"), `"${unknown}" says the count is not told`);
-          assert.ok(!unknown.includes("10,000 / 10,000"), `"${unknown}" claims the whole allowance`);
+          const counts = cards.first().locator(".quota-n");
+          for (let i = 0; i < 3; i++) {
+            const unknown = squash(await counts.nth(i).textContent());
+            assert.ok(unknown.includes("— / 10,000"), `window ${i}: "${unknown}" says the count is not told`);
+            assert.ok(!unknown.includes("10,000 / 10,000"), `window ${i}: "${unknown}" claims the whole allowance`);
+          }
+          assert.equal(squash(await counts.nth(3).textContent()).split(" · ")[0], "Waiting for vendor count");
+          const reported = squash(await counts.nth(4).textContent());
+          assert.ok(reported.startsWith("0 / 10,000 Neurons"), `"${reported}" keeps the vendor's count and unit in either mode`);
           // a count that is said reads as it was
           const known = squash(await cards.nth(1).locator(".quota-n").first().textContent());
           assert.ok(known.startsWith(left ? "1,450 / 5,000" : "3,550 / 5,000"), `"${known}"`);

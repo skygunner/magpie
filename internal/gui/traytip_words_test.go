@@ -41,6 +41,29 @@ func TestTrayTooltipSaysWindowWordsAsTheCard(t *testing.T) {
 	}
 }
 
+// #3487: the tray's count keeps unknown amounts unknown in either mode,
+// with translated units or the vendor's own display text.
+func TestTrayTooltipUnknownCount(t *testing.T) {
+	card := provider.SubscriptionQuota{Provider: "workbuddy", Name: "WorkBuddy",
+		Windows: []provider.QuotaWindow{{Name: "Credits", Used: 10, Limit: 500, Unit: "credits"}}}
+	for _, display := range []string{"", "Waiting for vendor count", "0 / 500"} {
+		card.Windows[0].Display = display
+		for _, lang := range []string{"en", "zh", "zh-TW", "ja", "de"} {
+			want := display
+			if want == "" {
+				want = "— / 500 " + pageWord(lang, "credits")
+			} else if want == "0 / 500" {
+				want += " " + pageWord(lang, "credits")
+			}
+			for _, left := range []bool{false, true} {
+				if _, tip := trayCardText(lang, card, time.Now(), left, false, nil); !strings.Contains(tip, want) || strings.Contains(tip, "500 / 500") {
+					t.Errorf("%s left=%v display=%q: tooltip %q, want %q", lang, left, display, tip, want)
+				}
+			}
+		}
+	}
+}
+
 // The words plugins name and count their usage windows in are said in every
 // language the page has, so neither the card nor the tray's tooltip shows
 // one in English (the names and units in magpie-community/plugins'

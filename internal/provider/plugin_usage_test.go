@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -75,13 +76,24 @@ func TestPluginUsage(t *testing.T) {
 		if extra.Used != 250 || extra.Display != "$2.50" || !extra.Aside {
 			t.Fatalf("%s: extra = %+v", agent, extra)
 		}
-		// a limit whose count the vendor left out (#3487): the plugin's
-		// "amount": null reads as 0 here, and Count says "0 / limit unit"
-		// (upstream's Count since v0.1.2877); the card is where it is
-		// marked not said ("— / 10,000 Neurons", quota-amount-unknown)
-		if daily := q.Windows[3]; daily.Name != "Daily" || daily.Used != 0 || daily.Amount != 0 || daily.Limit != 10000 ||
-			daily.Count(false) != "0 / 10,000 Neurons" || daily.Count(true) != "10,000 / 10,000 Neurons" {
-			t.Fatalf("%s: daily = %+v (count %q / %q)", agent, daily, daily.Count(false), daily.Count(true))
+		// #3487: the real plugin's null amount reads as 0, then the card's
+		// JSON omits it. Neither side of that wire invents a full count.
+		wire, err := json.Marshal(q)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var card SubscriptionQuota
+		if err := json.Unmarshal(wire, &card); err != nil {
+			t.Fatal(err)
+		}
+		for _, daily := range []QuotaWindow{q.Windows[3], card.Windows[3]} {
+			if daily.Name != "Daily" || daily.Used != 0 || daily.Amount != 0 || daily.Limit != 10000 ||
+				daily.Count(false) != "— / 10,000 Neurons" || daily.Count(true) != "— / 10,000 Neurons" {
+				t.Fatalf("%s: daily = %+v (count %q / %q), JSON %s", agent, daily, daily.Count(false), daily.Count(true), wire)
+			}
+		}
+		if got := card.Windows[1]; got.Count(false) != "120 / 1,200 credits" || got.Count(true) != "1,080 / 1,200 credits" {
+			t.Fatalf("%s: known count changed across JSON: %+v", agent, got)
 		}
 		// when its soonest credits are lost, and how many, through the
 		// host (#2265); one it can't read is not known

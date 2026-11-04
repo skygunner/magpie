@@ -149,6 +149,7 @@ line; agents connected to magpie lose it when it quits.
 | OpenPencil   | `openpencil/settings.json` in the config folder: `~/Library/Application Support` (macOS), `$XDG_CONFIG_HOME` or `~/.config` (Linux), `%APPDATA%` (Windows) | provider (a `magpie` entry in its `builtin_agents`, magpie's models in its chat's model picker; the user's entries and settings kept; refused while OpenPencil runs, as it writes the file back when it quits) |
 | OpenBot      | `OpenBot/openbot-custom-providers-v1.json` in the app data folder: `~/Library/Application Support` (macOS), `%APPDATA%` (Windows), `$XDG_CONFIG_HOME` or `~/.config` (Linux) | provider (a keyless `magpie` endpoint, magpie's models in its model picker; the user's endpoints kept; OpenBot reads it at start, so restart it) |
 | NewMax       | `newmax.db` (SQLite, the row `app` of its `settings` table) in `$NEWMAX_USER_DATA_DIR`, else `~/.newmax` (every OS) | provider (a `magpie-gateway` entry in its `providers` and `providerOrder`, magpie's models in its model picker; the rest of the row kept byte for byte; refused while NewMax runs, as it writes its settings back whenever one changes) |
+| LiveAgent    | `config.json` (JSONC, K-brain's) in `$LIVEAGENT_HOME`, else `$K_BRAIN_HOME`, else the folder `~/.liveagent/data-dir.json` points to, else `~/.liveagent` (every OS) | provider (a `magpie` entry in its `providers`, Anthropic Messages at the gateway's root, magpie's models in its model picker; a default still K-brain's own demo model becomes magpie's first; refused while LiveAgent or its `k-brain` backend runs, as it writes its settings back whenever one changes) |
 | T3 Code      | `~/.t3/userdata/settings.json` (`$T3CODE_HOME/userdata`) | provider (a `magpie` provider instance on Claude Code, magpie's models as its custom models; a `magpie-codex` instance on Codex, whose `launchArgs` are Codex's own `-c` overrides to magpie and a `magpie-codex-models.json` catalog beside the settings. The harness is picked in T3's model picker) |
 | OpenHanako   | `~/.hanako/provider-catalog.json` + `agents/<id>/config.yaml` (`$HANA_HOME`; its local API while it runs) | model (the primary agent's; magpie's models as a provider) |
 | AtomCode     | `~/.atomcode/config.toml` (`$ATOMCODE_HOME`) | model, effort (a `magpie` provider account, one model table per catalog model as its own sign-in writes) |
@@ -1156,6 +1157,82 @@ export const LemonPlugin = async () => ({
 
 In TypeScript, `icon` and `placeholder` aren't in OpenCode's types: build
 the hook as a variable (or cast it), or put the icon in `package.json`.
+
+#### Web search APIs from a plugin
+
+A plugin can add a web search API to Settings › Models › Web search with a
+`search` hook (magpie's own; OpenCode ignores it). It is listed after
+Tavily, Brave and the rest under its own name, and added, keyed, switched
+off, reordered and removed like them (`magpie search add <plugin>:<id> <key>`
+on the command line). magpie keeps its keys (several, tried in turn, a refused
+one resting), its order and its place in the request log, masks the query
+as it does for every search API, and asks the plugin only while the
+plugin is on and the Web search plugin is.
+
+```js
+export const MojeekSearch = async () => ({
+  search: {
+    mojeek: {                      // [a-z0-9-], at most 32; the API is `<plugin>:mojeek`
+      name: "Mojeek",              // its name in the list
+      keysURL: "https://www.mojeek.com/services/api/", // "Get a key" link, optional
+      keyOptional: false,          // true: it answers with no key
+      url: false,                  // true: the user gives its address (a SearXNG's)
+      async execute({ query, count, key, url }, ctx) {
+        const r = await fetch(`https://api.mojeek.com/search?fmt=json&q=${encodeURIComponent(query)}&t=${count}&api_key=${key}`, { signal: ctx.abort })
+        if (!r.ok) throw Object.assign(new Error(await r.text()), { status: r.status }) // 401, 402, 403, 429 rest the key
+        const j = await r.json()
+        return j.response.results.map((x) => ({ title: x.title, url: x.url, text: x.desc }))
+      },
+    },
+  },
+})
+```
+
+`execute` returns `[{ title, url, text?, age? }]` (or `{ results: [...] }`);
+magpie strips tags and cuts each page's text. A throw with a numeric
+`status` (and `retryAfter`, its Retry-After) is the API refusing the key,
+treated as a built-in's 401/402/403/429 is; any other throw is a failure
+and the next search API is asked. It has the time a search API has
+(a quarter of a search's limit); `ctx.abort` fires then.
+
+A search API can use a sign-in instead of a key: `auth` names a provider
+this plugin's `auth` hook signs in to (one with models, or an auth hook
+with none). It is added with no key, and its row in Settings says whose
+sign-in it uses and how many of that provider's accounts are on. A search
+asks one account at a time: the accounts that are on (Providers' switches),
+in the order the provider's model requests take them, one resting from a
+search refusal last. For each,
+`ctx.getAuth()` returns a copy of that one account's sign-in, renewed first
+when it is due; the renewal counts within the search's time, and the plugin
+never reads `plugin-auth.json`. A token the hook saves with
+`client.auth.set({path: {id: "<provider>"}, body})` goes to that same
+account. A throw with `status` 429 (or 401, 402, 403)
+rests that account for search only, never for the provider's models, and
+the next account is asked. Not signed in, or no account on, is said in the
+row and in the request log, and the next search API is asked. A plugin with
+several providers adds one search entry per provider.
+
+```js
+export const SeekCo = async () => ({
+  auth: { provider: "seekco", methods: [/* … */], async loader(getAuth) { /* … */ } },
+  search: {
+    seek: {
+      name: "SeekCo",
+      auth: "seekco",              // the provider whose sign-in it uses; no key
+      async execute({ query, count }, ctx) {
+        const a = await ctx.getAuth() // { type: "oauth", access, refresh, expires, accountId, … }
+        const r = await fetch(`https://api.seek.example/search?q=${encodeURIComponent(query)}&n=${count}`,
+          { headers: { authorization: `Bearer ${a.access}` }, signal: ctx.abort })
+        if (!r.ok) throw Object.assign(new Error(await r.text()), { status: r.status })
+        return (await r.json()).results
+      },
+    },
+  },
+})
+```
+
+An `auth` naming a provider this plugin doesn't sign in to is ignored: the
+entry is an ordinary keyed one, and its `ctx` has no `getAuth`.
 
 #### Gateway middleware
 
@@ -2283,6 +2360,20 @@ refused. Claude Code runs a changed status line in its open sessions too,
 so nothing needs a restart. It is offered for Claude Code on this computer,
 not in a WSL distro. With the gateway not running it prints an empty line.
 
+Claude Code on another computer than magpie (magpie in Docker, on a server)
+can't be switched on from the square: magpie can't write that computer's
+settings.json, and the command would name a binary inside the container.
+`GET` or `POST /v1/magpie/statusline` answers the same line as plain text, so
+that computer needs only curl. The optional `?session=<id>` (or, in a POST,
+the `session_id` of the JSON Claude Code sends on stdin) adds the model like
+`/v1/magpie/route`, and `?only=` (comma separated, repeatable) keeps the
+accounts as `magpie statusline claude` does. A caller that isn't this
+computer needs a gateway key, a read-only one included (it gets the windows
+without the model); a key held to a budget, models or accounts sees only
+what it may. On the computer Claude Code runs on:
+`"statusLine": {"type": "command", "command": "curl -fsS -m 1 -H 'Authorization: Bearer <gateway key>' --data-binary @- http://<host>:3425/v1/magpie/statusline || true"}`.
+`magpie web` shows this command with its own address under Settings → About.
+
 `magpie heap [<file>]` is for a report of magpie holding too much memory: a
 macOS `sample` of the app shows Go's frames as `???`. It asks the running
 magpie that serves the gateway (the app, the menu bar, `magpie serve` or
@@ -2972,8 +3063,10 @@ protocol-specific base URLs. Keep `3425` behind a firewall or VPN and do not
 expose it publicly without gateway-key authentication.
 
 Such a page is in **gateway mode**: it shows Providers, Gateway, Routing,
-Usage, Plugins and Settings, with no Agents, Sessions or Library tab, and
-Settings leaves out what is written into this machine's agents (provider in
+Usage, Sessions, Plugins and Settings, with no Agents or Library tab.
+Sessions lists only the sessions of other computers' agents that came
+through this gateway, never this machine's agents' session files
+([gateway sessions](subsystems/gateway-sessions.md)). Settings leaves out what is written into this machine's agents (provider in
 model names) and the desktop's alerts and tray. Codex's and Claude Code's own
 settings (Codex subagents, long conversations, Codex thread titles and the
 rest) are on the Agents page, in the agent's opened row, so a gateway has
@@ -3307,6 +3400,28 @@ MAGPIE_OTEL_ENABLED=true MAGPIE_OTEL_ENDPOINT=http://localhost:4318 magpie serve
 - `MAGPIE_OTEL_BODIES_WHOLE`: `true` or `false`, off by default; with bodies on,
   keeps them entire rather than cut at 256 KB. A long reply is written to a
   temporary file; a body too large for the collector is still refused.
+- `OTEL_RESOURCE_ATTRIBUTES`: the standard OpenTelemetry variable, merged into
+  the resource of both traces and metrics, for example to tell servers apart:
+
+  ```sh
+  OTEL_RESOURCE_ATTRIBUTES='service.instance.id=magpie-prod-01,host.name=server-a,deployment.environment.name=production' \
+    MAGPIE_OTEL_ENABLED=true MAGPIE_OTEL_ENDPOINT=http://localhost:4318 magpie serve
+  ```
+
+  Comma-separated `key=value` pairs, as the
+  [OTel resource SDK spec](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/resource/sdk.md#specifying-resource-information-via-an-environment-variable)
+  has them: keys and values are trimmed and percent-decoded (write `,` as
+  `%2C`, `=` as `%3D` and `%` as `%25`; `+` stays a plus), every value is a
+  string, and the last of a repeated key wins. Any invalid entry (no `=`, an
+  empty key, a bad escape, bytes that aren't UTF-8 once decoded, an empty
+  entry such as a trailing comma) discards the whole variable: magpie logs
+  which entry, never its contents, and exports with the default resource.
+  Nothing else about the machine is looked up or sent.
+- `OTEL_SERVICE_NAME`: the resource's `service.name`, over a `service.name` in
+  `OTEL_RESOURCE_ATTRIBUTES`. With neither set, or set empty, it is `magpie`.
+
+  Neither variable turns export on, and both are read in the process that
+  exports (the app, or `magpie serve`), so restart it after changing them.
 
 For Langfuse, pick **Collector › Langfuse**, then the host (Cloud EU
 `https://cloud.langfuse.com`, Cloud US `https://us.cloud.langfuse.com`, or
@@ -3553,6 +3668,8 @@ The gateway and usage:
   page's history
 - `affinity.json` — which key or account answered each conversation, so a
   restart keeps it there while the vendor has it cached
+- `vision-cache.jsonl` — successful inline-image descriptions reused after a
+  restart (0600); `vision-cache.jsonl.lock` serializes writers during handover
 - `served.json` — when each account and key last answered
 - `quotas.json` — the last allowance each account reported
 - `quota-history.json`, `balance-history.json` — allowance and balance

@@ -48,14 +48,11 @@ Each round:
    comments before considering a budget raise), and
    `go test -tags nogui ./...` — attribute every red against a clean
    checkout of the same tag before blaming the line.
-6. Tag `prod/<tag>-pN` (annotated); build
+6. Tag `prod/<tag>-pN` (annotated) at the fully tested commit and push
+   `prod` and the tag. Build
    `docker build --build-arg VERSION=<tag>-pN -t magpie:<tag>-pN .`;
    smoke-test on a throwaway config (`magpie version`, 401 without a key).
-   Publish to Docker Hub: `docker tag` the image as
-   `bigshort/magpie-patched:<tag>-pN` and `:latest` (latest always points
-   at the newest round), push both, and refresh the repo's README — the
-   version header, the patch table, and the source tag link come from
-   this file's current round.
+   Transfer and verify the image on docker1 before stopping the container.
 7. On docker1: **the switch is one batched script, run detached** —
    `scripts/deploy-docker1.sh` on this branch. It backs up (container
    inspect + stopped-volume tar), stops, renames to
@@ -78,9 +75,18 @@ Each round:
    back, the agent's route returns and the round continues by polling the
    log. Never issue the stop in one turn and the run in a later one.
 8. Accept: healthy, 401/200 auth pair, model count equal before/after, a
-   real `group/fast-cheap` request 200. Push `prod` and the tag.
+   real `group/fast-cheap` request 200. Observe for 46 minutes after
+   acceptance; on any acceptance or observation anomaly, roll back at once
+   and do not publish. Only after a clean observation, push both
+   `bigshort/magpie-patched:<tag>-pN` and `:latest`, verify their digests,
+   and update the Hub README and `/tmp/hub-readme.md`.
 
 ## Carried patches (as of v0.1.2767-p1, 2026-11-03)
+
+> **In progress (2026-11-04):** v0.1.2950 is merged into this branch and its
+> gate is running; the Deployment history entry below is not written yet.
+> Do not start another round from this checkout, do not tag or deploy, until
+> this notice is replaced by the round's history entry.
 
 Checked against v0.1.2767 (2026-11-03): eleven carried entries — nine
 patch rows, #3623's attempt chain (joined at 0.1.2051-p3) and the
@@ -110,16 +116,19 @@ commit is docs-only.
 | yetone/magpie#3624 | `c931166a` | `fix/nvidia-parameters-routing` | Usage → View routing reveals the selected trace, not off-screen |
 | yetone/magpie#3788 | `dd670e6` + `dfd128ca` | `fix/hindsight-nonstream-sse-1767` | the group's first-response timeout also bounds non-streaming requests — headers alone don't count — so a slow member fails over before the caller gives up; the last candidate still waits. `dfd128ca` keeps that wait out of SSE: a non-streaming wait no longer sends a keepalive and HTTP 200 (see the SSE follow-up section below) |
 | yetone/magpie#3791 | `dd670e6` + `dfd128ca` | `fix/hindsight-nonstream-sse-1767` | provider JSON `modelCooldown` opts exact model ids into model/account/key cooldowns on 499s and slow starts: 1, 2, 4, 8, 16, 32, then the cap minutes; success resets the ladder; a cooling model is not probed even as last candidate (503 + Retry-After); `RestCapOff` overrides; production opts `raccoon`'s `sn-sensenova-6-8-flash` at a 60-minute cap |
-| yetone/magpie#3948 | `56eb1ba1` | `fix/request-protocol-visibility` | a completed non-streaming response is checked by its existing bounded capture: SSE-instead-of-JSON, malformed JSON, missing arrays and empty Chat choices record `protocol_error` while keeping the committed HTTP status (Usage shows `200 · Protocol error`); missing speed says non-streaming/untimed or insufficient sample — diagnostic recording only, no new retry/cooldown policy |
+| yetone/magpie#3948 | `56eb1ba1` | `fix/request-protocol-visibility` | a completed non-streaming response is checked by its existing bounded capture: SSE-instead-of-JSON, malformed JSON, missing arrays and empty Chat choices record `protocol_error` while keeping the committed HTTP status (Usage shows `200 · Protocol error`); unavailable speed is shown as a dash with its reason, or a lower bound when available — diagnostic recording only, no new retry/cooldown policy |
 | yetone/magpie#3794 | `82d916e3` | `fix/kilo-tools-count-fallback` | an explicit upstream tool-count limit (Kilo refusing 129 tools, max 128) fails the group over to the next member with the full tool list; the refusing member stays eligible for smaller requests |
 | yetone/magpie#3623 | `33c0ade7a` | `feature/request-attempt-chain` | Usage's expanded request loads its recorded routing trace and lists every actual attempt in order — provider/model, status, duration, error, a 499 included; an expired or unavailable trace says so instead of inferring from the current group config. No routing or retry behavior changes |
 | build line (ours) | this branch | `prod` | What's new and the update check read a `-pN` build as its base release: `update.parse` strips the suffix, and the notes site is asked in whole release numbers (its own `newer()` reads `-pN` as a pre-release, which hid the range's base releases at both ends — 0.1.2051's notes stayed out of "since 0.1.1948-p1" and 0.1.1948's crept in). `prod_build_test.go` pins it |
 
-Plugin (not this branch): `@magpie-community/opencode-cloudflare-workers-ai-auth`
-0.0.4 tarball, source to track = plugins PR #366 (`pull/366/head`). The
-tarball in the volume was packed at `bdc302a`; `38ddeb1` after it is
-test-only, so the runtime content matches the PR head. Rebuilt and
-reinstalled whenever the PR's runtime files change.
+Plugin (not this branch): `@magpie-community/opencode-cloudflare-workers-ai-auth`,
+source to track = plugins PR #366 (`pull/366/head`). On 2026-11-04 the
+installed package and volume tarball were 0.0.5, while PR head `38ddeb1`
+was 0.0.4; `src/index.mjs` and `index.mjs` matched byte for byte, but
+`package.json` differed and 0.0.5 also had `opencode.mjs` and
+`opencode2.mjs`. The 0.0.5 tarball's nine files matched the installed
+package. The PR changes since `bdc302a` were tests only; do not replace the
+newer production package with the older, differently packaged PR version.
 
 Carried after registering here: #3948 was registered on 2026-10-28
 while no fix existed; `fix/request-protocol-visibility` (`56eb1ba1`)
@@ -442,9 +451,11 @@ bodies are outside this check; valid tool calls, refusals and empty text pass.
 
 Usage shows `200 · Protocol error`, identifies gateway checks versus existing
 client reports/logs, and explains that HTTP status cannot establish client
-processing success. Missing speed says non-streaming/untimed or insufficient
-sample, with its specific reason. No Hindsight log collector, client changes,
-feedback endpoint, historical backfill or report-to-request merging is added.
+processing success. The original change labeled missing speed in the cell;
+since v0.1.2877, upstream's speed display instead shows a dash or lower bound,
+with the reason in its tooltip and details. No Hindsight log collector, client
+changes, feedback endpoint, historical backfill or report-to-request merging
+is added.
 
 Validation:
 

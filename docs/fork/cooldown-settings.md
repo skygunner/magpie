@@ -1,8 +1,9 @@
 # Error cooldown settings — fork trial
 
-This feature lives on `feature/cooldown-settings` in skygunner/magpie. It is
-based on the production branch carrying v0.1.2051-p3. It has not been deployed to
-docker1 and no upstream feature request has been submitted.
+This feature lives on `feature/cooldown-settings` in skygunner/magpie. It was
+based on the production branch carrying v0.1.2051-p3 and deployed to docker1 in
+v0.1.2051-p4; see [deployment history](../../PATCHES.md#deployment-history).
+No upstream feature request has been submitted.
 
 ## Where to use it
 
