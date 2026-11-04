@@ -1346,7 +1346,7 @@ func compactNumber(n float64) string {
 // "355 / 500 credits" used, or what is left of it when left (#659); the
 // vendor's Display when it doesn't count in amounts.
 func (w QuotaWindow) Count(left bool) string {
-	if w.Limit <= 0 || !(w.Amount > 0) {
+	if w.Limit <= 0 {
 		return w.Display
 	}
 	n := w.Amount

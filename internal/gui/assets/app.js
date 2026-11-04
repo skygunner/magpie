@@ -14208,8 +14208,9 @@ function paceLine(w) {
 const countFormat = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
 function quotaCount(w) {
   if (!(w.limit > 0)) return w.display || "";
-  // no count is not a full allowance; amount 0 is "not said" (#3487)
-  if (!(w.amount > 0)) return w.display || ("\u2014 / " + countFormat.format(w.limit) + (w.unit ? " " + t(w.unit) : "")).trim();
+  // a count the vendor left out (amount absent or null, #3487) is not a
+  // full allowance: the card says so; a said 0 counts as it was
+  if (w.amount == null) return w.display || ("\u2014 / " + countFormat.format(w.limit) + (w.unit ? " " + t(w.unit) : "")).trim();
   const amount = Math.max(0, w.amount || 0), n = quotaLeft ? Math.max(0, w.limit - amount) : amount;
   return (countFormat.format(n) + " / " + countFormat.format(w.limit) + (w.unit ? " " + t(w.unit) : "")).trim();
 }
