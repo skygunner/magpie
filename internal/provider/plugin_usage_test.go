@@ -75,11 +75,12 @@ func TestPluginUsage(t *testing.T) {
 		if extra.Used != 250 || extra.Display != "$2.50" || !extra.Aside {
 			t.Fatalf("%s: extra = %+v", agent, extra)
 		}
-		// a limit with no count is not a full allowance (#3487): the
-		// plugin's "amount": null reads as 0, and the count says the
-		// vendor's words — nothing here — never a made-up share
+		// a limit whose count the vendor left out (#3487): the plugin's
+		// "amount": null reads as 0 here, and Count says "0 / limit unit"
+		// (upstream's Count since v0.1.2877); the card is where it is
+		// marked not said ("— / 10,000 Neurons", quota-amount-unknown)
 		if daily := q.Windows[3]; daily.Name != "Daily" || daily.Used != 0 || daily.Amount != 0 || daily.Limit != 10000 ||
-			daily.Count(false) != "" || daily.Count(true) != "" {
+			daily.Count(false) != "0 / 10,000 Neurons" || daily.Count(true) != "10,000 / 10,000 Neurons" {
 			t.Fatalf("%s: daily = %+v (count %q / %q)", agent, daily, daily.Count(false), daily.Count(true))
 		}
 		// when its soonest credits are lost, and how many, through the
