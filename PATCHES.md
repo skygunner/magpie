@@ -130,6 +130,34 @@ the table above.
 
 ## Deployment history
 
+- `prod/0.1.2877-p1` — 2026-11-04. **Candidate failed acceptance;
+  rolled back, not published.** The v0.1.2877 release was merged into
+  `prod` and the candidate tag was pushed. After deployment, the first
+  real `group/fast-cheap` inference timed out after 90 seconds; a retry
+  returned 200, but the failure required rollback. Rollback was delayed:
+  the previous session retried instead of rolling back; after the session
+  resumed, `magpie:0.1.2767-p1` was restored and healthy at 07:06 UTC.
+  The restored console returned 401 without a key and 200 with a cookie;
+  `/v1/models` returned 200 with 249 models, and a real inference returned
+  200. The prior candidate's acceptance did not collect the actual
+  `/v1/models` count before switching, so equality for that endpoint was
+  not established. The candidate was not observed for 46 minutes and was
+  not published to Docker Hub. Its pre-switch volume backup is
+  `/home/hermes/backups/magpie/pre-0.1.2877-p1-20261104-013704`.
+
+  Do not redeploy the candidate until #3487's carried behavior is fixed
+  and tested across the real plugin-to-tray and GUI paths: `Amount` is a
+  float in both `plugin.UsageWindow` and `provider.QuotaWindow`, so the
+  plugin's null and a stated zero are indistinguishable after decoding,
+  and `omitempty` omits either from the API response. This candidate's
+  `QuotaWindow.Count` treats that unknown as zero and can show a full
+  allowance in the tray; the fake GUI fixture alone did not test the real
+  serialization path. The final tagged commit changed the corresponding
+  test expectation after the last full-suite run; it was not followed by
+  a full-suite rerun at that commit. Resolve that regression and complete
+  the required gate before another deployment attempt. The inference
+  timeout's cause remains unverified and is not attributed to #3487.
+
 - `prod/0.1.2767-p1` — 2026-11-03. Rolling merge of v0.1.2767 (32
   commits since v0.1.2753); two conflicts, both sides kept: shapeRefused
   now also checks upstream's new `reasoningBackRefused` (Beam's missing
