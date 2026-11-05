@@ -1,3 +1,5 @@
+> **Deployment fork:** current patches and verified production are in [PATCHES.md](PATCHES.md). See the [fork maintenance guide](docs/fork/README.md) for workspace layout and history. Upstream usage documentation follows below.
+
 <div align="center">
 
 <a href="https://usemagpie.ai"><img src="site/public/img/icon-256.png" width="112" alt="magpie"></a>

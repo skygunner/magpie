@@ -1,3 +1,5 @@
+> **部署 Fork：** 当前补丁和已验收生产版本见 [PATCHES.md](PATCHES.md)；目录、分支及历史记录见 [Fork 维护入口](docs/fork/README.md)。下方保留上游使用说明。
+
 <div align="center">
 
 <a href="https://usemagpie.ai/zh/"><img src="site/public/img/icon-256.png" width="112" alt="magpie"></a>

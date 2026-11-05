@@ -1050,12 +1050,9 @@ available timing supports one. Speed is not evidence of success. The
 `usage-speed-every-row.test.cjs` tests cover speed explanations, error
 provenance and HTTP 200 in all five languages in Chromium and WebKit.
 
-### Fork error cooldown editor
+### Suspended fork cooldown editor
 
-Settings → Network and sharing, provider rows and account/key rows open the same
-Error cooldown and backoff editor. It reads/writes `/api/cooldown`, shows effective
-values and sources, examples, limit switches, exact model cooldowns and current
-rests, and links response deadlines to Routing. Numeric blanks inherit; model
-zero disables its inherited opt-in. Save errors keep the draft; the modal stays
-open across provider refreshes. Saving blocks modal dismissal. Rules are in
-[gateway routing](gateway-routing.md#fork-editable-error-cooldown-policy).
+The layered Error cooldown and backoff editor and its `/api/cooldown` API are
+absent from current production. Rest defaults, attribution and configuration
+follow upstream. The old editor's entry points and policy contract are kept
+only in the [historical trial](../fork/archive/cooldown-settings.md).

@@ -442,11 +442,9 @@ Vertex AI's tests send Vertex AI, Google's token endpoint and IAM Credentials
 to a server of their own (`VertexForTest`). Check a change
 against real accounts in a sandbox HOME, as [Code standards](../code-standards.md#acceptance-criteria) describes.
 
-### Fork cooldown settings
+### Suspended fork cooldown settings
 
-Provider `cooldown` and per-account/key `accountCooldown` expose error-rest
-policies with global defaults and source attribution. Legacy rest-cap, quota-rest,
-its daily reset and modelCooldown values remain compatible. See
-[editable error cooldown policy](gateway-routing.md#fork-editable-error-cooldown-policy)
-for precedence, defaults, persistence and API behavior. Subscription/plugin picks
-and replacement keys carry these settings on the same paths as their other limits.
+Current production follows upstream account/key rest rules. The trial's
+`cooldown` / `accountCooldown` layered overrides and editor are not active.
+Their earlier precedence and persistence contract is retained in the
+[historical trial](../fork/archive/cooldown-settings.md), not this current API.
