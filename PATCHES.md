@@ -176,9 +176,14 @@ the table above.
   `/var/lib/magpie-deploy/0.1.3005-p1/`; a candidate configuration snapshot
   was also preserved before the old container resumed. The two copies have
   the same configured provider IDs and raw cooldown setting, which does not
-  establish which acceptance field differed. Diagnose that mismatch before
-  a future attempt; preserve the required acceptance checks and do not
-  publish this failed candidate.
+  establish which acceptance field differed. The candidate API snapshot was
+  not saved. A read-only investigation found one plausible cause: upstream
+  `7c115f6f5` changed the model exposure rule for an empty picks list with
+  delisted models and no `DelistedAt` timestamp, and one configured provider
+  meets those conditions. It had no direct model IDs in the baseline. The
+  candidate's model IDs and the cause of the mismatch remain unconfirmed.
+  Identify the mismatch before a future attempt; preserve the required
+  acceptance checks and do not publish this failed candidate.
 
 - `prod/0.1.2877-p1` — 2026-11-04. **Candidate failed acceptance;
   rolled back, not published.** The v0.1.2877 release was merged into
