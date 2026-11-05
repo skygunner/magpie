@@ -90,14 +90,15 @@ Each round:
    `bigshort/magpie-patched:<tag>-pN` and `:latest`, verify their digests,
    and update the Hub README and `/tmp/hub-readme.md`.
 
-## Carried patches (as of v0.1.3005-p1, 2026-11-05)
+## Carried patches (as of v0.1.2767-p1, 2026-11-03)
 
-> **In progress (2026-11-05):** the current target is v0.1.3005. The earlier
-> v0.1.2950 preparation was tested but never deployed. Its tests do not
-> authorize deploying the new target: the complete gate must run again on
-> the final commit. Do not start a parallel round from this checkout. The
-> v0.1.2877 candidate was rolled back for its first inference timeout; the
-> cause of that timeout is unknown, including whether it involved #3487.
+> **Production remains v0.1.2767-p1.** The v0.1.3005-p1 source candidate
+> failed acceptance and was rolled back on 2026-11-05; it was not published
+> to Docker Hub. The table below describes the current candidate source, not
+> the deployed image. Do not treat the failed tag as a deployed release in
+> the no-op check. Identify the snapshot mismatch before another attempt,
+> use a new patch number, and run the complete gate on its final commit.
+> The earlier v0.1.2950 preparation was never deployed.
 
 Checked against v0.1.3005 (2026-11-05): eleven carried entries — nine
 patch rows, #3623's attempt chain (joined at 0.1.2051-p3) and the
@@ -149,6 +150,35 @@ registered on 2026-10-29 and its fix (`33c0ade7a`,
 the table above.
 
 ## Deployment history
+
+- `prod/0.1.3005-p1` — 2026-11-05. **Candidate failed acceptance;
+  rolled back, not published.** Source commit `b46d2c12f` and the annotated
+  tag were pushed to the fork before the image was built and transferred.
+  The final gate was run at that commit: all eight Go failures were
+  reproduced on the clean v0.1.3005 baseline (seven in the full suite and
+  `TestOpenCodeSessionOnEveryCall` in a repeated provider package run); the
+  two WebKit German failures and Darwin nogui vet error also reproduced on
+  the clean tag. The other builds, Linux/Windows vet, patch regressions,
+  deployment fault tests and smoke checks passed.
+
+  The detached switch began at 02:03 UTC. Before the switch the gateway
+  listed 245 models, with 32 providers and 47 groups in the console. The
+  candidate's acceptance snapshot differed (`acceptance_snapshot_changed`),
+  so the script did not send the real inference probe or start the 46-minute
+  observation. Its log does not identify whether models, providers, groups
+  or the effective cooldown differed; the cause is not established. The
+  previous `magpie:0.1.2767-p1` container was restored and verified healthy
+  at 02:05:32 UTC with zero restarts. No retry was attempted, and neither
+  `0.1.3005-p1` nor `latest` was pushed to Docker Hub; the public candidate
+  tag returned 404 and `latest` remained `sha256:bbc221d0…`.
+
+  Private pre-switch volume and container backups are under
+  `/var/lib/magpie-deploy/0.1.3005-p1/`; a candidate configuration snapshot
+  was also preserved before the old container resumed. The two copies have
+  the same configured provider IDs and raw cooldown setting, which does not
+  establish which acceptance field differed. Diagnose that mismatch before
+  a future attempt; preserve the required acceptance checks and do not
+  publish this failed candidate.
 
 - `prod/0.1.2877-p1` — 2026-11-04. **Candidate failed acceptance;
   rolled back, not published.** The v0.1.2877 release was merged into
