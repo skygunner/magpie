@@ -1,3 +1,31 @@
+## 2026-11-06 跟进巡检：台账 172 个已回帖 issue 全量复核 + #3183/#3329/#3566/#3619 四支分支返工 + 8 条回帖
+
+巡检方法：从 `upstream-status.json` 取出全部带我们评论的 172 个 issue/PR（1072–3828），
+逐条拉取当前状态、我们最后评论之后的全部新评论与 timeline 交叉引用。
+结果：**81 条开放且无新动态**（无需动作）、**29 条上游已收**（yetone 落地/移植，含 ggbdpq 批量验证搬运，无需动作）、
+**9 条已关闭**（报告者确认/上游修复/自行解决）、**8 条需要跟进**。
+ggbdpq 在 11-04 对我们多支分支做了独立验证并 "take"/让位，两处实测反馈各揪出一个真实缺陷，均已修复。
+
+| # | 语言 | 跟进内容 | 交付 |
+|---|---|---|---|
+| M1 | en | #3619 ggbdpq 验证发现回归 #153：反向匹配命中 OpenRouter 全账号 free-models-per-min 措辞；第二版补丁的排除把 rest 记到空 id。旧头两处均复现红 | 分支重写为单提交 `bbd53987c`（`2df5d40ee` 基）：词表窗口禁止跨越 JSON 引号/花括号，删 preset 排除与 `KeyAllowanceID`；新增 `TestOpenRouterAccountWideWordingRestsTheKey`；#153 绿；全量 gateway 仅 5 个基线红 |
+| M2 | zh | #3566 ggbdpq 指出递归边界：内层 walk 可把类型写在 `$ref` 旁（#3205 拒绝），zod 复用形状触发 | 重接 main `28919f45b`：内层 walk 跳过带 `$ref` 节点 + 补 `TestKimiTypedRefTargetInnerUnion`（clean main 红） |
+| M3 | zh | #3183 oevery 报上游移植（3b961f294）回归：密封任务（arguments=`gAAAAA…`）被补 `encrypted_function_args:[]` 误标明文；我们分支同洞 | 守卫 `c20d3e202`（`fix/issue-batch-20261023-g`）：密封 arguments 原样交回；parent 红/head 绿；上游落地形状需同守卫，回帖已说明 |
+| M4 | zh | #3329 frc16u 补 dsh-mcp-console 现场并要求纳入回归测试 | 重接 main `fc222ef12` + `TestDshConsoleMarkersBetweenEntriesSurvive`（clean main 红） |
+| M5 | en | #3572 ericcug 实测 google Developer API 同 400；Yaka88 问 PR | 无 PR（不收外部 PR）；上游 `2260390a0`（11-05）重构整条路径并覆盖两面，分支撤下（upstream=independent_alternative） |
+| M6 | zh | #3259 Sukkk-zcy 补 Windows MiMo Desktop 复现并问合并计划 | 答：未合并，`fix/null-tool-calls` 待收；复现与分支机制吻合 |
+| M7 | en | #3285 AAEE86 第二台机器确认 + O_CLOEXEC/no-wait4 取证 | 致谢确认；`fix/reexec-plugin-host` 仍待收 |
+| M8 | en | #3188 wtj-0527 "请求合并" | 答合并属维护者；分支 `0817d2e9`（ggbdpq 已验证）待收（回帖当日修正 head 表述） |
+
+八条回帖逐条 API 读回（author/UTF-8 body SHA256 入 `evidence/2026-11-06-followup/comment-readback.json`）。
+台账 8 个 unit 更新（coverage/commits/comments/verify/upstream）、prior-comments +8、comment_publications +8（86）；
+`generate.py --write/--selftest` 过（169 units / 173 issues / 362 远端 heads）。
+四支返工分支远端读回一致：`fix/3619-model-scoped-rate-limit`→bbd53987c（force-push，旧 tip e9307596c 覆盖）、
+`fix/3566-kimi-typed-ref-untyped-union`→28919f45b（旧 df5363d0 覆盖）、`fix/issue-batch-20261023-g`→c20d3e202（追加）、
+`fix/dsh-comment-between-entries`→fc222ef12（force-push，旧 91a19f256 覆盖）。
+边界：#3174 maintainer 11-04/05 三次再见同签名红，但 ggbdpq 10-28 已做双方案对比，本轮未加评论，下次巡检若无进展再推进；
+zz-test/zz-test2 为 round-27 合并套件 scratch，同日清理。
+
 ## 2026-10-27 第二十七轮：#1903、#2099、#2541、#2746、#2755、#2761、#2789、#3137、#3278、#3738、#3785、#3792、#3793、#3805、#3812、#3814、#3816、#3821、#3826、#3828
 
 本轮二十题同样全部是**别人报的、上游未修、帖里没有可用补丁**的：选题前先与台账既有 issue 做差集，
