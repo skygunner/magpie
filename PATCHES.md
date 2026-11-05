@@ -9,11 +9,12 @@ mean upstream implements every former fork guarantee.
   branch, merging a pinned release tag per round. Source `fix/*` and `feature/*`
   branches stay available; do not re-pick unchanged patches every round.
 - The existing `prod` branch has historical failed candidates in its ancestry.
-  It is not evidence of production success. `production/stable` will point only
+  It is not evidence of production success. `production/stable` points only
   to successfully observed production source. `candidate/<version>` records a
   tested candidate; `deployed/<version>` is created only after acceptance and
   observation pass. Old `prod/*` tags retain their historical meaning.
-- Production currently remains 0.1.2767-p1. This round pins upstream v0.1.3007.
+- Production is 0.1.3007-p2 (accepted 2026-11-05 04:38 UTC / 14:38 AEST),
+  tested source c63d898351f6b4cc057b387da158d8129225f405, upstream v0.1.3007.
   Source integration alone does not authorize publication.
 
 ## This round's patch decisions
@@ -63,6 +64,51 @@ behavior; baseline failures do not automatically authorize deployment.
    matching live IDs and fresh healthy checks. Never rebuild during promotion.
 
 ## Deployment history
+
+- **deployed/0.1.3007-p2 — 2026-11-05: PASSED AND PUBLISHED.**
+  Tested/deployed source c63d898351f6b4cc057b387da158d8129225f405;
+  production/stable and the annotated deployed tag point to that exact source.
+  This successful record supersedes the earlier 3007 preparation/blocking state.
+  Seven independent issue behaviors and -pN build adaptation remain; #3487's
+  remainder, #3788/#3791 and cooldown-settings stay suspended under upstream-first
+  policy. Cloudflare Workers AI package 0.0.5 was not replaced.
+
+  Both blockers were test issues, with no required production protocol change:
+  generated OpenCode IDs are now tested against identifier.ts rather than the
+  incoming-seed heuristic; cached Claude misses are invalidated by the sign-in
+  fixture (#3174). Fixed-time/cached-miss regression families pass 20 repetitions
+  under race detection. At the exact release commit, full nogui Go tests passed
+  87 packages (20 without tests), 162 relevant browser cases passed, 80 deployment
+  fault tests passed; Linux/Windows/Darwin nogui and native builds/vet passed.
+  All changed Go files are formatted with the pinned Go 1.26.8 formatter.
+
+  The isolated candidate matched the reviewed changes: 245→251 caller-visible
+  models and 47→49 groups, 32 providers unchanged, fork cooldown API deliberately
+  removed. The final production snapshot matched the same reviewed candidate;
+  acceptance-diff.json and final-diff.json are empty. No broad difference bypass.
+
+  Detached docker1 switch began 03:50 UTC. Acceptance completed about 03:52 UTC;
+  observation ended 04:38 UTC (14:38 AEST), 2761.101 seconds, exit 0 and this run's
+  result.json PASSED. Three real probes returned 200, with two during observation.
+  Eleven samples: healthy, zero restarts, no panic/fatal, no 5xx or protocol_error.
+  Recorded traffic: 372 HTTP 200 and one client cancellation (499); the pre-switch
+  window had 323 HTTP 200, 19 cancellations and one 400. These are observed counts,
+  not a controlled performance comparison.
+
+  Same image published as bigshort/magpie-patched:0.1.3007-p2 and :latest,
+  both publicly verified at
+  sha256:c9950bf814d172a45e9c846cde00c518707d15d7770405bdadbfe79772ff25de.
+  Hub description was updated from a fresh read, verified, and saved to
+  /tmp/hub-readme.md. No rebuild during promotion.
+
+  Private backup, reviewed snapshots and result on docker1:
+  /var/lib/magpie-deploy/0.1.3007-p2/. Previous production container is kept stopped.
+  Local complete evidence: ~/.local/state/magpie-rounds/0.1.3007-p2/.
+  Deployment block was archived only after both resolutions and the final gate.
+  The six-hour automation resumes under upstream-first policy, with production
+  references authoritative and no special unresolved 3007 blocker remaining.
+  Windows/macOS builds and vet are cross-checks, not native runtime tests.
+
 
 - **2026-11-05, 3007-p2 preparation — both previous blockers resolved.**
   This remains pinned to upstream v0.1.3007; the seven retained issue behaviors
