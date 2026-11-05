@@ -1,0 +1,6 @@
+--- FAIL: FuzzMarshalRaw (0.00s)
+    --- FAIL: FuzzMarshalRaw/seed#7 (0.00s)
+--- FAIL: TestClaudeClientCacheAbsentUnchanged (0.00s)
+--- FAIL: TestMarshalRawIsEncodingJSON (0.00s)
+--- FAIL: TestMarshalSizedIsJSONMarshal (0.00s)
+--- FAIL: TestServeWSLListensBesideLoopback (10.02s)

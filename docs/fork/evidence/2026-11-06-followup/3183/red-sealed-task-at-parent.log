@@ -1,0 +1,5 @@
+--- FAIL: TestNativeRelaySealedTaskStaysSealed (0.00s)
+    native_relay_collab_test.go:173: a sealed task was labelled unsealed: map[arguments:gAAAAABm4BuA1tOaG9vZF9hc2tfdGVzdA== call_id:c9 encrypted_function_args:[] id:fc_1 name:spawn_agent namespace:collaboration status:completed type:function_call]
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.019s
+FAIL

@@ -1,0 +1,5 @@
+--- FAIL: TestKimiTypedRefTargetInnerUnion (0.00s)
+    kimi_schema_test.go:529: the typed target's inner union left untyped: {"oneOf":[{"type":"object","properties":{"mode":{"type":"string","const":"a"}}},{"type":"object","properties":{"mode":{"type":"string","const":"b"}}}]}
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.018s
+FAIL

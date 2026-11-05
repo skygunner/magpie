@@ -1588,10 +1588,11 @@
    ],
    "category": "product",
    "title": "gateway: preserve plaintext Codex collaboration through native relays (#3183)",
-   "coverage": "Native relays: namespaced calls marked unsealed, plaintext agent_message via PlainAgentMessage, Copilot keeps native messages; reply-side encrypted_function_args preserved. #3374's bare rewrite retired in its favor; composition tested through /backend-api/codex/responses.",
+   "coverage": "Native relays: namespaced calls marked unsealed, plaintext agent_message via PlainAgentMessage, Copilot keeps native messages; reply-side encrypted_function_args preserved. #3374's bare rewrite retired in its favor; composition tested through /backend-api/codex/responses. | 2026-11-06 follow-up: oevery reports the landed upstream port (3b961f294, v0.1.2747) mislabeling a relay's native sealed task as plaintext — a function_call that names its namespace while its arguments are the ChatGPT backend's own gAAAAA token gains the empty encrypted_function_args list, so Codex hands the subagent ciphertext (regression vs v0.1.2746; comment 6594602917). The same hole sat in this branch's nsTidy.call. Guard added as c20d3e202: arguments matching nativeSealedAgentPayload hand the seal on untouched, only non-sealed arguments are labelled unsealed. TestNativeRelaySealedTaskStaysSealed red at the parent (the list added to a sealed call), green at the head; TestNativeRelay* green. Comment 6663475336; upstream's landed shape needs the same guard.",
    "commits": [
     "b1ae66c779355c897eed2337f83666447ae8db2a",
-    "eae195b1ef5680041148ae9aa05282d78e3aed5d"
+    "eae195b1ef5680041148ae9aa05282d78e3aed5d",
+    "c20d3e202788edac7021d506a81207d04a315e08"
    ],
    "commit_details": [
     {
@@ -1609,7 +1610,8 @@
    "base": "see delivery: r3-batch",
    "comments": {
     "3183": [
-     "https://github.com/yetone/magpie/issues/3183#issuecomment-6350770765"
+     "https://github.com/yetone/magpie/issues/3183#issuecomment-6350770765",
+     "https://github.com/yetone/magpie/issues/3183#issuecomment-6663475336"
     ]
    },
    "sources": {
@@ -1621,8 +1623,8 @@
    },
    "verify": {
     "state": "pass",
-    "evidence": "Composition retained and re-run on r3 head: TestNativeRelay* , Copilot native (TestCopilotUltraSubagentWithWebSearch, TestCopilotRelayedUnlessAskedToSeal — the earlier \"no fixture\" claim was wrong), reply-side encrypted_function_args.",
-    "head": "7f927133be68a452f662d0c7445a1432e66c426a"
+    "evidence": "Composition retained and re-run on r3 head: TestNativeRelay* , Copilot native (TestCopilotUltraSubagentWithWebSearch, TestCopilotRelayedUnlessAskedToSeal — the earlier \"no fixture\" claim was wrong), reply-side encrypted_function_args.; docs/fork/evidence/2026-11-06-followup/comment-readback.json and docs/fork/evidence/2026-11-06-followup/3183/",
+    "head": "c20d3e202788edac7021d506a81207d04a315e08"
    },
    "upstream": {
     "status": "unconfirmed"
@@ -2101,7 +2103,7 @@
    ],
    "category": "product",
    "title": "gateway: a stream delta's \"tool_calls\": null is no call made, so a narration-only reply keeps finish_reason stop (#3259, mawag)",
-   "coverage": "Delivered scope per commit body and issue thread.",
+   "coverage": "Delivered scope per commit body and issue thread. | 2026-11-06 follow-up: Sukkk-zcy adds a Windows MiMo Desktop/CLI repro and asks whether a release or merge is planned (comment 6650209721). Answered: not merged, the fix waits on fix/null-tool-calls; the repro's client-side record (finish=tool-calls with no tool part) matches the branch's mechanism. Comment 6663476508.",
    "commits": [
     "d2abf49aa50337d562820eac1c03a957c908fb4d"
    ],
@@ -2116,7 +2118,8 @@
    "base": "see delivery: historical; base recorded in the unit branch map",
    "comments": {
     "3259": [
-     "https://github.com/yetone/magpie/issues/3259#issuecomment-6342839037"
+     "https://github.com/yetone/magpie/issues/3259#issuecomment-6342839037",
+     "https://github.com/yetone/magpie/issues/3259#issuecomment-6663476508"
     ]
    },
    "sources": {
@@ -2126,7 +2129,7 @@
    },
    "verify": {
     "state": "unverified_this_round",
-    "evidence": "Delivered with red-green recorded in the commit body; not independently re-run this round. See prior/72-thread-evidence.json for the delivered-time evidence chain.",
+    "evidence": "Delivered with red-green recorded in the commit body; not independently re-run this round. See prior/72-thread-evidence.json for the delivered-time evidence chain.; docs/fork/evidence/2026-11-06-followup/comment-readback.json",
     "head": ""
    },
    "upstream": {
@@ -2395,7 +2398,7 @@
    ],
    "category": "product",
    "title": "fix(gui): reap plugin hosts before web update reexec (#3285)",
-   "coverage": "Delivered scope per commit body and issue thread.",
+   "coverage": "Delivered scope per commit body and issue thread. | 2026-11-06 follow-up: AAEE86 confirms the zombie on a second machine and still at main 59fdab0af, with the O_CLOEXEC/no-wait4 forensics (comment 6560235728); acknowledged — fix/reexec-plugin-host (863a1e72) still awaits pickup. Comment 6663476845.",
    "commits": [
     "863a1e725073a19829e8986e92c92c20a48e6003"
    ],
@@ -2410,7 +2413,8 @@
    "base": "see delivery: historical; base recorded in the unit branch map",
    "comments": {
     "3285": [
-     "https://github.com/yetone/magpie/issues/3285#issuecomment-6348172340"
+     "https://github.com/yetone/magpie/issues/3285#issuecomment-6348172340",
+     "https://github.com/yetone/magpie/issues/3285#issuecomment-6663476845"
     ]
    },
    "sources": {
@@ -2420,7 +2424,7 @@
    },
    "verify": {
     "state": "unverified_this_round",
-    "evidence": "Delivered with red-green recorded in the commit body; not independently re-run this round. See prior/72-thread-evidence.json for the delivered-time evidence chain.",
+    "evidence": "Delivered with red-green recorded in the commit body; not independently re-run this round. See prior/72-thread-evidence.json for the delivered-time evidence chain.; docs/fork/evidence/2026-11-06-followup/comment-readback.json",
     "head": ""
    },
    "upstream": {
@@ -4067,9 +4071,12 @@
    ],
    "category": "product",
    "title": "gateway: a 429 that says the model's own limit rests that model alone (#3619)",
-   "coverage": "modelRateLimit (limit kind named, model name or none between) rests by restID on failRate, beside otherModels and clineFreeLimit; siblings keep serving; a rate limit naming no model rests the key as before; gateway-routing.md documents the decision.",
+   "coverage": "modelRateLimit (limit kind named, model name or none between) rests by restID on failRate, beside otherModels and clineFreeLimit; siblings keep serving; a rate limit naming no model rests the key as before; gateway-routing.md documents the decision. | 2026-10-28 follow-up: reworked as fix/3619-model-scoped-rate-limit (0c5a9d458, later e9307596c; comment 6461426943). | 2026-11-06 follow-up: ggbdpq's independent verification found the branch regressing #153 (comment 6621387461) — the first commit's unwindowed reverse alternative matched OpenRouter's account-wide free-models-per-min wording (reproduced red at e9307596c), and the second commit's freeModelsPerMin exclusion set id to KeyAllowanceID, empty for keys whose windows magpie does not read. Branch rewritten as one commit bbd53987c on upstream/main 2df5d40ee: the word-list window class excludes the JSON's quotes and braces so account-wide wording cannot bridge across envelope fields; no preset exclusion; missing test-file newline fixed. New TestOpenRouterAccountWideWordingRestsTheKey (short body + fuller rate_limit_error shape); #153 green; full gateway run shows only the five baseline reds clean main shows in this environment. Comment 6663692894.",
    "commits": [
-    "466a153cba7865a6b5e974298177ff5a630756bd"
+    "466a153cba7865a6b5e974298177ff5a630756bd",
+    "0c5a9d458ba086e19bfd9caa359719f12fea5e46",
+    "e9307596c07d3a513764d878199f13c3a08b83b8",
+    "bbd53987c389f89caba670c3d121f344d3d8b594"
    ],
    "commit_details": [
     {
@@ -4078,11 +4085,12 @@
      "url": "https://github.com/skygunner/magpie/commit/466a153cba7865a6b5e974298177ff5a630756bd"
     }
    ],
-   "branch": "fix/sophnet-model-429",
+   "branch": "fix/3619-model-scoped-rate-limit",
    "base": "3173440ca3be3eb0a855870d92faeadea6785aaa",
    "comments": {
     "3619": [
-     "https://github.com/yetone/magpie/issues/3619#issuecomment-6400912438"
+     "https://github.com/yetone/magpie/issues/3619#issuecomment-6400912438",
+     "https://github.com/yetone/magpie/issues/3619#issuecomment-6663692894"
     ]
    },
    "sources": {
@@ -4090,8 +4098,8 @@
    },
    "verify": {
     "state": "pass",
-    "evidence": "red=TestModelRateLimitRestsTheModel (reporter JSON verbatim + 3 forms); full internal/gateway nogui 5172 ok with the known #3280 environmental red; see docs/fork/evidence/round22/comment-readback.json and README.md",
-    "head": "466a153cba7865a6b5e974298177ff5a630756bd"
+    "evidence": "red=TestModelRateLimitRestsTheModel (reporter JSON verbatim + 3 forms); full internal/gateway nogui 5172 ok with the known #3280 environmental red; see docs/fork/evidence/round22/comment-readback.json and README.md; docs/fork/evidence/2026-11-06-followup/comment-readback.json and docs/fork/evidence/2026-11-06-followup/3619/",
+    "head": "bbd53987c389f89caba670c3d121f344d3d8b594"
    },
    "upstream": {
     "status": "unconfirmed"
@@ -4338,9 +4346,11 @@
    ],
    "category": "product",
    "title": "gateway: a union of objects inside a typed $ref target is given object for Kimi (#3566)",
-   "coverage": "Delivered scope per commit body and issue thread.",
+   "coverage": "Delivered scope per commit body and issue thread. | 2026-10-28 follow-up: reworked as fix/3566-kimi-typed-ref-untyped-union (df5363d0, comment 6461879332). | 2026-11-06 follow-up: ggbdpq verified the fix and found one recursion boundary — the inner walk could write a type beside a $ref (the #3205 refusal) for a zod reused-schema node inside a typed target (comment 6621830283). Branch rebased onto upstream/main 2df5d40ee keeping the #3205 chain loop, the $ref skip guard added to the inner walk, and the missing tests written (28919f45b): TestKimiTypedRefTargetInnerUnion covers the reported repro and the zod shape (ref-bearing node verbatim, chain end T typed), red on clean main, green at the head; TestKimi* green; full gateway only the five baseline reds. Comment 6663693365.",
    "commits": [
-    "bafd13618b4dee3e879801d6f02aca48135b863e"
+    "bafd13618b4dee3e879801d6f02aca48135b863e",
+    "df5363d0a2333117f62f33f5a44088a027d9d716",
+    "28919f45b30b0ad6a46aa251c83f6ccf9c4285a7"
    ],
    "commit_details": [
     {
@@ -4349,17 +4359,18 @@
      "url": "https://github.com/skygunner/magpie/commit/bafd13618b4dee3e879801d6f02aca48135b863e"
     }
    ],
-   "branch": "fix/issue-3566",
+   "branch": "fix/3566-kimi-typed-ref-untyped-union",
    "base": "01468003348ede896c5126e9fd81057e1e58765c",
    "comments": {
     "3566": [
-     "https://github.com/yetone/magpie/issues/3566#issuecomment-6403129516"
+     "https://github.com/yetone/magpie/issues/3566#issuecomment-6403129516",
+     "https://github.com/yetone/magpie/issues/3566#issuecomment-6663693365"
     ]
    },
    "verify": {
     "state": "pass",
-    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3566/.",
-    "head": "bafd13618b4dee3e879801d6f02aca48135b863e"
+    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3566/.; docs/fork/evidence/2026-11-06-followup/comment-readback.json and docs/fork/evidence/2026-11-06-followup/3566/",
+    "head": "28919f45b30b0ad6a46aa251c83f6ccf9c4285a7"
    },
    "upstream": {
     "status": "reported"
@@ -4449,9 +4460,11 @@
    ],
    "category": "product",
    "title": "agent: a comment between dsh patch-list entries survives a rewrite (#3329)",
-   "coverage": "Delivered scope per commit body and issue thread.",
+   "coverage": "Delivered scope per commit body and issue thread. | 2026-11-06 follow-up: frc16u adds the @moon16u/dsh-mcp-console field — managed-block markers between entries, begin right after the route entry magpie rebuilds each round (comment 6621719258) — and asks for the scenario in the regression tests. Branch rebased onto upstream/main 2df5d40ee (91a19f256 -> 2a5a0d3a7) and TestDshConsoleMarkersBetweenEntriesSurvive added (fc222ef12): after a rewrite the begin, the note comment, the blank line, the end marker and the insert entry all survive; red on clean main (begin wiped), green at the head. Comment 6663475768.",
    "commits": [
-    "91a19f2568f5d7d504a3ca11c97ea027294b04ca"
+    "91a19f2568f5d7d504a3ca11c97ea027294b04ca",
+    "2a5a0d3a748f9d5eca57f86040cdb17308f47d6e",
+    "fc222ef1272c7ef2c784b68a43c9e1159e2ede72"
    ],
    "commit_details": [
     {
@@ -4464,13 +4477,14 @@
    "base": "01468003348ede896c5126e9fd81057e1e58765c",
    "comments": {
     "3329": [
-     "https://github.com/yetone/magpie/issues/3329#issuecomment-6403289779"
+     "https://github.com/yetone/magpie/issues/3329#issuecomment-6403289779",
+     "https://github.com/yetone/magpie/issues/3329#issuecomment-6663475768"
     ]
    },
    "verify": {
     "state": "pass",
-    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3329/.",
-    "head": "91a19f2568f5d7d504a3ca11c97ea027294b04ca"
+    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3329/.; docs/fork/evidence/2026-11-06-followup/comment-readback.json and docs/fork/evidence/2026-11-06-followup/3329/",
+    "head": "fc222ef1272c7ef2c784b68a43c9e1159e2ede72"
    },
    "upstream": {
     "status": "reported"
@@ -4523,7 +4537,7 @@
    ],
    "category": "product",
    "title": "gateway: Antigravity's \"Corrupted thought signature\" is retried without the history's signatures (#3572)",
-   "coverage": "Delivered scope per commit body and issue thread.",
+   "coverage": "Delivered scope per commit body and issue thread. | 2026-11-06 follow-up: ericcug measured the same 400 on the google Gemini Developer API, which this branch's gate (IsVertex || antigravity) did not reach, and Yaka88 asked whether a PR was filed (comments 6598299216, 6591118984). Answered: no PR — external PRs are not accepted here — and upstream 2260390a0 (2026-11-05) has since reworked the whole path: signatureRefused matches corrupted too and the without-signatures retry reaches the Developer API, Code Assist and Vertex, superseding this branch, which stands down (comment 6663476158).",
    "commits": [
     "043636a38ae731a74fe70511b9425c8b6275d70f"
    ],
@@ -4538,16 +4552,19 @@
    "base": "01468003348ede896c5126e9fd81057e1e58765c",
    "comments": {
     "3572": [
-     "https://github.com/yetone/magpie/issues/3572#issuecomment-6403372256"
+     "https://github.com/yetone/magpie/issues/3572#issuecomment-6403372256",
+     "https://github.com/yetone/magpie/issues/3572#issuecomment-6663476158"
     ]
    },
    "verify": {
     "state": "pass",
-    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3572/.",
+    "evidence": "Independent re-run on a clean checkout: the new test fails at 01468003 and passes at the pushed head; logs in docs/fork/evidence/round23/3572/.; docs/fork/evidence/2026-11-06-followup/comment-readback.json",
     "head": "043636a38ae731a74fe70511b9425c8b6275d70f"
    },
    "upstream": {
-    "status": "reported"
+    "status": "independent_alternative",
+    "commit": "2260390a01382ca4b2a7b2e03a6ddf62aad24f65",
+    "note": "yetone 2026-11-05: signatureRefused now matches (invalid|corrupted) thought signature and signaturesReach covers the Gemini Developer API, Code Assist and Vertex, reworking the retry this unit delivered; the fork branch stands down. ericcug's google face and Yaka88's switch face are covered upstream."
    },
    "archive": {
     "candidate": false
@@ -5583,7 +5600,7 @@
    ],
    "category": "product",
    "title": "provider: a sub2api `unit: \"percent\"` window is a share, not dollars (#3188)",
-   "coverage": "Exactly the issue's contract: a percent entry is `Used` alone (no Amount/Limit/Unit), `Balance`'s dollar sum moved to `windowsLeft` (which says `20%`), other windows read as today, `KeyAllowance` untouched. The issue's example reply is the fixture byte for byte. `TestSub2APIKeySharesAreNotDollars` red then green; `./internal/provider` ok in 42.9s with the pre-existing synctest test skipped.",
+   "coverage": "Exactly the issue's contract: a percent entry is `Used` alone (no Amount/Limit/Unit), `Balance`'s dollar sum moved to `windowsLeft` (which says `20%`), other windows read as today, `KeyAllowance` untouched. The issue's example reply is the fixture byte for byte. `TestSub2APIKeySharesAreNotDollars` red then green; `./internal/provider` ok in 42.9s with the pre-existing synctest test skipped. | 2026-11-06 follow-up: wtj-0527 asks for a merge (comment 6461153080); answered that merging is the maintainer's call — the branch (0817d2e9, verified by ggbdpq) waits to be picked (comment 6663477178, edited the same day to name the real head).",
    "commits": [
     "0817d2e9624f1d7b6bde53e6c1b00f5cccd78ce0"
    ],
@@ -5598,7 +5615,8 @@
    "base": "6afbe3f3047419bfd50e522526457bac3fa25f2c",
    "comments": {
     "3188": [
-     "https://github.com/yetone/magpie/issues/3188#issuecomment-6429785328"
+     "https://github.com/yetone/magpie/issues/3188#issuecomment-6429785328",
+     "https://github.com/yetone/magpie/issues/3188#issuecomment-6663477178"
     ]
    },
    "sources": {
@@ -5606,7 +5624,7 @@
    },
    "verify": {
     "state": "pass",
-    "evidence": "Red-green recorded in the commit body; targeted suite re-run at the pushed head (0817d2e9624f1d7b6bde53e6c1b00f5cccd78ce0); comment read back 2026-10-26T23:28:54Z (body SHA256 e79d75a2be4943c4). Full ./... at the round's merge: 70 ok / 5 red, all five red at base 6afbe3f3 in the same environment.",
+    "evidence": "Red-green recorded in the commit body; targeted suite re-run at the pushed head (0817d2e9624f1d7b6bde53e6c1b00f5cccd78ce0); comment read back 2026-10-26T23:28:54Z (body SHA256 e79d75a2be4943c4). Full ./... at the round's merge: 70 ok / 5 red, all five red at base 6afbe3f3 in the same environment.; docs/fork/evidence/2026-11-06-followup/comment-readback.json",
     "head": "0817d2e9624f1d7b6bde53e6c1b00f5cccd78ce0"
    },
    "upstream": {
@@ -11530,6 +11548,142 @@
    "body_sha256": "02c5a0f4e21e69bd2c545dae4d152023fe2eaaf0eb29b17b0288fcdbb0216463",
    "evidence": "docs/fork/evidence/round23/2759-followup/comment-followup-readback.json",
    "body_updated_at": "2026-10-27T03:03:20Z"
+  },
+  {
+   "issue": 3183,
+   "fix_id": "u-gateway-preserve-plaintext-codex-collaboration-t-b1ae66c7",
+   "comment_id": 6663475336,
+   "url": "https://github.com/yetone/magpie/issues/3183#issuecomment-6663475336",
+   "role": "followup",
+   "author": "skygunner",
+   "language": "zh",
+   "status": "published_verified",
+   "published_at": "2026-11-05T16:35:28Z",
+   "verified_at": "2026-11-06T03:30:00Z",
+   "delivery": "fix/issue-batch-20261023-g",
+   "delivery_head": "c20d3e202788edac7021d506a81207d04a315e08",
+   "body_sha256": "82c17adccb25914efcced28d7e936043208c64a469a5387cbd259d6923ada660",
+   "evidence": "docs/fork/evidence/2026-11-06-followup/3183/",
+   "body_updated_at": "2026-11-05T16:35:28Z"
+  },
+  {
+   "issue": 3259,
+   "fix_id": "u-gateway-a-stream-delta-s-tool-calls-null-is-no-c-d2abf49a",
+   "comment_id": 6663476508,
+   "url": "https://github.com/yetone/magpie/issues/3259#issuecomment-6663476508",
+   "role": "followup",
+   "author": "skygunner",
+   "language": "zh",
+   "status": "published_verified",
+   "published_at": "2026-11-05T16:35:31Z",
+   "verified_at": "2026-11-06T03:30:00Z",
+   "delivery": "fix/null-tool-calls",
+   "delivery_head": "",
+   "body_sha256": "4860ab5d5b911fad3e8845c43a8d50130a48ee0c1b126dd8cf2693556ffc13ea",
+   "evidence": "docs/fork/evidence/2026-11-06-followup/comment-readback.json",
+   "body_updated_at": "2026-11-05T16:35:31Z"
+  },
+  {
+   "issue": 3285,
+   "fix_id": "u-fix-gui-reap-plugin-hosts-before-web-update-reex-863a1e72",
+   "comment_id": 6663476845,
+   "url": "https://github.com/yetone/magpie/issues/3285#issuecomment-6663476845",
+   "role": "followup",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-11-05T16:35:32Z",
+   "verified_at": "2026-11-06T03:30:00Z",
+   "delivery": "fix/reexec-plugin-host",
+   "delivery_head": "",
+   "body_sha256": "a774a5e7e3d3fe97831fb0ff547290d4387691aea970bf72838ade02cecf046c",
+   "evidence": "docs/fork/evidence/2026-11-06-followup/comment-readback.json",
+   "body_updated_at": "2026-11-05T16:35:32Z"
+  },
+  {
+   "issue": 3619,
+   "fix_id": "u-gateway-model-rate-limit-rests-by-restid-3619-466a153c",
+   "comment_id": 6663692894,
+   "url": "https://github.com/yetone/magpie/issues/3619#issuecomment-6663692894",
+   "role": "followup",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-11-05T16:45:03Z",
+   "verified_at": "2026-11-06T03:30:00Z",
+   "delivery": "fix/3619-model-scoped-rate-limit",
+   "delivery_head": "bbd53987c389f89caba670c3d121f344d3d8b594",
+   "body_sha256": "aa2c515c8d3cc0491c4d276d5442e6333f1e35ad556ab1aefeba0cc84f1ccc02",
+   "evidence": "docs/fork/evidence/2026-11-06-followup/3619/",
+   "body_updated_at": "2026-11-05T16:45:03Z"
+  },
+  {
+   "issue": 3566,
+   "fix_id": "u-issue-3566-issue-3566-bafd1361",
+   "comment_id": 6663693365,
+   "url": "https://github.com/yetone/magpie/issues/3566#issuecomment-6663693365",
+   "role": "followup",
+   "author": "skygunner",
+   "language": "zh",
+   "status": "published_verified",
+   "published_at": "2026-11-05T16:45:04Z",
+   "verified_at": "2026-11-06T03:30:00Z",
+   "delivery": "fix/3566-kimi-typed-ref-untyped-union",
+   "delivery_head": "28919f45b30b0ad6a46aa251c83f6ccf9c4285a7",
+   "body_sha256": "4b54dd4bf9cb4a640ff7271fc24fb0dd49f92170db8886c33dbcae6f62dbea19",
+   "evidence": "docs/fork/evidence/2026-11-06-followup/3566/",
+   "body_updated_at": "2026-11-05T16:45:04Z"
+  },
+  {
+   "issue": 3329,
+   "fix_id": "u-issue-3329-dsh-comment-between-entries-91a19f25",
+   "comment_id": 6663475768,
+   "url": "https://github.com/yetone/magpie/issues/3329#issuecomment-6663475768",
+   "role": "followup",
+   "author": "skygunner",
+   "language": "zh",
+   "status": "published_verified",
+   "published_at": "2026-11-05T16:35:29Z",
+   "verified_at": "2026-11-06T03:30:00Z",
+   "delivery": "fix/dsh-comment-between-entries",
+   "delivery_head": "fc222ef1272c7ef2c784b68a43c9e1159e2ede72",
+   "body_sha256": "b7bfc51e798743ae032dcad6a2527ccf29b1378ee4a98c96696d0f558ad50c50",
+   "evidence": "docs/fork/evidence/2026-11-06-followup/3329/",
+   "body_updated_at": "2026-11-05T16:35:29Z"
+  },
+  {
+   "issue": 3572,
+   "fix_id": "u-issue-3572-antigravity-signature-043636a3",
+   "comment_id": 6663476158,
+   "url": "https://github.com/yetone/magpie/issues/3572#issuecomment-6663476158",
+   "role": "followup",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-11-05T16:35:30Z",
+   "verified_at": "2026-11-06T03:30:00Z",
+   "delivery": "fix/antigravity-signature (stands down)",
+   "delivery_head": "",
+   "body_sha256": "abd09f3b191ed472abdf275bc5509409bd86de097fbb7bea1676d417140be920",
+   "evidence": "docs/fork/evidence/2026-11-06-followup/comment-readback.json",
+   "body_updated_at": "2026-11-05T16:35:30Z"
+  },
+  {
+   "issue": 3188,
+   "fix_id": "u-provider-a-sub2api-unit-percent-window-is-a-share-not-dollar-3188-0817d2e9",
+   "comment_id": 6663477178,
+   "url": "https://github.com/yetone/magpie/issues/3188#issuecomment-6663477178",
+   "role": "followup",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-11-05T16:35:33Z",
+   "verified_at": "2026-11-06T03:30:00Z",
+   "delivery": "fix/3188-sub2api-percent",
+   "delivery_head": "",
+   "body_sha256": "3d63160b2ed2e13fa5c28034ffbe606c9e5b4d4a44da0f37970b586c1b90fd7f",
+   "evidence": "docs/fork/evidence/2026-11-06-followup/comment-readback.json",
+   "body_updated_at": "2026-11-05T16:46:28Z"
   }
  ],
  "deliveries": {

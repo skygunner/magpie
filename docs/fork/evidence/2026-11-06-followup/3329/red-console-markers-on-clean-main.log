@@ -1,0 +1,29 @@
+--- FAIL: TestDshConsoleMarkersBetweenEntriesSurvive (0.00s)
+    dsh_comments_test.go:70: the console's markers lost:
+        # Your patch layer for this dsh profile.
+        - id: llm-pi-ai
+          name: "@deepseek-ai/dsh-llm-pi-ai"
+          config:
+            providers:
+              magpie:
+                displayName: Magpie
+                apiKeyEnv: MAGPIE_GATEWAY_KEY
+                api: openai-completions
+                baseURL: http://127.0.0.1:3425/v1
+                models:
+                  - id: deepseek/pro
+                    name: pro · DeepSeek
+                  - id: deepseek/flash
+                    name: flash · DeepSeek
+                streamIdleTimeoutMs: 600000
+        - insert:
+            - id: mcp-console-handoff
+              path: ~/.dsh/profiles/default/cordis.patch.yml
+        # ---- MCP console automatic handoff: end ----
+        - id: agent-default-model
+          config:
+            provider: magpie
+            model: deepseek/flash
+FAIL
+FAIL	github.com/yetone/magpie/internal/agent	0.026s
+FAIL

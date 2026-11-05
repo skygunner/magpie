@@ -1,0 +1,5 @@
+--- FAIL: TestOpenRouterFreeAccountRateLimitKeepsProviderRest (0.00s)
+    group_test.go:224: account rate limit rest: {ID:orf Model:x/a:free Effort: Picked:false Fixed: RuleEffort: Fast:false Start:2026-11-06 02:37:45.042634423 +1000 AEST m=+0.011525449 Done:true Status:429 Millis:0 TTFT:0 FirstText:0 FirstReasoning:0 ReasoningHidden:false Flow:0 Served: Swapped:false Routed:false Upstream: Pin: Tier: TierServed: Fail:rate Error:OpenRouter Free: Rate limit exceeded: free-models-per-min Rest:0x18a4bb254000 Again:0 Replan:0 Patience:0 Gone:false Earlier:false Queued:0 Net:0x18a4bb24a120 Reset:<nil> Credits:false Auto:[]}
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.016s
+FAIL
