@@ -38,3 +38,35 @@ func TestDshCommentsBetweenEntriesSurviveRewrite(t *testing.T) {
 		t.Fatalf("the managed block's comment markers lost:\n%s", s)
 	}
 }
+
+// The console shape (#3329, frc16u): a managed block's markers sit between
+// entries, its begin marker right after the route entry magpie writes
+// every round. @moon16u/dsh-mcp-console refuses to write when the begin
+// marker is gone; magpie used to file both markers with the entry before
+// them, and writing that entry took the begin away while the end survived.
+func TestDshConsoleMarkersBetweenEntriesSurvive(t *testing.T) {
+	_, dir, web := dshRouteHome(t)
+	dshKeyFixture(dir)
+	// the console's managed block (its cordis.patch.yml guard), markers on
+	// their own lines between the route entry and its insert entry
+	console := "\n" +
+		"# ---- MCP console automatic handoff: begin ----\n" +
+		"# Native MCP fallback: active only when the console plugin is absent/disabled.\n" +
+		"- insert:\n    - id: mcp-console-handoff\n      path: ~/.dsh/profiles/default/cordis.patch.yml\n" +
+		"# ---- MCP console automatic handoff: end ----\n"
+	os.WriteFile(web, []byte("# Your patch layer for this dsh profile.\n"+
+		dshRouteFixture("deepseek/pro")+
+		console+
+		"- id: agent-default-model\n  config:\n    provider: magpie\n    model: deepseek/flash\n"), 0o644)
+
+	if _, err := dshRouteAgain(web, magpieModels("dsh"), gateway.URL()); err != nil {
+		t.Fatal(err)
+	}
+	b, err := os.ReadFile(web)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if s := string(b); !strings.Contains(s, console) {
+		t.Fatalf("the console's markers lost:\n%s", s)
+	}
+}
