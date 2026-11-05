@@ -22746,11 +22746,7 @@ function keyboardFocus(e) {
     if ((r.top < b.top || r.bottom > b.bottom) && scrollOnPurpose(e, 400)) focused.scrollIntoView({ block: "nearest" });
   }));
 }
-// A wheel or touch may scroll before the page hears of it: what was put back
-// is kept a moment, and a wheel or touch before it, the same way, gives it
-// back. macOS 13's WebKit may never tell of one (issenn): three put back the
-// same way in a second, not by a click's hold (h), are the reader's, and so
-// is each after it within a second.
+// Keep erased motion briefly: late input restores it; three unheard steps form a run.
 let putBack = [], run = null; // { v, by: px put back, top: restored position, at, h: held }, the last second's
 function puttingBack(v, from, h) {
   const by = from - v.scrollTop, at = performance.now(), d = Math.sign(by);
@@ -22764,10 +22760,7 @@ function puttingBack(v, from, h) {
   for (const p of mine) v.scrollTop += p.by;
   if (!deaf) { deaf = true; try { localStorage.setItem("magpie.unheardWheels", "1"); } catch {} }
 }
-// Seen once (kept), a scroll at rest waits before it is put back; a second
-// the same way within 80ms, nothing laid out anew, or one down to the end is
-// the reader's. A wheel heard late gives back what was put back (issennknight,
-// macOS 13)
+// After unheard wheels, wait before restoring a scroll; a continuing run stays.
 let deaf = false;
 try { deaf = localStorage.getItem("magpie.unheardWheels") === "1"; } catch {}
 const waits = new WeakMap();
@@ -22780,9 +22773,7 @@ function waitsBack(v) {
   waits.set(v, { d, h, at: performance.now(), t: setTimeout(() => { waits.delete(v); if (d > 0 && h === v.scrollHeight && v.scrollTop + v.clientHeight >= h - 1) { readerWay.set(v, d); readerLeaves(v); } else if (performance.now() >= purposeUntil && held?.v !== v) { const from = v.scrollTop; backToReader(v); puttingBack(v, from, false); } }, 120) });
   return true;
 }
-// Given back is what was put back after the reader's input was made (its
-// timeStamp is when it was made, not when the page was told) and went the
-// way it goes: not a scroll by code from before it.
+// Late input restores erased motion after its timestamp, not earlier code.
 function givesBack(e, dir) {
   if (!e.isTrusted || !dir) return;
   const now = performance.now(), mine = (p) => p.at >= e.timeStamp - 50 && now - p.at < 1000 && Math.sign(p.by) === dir && !p.v.hidden;
