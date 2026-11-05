@@ -13,11 +13,11 @@ mean upstream implements every former fork guarantee.
   to successfully observed production source. `candidate/<version>` records a
   tested candidate; `deployed/<version>` is created only after acceptance and
   observation pass. Old `prod/*` tags retain their historical meaning.
-- Production is 0.1.3007-p2 (accepted 2026-11-05 04:38 UTC / 14:38 AEST),
-  tested source c63d898351f6b4cc057b387da158d8129225f405, upstream v0.1.3007.
+- Production is 0.1.3036-p2 (accepted 2026-11-05 10:30:47 UTC / 20:30:47 AEST),
+  tested source 16f33cdcf00f4c445be7be35b285f3ef1c241df7, upstream v0.1.3036.
   Source integration alone does not authorize publication.
 
-## This round's patch decisions (v0.1.3036-p2 candidate)
+## This round's patch decisions (v0.1.3036-p2 production)
 
 | Patch | Decision | Behavior / reason |
 | --- | --- | --- |
@@ -65,6 +65,64 @@ behavior; baseline failures do not automatically authorize deployment.
    matching live IDs and fresh healthy checks. Never rebuild during promotion.
 
 ## Deployment history
+
+- **2026-11-05, 0.1.3036-p2 — accepted, observed and published.**
+  Tested/deployed source 16f33cdcf00f4c445be7be35b285f3ef1c241df7, upstream
+  v0.1.3036. The seven previously retained issue behaviors remain, plus #4385's
+  independently tracked repair in `fix/webkit-delayed-wheel` (8b5b0bf53,
+  def0d1298). The supporting `fix/gui-wheel-test-contexts` (e057fd4) fixes
+  subtest cleanup only. The suspended runtime policies stay suspended.
+
+  Final Go: 87 packages pass, 20 have no tests, 24,921 passing tests including
+  subtests. Eight build/vet checks, 20 repetitions of the selected gateway
+  race regression, update checks and 80 deployment tests pass. The core-script
+  budget is unchanged. The original delayed-wheel regression is red against
+  clean upstream. Repaired click-scroll/account-rest checks pass 34/34,
+  the complete late-wheel load matrix 82/82, and after-click 26/26, no skips.
+  Context ownership is red with the old parent hook and green with subtest
+  cleanup, including a post-case assertion before the next case starts.
+
+  Expanded coverage ran 1,022 checks in 38 files; its initial 8 failure counts
+  are preserved, including parent failures. Account-rest's parallel click
+  timeout passes the targeted check, and the after-click case passes the full
+  26-case rerun. The two Chromium nested-scroller foot cases reproduce on
+  clean upstream (#4689) and never enter the changed restoration branch.
+  Unheard-wheel cadence failures remain under #4132: the test suppresses the
+  wheel listeners, making the changed restoration unreachable; a controlled
+  200ms driver gap reproduces the same 30px reversal on both old and repaired
+  assets. Both complete load modes were rerun after context cleanup. These
+  are reviewed existing limitations outside the repair, not a claim that the
+  expanded suite is all green or that the unheard-wheel policy was fixed.
+
+  Frozen production-config replay gave identical 251-model/32-provider/49-group
+  snapshots and no unexpected cooldown difference. The final source adds only
+  test cleanup and documentation after that replay; executable SHA-256 and all
+  runtime filesystem layers/configuration (apart from the source label) are
+  identical to the replayed image. The reviewed snapshot is bound to the final
+  immutable image, and actual acceptance/final snapshots passed again.
+
+  Detached run 20261105T094241Z-06668d6e returned exit 0 and PASSED at
+  10:30:47 UTC: 2760.961 seconds observed, 11 samples, three successful real
+  inference probes (acceptance plus two observation probes), healthy with
+  zero restarts/OOM/5xx/protocol errors. Source `production/stable` and
+  `deployed/0.1.3036-p2` point at the tested source, not this documentation
+  successor. Docker Hub `bigshort/magpie-patched:0.1.3036-p2` and `latest`
+  both publish the exact accepted digest
+  `sha256:d5d98ffbec2c4b3ed9a9fa2669b8aeedf5aa95e5aa64772ae800d493c6caf934`;
+  no rebuild occurred during promotion. Hub description was verified after
+  update. Cloudflare Workers AI remains 0.0.5 in the persistent volume.
+
+  Fix and verification were [posted to existing upstream #4385](https://github.com/yetone/magpie/issues/4385#issuecomment-6654123271);
+  no duplicate issue was opened. The old production container and transaction
+  backup are retained for rollback. Scoped temporary UI/replay containers and
+  copied test configurations were removed. The automation was disabled at
+  this round's start and remains disabled.
+  Committed text logs normalize trailing whitespace only; raw outputs remain
+  in the local round-state directory.
+  Evidence: [scoped gate and known limitations](docs/fork/evidence/2026-11-05-3036/p2/gate-result.json),
+  [production acceptance](docs/fork/evidence/2026-11-05-3036/p2/deployment-result.json),
+  [runtime equivalence](docs/fork/evidence/2026-11-05-3036/p2/runtime-equivalence.json),
+  [published digest](docs/fork/evidence/2026-11-05-3036/p2/published-digest.json).
 
 - **2026-11-05, 0.1.3036-p2 preparation — not deployed yet.**
   The user authorized fixing the WebKit blocker, keeping the repair in fix/*,

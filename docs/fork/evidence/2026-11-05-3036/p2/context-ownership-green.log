@@ -1,0 +1,14 @@
+▶ chromium: a page scrolled as it opens keeps the reader's place when its data lands
+  ✔ usage, opened, wheels late, en, 420px (3567.272552ms)
+✔ chromium: a page scrolled as it opens keeps the reader's place when its data lands (3826.894019ms)
+▶ webkit: a page scrolled as it opens keeps the reader's place when its data lands
+  ✔ usage, opened, wheels late, en, 420px (4251.900456ms)
+✔ webkit: a page scrolled as it opens keeps the reader's place when its data lands (4503.066709ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8518.970183

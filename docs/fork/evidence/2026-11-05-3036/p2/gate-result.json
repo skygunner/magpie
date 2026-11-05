@@ -1,0 +1,34 @@
+{
+  "verdict": "PASSED",
+  "commit": "16f33cdcf00f4c445be7be35b285f3ef1c241df7",
+  "target_image_id": "sha256:d5d98ffbec2c4b3ed9a9fa2669b8aeedf5aa95e5aa64772ae800d493c6caf934",
+  "go_packages": 87,
+  "go_no_test_packages": 20,
+  "go_tests_including_subtests": 24921,
+  "ui_files": 38,
+  "expanded_ui_total": 1022,
+  "expanded_ui_initial_failures": 8,
+  "targeted_final_source_checks": 34,
+  "known_baseline_failures": {
+    "issue": 4689,
+    "cases": [
+      "chromium inner-scroll rt-reqs",
+      "chromium inner-scroll rt-steps"
+    ],
+    "review": "same failures on unmodified upstream, matching recorded failure paths do not enter the modified restore branch (counter zero); outside this repair and no new regression; retained in evidence, not called fixed"
+  },
+  "account_rest_retry": "all 10 account-rest and24 click-scroll tests pass without skips on final source; initial parallel English timeout preserved",
+  "ui_source_review": "38-file archive at7034fb77f; later production-runtime delta solely3 shortened comments. Final16f33cdcf adds test-only context cleanup and documentation; identical runtime rootfs/binary verified. All160 view-open cases rerun with per-case cleanup, split late/unheard;26 after-click cases rerun and pass. Inherited unheard driver-cadence failures are separately assessed under4132: DEAF stops wheel listeners, so modified recovery never runs; controlled200ms gap reproduces on both clean and repaired assets.",
+  "at": "2026-11-05T09:42:00.840814+00:00",
+  "unheard_cadence": {
+    "issue": 4132,
+    "known_failures": [
+      "chromium: a page scrolled as it opens keeps the reader's place when its data lands",
+      "usage, opened again, wheels unheard, ja, 420px",
+      "usage, opened again, wheels unheard, zh-TW, 420px",
+      "webkit: a page scrolled as it opens keeps the reader's place when its data lands"
+    ],
+    "assessment": "DEAF stops wheel listeners, so modified recovery is unreachable; controlled200ms driver gap reproduces same30px reversal on clean and repaired assets. Preserve upstream attribution policy."
+  },
+  "expanded_ui_outcome": "Known upstream failures remain; the expanded suite is not described as fully green. No unknown/new failure remains on the changed runtime path."
+}

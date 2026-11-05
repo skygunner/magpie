@@ -1,0 +1,9 @@
+{
+  "old_image": "sha256:eb6625c3f521d93be59b1864c06c0d8dec935d4fef200d72635fdb90fdafaadb",
+  "new_image": "sha256:d5d98ffbec2c4b3ed9a9fa2669b8aeedf5aa95e5aa64772ae800d493c6caf934",
+  "binary_sha256": "63b8d23bdf768211f15b043e67efbc8985cdf7a96e011490f4260a3f0383b0df",
+  "same_runtime_config_except_revision": true,
+  "same_rootfs_layers": true,
+  "only_source_delta": "view-open-wheel test ownership and PATCHES documentation; runtime assets and Dockerfile unchanged",
+  "source": "16f33cdcf00f4c445be7be35b285f3ef1c241df7"
+}

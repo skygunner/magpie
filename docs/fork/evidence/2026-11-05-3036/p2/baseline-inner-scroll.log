@@ -1,0 +1,96 @@
+▶ chromium: Requests' list on its page keeps the wheel at its ends
+  ✔ en, 900x560 (4891.26199ms)
+  ✔ en, 1300x600 (4633.091336ms)
+  ✔ zh, 900x560 (5505.552269ms)
+  ✔ zh, 1300x600 (5243.624326ms)
+✔ chromium: Requests' list on its page keeps the wheel at its ends (20677.502006ms)
+▶ chromium: every box that scrolls inside a page keeps the wheel; the others pass it on
+  ✖ rt-reqs (2780.21469ms)
+  ✔ call-pre (3323.653564ms)
+  ✔ sess-talk (4030.87614ms)
+  ✔ add-models-list (3423.628274ms)
+  ✔ mnames (3302.673231ms)
+  ✔ mchips (3603.491383ms)
+  ✔ lib-picks (3272.171476ms)
+  ✖ rt-steps (2054.855053ms)
+  ✔ ag-diff-box (2763.859162ms)
+  ✔ a new box (3384.071177ms)
+  ✔ a short rt-reqs passes the wheel on (2735.371695ms)
+  ✔ heat-scroll passes the wheel on (3012.948393ms)
+  ✔ led-wrap passes the wheel on (2891.896444ms)
+  ✔ snip passes the wheel on (2836.679242ms)
+✖ chromium: every box that scrolls inside a page keeps the wheel; the others pass it on (46191.819758ms)
+▶ webkit: Requests' list on its page keeps the wheel at its ends
+  ✔ en, 900x560 (6840.784381ms)
+  ✔ en, 1300x600 (5954.367022ms)
+  ✔ zh, 900x560 (5815.733415ms)
+  ✔ zh, 1300x600 (5649.181271ms)
+✔ webkit: Requests' list on its page keeps the wheel at its ends (25088.558972ms)
+▶ webkit: every box that scrolls inside a page keeps the wheel; the others pass it on
+  ✔ rt-reqs (5009.256647ms)
+  ✔ call-pre (3728.647968ms)
+  ✔ sess-talk (4154.320848ms)
+  ✔ add-models-list (3714.468209ms)
+  ✔ mnames (3442.976624ms)
+  ✔ mchips (3849.409221ms)
+  ✔ lib-picks (3373.001938ms)
+  ✔ rt-steps (3366.658331ms)
+  ✔ ag-diff-box (3551.290992ms)
+  ✔ a new box (3598.019566ms)
+  ✔ a short rt-reqs passes the wheel on (2822.429689ms)
+  ✔ heat-scroll passes the wheel on (3200.976752ms)
+  ✔ led-wrap passes the wheel on (3321.444619ms)
+  ✔ snip passes the wheel on (3204.284166ms)
+✔ webkit: every box that scrolls inside a page keeps the wheel; the others pass it on (53798.410387ms)
+✔ chromium: every scroller in every stylesheet holds the wheel at its ends (1506.542165ms)
+✔ webkit: every scroller in every stylesheet holds the wheel at its ends (2209.286122ms)
+✔ chromium: without overscroll-behavior, Requests' list still keeps the wheel at its ends (5174.082916ms)
+✔ webkit: without overscroll-behavior, Requests' list still keeps the wheel at its ends (5406.954157ms)
+ℹ tests 44
+ℹ suites 0
+ℹ pass 41
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 160554.536027
+
+✖ failing tests:
+
+test at internal/gui/tests/inner-scroll-contain.test.cjs:170:49
+✖ rt-reqs (2780.21469ms)
+  AssertionError [ERR_ASSERTION]: rt-reqs, wheeled past its foot: the page didn't move
+
+  1399 !== 1279
+
+      at heldAtEnds (/work/baseline/internal/gui/tests/inner-scroll-contain.test.cjs:90:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/work/baseline/internal/gui/tests/inner-scroll-contain.test.cjs:170:41)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1399,
+    expected: 1279,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/inner-scroll-contain.test.cjs:170:49
+✖ rt-steps (2054.855053ms)
+  AssertionError [ERR_ASSERTION]: rt-steps, wheeled past its foot: the page didn't move
+
+  7333 !== 6733
+
+      at heldAtEnds (/work/baseline/internal/gui/tests/inner-scroll-contain.test.cjs:90:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/work/baseline/internal/gui/tests/inner-scroll-contain.test.cjs:170:41)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 7333,
+    expected: 6733,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

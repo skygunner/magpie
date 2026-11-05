@@ -1,0 +1,44 @@
+✔ chromium en: an account's model the gateway rests says so on its row, with the vendor's words and Try now (3518.221546ms)
+✔ chromium zh: an account's model the gateway rests says so on its row, with the vendor's words and Try now (3221.453115ms)
+✔ chromium zh-TW: an account's model the gateway rests says so on its row, with the vendor's words and Try now (3069.025137ms)
+✔ chromium ja: an account's model the gateway rests says so on its row, with the vendor's words and Try now (3178.591709ms)
+✔ chromium de: an account's model the gateway rests says so on its row, with the vendor's words and Try now (3359.397819ms)
+✔ webkit en: an account's model the gateway rests says so on its row, with the vendor's words and Try now (11586.95517ms)
+✔ webkit zh: an account's model the gateway rests says so on its row, with the vendor's words and Try now (5125.566708ms)
+✔ webkit zh-TW: an account's model the gateway rests says so on its row, with the vendor's words and Try now (4500.574819ms)
+✔ webkit ja: an account's model the gateway rests says so on its row, with the vendor's words and Try now (5921.354687ms)
+✔ webkit de: an account's model the gateway rests says so on its row, with the vendor's words and Try now (4177.611703ms)
+▶ chromium: a click never moves the page
+  ✔ date controls stay separate from request grouping controls (905.547011ms)
+  ✔ Live and a day, picked in turn, stay under the pointer (6490.347912ms)
+  ✔ a request picked in the list, and Replay them all, stay under the pointer (8197.445214ms)
+  ✔ code can't take the page from a click (12338.037897ms)
+  ✔ a scroll the page hears of after the click is still put back (6721.952052ms)
+  ✔ a control under what it unrolls goes down with it (6980.080268ms)
+  ✔ a click that asks to go somewhere does (5954.14721ms)
+  ✔ the room kept for a click goes as the reader scrolls back (5102.566457ms)
+  ✔ the reader's wheel still scrolls after a click (1054.388979ms)
+  ✔ a wheel the page hears of after its scroll is still the reader's (2796.640134ms)
+  ✔ a wheel heard after the wait for unheard wheels is still the reader's (2084.70321ms)
+✔ chromium: a click never moves the page (59186.382351ms)
+▶ webkit: a click never moves the page
+  ✔ date controls stay separate from request grouping controls (1686.486212ms)
+  ✔ Live and a day, picked in turn, stay under the pointer (6770.927301ms)
+  ✔ a request picked in the list, and Replay them all, stay under the pointer (8867.384004ms)
+  ✔ code can't take the page from a click (13508.404074ms)
+  ✔ a scroll the page hears of after the click is still put back (7251.116552ms)
+  ✔ a control under what it unrolls goes down with it (7408.137716ms)
+  ✔ a click that asks to go somewhere does (7407.650938ms)
+  ✔ the room kept for a click goes as the reader scrolls back (4959.924685ms)
+  ✔ the reader's wheel still scrolls after a click (1376.238517ms)
+  ✔ a wheel the page hears of after its scroll is still the reader's (2890.582577ms)
+  ✔ a wheel heard after the wait for unheard wheels is still the reader's (1730.545491ms)
+✔ webkit: a click never moves the page (64378.945146ms)
+ℹ tests 34
+ℹ suites 0
+ℹ pass 34
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 191445.40429

@@ -1,0 +1,32 @@
+▶ chromium: a page scrolled as it opens keeps the reader's place when its data lands
+  ✖ usage, opened again, wheels unheard, zh-TW, 420px (5875.538207ms)
+✖ chromium: a page scrolled as it opens keeps the reader's place when its data lands (6167.755387ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6365.190624
+
+✖ failing tests:
+
+test at ../../.local/state/magpie-rounds/0.1.3036-p2/cadence-old.cjs:113:15
+✖ usage, opened again, wheels unheard, zh-TW, 420px (5875.538207ms)
+  AssertionError [ERR_ASSERTION]: the view went back up under a wheel going down, 30 to 0 (frame 10): 0 0 30 30 30 30 30 30 30 30 0 0 0 0 0 30 30 60 60 90 90 120 120 150 150 180 180 210 210 240 240 270 270 300 300 330 330 360 390 390 420 420 450 450 480 480 510 510 540 540 570 570 600 600 630 630 660 660 690 690 720 720 750 750 780 780 810 810 840 840 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870
+
+  10 !== -1
+
+      at TestContext.<anonymous> (/home/vincenty/.local/state/magpie-rounds/0.1.3036-p2/cadence-old.cjs:182:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/home/vincenty/.local/state/magpie-rounds/0.1.3036-p2/cadence-old.cjs:113:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 10,
+    expected: -1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

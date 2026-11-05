@@ -1,0 +1,136 @@
+▶ chromium: a page scrolled as it opens keeps the reader's place when its data lands
+  ✔ usage, opened, wheels unheard, en, 420px (5221.88194ms)
+  ✔ usage, opened again, wheels unheard, en, 420px (7295.91724ms)
+  ✔ routing, opened, wheels unheard, en, 420px (5460.180204ms)
+  ✔ routing, opened again, wheels unheard, en, 420px (7010.088468ms)
+  ✔ usage, opened, wheels unheard, en, 1000px (5215.008055ms)
+  ✔ usage, opened again, wheels unheard, en, 1000px (6827.611963ms)
+  ✔ routing, opened, wheels unheard, en, 1000px (5424.185737ms)
+  ✔ routing, opened again, wheels unheard, en, 1000px (6617.990132ms)
+  ✔ usage, opened, wheels unheard, zh, 420px (5116.593697ms)
+  ✔ usage, opened again, wheels unheard, zh, 420px (6808.003941ms)
+  ✔ routing, opened, wheels unheard, zh, 420px (5112.10436ms)
+  ✔ routing, opened again, wheels unheard, zh, 420px (7004.358479ms)
+  ✔ usage, opened, wheels unheard, zh, 1000px (5212.97651ms)
+  ✔ usage, opened again, wheels unheard, zh, 1000px (7118.674096ms)
+  ✔ routing, opened, wheels unheard, zh, 1000px (5397.288907ms)
+  ✔ routing, opened again, wheels unheard, zh, 1000px (6897.231328ms)
+  ✔ usage, opened, wheels unheard, zh-TW, 420px (5565.096758ms)
+  ✖ usage, opened again, wheels unheard, zh-TW, 420px (6728.297492ms)
+  ✔ routing, opened, wheels unheard, zh-TW, 420px (5178.643257ms)
+  ✔ routing, opened again, wheels unheard, zh-TW, 420px (6354.672233ms)
+  ✔ usage, opened, wheels unheard, zh-TW, 1000px (4996.717683ms)
+  ✔ usage, opened again, wheels unheard, zh-TW, 1000px (7041.980272ms)
+  ✔ routing, opened, wheels unheard, zh-TW, 1000px (5303.909599ms)
+  ✔ routing, opened again, wheels unheard, zh-TW, 1000px (6850.279499ms)
+  ✔ usage, opened, wheels unheard, ja, 420px (5067.968766ms)
+  ✔ usage, opened again, wheels unheard, ja, 420px (6959.539019ms)
+  ✔ routing, opened, wheels unheard, ja, 420px (5473.538281ms)
+  ✔ routing, opened again, wheels unheard, ja, 420px (6403.596174ms)
+  ✔ usage, opened, wheels unheard, ja, 1000px (5384.530871ms)
+  ✔ usage, opened again, wheels unheard, ja, 1000px (7037.941689ms)
+  ✔ routing, opened, wheels unheard, ja, 1000px (5418.371453ms)
+  ✔ routing, opened again, wheels unheard, ja, 1000px (6598.95992ms)
+  ✔ usage, opened, wheels unheard, de, 420px (5674.343868ms)
+  ✔ usage, opened again, wheels unheard, de, 420px (7017.759648ms)
+  ✔ routing, opened, wheels unheard, de, 420px (5640.355092ms)
+  ✔ routing, opened again, wheels unheard, de, 420px (6939.17235ms)
+  ✔ usage, opened, wheels unheard, de, 1000px (4753.374462ms)
+  ✔ usage, opened again, wheels unheard, de, 1000px (6507.587181ms)
+  ✔ routing, opened, wheels unheard, de, 1000px (5088.980226ms)
+  ✔ routing, opened again, wheels unheard, de, 1000px (7057.864899ms)
+✖ chromium: a page scrolled as it opens keeps the reader's place when its data lands (243160.038ms)
+▶ webkit: a page scrolled as it opens keeps the reader's place when its data lands
+  ✔ usage, opened, wheels unheard, en, 420px (8642.545176ms)
+  ✔ usage, opened again, wheels unheard, en, 420px (7782.868145ms)
+  ✔ routing, opened, wheels unheard, en, 420px (7407.569216ms)
+  ✔ routing, opened again, wheels unheard, en, 420px (7787.775866ms)
+  ✔ usage, opened, wheels unheard, en, 1000px (6680.974062ms)
+  ✔ usage, opened again, wheels unheard, en, 1000px (7633.424106ms)
+  ✔ routing, opened, wheels unheard, en, 1000px (6136.891229ms)
+  ✔ routing, opened again, wheels unheard, en, 1000px (7482.353854ms)
+  ✔ usage, opened, wheels unheard, zh, 420px (6631.023179ms)
+  ✔ usage, opened again, wheels unheard, zh, 420px (7368.412924ms)
+  ✔ routing, opened, wheels unheard, zh, 420px (6696.067329ms)
+  ✔ routing, opened again, wheels unheard, zh, 420px (8121.859682ms)
+  ✔ usage, opened, wheels unheard, zh, 1000px (6854.524594ms)
+  ✔ usage, opened again, wheels unheard, zh, 1000px (8870.196044ms)
+  ✔ routing, opened, wheels unheard, zh, 1000px (6618.423553ms)
+  ✔ routing, opened again, wheels unheard, zh, 1000px (8223.662503ms)
+  ✔ usage, opened, wheels unheard, zh-TW, 420px (6254.630969ms)
+  ✔ usage, opened again, wheels unheard, zh-TW, 420px (8368.249335ms)
+  ✔ routing, opened, wheels unheard, zh-TW, 420px (6227.927515ms)
+  ✔ routing, opened again, wheels unheard, zh-TW, 420px (8094.562591ms)
+  ✔ usage, opened, wheels unheard, zh-TW, 1000px (7363.942017ms)
+  ✔ usage, opened again, wheels unheard, zh-TW, 1000px (7967.755728ms)
+  ✔ routing, opened, wheels unheard, zh-TW, 1000px (6579.410192ms)
+  ✔ routing, opened again, wheels unheard, zh-TW, 1000px (7265.491978ms)
+  ✔ usage, opened, wheels unheard, ja, 420px (6079.821909ms)
+  ✖ usage, opened again, wheels unheard, ja, 420px (7952.501935ms)
+  ✔ routing, opened, wheels unheard, ja, 420px (6503.778486ms)
+  ✔ routing, opened again, wheels unheard, ja, 420px (7412.419317ms)
+  ✔ usage, opened, wheels unheard, ja, 1000px (6432.72312ms)
+  ✔ usage, opened again, wheels unheard, ja, 1000px (9089.167095ms)
+  ✔ routing, opened, wheels unheard, ja, 1000px (6093.971824ms)
+  ✔ routing, opened again, wheels unheard, ja, 1000px (8266.474284ms)
+  ✔ usage, opened, wheels unheard, de, 420px (6805.720384ms)
+  ✔ usage, opened again, wheels unheard, de, 420px (8362.374659ms)
+  ✔ routing, opened, wheels unheard, de, 420px (6683.937087ms)
+  ✔ routing, opened again, wheels unheard, de, 420px (8365.288584ms)
+  ✔ usage, opened, wheels unheard, de, 1000px (6985.27591ms)
+  ✔ usage, opened again, wheels unheard, de, 1000px (9716.751921ms)
+  ✔ routing, opened, wheels unheard, de, 1000px (6707.318066ms)
+  ✔ routing, opened again, wheels unheard, de, 1000px (8541.440959ms)
+✖ webkit: a page scrolled as it opens keeps the reader's place when its data lands (297746.415039ms)
+ℹ tests 82
+ℹ suites 0
+ℹ pass 78
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 542066.256614
+
+✖ failing tests:
+
+test at internal/gui/tests/view-open-wheel.test.cjs:113:15
+✖ usage, opened again, wheels unheard, zh-TW, 420px (6728.297492ms)
+  AssertionError [ERR_ASSERTION]: nothing put the view back up under the wheel: 0 0 30 30 30 30 30 30 60 60 60 60 90 90 120 120 150 150 180 180 180 210 210 210 240 240 270 270 300 300 330 330 360 360 390 390 420 420 450 450 480 480 510 510 540 540 570 570 600 600 630 630 660 660 690 690 720 720 750 750 780 780 810 810 840 840 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870
+  + actual - expected
+
+  + [
+  +   30
+  + ]
+  - []
+
+      at TestContext.<anonymous> (/work/release/internal/gui/tests/view-open-wheel.test.cjs:185:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/work/release/internal/gui/tests/view-open-wheel.test.cjs:113:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: [ 30 ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at internal/gui/tests/view-open-wheel.test.cjs:113:15
+✖ usage, opened again, wheels unheard, ja, 420px (7952.501935ms)
+  AssertionError [ERR_ASSERTION]: the view went back up under a wheel going down, 27 to 0 (frame 4): 0 0 0 27 0 8 29 45 59 78 89 109 119 137 149 170 180 197 205 209 217 234 254 270 290 299 317 330 344 358 360 372 390 403 419 450 467 480 500 510 534 540 570 570 592 599 619 629 647 659 679 690 713 720 742 750 776 780 800 809 828 839 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870 870
+
+  4 !== -1
+
+      at TestContext.<anonymous> (/work/release/internal/gui/tests/view-open-wheel.test.cjs:182:16)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/work/release/internal/gui/tests/view-open-wheel.test.cjs:113:7)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 4,
+    expected: -1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

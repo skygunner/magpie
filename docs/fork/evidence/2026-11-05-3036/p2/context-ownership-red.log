@@ -1,0 +1,50 @@
+▶ chromium: a page scrolled as it opens keeps the reader's place when its data lands
+  ✔ usage, opened, wheels late, en, 420px (3446.754441ms)
+✖ chromium: a page scrolled as it opens keeps the reader's place when its data lands (3499.251385ms)
+▶ webkit: a page scrolled as it opens keeps the reader's place when its data lands
+  ✔ usage, opened, wheels late, en, 420px (3816.226452ms)
+✖ webkit: a page scrolled as it opens keeps the reader's place when its data lands (3939.434735ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 2
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7615.924693
+
+✖ failing tests:
+
+test at ../../.local/state/magpie-rounds/0.1.3036-p2/context-red.cjs:109:3
+✖ chromium: a page scrolled as it opens keeps the reader's place when its data lands (3499.251385ms)
+  AssertionError [ERR_ASSERTION]: each finished case closes its browsing context
+
+  1 !== 0
+
+      at TestContext.<anonymous> (/home/vincenty/.local/state/magpie-rounds/0.1.3036-p2/context-red.cjs:189:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at ../../.local/state/magpie-rounds/0.1.3036-p2/context-red.cjs:109:3
+✖ webkit: a page scrolled as it opens keeps the reader's place when its data lands (3939.434735ms)
+  AssertionError [ERR_ASSERTION]: each finished case closes its browsing context
+
+  1 !== 0
+
+      at TestContext.<anonymous> (/home/vincenty/.local/state/magpie-rounds/0.1.3036-p2/context-red.cjs:189:14)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

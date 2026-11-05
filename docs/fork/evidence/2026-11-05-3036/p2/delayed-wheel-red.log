@@ -1,0 +1,41 @@
+▶ webkit: a click never moves the page
+  ﹣ date controls stay separate from request grouping controls (0.324292ms) # SKIP
+  ﹣ Live and a day, picked in turn, stay under the pointer (0.045889ms) # SKIP
+  ﹣ a request picked in the list, and Replay them all, stay under the pointer (0.038715ms) # SKIP
+  ﹣ code can't take the page from a click (0.064594ms) # SKIP
+  ﹣ a scroll the page hears of after the click is still put back (0.035957ms) # SKIP
+  ﹣ a control under what it unrolls goes down with it (0.035084ms) # SKIP
+  ﹣ a click that asks to go somewhere does (0.029598ms) # SKIP
+  ﹣ the room kept for a click goes as the reader scrolls back (0.034361ms) # SKIP
+  ﹣ the reader's wheel still scrolls after a click (0.055251ms) # SKIP
+  ✖ a wheel the page hears of after its scroll is still the reader's (752.126908ms)
+  ﹣ a wheel heard after the wait for unheard wheels is still the reader's (0.424997ms) # SKIP
+✖ webkit: a click never moves the page (1263.28805ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 10
+ℹ todo 0
+ℹ duration_ms 21042.363041
+
+✖ failing tests:
+
+test at ../../.local/state/magpie-rounds/0.1.3036-p2/red-on-upstream.cjs:288:13
+✖ a wheel the page hears of after its scroll is still the reader's (752.126908ms)
+  AssertionError [ERR_ASSERTION]: the late-heard wheel must scroll the view
+      at TestContext.<anonymous> (/home/vincenty/.local/state/magpie-rounds/0.1.3036-p2/red-on-upstream.cjs:320:9)
+      at runNextTicks (node:internal/process/task_queues:65:5)
+      at process.processImmediate (node:internal/timers:541:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/home/vincenty/.local/state/magpie-rounds/0.1.3036-p2/red-on-upstream.cjs:288:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

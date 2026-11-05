@@ -1,0 +1,36 @@
+▶ chromium: a wheel right after a click scrolls the view
+  ✔ en, 420px, a wheel the page never hears (10435.227145ms)
+  ✔ en, 1000px, a wheel the page never hears (9551.900356ms)
+  ✔ zh, 420px, a wheel the page never hears (9013.747833ms)
+  ✔ zh, 1000px, a wheel the page never hears (9175.399157ms)
+  ✔ zh-TW, 420px, a wheel the page never hears (9331.489462ms)
+  ✔ zh-TW, 1000px, a wheel the page never hears (9294.317286ms)
+  ✔ ja, 420px, a wheel the page never hears (9083.79495ms)
+  ✔ ja, 1000px, a wheel the page never hears (8923.049706ms)
+  ✔ de, 420px, a wheel the page never hears (9626.233623ms)
+  ✔ de, 1000px, a wheel the page never hears (9304.476653ms)
+  ✔ en, 420px, a wheel heard (9684.332148ms)
+  ✔ zh, 1000px, a wheel heard (9183.331955ms)
+✔ chromium: a wheel right after a click scrolls the view (113058.398501ms)
+▶ webkit: a wheel right after a click scrolls the view
+  ✔ en, 420px, a wheel the page never hears (13033.691205ms)
+  ✔ en, 1000px, a wheel the page never hears (11976.540335ms)
+  ✔ zh, 420px, a wheel the page never hears (12488.537016ms)
+  ✔ zh, 1000px, a wheel the page never hears (10544.0402ms)
+  ✔ zh-TW, 420px, a wheel the page never hears (10414.122614ms)
+  ✔ zh-TW, 1000px, a wheel the page never hears (12624.056767ms)
+  ✔ ja, 420px, a wheel the page never hears (11684.617474ms)
+  ✔ ja, 1000px, a wheel the page never hears (11035.789526ms)
+  ✔ de, 420px, a wheel the page never hears (11203.043481ms)
+  ✔ de, 1000px, a wheel the page never hears (10477.388499ms)
+  ✔ en, 420px, a wheel heard (10474.023266ms)
+  ✔ zh, 1000px, a wheel heard (10106.943562ms)
+✔ webkit: a wheel right after a click scrolls the view (136845.867414ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 250449.185439
