@@ -1728,13 +1728,16 @@ func bareRequestRefused(status int, body []byte) bool {
 // 'messages[1].reasoning_content'", EDwinpzy) is one too: the client's
 // request is whole, and a group of Beam then another model stopped at
 // Beam before.
+// Google's word for a thought signature it didn't give (signatureRefused:
+// "Corrupted thought signature.", one Vertex AI gave replayed to AI Studio,
+// mimi001234) is one: the member that gave it may take it.
 // One that also says the account is out of quota or credit (quotaWords,
 // creditWords: "请充值") is that, and rests it (#4095).
 func shapeRefused(status int, body []byte) bool {
 	// the words are matched decoded, too (#1669)
 	raw := body
 	body = wordsOf(body)
-	return (status == 400 || status == 422) && (shapeWords.Match(body) || refusedParameterList(raw) || unsaidWords.Match(body) || customToolRefusal.Match(body) || wrongEndpoint(status, body) || zhipuImageRefusal.Match(body) || upstreamFailedWords.Match(body) || reasoningBackRefused(body)) &&
+	return (status == 400 || status == 422) && (shapeWords.Match(body) || refusedParameterList(raw) || unsaidWords.Match(body) || customToolRefusal.Match(body) || wrongEndpoint(status, body) || zhipuImageRefusal.Match(body) || upstreamFailedWords.Match(body) || reasoningBackRefused(body) || signatureRefused.Match(body)) &&
 		!quotaWords.Match(body) && !creditWords.Match(body) && !unservedWords.Match(body) && !refusedWords.Match(body)
 }
 
@@ -1927,7 +1930,7 @@ func retryable(status int, body []byte) bool {
 		return quotaWords.Match(body) || unservedWords.Match(body) || refusedWords.Match(body) || shapeWords.Match(body) || refusedParameterList(raw) || unsaidWords.Match(body) || regionWords.Match(body) || zhipuImageRefusal.Match(body) || wrongEndpoint(status, body) ||
 			// a relay's own word that the provider behind it turned the
 			// request away (#4632): another member may answer
-			upstreamFailedWords.Match(body) ||
+			upstreamFailedWords.Match(body) || signatureRefused.Match(body) ||
 			// a model's demand for an earlier turn's reasoning (EDwinpzy):
 			// another member's model may not make it
 			reasoningBackRefused(body)
