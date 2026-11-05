@@ -54,14 +54,18 @@ Each round:
    smoke-test on a throwaway config (`magpie version`, 401 without a key).
    Transfer and verify the image on docker1 before stopping the container.
 7. On docker1: **the switch is one batched script, run detached** —
-   `scripts/deploy-docker1.sh` on this branch. It backs up (container
-   inspect + stopped-volume tar), stops, renames to
-   `magpie-pre-<tag>-<ts>` (kept stopped), starts the new image with the
-   same flags (`-p 3425:3425 -p 3430:3430 -v magpie-config:/config:z
-   --user nonroot --restart unless-stopped`, the two MAGPIE_* env vars
-   read from the old container, `web --addr 0.0.0.0:3430 --no-open`),
-   waits for healthy, and rolls itself back if the new container does not
-   come up:
+   `scripts/deploy-docker1.sh` on this branch, with Python embedded so only
+   this one file is copied. It holds one host lock through the baseline,
+   stop, backup, switch, acceptance, 46-minute observation and any rollback.
+   Full container and image IDs bind this run; another deployment cannot
+   reuse its per-version state directory. It keeps the prior container as
+   `magpie-pre-<tag>-<run-id>` and writes private backups and results under
+   `/var/lib/magpie-deploy/<tag>/`. The same ports, volume, user, restart
+   policy and web command are used; the old environment is passed through
+   a private temporary env-file. A failed acceptance or observation restores
+   the old container and verifies its health and API. The shared volume is
+   never overwritten; a two-second best-effort private configuration copy
+   preserves candidate-only fields for manual recovery.
 
        scp scripts/deploy-docker1.sh docker1:/tmp/
        ssh docker1 'nohup bash /tmp/deploy-docker1.sh magpie:<tag>-pN >/tmp/deploy-<tag>.log 2>&1 &'
@@ -74,19 +78,24 @@ Each round:
    and start keeps running on docker1 regardless; when it brings magpie
    back, the agent's route returns and the round continues by polling the
    log. Never issue the stop in one turn and the run in a later one.
-8. Accept: healthy, 401/200 auth pair, model count equal before/after, a
-   real `group/fast-cheap` request 200. Observe for 46 minutes after
-   acceptance; on any acceptance or observation anomaly, roll back at once
-   and do not publish. Only after a clean observation, push both
+8. The script accepts healthy, 401/200 auth, matching model/provider/group
+   IDs and cooldown settings, plus one real `group/fast-cheap` request.
+   It then observes for 46 minutes, with two more real requests, continuous
+   checks and samples about every 4.6 minutes. Any failed request is not
+   retried. The launcher must separately record the task's final exit code;
+   publication requires exit 0, this run's `result.json` outcome `PASSED`,
+   matching current container/image IDs and a fresh healthy check. Neither
+   `ACCEPTED` nor an existing result file alone permits publication. Only
+   after a clean observation, push both
    `bigshort/magpie-patched:<tag>-pN` and `:latest`, verify their digests,
    and update the Hub README and `/tmp/hub-readme.md`.
 
 ## Carried patches (as of v0.1.2767-p1, 2026-11-03)
 
-> **In progress (2026-11-04):** v0.1.2950 is merged into this branch and its
-> gate is running; the Deployment history entry below is not written yet.
-> Do not start another round from this checkout while this round is active.
-> This round may tag and deploy only after the complete gate passes. The
+> **In progress (2026-11-05):** the current target is v0.1.3005. The earlier
+> v0.1.2950 preparation was tested but never deployed. Its tests do not
+> authorize deploying the new target: the complete gate must run again on
+> the final commit. Do not start a parallel round from this checkout. The
 > v0.1.2877 candidate was rolled back for its first inference timeout; the
 > cause of that timeout is unknown, including whether it involved #3487.
 
