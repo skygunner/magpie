@@ -267,6 +267,36 @@ class FakeSystem:
 
 
 class TransactionTests(unittest.TestCase):
+    def test_mismatch_preserves_candidate_and_field_diff(self):
+        self.io.mode = 'model_list'
+        self.assertEqual(self.execute(), 1)
+        actual = json.loads((self.deploy.directory / 'acceptance.json').read_text())
+        self.assertIn('unexpected-model', actual['models'])
+        delta = json.loads((self.deploy.directory / 'acceptance-diff.json').read_text())
+        self.assertEqual(delta['models']['added'], ['unexpected-model'])
+
+    def test_reviewed_snapshot_change_is_bound_to_baseline_and_image(self):
+        candidate = copy.deepcopy(SNAPSHOT)
+        candidate['models'].append('unexpected-model')
+        review = self.path / 'review.json'
+        review.write_text(json.dumps(dict(baseline=SNAPSHOT, candidate=candidate, target_image_id=TARGET)))
+        self.args.expected_snapshot = str(review)
+        self.io.mode = 'model_list'
+        self.assertEqual(self.execute(), 0)
+
+    def test_stale_snapshot_review_cannot_stop_production(self):
+        review = self.path / 'review.json'
+        review.write_text(json.dumps(dict(baseline={}, candidate=SNAPSHOT, target_image_id=TARGET)))
+        self.args.expected_snapshot = str(review)
+        self.assertEqual(self.execute(), 1)
+        self.assertFalse(any('stop' in call for call in self.io.calls))
+
+    def test_deployment_block_cannot_stop_production(self):
+        self.root.mkdir()
+        (self.root / 'BLOCKED').write_text('Unresolved acceptance difference')
+        self.assertEqual(self.execute(), 1)
+        self.assertFalse(any('stop' in call for call in self.io.calls))
+
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory(prefix='magpie-deploy-tests-',dir='/tmp')
         self.path=Path(self.tmp.name)

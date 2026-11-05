@@ -46,8 +46,7 @@ const CodexSubagentLead = "lead"
 
 // Settings is what the user chose. "" and "system" both mean "follow the OS".
 type Settings struct {
-	Cooldown CooldownPolicy `json:"cooldown,omitempty"`
-	Theme    string         `json:"theme,omitempty"` // system | light | dark
+	Theme string `json:"theme,omitempty"` // system | light | dark
 	// Colorblind switches chart series (--c1…--c7) to an Okabe–Ito palette
 	// and gives each quota curve window, and its legend key, a dash of its
 	// own (#2073).

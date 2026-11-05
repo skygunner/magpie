@@ -34,7 +34,7 @@ function mergeQuotas(subs, now = Date.now()) {
   for (const q of read) {
     for (const w of q.windows || []) {
       if (w.text) continue;
-      const kind = w.unlimited ? "u" : w.limit > 0 && (w.amount > 0 || w.heldBy) ? "c" : w.balance != null ? "b" : w.used != null ? "p:" + (q.plan || "") : "";
+      const kind = w.unlimited ? "u" : w.limit > 0 ? "c" : w.balance != null ? "b" : w.used != null ? "p:" + (q.plan || "") : "";
       if (!kind) continue;
       const k = JSON.stringify([w.name, w.family || "", w.pool || "", w.unit || "", kind]);
       let m = by.get(k);

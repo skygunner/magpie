@@ -281,8 +281,14 @@ def http_work(action, payload):
     request(console + '/?' + urllib.parse.urlencode({'k': payload['web_key']}), raw=True)
     providers = request(console + '/api/providers')
     groups = request(console + '/api/groups')
-    cooldown = request(console + '/api/cooldown')
-    require(isinstance(cooldown.get('effective'), dict), 'cooldown_schema')
+    try:
+        cooldown = request(console + '/api/cooldown')['effective']
+        require(isinstance(cooldown, dict), 'cooldown_schema')
+    except urllib.error.HTTPError as error:
+        status = error.code
+        error.close()
+        require(status == 404, 'cooldown_http_error')
+        cooldown = None  # The upstream-first build has no fork cooldown editor.
 
     def ids(rows):
         require(isinstance(rows, list), 'snapshot_schema')
@@ -304,7 +310,7 @@ def http_work(action, payload):
             continue  # A models 200 can still be a key without this inference permission.
         return {'key_index': index, 'snapshot': {'models': model_ids,
                 'providers': ids(providers['providers']), 'groups': ids(groups['groups']),
-                'cooldown': cooldown['effective']}}
+                'cooldown': cooldown}}
     raise Failure('no_enabled_caller_key')
 
 
@@ -370,6 +376,7 @@ class Deployment:
         return self.io.worker('snapshot', {'web_key': self.web_key, 'keys': keys}, watch=watch)
 
     def preflight(self):
+        require(not (self.root / 'BLOCKED').exists(), 'deployment_blocked')
         current = self.named('magpie')
         require(current and re.fullmatch(r'[0-9a-f]{64}', current), 'current_container_missing')
         require(not self.a.old_container_id or current == self.a.old_container_id, 'unexpected_current_container')
@@ -417,6 +424,15 @@ class Deployment:
         require(self.keys, 'no_caller_keys')
         result = self.snapshot()
         self.prior, self.key = result['snapshot'], self.keys[result['key_index']]
+        self.expected = self.prior
+        if getattr(self.a, 'expected_snapshot', None):
+            review = json.loads(Path(self.a.expected_snapshot).read_bytes())
+            require(review['target_image_id'] == self.a.target_image_id
+                    and review['baseline'] == self.prior, 'snapshot_review_stale')
+            self.expected = review['candidate']
+            require(isinstance(self.expected, dict) and set(self.expected) == set(self.prior),
+                    'snapshot_review_schema')
+            write_private(self.directory / 'review.json', json.dumps(review).encode())
         then = (parse_time(self.io.now()) - dt.timedelta(seconds=OBSERVE)).isoformat()
         usage = self.usage(then, reset=True)
         self.baseline_ratio = self.ratio(usage['counts'])
@@ -545,7 +561,7 @@ class Deployment:
     def accept_and_observe(self):
         require(self.docker('exec', self.new_id, 'magpie', 'version').decode().strip() == 'magpie ' + self.version,
                 'binary_version_mismatch')
-        require(self.snapshot(self.watch)['snapshot'] == self.prior, 'acceptance_snapshot_changed')
+        self.compare_snapshot('acceptance')
         self.io.worker('inference', {'key': self.key}, watch=self.watch)
         emit('REAL_INFERENCE', phase='acceptance', status=200)
         self.check()
@@ -567,10 +583,25 @@ class Deployment:
                 emit('REAL_INFERENCE', phase='observation', probe=probes, status=200)
                 self.check()
         require(probes == len(probe_times), 'observation_probes_missing')
-        require(self.snapshot(self.watch)['snapshot'] == self.prior, 'final_snapshot_changed')
+        self.compare_snapshot('final')
         self.check(final=True)
         require(self.io.mono() - accepted >= OBSERVE, 'observation_too_short')
         return round(self.io.mono() - accepted, 3)
+
+    def compare_snapshot(self, phase):
+        actual = self.snapshot(self.watch)['snapshot']
+        write_private(self.directory / (phase + '.json'), json.dumps(actual).encode())
+        delta = {}
+        for key in self.expected.keys() | actual.keys():
+            before, after = self.expected.get(key), actual.get(key)
+            if before == after:
+                continue
+            delta[key] = ({'added': sorted(set(after) - set(before)),
+                           'removed': sorted(set(before) - set(after))}
+                          if isinstance(before, list) and isinstance(after, list)
+                          else {'before': before, 'after': after})
+        write_private(self.directory / (phase + '-diff.json'), json.dumps(delta).encode())
+        require(not delta, phase + '_snapshot_changed')
 
     def rollback(self):
         old = self.old_checked()  # Validate BOTH identities before any destructive recovery.
@@ -759,6 +790,7 @@ def main():
     parser.add_argument('--target-image-id', help='optional assertion, full sha256 ID')
     parser.add_argument('--old-container-id', help='optional assertion, full container ID')
     parser.add_argument('--old-image-id', help='optional assertion, full sha256 ID')
+    parser.add_argument('--expected-snapshot', help='private reviewed baseline/candidate snapshots bound to target image ID')
     args = parser.parse_args()
     signal.signal(signal.SIGTERM, terminated)
     signal.signal(signal.SIGINT, terminated)

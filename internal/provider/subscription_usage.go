@@ -44,9 +44,6 @@ type QuotaWindow struct {
 	// Amount of Limit is the window's own count in Unit, when the vendor
 	// counts it so (WorkBuddy's credits): Used is Amount as a share of
 	// Limit. The GUI says it as used or left, as it says the share (#659).
-	// An amount of 0 is what a count left out reads as (upstream's
-	// plugins#468 model, which took #3487's point over), so a window with
-	// a limit and no count says its text, never a full allowance.
 	Amount float64 `json:"amount,omitempty"`
 	Limit  float64 `json:"limit,omitempty"`
 	Unit   string  `json:"unit,omitempty"`
@@ -1377,15 +1374,6 @@ func compactNumber(n float64) string {
 func (w QuotaWindow) Count(left bool) string {
 	if w.Limit <= 0 {
 		return w.Display
-	}
-	if !(w.Amount > 0) {
-		if w.Display != "" {
-			if strings.Contains(w.Display, "/") && strings.Trim(w.Display, "0123456789.,/ ") == "" {
-				return strings.TrimSpace(w.Display + " " + w.Unit)
-			}
-			return w.Display
-		}
-		return strings.TrimSpace("— / " + groupedNumber(w.Limit) + " " + w.Unit)
 	}
 	n := w.Amount
 	if left {

@@ -1231,7 +1231,6 @@ func moveContext(r *http.Request) (context.Context, context.CancelFunc) {
 var appLink = agent.OpenAppLink
 
 func providerRoutes(mux *http.ServeMux, w Windows) {
-	cooldownRoutes(mux)
 	importAppsRoutes(mux)
 	pluginRoutes(mux, w)
 	traceRoutes(mux)
@@ -1876,13 +1875,6 @@ func providerRoutes(mux *http.ServeMux, w Windows) {
 				}
 				// and the most they sit out while they keep failing, set
 				// with `magpie provider rest-cap` (#2008)
-				if old != nil {
-					in.Cooldown, in.AccountCooldown, in.ModelCooldown = provider.CloneCooldown(old.Cooldown), old.AccountCooldown, old.ModelCooldown
-					if req.LimitRestOff != nil && in.Cooldown.LimitRest != nil {
-						on := !*req.LimitRestOff
-						in.Cooldown.LimitRest = &on
-					}
-				}
 				if in.RestCap == 0 && old != nil {
 					in.RestCap = old.RestCap
 				}

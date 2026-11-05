@@ -220,7 +220,7 @@ type Provider struct {
 	// QuotaRest is how many minutes one of its keys sits out once the
 	// vendor says it is out of its allowance without saying when it is
 	// back (#1772: Ollama Cloud's weekly limit); 0 is the gateway's own
-	// half hour. A time the vendor names stands over it.
+	// quarter of an hour. A time the vendor names stands over it.
 	QuotaRest int `json:"quotaRest,omitempty"`
 	// QuotaResetAt is the time of day a key of it out of its allowance is
 	// back, when its vendor refuses for a day's allowance without saying
@@ -231,16 +231,10 @@ type Provider struct {
 	// RestCap is the most, in minutes, one of its keys or accounts sits
 	// out while it keeps failing or keeps being rate limited as soon as
 	// its rest is over (#2008); 0 is the gateway's own, 10 minutes for a
-	// failure and 64 for a rate limit. The vendor's own "try again in"
+	// failure and 30 for a rate limit. The vendor's own "try again in"
 	// still stands over it. RestCapOff (-1): no rest at all after a
 	// failure that says nothing of why, a rate limit's as the gateway's own.
-	RestCap         int                                `json:"restCap,omitempty"`
-	Cooldown        settings.CooldownPolicy            `json:"cooldown,omitempty"`
-	AccountCooldown map[string]settings.CooldownPolicy `json:"accountCooldown,omitempty"`
-	// ModelCooldown opts exact model IDs into aggressive timeout/cancel
-	// cooldowns. Values are exponential-backoff caps in minutes (1..60).
-	// Unset models retain the normal policy: a client cancellation rests nothing.
-	ModelCooldown map[string]int `json:"modelCooldown,omitempty"`
+	RestCap int `json:"restCap,omitempty"`
 	// LimitRestOff keeps its keys and accounts asked when the vendor says
 	// they are out of quota or answers 429 (zoecats on Discord: a local
 	// aggregator says "quota exhausted" for a moment while it switches
@@ -817,12 +811,6 @@ func (p Provider) clone() Provider {
 	p.PickedFrom = slices.Clone(p.PickedFrom)
 	p.Delisted = slices.Clone(p.Delisted)
 	p.AutoInclude = slices.Clone(p.AutoInclude)
-	p.Cooldown = CloneCooldown(p.Cooldown)
-	p.AccountCooldown = maps.Clone(p.AccountCooldown)
-	for k, v := range p.AccountCooldown {
-		p.AccountCooldown[k] = CloneCooldown(v)
-	}
-	p.ModelCooldown = maps.Clone(p.ModelCooldown)
 	p.Headers = maps.Clone(p.Headers)
 	p.ExtraBody = maps.Clone(p.ExtraBody)
 	p.ReplyHeaders = slices.Clone(p.ReplyHeaders)
@@ -951,8 +939,6 @@ func accountSettings(a, pk Provider) Provider {
 	// how long its accounts rest out of quota, and the most they rest
 	// while they keep failing (#2008); or not at all for a limit
 	a.QuotaRest, a.QuotaResetAt, a.RestCap, a.LimitRestOff = pk.QuotaRest, pk.QuotaResetAt, pk.RestCap, pk.LimitRestOff
-	a.ModelCooldown = pk.ModelCooldown
-	a.Cooldown, a.AccountCooldown = pk.Cooldown, pk.AccountCooldown
 	// what it bills against the official price (#819): an account's editor
 	// sets it as a key provider's does (PaulT on Discord, Codex)
 	a.PriceRate = pk.PriceRate
@@ -1060,14 +1046,6 @@ func Save(p Provider) error {
 	// drops it: it would never be sent
 	if p.IsVertex() && (strings.TrimSpace(p.Key) != "" || len(p.Keys) > 0) {
 		return errors.New("Google Vertex AI is asked with your Google credentials, not an API key")
-	}
-	if err := CheckCooldown(p.Cooldown); err != nil {
-		return err
-	}
-	for _, policy := range p.AccountCooldown {
-		if err := CheckCooldown(policy); err != nil {
-			return err
-		}
 	}
 	p = normalize(p)
 	p.IconURL = "" // import-only: never stored
@@ -1703,19 +1681,6 @@ func normalize(p Provider) Provider {
 	p.QueueLimit, p.QueueWait = min(max(p.QueueLimit, 0), MaxQueueLimit), min(max(p.QueueWait, 0), MaxQueueWait)
 	p.MaxRPM = min(max(p.MaxRPM, 0), MaxRPMLimit)
 	p.QuotaRest = min(max(p.QuotaRest, 0), MaxQuotaRest)
-	p.Cooldown = CloneCooldown(p.Cooldown)
-	p.AccountCooldown = maps.Clone(p.AccountCooldown)
-	for k, v := range p.AccountCooldown {
-		p.AccountCooldown[k] = CloneCooldown(v)
-	}
-	p.ModelCooldown = maps.Clone(p.ModelCooldown)
-	for model, cap := range p.ModelCooldown {
-		if strings.TrimSpace(model) == "" || cap <= 0 {
-			delete(p.ModelCooldown, model)
-		} else {
-			p.ModelCooldown[model] = min(cap, 60)
-		}
-	}
 	if p.RestCap != RestCapOff {
 		p.RestCap = min(max(p.RestCap, 0), MaxQuotaRest)
 	}

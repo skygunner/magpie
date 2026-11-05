@@ -196,8 +196,6 @@ func TestSettingsSaveKeepsWhatItDoesNotSend(t *testing.T) {
 		RedactModelScore:     map[string]float64{"astrlink-guard": 0.9},
 		RedactRouteTo:        "fake/m1",
 	}
-	cooldownCap := 64
-	was.Cooldown = settings.CooldownPolicy{RateCap: &cooldownCap}
 	was.RedactModelOff, was.RedactModelAuto = true, true
 	was.DesktopSubagentEffort = "high"
 	was.ReplyModel = settings.ReplyMember // memberModel, its mirror, is kept with it

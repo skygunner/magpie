@@ -1,153 +1,66 @@
-# prod line — upstream releases + skygunner patches
+# Integration and production — upstream first
 
-How the fork is organized (since 2026-10-27):
+User-approved policy (2026-11-05): remove an absorbed patch. Also suspend a
+fork patch whose logic overlaps or conflicts with current upstream rules;
+do not force both semantics into a conflict resolution. Suspension does not
+mean upstream implements every former fork guarantee.
 
-- `main` mirrors `upstream/main` (fast-forward only). A fix forks off it as
-  `fix/<topic>`, one fix per branch, is verified there, and is replied to
-  the upstream issue.
-- `prod` is the rolling integration line: each round merges the newest
-  upstream **release tag** (never `upstream/main` — unreleased commits
-  don't ship) and cherry-picks the fixes chosen for deployment. This file
-  is the manifest of what the line carries.
-- Each deployment is tagged `prod/<image-tag>` (e.g. `prod/0.1.1670-p1`).
-  The tag is the deployment record; `magpie:<tag>` images build from it.
-- A patch leaves the manifest only when upstream absorbs it: the fix of
-  record is an ancestor of the merged tag, or an upstream commit says it
-  fixes the same issue, or the issue closes as fixed.
+- `main` mirrors upstream. `integration/nightly` is the persistent integration
+  branch, merging a pinned release tag per round. Source `fix/*` and `feature/*`
+  branches stay available; do not re-pick unchanged patches every round.
+- The existing `prod` branch has historical failed candidates in its ancestry.
+  It is not evidence of production success. `production/stable` will point only
+  to successfully observed production source. `candidate/<version>` records a
+  tested candidate; `deployed/<version>` is created only after acceptance and
+  observation pass. Old `prod/*` tags retain their historical meaning.
+- Production currently remains 0.1.2767-p1. This round pins upstream v0.1.3007.
+  Source integration alone does not authorize publication.
 
-Each round:
+## This round's patch decisions
 
-1. `git fetch upstream --tags`; merge the newest `vX.Y.Z` into `prod`.
-   Resolve conflicts by keeping both sides' semantics; adapt new upstream
-   tests that meet a carried type change (noted below when it happens).
-2. **Track each carried patch's latest state — the table's SHAs are what
-   was last integrated, never a freeze.** For every row's source ref:
-   - `git fetch origin`, then compare the row's `fix/*` branch tip against
-     the carried state (`git rev-list --count <carried>..origin/<branch>`).
-     New commits mean the fix evolved: cherry-pick them (branch order),
-     re-run that patch's regressions, and move the row's fix of record to
-     the new head. Also skim the row's issue for new comments — a
-     reporter's follow-up or a maintainer's note can make the carried fix
-     need rework even with no new commits.
-   - The plugin row is a PR: fetch its head (`git fetch
-     <plugins-remote> pull/366/head` in the plugins checkout) and compare
-     the runtime files (`src/`, `index.mjs`, `package.json`) against the
-     tarball in the volume. Runtime change → rebuild the tarball with
-     `npm pack`, swap it into `/config/magpie/plugins/dist/`, replace the
-     package under `node_modules/`, restart `magpie`, re-verify. Test-only
-     commits → note them, nothing to ship.
-3. Add genuinely new fixes: `git cherry-pick -x` from their `fix/*`
-   branches, in branch order — only when the user names them (an evolved
-   carried patch is not a new patch).
-4. Absorption: a patch leaves the table only when upstream absorbed it —
-   the fix of record is an ancestor of the merged tag, or an upstream
-   commit says it fixes the same issue, or the issue closes as fixed.
-5. Gate: each patch's own regression tests, the GUI tests below in both
-   engines (`node --test` with playwright), `go vet`,
-   `TestCoreScriptBudget` (if app.js goes over, shorten the patch's own
-   comments before considering a budget raise), and
-   `go test -tags nogui ./...` — attribute every red against a clean
-   checkout of the same tag before blaming the line.
-6. Tag `prod/<tag>-pN` (annotated) at the fully tested commit and push
-   `prod` and the tag. Build
-   `docker build --build-arg VERSION=<tag>-pN -t magpie:<tag>-pN .`;
-   smoke-test on a throwaway config (`magpie version`, 401 without a key).
-   Transfer and verify the image on docker1 before stopping the container.
-7. On docker1: **the switch is one batched script, run detached** —
-   `scripts/deploy-docker1.sh` on this branch, with Python embedded so only
-   this one file is copied. It holds one host lock through the baseline,
-   stop, backup, switch, acceptance, 46-minute observation and any rollback.
-   Full container and image IDs bind this run; another deployment cannot
-   reuse its per-version state directory. It keeps the prior container as
-   `magpie-pre-<tag>-<run-id>` and writes private backups and results under
-   `/var/lib/magpie-deploy/<tag>/`. The same ports, volume, user, restart
-   policy and web command are used; the old environment is passed through
-   a private temporary env-file. A failed acceptance or observation restores
-   the old container and verifies its health and API. The shared volume is
-   never overwritten; a two-second best-effort private configuration copy
-   preserves candidate-only fields for manual recovery.
+| Patch | Decision | Behavior / reason |
+| --- | --- | --- |
+| #3035 | retain | SenseNova format downgrade and narrowly matched unexplained request refusals still extend upstream. |
+| #3487 | suspend remainder | Upstream changed the amount model and zero-count rules; do not carry competing unknown/zero interpretations or its associated old fixtures. |
+| #3635 | retain | NVIDIA explicit parameter-list repair and synchronized equivalent reasoning settings. |
+| #3636 | retain | Unresolved explicit parameter lists fail over without resting accounts. |
+| #3624 | retain | Usage navigation reveals the selected trace. |
+| #3788 | suspend | Upstream now owns the changing group-budget/slow-start rules; use its current streaming-only FirstToken behavior. The 540s total budget is not an equivalent non-streaming deadline. |
+| #3791 | suspend | Fork deliberately counts client cancellation and imposes hard model holds; upstream cancellation attribution and resting-candidate policy differ. |
+| #3948 | retain diagnostics only | Speed display follows upstream; retain bounded non-streaming envelope checks without changing the committed HTTP status. Stream error-frame status handling is upstream's separate behavior. |
+| #3794 | retain | Tools on demand does not cover arbitrary external client tools or guarantee vendor limits. Keep full-tool fallback. |
+| #3623 | retain | Expanded Usage details show ordered recorded attempts, including 499. |
+| Cooldown settings | suspend | Layered policy, changed defaults and release semantics compete with current upstream rest rules. Editor/API and runtime overrides are removed together. |
+| #3417 | absorbed | Upstream configurable Codex reset lead remains; fixed-lead fork stays removed. |
+| build -pN | retain | Update checks and release notes compare the base version. |
+| plugins PR #366 | separate | Keep production Cloudflare Workers AI package 0.0.5. No package downgrade or test-only rebuild. |
 
-       scp scripts/deploy-docker1.sh docker1:/tmp/
-       ssh docker1 'nohup bash /tmp/deploy-docker1.sh magpie:<tag>-pN >/tmp/deploy-<tag>.log 2>&1 &'
-       ssh docker1 'tail -n 40 /tmp/deploy-<tag>.log'
+The retained delta is reviewed against the pinned tag, including callers,
+fixtures, GUI and subsystem references. Source commit ancestry and issue state
+are evidence, not the sole retirement test. Tests must exercise current public
+behavior; baseline failures do not automatically authorize deployment.
 
-   Why detached and never split: the agent's own model route may go
-   through this gateway, so `docker stop magpie` cuts the agent's session
-   (2026-11-01: the stop ended the round mid-deploy and the operator had
-   to roll the container by hand). A single script that does stop, swap
-   and start keeps running on docker1 regardless; when it brings magpie
-   back, the agent's route returns and the round continues by polling the
-   log. Never issue the stop in one turn and the run in a later one.
-8. The script accepts healthy, 401/200 auth, matching model/provider/group
-   IDs and cooldown settings, plus one real `group/fast-cheap` request.
-   It then observes for 46 minutes, with two more real requests, continuous
-   checks and samples about every 4.6 minutes. Any failed request is not
-   retried. The launcher must separately record the task's final exit code;
-   publication requires exit 0, this run's `result.json` outcome `PASSED`,
-   matching current container/image IDs and a fresh healthy check. Neither
-   `ACCEPTED` nor an existing result file alone permits publication. Only
-   after a clean observation, push both
-   `bigshort/magpie-patched:<tag>-pN` and `:latest`, verify their digests,
-   and update the Hub README and `/tmp/hub-readme.md`.
+## Deployment checks
 
-## Carried patches (as of v0.1.2767-p1, 2026-11-03)
-
-> **Production remains v0.1.2767-p1.** The v0.1.3005-p1 source candidate
-> failed acceptance and was rolled back on 2026-11-05; it was not published
-> to Docker Hub. The table below describes the current candidate source, not
-> the deployed image. Do not treat the failed tag as a deployed release in
-> the no-op check. Identify the snapshot mismatch before another attempt,
-> use a new patch number, and run the complete gate on its final commit.
-> The earlier v0.1.2950 preparation was never deployed.
-
-Checked against v0.1.3005 (2026-11-05): eleven carried entries — nine
-patch rows, #3623's attempt chain (joined at 0.1.2051-p3) and the
-cooldown-settings surface (joined at 0.1.2051-p4) — plus the build-line
-fix and #3487's card-display and millisecond-span remainder, re-
-expressed at the v0.1.1948 merge. #3417 left the list at 0.1.2264-p1:
-upstream made the spend deadline's lead configurable (settings'
-`CodexResetLead`) and evolved the held-up behavior, superseding this
-line's fixed-lead variant. The remaining fixed-lead CLI wording was
-removed during the v0.1.3005 audit; its output now matches upstream too.
-
-Equivalence notes for the sweep: `fix/hindsight-nonstream-cooldown`'s
-tip `b48a91bb` and `dfd128ca` are the same SSE fix on different bases —
-never pick both; #3788/#3791 track `fix/hindsight-nonstream-sse-1767`.
-#3035's evolved fix `223f9b0a` (fix/bare-request-failover) is carried
-beside `8f931a28`. The #3487 source branch's newer commits are other
-issues' fixes touching none of its files; the nvidia branch's extra
-commit is docs-only.
-
-| upstream | fix of record (skygunner/magpie) | source to track | what it does |
-| --- | --- | --- | --- |
-| yetone/magpie#3035 | `8f931a28` + `223f9b0a` | `fix/sensenova-grammar-refusal`, `fix/bare-request-failover` | recognize SenseNova's guided_grammar compile_grammar refusal and retry the schema as json_object; an otherwise unexplained 400/422 `Invalid request` also fails over to the next candidate, resting nothing |
-| yetone/magpie#3417 | absorbed at v0.1.2264 | — | Codex expiry-only resets stay inside the expiry window: upstream made the spend deadline's lead configurable (settings' `CodexResetLead`) and evolved the held-up behavior (a reset held up past its spend point is spent at once); this line's fixed-lead variant (`e75480ec`) and its test were superseded and removed at the merge |
-| yetone/magpie#3487 | merge-carried (was `d4944ace`) | `fix/issue-batch-1025a` | quota card: a limit with no count is not a full allowance — on upstream's bare-amount model (plugins#468) the card and tray treat an amount of 0 as not said, and account aggregation keeps such shares apart from known counts; a millisecond span is not charted as seconds (`quotaSpanLimit`, upstream lacks it) |
-| yetone/magpie#3635 | `ad3badd3` + `4f7e63a8` | `fix/nvidia-parameters-routing` | NVIDIA parameter-list repair keeps reasoning effort; duplicate effort controls stay aligned through routing |
-| yetone/magpie#3636 | `0d3dca3d` | `fix/nvidia-parameters-routing` | an explicit unsupported-parameter 400 fails over to the group's remaining members |
-| yetone/magpie#3624 | `c931166a` | `fix/nvidia-parameters-routing` | Usage → View routing reveals the selected trace, not off-screen |
-| yetone/magpie#3788 | `dd670e6` + `dfd128ca` | `fix/hindsight-nonstream-sse-1767` | the group's first-response timeout also bounds non-streaming requests — headers alone don't count — so a slow member fails over before the caller gives up; the last candidate still waits. `dfd128ca` keeps that wait out of SSE: a non-streaming wait no longer sends a keepalive and HTTP 200 (see the SSE follow-up section below) |
-| yetone/magpie#3791 | `dd670e6` + `dfd128ca` | `fix/hindsight-nonstream-sse-1767` | provider JSON `modelCooldown` opts exact model ids into model/account/key cooldowns on 499s and slow starts: 1, 2, 4, 8, 16, 32, then the cap minutes; success resets the ladder; a cooling model is not probed even as last candidate (503 + Retry-After); `RestCapOff` overrides; production opts `raccoon`'s `sn-sensenova-6-8-flash` at a 60-minute cap |
-| yetone/magpie#3948 | `56eb1ba1` | `fix/request-protocol-visibility` | a completed non-streaming response is checked by its existing bounded capture: SSE-instead-of-JSON, malformed JSON, missing arrays and empty Chat choices record `protocol_error` while keeping the committed HTTP status (Usage shows `200 · Protocol error`); unavailable speed is shown as a dash with its reason, or a lower bound when available — diagnostic recording only, no new retry/cooldown policy |
-| yetone/magpie#3794 | `82d916e3` | `fix/kilo-tools-count-fallback` | an explicit upstream tool-count limit (Kilo refusing 129 tools, max 128) fails the group over to the next member with the full tool list; the refusing member stays eligible for smaller requests |
-| yetone/magpie#3623 | `33c0ade7a` | `feature/request-attempt-chain` | Usage's expanded request loads its recorded routing trace and lists every actual attempt in order — provider/model, status, duration, error, a 499 included; an expired or unavailable trace says so instead of inferring from the current group config. No routing or retry behavior changes |
-| build line (ours) | this branch | `prod` | What's new and the update check read a `-pN` build as its base release: `update.parse` strips the suffix, and the notes site is asked in whole release numbers (its own `newer()` reads `-pN` as a pre-release, which hid the range's base releases at both ends — 0.1.2051's notes stayed out of "since 0.1.1948-p1" and 0.1.1948's crept in). `prod_build_test.go` pins it |
-
-Plugin (not this branch): `@magpie-community/opencode-cloudflare-workers-ai-auth`,
-source to track = plugins PR #366 (`pull/366/head`). On 2026-11-04 the
-installed package and volume tarball were 0.0.5, while PR head `38ddeb1`
-was 0.0.4; `src/index.mjs` and `index.mjs` matched byte for byte, but
-`package.json` differed and 0.0.5 also had `opencode.mjs` and
-`opencode2.mjs`. The 0.0.5 tarball's nine files matched the installed
-package. The PR changes since `bdc302a` were tests only; do not replace the
-newer production package with the older, differently packaged PR version.
-
-Carried after registering here: #3948 was registered on 2026-10-28
-while no fix existed; `fix/request-protocol-visibility` (`56eb1ba1`)
-appeared the same day and is carried in the table above. #3623 was
-registered on 2026-10-29 and its fix (`33c0ade7a`,
-`feature/request-attempt-chain`) appeared within the hour, carried in
-the table above.
+1. Preserve acceptance evidence before deciding: baseline.json, acceptance.json,
+   acceptance-diff.json, final.json and final-diff.json are private on docker1.
+2. An optional --expected-snapshot file contains reviewed baseline/candidate
+   snapshots and the immutable target_image_id. A changed baseline or image
+   refuses before stopping production. Unexpected candidate differences roll back.
+3. `/api/cooldown` exists only in older fork builds. Its deliberate removal is
+   represented as null in the snapshot, not silently ignored. Other HTTP failures
+   remain errors. Authentication, providers, groups and caller-visible models stay
+   checked, with explicitly reviewed model exposure changes only.
+4. `/var/lib/magpie-deploy/BLOCKED` prevents a switch. Leave it present while an
+   unexplained acceptance difference remains; clear it only after isolated
+   reproduction and final-commit tests. Integration may continue while blocked.
+5. Build one image from the tested commit. Run the existing detached transaction
+   with a host lock, stopped-volume backup, immutable container/image assertions,
+   acceptance, three real inference probes and 46-minute observation. Any failure
+   rolls back and verifies the previous container; preserve candidate config.
+6. Promote production/stable and deployed/<version>, and publish the exact image
+   digest as a version and latest only after exit 0, this run's PASSED result,
+   matching live IDs and fresh healthy checks. Never rebuild during promotion.
 
 ## Deployment history
 

@@ -235,7 +235,7 @@ func clearRest(key string) {
 // How long a candidate sits out, by why it failed.
 const (
 	creditRest  = 30 * time.Minute // out of credit: until someone tops it up
-	quotaRest   = 30 * time.Minute // out of quota, with no word of when it resets
+	quotaRest   = 15 * time.Minute // out of quota, with no word of when it resets
 	longestWait = time.Hour        // the most a vendor's own "try again at" is trusted
 	// chatgptCreditRest is how long a ChatGPT account out of its credits
 	// sits out when neither the refusal nor its reading says when it can
@@ -257,7 +257,7 @@ const (
 	// longestRateRest is the most a rate limit that keeps coming back as
 	// soon as its rest is over is waited out, when the vendor says nothing
 	// of when (rateRest)
-	longestRateRest = 64 * time.Minute
+	longestRateRest = 30 * time.Minute
 	// rateForget: a rate limit this long after the last one's rest ended
 	// is a new one, a minute again
 	rateForget = 30 * time.Minute
@@ -939,15 +939,8 @@ func (s *Server) Unrest(key string) bool {
 	restingUntil.Lock()
 	_, ok := restingUntil.m[key]
 	kept := ladderRest(restingUntil.note[key])
-	if note, had := restingUntil.note[key]; had && note.Why == failRate {
-		// Release the deadline without losing the rate-limit ladder
-		// (the cooldown settings' release of an active rest).
-		restingUntil.m[key] = time.Now()
-		kept = true
-	} else {
-		delete(restingUntil.m, key)
-		delete(restingUntil.note, key)
-	}
+	delete(restingUntil.m, key)
+	delete(restingUntil.note, key)
 	liftedLocked(key, time.Now())
 	restingUntil.Unlock()
 	if kept {
@@ -1380,7 +1373,7 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
 		// the account is as good as it was; the proxy is the user's to start
 		return r
 	}
-	if !c.p.CooldownFor(c.p.CooldownIdentity()).LimitRest && (why == failQuota || why == failCredit || why == failRate || status == http.StatusTooManyRequests) {
+	if c.p.LimitRestOff && (why == failQuota || why == failCredit || why == failRate || status == http.StatusTooManyRequests) {
 		// the user set it never to rest for a limit (provider.LimitRestOff;
 		// zoecats on Discord: a local aggregator says "quota exhausted"
 		// for the moment it switches upstreams, and the next request goes
@@ -1569,7 +1562,7 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
 			}
 		}
 		routed.Unlock()
-		d, r.By, r.Failures = backoffWait(fallbackCooldown, c.p.FailureRestCap(), n-1), "backoff", n
+		d, r.By, r.Failures = min(fallbackCooldown<<min(n-1, 10), c.p.RestCapOr(longestRetry)), "backoff", n
 		// a subscription that failed with a window full is out of it,
 		// whatever it said; a key isn't: a relay out of accounts for
 		// everyone (sub2api's 503) says nothing of the key's own windows.
@@ -1758,52 +1751,30 @@ func remoteModelRest(c candidate, why string, header http.Header) bool {
 // rest after a failure that says nothing of why (RestCapOff) isn't
 // rested, nor its slow starts counted.
 func restSlow(c candidate, now time.Time) (Rest, bool) {
-	threshold := c.p.CooldownFor(c.p.CooldownIdentity()).SlowThreshold
-	if c.p.ModelCooldownCap(c.model) > 0 {
-		threshold = 1
-	}
-	return restUnresponsive(c, now, failSlow, http.StatusGatewayTimeout, threshold)
-}
-
-// Slow starts and opted-in client cancellations share the model/account ladder.
-func restUnresponsive(c candidate, now time.Time, why string, status, threshold int) (Rest, bool) {
 	if c.p.NoFailRest() {
 		return Rest{}, false
 	}
 	id := c.restID()
 	prev, resting := restOf(id)
-	policy := c.p.CooldownFor(c.p.CooldownIdentity())
 	routed.Lock()
 	run := routed.slow[id]
-	cap := time.Duration(policy.SlowCap) * time.Minute
-	forget := slowForget
-	if cap >= slowForget {
-		forget += cap
-	}
-	if minutes := policy.Models[c.model]; minutes > 0 {
-		cap = time.Duration(min(minutes, 60)) * time.Minute
-		policy.SlowStart = 1
-		forget = slowForget + cap
-	}
-	// A long cooldown is not evidence of recovery. Forget only after the
-	// cooldown could have elapsed plus the normal quiet interval.
-	if now.Sub(run.at) >= forget {
+	if now.Sub(run.at) >= slowForget {
 		run.n = 0
 	}
-	if !resting || (prev.Why != failSlow && prev.Why != failCanceled) || run.n == 0 {
+	if !resting || prev.Why != failSlow || run.n == 0 {
 		run.n++
 	}
 	run.at = now
 	routed.slow[id] = run
 	routed.Unlock()
-	if run.n < threshold {
+	if run.n < slowRests {
 		return Rest{}, false
 	}
-	d, by := backoffWait(time.Duration(policy.SlowStart)*time.Minute, cap, run.n-threshold), "cooldown"
-	if run.n > threshold {
+	d, by := min(fallbackCooldown<<min(run.n-slowRests, 10), c.p.RestCapOr(longestRetry)), "cooldown"
+	if run.n > slowRests {
 		by = "backoff"
 	}
-	r := Rest{Why: why, Status: status, Until: now.Add(d), By: by, Failures: run.n, Key: id, Model: c.model}
+	r := Rest{Why: failSlow, Status: http.StatusGatewayTimeout, Until: now.Add(d), By: by, Failures: run.n, Key: id, Model: c.model}
 	if a := c.p.Account; a != nil {
 		r.agent, r.user = a.UsageAgent(), a.User
 	}
@@ -1860,8 +1831,7 @@ func (s *Server) rateRest(c candidate, header http.Header, body []byte, sharedPo
 		}
 	}
 	restingUntil.Unlock()
-	policy := c.p.CooldownFor(c.p.CooldownIdentity())
-	d, by := backoffWait(time.Duration(policy.RateStart)*time.Minute, time.Duration(policy.RateCap)*time.Minute, n-1), "cooldown"
+	d, by := min(fallbackCooldown<<min(n-1, 10), c.p.RestCapOr(longestRateRest)), "cooldown"
 	if n > 1 {
 		by = "backoff"
 	}
@@ -2364,28 +2334,4 @@ func weighRouted(p provider.Provider, cs []candidate, model string, from provide
 		sort.SliceStable(cs, func(i, j int) bool { return keyFit(cs[i].p, cs[i].model, from) < keyFit(cs[j].p, cs[j].model, from) })
 	}
 	return cs, wg
-}
-
-// CooldownRests returns active account and model rests for the settings panel.
-func CooldownRests(key string) []Rest {
-	restingUntil.Lock()
-	defer restingUntil.Unlock()
-	out := []Rest{}
-	now := time.Now()
-	for id, note := range restingUntil.note {
-		if (id == key || strings.HasPrefix(id, key+"/")) && restingUntil.m[id].After(now) {
-			note.Until = restingUntil.m[id]
-			out = append(out, note)
-		}
-	}
-	return out
-}
-
-// Double only while below the cap, so large custom starts cannot overflow.
-func backoffWait(start, cap time.Duration, repeats int) time.Duration {
-	for repeats > 0 && start < cap {
-		start = min(start*2, cap)
-		repeats--
-	}
-	return min(start, cap)
 }
