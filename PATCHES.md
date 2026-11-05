@@ -105,6 +105,21 @@ behavior; baseline failures do not automatically authorize deployment.
   Evidence: [deterministic reproducer](docs/fork/evidence/2026-11-05-3007/opencode-boundary-repro.go.txt),
   [failure](docs/fork/evidence/2026-11-05-3007/opencode-boundary-red.log),
   [isolated replay](docs/fork/evidence/2026-11-05-3007/incident-reproduction.json).
+  A subsequent whole-suite run also failed
+  `TestClaudeAccountServesModelsListedSinceItsFetch`; clean baseline isolation
+  with `-race -count=20` passed, so this failure is not yet attributed and must
+  not be labelled a flake or ignored. The complete release gate is not green.
+  The final source includes later test-only fixture repairs; no claim is made
+  that a final clean-commit release gate passed.
+
+  `production/stable` is initialized to successful source 96cf7af969
+  (prod/0.1.2767-p1), while `integration/nightly` carries this candidate.
+  The existing six-hour ZCode automation was temporarily paused for this
+  investigation, then restored with the new upstream-first policy and an
+  explicit prohibition on clearing BLOCKED or deploying while it exists.
+  Its schedule was preserved. All three isolated replay containers, their
+  internal network and copied configuration directories were removed.
+
   Complete local gate logs remain private under
   `~/.local/state/magpie-rounds/0.1.3007-p1/`. Deployment stays blocked on
   docker1, and the rolling automation must honor this block. No production
