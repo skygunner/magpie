@@ -18,6 +18,7 @@ import (
 // through magpie, the next start puts it back for a user wired before,
 // and stepping out takes it out, the user's own lines as they were.
 func TestAgyShell(t *testing.T) {
+	t.Setenv("SHELL", "/bin/bash")
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
