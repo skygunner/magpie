@@ -65,6 +65,34 @@ behavior; baseline failures do not automatically authorize deployment.
 
 ## Deployment history
 
+- **2026-11-05, 0.1.3036-p1 gate blocked — no deployment.**
+  Tested source 588344c9a30480843f16bd24c9cde6bf592eba5f. Full Go passed
+  (87 packages, 20 without tests; 24,921 passing tests including subtests),
+  all eight build/vet checks passed, retained/new gateway race checks passed
+  20 times, all nine retained UI files passed, and all 80 deployment tests passed.
+  The immutable image was built and transferred; a frozen production-config
+  replay gave identical 251-model/32-provider/49-group snapshots with no
+  unexpected cooldown difference. Old production inference returned 200.
+
+  Expanded coverage of 21 upstream-changed UI files found four local failing
+  files. Rerunning all four unchanged in the official Ubuntu Playwright
+  1.64.1 image passed quota folding, plugin agents and grouping by caller key;
+  only WebKit's delayed-wheel case remains red (74/76 pass; one child failure
+  plus its parent, exit 1, no skips). The same concrete assertion fails on
+  clean v0.1.3036, Playwright 1.62.1 Ubuntu, and the previous v0.1.3007 assets
+  with the same new fixture. The scrolling runtime differs only in comments
+  from v0.1.3007, and this fork's app.js equals v0.1.3036. This is a pre-existing
+  upstream UI limitation, not a retained patch regression; an exact product
+  correction is not yet established. Experimental test changes were reverted.
+
+  Gate verdict is BLOCKED_UI, not PASSED. Do not start deployment or publish
+  this image until the UI issue is fixed and checked, or the user explicitly
+  accepts this documented pre-existing limitation. Production/stable remains
+  c63d898351f6b4cc057b387da158d8129225f405 / 0.1.3007-p2. No candidate/deployed
+  tag is created and no Docker Hub label is changed. The already-disabled
+  automation remains disabled. Evidence: [gate result](docs/fork/evidence/2026-11-05-3036/gate-result.json)
+  and [official Ubuntu UI log](docs/fork/evidence/2026-11-05-3036/official-ubuntu-ui.log).
+
 - **2026-11-05, 0.1.3036-p1 preparation — not deployed yet.**
   Pin upstream v0.1.3036 (465928bccea4fec3537edd6280f7cabb9a0c5bad),
   36 commits after v0.1.3007. Seven retained issue behaviors and -pN adaptation

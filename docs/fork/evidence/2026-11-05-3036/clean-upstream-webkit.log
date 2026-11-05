@@ -1,0 +1,41 @@
+▶ webkit: a click never moves the page
+  ✔ date controls stay separate from request grouping controls (570.533358ms)
+  ✔ Live and a day, picked in turn, stay under the pointer (5750.05767ms)
+  ✔ a request picked in the list, and Replay them all, stay under the pointer (7462.38473ms)
+  ✔ code can't take the page from a click (10064.284346ms)
+  ✔ a scroll the page hears of after the click is still put back (4864.056647ms)
+  ✔ a control under what it unrolls goes down with it (5010.839014ms)
+  ✔ a click that asks to go somewhere does (4467.138395ms)
+  ✔ the room kept for a click goes as the reader scrolls back (4159.336019ms)
+  ✔ the reader's wheel still scrolls after a click (751.610213ms)
+  ✖ a wheel the page hears of after its scroll is still the reader's (594.308301ms)
+  ✔ a wheel heard after the wait for unheard wheels is still the reader's (1012.662614ms)
+✖ webkit: a click never moves the page (45046.946176ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 10
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 64556.620818
+
+✖ failing tests:
+
+test at internal/gui/tests/click-scroll.test.cjs:288:13
+✖ a wheel the page hears of after its scroll is still the reader's (594.308301ms)
+  AssertionError [ERR_ASSERTION]: the late-heard wheel must scroll the view
+      at TestContext.<anonymous> (/home/vincenty/Projects/magpie-baseline-3036/internal/gui/tests/click-scroll.test.cjs:319:9)
+      at runNextTicks (node:internal/process/task_queues:65:5)
+      at process.processImmediate (node:internal/timers:541:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/home/vincenty/Projects/magpie-baseline-3036/internal/gui/tests/click-scroll.test.cjs:288:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

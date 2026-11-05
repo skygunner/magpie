@@ -1,0 +1,106 @@
+▶ chromium: a click never moves the page
+  ✔ date controls stay separate from request grouping controls (1247.082967ms)
+  ✔ Live and a day, picked in turn, stay under the pointer (6629.485888ms)
+  ✔ a request picked in the list, and Replay them all, stay under the pointer (8465.117869ms)
+  ✔ code can't take the page from a click (12772.409278ms)
+  ✔ a scroll the page hears of after the click is still put back (7009.98323ms)
+  ✔ a control under what it unrolls goes down with it (7367.832784ms)
+  ✔ a click that asks to go somewhere does (6198.595048ms)
+  ✔ the room kept for a click goes as the reader scrolls back (4859.065288ms)
+  ✔ the reader's wheel still scrolls after a click (972.151415ms)
+  ✔ a wheel the page hears of after its scroll is still the reader's (1808.35562ms)
+  ✔ a wheel heard after the wait for unheard wheels is still the reader's (1468.879377ms)
+✔ chromium: a click never moves the page (59314.453293ms)
+▶ webkit: a click never moves the page
+  ✔ date controls stay separate from request grouping controls (2390.092806ms)
+  ✔ Live and a day, picked in turn, stay under the pointer (6534.716692ms)
+  ✔ a request picked in the list, and Replay them all, stay under the pointer (9020.834687ms)
+  ✔ code can't take the page from a click (14839.208608ms)
+  ✔ a scroll the page hears of after the click is still put back (8330.415453ms)
+  ✔ a control under what it unrolls goes down with it (7598.30831ms)
+  ✔ a click that asks to go somewhere does (7522.462948ms)
+  ✔ the room kept for a click goes as the reader scrolls back (4972.340812ms)
+  ✔ the reader's wheel still scrolls after a click (1153.77306ms)
+  ✖ a wheel the page hears of after its scroll is still the reader's (1017.837152ms)
+  ✔ a wheel heard after the wait for unheard wheels is still the reader's (1602.299752ms)
+✖ webkit: a click never moves the page (65805.390883ms)
+✔ chromium en: the panel's Allowances tab folds what has nothing left (3003.746597ms)
+✔ chromium zh: the panel's Allowances tab folds what has nothing left (2187.020637ms)
+✔ chromium zh-TW: the panel's Allowances tab folds what has nothing left (2563.719989ms)
+✔ chromium ja: the panel's Allowances tab folds what has nothing left (3296.25339ms)
+✔ chromium de: the panel's Allowances tab folds what has nothing left (2712.800477ms)
+✔ webkit en: the panel's Allowances tab folds what has nothing left (3953.163317ms)
+✔ webkit zh: the panel's Allowances tab folds what has nothing left (3085.873433ms)
+✔ webkit zh-TW: the panel's Allowances tab folds what has nothing left (3001.118668ms)
+✔ webkit ja: the panel's Allowances tab folds what has nothing left (2940.29484ms)
+✔ webkit de: the panel's Allowances tab folds what has nothing left (2989.444773ms)
+▶ chromium: agent plugins in Installed and Discover
+  ✔ en 980 (1927.657021ms)
+  ✔ en 420 (1874.122524ms)
+  ✔ zh 980 (2188.800865ms)
+  ✔ zh 420 (2032.635762ms)
+  ✔ zh-TW 980 (2132.736971ms)
+  ✔ zh-TW 420 (1644.779187ms)
+  ✔ ja 980 (1519.130149ms)
+  ✔ ja 420 (1302.966389ms)
+  ✔ de 980 (1716.12524ms)
+  ✔ de 420 (1662.049885ms)
+✔ chromium: agent plugins in Installed and Discover (18511.416375ms)
+▶ webkit: agent plugins in Installed and Discover
+  ✔ en 980 (3221.972859ms)
+  ✔ en 420 (1642.5359ms)
+  ✔ zh 980 (1944.538048ms)
+  ✔ zh 420 (2162.880109ms)
+  ✔ zh-TW 980 (1928.954973ms)
+  ✔ zh-TW 420 (1814.814579ms)
+  ✔ ja 980 (1807.86755ms)
+  ✔ ja 420 (1684.381595ms)
+  ✔ de 980 (1792.612723ms)
+  ✔ de 420 (1909.635724ms)
+✔ webkit: agent plugins in Installed and Discover (20479.221872ms)
+✔ chromium en 1100: routing lists the requests by gateway key (2661.895217ms)
+✔ chromium en 420: routing lists the requests by gateway key (2905.041472ms)
+✔ chromium zh 1100: routing lists the requests by gateway key (3524.294674ms)
+✔ chromium zh 420: routing lists the requests by gateway key (3274.405125ms)
+✔ chromium zh-TW 1100: routing lists the requests by gateway key (2602.220872ms)
+✔ chromium zh-TW 420: routing lists the requests by gateway key (3378.000759ms)
+✔ chromium ja 1100: routing lists the requests by gateway key (3189.382737ms)
+✔ chromium ja 420: routing lists the requests by gateway key (2896.385573ms)
+✔ chromium de 1100: routing lists the requests by gateway key (2040.760251ms)
+✔ chromium de 420: routing lists the requests by gateway key (3042.020942ms)
+✔ webkit en 1100: routing lists the requests by gateway key (2663.760303ms)
+✔ webkit en 420: routing lists the requests by gateway key (2862.081052ms)
+✔ webkit zh 1100: routing lists the requests by gateway key (2631.585767ms)
+✔ webkit zh 420: routing lists the requests by gateway key (2500.064397ms)
+✔ webkit zh-TW 1100: routing lists the requests by gateway key (2673.091115ms)
+✔ webkit zh-TW 420: routing lists the requests by gateway key (2552.660742ms)
+✔ webkit ja 1100: routing lists the requests by gateway key (2582.271812ms)
+✔ webkit ja 420: routing lists the requests by gateway key (2843.734949ms)
+✔ webkit de 1100: routing lists the requests by gateway key (2665.247448ms)
+✔ webkit de 420: routing lists the requests by gateway key (2731.955875ms)
+ℹ tests 76
+ℹ suites 0
+ℹ pass 74
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 271064.846536
+
+✖ failing tests:
+
+test at internal/gui/tests/click-scroll.test.cjs:288:13
+✖ a wheel the page hears of after its scroll is still the reader's (1017.837152ms)
+  AssertionError [ERR_ASSERTION]: the late-heard wheel must scroll the view
+      at TestContext.<anonymous> (/work/src/internal/gui/tests/click-scroll.test.cjs:319:9)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async TestContext.<anonymous> (/work/src/internal/gui/tests/click-scroll.test.cjs:288:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

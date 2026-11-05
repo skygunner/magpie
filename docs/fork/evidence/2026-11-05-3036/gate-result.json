@@ -1,0 +1,56 @@
+{
+  "verdict": "BLOCKED_UI",
+  "tested_source": "588344c9a30480843f16bd24c9cde6bf592eba5f",
+  "upstream_tag": "v0.1.3036",
+  "upstream_commit": "465928bccea4fec3537edd6280f7cabb9a0c5bad",
+  "version": "0.1.3036-p1",
+  "go": {
+    "passing_packages": 87,
+    "no_test_packages": 20,
+    "passing_tests_including_subtests": 24921
+  },
+  "build_and_vet_checks": 8,
+  "deployment_unit_tests": 80,
+  "race_repetitions": 20,
+  "ui_local": {
+    "retained_files_passed": 9,
+    "upstream_changed_files": 21,
+    "failed_files": [
+      "click-scroll.test",
+      "panel-zero-fold.test",
+      "plugin-agent.test",
+      "routing-by-key.test"
+    ]
+  },
+  "ui_official_ubuntu": {
+    "image": "mcr.microsoft.com/playwright:v1.64.1-noble",
+    "image_digest": "sha256:2f05f8a734509a7b3f26a912639488ee08f58a7b292d14d62271bcff9038768f",
+    "files": 4,
+    "tests": 76,
+    "pass": 74,
+    "fail_including_parent": 2,
+    "skipped": 0,
+    "concrete_failure": "webkit: a wheel the page hears of after its scroll is still the reader's",
+    "exit": 1
+  },
+  "reproduction": {
+    "clean_v3036": true,
+    "official_ubuntu_pw1641": true,
+    "official_ubuntu_pw1621": true,
+    "v3007_assets_with_same_new_fixture": true,
+    "fork_app_js_equals_v3036": true,
+    "scroll_logic_relative_v3007": "comments changed only; no runtime logic change",
+    "conclusion": "pre-existing upstream WebKit scrolling limitation exposed by expanded tests; not one of the seven retained patches; exact product correction not yet established"
+  },
+  "isolated_snapshot": {
+    "models": 251,
+    "providers": 32,
+    "groups": 49,
+    "unexpected_fields": []
+  },
+  "old_production_inference": 200,
+  "deployment_started": false,
+  "production": "0.1.3007-p2",
+  "automation": "already disabled at round start; left disabled",
+  "decision_needed": "fix the upstream UI issue before deployment, or explicitly accept the known pre-existing UI limitation; no automatic baseline-failure waiver"
+}
