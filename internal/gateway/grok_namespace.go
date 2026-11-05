@@ -178,6 +178,15 @@ func (t *nsTidy) call(it map[string]any) bool {
 	if ns, _ := it["namespace"].(string); ns != "" {
 		for _, q := range t.named {
 			if q.Namespace == ns && q.Name == name {
+				// a task the upstream sealed itself is handed on sealed:
+				// the arguments are the ChatGPT backend's own token (the
+				// gAAAAA shape codex_backend reads), and the client that
+				// can open it reads this call as sealed — telling it
+				// "not sealed" would hand the subagent the ciphertext
+				// (a relay of a native sealed task, oevery on #3183)
+				if args, _ := it["arguments"].(string); nativeSealedAgentPayload.MatchString(args) {
+					return false
+				}
 				if _, ok := it["encrypted_function_args"]; !ok {
 					it["encrypted_function_args"] = []any{}
 					return true

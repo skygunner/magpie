@@ -125,6 +125,60 @@ func TestNativeRelayNamespacedCallSaysUnsealed(t *testing.T) {
 	}
 }
 
+// A relay that forwards a native sealed task hands the seal on: the
+// upstream's own answer carries the task as the ChatGPT backend's sealed
+// token in arguments, with no encrypted_function_args of its own, and the
+// client that can open it must read the call as sealed — the empty list
+// would have Codex hand the subagent the ciphertext instead of the task
+// (oevery on #3183: CPA relay of a native V2 task, subagent unreadable
+// from v0.1.2747, right again on a build without it).
+func TestNativeRelaySealedTaskStaysSealed(t *testing.T) {
+	fresh(t)
+	var mu sync.Mutex
+	var sent []map[string]any
+	call := `{"type":"function_call","id":"fc_1","call_id":"c9","name":"spawn_agent","namespace":"collaboration","arguments":"gAAAAABm4BuA1tOaG9vZF9hc2tfdGVzdA==","status":"completed"}`
+	up := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		var q map[string]any
+		json.Unmarshal(b, &q)
+		mu.Lock()
+		sent = append(sent, q)
+		mu.Unlock()
+		done := `{"id":"r1","object":"response","status":"completed","output":[` + call + `],"usage":{"input_tokens":5,"output_tokens":3}}`
+		w.Header().Set("Content-Type", "application/json")
+		io.WriteString(w, done)
+	}))
+	defer up.Close()
+	if err := provider.Save(provider.Provider{ID: "cpa", Name: "CPA", Key: "k", Models: []string{"m"}, Responses: up.URL + "/v1"}); err != nil {
+		t.Fatal(err)
+	}
+	s := New()
+	body := `{"model":"cpa/m","stream":false,` + codexCollabTools + `,"input":[{"type":"message","role":"user","content":"go"}]}`
+	rec := httptest.NewRecorder()
+	s.Handler().ServeHTTP(rec, httptest.NewRequest("POST", "/v1/responses", strings.NewReader(body)))
+	if rec.Code != 200 {
+		t.Fatalf("%d %s", rec.Code, rec.Body)
+	}
+	var res struct {
+		Output []map[string]any `json:"output"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &res); err != nil {
+		t.Fatalf("%v: %s", err, rec.Body)
+	}
+	if len(res.Output) != 1 {
+		t.Fatalf("the reply came back as %s", rec.Body)
+	}
+	it := res.Output[0]
+	if _, ok := it["encrypted_function_args"]; ok {
+		t.Fatalf("a sealed task was labelled unsealed: %v", it)
+	}
+	if it["arguments"] != call_sealed_args {
+		t.Fatalf("the sealed token was rewritten: %v", it["arguments"])
+	}
+}
+
+const call_sealed_args = `gAAAAABm4BuA1tOaG9vZF9hc2tfdGVzdA==`
+
 // The seal a reply carries is the seal the client reads: an upstream that
 // answered a namespaced call with its arguments sealed hands that seal on
 // untouched, and a call to a tool outside every namespace says nothing
