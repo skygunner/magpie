@@ -490,3 +490,58 @@ func TestKimiLockedSampling(t *testing.T) {
 		}
 	})
 }
+
+// A typed $ref target that hides untyped oneOf/anyOf unions inside has
+// those typed: Kimi refuses them all the same, 400 "At path
+// 'properties.x': detected infinite recursion without termination
+// condition" (#3566, k3.1-pro over kimi-code-cn; only giving the inner
+// union its type turned the same request 200). The type goes on the
+// union and nowhere else — a node inside the target that carries a $ref
+// goes untouched, a type beside a $ref being refused in its own right
+// (#3205), and that ref's chain end is typed by the outer walk if a type
+// is due there.
+func TestKimiTypedRefTargetInnerUnion(t *testing.T) {
+	t.Setenv("XDG_CONFIG_HOME", t.TempDir())
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	kimi, err := provider.FromPreset("kimi-code-cn")
+	if err != nil {
+		t.Fatal(err)
+	}
+	kimi.ID, kimi.Key, kimi.Models = "kimi", "k", []string{"m"}
+	schema := `{"type":"object","properties":{"x":{"$ref":"#/$defs/X"},"u":{"$ref":"#/$defs/Z"}},` +
+		`"$defs":{"X":{"type":"object","required":["y"],"properties":{"y":{"oneOf":[` +
+		`{"type":"object","properties":{"mode":{"type":"string","const":"a"}}},` +
+		`{"type":"object","properties":{"mode":{"type":"string","const":"b"}}}]}}},` +
+		`"Z":{"type":"object","properties":{"w":{"format":"uuid","description":"tt","$ref":"#/$defs/T"}}},` +
+		`"T":{"description":"anything"}}}`
+	if !json.Valid([]byte(schema)) {
+		t.Fatal("test fixture is not valid JSON")
+	}
+	body := `{"model":"kimi/m","messages":[{"role":"user","content":"hi"}],` +
+		`"tools":[{"type":"function","function":{"name":"probe","parameters":` + schema + `}}]}`
+	out := kimiToolRefTypes(kimi, provider.Chat, []byte(body))
+	if !json.Valid(out) {
+		t.Fatalf("Kimi was sent invalid JSON: %s", out)
+	}
+	defs := gjson.GetBytes(out, "tools.0.function.parameters.$defs")
+	y := defs.Get("X.properties.y")
+	if got := y.Get("type").String(); got != "object" {
+		t.Errorf("the typed target's inner union left untyped: %s", y.Raw)
+	}
+	if x := defs.Get("X"); x.Get("type").String() != "object" || gjson.Get(x.Raw, "properties.y.oneOf.0.type").String() != "object" {
+		t.Errorf("X itself was rewritten: %s", x.Raw)
+	}
+	// zod's reused-schema shape inside a typed target: no type beside the
+	// $ref; the chain end T is where a type goes
+	w := defs.Get("Z.properties.w")
+	var buf bytes.Buffer
+	if err := json.Compact(&buf, []byte(w.Raw)); err != nil {
+		t.Fatal(err)
+	}
+	if buf.String() != `{"format":"uuid","description":"tt","$ref":"#/$defs/T"}` {
+		t.Errorf("the ref-bearing node was rewritten:\n%s", w.Raw)
+	}
+	if typ := defs.Get("T").Get("type"); !typ.Exists() {
+		t.Errorf("the ref's chain end T was left untyped: %s", defs.Get("T").Raw)
+	}
+}

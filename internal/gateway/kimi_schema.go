@@ -325,7 +325,12 @@ func kimiToolRefTypes(p provider.Provider, to provider.Protocol, body []byte) []
 // tool schema root) whose target Kimi would refuse untyped, where the
 // target opens and the type it is given. The target is the schema the
 // chain of $refs ends at, the one place a type may go (#3205); a chain
-// that ends at a ref to nowhere, or never ends, adds nothing.
+// that ends at a ref to nowhere, or never ends, adds nothing. A target
+// that is already typed is walked for untyped oneOf/anyOf unions inside
+// it, which Kimi refuses with "detected infinite recursion" all the same
+// (#3566) — but a node carrying a $ref is left alone: a type beside a
+// $ref is itself refused (#3205), and the outer walk visits those refs
+// and types their own chain ends.
 func collectRefTargets(body []byte, root, node gjson.Result, ins *[]typeInsert) {
 	walkSchema(node, func(s gjson.Result) {
 		ref := s.Get(`\$ref`)
@@ -350,12 +355,26 @@ func collectRefTargets(body []byte, root, node gjson.Result, ins *[]typeInsert) 
 			}
 			t = n
 		}
-		if !t.IsObject() || t.Index <= 0 || t.Index >= len(body) || body[t.Index] != '{' || !untypedForKimi(t) {
+		if !t.IsObject() || t.Index <= 0 || t.Index >= len(body) || body[t.Index] != '{' {
 			return
 		}
-		if typ := kimiSchemaType(root, t); typ != "" {
-			*ins = append(*ins, typeInsert{t.Index, typ})
+		if untypedForKimi(t) {
+			if typ := kimiSchemaType(root, t); typ != "" {
+				*ins = append(*ins, typeInsert{t.Index, typ})
+			}
+			return
 		}
+		walkSchema(t, func(inner gjson.Result) {
+			if inner.Get(`\$ref`).Type == gjson.String {
+				return
+			}
+			if !untypedForKimi(inner) {
+				return
+			}
+			if typ := kimiSchemaType(root, inner); typ != "" {
+				*ins = append(*ins, typeInsert{inner.Index, typ})
+			}
+		})
 	})
 }
 
