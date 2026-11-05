@@ -110,9 +110,9 @@ for (const engine of ["chromium", "webkit"]) {
     const browser = await (engine === "webkit" ? webkit : chromium).launch();
     t.after(() => browser.close());
     for (const heard of HEARD) for (const lang of LANGS) for (const width of [420, 1000]) for (const name of ["usage", "routing"]) for (const visit of ["opened", "opened again"]) {
-      await t.test(`${name}, ${visit}, wheels ${heard}, ${lang}, ${width}px`, async () => {
+      await t.test(`${name}, ${visit}, wheels ${heard}, ${lang}, ${width}px`, async (st) => {
         const ctx = await browser.newContext({ viewport: { width, height: 600 }, reducedMotion: "reduce" });
-        t.after(() => ctx.close());
+        st.after(() => ctx.close());
         const p = await ctx.newPage();
         p.setDefaultTimeout(8000);
         p.setDefaultNavigationTimeout(60000);
@@ -186,6 +186,7 @@ for (const engine of ["chromium", "webkit"]) {
         assert.ok(tops[tops.length - 1] > 100, "the wheel scrolled the page: " + tops.map(Math.round).join(" "));
         assert.deepEqual(errors, []);
       });
+      assert.equal(browser.contexts().length, 0, "each finished case closes its browsing context");
     }
   });
 }
