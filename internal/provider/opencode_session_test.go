@@ -91,7 +91,7 @@ func TestOpenCodeSessionOnEveryCall(t *testing.T) {
 	}
 	zen := Provider{ID: "zen", Key: "k", Chat: "https://opencode.ai/zen/v1", Decide: "https://opencode.ai/zen/v1"}
 	h1, h2 := sign(zen, "https://opencode.ai/zen/v1/systemone"), sign(zen, "https://opencode.ai/zen/v1/systemone")
-	if s := h1.Get("x-opencode-session"); !openCodeRealSession(s) || h1.Get("x-opencode-session-id") != s || h2.Get("x-opencode-session") == s {
+	if s := h1.Get("x-opencode-session"); !strings.HasPrefix(s, "ses_") || !openCodeIDRe.MatchString(s) || h1.Get("x-opencode-session-id") != s || h2.Get("x-opencode-session") == s {
 		t.Errorf("decisions: %q %q", s, h2.Get("x-opencode-session"))
 	}
 	// a turn's session, named before signing, stays

@@ -97,7 +97,7 @@ func TestOpenCodeClientIs225(t *testing.T) {
 		}
 	}
 	id := h.Get("x-opencode-session")
-	if !openCodeRealSession(id) {
+	if !strings.HasPrefix(id, "ses_") || !openCodeIDRe.MatchString(id) {
 		t.Errorf("session %q", id)
 	}
 	for _, k := range []string{"x-opencode-session-id", "x-session-affinity", "x-session-id"} {

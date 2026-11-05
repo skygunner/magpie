@@ -33,17 +33,17 @@ func TestOpenCodeSessionIsOpenCodes(t *testing.T) {
 	before := uint64(time.Now().UnixMilli()) % (1 << 36)
 	id := openCodeSession("conversation-a")
 	after := uint64(time.Now().UnixMilli()) % (1 << 36)
-	if !openCodeIDRe.MatchString(id) || id[:4] != "ses_" || !openCodeRealSession(id) {
+	if !openCodeIDRe.MatchString(id) || id[:4] != "ses_" {
 		t.Fatalf("session %q", id)
 	}
-	if ms, n := openCodeDecode(t, id, true); ms < before || ms > after || n < 1 || n >= 16 {
+	if ms, n := openCodeDecode(t, id, true); ms < before || ms > after || n < 1 {
 		t.Fatalf("session %q: time %d (want %d..%d), count %d", id, ms, before, after, n)
 	}
 	// one conversation keeps one session, another gets its own
 	if again, other := openCodeSession("conversation-a"), openCodeSession("conversation-b"); again != id || other == id {
 		t.Fatalf("sessions %q %q %q", id, again, other)
 	}
-	if a, b := openCodeSession(""), openCodeSession(""); a == b || !openCodeRealSession(a) {
+	if a, b := openCodeSession(""), openCodeSession(""); a == b || !openCodeIDRe.MatchString(a) {
 		t.Fatalf("no conversation: %q %q", a, b)
 	}
 	// OpenCode's own goes as it is; a hash cut to its shape doesn't
@@ -54,7 +54,7 @@ func TestOpenCodeSessionIsOpenCodes(t *testing.T) {
 	if openCodeRealSession(hashed) {
 		t.Fatal("a hash passes for OpenCode's session")
 	}
-	if got := openCodeSession(hashed); got == hashed || !openCodeRealSession(got) {
+	if got := openCodeSession(hashed); got == hashed || !openCodeIDRe.MatchString(got) {
 		t.Fatalf("a hashed session went on as %q", got)
 	}
 	h := http.Header{"X-Session-Affinity": {"from-the-agent"}}
@@ -96,5 +96,29 @@ func TestOpenCodeSessionsKeptBounded(t *testing.T) {
 	}
 	if openCodeSession("bounded-0") == first {
 		t.Fatal("the oldest conversation's session was still kept")
+	}
+}
+
+// OpenCode identifier.ts uses all 12 counter bits; the incoming-session
+// heuristic is not a validator for IDs produced by that algorithm.
+func TestOpenCodeIDsPastSmallCounter(t *testing.T) {
+	now := time.UnixMilli(1_700_000_000_123)
+	openCodeIDs.Lock()
+	last, count := openCodeIDs.last, openCodeIDs.counter
+	openCodeIDs.last, openCodeIDs.counter = 0, 0
+	openCodeIDs.Unlock()
+	t.Cleanup(func() {
+		openCodeIDs.Lock()
+		openCodeIDs.last, openCodeIDs.counter = last, count
+		openCodeIDs.Unlock()
+	})
+	seen := map[string]bool{}
+	for i := 1; i <= 32; i++ {
+		id := openCodeNewID("ses", true, now)
+		ms, n := openCodeDecode(t, id, true)
+		if !openCodeIDRe.MatchString(id) || ms != uint64(now.UnixMilli())%(1<<36) || n != uint64(i) || seen[id] {
+			t.Fatalf("generated ID %d: %s, time %d, count %d", i, id, ms, n)
+		}
+		seen[id] = true
 	}
 }

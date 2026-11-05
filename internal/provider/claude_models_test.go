@@ -43,6 +43,9 @@ func writeAnthropicCatalog(t *testing.T, rows ...string) {
 // Haiku 5.5 in Claude Code on the same account, not in magpie).
 func TestClaudeAccountServesModelsListedSinceItsFetch(t *testing.T) {
 	home := claudeHome(t)
+	if _, _, ok := claudeCredential(); ok {
+		t.Fatal("fresh home has a credential")
+	}
 	claudeSignIn(t, home, time.Now().Add(time.Hour))
 	t.Cleanup(catalog.Reset)
 

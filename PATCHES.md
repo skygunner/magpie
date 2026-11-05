@@ -64,6 +64,31 @@ behavior; baseline failures do not automatically authorize deployment.
 
 ## Deployment history
 
+- **2026-11-05, 3007-p2 preparation — both previous blockers resolved.**
+  This remains pinned to upstream v0.1.3007; the seven retained issue behaviors
+  and all four suspended entries stay as listed above.
+
+  OpenCode's reference identifier.ts increments a 12-bit-position counter
+  without a limit of 15. The generator and incoming-seed heuristic have both
+  existed since upstream 8e6354714 (2026-10-13), including production 2767.
+  `openCodeRealSession` is not the protocol validator for generated IDs.
+  Tests now validate generated IDs against the actual shape/time/counter
+  algorithm, including 32 IDs at fixed time; existing native-seed and legacy
+  hash-seed assertions remain. Runtime logic is unchanged. The prior blocker
+  classification was too strong; a vendor failure was never demonstrated.
+  Reference: https://github.com/anomalyco/opencode/blob/dev/packages/schema/src/identifier.ts
+
+  Claude's missing account is reproducible by caching a credential miss before
+  claudeSignIn writes the test login. That fixture bypassed the normal writer
+  and did not invalidate the miss. Reuse test-only #3174 fix de9593aca (with
+  ggbdpq credit), clearing the credential cache after writing. The actual
+  failing model-list test now seeds this miss so it cannot pass by timing.
+  The same test fails before the helper repair and passes after it. No carried
+  runtime patch caused either issue. Both regression families pass 20 times
+  with race detection. Complete final-commit gates and deployment follow;
+  this preparation entry is not a production success record.
+
+
 - **2026-11-05, v0.1.3007 integration — BLOCKED, NOT DEPLOYED.**
   `integration/nightly` merges pinned upstream v0.1.3007. #3487 remainder,
   #3788/#3791 and cooldown-settings are suspended under the user's new
