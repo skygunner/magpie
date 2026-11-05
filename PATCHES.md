@@ -15,7 +15,8 @@ mean upstream implements every former fork guarantee.
   observation pass. Old `prod/*` tags retain their historical meaning.
 - Production is 0.1.3007-p2 (accepted 2026-11-05 04:38 UTC / 14:38 AEST),
   tested source c63d898351f6b4cc057b387da158d8129225f405, upstream v0.1.3007.
-  Source integration alone does not authorize publication.
+  This round integrates pinned upstream v0.1.3033. Source integration alone
+  does not authorize publication.
 
 ## This round's patch decisions
 
@@ -64,6 +65,30 @@ behavior; baseline failures do not automatically authorize deployment.
    matching live IDs and fresh healthy checks. Never rebuild during promotion.
 
 ## Deployment history
+
+- **2026-11-05, v0.1.3033 integration — TESTED, NOT YET DEPLOYED.**
+  Dedicated worktree `integration/round-20261105T070630Z` merges pinned
+  upstream v0.1.3033 (`a2f7ed2e8`) from `integration/nightly`
+  `efd405044`. The only conflict was request-shape classification:
+  upstream's thought-signature refusal and the retained explicit
+  parameter-list refusal are both kept. All retained source branches had
+  no code commits; NVIDIA's one new commit is documentation only and was
+  not picked. All tracked issue comments were reread. Cloudflare Workers
+  AI remains production package 0.0.5; PR #366 remains test-only 0.0.4.
+  Stale documentation for suspended quota aggregation, cooldown settings
+  and absorbed #3417 was removed. One Claude cache assertion was corrected
+  to the recorded prompt text; it failed before and passes after.
+
+  Go 1.26.8 checks: changed Go formatting clean; Linux nogui, Windows and
+  Darwin nogui builds/vet passed. Native GUI build/vet passed with the
+  host libraries and `GOTOOLCHAIN=go1.26.8`. Retained gateway/provider/update
+  regressions passed `-race -count=20`. Full nogui suite has eight failures,
+  all reproduced on clean v0.1.3033: four aside-offline tests, TestKeyNote,
+  TestBootSaysWhereItsGatewayListens, TestSteadyGCRetunesAfterACollection
+  and TestGitPluginUpdateOnlyWhenItsRepositoryMoved. These are upstream
+  failures, not a release authorization. Relevant GUI checks passed 62/62
+  across Chromium/WebKit and five languages. Deployment fault tests: 80/80.
+  Production snapshot comparison and deployment have not run yet.
 
 - **deployed/0.1.3007-p2 — 2026-11-05: PASSED AND PUBLISHED.**
   Tested/deployed source c63d898351f6b4cc057b387da158d8129225f405;
