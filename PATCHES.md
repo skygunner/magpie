@@ -17,7 +17,7 @@ mean upstream implements every former fork guarantee.
   tested source c63d898351f6b4cc057b387da158d8129225f405, upstream v0.1.3007.
   Source integration alone does not authorize publication.
 
-## This round's patch decisions
+## This round's patch decisions (v0.1.3036 candidate)
 
 | Patch | Decision | Behavior / reason |
 | --- | --- | --- |
@@ -64,6 +64,31 @@ behavior; baseline failures do not automatically authorize deployment.
    matching live IDs and fresh healthy checks. Never rebuild during promotion.
 
 ## Deployment history
+
+- **2026-11-05, 0.1.3036-p1 preparation — not deployed yet.**
+  Pin upstream v0.1.3036 (465928bccea4fec3537edd6280f7cabb9a0c5bad),
+  36 commits after v0.1.3007. Seven retained issue behaviors and -pN adaptation
+  remain; the four suspended entries stay suspended. Source refs have no new
+  runtime changes (NVIDIA's extra commit is documentation only). Related issue
+  states/comments have not changed since the previous review.
+
+  Review intersections: upstream near-cap account serialization owns admission,
+  waiting/cancellation and post-wait cap checks; none of the suspended fork
+  cooldown/timeout policies is reintroduced. Caller-key trace fields and Routing
+  grouping extend route metadata; #3623 still reads the actual ordered tries,
+  and #3624 still reveals the selected trace. New Google thought-signature
+  ownership/retry/refusal handling applies to different input than NVIDIA's
+  explicit unsupported-parameter reader. The only textual merge conflict was
+  shapeRefused's predicate list; retain both independently applicable predicates,
+  not competing rules for the same error. Cover both in the gate.
+
+  Upstream media-group, search routing/archive, balance discovery and self-remote
+  changes are retained. Final-source full tests, both browser engines, isolated
+  config validation, detached deployment and 46-minute observation are required
+  before production promotion/publication. Current production stays 3007-p2.
+  The six-hour automation was already disabled and idle at this round's start;
+  preserve that state rather than enabling it as part of a manual deployment.
+
 
 - **deployed/0.1.3007-p2 — 2026-11-05: PASSED AND PUBLISHED.**
   Tested/deployed source c63d898351f6b4cc057b387da158d8129225f405;
