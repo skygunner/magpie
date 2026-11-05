@@ -17,7 +17,7 @@ mean upstream implements every former fork guarantee.
   tested source c63d898351f6b4cc057b387da158d8129225f405, upstream v0.1.3007.
   Source integration alone does not authorize publication.
 
-## This round's patch decisions (v0.1.3036 candidate)
+## This round's patch decisions (v0.1.3036-p2 candidate)
 
 | Patch | Decision | Behavior / reason |
 | --- | --- | --- |
@@ -33,6 +33,7 @@ mean upstream implements every former fork guarantee.
 | #3623 | retain | Expanded Usage details show ordered recorded attempts, including 499. |
 | Cooldown settings | suspend | Layered policy, changed defaults and release semantics compete with current upstream rest rules. Editor/API and runtime overrides are removed together. |
 | #3417 | absorbed | Upstream configurable Codex reset lead remains; fixed-lead fork stays removed. |
+| #4385 | retain new fix | Restore the full interrupted pixel-wheel step from its origin, grouped per view; preserve native progress and keep touch/non-pixel restoration unchanged. Source `fix/webkit-delayed-wheel`. |
 | build -pN | retain | Update checks and release notes compare the base version. |
 | plugins PR #366 | separate | Keep production Cloudflare Workers AI package 0.0.5. No package downgrade or test-only rebuild. |
 
@@ -64,6 +65,25 @@ behavior; baseline failures do not automatically authorize deployment.
    matching live IDs and fresh healthy checks. Never rebuild during promotion.
 
 ## Deployment history
+
+- **2026-11-05, 0.1.3036-p2 preparation — not deployed yet.**
+  The user authorized fixing the WebKit blocker, keeping the repair in fix/*,
+  applying it to pinned v0.1.3036, testing/deploying, and replying upstream.
+  Exact upstream issue [#4385](https://github.com/yetone/magpie/issues/4385)
+  has been read through its last comment; no patch is posted. Source branch
+  `fix/webkit-delayed-wheel`, commit 8b5b0bf53, starts from clean v0.1.3036.
+  A guard write cancels WebKit's native wheel animation before the delayed
+  listener runs; restoring only the erased first fragment loses the rest.
+  The fix records the restored origin and groups erased steps per view, then
+  completes a pixel wheel from that origin without adding already kept motion.
+  Touch/non-pixel inputs retain recorded-distance restoration. The regression
+  keeps its original minimum movement assertion and adds an upper bound;
+  the clicked day's load settles before measuring the wheel's own distance.
+  The focused test fails on unmodified upstream and passes in both engines.
+  Full final-source gate, isolated config replay, immutable image deployment
+  and the 46-minute production observation still must pass before promotion.
+  The seven prior retained issue behaviors and suspended entries stay as above;
+  production remains 0.1.3007-p2 and automation remains disabled.
 
 - **2026-11-05, 0.1.3036-p1 gate blocked — no deployment.**
   Tested source 588344c9a30480843f16bd24c9cde6bf592eba5f. Full Go passed
