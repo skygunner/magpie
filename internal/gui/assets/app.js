@@ -22751,12 +22751,12 @@ function keyboardFocus(e) {
 // back. macOS 13's WebKit may never tell of one (issenn): three put back the
 // same way in a second, not by a click's hold (h), are the reader's, and so
 // is each after it within a second.
-let putBack = [], run = null; // { v, by: px put back, at, h: held }, the last second's
+let putBack = [], run = null; // { v, by: px put back, top: restored position, at, h: held }, the last second's
 function puttingBack(v, from, h) {
   const by = from - v.scrollTop, at = performance.now(), d = Math.sign(by);
   putBack = putBack.filter((p) => at - p.at < 1000);
   if (Math.abs(by) < 1) return;
-  putBack.push({ v, by, at, h });
+  putBack.push({ v, by, at, h, top: v.scrollTop });
   if (h) return;
   const mine = putBack.filter((p) => p.v === v && !p.h && Math.sign(p.by) === d);
   if (mine.length < 3 && !(run?.v === v && run.d === d && at - run.at < 1000)) return;
@@ -22788,7 +22788,18 @@ function givesBack(e, dir) {
   const now = performance.now(), mine = (p) => p.at >= e.timeStamp - 50 && now - p.at < 1000 && Math.sign(p.by) === dir && !p.v.hidden;
   const back = putBack.filter(mine);
   putBack = putBack.filter((p) => !mine(p));
-  for (const p of back) p.v.scrollTop += p.by;
+  const steps = new Map();
+  for (const p of back) {
+    const prev = steps.get(p.v);
+    steps.set(p.v, { top: prev?.top ?? p.top, by: (prev?.by || 0) + p.by });
+  }
+  for (const [v, step] of steps) {
+    if (e.deltaMode !== 0) { v.scrollTop += step.by; continue; }
+    // Writing scrollTop cancels WebKit's remaining wheel animation. Count
+    // the full pixel step from its old position, including any part kept.
+    const to = step.top + dir * Math.max(Math.abs(step.by), Math.abs(e.deltaY));
+    v.scrollTop = dir > 0 ? Math.max(v.scrollTop, to) : Math.min(v.scrollTop, to);
+  }
 }
 // marks a box that scrolls in a page while it overflows (.holds, app.css)
 const holds = (e) => { for (let b = e.target; b instanceof Element && !b.matches(".view,body"); b = b.parentNode) b.classList.toggle("holds", b.scrollHeight > b.clientHeight + 1 && /auto|scroll/.test(getComputedStyle(b).overflowY)); };

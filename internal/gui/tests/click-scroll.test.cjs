@@ -313,10 +313,12 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       const frames = () => page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r)))));
       for (const click of [false, true]) {
         // with nothing clicked, and with a click held
-        if (click) await dayButtons.nth(1).click();
+        if (click) { await dayButtons.nth(1).click(); await settle(page); }
         const was = await scrollTop();
         await wheel(300);
-        assert((await scrollTop()) > was + 100, `the late-heard wheel must scroll the view${click ? " after a click" : ""}`);
+        const moved = (await scrollTop()) - was;
+        assert(moved > 100, `the late-heard wheel must scroll the view${click ? " after a click" : ""}`);
+        assert(moved <= 301, "restoring a wheel must not count its step twice");
       }
       // a scroll by code is still put back, the wheel that follows it not
       // giving it to the reader
