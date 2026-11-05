@@ -82,6 +82,16 @@ behavior; baseline failures do not automatically authorize deployment.
   The focused test fails on unmodified upstream and passes in both engines.
   Full final-source gate, isolated config replay, immutable image deployment
   and the 46-minute production observation still must pass before promotion.
+  The supporting `fix/gui-wheel-test-contexts` branch (e057fd4) corrects
+  view-open-wheel's cleanup ownership: each subtest closes its own context,
+  with an assertion that no context remains before the next case. The old
+  hook retains 80 active pages per engine and confounds a long loaded run;
+  the ownership assertion is red with that hook and green with subtest cleanup.
+  This changes test code only. Expanded coverage also reproduces the two
+  Chromium inner-scroll foot cases on clean upstream, tracked by #4689;
+  instrumentation shows zero entries into the modified restoration path at
+  those failures. They remain a separately recorded, out-of-scope baseline
+  issue, not a claimed fix and not evidence that the expanded suite is all green.
   The seven prior retained issue behaviors and suspended entries stay as above;
   production remains 0.1.3007-p2 and automation remains disabled.
 
