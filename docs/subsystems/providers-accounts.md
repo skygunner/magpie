@@ -250,20 +250,6 @@ the price is the own id's first (`ListPrice`). `TestModelIDListedAndAskedForByOw
 
 ## Constraints and failure behavior
 
-Codex automatic reset spending has two independent permissions (#2078,
-#3417): `week` allows a reset when the week is exhausted and no account can
-answer, at most once a week; `expiring` allows the earliest expiring card
-when its windows have been used. The card is normally spent before expiry
-by the configured `CodexResetLead` (30 minutes by default). If the account
-is held up and its recovery is unknown or no earlier than that spend time,
-the card is spent on the next check instead. The background check uses
-`expiringResetSpent` in [`codex_expiring.go`](../../internal/provider/codex_expiring.go);
-routing uses the same time through `Allowance.Restarts`. Expired cards and
-unused windows spend nothing. Manual use remains an explicit user action.
-`TestResetSpentAsLateAsSafe`, `TestSpendExpiringCodexResets`,
-`TestRestartsWhenHeldUp` and `TestCodexAutoResetCases` exercise this with
-fixed times, fake callbacks and a local fake vendor; no real cards are needed.
-
 An allowance deliberately not requested (a saved Claude account outside
 its card refresh, or allowances set to *When I ask*) can use the last
 reading with `readDeferred: true`. `AsOf` and `ReadAt` still date that
@@ -441,12 +427,3 @@ real `~/.codex`, `~/.claude`, `~/.config/gcloud` or `~/.config/magpie` files.
 Vertex AI's tests send Vertex AI, Google's token endpoint and IAM Credentials
 to a server of their own (`VertexForTest`). Check a change
 against real accounts in a sandbox HOME, as [Code standards](../code-standards.md#acceptance-criteria) describes.
-
-### Fork cooldown settings
-
-Provider `cooldown` and per-account/key `accountCooldown` expose error-rest
-policies with global defaults and source attribution. Legacy rest-cap, quota-rest,
-its daily reset and modelCooldown values remain compatible. See
-[editable error cooldown policy](gateway-routing.md#fork-editable-error-cooldown-policy)
-for precedence, defaults, persistence and API behavior. Subscription/plugin picks
-and replacement keys carry these settings on the same paths as their other limits.

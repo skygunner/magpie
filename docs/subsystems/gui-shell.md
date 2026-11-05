@@ -290,11 +290,9 @@ once a group's member has readings, so they weigh nothing on the core;
 each place is drawn again once it is in. All three come from
 `mergeQuotas`, which puts together only what reads alike:
 
-- a counted window with a positive `limit` and positive `amount` (or
-  `heldBy`) of one name and unit adds its amounts and limits, its share the
-  share of the sum; a missing or zero `amount` means not said, so its `used`
-  share, if present, is grouped by plan instead; a wallet (`balance`) adds
-  its balances in one unit;
+- a counted window (`limit`) of one name and unit adds its amounts and
+  limits, its share the share of the sum; a wallet (`balance`) adds its
+  balances in one unit;
 - a window said only as a share is the mean of the accounts on one
   plan, the same allowance each; two plans are never averaged, and a
   window more than one plan has is named with its plan;
@@ -1049,13 +1047,3 @@ specific reason in the tooltip and details. A lower bound is shown when the
 available timing supports one. Speed is not evidence of success. The
 `usage-speed-every-row.test.cjs` tests cover speed explanations, error
 provenance and HTTP 200 in all five languages in Chromium and WebKit.
-
-### Fork error cooldown editor
-
-Settings → Network and sharing, provider rows and account/key rows open the same
-Error cooldown and backoff editor. It reads/writes `/api/cooldown`, shows effective
-values and sources, examples, limit switches, exact model cooldowns and current
-rests, and links response deadlines to Routing. Numeric blanks inherit; model
-zero disables its inherited opt-in. Save errors keep the draft; the modal stays
-open across provider refreshes. Saving blocks modal dismissal. Rules are in
-[gateway routing](gateway-routing.md#fork-editable-error-cooldown-policy).
