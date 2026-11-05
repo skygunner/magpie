@@ -954,6 +954,7 @@ class PrimitiveTests(unittest.TestCase):
             def read(self,n): return self.body
         class Opener:
             authenticated=False
+            cooldown_error=None
             def open(self,request,timeout):
                 url=request.full_url; requests.append((url,request.get_header('Authorization'),request.get_method()))
                 if url.endswith('/api/providers') and not self.authenticated:
@@ -963,7 +964,10 @@ class PrimitiveTests(unittest.TestCase):
                     return Response(b'ok',raw=True)
                 if url.endswith('/api/providers'): return Response({'providers':[{'id':'p'}]})
                 if url.endswith('/api/groups'): return Response({'groups':[{'id':'g'}]})
-                if url.endswith('/api/cooldown'): return Response({'effective':{}})
+                if url.endswith('/api/cooldown'):
+                    if self.cooldown_error:
+                        raise urllib.error.HTTPError(url,self.cooldown_error,'offline',{},None)
+                    return Response({'effective':{}})
                 if url.endswith('/v1/models'):
                     model='group/unrelated' if request.get_header('Authorization')=='Bearer FIRST' else 'group/fast-cheap'
                     return Response({'data':[{'id':model}]})
@@ -973,6 +977,16 @@ class PrimitiveTests(unittest.TestCase):
         self.assertEqual(result['key_index'],1)
         self.assertEqual([r[1] for r in requests if r[0].endswith('/v1/models')],['Bearer FIRST','Bearer SECOND'])
         self.assertFalse(any(r[2]=='POST' for r in requests))
+        upstream = Opener()
+        upstream.cooldown_error = 404
+        with patch.object(g.urllib.request,'build_opener',return_value=upstream):
+            result=g.http_work('snapshot',{'web_key':SENTINEL,'keys':['SECOND']})
+        self.assertIsNone(result['snapshot']['cooldown'])
+        unavailable = Opener()
+        unavailable.cooldown_error = 503
+        with patch.object(g.urllib.request,'build_opener',return_value=unavailable):
+            with self.assertRaisesRegex(g.Failure,'cooldown_http_error'):
+                g.http_work('snapshot',{'web_key':SENTINEL,'keys':['SECOND']})
 
     def test_entry_help_runs_without_docker_or_network(self):
         result=subprocess.run([sys.executable,'-I','-B','-c',EMBEDDED,str(ENTRY),'--help'],

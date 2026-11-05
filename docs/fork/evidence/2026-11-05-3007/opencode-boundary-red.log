@@ -1,0 +1,5 @@
+--- FAIL: TestIntegrationGeneratedSessionsStayRecognized (0.00s)
+    integration_id_boundary_test.go:7: generated session 16 is rejected by the same package: ses_4301a97fffeflqjMfvMnNfGJh7
+FAIL
+FAIL	github.com/yetone/magpie/internal/provider	0.008s
+FAIL

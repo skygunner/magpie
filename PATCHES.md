@@ -64,6 +64,53 @@ behavior; baseline failures do not automatically authorize deployment.
 
 ## Deployment history
 
+- **2026-11-05, v0.1.3007 integration — BLOCKED, NOT DEPLOYED.**
+  `integration/nightly` merges pinned upstream v0.1.3007. #3487 remainder,
+  #3788/#3791 and cooldown-settings are suspended under the user's new
+  upstream-first policy; retained runtime additions are listed above.
+  Production remains 0.1.2767-p1; no candidate/deployed tag or Hub release
+  was created for this integration.
+
+  A network-isolated replay of the pre-3005 backup reproduced the incident's
+  baseline exactly (245 models, 32 providers, 47 groups). The failed image
+  yielded 251 models, 32 providers, 49 groups: four zcode models, two auto
+  model aliases and two generated groups were added, with cooldown unchanged.
+  The first new candidate snapshot also had 251/32/49 and deliberately no
+  cooldown API. Original incident candidate API data is still unavailable:
+  this is reproduction evidence, not recovered historical data. Later offline
+  refresh failures changed the old replay's cached lists, demonstrating why
+  snapshots must be saved at capture time. No external vendor calls were
+  possible from the replay's internal Docker network.
+
+  Test maintenance keeps the original behavior assertions: isolate the POSIX
+  shell from a fish login, correct literal JSON-newline expectations, and gate
+  the Darwin tray image test on its cgo implementation. Restore three upstream
+  timing/order fixtures after cooldown removal. Reuse the existing #2207
+  deterministic SOCKS refusal fixture (test-only, source a93c613a0). The Codex
+  reset UI test clears previous notification state before each independent
+  click and permits one-pixel engine rounding; all 20 browser/language/width
+  cases pass, including the two previously failing WebKit German cases.
+  All 80 deployment fault tests pass; Linux/Windows/Darwin nogui vet/build,
+  native build/vet and retained gateway race regressions (20 repetitions) pass.
+
+  **New deterministic blocker:** upstream openCodeNewID emits counter 16
+  within one millisecond, but openCodeRealSession requires counter <16.
+  The checked-in reproducer fails on clean v0.1.3007 at generated session 16.
+  This explains a real consistency failure behind the previously called
+  load-sensitive TestOpenCodeSessionOnEveryCall; a later isolated pass does
+  not resolve it. Do not weaken the validator or alter the wire-ID algorithm
+  without checking OpenCode's protocol requirements. No new protocol patch
+  was added during this integration.
+
+  Evidence: [deterministic reproducer](docs/fork/evidence/2026-11-05-3007/opencode-boundary-repro.go.txt),
+  [failure](docs/fork/evidence/2026-11-05-3007/opencode-boundary-red.log),
+  [isolated replay](docs/fork/evidence/2026-11-05-3007/incident-reproduction.json).
+  Complete local gate logs remain private under
+  `~/.local/state/magpie-rounds/0.1.3007-p1/`. Deployment stays blocked on
+  docker1, and the rolling automation must honor this block. No production
+  inference, acceptance switch or 46-minute production observation occurred.
+
+
 - `prod/0.1.3005-p1` — 2026-11-05. **Candidate failed acceptance;
   rolled back, not published.** Source commit `b46d2c12f` and the annotated
   tag were pushed to the fork before the image was built and transferred.

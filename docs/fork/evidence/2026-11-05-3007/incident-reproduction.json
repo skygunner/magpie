@@ -1,0 +1,47 @@
+{
+  "network": "internal, no external vendor calls",
+  "snapshots_and_diff": [
+    {
+      "replay": "old",
+      "models": 245,
+      "providers": 32,
+      "groups": 47,
+      "zcode_ids": []
+    },
+    {
+      "replay": "failed",
+      "models": 251,
+      "providers": 32,
+      "groups": 49,
+      "zcode_ids": [
+        "zcode/GLM-5-Turbo",
+        "zcode/GLM-5.2",
+        "zcode/GLM-5.3",
+        "zcode/GLM-5.3-Flash"
+      ]
+    },
+    {
+      "diff": {
+        "models": {
+          "added": [
+            "auto/glm-5-turbo",
+            "auto/glm-5.2",
+            "zcode/GLM-5-Turbo",
+            "zcode/GLM-5.2",
+            "zcode/GLM-5.3",
+            "zcode/GLM-5.3-Flash"
+          ],
+          "removed": []
+        },
+        "groups": {
+          "added": [
+            "auto-glm-5-2",
+            "auto-glm-5-turbo"
+          ],
+          "removed": []
+        }
+      }
+    }
+  ],
+  "limitation": "Original candidate API snapshot was not retained; this is an isolated reproduction. Catalogs can change after offline refresh failures."
+}

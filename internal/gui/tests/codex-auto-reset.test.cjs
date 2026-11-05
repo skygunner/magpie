@@ -158,6 +158,8 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       // a switch's click: it posts, turns, says what the account does now,
       // and moves nothing on the page
       const flip = async (page, sel, posts, body, want, said) => {
+        // A previous long toast must not make Playwright scroll around it.
+        await page.evaluate(() => status(""));
         const b = page.locator(sel);
         await b.scrollIntoViewIfNeeded();
         const at = await b.evaluate((e) => [e.getBoundingClientRect().top, document.scrollingElement.scrollTop, ...[...document.querySelectorAll(".view")].map((v) => v.scrollTop)]);
@@ -169,7 +171,8 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         assert.equal(await page.locator(sel).evaluate((e) => e.classList.contains("on")), want);
         assert.equal(await page.locator("#status").textContent(), said);
         await page.waitForTimeout(200);
-        assert.deepEqual(await page.locator(sel).evaluate((e) => [e.getBoundingClientRect().top, document.scrollingElement.scrollTop, ...[...document.querySelectorAll(".view")].map((v) => v.scrollTop)]), at, "the click moved the page");
+        const after = await page.locator(sel).evaluate((e) => [e.getBoundingClientRect().top, document.scrollingElement.scrollTop, ...[...document.querySelectorAll(".view")].map((v) => v.scrollTop)]);
+        assert(after.length === at.length && after.every((n, i) => Math.abs(n - at[i]) <= 1), `the click moved the page: ${at} → ${after}`);
       };
       const checked = (page, sel) => page.locator(sel).getAttribute("aria-checked");
       // fits: sel lies inside its card, cut off nowhere

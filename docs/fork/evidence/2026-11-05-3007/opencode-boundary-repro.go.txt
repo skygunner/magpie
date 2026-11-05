@@ -1,0 +1,9 @@
+package provider
+import ("testing"; "time")
+func TestIntegrationGeneratedSessionsStayRecognized(t *testing.T) {
+ now := time.UnixMilli(1700000000000)
+ for i:=1;i<=20;i++ {
+  id:=openCodeNewID("ses",true,now)
+  if !openCodeRealSession(id) {t.Fatalf("generated session %d is rejected by the same package: %s",i,id)}
+ }
+}
