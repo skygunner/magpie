@@ -90,7 +90,7 @@ Each round:
    `bigshort/magpie-patched:<tag>-pN` and `:latest`, verify their digests,
    and update the Hub README and `/tmp/hub-readme.md`.
 
-## Carried patches (as of v0.1.2767-p1, 2026-11-03)
+## Carried patches (as of v0.1.3005-p1, 2026-11-05)
 
 > **In progress (2026-11-05):** the current target is v0.1.3005. The earlier
 > v0.1.2950 preparation was tested but never deployed. Its tests do not
@@ -99,15 +99,15 @@ Each round:
 > v0.1.2877 candidate was rolled back for its first inference timeout; the
 > cause of that timeout is unknown, including whether it involved #3487.
 
-Checked against v0.1.2767 (2026-11-03): eleven carried entries — nine
+Checked against v0.1.3005 (2026-11-05): eleven carried entries — nine
 patch rows, #3623's attempt chain (joined at 0.1.2051-p3) and the
 cooldown-settings surface (joined at 0.1.2051-p4) — plus the build-line
 fix and #3487's card-display and millisecond-span remainder, re-
 expressed at the v0.1.1948 merge. #3417 left the list at 0.1.2264-p1:
 upstream made the spend deadline's lead configurable (settings'
 `CodexResetLead`) and evolved the held-up behavior, superseding this
-line's fixed-lead variant. This header had silently stayed at
-v0.1.2214 for two rounds (unasserted replaces); fixed here.
+line's fixed-lead variant. The remaining fixed-lead CLI wording was
+removed during the v0.1.3005 audit; its output now matches upstream too.
 
 Equivalence notes for the sweep: `fix/hindsight-nonstream-cooldown`'s
 tip `b48a91bb` and `dfd128ca` are the same SSE fix on different bases —
@@ -121,7 +121,7 @@ commit is docs-only.
 | --- | --- | --- | --- |
 | yetone/magpie#3035 | `8f931a28` + `223f9b0a` | `fix/sensenova-grammar-refusal`, `fix/bare-request-failover` | recognize SenseNova's guided_grammar compile_grammar refusal and retry the schema as json_object; an otherwise unexplained 400/422 `Invalid request` also fails over to the next candidate, resting nothing |
 | yetone/magpie#3417 | absorbed at v0.1.2264 | — | Codex expiry-only resets stay inside the expiry window: upstream made the spend deadline's lead configurable (settings' `CodexResetLead`) and evolved the held-up behavior (a reset held up past its spend point is spent at once); this line's fixed-lead variant (`e75480ec`) and its test were superseded and removed at the merge |
-| yetone/magpie#3487 | merge-carried (was `d4944ace`) | `fix/issue-batch-1025a` | quota card: a limit with no count is not a full allowance — on upstream's bare-amount model (plugins#468) the card and tray treat an amount of 0 as not said; a millisecond span is not charted as seconds (`quotaSpanLimit`, upstream lacks it) |
+| yetone/magpie#3487 | merge-carried (was `d4944ace`) | `fix/issue-batch-1025a` | quota card: a limit with no count is not a full allowance — on upstream's bare-amount model (plugins#468) the card and tray treat an amount of 0 as not said, and account aggregation keeps such shares apart from known counts; a millisecond span is not charted as seconds (`quotaSpanLimit`, upstream lacks it) |
 | yetone/magpie#3635 | `ad3badd3` + `4f7e63a8` | `fix/nvidia-parameters-routing` | NVIDIA parameter-list repair keeps reasoning effort; duplicate effort controls stay aligned through routing |
 | yetone/magpie#3636 | `0d3dca3d` | `fix/nvidia-parameters-routing` | an explicit unsupported-parameter 400 fails over to the group's remaining members |
 | yetone/magpie#3624 | `c931166a` | `fix/nvidia-parameters-routing` | Usage → View routing reveals the selected trace, not off-screen |

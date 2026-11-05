@@ -49,6 +49,28 @@ test("counted windows of one unit add up; the share is of the sum", () => {
   assert.equal(w.how, "c");
 });
 
+test("missing and zero amounts use their shares instead of adding unspent counts", () => {
+  const r = merge([
+    acct("a", [{ name: "Credits", amount: 100, limit: 500, unit: "credits", used: 20 }]),
+    acct("b", [{ name: "Credits", amount: 250, limit: 500, unit: "credits", used: 50 }]),
+    acct("c", [{ name: "Credits", limit: 500, unit: "credits", used: 30 }]),
+    acct("d", [{ name: "Credits", amount: 0, limit: 500, unit: "credits", used: 70 }]),
+  ], now);
+  const ws = by(r, "Credits");
+  assert.deepEqual(ws.map((w) => [w.how, w.accounts, w.amount, w.limit, w.used]), [
+    ["c", 2, 350, 1000, 35],
+    ["p", 2, undefined, undefined, 50],
+  ]);
+});
+
+test("missing or zero amounts without a share do not invent a counted window", () => {
+  const r = merge([
+    acct("a", [{ name: "Credits", limit: 500, unit: "credits" }]),
+    acct("b", [{ name: "Credits", amount: 0, limit: 500, unit: "credits" }]),
+  ], now);
+  assert.deepEqual(by(r, "Credits"), []);
+});
+
 test("a share is never added to a count, nor one unit to another", () => {
   const r = merge([
     acct("a", [{ name: "Monthly", amount: 100, limit: 500, unit: "credits" }, { name: "Tokens", amount: 1, limit: 10, unit: "M tokens" }]),

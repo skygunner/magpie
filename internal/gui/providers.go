@@ -747,8 +747,9 @@ func providerInfoWith(p provider.Provider, ls provider.Listing, agents []agentUs
 		}
 	}
 	// a provider of a preset with such a plan among its regions takes one
-	// wherever it is, the editor showing it at those regions
-	vendor := provider.AccessKeyVendor(p)
+	// wherever it is, the editor showing it at those regions; a custom
+	// provider none until it has one (provider.AsksAccessKey, ysm119)
+	vendor := provider.AsksAccessKey(p)
 	if pr := provider.Preset(p.Preset); vendor == "" && pr != nil {
 		vendor, _ = presetAccessKey(*pr)
 	}
@@ -1920,7 +1921,7 @@ func providerRoutes(mux *http.ServeMux, w Windows) {
 				// each account's own models are set on their own, with
 				// accountmodels
 				if old != nil {
-					in.AccountModels = old.AccountModels
+					in.AccountModels, in.AccountModelsAll = old.AccountModels, old.AccountModelsAll
 				}
 				// and their usage caps, with accountcap and windowcap, their
 				// limits on requests at once, with accountconcurrency, and
@@ -2160,6 +2161,12 @@ func providerRoutes(mux *http.ServeMux, w Windows) {
 				fail(rw, err)
 				return
 			}
+		case "keylisted":
+			// the models the key Account's own fetched list has, for the
+			// key picker's Select all available; nothing saved
+			ms := provider.KeyListed(in.ID, req.Account)
+			writeJSON(rw, map[string]any{"models": ms, "known": ms != nil})
+			return
 		case "accountcap":
 			if err := provider.SetAccountCap(in.ID, req.Account, req.Cap); err != nil {
 				fail(rw, err)
