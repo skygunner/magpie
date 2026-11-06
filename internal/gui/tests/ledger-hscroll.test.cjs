@@ -104,13 +104,17 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         const d = p.locator(".led tbody tr.led-detail");
         assert.deepEqual((await d.locator("dt").allTextContents()).slice(0, 3), w.labels);
         assert.deepEqual((await d.locator("dd").allTextContents()).slice(0, 3), w.values);
+        // Opening the detail reads its attempts; navigation asks for a fresh trace.
+        for (let i = 0; i < 40 && !asked.length; i++) await p.waitForTimeout(25);
+        assert.deepEqual(asked, ["502"], "the detail loads its attempt history once");
+        const beforeRouteClick = asked.length;
         // brought above the bar, which covers the window's last few pixels
         await reader.inView(p, d.locator(".led-route-link"));
         await p.mouse.wheel(0, 80);
         await p.waitForTimeout(300);
         await d.locator(".led-route-link").click();
-        for (let i = 0; i < 40 && !asked.length; i++) await p.waitForTimeout(25);
-        assert.deepEqual(asked, ["502"], "the link asks for the row's route");
+        for (let i = 0; i < 40 && asked.length === beforeRouteClick; i++) await p.waitForTimeout(25);
+        assert.deepEqual(asked.slice(beforeRouteClick), ["502"], "the link asks for the row's route");
         assert.equal(await p.locator(".led tbody tr.led-detail").count(), 1, "the link didn't close the row");
 
         // a window wide enough for the table has no bar

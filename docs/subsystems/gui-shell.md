@@ -1099,13 +1099,18 @@ view in both browser engines and all five languages.
 The Usage request table keeps HTTP status separate from recorded errors:
 `200 · Protocol error` is a failed request observed by the gateway, while
 `200 · Client-reported error` comes from an existing reported record. Expanded
-rows show the error source and original error text. Reports remain separate
+protocol-error and client-reported rows name their source and keep the original
+error text. Ordinary vendor and session-log errors keep upstream's existing
+labels. Reports remain separate
 records; this UI does not collect client logs or correlate reports with gateway
 calls. A gateway response cannot establish whether Hindsight or another client
-parsed or used it, and the details explicitly say so.
+parsed or used it; this boundary follows the ordinary detail fields. A try
+handed on to another member keeps upstream's status/type/handoff labels, without
+an extra generic Failed label.
 
 A speed that cannot be estimated or bounded is shown as a dash, with its
-specific reason in the tooltip and details. A lower bound is shown when the
+specific reason in upstream's tooltip; no duplicate no-sample detail is added.
+A lower bound is shown when the
 available timing supports one. Speed is not evidence of success. The
 `usage-speed-every-row.test.cjs` tests cover speed explanations, error
 provenance and HTTP 200 in all five languages in Chromium and WebKit.

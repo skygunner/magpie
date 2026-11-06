@@ -1366,14 +1366,15 @@ function ledDetail(r, cols) {
   if (ledFailed_(r)) {
     add("Status", r.status ? String(r.status) : "—", "bad");
     add("Error type", r.err_type, "bad");
-    add("Error source", t(r.source === "reported" ? "Client report" : r.source === "log" ? "Client log" : r.err_type === "protocol_error" ? "Gateway protocol check" : "Gateway / upstream"));
-    add("Error", r.err, "said");
+    if (r.source === "reported" || r.err_type === "protocol_error") {
+      add("Error source", t(r.source === "reported" ? "Client report" : "Gateway protocol check"));
+      add("Error", r.err, "said");
+    } else add(r.source === "log" ? "Error" : "Upstream said", r.err, "said");
   } else {
     // how it went, here as well as in the row's last column, which a narrow
     // window leaves out of sight (#799)
     add("Status", r.status ? String(r.status) : r.source === "log" ? t("Succeeded") : "");
   }
-  if (r.source !== "log" && r.source !== "reported") add("Client processing", t("Not observed by the gateway. HTTP status does not confirm that the client parsed or used the response."));
   if (Number.isFinite(r.ms) && r.ms > 0) add("Duration", (r.source === "log" ? "≈" : "") + ledTook(r.ms));
   // the way it was routed: the row's time links there too, which reads as
   // a time rather than a link (#799)
@@ -1423,7 +1424,6 @@ function ledDetail(r, cols) {
   if (r.credits != null) add("Credits", ledCredits({ credits: r.credits, credited: 1 }).textContent);
   if (ledRowSpeed(r)) add("Speed", t("{n} tok/s", { n: ledNum(Math.round(ledRowSpeed(r))) }));
   else if (ledFloorSpeed(r)) add("Speed", "≥" + t("{n} tok/s", { n: ledNum(Math.round(ledFloorSpeed(r))) }));
-  else add("Speed", ledNoSpeed_(r));
   // what went up to the vendor and came back, its tries summed, and what
   // DeepSeek's image files kept out of it (#5407); a row from before has
   // none of them, and says nothing
@@ -1475,6 +1475,7 @@ function ledDetail(r, cols) {
   // it was on, or not through the gateway
   if (!r.archive && !r.computer && (providers?.gateway?.archive?.on ?? state.settings?.requestArchive)) add("Request archive", t("Not archived"), "muted");
   if (r.source === "log") add("Data source", t("Read from the agent's session file. The account is shown only when local metadata identifies it; no service provider is inferred."), "muted");
+  if (r.source !== "log" && r.source !== "reported") add("Client processing", t("Not observed by the gateway. HTTP status does not confirm that the client parsed or used the response."));
   const tr = el("tr", "led-detail");
   const td = el("td");
   td.colSpan = cols;
@@ -2656,7 +2657,7 @@ function renderLedger() {
     // a status when the gateway logged the call; a session file has none,
     // and says only whether it went well
     let word = r.status ? String(r.status) : r.source === "log" || mcp || search ? (bad ? r.err_type || t("Failed") : t("Succeeded")) : bad ? (r.source === "reported" ? t("Client-reported error") : r.err_type === "protocol_error" ? t("Protocol error") : r.err_type || t("Failed")) : "—";
-    if (r.status && bad) word += " · " + (r.source === "reported" ? t("Client-reported error") : r.err_type === "protocol_error" ? t("Protocol error") : r.err_type || t("Failed"));
+    if (r.status && bad && (r.err_type || r.source === "reported")) word += " · " + (r.source === "reported" ? t("Client-reported error") : r.err_type === "protocol_error" ? t("Protocol error") : r.err_type);
     if (r.handed_on) word += " · " + t("handed on");
     else if (r.tries > 1) word += " · " + t("{n} tries", { n: r.tries });
     st.append(el("i", "dot"), document.createTextNode(word));

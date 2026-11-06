@@ -30,6 +30,9 @@ source named above until the complete gate and production observation pass.
 - Retain the other seven issue behaviors listed below, pending final regression
   results. Their upstream issue states and replies were rechecked; open issue
   status alone is not evidence that a fork patch remains necessary.
+- Retire the #3948 generic error-label/source and duplicate no-speed detail
+  rewrites where upstream now owns the presentation. Keep protocol/client-report
+  diagnostics; put the client-processing boundary after the ordinary details.
 - The prior suspended quota/cooldown/timeout policies remain suspended.
 - Keep the separate production Cloudflare Workers AI plugin at 0.0.5.
 - Review and final test evidence: [3190 integration review](docs/fork/evidence/2026-11-07-3190/patch-review.md).

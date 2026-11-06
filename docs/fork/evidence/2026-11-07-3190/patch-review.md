@@ -73,3 +73,23 @@ TestKeepOffWaitsForTheSetting. The exact same failure (two reads in 50ms) was
 reproduced five times in 500 repetitions on pristine v0.1.3190. This subsystem
 has no fork delta. Preserve the initial failure and final-source rerun instead
 of claiming it never occurred. Browser-suite failures remain under review.
+
+## Usage presentation convergence found by the complete GUI run
+
+The original candidate exposed a real #3948 presentation conflict with newer
+upstream behavior: ledger-retried failed all 20 cases because a handed-on plain
+400 became `400 · Failed · handed on` instead of upstream's `400 · handed on`.
+The old global source/no-speed detail rewrites also displaced ordinary fields.
+Remove those overlapping rewrites: ordinary vendor and session-log errors keep
+upstream labels; missing-speed explanations use upstream tooltips. Protocol and
+client-reported failures still identify their source and preserve HTTP status.
+The client-processing boundary follows the standard fields.
+
+The corrected details test restores upstream's ordinary field expectations and
+adds only the boundary at the end. ledger-hscroll now distinguishes the attempt
+history read on expansion from the fresh trace read on navigation, asserting
+one request per action rather than treating all reads as the link's action.
+All 58 focused cases pass in Chromium/WebKit, including all five languages for
+HTTP-200 diagnostics and the upstream handoff count tests. The original complete
+GUI run remains frozen on its own worktree; affected Usage/navigation cases and
+full Go/build checks are rerun on the correction separately.
