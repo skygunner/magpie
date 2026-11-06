@@ -34,6 +34,44 @@ disabled state and scheduling fields were retained. Production remains
 
 ## Deployment history
 
+- **2026-11-07 AEST, 0.1.3190-p1 — accepted, observed and published.**
+  Accepted 2026-11-06 21:05:07 UTC / 2026-11-07 07:05:07 AEST; tested source
+  `171e12415ddce084a3c9417e80cee808a5d1589a`, pinned upstream v0.1.3190 (`8cbaeecae`).
+  `production/stable` and `deployed/0.1.3190-p1` identify the accepted source;
+  later integration documentation commits do not move those references.
+
+  Suspend the bare Invalid request extension in favor of upstream's current
+  opaque-error policy. Retire generic #3948 vendor/session labels and duplicate
+  speed details; keep bounded protocol diagnostics, actual attempt details and
+  the other retained fixes. Quota/non-stream timeout/model cooldown/editor
+  policies stay suspended. The separate Cloudflare Workers AI package stays at 0.0.5.
+
+  Final Go: 87 packages, 25,594 passing tests/subtests; 20 packages have no tests.
+  Eight build/vet checks, gateway race regressions (20 repetitions), update checks
+  and 80 deployment tests pass. Original GUI: 1,251 files, 114 initial failing
+  files; final affected GUI: 237 files, 24 initial failing files. The original fork
+  presentation conflicts were corrected before the final run; remaining failures
+  are reviewed baseline/fixture/renderer boundaries. The matrix is not fully green.
+  The official final six-file run has 227 passes and 3 known upstream scrollbar failure counts;
+  pinned mobile and masking-demo fixtures each pass 30/30 on upstream and final.
+
+  API acceptance and final snapshots match 269 models/32 providers/49 groups.
+  Three real inference probes and 11 samples pass over 2,760.902 seconds, with
+  zero restarts, OOMs, 5xx or protocol errors. The original container is retained
+  stopped. The verified backup is
+  `/var/lib/magpie-deploy/0.1.3190-p1/volume.tgz`.
+  The same accepted image was published without rebuilding as
+  `bigshort/magpie-patched:0.1.3190-p1` and `latest`; its manifest and docker1
+  descriptor are `sha256:c1be4ea02e14b013ca1301d60bdf9508edcd31d83c1390fdf425821eca105dc4`.
+  Its separate config digest is recorded in the evidence; do not assume a
+  containerd image ID is a config digest.
+
+  Evidence: [semantic review](evidence/2026-11-07-3190/patch-review.md),
+  [test gate](evidence/2026-11-07-3190/gate-result.json),
+  [GUI review](evidence/2026-11-07-3190/gui-review.json),
+  [production result](evidence/2026-11-07-3190/deployment-result.json),
+  [published digests](evidence/2026-11-07-3190/published-digest.json).
+
 - **2026-11-05, 0.1.3036-p2 — accepted, observed and published.**
   Tested/deployed source 16f33cdcf00f4c445be7be35b285f3ef1c241df7, upstream
   v0.1.3036. The seven previously retained issue behaviors remain, plus #4385's

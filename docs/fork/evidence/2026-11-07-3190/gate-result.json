@@ -1,0 +1,192 @@
+{
+  "verdict": "PASSED",
+  "commit": "171e12415ddce084a3c9417e80cee808a5d1589a",
+  "upstream": "v0.1.3190",
+  "upstream_commit": "8cbaeecae976d2a8561293c1abc5daf6aa89d77f",
+  "target_image_id": "sha256:c1be4ea02e14b013ca1301d60bdf9508edcd31d83c1390fdf425821eca105dc4",
+  "at": "2026-11-06T20:16:49.298668+00:00",
+  "go_packages": 87,
+  "go_no_test_packages": 20,
+  "go_tests_including_subtests": 25594,
+  "build_vet_checks": 8,
+  "race_checks": 2,
+  "deployment_transaction_tests": 80,
+  "complete_gui_files": 1251,
+  "original_gui_commit": "c9ca5935fe8772ca7127a48958260ac0b8a3c272",
+  "final_affected_gui_files": 237,
+  "final_affected_initial_failed_files": 24,
+  "official_final_gui": {
+    "tests": 230,
+    "passed": 227,
+    "failed_including_parent": 3,
+    "remaining": "Same upstream WebKit horizontal-scrollbar assertion; exact baseline proof retained."
+  },
+  "mobile_pinned": {
+    "upstream": 30,
+    "final": 30,
+    "failed": 0
+  },
+  "masking_official": {
+    "upstream": 30,
+    "final": 30,
+    "failed": 0
+  },
+  "gui_review": "Complete original suite plus final affected-component suite. Known baseline/layout/fixture timing failures and first-only transients retained and reviewed; expanded GUI suite is NOT fully green. Real ordinary-400/detail presentation regressions were corrected before final-source testing. One original900s lifecycle timeout is preserved and passes official final-source fixture. No unknown/new failure remains on the changed runtime path.",
+  "runtime_source_change_after_full_gui": "Only Usage plugin page.js and i18n.js; unaffected runtime assets byte-identical. Final affected237 cover Usage/ledger/navigation paths.",
+  "gui_review_file": "gui-review.json",
+  "original_gui_initial_failed_files": 114,
+  "complete_gui_initial_passed_files": 1137,
+  "final_affected_initial_passed_files": 213,
+  "runtime_fork_delta": {
+    "previous": {
+      "files": 14,
+      "added": 308,
+      "removed": 48,
+      "entries": [
+        {
+          "file": "internal/gateway/capture.go",
+          "added": 17,
+          "removed": 1
+        },
+        {
+          "file": "internal/gateway/decide.go",
+          "added": 2,
+          "removed": 2
+        },
+        {
+          "file": "internal/gateway/decide_group.go",
+          "added": 1,
+          "removed": 1
+        },
+        {
+          "file": "internal/gateway/fallback.go",
+          "added": 55,
+          "removed": 4
+        },
+        {
+          "file": "internal/gateway/format.go",
+          "added": 5,
+          "removed": 2
+        },
+        {
+          "file": "internal/gateway/gateway.go",
+          "added": 47,
+          "removed": 9
+        },
+        {
+          "file": "internal/gateway/protocol_reply.go",
+          "added": 49,
+          "removed": 0
+        },
+        {
+          "file": "internal/gui/assets/app.js",
+          "added": 17,
+          "removed": 15
+        },
+        {
+          "file": "internal/gui/assets/plugins/routing/client.js",
+          "added": 7,
+          "removed": 1
+        },
+        {
+          "file": "internal/gui/assets/plugins/usage/i18n.js",
+          "added": 60,
+          "removed": 0
+        },
+        {
+          "file": "internal/gui/assets/plugins/usage/page.js",
+          "added": 24,
+          "removed": 5
+        },
+        {
+          "file": "internal/provider/opencode_client.go",
+          "added": 2,
+          "removed": 2
+        },
+        {
+          "file": "internal/update/notes.go",
+          "added": 9,
+          "removed": 6
+        },
+        {
+          "file": "internal/update/update.go",
+          "added": 13,
+          "removed": 0
+        }
+      ]
+    },
+    "final": {
+      "files": 13,
+      "added": 250,
+      "removed": 44,
+      "entries": [
+        {
+          "file": "internal/gateway/capture.go",
+          "added": 17,
+          "removed": 1
+        },
+        {
+          "file": "internal/gateway/decide.go",
+          "added": 2,
+          "removed": 2
+        },
+        {
+          "file": "internal/gateway/fallback.go",
+          "added": 14,
+          "removed": 3
+        },
+        {
+          "file": "internal/gateway/format.go",
+          "added": 5,
+          "removed": 2
+        },
+        {
+          "file": "internal/gateway/gateway.go",
+          "added": 38,
+          "removed": 7
+        },
+        {
+          "file": "internal/gateway/protocol_reply.go",
+          "added": 49,
+          "removed": 0
+        },
+        {
+          "file": "internal/gui/assets/app.js",
+          "added": 17,
+          "removed": 15
+        },
+        {
+          "file": "internal/gui/assets/plugins/routing/client.js",
+          "added": 7,
+          "removed": 1
+        },
+        {
+          "file": "internal/gui/assets/plugins/usage/i18n.js",
+          "added": 52,
+          "removed": 0
+        },
+        {
+          "file": "internal/gui/assets/plugins/usage/page.js",
+          "added": 25,
+          "removed": 5
+        },
+        {
+          "file": "internal/provider/opencode_client.go",
+          "added": 2,
+          "removed": 2
+        },
+        {
+          "file": "internal/update/notes.go",
+          "added": 9,
+          "removed": 6
+        },
+        {
+          "file": "internal/update/update.go",
+          "added": 13,
+          "removed": 0
+        }
+      ]
+    },
+    "scope": "internal non-test files; includes one comment-only file"
+  }
+}

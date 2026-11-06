@@ -1,6 +1,8 @@
 # v0.1.3190 upstream-first integration review
 
-Candidate in progress, not a production acceptance record. Pinned upstream:
+Accepted release `0.1.3190-p1`: source `171e12415ddce084a3c9417e80cee808a5d1589a`,
+accepted 2026-11-06 21:05:07 UTC / 2026-11-07 07:05:07 AEST.
+Production evidence: [deployment result](deployment-result.json). Pinned upstream:
 `8cbaeecae976d2a8561293c1abc5daf6aa89d77f` (`v0.1.3190`).
 Previous integration: `7308a6331`; previous accepted source: `16f33cdcf`.
 
@@ -46,9 +48,7 @@ regressions: 20 race repetitions pass; update tests pass.
 
 The first full Go attempt found the core script 11 bytes above its unchanged
 budget. Only two comments in the existing wheel fix were shortened, and the
-budget check then passed; the failed attempt is retained privately. Final source
-must be retested before deployment. Full Go, full UI, image smoke, isolated
-snapshot replay and production observation results will be recorded separately.
+budget check then passed; the failed attempt is retained privately. The final committed source was retested as recorded below; initial failed attempts remain preserved.
 
 ## Deployment probe correction
 
@@ -72,7 +72,7 @@ A full Go attempt at committed runtime 74540cc71 exposed
 TestKeepOffWaitsForTheSetting. The exact same failure (two reads in 50ms) was
 reproduced five times in 500 repetitions on pristine v0.1.3190. This subsystem
 has no fork delta. Preserve the initial failure and final-source rerun instead
-of claiming it never occurred. Browser-suite failures remain under review.
+of claiming it never occurred. Completed GUI attribution and the release boundary are recorded below.
 
 ## Usage presentation convergence found by the complete GUI run
 
@@ -90,6 +90,43 @@ adds only the boundary at the end. ledger-hscroll now distinguishes the attempt
 history read on expansion from the fresh trace read on navigation, asserting
 one request per action rather than treating all reads as the link's action.
 All 58 focused cases pass in Chromium/WebKit, including all five languages for
-HTTP-200 diagnostics and the upstream handoff count tests. The original complete
-GUI run remains frozen on its own worktree; affected Usage/navigation cases and
-full Go/build checks are rerun on the correction separately.
+HTTP-200 diagnostics and the upstream handoff count tests. The complete original
+GUI run was kept frozen on its own worktree; the final 237 affected fixtures and
+full Go/build/race checks were completed separately on the correction.
+
+## Final-source gate and production acceptance
+
+[Gate result](gate-result.json) and [GUI review](gui-review.json) distinguish the
+original complete matrix (`c9ca5935f`, 1,251 files) from the corrected final
+source (`171e12415`, 237 affected fixtures). Runtime assets outside the Usage
+plugin page and translations are byte-identical between these candidates.
+The original 114 and final 24 initial failing files, baseline attempts, one recorded
+candidate retry and additional diagnostics remain available privately. The
+expanded GUI suite is **not fully green**. Exact assertion matches, measured
+layout/frame variations, controlled timing cases and first-only transients are
+identified separately; an initial timeout after 27 reported passes is not treated
+as a completed 30-case run. The official final and pristine masking-demo fixtures
+both pass 30/30 and exit normally. Mobile screenshots with `BASE_REF=v0.1.3190`
+also pass 30/30 on both; the default old `origin/main` mismatches are preserved.
+
+Final Go passes 87 packages and 25,594 tests/subtests (20 no-test packages).
+Eight build/vet checks and the retained race/update checks pass; deployment
+transaction tests pass 80/80. The official final 230-case core run has 227 passes
+and 3 failure counts (two WebKit horizontal-scrollbar cases plus their parent),
+with the same scrollbar assertion on clean upstream. All wheel cases and the
+narrow protocol/attempt/handoff checks pass in that environment.
+
+Plugin [PR #366](https://github.com/magpie-community/plugins/pull/366) is merged;
+its unchanged head `38ddeb1` modifies only `test/plugin.test.mjs` (+18/-3), with
+no later review request. The actual production package remains 0.0.5.
+
+A fresh isolated replay of the final image and a stopped-volume production backup
+precede the switch. Baseline/candidate/final snapshots agree on 269 models,
+32 providers and 49 groups, without an unexpected-field allowance. Deployment
+run `20261106T201706Z-f5c6e83e` exits 0 with PASSED at 2026-11-06 21:05:07 UTC, after
+2,760.902 seconds, 11 healthy samples and 3 successful real inference probes.
+Restart/OOM/5xx/protocol-error counts are zero. The original container and volume
+backup remain available. See [production result](deployment-result.json) and
+[published digests](published-digest.json); version and latest are the exact
+accepted image, without rebuilding. Native Windows/macOS execution was not done;
+their checks are cross-build/vet only.

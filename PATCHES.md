@@ -13,47 +13,45 @@ mean upstream implements every former fork guarantee.
   to successfully observed production source. `candidate/<version>` records a
   tested candidate; `deployed/<version>` is created only after acceptance and
   observation pass. Old `prod/*` tags retain their historical meaning.
-- Production is 0.1.3036-p2 (accepted 2026-11-05 10:30:47 UTC / 20:30:47 AEST),
-  tested source 16f33cdcf00f4c445be7be35b285f3ef1c241df7, upstream v0.1.3036.
-  Source integration alone does not authorize publication.
+- Production is **0.1.3190-p1**, upstream v0.1.3190. Accepted 2026-11-06 21:05:07 UTC
+  / 2026-11-07 07:05:07 AEST; tested source `171e12415ddce084a3c9417e80cee808a5d1589a`.
+  Source integration alone is not production acceptance evidence.
 
-## Candidate in progress — v0.1.3190-p1 (2026-11-07)
-
-Pinned upstream `v0.1.3190` = `8cbaeecae976d2a8561293c1abc5daf6aa89d77f`.
-This candidate is not deployed. Production remains the accepted 0.1.3036-p2
-source named above until the complete gate and production observation pass.
+## Changes in v0.1.3190-p1
 
 - Suspend the #3035-associated bare Invalid request failover extension. Upstream
   `11df525f0` scopes opaque overflow handling to observed vendors; `8cbaeecae`
-  adds explicit pass-through errors. Do not add competing inference/fallback
-  rules. Keep #3035's independent guided-grammar format downgrade.
-- Retain the other seven issue behaviors listed below, pending final regression
-  results. Their upstream issue states and replies were rechecked; open issue
-  status alone is not evidence that a fork patch remains necessary.
-- Retire the #3948 generic error-label/source and duplicate no-speed detail
-  rewrites where upstream now owns the presentation. Keep protocol/client-report
-  diagnostics; put the client-processing boundary after the ordinary details.
-- The prior suspended quota/cooldown/timeout policies remain suspended.
-- Keep the separate production Cloudflare Workers AI plugin at 0.0.5.
-- Review and final test evidence: [3190 integration review](docs/fork/evidence/2026-11-07-3190/patch-review.md).
+  adds pass-through errors. Keep the independent guided-grammar format downgrade.
+- Remove #3948's overlapping generic error-label/source and duplicate no-speed
+  detail rewrites. Ordinary vendor/session labels and speed tooltips follow
+  upstream; bounded protocol/client-report diagnostics remain. The client-processing
+  boundary follows the standard fields.
+- Raise only the deployment probe allowance from 16 to 256 tokens: the old cap
+  could be exhausted by reasoning before any answer. Keep the nonempty-answer
+  check, one POST, deadlines and rollback behavior.
+- The suspended quota/cooldown/timeout policies stay suspended. The separate
+  Cloudflare Workers AI plugin remains 0.0.5.
+- [Integration and semantic review](docs/fork/evidence/2026-11-07-3190/patch-review.md),
+  [final test gate](docs/fork/evidence/2026-11-07-3190/gate-result.json),
+  [GUI scope and failure review](docs/fork/evidence/2026-11-07-3190/gui-review.json).
 
-## This round's patch decisions (v0.1.3036-p2 production)
+## This round's patch decisions (v0.1.3190-p1 production)
 
 | Patch | Decision | Behavior / reason |
 | --- | --- | --- |
-| #3035 | retain | SenseNova format downgrade and narrowly matched unexplained request refusals still extend upstream. |
+| #3035 | retain | Keep the explicit guided-grammar format downgrade. The bare Invalid request extension is suspended; opaque errors follow upstream. |
 | #3487 | suspend remainder | Upstream changed the amount model and zero-count rules; do not carry competing unknown/zero interpretations or its associated old fixtures. |
 | #3635 | retain | NVIDIA explicit parameter-list repair and synchronized equivalent reasoning settings. |
 | #3636 | retain | Unresolved explicit parameter lists fail over without resting accounts. |
 | #3624 | retain | Usage navigation reveals the selected trace. |
 | #3788 | suspend | Upstream now owns the changing group-budget/slow-start rules; use its current streaming-only FirstToken behavior. The 540s total budget is not an equivalent non-streaming deadline. |
 | #3791 | suspend | Fork deliberately counts client cancellation and imposes hard model holds; upstream cancellation attribution and resting-candidate policy differ. |
-| #3948 | retain diagnostics only | Speed display follows upstream; retain bounded non-streaming envelope checks without changing the committed HTTP status. Stream error-frame status handling is upstream's separate behavior. |
+| #3948 | retain diagnostics only | Retain bounded non-streaming envelope checks and the committed HTTP status. Ordinary vendor/session labels and speed tooltips follow upstream; protocol/client-reported failures identify their source. |
 | #3794 | retain | Tools on demand does not cover arbitrary external client tools or guarantee vendor limits. Keep full-tool fallback. |
 | #3623 | retain | Expanded Usage details show ordered recorded attempts, including 499. |
 | Cooldown settings | suspend | Layered policy, changed defaults and release semantics compete with current upstream rest rules. Editor/API and runtime overrides are removed together. |
 | #3417 | absorbed | Upstream configurable Codex reset lead remains; fixed-lead fork stays removed. |
-| #4385 | retain new fix | Restore the full interrupted pixel-wheel step from its origin, grouped per view; preserve native progress and keep touch/non-pixel restoration unchanged. Source `fix/webkit-delayed-wheel`. |
+| #4385 | retain | Restore the full interrupted pixel-wheel step from its origin, grouped per view; preserve native progress and keep touch/non-pixel restoration unchanged. Source `fix/webkit-delayed-wheel`. |
 | build -pN | retain | Update checks and release notes compare the base version. |
 | plugins PR #366 | separate | Keep production Cloudflare Workers AI package 0.0.5. No package downgrade or test-only rebuild. |
 
@@ -86,19 +84,26 @@ behavior; baseline failures do not automatically authorize deployment.
 
 ## Deployment history
 
-- Current accepted release: **0.1.3036-p2**, upstream v0.1.3036, source
-  [`16f33cdcf`](https://github.com/skygunner/magpie/tree/deployed%2F0.1.3036-p2).
-  Accepted 2026-11-05 after 46 minutes and three successful inference probes.
+- Current accepted release: **0.1.3190-p1**, upstream v0.1.3190, source
+  [`171e12415`](https://github.com/skygunner/magpie/tree/deployed%2F0.1.3190-p1).
+  Accepted 2026-11-06 21:05:07 UTC after 2,760.902 seconds, 11 healthy samples
+  and three successful real inference probes. Snapshots match the fresh baseline:
+  269 models, 32 providers, 49 groups; no unexpected fields.
 - [Full deployment history and earlier patch notes](docs/fork/history.md#deployment-history).
-- [Current acceptance and scoped test evidence](docs/fork/evidence/2026-11-05-3036/p2/gate-result.json),
-  [production result](docs/fork/evidence/2026-11-05-3036/p2/deployment-result.json),
-  [published digest](docs/fork/evidence/2026-11-05-3036/p2/published-digest.json).
+- [Final source gate](docs/fork/evidence/2026-11-07-3190/gate-result.json),
+  [GUI review](docs/fork/evidence/2026-11-07-3190/gui-review.json),
+  [production result](docs/fork/evidence/2026-11-07-3190/deployment-result.json),
+  [published manifest/config digests](docs/fork/evidence/2026-11-07-3190/published-digest.json).
 
 ## Known boundaries
 
-- Expanded GUI checks retain documented upstream #4132 (unheard-wheel driver
-  cadence) and #4689 (nested-scroller) failures. They are separately assessed
-  against clean upstream, not described as a fully green expanded suite.
+- Expanded GUI checks are **not fully green**. The complete original 1,251-file
+  matrix and the final 237 affected fixtures retain reviewed upstream layout,
+  scrolling and asynchronous test failures, including #4132/#4689. See the
+  [scoped failure review](docs/fork/evidence/2026-11-07-3190/gui-review.json); first failures and retries
+  are preserved. The old fork's ordinary-400/detail presentation conflicts were
+  corrected before deployment.
+
 - The fork's layered cooldown editor/API and non-streaming timeout/cancellation
   model policies are suspended. Current behavior follows upstream; the old
   feature's design is [archived](docs/fork/archive/cooldown-settings.md).

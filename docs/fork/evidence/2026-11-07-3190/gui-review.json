@@ -1,0 +1,1432 @@
+{
+  "scope": {
+    "original": {
+      "commit": "c9ca5935fe8772ca7127a48958260ac0b8a3c272",
+      "files": 1251,
+      "initial_failed_files": 114,
+      "initial_passed_files": 1137
+    },
+    "final_affected": {
+      "commit": "171e12415ddce084a3c9417e80cee808a5d1589a",
+      "files": 237,
+      "initial_failed_files": 24,
+      "initial_passed_files": 213
+    },
+    "unchanged_runtime_assets": "All assets except the Usage plugin page.js and i18n.js are byte-identical between original and final source. The237 affected fixtures cover Usage/ledger/navigation.",
+    "engines": [
+      "Chromium",
+      "WebKit"
+    ],
+    "native_renderer": "Test-only Mesa software EGL/llvmpipe, after NVIDIA VRAM-exhaustion crashes were diagnosed; no system graphics changes.",
+    "no_hidden_retries": "First failures, paired pristine tag results, one recorded candidate retry and named diagnostics remain preserved privately.",
+    "not_fully_green": true,
+    "raw_evidence": "~/.local/state/magpie-rounds/0.1.3190-p1/"
+  },
+  "review_notes": {
+    "paired_upstream": "Same source assertion and error class on the pinned pristine upstream; underlying path reviewed. Full original and retry logs retained.",
+    "transient": "First failure retained; candidate retry passes. This is not a claim that upstream reproduced the exact failure.",
+    "found-skill-pick-remove.test.cjs": "Upstream fails the same reader.click scroll assertion in another selector/locale; Library source is byte-identical. The diagnostic complete candidate fixture passes, but there is no failure-time recovery counter capture for the initial case. Upstream issue5475 lists this fixture. Preserve the original mismatch as a reviewed layout/timing boundary, not an exact paired-case reproduction.",
+    "images-codex-one.test.cjs": "Exact same Chromium subtest, click helper line101, and null bounding-box error reproduced on pristine upstream in images-codex-one-baseline-extra-9.log. All10 additional attempts preserved.",
+    "ledger-retried.test.cjs": "REAL C9 regression from generic #3948 labels, corrected at171. All20 original upstream cases pass on final source; included in58 focused green and official final run.",
+    "ledger-hscroll.test.cjs": "C9 ordinary detail order/duplicate label conflict corrected171; per-action history reads now explicit. Final remaining failure is only upstream WebKit a bar with nothing to scroll. Assertion124 maps to pristine120 after4 fixture assertion lines; same failure also reproduced in official baseline and final images.",
+    "library-ime-scroll.test.cjs": "Same upstream WebKit caret-visibility assertion; measured caret coordinates differ. No fork delta in Library/editor/IME implementation.",
+    "name-suffix-no-names.test.cjs": "Exact same WebKit case and autobackup access-control pageerror reproduced in2of3 additional complete pristine fixtures; selected single case5green preserved as insufficient to reproduce navigation race.",
+    "plugin-pick-sub.test.cjs": "Unchanged plugin UI has a providers-read race: card first says Installed before Sign in. Unmodified baseline3green retained. Controlled300ms providers delay reproduces same assertion on pristine upstream9cases and candidate10cases; no source patch to plugin install/sign-in.",
+    "plugin-readme-bird.test.cjs": "Same upstream bird-motion assertion and low animation counts; numbers vary per run. Unchanged plugin/animation implementation.",
+    "routing-columns.test.cjs": "Exact same WebKit zh940px one-column assertion101 reproduced in routing-columns-baseline-extra-2.log; upstream English side-by-side assertion87 also matches.",
+    "routing-ctx-sessions.test.cjs": "Same upstream frame-count assertion125; baseline6frames,candidate9,retry6. No change to renderer/frame loop.",
+    "routing-idle-frame.test.cjs": "Same upstream wake-loop assertion151; frames per600ms vary6/7/10. No change to renderer/frame loop.",
+    "routing-many-keys.test.cjs": "Pristine baseline and two additional baseline runs fail adjacent footer virtual-list assertion187 (one/two keys in sight); candidate initially fails last-key assertion186, retry fails187 as baseline. No fork delta in virtual-list painter; no explicit Usage navigation in fixture. Do not claim exact initial assertion reproduction.",
+    "quota-caption-contrast.test.cjs": "Same upstream caption contrast assertion94 at1.00:1. Reset clock text differs by minute only; no CSS or quota-card fork delta.",
+    "usage-heatmap.test.cjs": "Same upstream locale-date and hovered-cell assertions172/182. Cell/date differs under native WebKit, same locale-format defect in Chromium. Heatmap renderer unchanged.",
+    "usage-computers.test.cjs": "Unmodified upstream3green preserved. Controlled test captures scrollTop in the same JS turn as scrollIntoView, exposing the same deferred reader-position restore on upstream and candidate:248->388(en),220->360(zh). Only sync-tick cases fail in corrected capture proofs; candidate recovery branch count0. Product code was unchanged for this diagnostic.",
+    "usage-ledger.test.cjs": "Same upstream live-route button assertion424 and return-position assertion374. Chinese scroll coordinates differ; unchanged failure mechanism. Same closed-page asynchronous route-callback error at416 appears on both; all attempts preserved.",
+    "mobile-web.test.cjs": "Default BASE_REF origin/main is older than pinned release. All initial runs preserved. Correct BASE_REF=v0.1.3190 full fixture passes30/30 on pristine and final source, no skips.",
+    "masking-demo.test.cjs": "Original C9 process timeout900s after27 reported passing subtests, without a completed TAP footer; this does not establish that all30 cases finished. Baseline/retry show WebKit waits in the same unchanged demo. Official final and pristine fixtures each pass30/30, no skips/cancellations, and exit normally. All original results retained.",
+    "text-size.test.cjs": "Initial C9 paired baseline green, but final-source paired pristine baseline reproduces exact same assertion157,30!=24, bothlanguages. Original failing runs preserved.",
+    "tray-totals.test.cjs": "Initial C9 callback-count failure3!=2 had baselinegreen, retry anotherlocale failure. Complete final fixture passes bothengines (58.69s); no fork delta on panel focus/polling implementation. Preserve initial flake, do not claim exact paired reproduction.",
+    "usage-ledger-content.test.cjs": "C9 content control-position failure retained; final source complete fixture passes (126.4s) after the ordinary detail presentation convergence. Final changed paths covered separately."
+  },
+  "failed_file_attempts": [
+    {
+      "run": "original",
+      "file": "allow-ips.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "api-key-theme.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "bare-ids.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "builtins.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "codex-credits-first.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "codex-predictions.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "copilot-ghe.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "currency.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "deprecation-notice.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "fonts.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "found-skill-pick-remove.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "found-skill-pick-remove.test.cjs"
+    },
+    {
+      "run": "original",
+      "file": "gateway-key-limit.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "gateway-key-models.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "group-disabled-contrast.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "group-editor-selected.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "header-centre.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "i18n-keys.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "icon-url.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "images-codex-one.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "images-codex-one.test.cjs"
+    },
+    {
+      "run": "original",
+      "file": "inner-scroll-contain.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "key-replace.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "key-rest-date.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "lan-docker.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "ledger-hscroll.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "ledger-hscroll.test.cjs"
+    },
+    {
+      "run": "original",
+      "file": "ledger-retried.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 1
+      },
+      "review": "ledger-retried.test.cjs"
+    },
+    {
+      "run": "original",
+      "file": "library-browser-away.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "library-ime-scroll.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "library-ime-scroll.test.cjs"
+    },
+    {
+      "run": "original",
+      "file": "list-sort.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "market-have.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 0
+      },
+      "review": "transient"
+    },
+    {
+      "run": "original",
+      "file": "masking-demo.test.cjs",
+      "exits": {
+        "candidate": 124,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "masking-demo.test.cjs"
+    },
+    {
+      "run": "original",
+      "file": "menu-input-scroll.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "mobile-web.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "mobile-web.test.cjs"
+    },
+    {
+      "run": "original",
+      "file": "model-chip-steady.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "model-copy-id.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "model-load.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "model-reasonless.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "model-suffix-own.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 0
+      },
+      "review": "transient"
+    },
+    {
+      "run": "original",
+      "file": "models-select-all-api.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "models-works-only.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "name-suffix-no-names.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 1
+      },
+      "review": "name-suffix-no-names.test.cjs"
+    },
+    {
+      "run": "original",
+      "file": "name-suffix-remote.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 0
+      },
+      "review": "transient"
+    },
+    {
+      "run": "original",
+      "file": "nav-timeout.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "number-units.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "omarchy.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "page-width-steady.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "panel-zero-fold.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "phone-connect-menu.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "plain-names.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 0
+      },
+      "review": "transient"
+    },
+    {
+      "run": "original",
+      "file": "plugin-card-update.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "plugin-github-filter.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "plugin-github-wait.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 0
+      },
+      "review": "transient"
+    },
+    {
+      "run": "original",
+      "file": "plugin-move-unserved.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "plugin-move.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "plugin-namesake.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 0
+      },
+      "review": "transient"
+    },
+    {
+      "run": "original",
+      "file": "plugin-pick-sub.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 1
+      },
+      "review": "plugin-pick-sub.test.cjs"
+    },
+    {
+      "run": "original",
+      "file": "plugin-readme-bird.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "plugin-readme-bird.test.cjs"
+    },
+    {
+      "run": "original",
+      "file": "plugin-signin-no-url.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 0
+      },
+      "review": "transient"
+    },
+    {
+      "run": "original",
+      "file": "privacy-usage-stats.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 0
+      },
+      "review": "transient"
+    },
+    {
+      "run": "original",
+      "file": "provider-detect-models.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "provider-fetch-again.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "provider-levels-save.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "provider-levels-scroll.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "provider-models-rest.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "provider-picks-stay.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "provider-typed.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "providers-fetching-retry.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "providers-reset-use.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "quit-ask-setting.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "quota-caption-contrast.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "quota-caption-contrast.test.cjs"
+    },
+    {
+      "run": "original",
+      "file": "recent-calls-more.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "recovered-file.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "redact-rule-edit.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "redact-words-any-case.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "redact-words-hidden.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "redact-words-import.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "redact-words-whole.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 0
+      },
+      "review": "transient"
+    },
+    {
+      "run": "original",
+      "file": "remote-magpie.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "rest-try-now.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "routing-columns.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "routing-columns.test.cjs"
+    },
+    {
+      "run": "original",
+      "file": "routing-ctx-sessions.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "routing-ctx-sessions.test.cjs"
+    },
+    {
+      "run": "original",
+      "file": "routing-idle-frame.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "routing-idle-frame.test.cjs"
+    },
+    {
+      "run": "original",
+      "file": "routing-intent-entry.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "routing-many-keys.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "routing-many-keys.test.cjs"
+    },
+    {
+      "run": "original",
+      "file": "routing-moved-why.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "routing-order-unknown.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "routing-row-swap.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "routing-sign-in-again.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "routing-stage-routes.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 0
+      },
+      "review": "transient"
+    },
+    {
+      "run": "original",
+      "file": "routing-steps-cap.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "routing-story-shrinks.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "segs-press-redraw.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "sessions-overview.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "sessions-today.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "side-toggle.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "skill-where.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "tap-lost-click.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 0
+      },
+      "review": "transient"
+    },
+    {
+      "run": "original",
+      "file": "tencent-cloud.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "text-size.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 1
+      },
+      "review": "text-size.test.cjs"
+    },
+    {
+      "run": "original",
+      "file": "title-bar-tools.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "tray-bird.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 0
+      },
+      "review": "transient"
+    },
+    {
+      "run": "original",
+      "file": "tray-cell-click.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "tray-totals.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 1
+      },
+      "review": "tray-totals.test.cjs"
+    },
+    {
+      "run": "original",
+      "file": "usage-agents-hide.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "usage-focus-steady.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "usage-fold.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "usage-heatmap.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "usage-heatmap.test.cjs"
+    },
+    {
+      "run": "original",
+      "file": "usage-ledger-chart.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "usage-ledger-content.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 1
+      },
+      "review": "usage-ledger-content.test.cjs"
+    },
+    {
+      "run": "original",
+      "file": "usage-ledger.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "usage-ledger.test.cjs"
+    },
+    {
+      "run": "original",
+      "file": "user-select.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "vertex-editor.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "view-open-wheel.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 0
+      },
+      "review": "transient"
+    },
+    {
+      "run": "original",
+      "file": "zcode-site-layout.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "original",
+      "file": "zero-priced-free.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "final_affected",
+      "file": "builtins.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "final_affected",
+      "file": "codex-credits-first.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "final_affected",
+      "file": "currency.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "final_affected",
+      "file": "inner-scroll-contain.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "final_affected",
+      "file": "ledger-hscroll.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "ledger-hscroll.test.cjs"
+    },
+    {
+      "run": "final_affected",
+      "file": "mobile-web.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "mobile-web.test.cjs"
+    },
+    {
+      "run": "final_affected",
+      "file": "number-units.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "final_affected",
+      "file": "panel-zero-fold.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "final_affected",
+      "file": "proto-menu-overflow.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 0
+      },
+      "review": "transient"
+    },
+    {
+      "run": "final_affected",
+      "file": "quota-caption-contrast.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "quota-caption-contrast.test.cjs"
+    },
+    {
+      "run": "final_affected",
+      "file": "segs-press-redraw.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "final_affected",
+      "file": "sessions-overview.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "final_affected",
+      "file": "sessions-today.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "final_affected",
+      "file": "text-size.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "text-size.test.cjs"
+    },
+    {
+      "run": "final_affected",
+      "file": "tray-cell-click.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "final_affected",
+      "file": "tray-logos.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 0
+      },
+      "review": "transient"
+    },
+    {
+      "run": "final_affected",
+      "file": "usage-agents-hide.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "final_affected",
+      "file": "usage-computers.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 1
+      },
+      "review": "usage-computers.test.cjs"
+    },
+    {
+      "run": "final_affected",
+      "file": "usage-focus-steady.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 0
+      },
+      "review": "transient"
+    },
+    {
+      "run": "final_affected",
+      "file": "usage-fold.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "final_affected",
+      "file": "usage-heatmap.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "usage-heatmap.test.cjs"
+    },
+    {
+      "run": "final_affected",
+      "file": "usage-ledger-chart.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "paired_upstream"
+    },
+    {
+      "run": "final_affected",
+      "file": "usage-ledger.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "review": "usage-ledger.test.cjs"
+    },
+    {
+      "run": "final_affected",
+      "file": "view-open-wheel.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 0
+      },
+      "review": "transient"
+    }
+  ]
+}
