@@ -263,7 +263,8 @@ def http_work(action, payload):
         # Exactly one POST; neither redirects nor application retries are allowed.
         data = request(gateway + '/v1/chat/completions', key=payload['key'], body={
             'model': 'group/fast-cheap', 'messages': [{'role': 'user', 'content': 'Reply OK'}],
-            'max_tokens': 16, 'stream': False})
+            # The cap includes reasoning: 16 tokens ended before any answer.
+            'max_tokens': 256, 'stream': False})
         choices = data.get('choices')
         require(isinstance(choices, list) and choices and isinstance(choices[0], dict)
                 and isinstance(choices[0].get('message', {}).get('content'), str)

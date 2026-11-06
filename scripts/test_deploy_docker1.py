@@ -917,7 +917,11 @@ class PrimitiveTests(unittest.TestCase):
             status=200
             def __enter__(self): return self
             def __exit__(self,*a): pass
-            def read(self,n): return json.dumps({'choices':[{'message':{'content':'OK'}}]}).encode()
+            def read(self,n):
+                # Recorded production probe: 89 reasoning + 13 answer tokens.
+                budget=json.loads(requests[-1].data)['max_tokens']
+                return json.dumps({'choices':[{'message':{'content':'OK' if budget >= 102 else '',
+                    'reasoning_content':'Thinking'},'finish_reason':'stop' if budget >= 102 else 'length'}]}).encode()
         class Opener:
             def open(self,request,timeout): requests.append(request); return Response()
         with patch.object(g.urllib.request,'build_opener',return_value=Opener()):

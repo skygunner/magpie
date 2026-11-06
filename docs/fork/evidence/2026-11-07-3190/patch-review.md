@@ -49,3 +49,27 @@ budget. Only two comments in the existing wheel fix were shortened, and the
 budget check then passed; the failed attempt is retained privately. Final source
 must be retested before deployment. Full Go, full UI, image smoke, isolated
 snapshot replay and production observation results will be recorded separately.
+
+## Deployment probe correction
+
+Before switching production, the old 16-token probe was run against the healthy
+0.1.3036-p2 instance. It returned HTTP 200 with finish_reason=length,
+16 completion tokens all attributed to reasoning, and zero answer characters.
+A 256-token probe returned finish_reason=stop with 89 reasoning + 13 answer
+tokens and nonempty content. This is an insufficient probe allowance, not a
+candidate protocol regression. Raise only the probe cap to 256; preserve the
+nonempty-content requirement, one POST, timeout and rollback behavior. The
+existing offline HTTP test now replays this reasoning-budget boundary: red at
+16, green at 256. All 80 deployment tests pass after the correction.
+
+Isolated replay of a private production copy is verified: old and candidate
+snapshots both expose 269 models, 32 providers, 49 groups, no unexpected fields.
+The count differs from the older release record because the live configuration
+has evolved; the comparison used a fresh baseline. Replay containers, network,
+config copies and seed archive were removed after verification.
+
+A full Go attempt at committed runtime 74540cc71 exposed
+TestKeepOffWaitsForTheSetting. The exact same failure (two reads in 50ms) was
+reproduced five times in 500 repetitions on pristine v0.1.3190. This subsystem
+has no fork delta. Preserve the initial failure and final-source rerun instead
+of claiming it never occurred. Browser-suite failures remain under review.
