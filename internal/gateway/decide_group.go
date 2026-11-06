@@ -124,6 +124,13 @@ func (s *Server) serveDecisionGroup(w http.ResponseWriter, r *http.Request, body
 			writeError(w, provider.Chat, http.StatusForbidden, keyAccountsError(who, asked))
 			return
 		}
+		// every member left is one a spent limit of the key's counts
+		if len(cs) == 0 && keyHeld && len(members) == 0 {
+			if st, msg := keyGroupRefusal(w, keyWho, asked, ms); st == http.StatusTooManyRequests {
+				writeError(w, provider.Chat, st, msg)
+				return
+			}
+		}
 	}
 	cs = probeOne(cs) // of those resting, only the one back soonest (#1799)
 	if len(cs) == 0 {
@@ -231,7 +238,7 @@ func (s *Server) serveDecideTries(w http.ResponseWriter, r *http.Request, body [
 		}
 		if status >= 400 {
 			fail, rest = s.decideFailed(c, status, header, b)
-			if !last && (retryable(status, b) || bareRequestRefused(status, b)) {
+			if !last && retryable(status, b) {
 				tried(status, errMsg, fail, rest, used)
 				skipped = append(skipped, fmt.Sprintf("%s: %s", c.label(), errMsg))
 				continue

@@ -34,7 +34,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/tidwall/gjson"
 	"github.com/yetone/magpie/internal/plugin"
 	"github.com/yetone/magpie/internal/provider"
 	"github.com/yetone/magpie/internal/settings"
@@ -1641,8 +1640,14 @@ func promptRefused(status int, body []byte) bool {
 // function_declarations[17].parameters.properties[batch].items: missing
 // field, plugins#375), is the same kind as OpenCode Go's: its subset of
 // JSON Schema is its own, and another vendor's model took the reporter's
-// same tools.
-var shapeWords = regexp.MustCompile(`(?i)failed to deserialize|unknown (item |content |input )?(type|variant|field|parameter)|unknown_parameter|unrecognized (request argument|field|parameter)|extra (inputs|fields) are not permitted|additional properties are not allowed|schema exceeds the maximum (nesting )?depth|schema[^"]{0,60}\bnesting depth\b|function_declarations\[\d+\]\.parameters\b|invalid value for ['"]tools['"]:\s*maximum number of items is [0-9]+\b`)
+// same tools. A relay passing Google's own Gemini on says the same in the
+// words Google gave it, camel-case and with no path: "Unable to submit
+// request because `tool` functionDeclaration `parameters.response` schema
+// specified other fields alongside any_of. When using any_of, it must be
+// the only field set." (#5374, worksyang) — a description beside an
+// anyOf, which Google's Schema takes alone, the reporter's same tools
+// another member took.
+var shapeWords = regexp.MustCompile(`(?i)failed to deserialize|unknown (item |content |input )?(type|variant|field|parameter)|unknown_parameter|unrecognized (request argument|field|parameter)|extra (inputs|fields) are not permitted|additional properties are not allowed|schema exceeds the maximum (nesting )?depth|schema[^"]{0,60}\bnesting depth\b|function_declarations\[\d+\]\.parameters\b|schema specified other fields alongside any_?of|invalid value for ['"]tools['"]:\s*maximum number of items is [0-9]+\b`)
 
 // unsaidWords are Command Code's Provider API turning a request away with
 // nothing but a trace id: {"message":"invalid request error trace_id:
@@ -1669,43 +1674,6 @@ func refusedParameterList(body []byte) bool {
 		fault = string(body)
 	}
 	return unsupportedOptionalField(fault, "")
-}
-
-// bareRequestRefused recognizes the whole, unexplained messages from NVIDIA
-// NIM and SenseNova (#3035). Another member may answer, but these words say
-// nothing about the key's health. Read before error translation loses metadata.
-func bareRequestRefused(status int, body []byte) bool {
-	if status != 400 && status != 422 || retryable(status, body) || overflowed(status, body) {
-		return false
-	}
-	message := string(body)
-	if root := gjson.ParseBytes(body); root.IsObject() {
-		if !gjson.ValidBytes(body) {
-			return false
-		}
-		for _, e := range []gjson.Result{root, root.Get("error")} {
-			if code := e.Get("code").String(); code != "" && code != fmt.Sprint(status) && code != "invalid_request_error" {
-				return false
-			}
-			if typ := e.Get("type").String(); typ != "" && typ != "error" && typ != "invalid_request_error" {
-				return false
-			}
-			for _, field := range []string{"param", "detail", "details", "status"} {
-				if e.Get(field).String() != "" {
-					return false
-				}
-			}
-		}
-		if e := root.Get("error"); e.Exists() {
-			if !e.IsObject() {
-				return false
-			}
-			root = e
-		}
-		message = root.Get("message").String()
-	}
-	message = strings.TrimSpace(message)
-	return strings.EqualFold(message, "Invalid request") || strings.EqualFold(message, "inference request is invalid")
 }
 
 // shapeRefused says a request failed over its shape alone: the next
@@ -1870,9 +1838,13 @@ func elsewhere(left []candidate, c candidate) []candidate {
 // request as well as the account, so the same request sent on to another
 // of its accounts trips it there too. Another computer's magpie that
 // says so (remoteModelRest) speaks for one account of its own, and its
-// other models may be other vendors: it walls off nothing here.
+// other models may be other vendors: it walls off nothing here. Nor does
+// Google's suspension of an account for its terms (googleSuspended): it
+// says the service was disabled in this account before the request came,
+// a ruling on the account, not on what was sent, so the provider's other
+// accounts are asked (bestony on Discord).
 func riskRefused(c candidate, status int, header http.Header, body []byte) bool {
-	return failureOf(c, status, body) == failRestricted && !remoteModelRest(c, failRestricted, header)
+	return failureOf(c, status, body) == failRestricted && !remoteModelRest(c, failRestricted, header) && !googleSuspended(c.p, carriedStatus(status, body), body)
 }
 
 // elsewhereWeighed is elsewhere on a list of candidates beside their
@@ -1986,35 +1958,61 @@ func saysLength(status int, body []byte) bool {
 }
 
 // tooLongUnsaid says a failure that doesn't say why was the request being too
-// long for the model, as some vendors put it: Devin's 502 "capacity
-// issues", WorkBuddy's 400 "Invalid request parameters", Qoder's 400
-// "Error in upstream response" — each for a conversation well past the
-// model's window, and answered at a size it holds. Retried, or asked of
-// another account of the model, it fails the same, and the agent, told it
-// as a vendor's error, never compacts. The message it is told instead
-// says the prompt is too long. Not for a rate limit, an account's
-// trouble, a model it doesn't serve, a region it doesn't serve, or one
-// already saying it overflowed. A request error that speaks of length
-// (saysLength) needs only lengthMargin of the window.
-func tooLongUnsaid(p provider.Provider, model string, tokens, status int, body []byte) (string, bool) {
-	switch status {
-	case 400, 413, 422, 500, 502, 503, 504:
-	default:
+// long for the model, as a few vendors put it (unsaidOverflows): Devin's
+// 502 "capacity issues", WorkBuddy's 400 "Invalid request parameters",
+// Qoder's 400 "Error in upstream response" — each for a conversation well
+// past the model's window, and answered at a size it holds (b3ab3e42e) —
+// and Factory's 413 "Request Entity Too Large" for one whose text alone is
+// past it (#711). Retried, or asked of another account of the model, it
+// fails the same, and the agent, told it as a vendor's error, never
+// compacts. The message it is told instead says the prompt is too long.
+// Not for a rate limit, an account's trouble, a model it doesn't serve, a
+// region it doesn't serve, or one already saying it overflowed.
+//
+// Every other provider's failure reaches the agent as the vendor said it,
+// its status, code and body, however long the request: a custom
+// Responses relay's plain 502, and the 400 or 413 any relay, OpenAI or
+// Anthropic may give for something else entirely, aren't magpie's to
+// read as an overflow (#5486, NEKO-CwC: ne9ko9's relay had a 502 at 385K
+// told to Codex as more than gpt-6-astra's 272K, and Codex ended the
+// turn). The one exception is a request error whose own words say the
+// request is too long (saysLength), from any vendor: the vendor named
+// the cause, and lengthMargin of the window rules out the other things
+// such words are said of. Nor is a failure that is no answer at all
+// (transportFailed): a dial or read that timed out, a connection reset, a
+// stream cut short, each in magpie's own words. held is the most the
+// model was seen to answer for this provider (Server.heldOf), and the
+// window is never less than it, nor than the most the provider's list
+// says the model may be asked for (windowMost).
+func tooLongUnsaid(p provider.Provider, model string, tokens, held, status int, body []byte) (string, bool) {
+	unsaid := unsaidOverflows(p, status)
+	if !unsaid && status != 400 && status != 422 {
 		return "", false
 	}
 	raw := body
 	// the words are matched decoded, too (#1669)
 	body = wordsOf(body)
+	if transportFailed(raw) || transportFailed(body) {
+		return "", false
+	}
+	length := saysLength(status, raw)
+	if !unsaid && !length {
+		return "", false
+	}
 	if overflowed(status, body) || failure(status, body) != failOther || quotaWords.Match(body) ||
 		unservedWords.Match(body) || refusedWords.Match(body) || provider.EdgeBlocked(body) || regionRefused(status, body) || zdrRefused(status, body) {
 		return "", false
 	}
 	window := windowOf(p, model)
+	if window <= 0 {
+		return "", false
+	}
+	window = max(window, windowMost(p, model), held)
 	margin := unsaidMargin
-	if saysLength(status, raw) {
+	if length {
 		margin = lengthMargin
 	}
-	if window <= 0 || float64(tokens) < float64(window)*margin {
+	if float64(tokens) < float64(window)*margin {
 		return "", false
 	}
 	msg := fmt.Sprintf("prompt is too long: about %d tokens, more than %s's context window of %d", tokens, model, window)
@@ -2030,6 +2028,92 @@ func tooLongUnsaid(p provider.Provider, model string, tokens, status int, body [
 		return full, true
 	}
 	return fmt.Sprintf("%s (%s answered %d)", msg, p.Name, status), true
+}
+
+// unsaidStatus are the statuses a vendor was seen to answer a request
+// past its model's window with, saying nothing of length, by the id of
+// the plugin that serves it now (each is retired as a built-in, so only
+// its plugin serves it): Devin's 502 "We are currently experiencing
+// capacity issues" for about 300K tokens on swe-1.7-lightning (202,752),
+// Qoder's 400 "Error in upstream response" for 1.8M on qmodel (1M) and
+// WorkBuddy's 400 "Invalid request parameters" on glm-5.1, each answered
+// at a size it holds (b3ab3e42e, v0.1.735), and Factory's 413 for a
+// request whose text alone is past the window (#711, v0.1.808). Keyed by
+// the plugin, never by the provider's id, which a user's own provider
+// may share.
+var unsaidStatus = map[string][]int{
+	"devin":        {500, 502, 503, 504},
+	"qoder":        {400, 413, 422},
+	"qoder-cn":     {400, 413, 422},
+	"workbuddy":    {400, 413, 422},
+	"workbuddy-ai": {400, 413, 422},
+	"factory":      {413},
+}
+
+// unsaidOverflows says p's vendor answers a request past its model's
+// window with status, saying nothing of length (unsaidStatus).
+func unsaidOverflows(p provider.Provider, status int) bool {
+	return slices.Contains(unsaidStatus[p.PluginProvider()], status)
+}
+
+// transportWords are a failure that never reached a vendor's answer, as Go,
+// Bun or Windows say it, or magpie's own words for a reply that broke off:
+// a request that met one may well fit, and is asked again.
+var transportWords = regexp.MustCompile(`(?i)dial (tcp|udp)|connectex|wsarecv|wsasend|i/o timeout|TLS handshake timeout|context deadline exceeded|Client\.Timeout|timeout awaiting response headers|connection (was )?(reset|refused|aborted|closed)|forcibly closed|broken pipe|unexpected EOF|no such host|network is unreachable|no route to host|server closed idle connection|Unable to connect|ConnectionRefused|ConnectionClosed|FailedToOpenSocket|ETIMEDOUT|ECONNRESET|ECONNREFUSED|ECONNABORTED|ENOTFOUND|EAI_AGAIN|ENETUNREACH|EHOSTUNREACH|EPIPE`)
+
+// transportFailed says an error body is a transport failure rather than a
+// vendor's answer (transportWords), or one magpie made of a reply that
+// broke off or said nothing.
+func transportFailed(body []byte) bool {
+	return transportWords.Match(body) || bytes.Contains(body, []byte(errEndedShort.Error())) ||
+		bytes.Contains(body, []byte(didNotStream)) || magpieSaid(string(body))
+}
+
+// noteHeld keeps n as the most prompt tokens the provider's model has
+// answered, when it is more than the most kept: a model that answered a
+// prompt of n holds one of n, whatever its window is said to be (ne9ko9
+// on Discord: gpt-6-astra, said at 272K, answered 454K and 474K).
+func (s *Server) noteHeld(id, model string, n int) {
+	if n <= 0 {
+		return
+	}
+	key := id + "\x00" + model
+	for {
+		cur, ok := s.held.Load(key)
+		if !ok {
+			if _, loaded := s.held.LoadOrStore(key, n); !loaded {
+				return
+			}
+			continue
+		}
+		if cur.(int) >= n || s.held.CompareAndSwap(key, cur, n) {
+			return
+		}
+	}
+}
+
+// heldOf is the most prompt tokens the provider's model has answered since
+// magpie started (noteHeld), 0 when none.
+func (s *Server) heldOf(id, model string) int {
+	if v, ok := s.held.Load(id + "\x00" + model); ok {
+		return v.(int)
+	}
+	return 0
+}
+
+// windowMost is the most the provider's list says its model may be asked
+// for (Entry.MaxContext), 0 when it says none: a Codex entry's
+// max_context_window of 872K above a 272K context_window, which Codex is
+// handed and may work a conversation up to.
+func windowMost(p provider.Provider, model string) int {
+	cat := provider.Served()
+	for i := range cat {
+		e := &cat[i]
+		if e.Group == "" && e.Provider.ID == p.ID && (e.Model == model || e.ID == model) {
+			return e.MaxContext
+		}
+	}
+	return 0
 }
 
 // windowOf is the tokens a provider's model takes, where known: the
@@ -2088,7 +2172,11 @@ func passing(status int, header http.Header, body []byte, again int) (time.Durat
 	case wait > longestPause:
 		return 0, false
 	case busyStatus(status):
-		if bytes.Contains(body, []byte(didNotStream)) {
+		if bytes.Contains(body, []byte(didNotStream)) || bytes.Contains(body, []byte(cutVoidWords)) {
+			// a void cut at its length fails the same every ask: the
+			// budget went to reasoning, and mostly would again — the same
+			// one asked again would burn it twice over before the error
+			// (#2972). A group's next member still is.
 			return 0, false
 		}
 		return wait, again < lastRetries
@@ -2343,8 +2431,6 @@ type holdWriter struct {
 	failMsg    string
 	sharedPool bool // an OpenRouter upstream pool rejected this attempt
 
-	bareRequest bool // an unexplained request refusal, read before error translation
-
 	// turnedAway: the account is asked with the system prompt Antigravity
 	// answers with a 429 whatever quota it has left — Claude Code's, its
 	// Agent SDK's — so the account isn't at fault and doesn't rest (#666)
@@ -2361,6 +2447,10 @@ type holdWriter struct {
 	// through as it comes. A refusal isn't a failure of the account, so
 	// nobody rests for it, whatever its timing (#248)
 	refusedAfter bool
+	// calls: a tool call of some kind has gone by in the reply, so a
+	// refusal after it is not handed over (handsOff): the call the agent
+	// has would sit beside the next member's, broken or doubled
+	calls bool
 	// after is what came of the reply once it began, for a refusal in it
 	// to be read event by event
 	after []byte
@@ -3114,35 +3204,71 @@ func (h *holdWriter) sent(b []byte) {
 // the scan that reads a stream held for its first content never sees an
 // event that comes after it, and the filter refusing a turn it had begun
 // is no failure of the account, as one it refuses before any of it is said
-// is not (#248). What is read is kept only as far as the event it is in is
-// whole, as a write may end in the middle of one.
+// is not (#248). A refusal that is the vendor's own finish code — Chat
+// Completions' content_filter, Anthropic's stop_reason refusal — on a
+// client reading Chat chunks hands the try over (#5075, handOffAfter):
+// the line the vendor put out first stays, as the reasoning of a
+// handed-over try does. What is read is kept only as far as the event it
+// is in is whole, as a write may end in the middle of one.
 func (h *holdWriter) refusalAfter(b []byte) {
 	// Every write is read, not only one that looks like a refusal: an
 	// event's name may come in one write and its data in the next (#2400).
 	// Only an unfinished event's bytes are kept.
+	if !h.calls {
+		h.calls = mayCall(b)
+	}
 	buf := b
 	if len(h.after) > 0 {
 		h.after = append(h.after, b...)
 		buf = h.after
 	}
+	at := len(buf) - len(b) // where this write's bytes begin in buf
+	gone := 0               // how much of buf whole events have taken
 	for {
-		end := eventEnd(buf)
+		end := eventEnd(buf[gone:])
 		if end < 0 {
 			break
 		}
-		ev := buf[:end]
-		buf = buf[end:]
+		ev := buf[gone : gone+end]
+		gone += end
 		if mayRefuse(ev) {
-			if kind, _, _ := streamEvent(ev); kind == eventRefusal || kind == eventRefusalError {
+			if kind, status, msg := streamEvent(ev); kind == eventRefusal || kind == eventRefusalError {
 				h.refusedAfter = true
+				// an error event mid-reply is a stream's accident, kept as
+				// it came (#733); the finish code is the vendor's word that
+				// the turn it had begun was never answered (#5075)
+				if kind == eventRefusal && h.handsOff() {
+					// what of this write went by before the code — the
+					// reply's last words — goes out with the rest; the
+					// code, and what came with it, does not
+					if start := gone - len(ev); start > at {
+						pre := buf[at:start]
+						h.sent(pre)
+						h.w.Write(pre)
+					}
+					h.handOffAfter(status, msg)
+					return
+				}
 			}
 		}
 	}
+	buf = buf[gone:]
 	if len(buf) == 0 || len(buf) > holdMost {
 		h.after = nil
 		return
 	}
 	h.after = append([]byte(nil), buf...)
+}
+
+// mayCall says whether a write of the reply carries a tool call of some
+// kind: Chat's delta.tool_calls or its legacy function_call, Anthropic's
+// tool_use, Responses' function_call. A word of it in plain text counts
+// too — the cost of missing one, a call the agent would run beside the
+// next member's, is the greater.
+func mayCall(b []byte) bool {
+	return bytes.Contains(b, []byte(`"tool_calls"`)) ||
+		bytes.Contains(b, []byte(`"tool_use"`)) ||
+		bytes.Contains(b, []byte(`"function_call"`))
 }
 
 // mayRefuse is whether an event may be the safety filter's refusal, by the
@@ -3267,7 +3393,7 @@ func (h *holdWriter) failed() bool {
 	if h.refused {
 		return !h.passing
 	}
-	return !h.passing && h.code() >= 400 && (retryable(h.code(), h.errBody()) || h.bareRequest && h.failure == 0)
+	return !h.passing && h.code() >= 400 && retryable(h.code(), h.errBody())
 }
 
 // mayAskAgain tells whether a failure now is still held, for the request
@@ -3598,6 +3724,10 @@ var filterReasons = map[string]string{
 	// agent took it for a failed sign-in (sweanng on Discord, ZCode:
 	// "Provider authentication failed", reason=auth_failed status=403)
 	"content_policy_rejected": "content_policy_rejected",
+	// StepFun's error type, its filter refusing with an HTTP 451 (#5089):
+	// read from the error object, the refusal is the request's, and the
+	// group's next member is asked rather than the 451 handed on
+	"censorship_blocked": "censorship_blocked",
 	// Zhipu's finish_reason when its filter stops GLM's reply, and
 	// DashScope's error code when Alibaba's stops Qwen's: both after the
 	// reasoning went to the agent, which had it end there (yhwangl on X)

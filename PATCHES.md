@@ -17,6 +17,23 @@ mean upstream implements every former fork guarantee.
   tested source 16f33cdcf00f4c445be7be35b285f3ef1c241df7, upstream v0.1.3036.
   Source integration alone does not authorize publication.
 
+## Candidate in progress — v0.1.3190-p1 (2026-11-07)
+
+Pinned upstream `v0.1.3190` = `8cbaeecae976d2a8561293c1abc5daf6aa89d77f`.
+This candidate is not deployed. Production remains the accepted 0.1.3036-p2
+source named above until the complete gate and production observation pass.
+
+- Suspend the #3035-associated bare Invalid request failover extension. Upstream
+  `11df525f0` scopes opaque overflow handling to observed vendors; `8cbaeecae`
+  adds explicit pass-through errors. Do not add competing inference/fallback
+  rules. Keep #3035's independent guided-grammar format downgrade.
+- Retain the other seven issue behaviors listed below, pending final regression
+  results. Their upstream issue states and replies were rechecked; open issue
+  status alone is not evidence that a fork patch remains necessary.
+- The prior suspended quota/cooldown/timeout policies remain suspended.
+- Keep the separate production Cloudflare Workers AI plugin at 0.0.5.
+- Review and final test evidence: [3190 integration review](docs/fork/evidence/2026-11-07-3190/patch-review.md).
+
 ## This round's patch decisions (v0.1.3036-p2 production)
 
 | Patch | Decision | Behavior / reason |
