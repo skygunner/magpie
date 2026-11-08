@@ -31,7 +31,8 @@ var held struct {
 	// tells filememo (settings.Save, an account's file) has it built again
 	fgen uint64
 	// roots is the providers' and the settings' files as last looked at
-	roots [2]rootStamp
+	roots   [2]rootStamp
+	rootsAt time.Time
 	// stamp is StampNow's files as a request holding the catalog last
 	// looked at them, at stampAt (stampNowFiles)
 	stamp   [3]rootStamp
@@ -55,8 +56,7 @@ func stampOf(path string) rootStamp {
 
 // heldFreshLocked drops what is built when a file was written since, by
 // this process (filememo.Gen) or, for the providers' and the settings'
-// files, by another (the CLI's "magpie group add", seen by the next
-// request, not a second later). Called with held held.
+// files, by another (the CLI's "magpie group add"). Called with held held.
 func heldFreshLocked(look bool) {
 	if g := filememo.Gen(); g != held.fgen {
 		held.built, held.fgen = nil, g
@@ -64,9 +64,11 @@ func heldFreshLocked(look bool) {
 	if !look {
 		return
 	}
+	held.rootsAt = time.Now()
 	for i, path := range [2]string{Path(), settings.Path()} {
 		if st := stampOf(path); st != held.roots[i] {
 			held.roots[i] = st
+			held.gen++
 			held.built = nil
 			filememo.Look(path)
 		}
@@ -125,6 +127,8 @@ func Hold() (release func()) {
 		heldFreshLocked(true)
 		// a request's first StampNow looks at the files again
 		held.stampAt = time.Time{}
+	} else if held.rootsAt.IsZero() || time.Since(held.rootsAt) >= heldFor {
+		heldFreshLocked(true)
 	}
 	held.holds++
 	held.Unlock()
@@ -192,8 +196,7 @@ var stampLooks atomic.Int64
 // most, as what is held is. KeptListing takes a stamp for every
 // provider, and its three stats a provider were most of what a
 // Providers page poll spent (~600 of them a poll with 200 providers).
-// Another process's write is seen by the next request, as Hold's look
-// sees it.
+// Another process's write is seen after Hold looks at its roots again.
 func stampNowFiles() [3]rootStamp {
 	held.Lock()
 	roots, fresh := held.stamp, held.holds > 0 && !held.stampAt.IsZero() && time.Since(held.stampAt) < heldFor
@@ -266,14 +269,17 @@ func heldOf[T any](key string, build func() T) T {
 		if c == nil {
 			break
 		}
+		gen, fgen, env := held.gen, filememo.Gen(), held.env
 		held.Unlock()
 		if round == heldRounds || !c.wait(heldWait) {
 			return build()
 		}
-		if c.fresh {
-			return c.v.(T)
-		}
 		held.Lock()
+		if c.fresh && held.gen == gen && filememo.Gen() == fgen && held.env == env {
+			v := c.v.(T)
+			held.Unlock()
+			return v
+		}
 		if held.holds == 0 {
 			held.Unlock()
 			return build()
