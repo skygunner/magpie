@@ -1,0 +1,1924 @@
+{
+  "scope": {
+    "original": {
+      "commit": "575d7bda3731d5a6b10a33d8fa4a78d105e9da2a",
+      "files": 1275,
+      "initial_failed_files": 108,
+      "tap_totals": {
+        "tests": 22334,
+        "pass": 21911,
+        "fail": 423,
+        "cancelled": 0,
+        "skipped": 0
+      }
+    },
+    "final_affected": {
+      "commit": "2fb297ebcd179ea488f4363a86c922f307d22449",
+      "changed_fixture_files": 11,
+      "guard_files": 1,
+      "files": 12,
+      "tests": 250,
+      "failed": 0
+    },
+    "unchanged_fixture_files": 1264,
+    "runtime_and_binary_identical": true,
+    "not_fully_green": true
+  },
+  "corrected_original_failure_files": [
+    "group-disabled-contrast.test.cjs",
+    "header-centre.test.cjs",
+    "key-replace.test.cjs",
+    "nav-timeout.test.cjs",
+    "side-toggle.test.cjs",
+    "usage-focus-steady.test.cjs"
+  ],
+  "reviews": [
+    {
+      "file": "allow-ips.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4959,
+        "finding": "WebKit Add moved the page assertion at line184. Exact initial zh case reproduced on pristine3295; retry also en/zh at same assertion. Test and relevant settings row assets unchanged from upstream; existing purposeful-scroll guard behavior remains. Maintainer issue has no posted fix. Retained wheel patch does not claim to fix settings scroll stability."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "api-key-theme.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 5044,
+        "finding": "WebKit System palette after emulated OS-color change: confirm button rgb(165,180,252) versus expected rgb(79,70,229), exactly identical candidate/baseline line88 and retry. Shared CSS/theme paths unchanged by fork; no posted fix in current issue."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "bare-ids.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 2370,
+        "finding": "Click-scrolled assertion line128 on WebKit900en reproduced exactly on clean3295; baseline also de. Preserve both first failure and one retry. The settings row and fixture are unchanged; inherited click/scroll stability limitation."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "builtins.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 3498,
+        "finding": "Existing residual sticky-head face after the landed f3512114b/outFromUnder helper: WebKit ja Observability switch click line250 times out because .lib-head.pm-head.stuck intercepts. Initial candidate, pristine3295 and one candidate retry have identical full Playwright call log, including Japanese aria-label. All comments read through maintainer landed note and reporter six-pass confirmation. Landed helper is already present; no later proposed patch. Do not misattribute this to stale sidebar lists (#3498 original) or #2960 goto load timeout.",
+        "wheel_path_proof": "Labeled instrumentation on an isolated copy reproduces ja420 sticky-header interception with zero erased-wheel matches in that failing case. Two positive matching events occur in earlier en420/zh-TW420 cells that pass. This excludes the modified erased-motion branch from the exact failing cell; does not claim the branch never runs anywhere in the file."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "codex-credits-first.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4908,
+        "finding": "WebKit account-credit toggle click shifts the view, line129; exact initial en assertion reproduced on pristine3295. No later comments/patch on issue. Preserve first failure and single retry."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "codex-predictions.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 2624,
+        "finding": "WebKit picker click scrolls Settings, line154; initial nine language/width cases reproduce on pristine3295 across all ten cells. Read all9 issue comments, latest confirms same1100/420 Linux WebKit face whenidle; no posted fix. Ordinary picker/assets unchanged by fork."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "copilot-ghe.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 1949,
+        "finding": "A fixture asset route fulfils after its page has closed, line51; same unhandled rejection in candidate zh, baseline en and retry en/zh. Current issue last comment confirms Linux WebKit alone and names the same lifecycle cause; no posted patch. Sign-in transport/runtime is unchanged by fork."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "currency.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4684,
+        "finding": "WebKit currency picker scroll-position assertion line134 en/zh is byte-identical on candidate, pristine3295 and retry. Read current issue/comments; no later patch. Settings/currency runtime is unchanged by fork."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "deprecation-notice.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": null,
+        "finding": "WebKit en-light390px deprecation button placement: exact geometry402.640625/446.640625/right406.015625/h44 assertion line114 reproduces identically candidate/baseline/retry. The complete3190 release comparison also records this exact assertion and coordinates on its candidate/baseline/retry. Existing layout limitation retained; no new source path/fixture change in this integration, not attributed to the NVIDIA/gateway patches."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "editor-advanced-align.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 0
+      },
+      "classification": "first failure retained; retry passes",
+      "review": {
+        "issue": 4615,
+        "finding": "Initial Chromium en1000 alignment measurement differs (Advanced283.375/fields347.359375), line77. One pristine3295 run passes, so no exact baseline reproduction is claimed. Known issue documents same layout measurement class in another locale; preserve initial result and one candidate retry, inspect retry status before gate. Recorded single candidate retry passes; this remains a first-only transient, not an exact baseline reproduction."
+      },
+      "unmatched_initial_cases": [
+        {
+          "title": "chromium: a provider editor's Advanced starts where its fields do",
+          "line": 55,
+          "assertion": "editor-advanced-align.test.cjs:77",
+          "type": "testCodeFailure",
+          "code": "ERR_ASSERTION",
+          "error": "en 1000: Advanced starts at 283.375, its fields at 347.359375",
+          "first_line": "en 1000: Advanced starts at 283.375, its fields at 347.359375",
+          "expected": null,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "file": "fonts.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4685,
+        "finding": "WebKit narrowed font menu pointer-focus assertion line230 fails initially. Current issue reports same message/line on Linux; no later comments/patch. Paired pristine and single retry still running when note created; verify completed outcomes before gate."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "found-skill-pick-remove.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 1
+      },
+      "classification": "reviewed GUI boundary; pristine attempt passed",
+      "review": {
+        "issue": 4097,
+        "additional_issue": 5013,
+        "finding": "Initial WebKit en420 and ja420 grilling-row click scrolls Library (reader helper line105). First pristine3295 run passes, so no exact baseline reproduction is claimed. Current issue documents1px Library selection-click shift and #5013 broader file, both already read; no later fix. Await and preserve single retry; original Library assets/test unchanged by fork."
+      },
+      "unmatched_initial_cases": [
+        {
+          "title": "webkit: some skills the agents have of their own, out of them at once > en at 420px",
+          "line": 129,
+          "assertion": "found-skill-pick-remove.test.cjs:105",
+          "type": "testCodeFailure",
+          "code": "ERR_ASSERTION",
+          "error": "locator('#view-library').locator('.lib-found').filter({ has: locator('.name').filter({ hasText: /^grilling$/ }) })'s click scrolled the page\n+ actual - expected\n\n+ 'view-library:353'\n- 'view-library:352'\n                  ^",
+          "first_line": "locator('#view-library').locator('.lib-found').filter({ has: locator('.name').filter({ hasText: /^grilling$/ }) })'s click scrolled the page",
+          "expected": null,
+          "actual": null
+        },
+        {
+          "title": "webkit: some skills the agents have of their own, out of them at once > ja at 420px",
+          "line": 129,
+          "assertion": "found-skill-pick-remove.test.cjs:105",
+          "type": "testCodeFailure",
+          "code": "ERR_ASSERTION",
+          "error": "locator('#view-library').locator('.lib-found').filter({ has: locator('.name').filter({ hasText: /^grilling$/ }) })'s click scrolled the page\n+ actual - expected\n\n+ 'view-library:352'\n- 'view-library:351'\n                  ^",
+          "first_line": "locator('#view-library').locator('.lib-found').filter({ has: locator('.name').filter({ hasText: /^grilling$/ }) })'s click scrolled the page",
+          "expected": null,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "file": "gateway-caller-keys.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 3797,
+        "finding": "Chromium en reads document width immediately after560px resize and sees scrollWidth>innerWidth at line138. Current issue last comment reproduces chromium en exactly four of six clean runs; no posted fix. Keep initial and one paired baseline/retry and distinguish measured reproduction from issue context."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "gateway-key-groups.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 0
+      },
+      "classification": "first failure retained; retry passes",
+      "review": {
+        "issue": 1974,
+        "finding": "Initial Chromium zh left-border guard sampled three detached key-model buttons (connected:false, empty computed style/width/color), line72. Exactly this diagnostic shape is in current issue comments. Clean baseline and single candidate retry pass; first-only detached-DOM measurement, not a claim of exact baseline reproduction. No proposed later patch."
+      },
+      "unmatched_initial_cases": [
+        {
+          "title": "chromium zh: a gateway key is held to the routing groups picked for it",
+          "line": 11,
+          "assertion": "gateway-key-groups.test.cjs:72",
+          "type": "testCodeFailure",
+          "code": "ERR_ASSERTION",
+          "error": "a coloured left border: {\"n\":3,\"bad\":[{\"tag\":\"BUTTON\",\"cls\":\"amodels key-models\",\"in\":\"acc in-use\",\"connected\":false,\"style\":\"\",\"width\":\"\",\"color\":\"\"},{\"tag\":\"BUTTON\",\"cls\":\"amodels key-models set\",\"in\":\"acc in-use\",\"connected\":false,\"style\":\"\",\"width\":\"\",\"color\":\"\"},{\"tag\":\"BUTTON\",\"cls\":\"amodels key-models set\",\"in\":\"acc in-use\",\"connected\":false,\"style\":\"\",\"width\":\"\",\"color\":\"\"}],\"sheets\":[\"/app.css:3217\",\"/plugins/routing/routing.css:743\",\"/plugins/library/library.css:578\",\"/plugins.css:220\",\"/plugins/sessions/sessions.css:126\",\"/plugins/redact/redact.css:326\",\"/context.css:331\",\"/omarchy.css:39\",\"<style>:1\"]}\n+ actual - expected\n\n+ [\n+   {\n+     cls: 'amodels key-models',\n+     color: '',\n+     connected: false,\n+     in: 'acc in-use',\n+     style: '',\n+     tag: 'BUTTON',\n+     width: ''\n+   },\n+   {\n+     cls: 'amodels key-models set',\n+     color: '',\n+     connected: false,\n+     in: 'acc in-use',\n+     style: '',\n+     tag: 'BUTTON',\n+     width: ''\n+   },\n+   {\n+     cls: 'amodels key-models set',\n+     color: '',\n+     connected: false,\n+     in: 'acc in-use',\n+     style: '',\n+     tag: 'BUTTON',\n+     width: ''\n+   }\n+ ]\n- []",
+          "first_line": "a coloured left border: {\"n\":3,\"bad\":[{\"tag\":\"BUTTON\",\"cls\":\"amodels key-models\",\"in\":\"acc in-use\",\"connected\":false,\"style\":\"\",\"width\":\"\",\"color\":\"\"},{\"tag\":\"BUTTON\",\"cls\":\"amodels key-models set\",\"in\":\"acc in-use\",\"connected\":false,\"style\":\"\",\"width\":\"\",\"color\":\"\"},{\"tag\":\"BUTTON\",\"cls\":\"amodels key-models set\",\"in\":\"acc in-use\",\"connected\":false,\"style\":\"\",\"width\":\"\",\"color\":\"\"}],\"sheets\":[\"/app.css:3217\",\"/plugins/routing/routing.css:743\",\"/plugins/library/library.css:578\",\"/plugins.css:220\",\"/plugins/sessions/sessions.css:126\",\"/plugins/redact/redact.css:326\",\"/context.css:331\",\"/omarchy.css:39\",\"<style>:1\"]}",
+          "expected": null,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "file": "gateway-key-limit.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4120,
+        "finding": "WebKit en/zh opening editor moved the page line64 on candidate, pristine3295 and retry. Separate from #3523 resize check, whose upstream state-wait fix2bde65759 is already present. All #3523 comments including branch retirement read; do not carry the redundant alternative."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "gateway-key-models.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4120,
+        "additional_issue": 4081,
+        "finding": "WebKit en/zh opening menu moved the page line49 matches candidate/baseline/retry. Baseline and retry also reproduce known Chromium en immediate560px resize width assertion line79 (#4081). Latest issue comments read; no later patch. Keep both failure classes distinct."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "gateway-keys-empty.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 0
+      },
+      "classification": "first failure retained; retry passes",
+      "review": {
+        "issue": 4383,
+        "finding": "WebKit read-before/failed-read fixture waits6s for error status line91; exact assertion on candidate and pristine3295. Current issue names competing poll/error timing as unresolved, has no later patch. Do not infer a successful read from the failure."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "group-disabled-contrast.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "corrected in final source",
+      "review": {
+        "issue": null,
+        "finding": "Candidate/pristine3295/retry all report WebKit en light/dark contrast1.00 at line99; same cases also in3190 original paired record. Diagnostic isolates premature measurement: first page ancestor MAIN.view has opacity0 before fade-in; preserving the original contrast parser/assertions and waiting for existing ancestors opacity>=.99 passes4/4 WebKit en/zh light/dark. Measured names8.64/8.03:1, members3.66/4.64, IDs8.22/8.43 after presentation. Canvas parser substitution alone still failed first case, so color parsing is NOT the established cause. Runtime/assets untouched; diagnostic fixture is a temporary copy and not claimed as candidate suite pass."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "group-editor-selected.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 5049,
+        "finding": "WebKit selected group/editor Save visibility wait at line103 times out identically candidate/pristine3295/retry. Current issue exact same test/line, no comments or later patch. Routing editor CSS/selection logic remains upstream."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "header-centre.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "corrected in final source",
+      "review": {
+        "issue": 3479,
+        "finding": "Original575/pristine3295/retry fail only the known ResizeObserver undelivered-notification page error at line96; all layout cells pass. Read all comments including current posted patch, ported exact-string classification with ggbdpq credit. Repaired file14/14 green, final-source retest tracked separately."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "icon-url.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4688,
+        "finding": "Exact WebKit420ja click-scroll assertion line157 on original/pristine3295/retry. Issue same language/width/line and message; no fork change in provider icon/editor implementation."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "images-codex-one.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 5475,
+        "finding": "Original WebKit zhTW1000 saved-GPT-Image explanation-at-rest assertion114; pristine3295 reproduces same assertion in de1000, single candidate retry reproduces original zhTW cell. Same fixture assertion/class, not exact baseline locale reproduction. Provider/image model UI assets unchanged by fork."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "inner-scroll-contain.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4689,
+        "finding": "Chromium nested rt-reqs/rt-steps wheel past foot fails at line90 on original/pristine3295/retry. Existing nested-wheel containment policy is unchanged; separate from retained delayed-pixel restoration. Current issue has no posted patch."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "key-replace.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "corrected in final source",
+      "review": {
+        "issue": 3476,
+        "finding": "Original575/pristine3295/retry420px Change-key assertion differs only in .holds class marker while body scrollTop200 remains200. Reviewed current posted two-part patch; port reader-only positions fix, omit unrelated timeout increase. Repaired full40/40 green; source fix0b8271889, final-source retest tracked separately."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "lan-docker.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4692,
+        "finding": "WebKit share switch page-movement assertion137 in original en, sticky-hit click timeout135 in original zh; pristine3295 and retry reproduce the timeout135 class in en/zh. No exact baseline proof for initial en scroll assertion is claimed. Runtime LAN/share UI is upstream; no new sharing/address policy introduced."
+      },
+      "unmatched_initial_cases": [
+        {
+          "title": "webkit: in a container, the share address is the host's, not the container's > en",
+          "line": 115,
+          "assertion": "lan-docker.test.cjs:137",
+          "type": "testCodeFailure",
+          "code": "ERR_ASSERTION",
+          "error": "the switch moved the page\n\n388 !== 306",
+          "first_line": "the switch moved the page",
+          "expected": null,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "file": "ledger-hscroll.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4400,
+        "finding": "Same WebKit en a-bar-with-nothing-to-scroll assertion on original/pristine3295/retry. Fork assertion124 maps to pristine120 after four intentional per-action route-fetch expectation lines; no scrollbar runtime change. Identical remaining boundary in the accepted3190 release. Request-attempt and routing navigation behavior independently pass their dedicated86-case official core."
+      },
+      "unmatched_initial_cases": [
+        {
+          "title": "webkit: the Requests table's scrollbar and a row's status > en",
+          "line": 58,
+          "assertion": "ledger-hscroll.test.cjs:124",
+          "type": "testCodeFailure",
+          "code": "ERR_ASSERTION",
+          "error": "a bar with nothing to scroll\n\ntrue !== false",
+          "first_line": "a bar with nothing to scroll",
+          "expected": null,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "file": "library-browser-away.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": null,
+        "finding": "Initial webkit: away from magpie, Magpie Browser's sheet downloads the extension > en at 1100px: download, then connected; library-browser-away.test.cjs:110: Expected values to be strictly equal: Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. The same file was an explicit boundary in the3190 release; compare old and new detailed failures rather than treating issue presence alone as equivalence.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "library-ime-scroll.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": null,
+        "finding": "Initial webkit: composing a word in the Library's instructions leaves the page where it is > en, 560px wide, set:default; library-ime-scroll.test.cjs:143: the text's end isn't in sight: -42.3125,106,640 Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. The same file was an explicit boundary in the3190 release; compare old and new detailed failures rather than treating issue presence alone as equivalence.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "list-sort.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4131,
+        "finding": "Initial webkit: the installed lists, sorted as picked > en; list-sort.test.cjs:91: libServers: the click moved the page Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. The same file was an explicit boundary in the3190 release; compare old and new detailed failures rather than treating issue presence alone as equivalence.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "market-have.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 0
+      },
+      "classification": "first failure retained; retry passes",
+      "review": {
+        "issue": 4620,
+        "finding": "Initial chromium en: the market's marks follow the library > a server added by hand is marked added; market-have.test.cjs:135: locator.waitFor: Timeout 5000ms exceeded. Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. Single candidate retry passes; initial failure remains in the record. The same file was an explicit boundary in the3190 release; compare old and new detailed failures rather than treating issue presence alone as equivalence.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "menu-input-scroll.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 3402,
+        "finding": "Initial chromium en: a menu opened from a long text box's rule stays open; menu-input-scroll.test.cjs:85: .rt-rmore's menu stays open Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. The same file was an explicit boundary in the3190 release; compare old and new detailed failures rather than treating issue presence alone as equivalence.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "modal-centred-late.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 0
+      },
+      "classification": "first failure retained; retry passes",
+      "review": {
+        "issue": 4116,
+        "finding": "Initial webkit: a dialog grows to its README over frames, centred all the way, not in one jump > 820px; modal-centred-late.test.cjs:138: grew over frames: [409,523,628,670,678,676,675,674] Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. Single candidate retry passes; initial failure remains in the record.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": [
+        {
+          "title": "webkit: a dialog grows to its README over frames, centred all the way, not in one jump > 820px",
+          "line": 100,
+          "assertion": "modal-centred-late.test.cjs:138",
+          "type": "testCodeFailure",
+          "code": "ERR_ASSERTION",
+          "error": "grew over frames: [409,523,628,670,678,676,675,674]",
+          "first_line": "grew over frames: [409,523,628,670,678,676,675,674]",
+          "expected": null,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "file": "model-chip-steady.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4388,
+        "finding": "Initial chromium en 900px: a model chip picked or unpicked moves no chip > some picked; model-chip-steady.test.cjs:83: Expected values to be strictly equal: Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. The same file was an explicit boundary in the3190 release; compare old and new detailed failures rather than treating issue presence alone as equivalence.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "model-copy-id.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4621,
+        "finding": "Initial chromium en: a chip's right-click copies the model's id; model-copy-id.test.cjs:94: locator.scrollIntoViewIfNeeded: Timeout 5000ms exceeded. Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. The same file was an explicit boundary in the3190 release; compare old and new detailed failures rather than treating issue presence alone as equivalence.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "model-load.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": null,
+        "finding": "Initial webkit 390 en window: busy models go last, or not; model-load.test.cjs:176: the click scrolled the page Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. The same file was an explicit boundary in the3190 release; compare old and new detailed failures rather than treating issue presence alone as equivalence.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "model-reasonless.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4100,
+        "finding": "Initial webkit 1100 de: a model's levels all unticked sends it no reasoning field; model-reasonless.test.cjs:87: the last level unticks Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. The same file was an explicit boundary in the3190 release; compare old and new detailed failures rather than treating issue presence alone as equivalence.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "model-suffix-own.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4962,
+        "finding": "Initial webkit zh: a name the user gave can go without its provider; model-suffix-own.test.cjs:116: a click scrolled the page Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. The same file was an explicit boundary in the3190 release; compare old and new detailed failures rather than treating issue presence alone as equivalence.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "models-works-only.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4391,
+        "finding": "Initial chromium en 900px: Working only unpicks the models that failed their test; models-works-only.test.cjs:113: locator.click: Timeout 5000ms exceeded. Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. The same file was an explicit boundary in the3190 release; compare old and new detailed failures rather than treating issue presence alone as equivalence.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "name-suffix-no-names.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 1937,
+        "finding": "Initial webkit zh 900px: Settings and Routing name the connected agents the setting changes nothing in; name-suffix-no-names.test.cjs:101: Expected values to be strictly deep-equal: Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. The same file was an explicit boundary in the3190 release; compare old and new detailed failures rather than treating issue presence alone as equivalence.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "name-suffix-remote.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 5147,
+        "additional_issue": 4430,
+        "finding": "Initial and single retry Chromium en second goto return ERR_NAME_NOT_RESOLVED for fake magpie.test after unrouteAll. Current issue5147 reports that exact fixture/interceptor-reconfiguration face; source lines69-73 remove then reinstall routes between two same-page navigations. Pristine3295 instead records the associated script-import/page-error and skeleton timing classes, not this exact DNS event, so exact baseline reproduction is not claimed. Page/mock lifecycle and Provider editor behavior are upstream; preserve original different outcomes and scope this as a test-interception boundary."
+      },
+      "unmatched_initial_cases": [
+        {
+          "title": "chromium en: a remote magpie's model is named alone under Off",
+          "line": 59,
+          "assertion": "name-suffix-remote.test.cjs:73",
+          "type": "testCodeFailure",
+          "code": "ERR_TEST_FAILURE",
+          "error": "page.goto: net::ERR_NAME_NOT_RESOLVED at http://magpie.test/?view=providers\nCall log:\n  - navigating to \"http://magpie.test/?view=providers\", waiting until \"load\"",
+          "first_line": "page.goto: net::ERR_NAME_NOT_RESOLVED at http://magpie.test/?view=providers",
+          "expected": null,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "file": "nav-sub-unroll.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 0
+      },
+      "classification": "first failure retained; retry passes",
+      "review": {
+        "issue": 1950,
+        "finding": "Initial webkit: the sidebar's selection sits on its row when the list is drawn again as it unrolls > en 1024; nav-sub-unroll.test.cjs:66: page.waitForFunction: Timeout 5000ms exceeded. Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. Single candidate retry passes; initial failure remains in the record.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "nav-timeout.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "corrected in final source",
+      "review": {
+        "issue": 5425,
+        "finding": "Static guard lists five missing navigation defaults on pristine3295; integrated fork adds a sixth in usage-routing-visible. OWN extra regression repaired, not waived. Allsix siblings now have60000ms navigation waits while original5000/8000ms action deadlines/assertions remain. Final2fb source guard and allsix fullbrowser fixtures pass as part of12files250tests."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "number-units.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4623,
+        "finding": "Initial webkit: counts in K/M/B or, picked in Settings in Chinese, 万/亿 > zh; number-units.test.cjs:186: picking units must not scroll the settings page Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. The same file was an explicit boundary in the3190 release; compare old and new detailed failures rather than treating issue presence alone as equivalence.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "omarchy.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4624,
+        "finding": "Initial chromium: Omarchy's look and Bar icon, only on Omarchy > en: on Omarchy; omarchy.test.cjs:135: page.waitForFunction: Timeout 5000ms exceeded. Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. The same file was an explicit boundary in the3190 release; compare old and new detailed failures rather than treating issue presence alone as equivalence.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "page-width-steady.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4541,
+        "finding": "Initial chromium MacIntel en: opening an agent's details past the window moves nothing sideways; page-width-steady.test.cjs:146: en: the details run the page past the window Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. The same file was an explicit boundary in the3190 release; compare old and new detailed failures rather than treating issue presence alone as equivalence.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "panel-zero-fold.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": null,
+        "finding": "Initial webkit zh: the panel's Allowances tab folds what has nothing left; panel-zero-fold.test.cjs:117: the click keeps the reader where they were Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. The same file was an explicit boundary in the3190 release; compare old and new detailed failures rather than treating issue presence alone as equivalence.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "phone-connect-menu.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4706,
+        "finding": "Initial chromium 420 public URL: the address clicked from the page's top opens its menu; phone-connect-menu.test.cjs:108: the address is in sight Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. The same file was an explicit boundary in the3190 release; compare old and new detailed failures rather than treating issue presence alone as equivalence. Current red is the420px top-click address visibility (#4706/#4707), not the300ms put-back case in posted3524 patch01566e051; that patch does not fix this observed red and is not imported.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "plain-names.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4963,
+        "finding": "Initial webkit zh: the agents' lists name models with their providers, or not; plain-names.test.cjs:109: the click scrolled the page Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. The same file was an explicit boundary in the3190 release; compare old and new detailed failures rather than treating issue presence alone as equivalence.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "plugin-card-update.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 3079,
+        "finding": "Initial webkit: a card's Update button updates the plugin > en; plugin-card-update.test.cjs:66: locator.waitFor: Timeout 5000ms exceeded. Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. The same file was an explicit boundary in the3190 release; compare old and new detailed failures rather than treating issue presence alone as equivalence.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "plugin-github-filter.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4679,
+        "finding": "Initial webkit: the plugins on GitHub are narrowed by kind and by a field of their own > ja 420px; plugin-github-filter.test.cjs:146: locator.click: Timeout 6000ms exceeded. Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. The same file was an explicit boundary in the3190 release; compare old and new detailed failures rather than treating issue presence alone as equivalence.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "plugin-move-unserved.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4392,
+        "finding": "Initial chromium en: Try again takes the models unticked; plugin-move-unserved.test.cjs:125: locator.click: Timeout 5000ms exceeded. Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. The same file was an explicit boundary in the3190 release; compare old and new detailed failures rather than treating issue presence alone as equivalence.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "plugin-move.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issue": 4393,
+        "finding": "Initial webkit en: a built-in subscription moves to its plugin for good; plugin-move.test.cjs:172: the failure moved the editor Paired pristine3295 reproduces the same source assertion/error class; locale/measurement values may differ. All first and retry logs retained. The same file was an explicit boundary in the3190 release; compare old and new detailed failures rather than treating issue presence alone as equivalence.",
+        "proof_level": "paired_assertion_class"
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "plugin-pick-sub.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 0
+      },
+      "classification": "first failure retained; retry passes",
+      "review": {
+        "issues": [],
+        "finding": "Providers read races the test signed-in state (line97). Candidate and clean3295 same assertion; candidate retry green. No fork changes to plugin subscription selection; historical controlled-delay reproduction is corroboration, not this-round case proof."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "plugins-more-discover.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 0
+      },
+      "classification": "first failure retained; retry passes",
+      "review": {
+        "issues": [],
+        "finding": "Initial goto closes page and cleanup invokes an unset told callback. Both clean3295 and candidate retry pass. Preserve first failure, do not call this baseline-reproduced. No fork plugin discovery implementation changes."
+      },
+      "unmatched_initial_cases": [
+        {
+          "title": "webkit: More in Plugins opens Discover > zh",
+          "line": 67,
+          "assertion": "plugins-more-discover.test.cjs:148",
+          "type": "testCodeFailure",
+          "code": "ERR_TEST_FAILURE",
+          "error": "page.goto: Target page, context or browser has been closed\nCall log:\n  - navigating to \"http://magpie.test/?view=plugins\", waiting until \"load\"",
+          "first_line": "page.goto: Target page, context or browser has been closed",
+          "expected": null,
+          "actual": null
+        },
+        {
+          "title": "webkit: More in Plugins opens Discover",
+          "line": 63,
+          "assertion": "plugins-more-discover.test.cjs:47",
+          "type": "unhandledRejection",
+          "code": "ERR_TEST_FAILURE",
+          "error": "told is not a function",
+          "first_line": "told is not a function",
+          "expected": null,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "file": "provider-detect-models.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          4964
+        ],
+        "finding": "Initial provider-detect-models.test.cjs:116 — Each picked model moved; paired pristine3295 and candidate retry reproduce the same assertion/error class. Locale equality checked in comparison report; only template matches are not promoted to exact-case proof. Relevant provider/settings/page geometry implementation is upstream unchanged; related current issue and all replies checked, no posted applicable fix. This remains a real inherited UI limitation, not a blanket flaky-test waiver."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "provider-fetch-again.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          5232,
+          5057,
+          3292
+        ],
+        "finding": "All14 cases allthree runs omit fetched b-chat,b-vision from groupB while keeping manual/shared IDs. #5232/#5057 and last#3292 comment report exact same functional failure upstream, no fix posted. Provider refetch path is upstream unchanged; document real inherited issue, not timing-only."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "provider-levels-save.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          4394
+        ],
+        "finding": "Initial provider-levels-save.test.cjs:63 — locator.uncheck: Clicking the checkbox did not change its state; paired pristine3295 and candidate retry reproduce the same assertion/error class. Locale equality checked in comparison report; only template matches are not promoted to exact-case proof. Relevant provider/settings/page geometry implementation is upstream unchanged; related current issue and all replies checked, no posted applicable fix. This remains a real inherited UI limitation, not a blanket flaky-test waiver."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "provider-levels-scroll.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          4395
+        ],
+        "finding": "Current WebKit uncheck does not change checkbox state at68, allthree attempts. Related#4395 is later scrollTop assertion, so current exact classifier matches #4394 sibling rather than claiming exact #4395 reproduction. Reasoning-level provider editor code upstream unchanged."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "provider-models-rest.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          4396
+        ],
+        "finding": "Initial provider-models-rest.test.cjs:71 — Expected values to be strictly equal:; paired pristine3295 and candidate retry reproduce the same assertion/error class. Locale equality checked in comparison report; only template matches are not promoted to exact-case proof. Relevant provider/settings/page geometry implementation is upstream unchanged; related current issue and all replies checked, no posted applicable fix. This remains a real inherited UI limitation, not a blanket flaky-test waiver."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "provider-picks-stay.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          5233,
+          4397
+        ],
+        "finding": "Initial provider-picks-stay.test.cjs:97 — locator.click: Timeout 5000ms exceeded.; paired pristine3295 and candidate retry reproduce the same assertion/error class. Locale equality checked in comparison report; only template matches are not promoted to exact-case proof. Relevant provider/settings/page geometry implementation is upstream unchanged; related current issue and all replies checked, no posted applicable fix. This remains a real inherited UI limitation, not a blanket flaky-test waiver."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "provider-typed.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          4673
+        ],
+        "finding": "Initial provider-typed.test.cjs:79 — Fetch models asks with the form; paired pristine3295 and candidate retry reproduce the same assertion/error class. Locale equality checked in comparison report; only template matches are not promoted to exact-case proof. Relevant provider/settings/page geometry implementation is upstream unchanged; related current issue and all replies checked, no posted applicable fix. This remains a real inherited UI limitation, not a blanket flaky-test waiver."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "providers-reset-use.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          4873
+        ],
+        "finding": "Initial providers-reset-use.test.cjs:192 — a click moved the page; paired pristine3295 and candidate retry reproduce the same assertion/error class. Locale equality checked in comparison report; only template matches are not promoted to exact-case proof. Relevant provider/settings/page geometry implementation is upstream unchanged; related current issue and all replies checked, no posted applicable fix. This remains a real inherited UI limitation, not a blanket flaky-test waiver."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "quit-ask-setting.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          4965
+        ],
+        "finding": "Initial quit-ask-setting.test.cjs:118 — the click moved nothing; paired pristine3295 and candidate retry reproduce the same assertion/error class. Locale equality checked in comparison report; only template matches are not promoted to exact-case proof. Relevant provider/settings/page geometry implementation is upstream unchanged; related current issue and all replies checked, no posted applicable fix. This remains a real inherited UI limitation, not a blanket flaky-test waiver."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "quota-caption-contrast.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          5589,
+          4787
+        ],
+        "finding": "All three fail identical WebKit light-en quota caption94 with1.00:1 under full run; #5589 same current face. This is not proof of persistent deployed1:1 contrast: group contrast instrumentation separately showed parent-view transitionopacity0. Quota fixture/styles untouched; no posted fix."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "recent-calls-more.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          4543
+        ],
+        "finding": "Initial recent-calls-more.test.cjs:64 — the click doesn't move the page; paired pristine3295 and candidate retry reproduce the same assertion/error class. Locale equality checked in comparison report; only template matches are not promoted to exact-case proof. Relevant provider/settings/page geometry implementation is upstream unchanged; related current issue and all replies checked, no posted applicable fix. This remains a real inherited UI limitation, not a blanket flaky-test waiver."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "recovered-file.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          4320
+        ],
+        "finding": "All10 cells allthree runs expect status warn but actual status warn lift at68. #4320 reports identical class-string stale assertion, no posted fix."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "redact-rule-edit.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          3407
+        ],
+        "finding": "Initial redact-rule-edit.test.cjs:97 — the click moved nothing; paired pristine3295 and candidate retry reproduce the same assertion/error class. Locale equality checked in comparison report; only template matches are not promoted to exact-case proof. Relevant provider/settings/page geometry implementation is upstream unchanged; related current issue and all replies checked, no posted applicable fix. This remains a real inherited UI limitation, not a blanket flaky-test waiver."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "redact-words-any-case.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          3500,
+          3497
+        ],
+        "finding": "Current failure is first real-coordinate mouse click not activating Any case within5s, line91, reproduced on clean3295 and retry. NOT the old second personal-row selector of #3500: that proposed patch was withdrawn after upstream bea9f905, already included. Latest comments read; do not reapply superseded fix."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "redact-words-hidden.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [],
+        "finding": "WebKit narrow page text box/Show geometry assertion91 reproduced clean3295 and retry; no fork masking or width styles."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "redact-words-import.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [],
+        "finding": "Narrow import box fits-window assertion100 reproduced clean3295 and retry; masking box geometry upstream unchanged."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "redact-words-whole.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [],
+        "finding": "First real-coordinate click waits for word toggle and times out at91; same assertion in both clean3295 and retry. No fork masking/settings code changes."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "remote-magpie.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          4398,
+          5013
+        ],
+        "finding": "Initial remote-magpie.test.cjs:160 — Expected values to be strictly deep-equal:; paired pristine3295 and candidate retry reproduce the same assertion/error class. Locale equality checked in comparison report; only template matches are not promoted to exact-case proof. Relevant provider/settings/page geometry implementation is upstream unchanged; related current issue and all replies checked, no posted applicable fix. This remains a real inherited UI limitation, not a blanket flaky-test waiver."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "removed-hide.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          4400
+        ],
+        "finding": "Initial removed-hide.test.cjs:87 — the click moved the page; paired pristine3295 and candidate retry reproduce the same assertion/error class. Locale equality checked in comparison report; only template matches are not promoted to exact-case proof. Relevant provider/settings/page geometry implementation is upstream unchanged; related current issue and all replies checked, no posted applicable fix. This remains a real inherited UI limitation, not a blanket flaky-test waiver."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "rest-try-now.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          2564,
+          4127,
+          2658
+        ],
+        "finding": "All three attempts contain button cannot be reached line93 plus click-scrolled line164. Exact locale occurrences differ; only assertion-class reproduction claimed. #2564/#4127 current replies include run-alone failures predating gutter and rest-probe changes. No posted applicable fix; retained cooldown editor/runtime absent."
+      },
+      "unmatched_initial_cases": [
+        {
+          "title": "webkit de 420px: a resting key in the provider's list is tried again",
+          "line": 141,
+          "assertion": "rest-try-now.test.cjs:93",
+          "type": "testCodeFailure",
+          "code": "ERR_ASSERTION",
+          "error": "the button can't be reached",
+          "first_line": "the button can't be reached",
+          "expected": null,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "file": "routing-columns.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          4520
+        ],
+        "finding": "Initial routing-columns.test.cjs:87 — side by side; paired pristine3295 and candidate retry reproduce the same assertion/error class. Locale equality checked in comparison report; only template matches are not promoted to exact-case proof. Relevant provider/settings/page geometry implementation is upstream unchanged; related current issue and all replies checked, no posted applicable fix. This remains a real inherited UI limitation, not a blanket flaky-test waiver."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "routing-ctx-sessions.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 1
+      },
+      "classification": "reviewed GUI boundary; pristine attempt passed",
+      "review": {
+        "issues": [
+          4711
+        ],
+        "finding": "Candidate first/retry collect10/7 requestAnimationFrame samples in four fixed300ms sends, below >10 assertion125; pristine3295 passes. Actual failure precedes per-frame session/content assertions. #4711 reports this fixture failing under the whole suite upstream, but does not publish the same inner sample-count assertion; not exact baseline reproduction and no session content misrouting demonstrated. Routing session update code remains upstream; retained wheel callback is not invoked by synthetic trace sends. No posted fix."
+      },
+      "unmatched_initial_cases": [
+        {
+          "title": "webkit: each session sending at once has its own context window, by its name > en 1100px",
+          "line": 100,
+          "assertion": "routing-ctx-sessions.test.cjs:125",
+          "type": "testCodeFailure",
+          "code": "ERR_ASSERTION",
+          "error": "frames were watched: 10",
+          "first_line": "frames were watched: 10",
+          "expected": null,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "file": "routing-intent-entry.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          5392
+        ],
+        "finding": "All8 cases allthree runs find added upstream rule entry next to old entry; one way to add assertion101. #5392 reports upstream01a260af4 change, no posted patch. Intent entry markup upstream unchanged."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "routing-many-keys.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          5543,
+          4082
+        ],
+        "finding": "Candidate/baseline/retry viewport foot assertion187 requires expected visible wires;1or2 keys differ by case. #5543/#4082 record this geometry family. No fork wiring/key visibility code changes; no posted fix."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "routing-moved-why.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [],
+        "finding": "Tooltip explanation exact string mismatch row0 at156 is identical on candidate, clean3295, retry. Upstream Codex memories explanation changed, no fork moved-why renderer changes."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "routing-row-swap.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [],
+        "finding": "Initial routing-row-swap.test.cjs:81 — page.waitForFunction: Timeout 5000ms exceeded.; paired pristine3295 and candidate retry reproduce the same assertion/error class. Locale equality checked in comparison report; only template matches are not promoted to exact-case proof. Relevant provider/settings/page geometry implementation is upstream unchanged; related current issue and all replies checked, no posted applicable fix. This remains a real inherited UI limitation, not a blanket flaky-test waiver."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "routing-sign-in-again.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [],
+        "finding": "Button bounding box null at1100px line90 on candidate/clean3295/retry; no fork sign-in button/render path."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "routing-stage-routes.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 0
+      },
+      "classification": "first failure retained; retry passes",
+      "review": {
+        "issues": [],
+        "finding": "First Chromium routing count assertion123; pristine3295 and one candidate retry both pass. Preserve transient failure rather than declare baseline reproduced; stage route rendering upstream unchanged."
+      },
+      "unmatched_initial_cases": [
+        {
+          "title": "webkit en 1100px: three agents on three routes, each route's rows under its own heading",
+          "line": 75,
+          "assertion": "routing-stage-routes.test.cjs:123",
+          "type": "testCodeFailure",
+          "code": "ERR_ASSERTION",
+          "error": "Expected values to be strictly equal:\n\nfalse !== true",
+          "first_line": "Expected values to be strictly equal:",
+          "expected": null,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "file": "routing-story-shrinks.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          3954,
+          4629
+        ],
+        "finding": "Allthree attempts same four held-while-under-way assertions99/156, including64.375vs200. #3954 latest comment reproduces four WebKit cells alone; no posted fix."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "segs-press-redraw.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          4566,
+          3922,
+          4189
+        ],
+        "finding": "Current16 sweep failures name models own|magpie@searchAllRow:0 option1, expected live press but gotnone at259. #4566 latest comment reports exactly16 Chromium/WebKit failures alone. #3922 posted newest-self and landed-wheel fix was already absorbed761e0e010; do not reapply it to this different searchAllRow face. Clean3295 and candidate retry both reproduce the same16 failures; no fork segs or searchAllRow code changes."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "side-toggle.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "corrected in final source",
+      "review": {
+        "issues": [
+          4715,
+          2732
+        ],
+        "finding": "Initial and clean3295 both fail Mac-transition assertions on a Linux host. #4715 author diagnosed navigator.platform left at Linux: navMorph correctly takes instant Linux path. Adopt posted0c0aedc91 test-only5line platform pin, author Rick Chan preserved, in fix/gui-fixtures-3295 and final source. Dedicated explicit Linux case remains. Original retry retained; final complete fixture26/26 passes on2fb. #2732 animation timing residual distinguished."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "sidebar-overlay-scrollbar.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 1
+      },
+      "classification": "reviewed GUI boundary; pristine attempt passed",
+      "review": {
+        "issues": [
+          1863,
+          4400
+        ],
+        "finding": "Initial candidate and retry drag endpoint220 of249 at107; pristine3295 passes this run, so not a current-baseline reproduction. #1863 documents the same29px-short endpoint on pristine upstream in both engines, #4400 full-suite sensitivity; prior3190 also recorded this residual. Sidebar overlay code is upstream unchanged, fork pixel-wheel state is view-scoped. No posted applicable fix. Preserve uncertainty about exact current-run trigger rather than call green baseline proof."
+      },
+      "unmatched_initial_cases": [
+        {
+          "title": "webkit: the sidebar's overlay scroll bar > en: no bar at rest, one while it scrolls",
+          "line": 56,
+          "assertion": "sidebar-overlay-scrollbar.test.cjs:107",
+          "type": "testCodeFailure",
+          "code": "ERR_ASSERTION",
+          "error": "dragged to the end: 220 of 249",
+          "first_line": "dragged to the end: 220 of 249",
+          "expected": null,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "file": "skill-edit.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 0
+      },
+      "classification": "first failure retained; retry passes",
+      "review": {
+        "issues": [
+          5574
+        ],
+        "finding": "Initial Chromium zh400px proto-menu visible wait138 times out after keyboard save and opening file picker. Pristine3295 and candidate retry pass. #5574 reports exact line/menu face on upstream in varying narrow locales; do not claim current baseline reproduction. File picker/Markdown/save implementation upstream unchanged; no posted applicable fix."
+      },
+      "unmatched_initial_cases": [
+        {
+          "title": "chromium: a skill's SKILL.md reads as Markdown and is edited and saved in the library > zh at 400px",
+          "line": 84,
+          "assertion": "skill-edit.test.cjs:138",
+          "type": "testCodeFailure",
+          "code": "ERR_TEST_FAILURE",
+          "error": "locator.waitFor: Timeout 5000ms exceeded.\nCall log:\n  - waiting for locator('.proto-menu') to be visible",
+          "first_line": "locator.waitFor: Timeout 5000ms exceeded.",
+          "expected": null,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "file": "skill-where.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          5154
+        ],
+        "finding": "Initial/pristine3295/retry reproduce WebKit400px switch scrolls nothing at161; locale counts differ. #5154 and later full-suite reports track same fixture. Skill destination switch and library drawer are upstream unchanged; no posted applicable fix."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "tap-lost-click.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 1
+      },
+      "classification": "reviewed GUI boundary; pristine attempt passed",
+      "review": {
+        "finding": "Candidate initial/retry time out1500ms waiting modal hidden at112 after Cancel tap; initial DOM log progresses modal held lib to modal held lib out, proving dismiss handler started and animation cleanup did not finish in deadline. Pristine3295 passes, no exact issue found. This file sends mouse taps only, no wheel/touchmove; fork givesBack changed branch is registered only for those input events. Modal dismiss/animation code upstream unchanged. Do not claim baseline reproduction or a demonstrated missing tap; preserve unresolved animation completion timing boundary."
+      },
+      "unmatched_initial_cases": [
+        {
+          "title": "webkit: a tap whose click the engine loses still presses the control > zh 390",
+          "line": 67,
+          "assertion": "tap-lost-click.test.cjs:112",
+          "type": "testCodeFailure",
+          "code": "ERR_TEST_FAILURE",
+          "error": "locator.waitFor: Timeout 1500ms exceeded.\nCall log:\n  - waiting for locator('#modal') to be hidden\n    2 × locator resolved to visible <div id=\"modal\" class=\"modal held lib\">…</div>\n    14 × locator resolved to visible <div id=\"modal\" class=\"modal held lib out\">…</div>",
+          "first_line": "locator.waitFor: Timeout 1500ms exceeded.",
+          "expected": null,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "file": "tencent-cloud.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          4321,
+          4399
+        ],
+        "finding": "Candidate/clean3295/retry each reproduce allfour region-strip0px assertion198 before clicking. Current#4321 reply records same four cells alone, #4399 paired upstream/parent. Horizontal region strip implementation upstream unchanged; late vertical view-wheel restoration does not add horizontal motion. No posted applicable fix."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "test-models-key-hint.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 0
+      },
+      "classification": "first failure retained; retry passes",
+      "review": {
+        "finding": "Initial WebKit en900 reports /magpie.test/api/lanes due to access control checks in pageerror collection103, after tooltip/key assertions passed. Pristine3295 and candidate retry both pass. Page repeatedly navigates fake host with shared page route, fixture lifecycle error family also observed in other upstream fixtures. Do not claim exact baseline reproduction. Tooltip/lanes fetch path upstream unchanged; no matching issue found by exact fixture search."
+      },
+      "unmatched_initial_cases": [
+        {
+          "title": "webkit en 900: Test models says which key a test goes out with",
+          "line": 66,
+          "assertion": "test-models-key-hint.test.cjs:103",
+          "type": "testCodeFailure",
+          "code": "ERR_ASSERTION",
+          "error": "Expected values to be strictly deep-equal:\n+ actual - expected\n\n+ [\n+   '/magpie.test/api/lanes due to access control checks.'\n+ ]\n- []",
+          "first_line": "Expected values to be strictly deep-equal:",
+          "expected": null,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "file": "text-size.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          1866,
+          2058
+        ],
+        "finding": "Candidate/clean3295/retry compared for Settings resize scroll stability157; #1866 latest comment reproduces this exact assertion alone3/3 on upstream (different face from its original title). #2058 is separate foot-clamp issue, no posted patch; no fork resize/styles change."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "title-bar-tools.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          2740,
+          4716
+        ],
+        "finding": "Initial and pristine3295 reproduce pageerror149 for mock API calls canceled across repeated reload. #2740 last reply diagnoses Playwright WebKit splitting message at http: (e.message loses Fetch API cannot load while e.stack retains it); current fixture filter tests message. No posted patch, separate hidden-header failure distinguished. Runtime reload/side gateway fetch paths unchanged by fork; preserve full error assertions."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "tray-cell-click.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          5215,
+          2686
+        ],
+        "finding": "Initial/retry include main-window card lower edge outside view plus small-panel clipped card; clean3295 reproduces small-panel geometry exactly (262.64top vs264.20viewbottom, bottom331.03) at77. #5215 latest alone4/4 matches; no fix posted. #2686 has a posted flash-parking test fix but targets later highlight-currentTime assertions, not this visibility failure, so do not add unrelated patch. Panel reveal/render upstream unchanged."
+      },
+      "unmatched_initial_cases": [
+        {
+          "title": "chromium en: a menu-bar cell's click opens the panel's Allowances tab at that agent's card",
+          "line": 42,
+          "assertion": "tray-cell-click.test.cjs:77",
+          "type": "testCodeFailure",
+          "code": "ERR_TEST_FAILURE",
+          "error": "page.waitForFunction: Timeout 5000ms exceeded. {\"target\":{\"x\":16,\"y\":299,\"width\":430.5,\"height\":470,\"top\":299,\"right\":446.5,\"bottom\":769,\"left\":16},\"view\":{\"x\":0,\"y\":46,\"width\":900,\"height\":654,\"top\":46,\"right\":900,\"bottom\":700,\"left\":0},\"scroll\":15,\"max\":205,\"viewport\":700}",
+          "first_line": "page.waitForFunction: Timeout 5000ms exceeded. {\"target\":{\"x\":16,\"y\":299,\"width\":430.5,\"height\":470,\"top\":299,\"right\":446.5,\"bottom\":769,\"left\":16},\"view\":{\"x\":0,\"y\":46,\"width\":900,\"height\":654,\"top\":46,\"right\":900,\"bottom\":700,\"left\":0},\"scroll\":15,\"max\":205,\"viewport\":700}",
+          "expected": null,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "file": "tray-totals.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          4717
+        ],
+        "finding": "Initial/clean3295/retry allfail duplicate panel Usage read count at216. Latest#4717 reply identifies real upstream panelUseFocus/panelUseShown duplicate read and proposes0fd066d plus3e2cb06 fixture scroll correction. This exact count boundary was already recorded for3190. It is not caused by our delta; panel loading/focus code is unchanged upstream. Defer the new runtime+two-fixture change to independent review rather than expand this upstream-convergence deployment. Do not claim no posted fix or merely load/flaky behavior."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "tray-usages.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 0
+      },
+      "classification": "first failure retained; retry passes",
+      "review": {
+        "issues": [
+          2453
+        ],
+        "finding": "Initial and clean3295 checkbox scroll-stability assertion133 fail; candidate retry passes. #2453 reports real click displacement alone on upstream, not merely a test timing allowance. Tray menu settings implementation unchanged and no posted fix; preserve this inherited product behavior limitation."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "usage-agents-hide.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          2276,
+          3414
+        ],
+        "finding": "Unhide pushes hidden-line down~50.28px at177, exact current#3414 reply532.70→582.98. Historical bisect cf455ebd5 top-of-view hold rule is upstream. Proposed clicked-control-height adjustment in#2276 has no supplied commit; later replies still reproduce. Fork retained givesBack runs only wheel/touchmove, unhide click top-hold branch follows upstream. Pristine3295 and candidate retry reproduce the same assertions and displacement."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "usage-computers.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          5155
+        ],
+        "finding": "Sync form Usage checkbox moves page at207 on allthree attempts; same current#5155 face, no posted fix. Sync editor remains upstream; this is outside retained Usage request-detail label/attempt code."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "usage-focus-steady.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 0,
+        "retry": 0
+      },
+      "classification": "corrected in final source",
+      "review": {
+        "issues": [
+          3501
+        ],
+        "finding": "Initial WebKit detached .opt.on element parentElement null at134; baseline and retry pass. Adopt current#3501 authored c2bd0b67d atomic in-page query/read with original5s patience and full assertions. Source on fix/gui-fixtures-3295, author ggbdpq preserved. Final complete fixture4/4 passes on2fb as part of12files250tests; original failure remains in fullmatrix evidence."
+      },
+      "unmatched_initial_cases": [
+        {
+          "title": "webkit zh: focusing the window keeps the Usage charts and the Routing groups",
+          "line": 117,
+          "assertion": "usage-focus-steady.test.cjs:134",
+          "type": "testCodeFailure",
+          "code": "ERR_TEST_FAILURE",
+          "error": "locator.evaluate: TypeError: null is not an object (evaluating 'b.parentElement.firstElementChild')",
+          "first_line": "locator.evaluate: TypeError: null is not an object (evaluating 'b.parentElement.firstElementChild')",
+          "expected": null,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "file": "usage-fold.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          3415,
+          2163
+        ],
+        "finding": "Initial/pristine3295/retry first-screen12of29 capacity at311 plus .view-ends overlay intercepting fold click at142. Last#3415 reply matches both current faces exactly on upstream alone; old#2163 four-pixel displacement distinguished. Quota fold/packing and overlay code upstream unchanged; no posted applicable patch for current failures."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "usage-heatmap.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          4718
+        ],
+        "finding": "Candidate/pristine3295/retry tooltip date expectedThuOct29 but readsFriOct30 at172, identical dates/text. Fixture and heatmap calendar/hover implementation upstream unchanged; related#4718 has no detailed inner failure or patch, so exact current paired reproduction is primary evidence, not issue title. No fork heatmap change."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "usage-ledger-chart.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          4263
+        ],
+        "finding": "Long ranking thumb follows scroll assertion486 fails candidate/pristine3295/retry. #4263 exact same upstream WebKit fixture assertion, no posted applicable fix. Chart ranking and scrollbar code upstream unchanged; retained diagnostics labels only affect request rows, not chart geometry."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "usage-ledger.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          4078,
+          1876
+        ],
+        "finding": "Newest live-route head still contains Back to live button at424, candidate/pristine3295/retry all reproduce the same assertion. #4078 exact assertion423 before line shift on upstream alone; no posted fix. Retained3624 reveal callback only changes scroll targeting, not live-vs-selected request state or header button policy. Dedicated explicit reveal regression passes bothengines and official runtime86. Preserve independent newest-live limitation."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "user-select.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          5157
+        ],
+        "finding": "Allthree attempts WebKit computed userSelect returns auto not text at107, before drag-content assertion. CSS and route-step words remain upstream unchanged; exact current baseline result is evidence. Related#5157 instead fails later selected-text content, so do not claim it reports this precise computed-style failure. No proposed patch found; preserve engine/style interpretation boundary."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "vertex-editor.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          4720,
+          4721,
+          4120
+        ],
+        "finding": "Allthree attempts show unwanted key field1vs0 at173/243 for add/saved Vertex editor. Both current issue last comments reproduce allfour cells upstream alone; no patch posted. Provider form is upstream unchanged; no NVIDIA/SenseNova/group fallback request path involved. Initial WebKit zh440 also reports page scrolls sideways at368; current clean/retry do not reproduce that extra cell. #4120 historical report explicitly lists vertex-editor zh440 horizontal overflow, corroboration only. Provider field widths and styles have zero fork delta, and retained wheel patch does not alter horizontal sizing; preserve this first-only extra geometry failure."
+      },
+      "unmatched_initial_cases": [
+        {
+          "title": "webkit zh: Vertex AI's pills and fields fit a narrow window",
+          "line": 339,
+          "assertion": "vertex-editor.test.cjs:368",
+          "type": "testCodeFailure",
+          "code": "ERR_ASSERTION",
+          "error": "440px\n+ actual - expected\n\n+ [\n+   'the page scrolls sideways'\n+ ]\n- []",
+          "first_line": "440px",
+          "expected": null,
+          "actual": null
+        }
+      ]
+    },
+    {
+      "file": "warm-at-own.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 0
+      },
+      "classification": "first failure retained; retry passes",
+      "review": {
+        "finding": "Initial/pristine3295 same click moved page assertion118, candidate retry green. Exact fixture issue search found none. Warm-up schedule/editor code upstream unchanged; scrolling assertion is outside model request fallback. Keep paired first failure rather than dismissing it after retry."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "zcode-site-layout.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          4727
+        ],
+        "finding": "Initial/pristine3295/retry allsame click scrolled assertion103 in site sign-in question. Related#4727 reports this fixture under full suite without inner signature; current paired logs are primary evidence. Plugin sign-in form and scroll hold behavior upstream unchanged; no posted applicable fix."
+      },
+      "unmatched_initial_cases": []
+    },
+    {
+      "file": "zero-priced-free.test.cjs",
+      "exits": {
+        "candidate": 1,
+        "baseline": 1,
+        "retry": 1
+      },
+      "classification": "reviewed paired upstream GUI boundary",
+      "review": {
+        "issues": [
+          5262
+        ],
+        "finding": "All20 cells initial/pristine3295/retry click agent model field times out under pointer-intercepting #agents/toolbar at100 (formerly86 before fixture setup growth). Last#5262 comment reproduces20/20 same alone upstream. Agent picker code upstream unchanged; no posted applicable patch."
+      },
+      "unmatched_initial_cases": []
+    }
+  ],
+  "limits": "File-level matrix completion is not a claim that every nested cell ran after a parent failure. First failures, different baseline cases, retries and diagnostic limits are retained. Physical Mac/WKWebView/trackpad not tested."
+}

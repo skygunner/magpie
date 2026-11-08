@@ -1,0 +1,24 @@
+{
+  "original": "575d7bda3731d5a6b10a33d8fa4a78d105e9da2a",
+  "final": "2fb297ebcd179ea488f4363a86c922f307d22449",
+  "changed_paths": [
+    "PATCHES.md",
+    "docs/fork/evidence/2026-11-08-3295/patch-review.md",
+    "internal/gui/tests/accounts-own-signin.test.cjs",
+    "internal/gui/tests/accounts-switch-alone.test.cjs",
+    "internal/gui/tests/agent-details-ready.test.cjs",
+    "internal/gui/tests/group-disabled-contrast.test.cjs",
+    "internal/gui/tests/header-centre.test.cjs",
+    "internal/gui/tests/icon-one-tone.test.cjs",
+    "internal/gui/tests/key-replace.test.cjs",
+    "internal/gui/tests/provider-retrieval-only.test.cjs",
+    "internal/gui/tests/side-toggle.test.cjs",
+    "internal/gui/tests/usage-focus-steady.test.cjs",
+    "internal/gui/tests/usage-routing-visible.test.cjs"
+  ],
+  "all_runtime_files_identical": true,
+  "unchanged_gui_fixtures_identical": true,
+  "changed_gui_fixtures": 11,
+  "unchanged_gui_fixtures": 1264,
+  "extra_unchanged_guard": "nav-timeout.test.cjs"
+}

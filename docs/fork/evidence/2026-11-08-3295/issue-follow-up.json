@@ -1,0 +1,78 @@
+{
+  "checked_at_utc": "2026-11-08 04:53:55 UTC",
+  "pinned_upstream": "v0.1.3295",
+  "issues": [
+    {
+      "id": 3035,
+      "state": "open",
+      "updated_at": "2026-10-25T14:16:35Z",
+      "comments": 2
+    },
+    {
+      "id": 3635,
+      "state": "open",
+      "updated_at": "2026-10-25T17:11:07Z",
+      "comments": 1
+    },
+    {
+      "id": 3636,
+      "state": "open",
+      "updated_at": "2026-10-25T17:11:08Z",
+      "comments": 1
+    },
+    {
+      "id": 3624,
+      "state": "open",
+      "updated_at": "2026-10-26T03:43:08Z",
+      "comments": 1
+    },
+    {
+      "id": 3948,
+      "state": "open",
+      "updated_at": "2026-10-27T20:35:12Z",
+      "comments": 0
+    },
+    {
+      "id": 3794,
+      "state": "open",
+      "updated_at": "2026-10-26T19:35:06Z",
+      "comments": 1
+    },
+    {
+      "id": 3623,
+      "state": "open",
+      "updated_at": "2026-10-29T15:05:15Z",
+      "comments": 1
+    },
+    {
+      "id": 4385,
+      "state": "open",
+      "updated_at": "2026-11-05T09:43:42Z",
+      "comments": 2
+    },
+    {
+      "id": 3430,
+      "state": "closed",
+      "updated_at": "2026-11-07T04:46:57Z",
+      "comments": 4
+    },
+    {
+      "id": 3165,
+      "state": "open",
+      "updated_at": "2026-11-07T10:07:59Z",
+      "comments": 12
+    },
+    {
+      "id": 3174,
+      "state": "open",
+      "updated_at": "2026-11-07T08:43:41Z",
+      "comments": 12
+    },
+    {
+      "id": 3392,
+      "state": "open",
+      "updated_at": "2026-11-07T10:46:31Z",
+      "comments": 13
+    }
+  ]
+}

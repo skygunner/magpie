@@ -1,0 +1,17 @@
+{
+  "source": "2fb297ebcd179ea488f4363a86c922f307d22449",
+  "raw_logs_retained_privately": true,
+  "sha256_of_log_hash_index": "c7a2758b0032517606c331f0c8778dd78d5b805305555abf1664239f42bde2a5",
+  "artifacts": {
+    "patch-review.md": "a77343485d09834cb6f7a042cbf558b2b81c053682510f0de11eb268eb03fb1e",
+    "gate-result.json": "0bd5c70f12541189d3d8e2348a4dcefd120594ba5af99ace5373d6d8ae9da3c2",
+    "gui-review.json": "40b2187f8799b6f4e353605bb63007e358ea37cac3820653875cf30d10eaab06",
+    "final-runtime-binding.json": "03f652f4d2d4cdf6858fb3c5fa74801ff653e550efff46f61cc58c0f251a89b6",
+    "binary-equivalence.json": "d7e4810cb163756a367225e5d422765af760c01fdd2ddf7ed00b10cee5ce9025",
+    "README.md": "5e1d109be950cd0c83ebae7d5f2cc3820d500310058637a8149355b3047dd38e",
+    "issue-follow-up.json": "5ec2ef16e9b0a8a381be2becbc1f7e0b5aad687becad25a79339c2915cc82db9",
+    "deployment-result.json": "793d09f5e1bd8b83bdc440594469470e1144c389942ba0f6cc5e042c56e63069",
+    "acceptance-result.json": "9cbfb3d29596d0da0407cfd2f4bbbed1760471578d5d467ae9b16dbb61314e8a",
+    "published-digest.json": "1913474c970277f8f0f02964d27443c96685e3bf8e96ef2eee9d437968027d21"
+  }
+}

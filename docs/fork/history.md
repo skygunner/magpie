@@ -34,6 +34,35 @@ disabled state and scheduling fields were retained. Production remains
 
 ## Deployment history
 
+- **2026-11-08 AEST, 0.1.3295-p1 — accepted, observed and published.**
+  Accepted 2026-11-08 05:08:40 UTC / 2026-11-08 15:08:40 AEST; tested source
+  `2fb297ebcd179ea488f4363a86c922f307d22449`, pinned upstream v0.1.3295 (`0fc3455e2`).
+  Production/stable and deployed/0.1.3295-p1 identify the tested source;
+  a later documentation commit advances integration/nightly only.
+
+  Preserve upstream cancellation attribution and member effort maps; #3430 is
+  absorbed via the merge. Eight retained issue behaviors and build-suffix
+  normalization remain; quota/nonstream timeout/model-cooldown/editor policies
+  stay suspended. Cloudflare Workers AI remains 0.0.5. Posted fixture fixes
+  preserve their authors on fix/gui-fixtures-3295; no new runtime policy is added.
+
+  Go 88 packages/25,914 tests and subtests, 8 build/vet checks, gateway race
+  regressions repeated 20 times, update tests and 80 deployment tests pass.
+  Original GUI 1,275 files/108 initial failing files, all paired and retried;
+  final 12 affected/guard files pass 250 tests. Runtime and the other 1,264
+  fixtures are identical. The expanded GUI matrix is not fully green.
+
+  Real acceptance and final snapshots match 268 models/32 providers/49 groups.
+  Three inference probes and 11 healthy samples over 2761.013 seconds pass,
+  with zero restarts, OOM, 5xx or protocol errors. Published the exact accepted
+  manifest as 0.1.3295-p1 and latest without rebuilding; retain the old stopped
+  container and stopped-volume backup.
+  [Patch decisions](evidence/2026-11-08-3295/patch-review.md),
+  [test gate](evidence/2026-11-08-3295/gate-result.json),
+  [GUI scope](evidence/2026-11-08-3295/gui-review.json),
+  [production result](evidence/2026-11-08-3295/deployment-result.json),
+  [published digests](evidence/2026-11-08-3295/published-digest.json).
+
 - **2026-11-07 AEST, 0.1.3190-p1 — accepted, observed and published.**
   Accepted 2026-11-06 21:05:07 UTC / 2026-11-07 07:05:07 AEST; tested source
   `171e12415ddce084a3c9417e80cee808a5d1589a`, pinned upstream v0.1.3190 (`8cbaeecae`).

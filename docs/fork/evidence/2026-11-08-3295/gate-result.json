@@ -1,0 +1,37 @@
+{
+  "verdict": "PASSED",
+  "commit": "2fb297ebcd179ea488f4363a86c922f307d22449",
+  "upstream": "v0.1.3295",
+  "upstream_commit": "0fc3455e2aa955466081b494795298e5ebbc8dc2",
+  "target_image_id": "sha256:d972296d4d5d01a5869bb2eb4e49c30e036676ee0e0f21cd983a550639ba023e",
+  "at": "2026-11-08T04:20:17.556108+00:00",
+  "go": {
+    "source": "2fb297ebcd179ea488f4363a86c922f307d22449",
+    "passed_packages": 88,
+    "no_test_packages": 20,
+    "passing_tests_and_subtests": 25914,
+    "failures": [],
+    "core_script_budget_passed": true
+  },
+  "build_vet_checks": 8,
+  "race_checks": 2,
+  "deployment_transaction_tests": 80,
+  "original_complete_gui_files": 1275,
+  "original_gui_commit": "575d7bda3731d5a6b10a33d8fa4a78d105e9da2a",
+  "original_initial_failed_files": 108,
+  "final_changed_gui_files": 11,
+  "final_guard_files": 1,
+  "final_affected_tests": 250,
+  "official_core_tests": 86,
+  "official_late_wheel_tests": 82,
+  "expanded_gui_not_fully_green": true,
+  "gui_review": "gui-review.json",
+  "runtime_binding": "final-runtime-binding.json",
+  "binary_binding": "binary-equivalence.json",
+  "acceptance_snapshot_counts": {
+    "models": 268,
+    "providers": 32,
+    "groups": 49
+  },
+  "cloudflare_plugin_version": "0.0.5"
+}

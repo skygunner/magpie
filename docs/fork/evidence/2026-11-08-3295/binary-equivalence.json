@@ -1,0 +1,11 @@
+{
+  "original": {
+    "image_id": "sha256:eb7e102a9ae26fd5c5d6c1357926c28d15634b14d22b9a288cebf2f11455b4f6",
+    "binary_sha256": "648704a280ddc0035f6b14ee84837a3acba853444772cda1c9375080751aa037"
+  },
+  "final": {
+    "image_id": "sha256:d972296d4d5d01a5869bb2eb4e49c30e036676ee0e0f21cd983a550639ba023e",
+    "source": "2fb297ebcd179ea488f4363a86c922f307d22449",
+    "binary_sha256": "648704a280ddc0035f6b14ee84837a3acba853444772cda1c9375080751aa037"
+  }
+}

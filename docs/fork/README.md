@@ -6,7 +6,7 @@
 [bigshort/magpie-patched](https://hub.docker.com/r/bigshort/magpie-patched)，
 已验收的源码用 `production/stable` 和 `deployed/*` 核对。
 
-## 本机只保留两个固定入口
+## 固定工作入口与临时目录
 
 | 目录 | 用途 |
 | --- | --- |

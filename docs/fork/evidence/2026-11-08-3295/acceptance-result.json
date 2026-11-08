@@ -1,0 +1,13 @@
+{
+  "acceptance_differences": 0,
+  "final_differences": 0,
+  "snapshot_counts": {
+    "models": 268,
+    "providers": 32,
+    "groups": 49
+  },
+  "plugin": {
+    "name": "@magpie-community/opencode-cloudflare-workers-ai-auth",
+    "version": "0.0.5"
+  }
+}
