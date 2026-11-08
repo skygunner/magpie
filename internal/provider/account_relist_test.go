@@ -30,12 +30,15 @@ func TestAccountListFollowsTheVendor(t *testing.T) {
 
 	var asked atomic.Int32
 	var added, down atomic.Bool
+	requests := make(chan string, 1)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/backend-api/codex/models" {
 			w.WriteHeader(404)
 			return
 		}
-		asked.Add(1)
+		if asked.Add(1) == 1 {
+			requests <- r.Header.Get("Chatgpt-Account-Id")
+		}
 		switch {
 		case down.Load():
 			w.WriteHeader(502)
@@ -60,14 +63,28 @@ func TestAccountListFollowsTheVendor(t *testing.T) {
 		}
 		return out
 	}
-	FetchNew(5 * time.Second)
+	deadline, ok := t.Deadline()
+	if !ok {
+		deadline = time.Now().Add(10 * time.Minute)
+	}
+	if FetchNew(time.Until(deadline)) {
+		t.Fatal("FetchNew did not fetch the account list")
+	}
+	select {
+	case account := <-requests:
+		if account != "acct-1" {
+			t.Errorf("model list requested for account %q, want acct-1", account)
+		}
+	default:
+		t.Fatal("model list request did not arrive")
+	}
+	ctx := context.Background()
 	if n := asked.Load(); n != 1 || !slices.Contains(served(), "gpt-6-astra") {
 		t.Fatalf("FetchNew: asked %d, serves %v", n, served())
 	}
 
 	// OpenAI adds a model; the list magpie has is a minute old
 	added.Store(true)
-	ctx := context.Background()
 	if got := relistAccounts(ctx, time.Now()); len(got) != 0 || asked.Load() != 1 {
 		t.Fatalf("a fresh list asked for again: %v (%d asks)", got, asked.Load())
 	}
