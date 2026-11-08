@@ -973,6 +973,13 @@ func (s *Server) codexUpstreamOn(w http.ResponseWriter, r *http.Request, rest st
 		return
 	}
 	start := time.Now()
+	image := r.Method == http.MethodPost && rest == "/images/generations"
+	parent := r.Context()
+	if image {
+		ctx, cancel := drawWithin(parent, drawTimeout())
+		defer cancel()
+		r = r.WithContext(ctx)
+	}
 	usage.Saw(agentOf(r))
 	// Codex's own turns come here from the mux, not through serve: the
 	// row written below sums this call's tries in its own context (#4456)
@@ -1039,6 +1046,27 @@ func (s *Server) codexUpstreamOn(w http.ResponseWriter, r *http.Request, rest st
 	// a turn goes in the Routing view's live trace as the others do, to
 	// the one it can go to: Codex's own sign-in, or its key
 	var tr *Route
+	imageStatus, imageError := 0, ""
+	if image {
+		model := modelOf(body)
+		who := "Codex's own sign-in"
+		if base == codexAPIBase {
+			who = "Codex's API key"
+		}
+		seat := Weighed{ID: "codex", Provider: "openai", Name: "OpenAI", Who: who, Kind: "account", Agent: "codex", Model: model}
+		tr = s.trace.beginFor(r, Route{Time: start, Agent: callerOf(r).agent, Session: sessionOf(r.Header), Model: model, Provider: "openai", Order: []Weighed{seat}, Tries: []Try{{ID: seat.ID, Model: model, Start: start}}})
+		defer func() {
+			ms := time.Since(start).Milliseconds()
+			s.trace.update(tr, func(t *Route) {
+				t.Done, t.Status, t.Error, t.Millis = true, imageStatus, imageError, ms
+				t.Tries[0].Done, t.Tries[0].Status, t.Tries[0].Error, t.Tries[0].Millis = true, imageStatus, imageError, ms
+			})
+			p, account := codexServed(base, r.Header, on)
+			rec := usage.Record{RouteID: tr.ID, Time: start, Agent: callerOf(r).agent, Provider: p, Host: provider.HostOf(base), ProviderAccount: account, Model: model, Requested: model, Millis: ms, Status: imageStatus, Session: sessionOf(r.Header), Endpoint: r.URL.Path}
+			failedWith(&rec, imageStatus, imageError, "")
+			appendUsage(r, rec)
+		}()
+	}
 	// where the try now going spent its time (TryNet): the request goes
 	// out through magpie's own client, as a routed try's does, so the
 	// Routing page says whose time a slow turn was here too
@@ -1229,6 +1257,9 @@ func (s *Server) codexUpstreamOn(w http.ResponseWriter, r *http.Request, rest st
 			}
 			req, err := http.NewRequestWithContext(ctx, r.Method, u, bytes.NewReader(body))
 			if err != nil {
+				if image {
+					imageStatus, imageError = 502, "OpenAI image request could not be constructed"
+				}
 				failWith(502, err.Error())
 				end(502, err.Error(), 0, 0)
 				return
@@ -1239,6 +1270,9 @@ func (s *Server) codexUpstreamOn(w http.ResponseWriter, r *http.Request, rest st
 				// what Codex said it takes back stays as it said it
 				accept := req.Header.Values("Accept")
 				if err := on.Sign(ctx, req, provider.Responses, body); err != nil {
+					if image {
+						imageStatus, imageError = 502, "OpenAI image request could not be signed"
+					}
 					msg := "OpenAI (" + on.Account.User + "): " + err.Error()
 					writeError(w, provider.Responses, 502, msg)
 					end(502, msg, 0, 0)
@@ -1246,6 +1280,9 @@ func (s *Server) codexUpstreamOn(w http.ResponseWriter, r *http.Request, rest st
 				}
 				// a sign-in its vendor revoked isn't sent again (#1793)
 				if why, ok := provider.RevokedSignIn(on.Account, req); ok {
+					if image {
+						imageStatus, imageError = 401, "OpenAI sign-in revoked"
+					}
 					writeError(w, provider.Responses, 401, why)
 					end(401, why, 0, 0)
 					return
@@ -1266,6 +1303,20 @@ func (s *Server) codexUpstreamOn(w http.ResponseWriter, r *http.Request, rest st
 			res = gotDown(r.Context(), res)
 			if err != nil {
 				msg := "OpenAI: " + err.Error()
+				if image {
+					imageStatus, imageError = http.StatusBadGateway, "OpenAI connection failed"
+					if parent.Err() != nil {
+						imageStatus, imageError = canceled(parent)
+					} else if errors.Is(r.Context().Err(), context.DeadlineExceeded) {
+						imageStatus, imageError = http.StatusGatewayTimeout, "OpenAI image generation timed out"
+					}
+					if imageStatus == http.StatusBadGateway {
+						failWith(imageStatus, msg)
+					} else {
+						failWith(imageStatus, imageError)
+					}
+					return
+				}
 				if overload && busyAgain < lastRetries && droppedUnanswered(r.Context(), err) {
 					// the connection closed with nothing of a reply (a
 					// proxy's or ChatGPT's front's "EOF" on a fresh
@@ -1393,6 +1444,9 @@ func (s *Server) codexUpstreamOn(w http.ResponseWriter, r *http.Request, rest st
 		}
 		defer res.Body.Close()
 		if base == codexAPIBase && res.StatusCode == http.StatusUnauthorized {
+			if image {
+				imageStatus, imageError = res.StatusCode, res.Status
+			}
 			// Codex signed in with an API key OpenAI refuses — often one a
 			// relay issued, left in ~/.codex/auth.json — and one of Codex's own
 			// models was picked, which goes out with Codex's own sign-in
@@ -1546,6 +1600,19 @@ func (s *Server) codexUpstreamOn(w http.ResponseWriter, r *http.Request, rest st
 		}
 		hw.release()
 		break
+	}
+	if image {
+		imageStatus = res.StatusCode
+		if parent.Err() != nil {
+			imageStatus, imageError = canceled(parent)
+		} else if errors.Is(r.Context().Err(), context.DeadlineExceeded) {
+			imageStatus, imageError = http.StatusGatewayTimeout, "OpenAI image generation timed out"
+		} else if readErr != nil || writeErr != nil {
+			imageStatus, imageError = http.StatusBadGateway, "OpenAI image response interrupted"
+		} else if res.StatusCode >= 400 {
+			imageError = res.Status
+		}
+		return
 	}
 	if sniff == nil {
 		return
