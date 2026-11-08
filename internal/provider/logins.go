@@ -1397,8 +1397,10 @@ func switchSavedLogin(agent, user string) (from string, _ error) {
 				ls[i].On, ls[i].Paused = want.On, false
 			}
 		}
-		if err := writeLogins(ls); err != nil {
-			return "", err
+		if agent != "claude" {
+			if err := writeLogins(ls); err != nil {
+				return "", err
+			}
 		}
 	}
 	var err error
@@ -1418,6 +1420,11 @@ func switchSavedLogin(agent, user string) (from string, _ error) {
 	}
 	if err != nil {
 		return "", err
+	}
+	if agent == "claude" && from != "" {
+		if err := writeLogins(ls); err != nil {
+			return "", err
+		}
 	}
 	loginsSeenAt.Store(0)
 	forgetAccountCaches()
