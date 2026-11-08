@@ -133,17 +133,22 @@ func (a *Agent) cliHeld() (held, known bool) {
 // extensionHere reports whether an editor here has the extension id
 // installed: VS Code's ~/.vscode/extensions/<id>-<version>, and the same
 // in each fork's (~/.cursor, ~/.windsurf, ~/.vscode-oss, ~/.trae, …) and
-// in VS Code Server's.
+// in VS Code Server's and a portable VS Code's data folder.
 func extensionHere(home, id string) bool {
-	es, err := os.ReadDir(home)
-	if err != nil {
-		return false
-	}
+	var dirs []string
+	es, _ := os.ReadDir(home)
 	for _, e := range es {
-		if !strings.HasPrefix(e.Name(), ".") {
-			continue
+		if strings.HasPrefix(e.Name(), ".") {
+			dirs = append(dirs, filepath.Join(home, e.Name(), "extensions"))
 		}
-		xs, err := os.ReadDir(filepath.Join(home, e.Name(), "extensions"))
+	}
+	for _, k := range []vscodeKind{vscodeStable, vscodeInsiders, vscodiumKind} {
+		if data := vscodePortableData(k); data != "" {
+			dirs = append(dirs, filepath.Join(data, "extensions"))
+		}
+	}
+	for _, dir := range dirs {
+		xs, err := os.ReadDir(dir)
 		if err != nil {
 			continue
 		}
