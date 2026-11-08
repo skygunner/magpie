@@ -161,12 +161,12 @@ func readSkills(dirs []string) []*CarriedSkill {
 				return nil
 			}
 			if d.IsDir() {
-				if p != dir && (d.Name() == ".git" || d.Name() == marker) {
+				if p != dir && (d.Name() == ".git" || d.Name() == marker || d.Name() == ".bsk.lock") {
 					return filepath.SkipDir
 				}
 				return nil
 			}
-			if !d.Type().IsRegular() || d.Name() == marker {
+			if !d.Type().IsRegular() || d.Name() == marker || d.Name() == ".bsk.lock" {
 				return nil
 			}
 			rel, err := filepath.Rel(dir, p)

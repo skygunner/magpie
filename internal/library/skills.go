@@ -2639,6 +2639,12 @@ func copyDir(from, to string) error {
 		if err != nil {
 			return err
 		}
+		if p != from && d.Name() == ".bsk.lock" {
+			if d.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
 		rel, _ := filepath.Rel(from, p)
 		dst := filepath.Join(to, rel)
 		if d.IsDir() {
@@ -2808,7 +2814,7 @@ func treeOf(root string) (tree, bool) {
 			}
 			return nil
 		}
-		if n := d.Name(); n == ".DS_Store" || n == marker || n == ".git" {
+		if skipInSkill(d.Name()) {
 			if d.IsDir() {
 				return filepath.SkipDir
 			}

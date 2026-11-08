@@ -194,7 +194,7 @@ func changedAt(dir string) (time.Time, error) {
 }
 
 func skipInSkill(name string) bool {
-	return name == marker || name == ".git" || name == ".DS_Store"
+	return name == marker || name == ".git" || name == ".DS_Store" || name == ".bsk.lock"
 }
 
 // keepLibrarySkill copies the library's skill to the backups before an

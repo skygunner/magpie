@@ -250,6 +250,12 @@ func hashWalk(dir string, lv leave, read bool) (hash, stamp string, settled, ok 
 		if err != nil {
 			return err
 		}
+		if p != dir && d.Name() == ".bsk.lock" {
+			if d.IsDir() {
+				return filepath.SkipDir
+			}
+			return nil
+		}
 		rel, _ := filepath.Rel(dir, p)
 		rel = filepath.ToSlash(rel)
 		if p != dir && lv >= leaveBuilt && fromInstall(d.Name(), d.IsDir() || d.Type()&fs.ModeSymlink != 0, lv == leaveInstalled) {
