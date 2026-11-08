@@ -413,13 +413,15 @@ func TestRateLimitIsWaitedOut(t *testing.T) {
 		}
 		a.replies = append(a.replies, reply{200, "", chatOK})
 		scriptedOn(t, "a", provider.Chat, a)
-		start := time.Now()
+		if x.n == 1 {
+			wait, again := passing(http.StatusTooManyRequests, x.header, []byte(x.said), 0)
+			if again || x.header.Get("Retry-After") == "3600" && wait != 0 {
+				t.Errorf("%s: passing returned wait %v, retry %t", x.name, wait, again)
+			}
+		}
 		code, body := postAs(t, New(), "", `{"model":"a/m","messages":[{"role":"user","content":"hi"}]}`)
 		if code != x.code || a.n != x.n {
 			t.Errorf("%s: %d after %d tries: %s", x.name, code, a.n, body)
-		}
-		if x.n == 1 && time.Since(start) > time.Second {
-			t.Errorf("%s: passed on after %v", x.name, time.Since(start))
 		}
 	}
 }
