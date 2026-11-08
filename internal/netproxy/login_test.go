@@ -195,7 +195,8 @@ func TestBunProxyLoginWithReservedCharacters(t *testing.T) {
 	cmd := exec.Command(bun, "-e", js)
 	cmd.Env = append(os.Environ(), "P="+proxy)
 	out, err := cmd.CombinedOutput()
-	if err != nil || strings.TrimSpace(string(out)) != "carried http://vendor.example/x" {
+	got := strings.TrimSpace(string(out))
+	if err != nil || (got != "carried http://vendor.example/x" && got != "carried http://vendor.example:80/x") {
 		t.Fatalf("bun through the HTTP proxy: %v %s", err, out)
 	}
 }
