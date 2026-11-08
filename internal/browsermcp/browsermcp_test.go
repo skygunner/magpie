@@ -190,7 +190,7 @@ func TestVisionBridgePassesLines(t *testing.T) {
 // path, the home's, a URL, a drive, another tool and another method go as
 // written, byte for byte.
 func TestImageFromLeavesTheRest(t *testing.T) {
-	wd := filepath.Join(string(filepath.Separator)+"work", "proj")
+	wd := t.TempDir()
 	call := func(name, image string) string {
 		return `{"jsonrpc":"2.0","id":"x-1","method":"tools/call","params":{"name":"` + name + `","arguments":{"image":"` + image + `"}}}`
 	}
