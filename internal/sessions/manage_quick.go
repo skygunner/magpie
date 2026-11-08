@@ -215,7 +215,7 @@ func glance(f file) *state {
 		workbuddyMeta(s, f.path)
 	}
 	g := &state{Size: f.size, Mod: f.mod.UnixNano(), ID: s.ID, Cwd: s.Cwd, Title: s.Title, Named: s.Named,
-		Custom: s.Custom, First: s.First, Start: s.Start, Last: f.mod, CodexIdentity: s.CodexIdentity,
+		Custom: s.Custom, First: s.First, Entry: s.Entry, Start: s.Start, Last: f.mod, CodexIdentity: s.CodexIdentity,
 		CodexNickname: s.CodexNickname, Provider: s.Provider}
 	if g.Start.IsZero() || g.Start.After(g.Last) {
 		g.Start = g.Last

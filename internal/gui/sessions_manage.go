@@ -223,7 +223,7 @@ func sessionManageRoutes(mux *http.ServeMux, w Windows) {
 			}
 			sizes := sessions.GatewaySizes()
 			for _, g := range gateway {
-				if g.Agent != out.Agent || native[g.ID] {
+				if g.Agent != out.Agent || native[g.ID] || view.Native[g.Agent][g.ID] {
 					continue
 				}
 				s := gatewaySession(g)

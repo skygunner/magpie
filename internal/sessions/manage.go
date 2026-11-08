@@ -166,9 +166,9 @@ func ListAgent(agent string) []Managed {
 
 // NativeIDs are the ids of every session the agents named keep themselves,
 // by agent: one nothing was said in too, as ListAgent lists it. It tells a
-// gateway session an agent keeps from one only magpie saw. Only the named
-// agents' files are looked at, and of those only the ones whose session id
-// is inside the file are read when they changed.
+// gateway session an agent keeps from one only magpie saw. It reads changed
+// files with ids inside them; for Claude Desktop it also reads Claude Code
+// files to identify Desktop's Code tab by entrypoint.
 func NativeIDs(agents map[string]bool) map[string]map[string]bool {
 	storeMu.RLock()
 	defer storeMu.RUnlock()
@@ -237,18 +237,20 @@ func nativeIDs(agents map[string]bool, all []file) map[string]map[string]bool {
 
 func nativeIDsWith(agents map[string]bool, all []file, quick bool) map[string]map[string]bool {
 	// Raft's Pi sessions are Pi's to the gateway (GatewayKeys)
-	asked := func(agent string) bool { return agents[agent] || agent == "raft" && agents["pi"] }
+	asked := func(agent string) bool {
+		return agents[agent] || agent == "raft" && agents["pi"] || agent == "claude" && agents["claude-desktop"]
+	}
 	groups := byKey(all, func(f *file) bool { return asked(f.agent) })
 	var want []file
 	for _, f := range all {
 		if !asked(f.agent) {
 			continue
 		}
-		if idInFile(f.agent) {
+		if idInFile(f.agent) || f.agent == "claude" && f.main && agents["claude-desktop"] {
 			want = append(want, f)
 		}
 	}
-	_, done := readFor(want, all, quick)
+	pending, done := readFor(want, all, quick)
 	defer done()
 	out := map[string]map[string]bool{}
 	for a := range agents {
@@ -265,6 +267,15 @@ func nativeIDsWith(agents map[string]bool, all []file, quick bool) map[string]ma
 		}
 		if fs[0].agent == "raft" && agents["pi"] {
 			out["pi"][id] = true
+		}
+		if fs[0].agent == "claude" && fs[0].main && agents["claude-desktop"] {
+			st := cache[fs[0].path]
+			if pending[fs[0].path] && !current(fs[0], st) {
+				st = glance(fs[0])
+			}
+			if st != nil && desktopEntrypoint(st.Entry) {
+				out["claude-desktop"][id] = true
+			}
 		}
 	}
 	return out
