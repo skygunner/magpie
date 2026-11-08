@@ -350,6 +350,10 @@ func TestGatewayAlias(t *testing.T) {
 // The docs' example (testdata/spread.gateway.js) loads, orders by tokens
 // with resting seats last, and takes rows.
 func TestDocsExample(t *testing.T) {
+	was := strategyLimit
+	defer func() { strategyLimit = was }()
+	// Ordering is independent of the request's wall-clock budget.
+	strategyLimit = time.Duration(1<<63 - 1)
 	src, err := os.ReadFile(filepath.Join("testdata", "spread.gateway.js"))
 	if err != nil {
 		t.Fatal(err)
