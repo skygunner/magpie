@@ -3,11 +3,13 @@ package provider
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -151,6 +153,63 @@ func TestResetUseWriteFailureSeen(t *testing.T) {
 	// kept, said so: a note whose write fails is an error, not silence
 	if err := noteResetUsed("me@example.com", ResetUsedByHand, ResetOutcome{Code: "reset", Windows: 2}); err == nil {
 		t.Fatal("a failed write of the record went unnamed")
+	}
+}
+
+// A failed read or backup must leave the original history intact (#5628).
+func TestResetUseReadAndBackupFailures(t *testing.T) {
+	if runtime.GOOS == "windows" || os.Geteuid() == 0 {
+		t.Skip("permission fixture requires a non-root Unix user")
+	}
+	for _, tc := range []struct {
+		name, contents    string
+		fileMode, dirMode os.FileMode
+		wantOp            string
+	}{
+		{"read", `[{"user":"old"}]`, 0, 0o700, "open"},
+		{"backup", "{not json", 0o600, 0o500, "open"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			signIn(t)
+			p := resetsUsedPath()
+			if err := os.MkdirAll(filepath.Dir(p), 0o700); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(p, []byte(tc.contents), 0o600); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(p+".lock", nil, 0o600); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Chmod(p, tc.fileMode); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Chmod(filepath.Dir(p), tc.dirMode); err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { os.Chmod(filepath.Dir(p), 0o700); os.Chmod(p, 0o600) })
+			err := noteResetUsed("me@example.com", ResetUsedByHand, ResetOutcome{Code: "reset"})
+			if err := os.Chmod(filepath.Dir(p), 0o700); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.Chmod(p, 0o600); err != nil {
+				t.Fatal(err)
+			}
+			b, readErr := os.ReadFile(p)
+			if readErr != nil {
+				t.Fatal(readErr)
+			}
+			if string(b) != tc.contents {
+				t.Errorf("original history changed: %q", b)
+			}
+			var pathErr *os.PathError
+			if !errors.As(err, &pathErr) || !errors.Is(err, os.ErrPermission) || pathErr.Op != tc.wantOp {
+				t.Fatalf("error = %v, want %s permission error", err, tc.wantOp)
+			}
+			if tc.name == "backup" && !strings.Contains(pathErr.Path, ".bad-") {
+				t.Fatalf("error path = %q, want backup path", pathErr.Path)
+			}
+		})
 	}
 }
 

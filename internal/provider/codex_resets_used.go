@@ -87,13 +87,20 @@ func noteResetUsed(user, why string, out ResetOutcome) error {
 	}
 	resetsUsedMu.Lock()
 	defer resetsUsedMu.Unlock()
-	us, err := readResetsUsed()
-	if err != nil {
-		p := resetsUsedPath()
-		if b, rerr := os.ReadFile(p); rerr == nil {
-			_ = os.WriteFile(p+".bad-"+time.Now().UTC().Format("20060102T150405.000000000"), b, 0o600)
+	p := resetsUsedPath()
+	b, err := os.ReadFile(p)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("reading reset use record %s: %w", p, err)
+	}
+	var us []ResetUse
+	if err == nil {
+		if err := json.Unmarshal(b, &us); err != nil {
+			aside := p + ".bad-" + time.Now().UTC().Format("20060102T150405.000000000")
+			if err := os.WriteFile(aside, b, 0o600); err != nil {
+				return fmt.Errorf("keeping reset use record aside as %s: %w", aside, err)
+			}
+			us = nil
 		}
-		us = nil
 	}
 	now := time.Now().UTC()
 	us = slices.DeleteFunc(us, func(u ResetUse) bool { return now.Sub(u.At) > resetsUsedKeep })
@@ -101,7 +108,7 @@ func noteResetUsed(user, why string, out ResetOutcome) error {
 	if len(us) > resetsUsedMost {
 		us = us[len(us)-resetsUsedMost:]
 	}
-	b, _ := json.MarshalIndent(us, "", "  ")
+	b, _ = json.MarshalIndent(us, "", "  ")
 	if err := os.MkdirAll(settings.Dir(), 0o755); err != nil {
 		return fmt.Errorf("keeping that a reset was used to %s: %w", resetsUsedPath(), err)
 	}
