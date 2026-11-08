@@ -6294,6 +6294,10 @@ func (s *Server) passthrough(w http.ResponseWriter, r *http.Request, p provider.
 			// thinking (a routing group's Claude turn), which DeepSeek
 			// turns the whole request away for (#1611)
 			body = withThinkingOnToolTurns(body)
+		} else if s.fits(p.ID, thinkingBackNeeded(upstream), proto) {
+			body = withoutThinkingBlocks(body, func(_, _ int, b gjson.Result) bool {
+				return b.Get("type").String() == "thinking" && b.Get("signature").String() == ""
+			})
 		}
 		if !anthropicModel.MatchString(model) && !provider.Reasonless(p.ID, model) {
 			body = thinkingOffUnlessAsked(body)
