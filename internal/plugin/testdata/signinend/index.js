@@ -2,12 +2,16 @@
 // plugins#658): a wait on a file a desktop app writes, one that ignores
 // magpie giving up and one that heeds it, and authorize results that fail
 // with no callback to call.
-import { existsSync, writeFileSync } from "node:fs"
+import { existsSync, renameSync, writeFileSync } from "node:fs"
 import { join } from "node:path"
 
 const home = () => process.env.HOME
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
-const mark = (name, text = "") => writeFileSync(join(home(), name), text)
+const mark = (name, text = "") => {
+  const path = join(home(), name)
+  writeFileSync(path + ".tmp", text)
+  renameSync(path + ".tmp", path)
+}
 
 // waits for $HOME/go as AStudio's plugin waits for its app's session
 // file, every 50ms, for a minute at most
