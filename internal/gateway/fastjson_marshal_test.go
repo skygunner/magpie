@@ -46,6 +46,7 @@ var mrValues = []string{
 	` { "a" : [ 1 , 2 , { "b" : "x y" } ] , "c" : null } `, "\t[\n\"x\"\r\n]\n",
 	`{"html":"<script>&amp;</script>","n":[1,2.5,-3e10]}`, `[]`, `{}`, `[ ]`, `{ }`,
 	``, ` `, `{`, `[1,]`, `"open`, `tru`, `01`, `{"a":1}{"b":2}`, `nul`,
+	`"\ud800 \udc00 \ud83d\ude00"`, "\"<tag>&\u2028\u2029\"",
 	strings.Repeat("[", 10001) + strings.Repeat("]", 10001),
 }
 

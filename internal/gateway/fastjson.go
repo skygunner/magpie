@@ -1506,20 +1506,28 @@ func appendRawJSON(dst []byte, raw json.RawMessage, escapeHTML bool) ([]byte, bo
 	return appendCompactJSON(dst, raw, escapeHTML), true
 }
 
-// appendCompactJSON is encoding/json's appendCompact of src, a valid JSON
-// value: without the space between its tokens, and with <, >, & and
-// U+2028, U+2029 escaped when escapeHTML, as json.Marshal writes them.
-// Those are only ever in a string, where a valid value's space is too, so
-// strings are copied whole, or looked through for those alone.
+// rawSeparatorsEscaped follows the active encoding/json implementation.
+var rawSeparatorsEscaped = func() bool {
+	var b bytes.Buffer
+	enc := json.NewEncoder(&b)
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(json.RawMessage("\"\u2028\"")); err != nil {
+		panic(err) // the fixed JSON value is valid
+	}
+	return bytes.Contains(b.Bytes(), []byte(`\u2028`))
+}()
+
+// appendCompactJSON writes a valid JSON value as encoding/json compacts it.
+// Strings are copied whole unless the active encoder escapes their contents.
 func appendCompactJSON(dst, src []byte, escapeHTML bool) []byte {
 	start := 0
 	for i := 0; i < len(src); {
 		switch c := src[i]; {
 		case c == '"':
 			j := skipJSONString(src, i)
-			if escapeHTML {
+			if escapeHTML || rawSeparatorsEscaped {
 				dst = append(dst, src[start:i]...)
-				dst = appendHTMLEscaped(dst, src[i:j])
+				dst = appendHTMLEscaped(dst, src[i:j], escapeHTML)
 				start = j
 			}
 			i = j
@@ -1534,13 +1542,13 @@ func appendCompactJSON(dst, src []byte, escapeHTML bool) []byte {
 	return append(dst, src[start:]...)
 }
 
-// appendHTMLEscaped is s with <, >, & and U+2028, U+2029 as \u escapes.
-func appendHTMLEscaped(dst, s []byte) []byte {
+// appendHTMLEscaped escapes separators and, when requested, HTML characters.
+func appendHTMLEscaped(dst, s []byte, escapeHTML bool) []byte {
 	const hex = "0123456789abcdef"
 	start := 0
 	for i := 0; i < len(s); i++ {
 		switch c := s[i]; {
-		case c == '<' || c == '>' || c == '&':
+		case escapeHTML && (c == '<' || c == '>' || c == '&'):
 			dst = append(dst, s[start:i]...)
 			dst = append(dst, '\\', 'u', '0', '0', hex[c>>4], hex[c&0xF])
 			start = i + 1
@@ -1909,6 +1917,15 @@ func plainJSONKey(k string) bool {
 	return true
 }
 
+// invalidJSONUTF8 is the active encoding/json's encoding of one invalid byte.
+var invalidJSONUTF8 = func() string {
+	b, err := json.Marshal("\xff")
+	if err != nil {
+		panic(err) // strings are always marshalable
+	}
+	return string(b[1 : len(b)-1])
+}()
+
 // jsonStringSize is how long json.Marshal(s) is.
 func jsonStringSize(s string) int {
 	n := 2
@@ -1927,7 +1944,9 @@ func jsonStringSize(s string) int {
 			continue
 		}
 		r, size := utf8.DecodeRuneInString(s[i:])
-		if r == utf8.RuneError && size == 1 || r == '\u2028' || r == '\u2029' {
+		if r == utf8.RuneError && size == 1 {
+			n += len(invalidJSONUTF8)
+		} else if r == '\u2028' || r == '\u2029' {
 			n += 6
 		} else {
 			n += size
@@ -1938,8 +1957,7 @@ func jsonStringSize(s string) int {
 }
 
 // appendJSONString appends s as encoding/json writes a string, its HTML
-// characters escaped: invalid UTF-8 as \ufffd, and U+2028 and U+2029
-// escaped.
+// characters and U+2028 and U+2029 escaped.
 func appendJSONString(dst []byte, s string) []byte {
 	const hex = "0123456789abcdef"
 	dst = append(dst, '"')
@@ -1975,7 +1993,7 @@ func appendJSONString(dst []byte, s string) []byte {
 		r, size := utf8.DecodeRuneInString(s[i:])
 		if r == utf8.RuneError && size == 1 {
 			dst = append(dst, s[start:i]...)
-			dst = append(dst, `\ufffd`...)
+			dst = append(dst, invalidJSONUTF8...)
 			i += size
 			start = i
 			continue
