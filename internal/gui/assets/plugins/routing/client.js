@@ -8627,7 +8627,7 @@ function routingPage(part) {
   }
   const pRest = (ms) => new Promise((res) => setTimeout(res, pShown() && !still() ? ms : 0));
   async function pPlay(id) {
-    if (!pBox || !pShown() || document.hidden || still() || pPlays.has(id) || pPlays.size >= 4) return;
+    if (!pBox || !pShown() || document.hidden || pPlays.has(id) || pPlays.size >= 4) return;
     let r = routes.get(id);
     if (!r) return;
     pPlays.add(id);
