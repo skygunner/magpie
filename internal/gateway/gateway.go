@@ -4711,7 +4711,7 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 				if f := failure(hw.code(), hw.errBody()); other == nil && f != failQuota && f != failCredit {
 					other = &Try{Status: call.Status, Error: call.Error, errType: call.Usage.ErrType}
 				}
-				rest := s.restAfterMarked(c, hw.code(), hw.header, hw.errBody(), hw.sharedPool)
+				rest := s.restAfterMarked(c, hw.code(), hw.header, hw.errBody(), hw.sharedPool, hw.modelUnavailable)
 				try.Fail, try.Rest = rest.Why, &rest
 				s.trace.update(tr, func(t *Route) {
 					t.Tries[len(t.Tries)-1] = try
@@ -4792,7 +4792,7 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 			if f := failure(hw.code(), hw.errBody()); other == nil && f != failQuota && f != failCredit {
 				other = &Try{Status: call.Status, Error: call.Error, errType: call.Usage.ErrType}
 			}
-			rest := s.restAfterMarked(c, hw.code(), hw.header, hw.errBody(), hw.sharedPool)
+			rest := s.restAfterMarked(c, hw.code(), hw.header, hw.errBody(), hw.sharedPool, hw.modelUnavailable)
 			try.Fail, try.Rest = rest.Why, &rest
 			at := -1
 			s.trace.update(tr, func(t *Route) { t.Tries[len(t.Tries)-1], at = try, len(t.Tries)-1 })
@@ -4848,7 +4848,7 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 			if next, wait, ok := replan(busyNow, rounds, waitFrom, patienceFallback); ok && !kept.tooQuiet(wait) {
 				try.Fail, try.Again = failureOf(c, hw.code(), hw.errBody()), wait.Milliseconds()
 				if lastSpent {
-					rest := s.restAfterMarked(c, hw.code(), hw.header, hw.errBody(), hw.sharedPool)
+					rest := s.restAfterMarked(c, hw.code(), hw.header, hw.errBody(), hw.sharedPool, hw.modelUnavailable)
 					try.Fail, try.Rest = rest.Why, &rest
 				}
 				if isGroup {
@@ -4932,7 +4932,7 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 			}
 			small = nil
 			if len(next) > 0 {
-				rest := s.restAfterMarked(c, hw.code(), hw.header, hw.errBody(), hw.sharedPool)
+				rest := s.restAfterMarked(c, hw.code(), hw.header, hw.errBody(), hw.sharedPool, hw.modelUnavailable)
 				try.Fail, try.Rest = rest.Why, &rest
 				s.trace.update(tr, func(t *Route) {
 					t.Tries[len(t.Tries)-1] = try
@@ -4957,7 +4957,7 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 			// quota or credit (not Antigravity's 429 to a prompt).
 			// quotaHeld still holds keys alone, and autoReset lifts the
 			// rest of an account it spends a reset of
-			rest := s.restAfterMarked(c, hw.code(), hw.header, hw.errBody(), hw.sharedPool)
+			rest := s.restAfterMarked(c, hw.code(), hw.header, hw.errBody(), hw.sharedPool, hw.modelUnavailable)
 			try.Fail, try.Rest = rest.Why, &rest
 		}
 		if !hw.passing && hw.code() == http.StatusTooManyRequests && hw.header.Get("Retry-After") == "" {

@@ -11,6 +11,11 @@ This page covers how a request is routed. Plugins that change requests and
 replies are in [Gateway middleware](gateway-middleware.md). Subscriptions
 served by a plugin are in [Provider and plugin ownership](provider-plugins.md).
 
+A CodeArts plugin's HTTP 400 `InferHub.4004.200` / `benefit not found`
+means that account cannot use that model: a held request goes to its next
+candidate and only that account's model rests. Other errors keep their usual
+handling, including `errors=pass` ([`codearts_benefit.go`](../../internal/gateway/codearts_benefit.go)).
+
 WorkBuddy and CodeBuddy Code's `X-Conversation-ID` is a native session header
 in `sessionHeaders` (`sessionOf`, `nativeSessionOf`, `conversationID` in
 [`gateway.go`](../../internal/gateway/gateway.go)). It keeps their requests

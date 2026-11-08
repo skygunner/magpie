@@ -2392,12 +2392,13 @@ type holdWriter struct {
 	passing bool
 	held    bytes.Buffer
 
-	stream     bool      // a stream held until its first content
-	since      time.Time // when it began
-	scanned    int       // how much of held has been read as events
-	failure    int       // the status the stream's error stands for
-	failMsg    string
-	sharedPool bool // an OpenRouter upstream pool rejected this attempt
+	stream           bool      // a stream held until its first content
+	since            time.Time // when it began
+	scanned          int       // how much of held has been read as events
+	failure          int       // the status the stream's error stands for
+	failMsg          string
+	sharedPool       bool // an OpenRouter upstream pool rejected this attempt
+	modelUnavailable bool // the upstream refused this account's model
 
 	// turnedAway: the account is asked with the system prompt Antigravity
 	// answers with a 429 whatever quota it has left — Claude Code's, its
@@ -3361,7 +3362,7 @@ func (h *holdWriter) failed() bool {
 	if h.refused {
 		return !h.passing
 	}
-	return !h.passing && h.code() >= 400 && retryable(h.code(), h.errBody())
+	return !h.passing && h.code() >= 400 && (h.modelUnavailable || retryable(h.code(), h.errBody()))
 }
 
 // mayAskAgain tells whether a failure now is still held, for the request

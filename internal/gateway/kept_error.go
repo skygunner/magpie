@@ -39,6 +39,14 @@ func errorShape(proto provider.Protocol) int {
 // the agent compact). Every other byte is the vendor's. A body not in the client's
 // shape is rebuilt in it, as before.
 func writeVendorErrorFrom(w http.ResponseWriter, proto, upstream provider.Protocol, p provider.Provider, res *http.Response, msg string, body []byte) int {
+	if codeartsBenefitMissing(p, res.StatusCode, body) {
+		if h, ok := w.(*holdWriter); ok {
+			h.modelUnavailable = true
+		}
+		if gjson.GetBytes(body, "code").String() == "InferHub.4004.200" {
+			return writeErrorSaid(w, proto, res.StatusCode, msg, "InferHub.4004.200", nil)
+		}
+	}
 	if status, ok := writeKeptError(w, proto, upstream, p, res, msg, body); ok {
 		return status
 	}

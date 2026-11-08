@@ -1363,12 +1363,12 @@ const restErrorRunes = 300
 
 // restAfter sets a failed candidate aside for as long as its failure says.
 func (s *Server) restAfter(c candidate, status int, header http.Header, body []byte) Rest {
-	return s.restAfterMarked(c, status, header, body, openRouterSharedPool(body))
+	return s.restAfterMarked(c, status, header, body, openRouterSharedPool(body), false)
 }
 
 // restAfterMarked keeps an upstream routing fact through gateway error
 // translation without putting it in the response sent to the client.
-func (s *Server) restAfterMarked(c candidate, status int, header http.Header, body []byte, sharedPool bool) Rest {
+func (s *Server) restAfterMarked(c candidate, status int, header http.Header, body []byte, sharedPool, modelUnavailable bool) Rest {
 	// an error carried under a 200 rests as its own status would, and
 	// says that status where the rest is shown — first among equals the
 	// one its stream's error frame named outright (#4855)
@@ -1447,7 +1447,7 @@ func (s *Server) restAfterMarked(c candidate, status int, header http.Header, bo
 	// (#1235): the key's other models are still served. So does a ZCode
 	// trial entry zcode.z.ai's firewall blocked (zcodeTrialBlocked): the
 	// account's GLM Coding Plan goes to another host
-	unserved := why == failOther && (modelRefused(status, body) || codeAssistModelMissing(c.p, status, body) || zcodeTrialBlocked(c, status, body))
+	unserved := why == failOther && (modelUnavailable || modelRefused(status, body) || codeAssistModelMissing(c.p, status, body) || zcodeTrialBlocked(c, status, body))
 	// the vendor too busy for the request: the model's moment, not the
 	// account's fault (vendorOverloaded)
 	overloaded := why == failOther && !unserved && c.model != "" && vendorOverloaded(status, body)
