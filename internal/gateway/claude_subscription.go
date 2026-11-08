@@ -490,6 +490,10 @@ func sweepBridgeTemps(tempDir string) {
 	}
 }
 
+// ClaudeWorkPath names the bridge's folder without creating it, so agent
+// history readers can leave the bridge's own runs out of user activity.
+func ClaudeWorkPath() string { return filepath.Join(os.TempDir(), claudeWorkName()) }
+
 // claudeWorkDir is the folder every run works in. Claude Code tells its
 // model the working directory in its system prompt, after its own fixed
 // part and before the conversation: a folder of its own for each run made
@@ -506,7 +510,7 @@ func sweepBridgeTemps(tempDir string) {
 // is a folder they own that no one else can write to: one someone else
 // made, or could put a CLAUDE.md in, would be read by every run.
 func claudeWorkDir() (string, error) {
-	dir := filepath.Join(os.TempDir(), claudeWorkName())
+	dir := ClaudeWorkPath()
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return "", err
 	}

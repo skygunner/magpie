@@ -997,7 +997,7 @@ func (a *Agent) reconnect(now map[string]string) (bool, error) {
 // under key in the last lines of a prompt log, passing over the lines whose
 // text (under textKey) is a slash command: those an agent answers itself.
 // Zero if there is none.
-func lastJSONLTime(path, key, textKey string) time.Time {
+func lastJSONLTime(path, key, textKey string, skipProject ...string) time.Time {
 	f, err := os.Open(path)
 	if err != nil {
 		return time.Time{}
@@ -1013,6 +1013,10 @@ func lastJSONLTime(path, key, textKey string) time.Time {
 	for sc.Scan() {
 		var m map[string]json.RawMessage
 		if json.Unmarshal(sc.Bytes(), &m) != nil {
+			continue
+		}
+		var project string
+		if len(skipProject) > 0 && json.Unmarshal(m["project"], &project) == nil && filepath.Clean(project) == filepath.Clean(skipProject[0]) {
 			continue
 		}
 		var text string
