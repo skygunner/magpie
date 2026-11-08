@@ -1687,9 +1687,10 @@
    ],
    "category": "product",
    "title": "gateway: keep a severed Chat stream free of partial JSON events (#3197)",
-   "coverage": "Delivered scope per commit body and issue thread.",
+   "coverage": "Delivered scope per commit body and issue thread. | 2026-11-08 follow-up: DDDFXYqiming adds the Codex Responses face — an upstream severed between an event: name line and its data line left the client an event with no data, which the openai Node SDK dies on (\"malformed server-sent event JSON\", comment 6690386826; the landed Chat fix 70a40aaa0 never hit it, Chat SSE has no event: lines). Confirmed in source: the name went out on completion and upstream's own TestPassthroughStreamEndsOnLineEnd tolerates the orphan. Fixed on a new branch fix/3197-orphan-event (a5fa3228f, on upstream/main c736906b1): a named event whose data has not come is held back until the data line does; a name the upstream never follows with data relays as sent; on a sever the held name drops. Two tests red on clean main, severed family green, full gateway only the five baseline reds. Comment 6718027883.",
    "commits": [
-    "a6a2c260e8a2425a8ea5276e46ac6753af9fd9c8"
+    "a6a2c260e8a2425a8ea5276e46ac6753af9fd9c8",
+    "a5fa3228f996808dc8c2d1628fb89103bafadee4"
    ],
    "commit_details": [
     {
@@ -1698,11 +1699,12 @@
      "url": "https://github.com/skygunner/magpie/commit/a6a2c260e8a2425a8ea5276e46ac6753af9fd9c8"
     }
    ],
-   "branch": "fix/issue-batch-20261023-g",
+   "branch": "fix/3197-orphan-event",
    "base": "see delivery: historical; base recorded in the unit branch map",
    "comments": {
     "3197": [
-     "https://github.com/yetone/magpie/issues/3197#issuecomment-6350770188"
+     "https://github.com/yetone/magpie/issues/3197#issuecomment-6350770188",
+     "https://github.com/yetone/magpie/issues/3197#issuecomment-6718027883"
     ]
    },
    "sources": {
@@ -1714,8 +1716,8 @@
    },
    "verify": {
     "state": "unverified_this_round",
-    "evidence": "Delivered with red-green recorded in the commit body; not independently re-run this round. See prior/72-thread-evidence.json for the delivered-time evidence chain.",
-    "head": ""
+    "evidence": "Delivered with red-green recorded in the commit body; not independently re-run this round. See prior/72-thread-evidence.json for the delivered-time evidence chain.; docs/fork/evidence/2026-11-08-followup/comment-readback.json and docs/fork/evidence/2026-11-08-followup/3197/",
+    "head": "a5fa3228f996808dc8c2d1628fb89103bafadee4"
    },
    "upstream": {
     "status": "unconfirmed"
@@ -2895,7 +2897,7 @@
    ],
    "category": "product",
    "title": "gateway: xAI's null-required walk goes through a schema's arrays too (#3392, kongkongklng)",
-   "coverage": "xAI's 422 serde wording joins customToolRefusal (8ecab590); the #2656 translate-as-functions path then covers the model; both 400 and 422 statuses pinned to take a group to its next member. Follow-up halves delivered in d8ad9ab2 after the reporter merged 8ecab590 and captured both error bodies: Codex's replay of a sealed reasoning item carries \"content\": null, which xAI answers 'Could not decode the compaction blob' — the null is dropped on both the relayed and the translated request (xaiBody); Claude Code's mid-conversation system turn, which xAI's Messages answers 'Invalid message role', folds into the top-level system. Third round c172b65d after the claude calls kept 400ing xAI's schema validation: a tool's schema said \"required\": null where none were, and the null goes — input_schema, parameters and function's parameters, at the schema's root or nested. Fourth round bf84dd4f after the reporter's retest still answered the same wording: the walk took objects but not arrays, so a null under an anyOf branch or a tuple items survived; arrays are walked too, a real array of names keeps its bytes, a body with no null required keeps its bytes. Real xAI upstream not called; the reporter is asked to confirm the built commit and, if it persists, to paste the failing tool's input_schema.",
+   "coverage": "xAI's 422 serde wording joins customToolRefusal (8ecab590); the #2656 translate-as-functions path then covers the model; both 400 and 422 statuses pinned to take a group to its next member. Follow-up halves delivered in d8ad9ab2 after the reporter merged 8ecab590 and captured both error bodies: Codex's replay of a sealed reasoning item carries \"content\": null, which xAI answers 'Could not decode the compaction blob' — the null is dropped on both the relayed and the translated request (xaiBody); Claude Code's mid-conversation system turn, which xAI's Messages answers 'Invalid message role', folds into the top-level system. Third round c172b65d after the claude calls kept 400ing xAI's schema validation: a tool's schema said \"required\": null where none were, and the null goes — input_schema, parameters and function's parameters, at the schema's root or nested. Fourth round bf84dd4f after the reporter's retest still answered the same wording: the walk took objects but not arrays, so a null under an anyOf branch or a tuple items survived; arrays are walked too, a real array of names keeps its bytes, a body with no null required keeps its bytes. Real xAI upstream not called; the reporter is asked to confirm the built commit and, if it persists, to paste the failing tool's input_schema. | 2026-11-08 follow-up: yangfei1024 posts an independent, wider patch — recursive required:[] fill for object schemas plus a new streaming face (xAI's Anthropic-compat stream omits index on content_block_delta, strict decoders drop the turn; comment 6705800927). Verified: 15 XAI tests green, gofmt/vet clean, base e9bde2520; ablation — reverting xai_body.go turns two required-fill tests red. Endorsed as superseding our fix/3392-xai-required-empty (16a4053b0, required face only) for the maintainer to pick. Comment 6718027988.",
    "commits": [
     "8ecab5903548f4499d39e411e35190bce794b006",
     "d8ad9ab2ae999a9920b0945d3beba42b27eb27fc",
@@ -2931,7 +2933,8 @@
      "https://github.com/yetone/magpie/issues/3392#issuecomment-6380779544",
      "https://github.com/yetone/magpie/issues/3392#issuecomment-6386768624",
      "https://github.com/yetone/magpie/issues/3392#issuecomment-6395007475",
-     "https://github.com/yetone/magpie/issues/3392#issuecomment-6397710434"
+     "https://github.com/yetone/magpie/issues/3392#issuecomment-6397710434",
+     "https://github.com/yetone/magpie/issues/3392#issuecomment-6718027988"
     ]
    },
    "sources": {
@@ -2941,7 +2944,7 @@
    },
    "verify": {
     "state": "pass",
-    "evidence": "Round-10 evidence stands for 8ecab590; round-14 for d8ad9ab2. c172b65d: red/green per its commit body (reporter wording on a fake xAI), 4 environmental reds matched to the clean baseline the same session. bf84dd4f: TestXAITakesANullRequiredToolSchema extended with an anyOf branch and a tuple items both carrying the null — red at c172b65d with the reporter wording verbatim (the nulls visible in the body xAI is sent), green at bf84dd4f; 23 targeted ok; full nogui gateway at both heads, same sandbox HOME, the same 4 environmental reds both sides; gofmt/vet(linux, linux-nogui, windows)/builds(linux, linux-nogui, windows) clean (docs/fork/evidence/round20/).",
+    "evidence": "Round-10 evidence stands for 8ecab590; round-14 for d8ad9ab2. c172b65d: red/green per its commit body (reporter wording on a fake xAI), 4 environmental reds matched to the clean baseline the same session. bf84dd4f: TestXAITakesANullRequiredToolSchema extended with an anyOf branch and a tuple items both carrying the null — red at c172b65d with the reporter wording verbatim (the nulls visible in the body xAI is sent), green at bf84dd4f; 23 targeted ok; full nogui gateway at both heads, same sandbox HOME, the same 4 environmental reds both sides; gofmt/vet(linux, linux-nogui, windows)/builds(linux, linux-nogui, windows) clean (docs/fork/evidence/round20/).; docs/fork/evidence/2026-11-08-followup/comment-readback.json",
     "head": "bf84dd4f86d236771ef3e8a3751a8b91f4a9c1a8"
    },
    "upstream": {
@@ -11684,6 +11687,40 @@
    "body_sha256": "3d63160b2ed2e13fa5c28034ffbe606c9e5b4d4a44da0f37970b586c1b90fd7f",
    "evidence": "docs/fork/evidence/2026-11-06-followup/comment-readback.json",
    "body_updated_at": "2026-11-05T16:46:28Z"
+  },
+  {
+   "issue": 3197,
+   "fix_id": "u-gateway-keep-a-severed-chat-stream-free-of-parti-a6a2c260",
+   "comment_id": 6718027883,
+   "url": "https://github.com/yetone/magpie/issues/3197#issuecomment-6718027883",
+   "role": "followup",
+   "author": "skygunner",
+   "language": "en",
+   "status": "published_verified",
+   "published_at": "2026-11-08T06:04:11Z",
+   "verified_at": "2026-11-08T18:10:00Z",
+   "delivery": "fix/3197-orphan-event",
+   "delivery_head": "a5fa3228f996808dc8c2d1628fb89103bafadee4",
+   "body_sha256": "3130dd9e0eb963dd09dd92825c129827e2364c9346a3cbee758bb3ab4b24617f",
+   "evidence": "docs/fork/evidence/2026-11-08-followup/3197/",
+   "body_updated_at": "2026-11-08T06:04:11Z"
+  },
+  {
+   "issue": 3392,
+   "fix_id": "u-gateway-an-upstream-naming-the-type-an-unknown-3392-8ecab590",
+   "comment_id": 6718027988,
+   "url": "https://github.com/yetone/magpie/issues/3392#issuecomment-6718027988",
+   "role": "followup",
+   "author": "skygunner",
+   "language": "zh",
+   "status": "published_verified",
+   "published_at": "2026-11-08T06:04:12Z",
+   "verified_at": "2026-11-08T18:10:00Z",
+   "delivery": "fix/3392-xai-required-empty (superseded by yangfei1024's fix/xai-tools-required-and-stream-index)",
+   "delivery_head": "",
+   "body_sha256": "a5e7a0be7ea8521ef0e6fddc521770149fbba541322fff362390460baaf54062",
+   "evidence": "docs/fork/evidence/2026-11-08-followup/comment-readback.json",
+   "body_updated_at": "2026-11-08T06:04:12Z"
   }
  ],
  "deliveries": {

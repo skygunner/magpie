@@ -341,11 +341,11 @@ Round-3 trees (base `b437e4ad`): batch `7f927133`, union `275b7a2e`, rests `d639
 ### u-gateway-keep-a-severed-chat-stream-free-of-parti-a6a2c260
 
 - Issues: #3197 (product)
-- Commits: `a6a2c260` — branch `fix/issue-batch-20261023-g`
-- Coverage: Delivered scope per commit body and issue thread.
+- Commits: `a6a2c260`, `a5fa3228` — branch `fix/3197-orphan-event`
+- Coverage: Delivered scope per commit body and issue thread. | 2026-11-08 follow-up: DDDFXYqiming adds the Codex Responses face — an upstream severed between an event: name line and its data line left the client an event with no data, which the openai Node SDK dies on ("malformed server-sent event JSON", comment 6690386826; the landed Chat fix 70a40aaa0 never hit it, Chat SSE has no event: lines). Confirmed in source: the name went out on completion and upstream's own TestPassthroughStreamEndsOnLineEnd tolerates the orphan. Fixed on a new branch fix/3197-orphan-event (a5fa3228f, on upstream/main c736906b1): a named event whose data has not come is held back until the data line does; a name the upstream never follows with data relays as sent; on a sever the held name drops. Two tests red on clean main, severed family green, full gateway only the five baseline reds. Comment 6718027883.
 - Upstream: unconfirmed
 - Sources: credited ggbdpq; coauthors Co-authored-by: ggbdpq <ggbdpq@gmail.com>
-- Verification: unverified_this_round — Delivered with red-green recorded in the commit body; not independently re-run this round. See prior/72-thread-evidence.json for the delivered-time evidence chain.
+- Verification: unverified_this_round at `a5fa3228` — Delivered with red-green recorded in the commit body; not independently re-run this round. See prior/72-thread-evidence.json for the delivered-time evidence chain.; docs/fork/evidence/2026-11-08-followup/comment-readback.json and docs/fork/evidence/2026-11-08-followup/3197/
 - Comment on #3197: https://github.com/yetone/magpie/issues/3197#issuecomment-6350770188
 
 ### u-gateway-follow-kimi-tool-schema-reference-chains-f5ec664b
@@ -597,9 +597,9 @@ Round-3 trees (base `b437e4ad`): batch `7f927133`, union `275b7a2e`, rests `d639
 
 - Issues: #3392 (product)
 - Commits: `8ecab590`, `d8ad9ab2`, `c172b65d`, `bf84dd4f` — branch `fix/issue-batch-1024pm`
-- Coverage: xAI's 422 serde wording joins customToolRefusal (8ecab590); the #2656 translate-as-functions path then covers the model; both 400 and 422 statuses pinned to take a group to its next member. Follow-up halves delivered in d8ad9ab2 after the reporter merged 8ecab590 and captured both error bodies: Codex's replay of a sealed reasoning item carries "content": null, which xAI answers 'Could not decode the compaction blob' — the null is dropped on both the relayed and the translated request (xaiBody); Claude Code's mid-conversation system turn, which xAI's Messages answers 'Invalid message role', folds into the top-level system. Third round c172b65d after the claude calls kept 400ing xAI's schema validation: a tool's schema said "required": null where none were, and the null goes — input_schema, parameters and function's parameters, at the schema's root or nested. Fourth round bf84dd4f after the reporter's retest still answered the same wording: the walk took objects but not arrays, so a null under an anyOf branch or a tuple items survived; arrays are walked too, a real array of names keeps its bytes, a body with no null required keeps its bytes. Real xAI upstream not called; the reporter is asked to confirm the built commit and, if it persists, to paste the failing tool's input_schema.
+- Coverage: xAI's 422 serde wording joins customToolRefusal (8ecab590); the #2656 translate-as-functions path then covers the model; both 400 and 422 statuses pinned to take a group to its next member. Follow-up halves delivered in d8ad9ab2 after the reporter merged 8ecab590 and captured both error bodies: Codex's replay of a sealed reasoning item carries "content": null, which xAI answers 'Could not decode the compaction blob' — the null is dropped on both the relayed and the translated request (xaiBody); Claude Code's mid-conversation system turn, which xAI's Messages answers 'Invalid message role', folds into the top-level system. Third round c172b65d after the claude calls kept 400ing xAI's schema validation: a tool's schema said "required": null where none were, and the null goes — input_schema, parameters and function's parameters, at the schema's root or nested. Fourth round bf84dd4f after the reporter's retest still answered the same wording: the walk took objects but not arrays, so a null under an anyOf branch or a tuple items survived; arrays are walked too, a real array of names keeps its bytes, a body with no null required keeps its bytes. Real xAI upstream not called; the reporter is asked to confirm the built commit and, if it persists, to paste the failing tool's input_schema. | 2026-11-08 follow-up: yangfei1024 posts an independent, wider patch — recursive required:[] fill for object schemas plus a new streaming face (xAI's Anthropic-compat stream omits index on content_block_delta, strict decoders drop the turn; comment 6705800927). Verified: 15 XAI tests green, gofmt/vet clean, base e9bde2520; ablation — reverting xai_body.go turns two required-fill tests red. Endorsed as superseding our fix/3392-xai-required-empty (16a4053b0, required face only) for the maintainer to pick. Comment 6718027988.
 - Upstream: unconfirmed
-- Verification: pass at `bf84dd4f` — Round-10 evidence stands for 8ecab590; round-14 for d8ad9ab2. c172b65d: red/green per its commit body (reporter wording on a fake xAI), 4 environmental reds matched to the clean baseline the same session. bf84dd4f: TestXAITakesANullRequiredToolSchema extended with an anyOf branch and a tuple items both carrying the null — red at c172b65d with the reporter wording verbatim (the nulls visible in the body xAI is sent), green at bf84dd4f; 23 targeted ok; full nogui gateway at both heads, same sandbox HOME, the same 4 environmental reds both sides; gofmt/vet(linux, linux-nogui, windows)/builds(linux, linux-nogui, windows) clean (docs/fork/evidence/round20/).
+- Verification: pass at `bf84dd4f` — Round-10 evidence stands for 8ecab590; round-14 for d8ad9ab2. c172b65d: red/green per its commit body (reporter wording on a fake xAI), 4 environmental reds matched to the clean baseline the same session. bf84dd4f: TestXAITakesANullRequiredToolSchema extended with an anyOf branch and a tuple items both carrying the null — red at c172b65d with the reporter wording verbatim (the nulls visible in the body xAI is sent), green at bf84dd4f; 23 targeted ok; full nogui gateway at both heads, same sandbox HOME, the same 4 environmental reds both sides; gofmt/vet(linux, linux-nogui, windows)/builds(linux, linux-nogui, windows) clean (docs/fork/evidence/round20/).; docs/fork/evidence/2026-11-08-followup/comment-readback.json
 - Comment on #3392: https://github.com/yetone/magpie/issues/3392#issuecomment-6380779544
 
 ### u-gateway-a-turn-the-backend-s-websocket-ref-3444-b834f286
@@ -1593,10 +1593,10 @@ Round-3 trees (base `b437e4ad`): batch `7f927133`, union `275b7a2e`, rests `d639
 
 ## Branches (from git at this run)
 
-362 remote heads (this run's snapshot), 30 local-only, 1 symref(s) excluded.
+374 remote heads (this run's snapshot), 4 local-only, 1 symref(s) excluded.
 
 - `chore/audit-v01957-delivery` fix/unknown head `bc8df907` base `9f36d768`
-- `dev` maintenance/maintenance head `17656d54` — ledger head was 3aae9406
+- `dev` maintenance/maintenance head `1582803a` — ledger head was 3aae9406
 - `feature/cooldown-settings` fix/unknown head `1da2e139` base `fc16214d`
 - `feature/request-attempt-chain` fix/unknown head `33c0ade7` base `18005c80`
 - `fix/1139-issue-1139` fix/unknown head `d1ba11f3` base `f8cd964a`
@@ -1612,6 +1612,7 @@ Round-3 trees (base `b437e4ad`): batch `7f927133`, union `275b7a2e`, rests `d639
 - `fix/2117-web-in-a-container-leave` fix/unknown head `6542183e` base `dc1cfe01`
 - `fix/2207-socks-proxy-test-deterministic` fix/unknown head `a93c613a` base `f8cd964a`
 - `fix/2301-minimax-code` fix/unknown head `1ce1eca8` base `8bade6c5`
+- `fix/2323-hermes-vision-mapping` fix/unknown head `2ba0337e` base `2cdbe92d`
 - `fix/2389-systemone-state-redaction` fix/unknown head `05f768ef` base `f8cd964a`
 - `fix/2541-queue-test-budget` fix/product head `7a327208` base `6eb510f7` → fix_ids: u-gateway-tests-the-queue-refusal-ledger-test-asks-with-produc-2541-7a327208 — round-27
 - `fix/2569-sessions-opencode-zcode-and-dsh` fix/unknown head `8b9246b2` base `74dcf40a`
@@ -1654,13 +1655,16 @@ Round-3 trees (base `b437e4ad`): batch `7f927133`, union `275b7a2e`, rests `d639
 - `fix/3135-codex-responses-eof-502` fix/unknown head `b4f9adf8` base `8abdf53a`
 - `fix/3136-agent-magpie-preview-86-mb` fix/unknown head `98e5e7bc` base `f8cd964a`
 - `fix/3137-proxy-advice-address` fix/product head `a9213cae` base `6eb510f7` → fix_ids: u-agent-the-proxy-warning-s-fix-advice-names-the-gateway-codex-3137-a9213cae — round-27
+- `fix/3141-proc-look-clock` fix/unknown head `c62a2333` base `2cdbe92d`
 - `fix/3157-reduced-motion-decorative` fix/unknown head `d459527c` base `a67da2dd`
 - `fix/3163-issue-3163` fix/unknown head `690ee207` base `f8cd964a`
 - `fix/3165-reasoning-faces` fix/unknown head `0b64bfe9` base `2cdbe92d`
 - `fix/3166-responses-continuation` fix/unknown head `08a2d1f5` base `8abdf53a`
 - `fix/3174-claude-signin-test-cache` fix/unknown head `de9593ac` base `2cdbe92d`
 - `fix/3188-sub2api-percent` fix/product head `0817d2e9` base `6afbe3f3` → fix_ids: u-provider-a-sub2api-unit-percent-window-is-a-share-not-dollar-3188-0817d2e9 — round-26
+- `fix/3188-sub2api-percent-r2` fix/unknown head `f4c5d313` base `2cdbe92d`
 - `fix/3191-gateway-request-body-write-can` fix/unknown head `043fe4ef` base `833f51ad`
+- `fix/3197-orphan-event` fix/unknown head `a5fa3228` base `c736906b`
 - `fix/3202-issue-3202` fix/unknown head `5302293b` base `c752082e`
 - `fix/3206-gateway-server-managed-tools-web` fix/unknown head `b9d5e58c` base `cad7bbbd`
 - `fix/3228-windows-ntfs-cursor-480gb-500gb` fix/unknown head `ad2b0ce9` base `f6ed2c99`
@@ -1681,6 +1685,7 @@ Round-3 trees (base `b437e4ad`): batch `7f927133`, union `275b7a2e`, rests `d639
 - `fix/3365-known-common-words` fix/unknown head `ad4ee842` base `1490045f`
 - `fix/3392-xai-required-empty` fix/unknown head `16a4053b` base `8abdf53a`
 - `fix/3399-kimi-thinking` fix/product head `d19b48b8` base `6afbe3f3` → fix_ids: u-agent-kimi-s-thinking-models-declare-a-capability-even-witho-3399-d19b48b8 — round-26
+- `fix/3399-kimi-thinking-2cdbe92` fix/unknown head `46bdcc6d` base `2cdbe92d`
 - `fix/3487-quota-span-fixture-1767` fix/unknown head `b6f71ebd` base `f8cd964a`
 - `fix/3512-first-write-waits` fix/unknown head `1b696162` base `01468003`
 - `fix/3514-subscription-claude-dsh-messages` fix/unknown head `9d68cb86` base `a67da2dd`
@@ -1717,6 +1722,7 @@ Round-3 trees (base `b437e4ad`): batch `7f927133`, union `275b7a2e`, rests `d639
 - `fix/3742-late-interrupt` fix/product head `fd442d4f` base `6afbe3f3` → fix_ids: u-middleware-a-timeout-s-interrupt-no-longer-lands-on-the-next-3742-fd442d4f — round-26
 - `fix/3745-bug-library-write-failure-banner-cannot-` fix/unknown head `1d3b657d` base `b90e81da`
 - `fix/3751-codex-meta-length` fix/product head `7e061eda` base `6afbe3f3` → fix_ids: u-sessions-a-rewritten-codex-provider-keeps-every-recorded-byt-3751-7e061eda — round-26
+- `fix/3751-codex-move-lock` fix/unknown head `5dc5057c` base `2cdbe92d`
 - `fix/3754-wsl-profile-probe` fix/unknown head `979784f6` base `7f32f0ec`
 - `fix/3775-token-count` fix/product head `c4fd6c4b` base `6afbe3f3` → fix_ids: u-redact-a-token-count-inside-total-tokens-is-no-secret-3775-3775-c4fd6c4b — round-26
 - `fix/3776-jp-phone` fix/product head `ab40c7ea` base `6afbe3f3` → fix_ids: u-redact-a-japanese-mobile-in-a-csv-is-masked-3776-3776-ab40c7ea — round-26
@@ -1817,6 +1823,7 @@ Round-3 trees (base `b437e4ad`): batch `7f927133`, union `275b7a2e`, rests `d639
 - `fix/embedding-indices` fix/single-fix head `38e36a7d` base `7aad6a50` → fix_ids: u-gateway-supply-missing-indices-in-embedding-answ-38e36a7d
 - `fix/gemini-ollama-options` fix/batch-chain head `a0b3c8f6` base `7aad6a50` → fix_ids: u-fix-gui-reap-plugin-hosts-before-web-update-reex-863a1e72, u-test-gui-wait-for-the-chosen-codex-subagent-stor-435c03ac, u-gateway-classify-chinese-hourly-usage-limits-as--942bf679, u-test-provider-invalidate-cached-misses-after-cla-873c5dfd, u-agent-use-vs-code-portable-data-for-settings-and-e4ca1b34, u-fix-tui-keep-agent-fields-readable-in-narrow-ter-cebfc283, u-agent-do-not-count-claude-exit-records-as-gatewa-18c0967e, u-test-gui-wait-for-the-quota-picker-save-to-be-re-c24a50e3, u-gui-preserve-the-original-url-across-protocol-sw-9f7ada4f, u-sessions-retain-pi-and-omp-reasoning-in-request--b506ff56, u-gateway-follow-kimi-tool-schema-reference-chains-f5ec664b, u-gateway-keep-a-severed-chat-stream-free-of-parti-a6a2c260, u-gateway-preserve-plaintext-codex-collaboration-t-b1ae66c7, u-gateway-carry-deepseek-reasoning-under-one-field-d5b46244, u-provider-let-the-grok-plugin-read-allowed-tool-c-852182f6, u-gateway-normalize-whole-tool-numbers-from-every--deefacd2, u-proc-recheck-tools-installed-within-a-directory--89bceb39, u-provider-retain-the-first-single-card-quota-refr-a11d605e, u-fix-gui-apply-left-display-to-custom-balance-per-15759adb, u-fix-gateway-omit-ollama-options-from-gemini-chat-a0b3c8f6
 - `fix/grok-plugin-allowed-tools` fix/batch-chain head `852182f6` base `7aad6a50` → fix_ids: u-fix-gui-reap-plugin-hosts-before-web-update-reex-863a1e72, u-test-gui-wait-for-the-chosen-codex-subagent-stor-435c03ac, u-gateway-classify-chinese-hourly-usage-limits-as--942bf679, u-test-provider-invalidate-cached-misses-after-cla-873c5dfd, u-agent-use-vs-code-portable-data-for-settings-and-e4ca1b34, u-fix-tui-keep-agent-fields-readable-in-narrow-ter-cebfc283, u-agent-do-not-count-claude-exit-records-as-gatewa-18c0967e, u-test-gui-wait-for-the-quota-picker-save-to-be-re-c24a50e3, u-gui-preserve-the-original-url-across-protocol-sw-9f7ada4f, u-sessions-retain-pi-and-omp-reasoning-in-request--b506ff56, u-gateway-follow-kimi-tool-schema-reference-chains-f5ec664b, u-gateway-keep-a-severed-chat-stream-free-of-parti-a6a2c260, u-gateway-preserve-plaintext-codex-collaboration-t-b1ae66c7, u-gateway-carry-deepseek-reasoning-under-one-field-d5b46244, u-provider-let-the-grok-plugin-read-allowed-tool-c-852182f6
+- `fix/gui-fixtures-3295` fix/unknown head `0ca5ca1e` base `0fc3455e`
 - `fix/gui-wheel-test-contexts` fix/unknown head `e057fd44` base `465928bc`
 - `fix/hardlink-test-mode` fix/single-fix head `dda612bc` base `ca4a1cde` — testenv umask fix (dda612bc), delivered without its own issue comment; kept as its own unit-sized change with no issue id
 - `fix/hermes-vision-mapping` fix/batch-chain head `d03d4a7b` base `7aad6a50` → fix_ids: u-fix-gui-reap-plugin-hosts-before-web-update-reex-863a1e72, u-test-gui-wait-for-the-chosen-codex-subagent-stor-435c03ac, u-gateway-classify-chinese-hourly-usage-limits-as--942bf679, u-test-provider-invalidate-cached-misses-after-cla-873c5dfd, u-agent-use-vs-code-portable-data-for-settings-and-e4ca1b34, u-fix-tui-keep-agent-fields-readable-in-narrow-ter-cebfc283, u-agent-do-not-count-claude-exit-records-as-gatewa-18c0967e, u-test-gui-wait-for-the-quota-picker-save-to-be-re-c24a50e3, u-gui-preserve-the-original-url-across-protocol-sw-9f7ada4f, u-sessions-retain-pi-and-omp-reasoning-in-request--b506ff56, u-gateway-follow-kimi-tool-schema-reference-chains-f5ec664b, u-gateway-keep-a-severed-chat-stream-free-of-parti-a6a2c260, u-gateway-preserve-plaintext-codex-collaboration-t-b1ae66c7, u-gateway-carry-deepseek-reasoning-under-one-field-d5b46244, u-provider-let-the-grok-plugin-read-allowed-tool-c-852182f6, u-gateway-normalize-whole-tool-numbers-from-every--deefacd2, u-proc-recheck-tools-installed-within-a-directory--89bceb39, u-provider-retain-the-first-single-card-quota-refr-a11d605e, u-fix-gui-apply-left-display-to-custom-balance-per-15759adb, u-fix-gateway-omit-ollama-options-from-gemini-chat-a0b3c8f6, u-test-provider-keep-hold-assertions-independent-o-665af242, u-test-provider-drain-plugin-callbacks-before-swap-f85bd166, u-test-gui-isolate-the-window-s-usage-requests-fro-4671590d, u-gateway-recognize-a-relay-s-expired-reasoning-it-cf95652a, u-gateway-recognize-sensenova-s-guided-grammar-for-8f931a28, u-gateway-deliver-background-task-notifications-wi-b7726551, u-edit-index-json-arrays-without-replacing-their-e-1805ff94, u-gateway-retry-kimi-s-untyped-tool-roots-as-objec-2bddfe10, u-fix-provider-keep-usage-only-models-out-of-codex-a016fcee, u-gateway-keep-desktop-credential-probes-on-their--9fd7a9d4, u-gateway-include-inferred-and-user-set-image-inpu-7e156213, u-gateway-apply-privacy-policy-to-direct-system-on-ee1b018b, u-agent-advertise-hermes-model-vision-capabilities-d03d4a7b
@@ -1906,6 +1913,7 @@ Round-3 trees (base `b437e4ad`): batch `7f927133`, union `275b7a2e`, rests `d639
 - `fix/r25-usage-view-routing-scroll` fix/unknown head `41d8cb52` base `19253f67`
 - `fix/r25-write-stdin-wait` fix/product head `d9c57ab0` base `19253f67` → fix_ids: u-round25-3655-d9c57ab0 — round25; scoped_evidence_with_limitations
 - `fix/reasonix-library-complete-1024` fix/unknown head `cf87dc37` base `dd1e8822`
+- `fix/reasonix-library-complete-20261024` fix/unknown head `62f4042b` base `628e1898`
 - `fix/redact-cue-words` fix/product head `e60d14a8` base `01468003` → fix_ids: u-issue-3585-redact-cue-words-e60d14a8 — round-23
 - `fix/redact-hex-count` fix/product head `50f6e8b5` base `3173440c` → fix_ids: u-redact-hex-run-with-a-count-before-it-is-no-secret-3597-50f6e8b5 — round-22 one-issue-one-branch
 - `fix/redact-local-host` fix/product head `aa0e3ec7` base `01468003` → fix_ids: u-issue-3541-redact-local-host-aa0e3ec7 — round-23
@@ -1940,6 +1948,7 @@ Round-3 trees (base `b437e4ad`): batch `7f927133`, union `275b7a2e`, rests `d639
 - `fix/union-items-v2` fix/batch-chain head `cbc6c3b3` base `fa22bc64` → fix_ids: u-gateway-a-schema-s-type-union-beside-items-keeps-c638203e, u-gateway-a-union-s-array-half-leaves-the-object-h-b2336968
 - `fix/unknown-model-sent-id` fix/single-fix head `38444c2d` base `be002aca` → fix_ids: u-gateway-the-refusal-for-an-unknown-model-names-t-94861ccb
 - `fix/usage-absent-used` fix/product head `6791aa99` base `01468003` → fix_ids: u-issue-3650-usage-absent-used-6791aa99 — round-23
+- `fix/usage-observability-3190` fix/unknown head `171e1241` base `8cbaeeca`
 - `fix/volcengine-resets` fix/single-fix head `e6c2b6fb` base `87d703c5` → fix_ids: u-volcengine-resets
 - `fix/vscode-portable-path` fix/batch-chain head `e4ca1b34` base `7aad6a50` → fix_ids: u-fix-gui-reap-plugin-hosts-before-web-update-reex-863a1e72, u-test-gui-wait-for-the-chosen-codex-subagent-stor-435c03ac, u-gateway-classify-chinese-hourly-usage-limits-as--942bf679, u-test-provider-invalidate-cached-misses-after-cla-873c5dfd, u-agent-use-vs-code-portable-data-for-settings-and-e4ca1b34
 - `fix/web-signal-shutdown` fix/single-fix head `c5334b59` base `0815c918` → fix_ids: u-cli-drain-browser-gateways-on-handled-stop-signa-8d5523f2
@@ -1948,45 +1957,22 @@ Round-3 trees (base `b437e4ad`): batch `7f927133`, union `275b7a2e`, rests `d639
 - `fix/zcode-reconnect-after-rewrite` fix/product head `c4495b30` base `01468003` → fix_ids: u-issue-3246-zcode-reconnect-after-rewrite-c4495b30 — round-23
 - `fix/zcode-window-renewal` fix/single-fix head `9795b099` base `8abdf53a` → fix_ids: u-gateway-classify-chinese-hourly-usage-limits-as--942bf679 — ledger head was 942bf679
 - `followup-2026-10-28` fix/unknown head `a1e6a04b` base `2cdbe92d`
-- `integration/nightly` fix/unknown head `7308a633` base `465928bc`
+- `integration/followup2-1029` fix/unknown head `4d2001d7` base `2cdbe92d`
+- `integration/nightly` fix/unknown head `1eeeeda5` base `0fc3455e`
+- `integration/round-20261105T070630Z` fix/unknown head `cd03b863` base `a2f7ed2e`
 - `main` protected/stale-protected head `5e3dd1d5` — stale branch named main at the 10-22 upstream-main snapshot be002aca; not the mirror ref and not the delivery line; kept, unknown purpose; treat as protected: do not delete without instruction; ledger head was be002aca
 - `prod` fix/unknown head `0bf695c1` base `6abacd46`
-- `production/stable` fix/unknown head `16f33cdc` base `465928bc`
+- `production/stable` fix/unknown head `2fb297eb` base `0fc3455e`
 - `r3-batch` fix/batch-chain head `7f927133` base `b437e4ad` → fix_ids: u-provider-antigravity-s-disabled-ids-are-left-out-8b4ecbac, u-gateway-preserve-plaintext-codex-collaboration-t-b1ae66c7, u-provider-decide-set-on-a-signed-in-provider-stay-b2497dd8, u-provider-a-balance-only-reading-knows-the-accoun-4fb09e6b, u-gateway-an-ordinary-chat-upstream-that-says-noth-600fa01c, u-redact-a-placeholder-url-s-password-and-version--4b6d93d9, u-gateway-a-subagent-s-task-reaches-a-responses-ap-67b57000 — forward-appended over the reviewed 885c1b8b; read back
 - `r3-rests` fix/single-fix head `d639c8d7` base `b437e4ad` → fix_ids: u-fix-gateway-persist-provider-rest-deadlines-acro-8d72abec — pushed and read back 2026-10-24 (origin head d639c8d7)
 - `r3-union` fix/single-fix head `275b7a2e` base `b437e4ad` → fix_ids: u-gateway-a-schema-s-type-union-beside-items-keeps-c638203e, u-gateway-a-union-s-array-half-leaves-the-object-h-b2336968 — pushed and read back 2026-10-24 (origin head 275b7a2e)
+- `r30-3894` fix/unknown head `ddd97ac2` base `8abdf53a`
 - `suite-r26-merged` fix/unknown head `c100a01d` base `6afbe3f3`
 - `suite-r27-merged` fix/unknown head `f8ed0033` base `6eb510f7`
-- `fix/2323-hermes-vision-mapping` local-only (historical snapshot, unavailable on this machine) head `2ba0337e`
-- `fix/3141-proc-look-clock` local-only (historical snapshot, unavailable on this machine) head `c62a2333`
-- `fix/3188-sub2api-percent-r2` local-only (historical snapshot, unavailable on this machine) head `f4c5d313`
-- `fix/3399-kimi-thinking-2cdbe92` local-only (historical snapshot, unavailable on this machine) head `46bdcc6d`
-- `fix/3751-codex-move-lock` local-only (historical snapshot, unavailable on this machine) head `5dc5057c`
+- `review/yangfei-3392` local-only (historical snapshot, unavailable on this machine) head `2c9cf0f2`
 - `fix/provider-detect-test-scroll` local-only (historical snapshot, unavailable on this machine) head `348fb756`
-- `fix/reasonix-library-complete-20261024` local-only (historical snapshot, unavailable on this machine) head `62f4042b`
-- `fix/webdav-digest-auth` local-only (historical snapshot, unavailable on this machine) head `0437ae4c`
-- `followup/3183` local-only (historical snapshot, unavailable on this machine) head `c20d3e20`
-- `followup/3329` local-only (historical snapshot, unavailable on this machine) head `fc222ef1`
-- `followup/3566` local-only (historical snapshot, unavailable on this machine) head `28919f45`
-- `followup/3619` local-only (historical snapshot, unavailable on this machine) head `e9307596`
-- `followup/3619-clean` local-only (historical snapshot, unavailable on this machine) head `bbd53987`
-- `integration/followup2-1029` local-only (historical snapshot, unavailable on this machine) head `4d2001d7`
-- `integration/round-20261105T070630Z` local-only (historical snapshot, unavailable on this machine) head `cd03b863`
-- `lane-scratch` local-only (historical snapshot, unavailable on this machine) head `02a46109`
-- `r30-1747` local-only (historical snapshot, unavailable on this machine) head `d0409dbb`
-- `r30-3166` local-only (historical snapshot, unavailable on this machine) head `08a2d1f5`
-- `r30-3475` local-only (historical snapshot, unavailable on this machine) head `1db7fb3d`
-- `r30-3846` local-only (historical snapshot, unavailable on this machine) head `61968cdb`
-- `r30-3848` local-only (historical snapshot, unavailable on this machine) head `ab6ec3f3`
-- `r30-3849` local-only (historical snapshot, unavailable on this machine) head `3befa94e`
-- `r30-3851` local-only (historical snapshot, unavailable on this machine) head `023450f7`
-- `r30-3894` local-only (historical snapshot, unavailable on this machine) head `ddd97ac2`
-- `r4-work` local-only (historical snapshot, unavailable on this machine) head `4e136a4b`
-- `r5-work` local-only (historical snapshot, unavailable on this machine) head `1952329f`
-- `zz-test` local-only (historical snapshot, unavailable on this machine) head `d77028e2`
-- `zz-test2` local-only (historical snapshot, unavailable on this machine) head `6c78eea6`
-- `zz-test3` local-only (historical snapshot, unavailable on this machine) head `0bbb64ee`
 - `fix/web-signal-shutdown-2` local-only (historical snapshot, unavailable on this machine) head `0815c918`
+- `fix/webdav-digest-auth` local-only (historical snapshot, unavailable on this machine) head `0437ae4c`
 
 ## Archive
 
