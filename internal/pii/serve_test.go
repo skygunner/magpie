@@ -281,6 +281,24 @@ func TestDeathSaysExitAndLastWords(t *testing.T) {
 	}
 }
 
+// A read racing an end of the helper (a stop or an idle end closing the
+// pipe, #5334) still says how pf-serve ended, not the reader's error.
+func TestClosedPipeSaysTheEnding(t *testing.T) {
+	fakeInstall(t, "asserts", false)
+	old := beforeRead
+	beforeRead = func(h *helper) {
+		<-h.exited
+		if err := h.outf.Close(); err != nil {
+			t.Error(err)
+		}
+	}
+	t.Cleanup(func() { beforeRead = old })
+	_, err := Find([]string{"hi Alice"})
+	if err == nil || !strings.Contains(err.Error(), "exit status 3") || !strings.Contains(err.Error(), "GGML_ASSERT(ne00 % 4 == 0) failed") || strings.Contains(err.Error(), "file already closed") {
+		t.Fatalf("err = %v, want the ending, not the reader's error", err)
+	}
+}
+
 func TestLastSaid(t *testing.T) {
 	for _, x := range []struct{ in, want string }{
 		{"ggml_metal_device_init: tensor API disabled for pre-M5 and pre-A19 devices\nggml_metal_library_init: loaded in 0.323 sec\n", ""},
