@@ -3,6 +3,7 @@ package gui
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -189,6 +190,47 @@ func TestPluginPageReadsWhatItDeclared(t *testing.T) {
 	if !pageSetAllowed("x", time.Now()) || pageSetAllowed("x", time.Now()) || !pageSetAllowed("x", time.Now().Add(2*time.Second)) {
 		t.Error("pageSetAllowed")
 	}
+}
+
+// A page can save and reload options beyond 64 KiB, but receives a clear error above 1 MiB (#5688).
+func TestPluginPageLargeOptions(t *testing.T) {
+	for _, size := range []int{70 << 10, (1 << 20) - 1024} {
+		t.Run(fmt.Sprint(size), func(t *testing.T) {
+			on, _ := pagePlugins(t)
+			spec, _ := json.Marshal(on)
+			h := pageMux()
+			value := strings.Repeat("x", size)
+			body := `{"spec":` + string(spec) + `,"options":{"data":"` + value + `"}}`
+			w := do(h, httptest.NewRequest("POST", "/api/plugin-pages/options", strings.NewReader(body)))
+			if w.Code != http.StatusOK {
+				t.Fatalf("save %d bytes: %d %s", len(body), w.Code, w.Body)
+			}
+			b, err := os.ReadFile(plugin.ListPath())
+			if err != nil {
+				t.Fatal(err)
+			}
+			var disk plugin.List
+			if err := json.Unmarshal(b, &disk); err != nil || len(disk.Plugins) == 0 || disk.Plugins[0].Options["data"] != value {
+				t.Fatalf("persisted options: %v", err)
+			}
+			plugin.Restart()
+			w = do(h, httptest.NewRequest("POST", "/api/plugin-pages/options", strings.NewReader(`{"spec":`+string(spec)+`}`)))
+			var got map[string]any
+			if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil || w.Code != http.StatusOK || got["data"] != value {
+				t.Fatalf("reload: status %d, decoded %v, err %v", w.Code, got["data"] == value, err)
+			}
+		})
+	}
+	t.Run("too large", func(t *testing.T) {
+		on, _ := pagePlugins(t)
+		spec, _ := json.Marshal(on)
+		body := `{"spec":` + string(spec) + `,"options":{"data":"` + strings.Repeat("x", 1<<20) + `"}}`
+		w := do(pageMux(), httptest.NewRequest("POST", "/api/plugin-pages/options", strings.NewReader(body)))
+		var got map[string]any
+		if err := json.Unmarshal(w.Body.Bytes(), &got); err != nil || w.Code != http.StatusRequestEntityTooLarge || got["code"] != "options_too_large" {
+			t.Fatalf("oversize: status %d, body %s", w.Code, w.Body)
+		}
+	})
 }
 
 // A page whose plugin has a part for the host too has the host up before

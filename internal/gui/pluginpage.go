@@ -41,6 +41,9 @@ import (
 // pluginPagePrefix + token + "/" + the file's path in the page's folder.
 const pluginPagePrefix = "/_magpie/plugin/"
 
+// pageOptionsLimit bounds the entire options request, including the spec.
+const pageOptionsLimit = 1 << 20
+
 // pluginBridgePath is the window's side of the page's messages, served
 // beside every page's files: a page loads it as
 // <script src="_magpie/bridge.js">.
@@ -469,8 +472,15 @@ func pluginPageRoutes(mux *http.ServeMux, web bool) {
 			Spec    string          `json:"spec"`
 			Options json.RawMessage `json:"options"`
 		}
-		if err := json.NewDecoder(http.MaxBytesReader(rw, r.Body, 64<<10)).Decode(&in); err != nil {
-			fail(rw, err)
+		if err := json.NewDecoder(http.MaxBytesReader(rw, r.Body, pageOptionsLimit)).Decode(&in); err != nil {
+			var tooLarge *http.MaxBytesError
+			if errors.As(err, &tooLarge) {
+				rw.Header().Set("Content-Type", "application/json")
+				rw.WriteHeader(http.StatusRequestEntityTooLarge)
+				_ = json.NewEncoder(rw).Encode(map[string]string{"error": "plugin page options request exceeds 1 MiB", "code": "options_too_large"})
+			} else {
+				fail(rw, err)
+			}
 			return
 		}
 		if _, _, ok := windowOf(in.Spec); !ok {
