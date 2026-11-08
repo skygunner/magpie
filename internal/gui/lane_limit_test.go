@@ -15,6 +15,9 @@ import (
 // sets the queue's size and wait, keeps them when it leaves them out, keeps
 // each key's own limit, and refuses a queue out of range.
 func TestLaneLimitRoutes(t *testing.T) {
+	owner := httptest.NewServer(http.NotFoundHandler())
+	defer owner.Close()
+	t.Setenv("MAGPIE_ADDR", strings.TrimPrefix(owner.URL, "http://"))
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
