@@ -315,7 +315,12 @@ func TestMiseShimWindowsFiveAgents(t *testing.T) {
 		if real != cmd {
 			t.Errorf("%s: program %q", c.id, real)
 		}
-		if u == nil || !reflect.DeepEqual(u.cmd, []string{npm, "install", "-g", "--prefix", prefix, c.pkg + "@latest"}) {
+		want := []string{npm, "install", "-g", "--prefix", prefix}
+		if c.id == "claude" || c.id == "opencode" {
+			want = append(want, "--allow-scripts="+c.pkg)
+		}
+		want = append(want, c.pkg+"@latest")
+		if u == nil || !reflect.DeepEqual(u.cmd, want) {
 			t.Errorf("%s: %+v", c.id, u)
 			continue
 		}
