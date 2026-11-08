@@ -212,10 +212,8 @@ func TestClaudeThinkingAroundMagpieSearchGoesBackAsWritten(t *testing.T) {
 	}
 }
 
-// A search beside no thinking of Claude's (another model's turn, a reply
-// without signed thinking) is left out, as before: no call is made up for
-// it.
-func TestSearchWithoutClaudeThinkingStaysOut(t *testing.T) {
+// A search without Claude thinking is text, not an invented tool call.
+func TestSearchWithoutClaudeThinkingHasNoToolCall(t *testing.T) {
 	body := `{"model":"m","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"q"}]},` +
 		`{"type":"reasoning","summary":[{"type":"summary_text","text":"thought"}]},` +
 		`{"type":"web_search_call","id":"ws_1","status":"completed","action":{"type":"search","query":"latest go"}},` +
@@ -224,7 +222,7 @@ func TestSearchWithoutClaudeThinkingStaysOut(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(r.Messages) != 2 || r.Messages[1].Role != "assistant" || len(r.Messages[1].Parts) != 2 {
+	if len(r.Messages) != 2 || r.Messages[1].Role != "assistant" || len(r.Messages[1].Parts) != 3 {
 		t.Fatalf("messages %+v", r.Messages)
 	}
 	for _, p := range r.Messages[1].Parts {

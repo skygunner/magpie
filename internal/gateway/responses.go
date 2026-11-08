@@ -493,9 +493,7 @@ func readResponsesFor(body []byte, facts, keepInstructions bool) (*Request, erro
 					r.Messages = append(r.Messages, Message{Role: "assistant", Parts: []Part{part}})
 				}
 			case it.Type == "web_search_call" && it.Action != nil && strings.TrimSpace(it.Action.Query) != "":
-				// where a search ran in the turn: magpie's own search round
-				// for a Claude reply is put back (searchRoundsBack), and
-				// otherwise it goes, as before
+				// Keep the query and supplied sources for searchRoundsBack.
 				var hits []Hit
 				for _, s := range it.Action.Sources {
 					if s.URL != "" {
@@ -624,7 +622,7 @@ func readResponsesFor(body []byte, facts, keepInstructions bool) (*Request, erro
 // stream gave up (oreoft on Discord). An assistant message with Claude's
 // signed thinking is split at each search into the call and its result,
 // the query and the pages found, as what the search said was never kept.
-// A search with no Claude thinking beside it is left out, as before.
+// Other searches are kept as text, without inventing tool calls.
 func searchRoundsBack(msgs []Message, name string) []Message {
 	if !slices.ContainsFunc(msgs, func(m Message) bool { return slices.ContainsFunc(m.Parts, isSearch) }) {
 		return msgs
@@ -637,10 +635,17 @@ func searchRoundsBack(msgs []Message, name string) []Message {
 			continue
 		}
 		if m.Role != "assistant" || !slices.ContainsFunc(m.Parts, claudeSigned) {
-			m.Parts = slices.DeleteFunc(slices.Clone(m.Parts), isSearch)
-			if len(m.Parts) > 0 {
-				out = append(out, m)
+			m.Parts = slices.Clone(m.Parts)
+			for i, p := range m.Parts {
+				if isSearch(p) {
+					result := "\nSearched the web for: " + p.Text
+					for _, h := range p.Hits {
+						result += "\n- " + h.URL
+					}
+					m.Parts[i] = Part{Kind: Text, Text: result + "\n"}
+				}
 			}
+			out = append(out, m)
 			continue
 		}
 		var cur []Part
