@@ -9814,6 +9814,23 @@ function drawEditor(p, presetID) {
     return row;
   };
 
+  const headerFields = () => {
+    const replyIn = input(draft.replyHeaders || "", "X-Trace-Id, X-Foo");
+    replyIn.classList.add("reply-headers");
+    replyIn.oninput = () => { draft.replyHeaders = replyIn.value; };
+    const passIn = input(draft.passHeaders || "", "X-Tenant-Id");
+    passIn.classList.add("pass-headers");
+    passIn.oninput = () => { draft.passHeaders = passIn.value; };
+    return [...field(t("Reply headers"), replyIn, t("Headers of the vendor's reply passed on to the agent, separated by commas, in any case. Request IDs (X-Request-Id, Request-Id, X-OneAPI-Request-ID) always are; cookies, CORS and the body's own headers never.")), ...field(t("Request headers to pass"), passIn, t("Headers of the agent's request passed on as sent, separated by commas. The agent's value stands over a header above. Keys, cookies and the connection's own never are."))];
+  };
+  const headerValues = () => {
+    const rh = replyHeadersOf(draft.replyHeaders);
+    if (rh.error) { shown(ed.querySelector(".reply-headers"))?.focus(NO_SCROLL); editorError(t("Reply headers: {why}", { why: rh.error }), "warn"); return null; }
+    const ph = replyHeadersOf(draft.passHeaders, true);
+    if (ph.error) { shown(ed.querySelector(".pass-headers"))?.focus(NO_SCROLL); editorError(t("Request headers to pass: {why}", { why: ph.error }), "warn"); return null; }
+    return { replyHeaders: rh.value, passHeaders: ph.value };
+  };
+
   if (p?.account) {
     const a = p.account;
     if (subOf(a.agent)) {
@@ -9852,6 +9869,8 @@ function drawEditor(p, presetID) {
     advIn.append(...compactField(p));
     if (p.carriesCompaction) advIn.append(...nativeCompactionField(() => true)[0]);
     advIn.append(...field(t("Fallback"), renderFallback(p), fallbackHint(p)));
+    const pluginHeaders = !!subOf(a.agent)?.plugin;
+    if (pluginHeaders) advIn.append(...headerFields());
     const proxies = el("div", "stack");
     proxies.append(proxyPicker());
     const perAccount = subOf(a.agent) ? accountProxyPicker(a, p) : null;
@@ -9908,7 +9927,9 @@ function drawEditor(p, presetID) {
       if (priceTypedError(ed)) return;
       const picked = accountModelsDraft(p);
       if (picked === false) return pickError();
-      const body = { id: p.id, models: chosenIds(), noModels: noneChosen(), bestInFamily: bestChosen(), unlisted: draft.unlisted, hiddenDrawers: draft.hiddenDrawers, hiddenVideomakers: draft.hiddenVideomakers, fallback: draft.fallback, contexts: cx.map, outputs: ox.map, compacts: cpx.map, maxImages, proxy, accountProxies: own.map, maxConcurrency, maxAccounts, ...queue, priceRate, rateWindows, modelPrefs: modelPrefsOfDraft(), pinUpstream: !!draft.pinUpstream, unredacted: !!draft.unredacted, countFree: !!draft.countFree, billing: draft.billing || "", ...(p.carriesCompaction ? { nativeCompaction: !!draft.nativeCompaction } : {}), ...routingOfDraft(p) };
+      const headers = pluginHeaders ? headerValues() : {};
+      if (!headers) return;
+      const body = { ...headers, id: p.id, models: chosenIds(), noModels: noneChosen(), bestInFamily: bestChosen(), unlisted: draft.unlisted, hiddenDrawers: draft.hiddenDrawers, hiddenVideomakers: draft.hiddenVideomakers, fallback: draft.fallback, contexts: cx.map, outputs: ox.map, compacts: cpx.map, maxImages, proxy, accountProxies: own.map, maxConcurrency, maxAccounts, ...queue, priceRate, rateWindows, modelPrefs: modelPrefsOfDraft(), pinUpstream: !!draft.pinUpstream, unredacted: !!draft.unredacted, countFree: !!draft.countFree, billing: draft.billing || "", ...(p.carriesCompaction ? { nativeCompaction: !!draft.nativeCompaction } : {}), ...routingOfDraft(p) };
       saving(saveBtn, t("Saving…"));
       saveAccountModelsDraft(picked).then(() => savePluginOptions(subOf(a.agent))).then(() => self.saveGatewayKeys?.(p)).then(() => providerAction("save", body, t("{name} saved", { name: p.name })), (e) => { doneSaving(saveBtn); editorError(e.message || String(e)); }); };
     bar.append(cancel, saveBtn);
@@ -10111,15 +10132,7 @@ function drawEditor(p, presetID) {
   }
   // and JSON fields of the user's own for each request's body (#1604)
   advIn.append(...field(t("Extra body"), extraBodyEditor(), t("JSON fields added to the body of every request to the vendor. A field the request has already is kept; write \"!name\" to replace it. ${sessionId} is the conversation's id; ${threadId} is the thread's, where the agent names one (Codex), else the same.")));
-  // and headers of the vendor's reply passed on to the agent (#4145)
-  const replyIn = input(draft.replyHeaders || "", "X-Trace-Id, X-Foo");
-  replyIn.classList.add("reply-headers");
-  replyIn.oninput = () => { draft.replyHeaders = replyIn.value; };
-  advIn.append(...field(t("Reply headers"), replyIn, t("Headers of the vendor's reply passed on to the agent, separated by commas, in any case. Request IDs (X-Request-Id, Request-Id, X-OneAPI-Request-ID) always are; cookies, CORS and the body's own headers never.")));
-  const passIn = input(draft.passHeaders || "", "X-Tenant-Id");
-  passIn.classList.add("pass-headers");
-  passIn.oninput = () => { draft.passHeaders = passIn.value; };
-  advIn.append(...field(t("Request headers to pass"), passIn, t("Headers of the agent's request passed on as sent, separated by commas. The agent's value stands over a header above. Keys, cookies and the connection's own never are.")));
+  advIn.append(...headerFields());
   const proxies = el("div", "stack");
   proxies.append(proxyPicker());
   const perKey = keyProxyPicker(p);
@@ -10575,12 +10588,9 @@ function drawEditor(p, presetID) {
     const xb = extraBodyOf(draft.extraBody);
     if (xb.error) { shown(ed.querySelector(".extra-body textarea"))?.focus(NO_SCROLL); return editorError(t("Extra body: {why}", { why: xb.error }), "warn"); }
     body.extraBody = xb.value;
-    const rh = replyHeadersOf(draft.replyHeaders);
-    if (rh.error) { shown(ed.querySelector(".reply-headers"))?.focus(NO_SCROLL); return editorError(t("Reply headers: {why}", { why: rh.error }), "warn"); }
-    body.replyHeaders = rh.value;
-    const ph = replyHeadersOf(draft.passHeaders, true);
-    if (ph.error) { shown(ed.querySelector(".pass-headers"))?.focus(NO_SCROLL); return editorError(t("Request headers to pass: {why}", { why: ph.error }), "warn"); }
-    body.passHeaders = ph.value;
+    const headers = headerValues();
+    if (!headers) return;
+    Object.assign(body, headers);
     if (decides || custom) body.decide = (draft.decide || "").trim();
     if ((body.decide || "").includes(WORKSPACE)) { ed.querySelector(".workspace-id")?.focus(NO_SCROLL); return editorError(t("Give the workspace ID your API key belongs to, or pick the Token Plan"), "warn"); }
     if (custom) {
