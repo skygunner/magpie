@@ -63,6 +63,7 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
    t.after(()=>browser.close());
    const tab=await browser.newPage({viewport:{width:1100,height:760},reducedMotion:"reduce"});
    tab.setDefaultTimeout(5000);
+   tab.setDefaultNavigationTimeout(60000);
    const errors=[]; tab.on("pageerror", e=>errors.push(e.message));
    await tab.route("**/*", server(lang,"light",[]));
    await tab.goto("http://magpie.test/");

@@ -80,3 +80,19 @@ checks and all three changed fixtures are run separately. Gate evidence must ver
 that runtime assets and every unchanged fixture are byte-identical between that full
 matrix and the final source. This preserves the original failures instead of hiding
 or overwriting them. Remaining known GUI failures are reviewed separately.
+
+## Navigation-room guard: fork omission repaired
+
+The full matrix caught #5425's five upstream setup omissions and a sixth in
+our own usage-routing-visible fixture. The extra fork entry is an integration
+gap and is repaired, rather than waived as the same baseline failure. Add only
+setDefaultNavigationTimeout(60000) beside the short action timeout in each of
+the six files; existing action deadlines and every behavioral assertion stay.
+The unchanged static guard goes from six entries to green. All six full browser
+fixtures pass in Chromium/WebKit after the correction.
+
+The final affected scope is nine changed GUI fixtures plus the unchanged static
+navigation guard. The original full1,275-file run remains frozen on575d7bda3;
+all runtime code/assets and the other1,266 fixtures must be byte-identical to the
+final source. Final-source Go/build/race and all ten affected/guard checks are
+bound to the final source, with fresh image/replay binding before deployment.
