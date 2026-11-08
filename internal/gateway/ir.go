@@ -785,7 +785,7 @@ func (c *collector) finish() Result {
 	// a reply of tool calls ended "stop" (a relay's end_turn beside its
 	// tool_use blocks, 蓝猫 on Discord) is the client's to run the calls
 	// of: told it stopped, an agent ends its turn there
-	if c.res.Stop == "" || c.res.Stop == "stop" {
+	if c.res.Stop == "" || c.res.Stop == "stop" || c.res.Stop == "tool" {
 		c.res.Stop = "stop"
 		for _, p := range c.res.Parts {
 			if p.Kind == ToolCall {
