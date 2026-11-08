@@ -126,6 +126,7 @@ func TestAgyTitleLater(t *testing.T) {
 // A conversation picked up again grows its transcript; a step written
 // again counts once, read on or read whole.
 func TestAgyGrows(t *testing.T) {
+	inZone(t, 0)
 	dir := putAgy(t)
 	path := filepath.Join(dir, "brain", agyRead, ".system_generated", "logs", "transcript_full.jsonl")
 	f := file{agent: "agy", path: path, main: true}

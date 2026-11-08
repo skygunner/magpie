@@ -279,10 +279,13 @@ func TestCursor(t *testing.T) {
 	}
 
 	// the tools called, the subagent's with them, on the day each was last at work
-	date := dateOf(time.UnixMilli(curT1))
 	tools := map[string]int{}
 	for _, f := range cursorFiles() {
 		if st := cache[f.path]; st != nil && f.key == "cursor:"+curMain {
+			date := dateOf(curOld)
+			if f.main {
+				date = dateOf(time.UnixMilli(curT1))
+			}
 			if st.Days.of(date) == nil {
 				t.Fatalf("%s counts no day %s: %v", f.path, date, st.Days)
 			}
