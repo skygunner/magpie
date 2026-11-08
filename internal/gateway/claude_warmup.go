@@ -488,7 +488,11 @@ func claudeTUIWarmArgs(model string) []string {
 
 func clip(s string) string {
 	if len(s) > 300 {
-		return s[:300] + "…"
+		i := 300
+		for i > 0 && !utf8.RuneStart(s[i]) {
+			i--
+		}
+		return s[:i] + "…"
 	}
 	return s
 }
