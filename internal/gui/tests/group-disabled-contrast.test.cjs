@@ -90,6 +90,8 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         await off.waitFor();
         await on.waitFor();
         await page.evaluate(() => document.fonts.ready);
+        // Contrast is measured after the page finishes its entrance.
+        await page.waitForFunction(() => { const v = document.querySelector(".rt-group.disabled")?.closest(".view"); return v && Number(getComputedStyle(v).opacity) === 1; });
         if (process.env.ARTIFACT_DIR) await page.locator(".rt-groups").screenshot({ path: path.join(process.env.ARTIFACT_DIR, `${engine}-${lang}-${theme}-group-disabled.png`) });
         const nameOff = await contrast(off.locator(".nm b")), nameOn = await contrast(on.locator(".nm b"));
         const memOff = await contrast(off.locator(".mem").first()), memOn = await contrast(on.locator(".mem").first());

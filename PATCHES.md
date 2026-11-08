@@ -21,7 +21,9 @@ mean upstream implements every former fork guarantee.
 
 Pinned upstream `0fc3455e2`; [semantic review](docs/fork/evidence/2026-11-08-3295/patch-review.md).
 Production remains 0.1.3190-p1 until final tests, isolated API comparison and 46-minute
-observation pass. Retained runtime differences touch 12 files after removing a comment-only
+observation pass. Test-only fixes from #3476/#3479 and a contrast measurement repair
+are tracked on `fix/gui-fixtures-3295`; their original failures remain in the record.
+Retained functional runtime differences touch 12 files after removing a comment-only
 delta. Preserve upstream cancellation attribution and new effort maps. Prior suspensions
 remain; Messages thinking-token accounting (#3430) arrives through upstream.
 

@@ -55,3 +55,28 @@ Before freezing the candidate: targeted gateway NVIDIA/member-map/cancellation t
 Usage attempt-chain and diagnostics fixtures pass in Chromium and WebKit. Final complete
 Go/GUI/build/race results and isolated production replay will be recorded separately, bound
 to the immutable tested source. A baseline failure alone is not permission to ship it.
+
+## Test fixture repairs prepared on the pinned tag
+
+Source branch `fix/gui-fixtures-3295` starts at pristine v0.1.3295 and contains
+three independent commits. The first two adapt fixes already posted by ggbdpq;
+the third follows a captured measurement of the page entrance. They change tests only.
+
+- #3476: compare scroll positions across the key editor redraw. The pointer-proximity
+  `.holds` marker can change while page/body positions stay identical. Take the
+  reader-only fix; no timeout increase. The complete file passes 40/40 in both engines,
+  all five languages and both widths. Original paired failures are preserved.
+- #3479: classify only the exact benign ResizeObserver undelivered-notification
+  message in the header width-sweep test, following the existing purpose-filter/update
+  precedent. Every layout assertion and every other page error remains checked.
+  Original candidate and pristine3295 reproduce the page-error string; repaired14/14.
+- Group contrast: the first read captured ancestor MAIN.view opacity0 during entrance,
+  producing1:1 for every text. Wait for that view to appear before the original
+  computation and thresholds. The repaired full file passes8/8. A color-parser-only
+  diagnostic still failed; no color-parser or runtime style change is carried.
+
+The complete1,275-file GUI matrix stays frozen on575d7bda3. Final-source Go/build/race
+checks and all three changed fixtures are run separately. Gate evidence must verify
+that runtime assets and every unchanged fixture are byte-identical between that full
+matrix and the final source. This preserves the original failures instead of hiding
+or overwriting them. Remaining known GUI failures are reviewed separately.
