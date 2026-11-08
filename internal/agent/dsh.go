@@ -1599,9 +1599,17 @@ func dshPutRoute(items []dshItem, on bool, models []catalog.Model, gw string) ([
 		return items, nil
 	}
 	var n *yaml.Node
+	var trailing []string
 	if i >= 0 {
+		entry := items[i]
+		j := len(entry.lines)
+		for j > 1 && (strings.TrimSpace(entry.lines[j-1]) == "" || strings.HasPrefix(entry.lines[j-1], "#")) {
+			j--
+		}
+		trailing = entry.lines[j:]
+		entry.lines = entry.lines[:j]
 		var err error
-		if n, err = dshNode(items[i]); err != nil {
+		if n, err = dshNode(entry); err != nil {
 			return nil, err
 		}
 	} else {
@@ -1624,14 +1632,19 @@ func dshPutRoute(items []dshItem, on bool, models []catalog.Model, gw string) ([
 			yamlDelKey(n, "config")
 		}
 		if yamlKey(n, "config") == nil && len(n.Content) <= 4 { // id and name alone
-			return append(items[:i], items[i+1:]...), nil
+			items[i].lines = trailing
+			if len(trailing) == 0 {
+				return append(items[:i], items[i+1:]...), nil
+			}
+			items[i].id = ""
+			return items, nil
 		}
 	}
 	lines, err := dshNodeLines(n)
 	if err != nil {
 		return nil, err
 	}
-	items[i] = dshItem{id: dshPiRow, magpie: items[i].magpie, lines: lines}
+	items[i] = dshItem{id: dshPiRow, magpie: items[i].magpie, lines: append(lines, trailing...)}
 	return items, nil
 }
 
