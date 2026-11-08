@@ -63,7 +63,8 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         const ctx = await browser.newContext({ viewport: { width: Math.round(1100 / zoom), height: 600 }, deviceScaleFactor: zoom });
         await ctx.addInitScript(() => { Object.defineProperty(Navigator.prototype, "platform", { get: () => "Win32" }); });
         const page = await ctx.newPage();
-        page.on("pageerror", (e) => errors.push(e.message));
+        // Width fitting can finish a ResizeObserver round on the next frame (#3479).
+        page.on("pageerror", (e) => { if (e.message !== "ResizeObserver loop completed with undelivered notifications.") errors.push(e.message); });
         await page.route("**/*", server(lang));
         await page.goto("http://magpie.test/");
         await page.waitForSelector("#nav button.on");
