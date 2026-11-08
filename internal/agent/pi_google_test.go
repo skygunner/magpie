@@ -106,7 +106,10 @@ func TestPiGoogleThinkingLevelsAreGeminis(t *testing.T) {
 // ("Custom fetch is not supported by the Google Generative AI adapter",
 // yunfei9958 on X), so a Gemini model in Pi's models.json stays on Chat,
 // and Pi offers it the levels Chat has; OmO and Prime Agent, whose
-// folders are their own, keep Gemini's API.
+// folders are their own, keep Gemini's API. Aside runs Pi's SDK on its
+// own ~/.aside/u/<account>/models.json too (#4428): a Gemini-capable
+// model there is still written as google-generative-ai, so if Aside hands
+// its runtime a fetch the way Raft does every Gemini model fails there.
 func TestPiFolderKeepsGeminiOnChatForRaft(t *testing.T) {
 	m := catalog.Model{ID: "gem/gemini-3.8-flash", Name: "Gemini 3.8 Flash", APIs: []string{"gemini"}, Efforts: []string{"low", "high", "xhigh"}}
 	const gw = "http://127.0.0.1:1"
@@ -121,5 +124,35 @@ func TestPiFolderKeepsGeminiOnChatForRaft(t *testing.T) {
 	}
 	if !slices.Equal(m.APIs, []string{"gemini"}) {
 		t.Errorf("the catalog's model changed: %v", m.APIs)
+	}
+}
+
+// #4428: Aside runs Pi's SDK on its own models.json and, like Raft, may
+// hand its runtime a fetch of its own — pi-ai's Google adapter refuses
+// that before sending — so a Gemini model in Aside's models.json stays on
+// Chat, with the levels Chat has. Its folder is its own (OmO and Prime
+// Agent keep the API), and its block is written through
+// magpieProviderJSONAt("pi", "aside", …), which piAsked covers now.
+func TestPiAskedKeepsGeminiOnChatForAside(t *testing.T) {
+	m := catalog.Model{ID: "gem/gemini-3.8-flash", Name: "Gemini 3.8 Flash", APIs: []string{"gemini"}, Efforts: []string{"low", "high", "xhigh"}}
+	const gw = "http://127.0.0.1:1"
+	e := piModelJSON(piAsked("aside", m), gw, true)
+	if e["api"] != nil {
+		t.Errorf("aside: api %v, want Chat (nil)", e["api"])
+	}
+	if e["baseUrl"] != nil {
+		t.Errorf("aside: baseUrl %v, want Chat (nil)", e["baseUrl"])
+	}
+	if l := e["thinkingLevelMap"].(map[string]any); l["xhigh"] != "xhigh" {
+		t.Errorf("aside: not Chat's entry: %v", l)
+	}
+	if !slices.Equal(m.APIs, []string{"gemini"}) {
+		t.Errorf("the catalog's model changed: %v", m.APIs)
+	}
+	// the other folders keep the API, so the change is narrow
+	for _, id := range []string{"omo", "prime-agent"} {
+		if got := piModelJSON(piAsked(id, m), gw, true)["api"]; got != "google-generative-ai" {
+			t.Errorf("%s: api %v, want google-generative-ai", id, got)
+		}
 	}
 }

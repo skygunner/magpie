@@ -791,8 +791,13 @@ func objectPairs(raw []byte) orderedJSON {
 //     1.4.0, api/google-generative-ai.js; yunfei9958 on X). Per-request
 //     fetch is a feature of Pi's SDK, so any other host of it can do the
 //     same. OmO's and Prime Agent's folders are their own, and keep it.
+//     Aside runs Pi's SDK on its own ~/.aside/u/<account>/models.json
+//     too (#4428), and its block is written through
+//     magpieProviderJSONAt("pi", "aside", …), so it is covered here as
+//     well; if Aside hands its runtime a fetch the way Raft does, every
+//     Gemini model fails there with the same error.
 func piAsked(agentID string, m catalog.Model) catalog.Model {
-	if agentID == "stepcode" || agentID == "pi" {
+	if agentID == "stepcode" || agentID == "pi" || agentID == "aside" {
 		m.APIs = slices.DeleteFunc(slices.Clone(m.APIs), func(a string) bool { return a == string(provider.Gemini) })
 	}
 	return m
