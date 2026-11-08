@@ -29,14 +29,15 @@ import (
 // restart asks for the administrator's password; only an app that can't be
 // replaced at all (run from its disk image, say) is sent to the release page.
 type updater struct {
-	mu     sync.Mutex
-	state  string // checking | latest | found | downloading | ready | available | source | error | blocked
-	latest *update.Release
-	err    string
-	bundle string // the .app to replace, "" when not in one or stuck
-	stuck  string // why the .app or binary can't be replaced where it is (update.Stuck, exeStuck)
-	exe    string // not in a .app: the binary to replace, "" when not writable
-	exeDir string // not in a .app: the binary's folder, named when it is stuck there
+	beginMu sync.Mutex // orders check starts and their persisted times
+	mu      sync.Mutex
+	state   string // checking | latest | found | downloading | ready | available | source | error | blocked
+	latest  *update.Release
+	err     string
+	bundle  string // the .app to replace, "" when not in one or stuck
+	stuck   string // why the .app or binary can't be replaced where it is (update.Stuck, exeStuck)
+	exe     string // not in a .app: the binary to replace, "" when not writable
+	exeDir  string // not in a .app: the binary's folder, named when it is stuck there
 	// stuck "package": the package manager that installed the binary,
 	// which updates it instead (update.PackagedBy)
 	packaged *update.Packaged
@@ -166,17 +167,28 @@ func (u *updater) start() {
 		// copy an update left finishing its requests checks for, and
 		// restarts into, nothing (#4938)
 		for backendCtx.Err() == nil {
-			u.mu.Lock()
-			last := u.asked
-			u.mu.Unlock()
 			s := settings.Load()
-			if updateDue(s, last, time.Now()) {
-				u.checkByClock()
-			}
+			u.checkIfDue(s)
 			u.autoTick(s)
 			time.Sleep(time.Minute)
 		}
 	}()
+}
+
+func (u *updater) checkIfDue(s settings.Settings) {
+	u.mu.Lock()
+	last := u.asked
+	u.mu.Unlock()
+	now := time.Now()
+	if last.IsZero() {
+		last = readUpdateClock(now)
+	}
+	if last.After(now) {
+		last = time.Time{}
+	}
+	if updateDue(s, last, now) {
+		u.checkByClock()
+	}
 }
 
 // bundleOf and executable are update.Bundle and update.Executable; tests
@@ -390,12 +402,17 @@ func (u *updater) refreshLatest(s settings.Settings) {
 // already downloaded checks too: a newer one out since takes its place,
 // so the restart goes straight to the latest.
 func (u *updater) begin() bool {
+	u.beginMu.Lock()
+	defer u.beginMu.Unlock()
 	u.mu.Lock()
-	defer u.mu.Unlock()
 	if u.state == "checking" || u.state == "downloading" {
+		u.mu.Unlock()
 		return false
 	}
 	u.state, u.err, u.retry, u.mirror, u.network, u.asked, u.byClock, u.fetch = "checking", "", false, "", false, time.Now(), false, false
+	asked := u.asked
+	u.mu.Unlock()
+	writeUpdateClock(asked)
 	return true
 }
 
