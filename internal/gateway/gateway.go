@@ -5006,6 +5006,9 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 		} else if outgrew {
 			// in the agent's own words for it, for it to compact
 			failTo(w, kept, from, call.Status, hw.failMsg)
+		} else if !hw.passing && hw.failure != 0 && overflowed(hw.code(), hw.errBody()) {
+			// A stream failed before its first event reached the agent.
+			failTo(w, kept, from, call.Status, call.Error)
 		} else if !hw.passing && hw.code() == http.StatusRequestEntityTooLarge {
 			// No member left took the body; only now add the byte-limit hint.
 			failTo(w, kept, from, call.Status, call.Error)

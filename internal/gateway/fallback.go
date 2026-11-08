@@ -2391,6 +2391,7 @@ type holdWriter struct {
 	status  int
 	passing bool
 	held    bytes.Buffer
+	lastSSE bool // inspect the first event without holding a successful stream
 
 	stream     bool      // a stream held until its first content
 	since      time.Time // when it began
@@ -2574,6 +2575,10 @@ func (h *holdWriter) writeHeader(code int) {
 		return
 	}
 	h.status = code
+	if !h.hold && code < 400 && strings.HasPrefix(h.header.Get("Content-Type"), "text/event-stream") {
+		h.lastSSE = true
+		return
+	}
 	if h.hold && code >= 400 {
 		return
 	}
@@ -2672,6 +2677,22 @@ func (h *holdWriter) Write(b []byte) (int, error) {
 	if h.passing {
 		h.sent(b)
 		return h.w.Write(b)
+	}
+	if h.lastSSE {
+		n, err := h.held.Write(b)
+		if end := eventEnd(h.held.Bytes()); end >= 0 {
+			kind, status, msg := streamEvent(h.held.Bytes()[:end])
+			h.lastSSE = false
+			if kind == eventError && tooLong(status, msg) {
+				h.failure, h.failMsg = status, msg
+			} else {
+				h.flow()
+			}
+		} else if h.held.Len() > holdMost {
+			h.lastSSE = false
+			h.flow()
+		}
+		return n, err
 	}
 	n, err := h.held.Write(b)
 	if h.stream && h.failure == 0 {
