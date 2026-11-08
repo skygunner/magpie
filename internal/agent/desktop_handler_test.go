@@ -3,6 +3,7 @@ package agent
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -11,6 +12,9 @@ import (
 // a blank Chrome page opened instead of Cindy. The handler is only
 // found when its entry and the entry's program are there.
 func TestDesktopHandlerNeedsItsEntryAndProgram(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the fixture is a Linux .desktop entry; Windows lookup is registry-based, and CI compiles only")
+	}
 	home, sys := t.TempDir(), t.TempDir()
 	prog := filepath.Join(t.TempDir(), "Cindy.AppImage")
 	if err := os.WriteFile(prog, []byte("#!/bin/sh\n"), 0o755); err != nil {
