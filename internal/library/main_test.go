@@ -27,7 +27,8 @@ func TestMain(m *testing.M) {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	for _, k := range []string{"TMPDIR", "TMP", "TEMP"} { // TMP, TEMP: Windows'
+	// testing.T.TempDir uses GOTMPDIR ahead of the OS temp directory.
+	for _, k := range []string{"TMPDIR", "TMP", "TEMP", "GOTMPDIR"} { // TMP, TEMP: Windows'
 		os.Setenv(k, tmp)
 	}
 	// Codex given its servers by their commands, as the tests expect;
