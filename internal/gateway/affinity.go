@@ -736,31 +736,28 @@ func backToFirst(cs []candidate, order []Weighed, at int) bool {
 	return member(0) != member(at)
 }
 
-// backFromStandIn says whether, in a group, the one ready first,
-// order[0], is of a member the group lists ahead of the member of the
-// one that answered last, cs[at]: not another key or account of the same
-// member, nor of one listed after it. restLast puts a resting one behind
-// every ready one, so the first is ready only when it isn't resting.
+// backFromStandIn finds a ready earlier group member or, outside a group,
+// an earlier account of the same provider. restLast puts resting ones last.
 func backFromStandIn(cs []candidate, order []Weighed, at int) bool {
 	if at <= 0 || at >= len(order) || at >= len(cs) || order[0].Rest != nil || order[0].Aside {
 		return false
 	}
-	return cs[0].place > 0 && cs[0].place < cs[at].place
+	return cs[0].place > 0 && cs[0].place < cs[at].place ||
+		cs[0].place == 0 && cs[at].place == 0 && cs[0].p.ID == cs[at].p.ID && cs[0].rank < cs[at].rank
 }
 
 // standsInFor says whether c, which answered, did so standing in for a
-// member of its group listed ahead of its own: one of the plan's (cs and
+// earlier group member or provider account: one of the plan's (cs and
 // order, as planned for the request) was resting, or all but used up, as
 // it answered. A failure that has a try go on to the next rests the one
 // that failed (restAfter), so a member ahead that failed this request is
 // resting by then. A member routing put first while the ones ahead of it
 // were ready and had room is no stand-in, whatever the order.
 func standsInFor(c candidate, cs []candidate, order []Weighed) bool {
-	if c.place <= 1 {
-		return false
-	}
 	for _, o := range cs {
-		if o.place <= 0 || o.place >= c.place {
+		memberAhead := o.place > 0 && o.place < c.place
+		accountAhead := o.place == 0 && c.place == 0 && o.p.ID == c.p.ID && o.rank < c.rank
+		if !memberAhead && !accountAhead {
 			continue
 		}
 		if _, resting := restingOf(o); resting {

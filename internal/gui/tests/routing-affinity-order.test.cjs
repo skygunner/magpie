@@ -16,11 +16,11 @@ const { chromium, webkit } = require("playwright");
 // too, and says so ("back"; 01huadalang, 11-01: a MiMo backup kept a Codex
 // session by its cache).
 const words = {
-  en: { back: ["listed ahead of it in the group", "turn 2 goes back"], order: ["goes in order", "turn 2 goes back"], main: ["a fallback", "turn 2 goes back"], strict: ["a fallback", "Strict", "new conversations go to"] },
+  en: { back: ["listed ahead of it", "turn 2 goes back"], order: ["goes in order", "turn 2 goes back"], main: ["a fallback", "turn 2 goes back"], strict: ["a fallback", "Strict", "new conversations go to"] },
   zh: { back: ["排在它前面", "第 2 轮回到它"], order: ["按顺序路由", "第 2 轮回到"], main: ["备用", "第 2 轮回到它"], strict: ["备用", "严格", "新会话会走"] },
   "zh-TW": { back: ["排在它前面", "第 2 輪回到它"], order: ["按順序路由", "第 2 輪回到"], main: ["備用", "第 2 輪回到它"], strict: ["備用", "嚴格", "新會話會走"] },
   ja: { back: ["受けられなかった", "ターン 2 は"], order: ["順番どおり", "ターン 2 は"], main: ["代替", "ターン 2 は"], strict: ["代替", "厳格", "新しい会話は"] },
-  de: { back: ["in der Gruppe davor", "Runde 2 dorthin zurück"], order: ["der Reihe nach", "Runde 2 zurück"], main: ["ein Ersatz", "Runde 2 dorthin zurück"], strict: ["ein Ersatz", "Strikt", "neue Unterhaltungen gehen an"] },
+  de: { back: ["das davor steht", "Runde 2 dorthin zurück"], order: ["der Reihe nach", "Runde 2 zurück"], main: ["ein Ersatz", "Runde 2 dorthin zurück"], strict: ["ein Ersatz", "Strikt", "neue Unterhaltungen gehen an"] },
 };
 
 function routes(now, why) {
