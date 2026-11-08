@@ -43,7 +43,7 @@ const calls = [0, 1, 2].map((i) => ({
 }));
 const keys = [
   { id: "laptop", name: "MacBook Pro", masked: "sk-magpie-key-…111111" },
-  { id: "phone", name: "iPhone", masked: "sk-magpie-key-…222222" },
+  { id: "phone", name: "A very long named test key used for layout", masked: "sk-magpie-key-…222222", mcp: ["long-example-server"] },
 ];
 const or = { id: "openrouter", provider: "openrouter", name: "OpenRouter International", kind: "provider", model: "anthropic/claude-opus-4.5" };
 const routes = [0, 1, 2].map((i) => ({
