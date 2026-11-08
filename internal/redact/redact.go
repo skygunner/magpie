@@ -206,6 +206,10 @@ var rules = append([]rule{
 	// any value of four or more is taken, digits only too (CyberCaius on
 	// Discord); a sentence's closing stop is no part of it.
 	{kind: "PASSWORD", re: cjkNamed(cjkPasswordNames), fold: lowerAll(cjkPasswordNames), back: 64, ahead: 100, ok: notAVariable, field: true},
+	// Prose names a password explicitly; short values with digits count,
+	// while code's password: String and words like "required" stay (#3574).
+	{kind: "SECRET", re: regexp.MustCompile(`(?i)\b(?:(?:my|your|our|his|her|their|the|this|that)[ \t]+password[ \t]*(?:[:=]|is|was)?|password[ \t]+(?:is|was))[ \t]*(?:\\?["'“「])?(` + secretCh + `{3,63}[A-Za-z0-9_\-/+=~!@#%^&*])`),
+		ok: func(v string) bool { return notAVariable(v) && strings.ContainsAny(v, digits) }},
 	// a key, a secret or a token after its name the same way: 密钥为 …,
 	// 令牌是 …, 金鑰： … . A key of digits only is taken after 为, 是, ：
 	// or = when it has six or more and counts nothing, so 密钥为12231241
