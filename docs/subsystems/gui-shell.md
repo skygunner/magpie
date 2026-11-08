@@ -26,6 +26,15 @@ three.
 | The terminal quitting | `magpie tui` that served the gateway with an agent connected hands the gateway on as it quits, on Linux where nothing opens magpie at login (a WSL distro, a server over SSH; zaidu259434 on X): `keepGateway` starts magpie's service when it is installed, installs it (`daemon.Install`) when the user never removed it (`daemon.Removed`, a mark `magpie daemon uninstall` leaves), and otherwise starts `magpie serve` in its own session (`serveInBackground`, log in magpie's cache). Elsewhere, or with nothing connected, it only says the gateway stopped. Where magpie opens at login (`autostart.Enabled`, which on Linux counts a package's own autostart entry, also on a box no desktop logs into) it leaves the gateway to the app, and the note says `magpie autostart off` has the terminal hand it on where no desktop logs in (`atLoginNote`, #3756). | [`keep.go`](../../internal/tui/keep.go) |
 | The app quitting | A Quit the user chooses (the tray's Quit, the panel's and window's Quit, Command-Q on the Mac) while agents are connected to the gateway this process serves asks first (see [A Quit asks while agents go through magpie](#a-quit-asks-while-agents-go-through-magpie)). Closing the window only hides it: magpie stays in the menu bar or the system tray and the gateway keeps serving, on Windows too. | [`quitask.go`](../../internal/gui/quitask.go), [`quitask_app.go`](../../internal/gui/quitask_app.go), [`quitask.js`](../../internal/gui/assets/quitask.js) |
 
+## Browser shutdown
+
+`magpie web` and `magpie serve --web` drain the gateway's in-flight
+requests on SIGINT, SIGTERM or the page's Quit. Signals inherited as
+ignored remain ignored; SIGHUP retains its normal termination behavior.
+A stop signal does not trigger a pending update restart. Before a requested
+update replaces the process, `plugin.EndHosts` stops and reaps plugin hosts
+(#3285). See `TestWebShutdown` and `TestEndHostsLeavesNoChild`.
+
 ## Runtime path
 
 1. `magpie` with no arguments, `magpie app` or `magpie tray` calls `runGUI`, which starts the app's log (`startLog`, above) and calls `gui.Run`. A `nogui` build runs the TUI instead. A second launch hands over to the instance already running. On Windows, before any window is made, `webView2Check` asks Wails whether the WebView2 runtime is there (`Env.Info().PlatformInfo["WebView2"]`, "" when its lookup fails; a key Wails doesn't set counts as there). Without it Wails would exit on the first window with nothing on screen, so magpie logs it, shows a Windows message box in the reader's language naming the runtime, Microsoft's download page (`webView2Page`) and `magpie web` / `magpie tui`, opens the page on Yes, and `Run` ends (#1806, `webview2.go`, `TestWebView2MissingFromWails` on Windows). The box can't come from `ErrorHandler`, which runs on the thread Wails makes its windows on.

@@ -77,6 +77,8 @@ func webCmd(args []string) error {
 	// version manager put on PATH only in the shell's profile, as the app's
 	// does: a service or autostart has none of it (#3803)
 	proc.UserPath()
+	ctx, stop := webContext()
+	defer stop()
 	w, err := gui.StartWeb(addr, version)
 	if err != nil {
 		return err
@@ -99,7 +101,7 @@ func webCmd(args []string) error {
 	if open {
 		openInBrowser(w.Link)
 	}
-	return w.Wait()
+	return w.Wait(ctx)
 }
 
 // samePort: a and b (host:port) name one port.
@@ -231,6 +233,8 @@ func serveCmd(args []string) error {
 		return serve()
 	}
 	go stats.Run(version, "serve")
+	ctx, stop := webContext()
+	defer stop()
 	w, err := gui.StartWeb(web, version)
 	if err != nil {
 		return err
@@ -246,5 +250,5 @@ func serveCmd(args []string) error {
 		fmt.Println(amber.Render("!"), "another magpie serves the gateway there: this one serves it once that one stops")
 	}
 	printWeb(w)
-	return w.Wait()
+	return w.Wait(ctx)
 }

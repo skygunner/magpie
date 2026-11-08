@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"context"
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/hex"
@@ -128,14 +129,27 @@ func StartWeb(addr, version string) (*Web, error) {
 // same files, and this one takes the gateway up once that one is gone.
 func (w *Web) ServesGateway() bool { return served.Load() != nil }
 
-// Wait returns once the page's Quit is used. After a restart to update it
-// runs the new version in this one's place, with the same arguments and
-// key, so the page open in the browser finds it where it was.
-func (w *Web) Wait() error {
-	<-w.quit
-	time.Sleep(200 * time.Millisecond) // the answer to the Quit gets out
-	w.srv.Close()
-	if !webReexec.Load() {
+// Wait drains the gateway on Quit or cancellation. A page-requested update
+// runs the new version in this one's place; a stop signal never restarts it.
+func (w *Web) Wait(ctx context.Context) error {
+	select {
+	case <-w.quit:
+		time.Sleep(200 * time.Millisecond) // the answer to the Quit gets out
+	case <-ctx.Done():
+	}
+	pageCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	pageDone := make(chan struct{})
+	go func() {
+		defer close(pageDone)
+		if err := w.srv.Shutdown(pageCtx); err != nil {
+			log.Printf("web: ending with requests still in flight: %v", err)
+			w.srv.Close()
+		}
+	}()
+	stopServing()
+	<-pageDone
+	if ctx.Err() != nil || !webReexec.Load() {
 		return nil
 	}
 	exe, err := update.Executable()
