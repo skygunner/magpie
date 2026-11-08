@@ -3,6 +3,7 @@ package update
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -77,7 +78,7 @@ func TestPackagedByDpkg(t *testing.T) {
 	root := t.TempDir()
 	info := filepath.Join(root, "var/lib/dpkg/info")
 	writeFile(t, filepath.Join(info, "coreutils.list"), "/.\n/bin\n/bin/ls\n")
-	writeFile(t, filepath.Join(info, "magpie:amd64.list"), "/.\n/usr\n/usr/bin\n/usr/bin/magpie\n")
+	writeFile(t, filepath.Join(info, "magpie.list"), "/.\n/usr\n/usr/bin\n/usr/bin/magpie\n")
 	p := packagedIn(root, "linux", "/usr/bin/magpie")
 	if p == nil || p.Manager != "dpkg" || p.Package != "magpie" || p.Name() != "apt" || p.Command() != "sudo apt install --only-upgrade magpie" {
 		t.Fatalf("%+v", p)
@@ -87,6 +88,18 @@ func TestPackagedByDpkg(t *testing.T) {
 	}
 	if p := packagedIn(root, "linux", "/usr/sbin/magpie"); p != nil {
 		t.Fatalf("not listed: %+v", p)
+	}
+}
+
+func TestPackagedByDpkgMultiarch(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows reserves colon in file names")
+	}
+	root := t.TempDir()
+	writeFile(t, filepath.Join(root, "var/lib/dpkg/info", "magpie:amd64.list"), "/usr/bin/magpie\n")
+	p := packagedIn(root, "linux", "/usr/bin/magpie")
+	if p == nil || p.Manager != "dpkg" || p.Package != "magpie" {
+		t.Fatalf("multiarch package: %+v", p)
 	}
 }
 
