@@ -33,7 +33,14 @@ func TestBusy(t *testing.T) {
 		t.Fatal(err)
 	}
 	s := New()
-	gw := httptest.NewServer(s.Handler())
+	handlerDone := make(chan struct{})
+	handler := s.Handler()
+	gw := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			defer close(handlerDone)
+		}
+		handler.ServeHTTP(w, r)
+	}))
 	defer gw.Close()
 	// deferred after both Closes, so it runs first: each waits for the held
 	// stream (the gateway's request on it), which a failed check would
@@ -44,6 +51,7 @@ func TestBusy(t *testing.T) {
 		t.Fatalf("before any request: %+v", b)
 	}
 
+	before := time.Now()
 	done := make(chan struct{})
 	go func() {
 		defer close(done)
@@ -61,12 +69,14 @@ func TestBusy(t *testing.T) {
 		t.Fatalf("streaming: %+v, want one request", b)
 	}
 	let()
-	<-done
-	deadline := time.Now().Add(2 * time.Second)
-	for s.Busy().Requests != 0 && time.Now().Before(deadline) {
-		time.Sleep(10 * time.Millisecond)
+	select {
+	case <-handlerDone:
+	case <-time.After(10 * time.Second):
+		t.Fatal("stream handler did not finish")
 	}
-	if b := s.Busy(); b.Any() || time.Since(b.Last) > 5*time.Second {
+	after := time.Now()
+	<-done
+	if b := s.Busy(); b.Requests != 0 || b.Tools != 0 || b.Any() || b.Last.Before(before) || b.Last.After(after) {
 		t.Fatalf("after the stream: %+v", b)
 	}
 
