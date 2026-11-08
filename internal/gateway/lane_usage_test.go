@@ -2,6 +2,9 @@ package gateway
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -9,75 +12,79 @@ import (
 	"github.com/yetone/magpie/internal/usage"
 )
 
-// A request turned away by a key's or account's queue answers 429 (that part
-// works), and shows in the Routing trace and the recent-calls ring, but never
-// reaches the usage ledger: the final write is guarded by `call.To != ""`
-// (gateway.go:2155) and call.To is only set inside s.attempt, which a lane
-// refusal never reaches (the attempt is gated on `err == nil`).
-//
-// Every other turn-away that happens before any provider was asked goes through
-// turnedAway(), which does write a Rejected record: an unknown model, a usage
-// cap, an account barred, a sealed subagent task. The same class of refusal
-// should read the same in Usage and in a CSV export.
+// A queue-full refusal has its own recent call and rejected ledger row even
+// when another request has already timed out in the same queue (#2541).
 func TestQueueRefusalIsInTheUsageLedger(t *testing.T) {
 	fresh(t)
-	v, up := slowUp(t)
+	_, up := slowUp(t)
 	one := 1
 	if err := provider.Save(provider.Provider{ID: "slow", Name: "Slow", Key: "k", Models: []string{"m"}, Chat: up + "/v1", Anthropic: up,
 		MaxConcurrency: &one, QueueLimit: 1, QueueWait: 1}); err != nil {
 		t.Fatal(err)
 	}
-	g := newLaneRig(t)
-	lane := func() Lane { return g.s.Lanes()["slow#"+provider.KeyID("k")] }
-
-	// a takes the only slot, b waits behind it
-	g.send(context.Background(), "/v1/chat/completions", "slow/m", "a")
-	within(t, "a at the vendor", func() bool { return len(v.seen()) == 1 })
-	g.send(context.Background(), "/v1/chat/completions", "slow/m", "b")
-	within(t, "b queued", func() bool { return lane().Waiting == 1 })
-
-	// c is turned away at once by the full queue
-	g.send(context.Background(), "/v1/chat/completions", "slow/m", "c")
-	r := g.reply()
-	if r.tag != "c" || r.status != 429 {
-		t.Fatalf("c = %+v, want a 429", r)
+	s := New()
+	who := "slow#" + provider.KeyID("k")
+	release, ok := s.lanes.tryTake(who, 1)
+	if !ok {
+		t.Fatal("could not hold the lane")
 	}
-	// the answer is out, so the ledger write is due
-	time.Sleep(500 * time.Millisecond)
-
-	// one entry in Recent calls and one row in the ledger, both saying the
-	// request was turned away: it is one refusal, not two
-	if n := recent429s(g.s); n != 1 {
-		t.Errorf("%d recent-calls entries for the 429, want 1", n)
+	defer release()
+	h := s.Handler()
+	ask := func(tag string) *httptest.ResponseRecorder {
+		body := `{"model":"slow/m","messages":[{"role":"user","content":"` + tag + `"}]}`
+		r := httptest.NewRequest(http.MethodPost, "/v1/chat/completions", strings.NewReader(body))
+		r.Header.Set("X-Magpie-Session", tag)
+		w := httptest.NewRecorder()
+		h.ServeHTTP(w, r)
+		return w
 	}
-	if n := ledger429s(); n != 1 {
-		t.Errorf("%d rejected 429 rows in the usage ledger, want 1", n)
+	// b's real queue timeout has completed before c's refusal is counted.
+	if w := ask("b"); w.Code != http.StatusTooManyRequests || !strings.Contains(w.Body.String(), "waited") {
+		t.Fatalf("b status = %d, want 429", w.Code)
 	}
-
-	close(v.gate("a"))
-	g.reply()
-}
-
-// recent429s is how many of the recent calls are the 429 the queue gave.
-func recent429s(s *Server) int {
-	n := 0
-	for _, c := range s.Recent() {
-		if c.Status == 429 {
-			n++
+	ctx, cancel := context.WithCancel(context.Background())
+	queued, done := make(chan struct{}), make(chan struct{})
+	go func() {
+		defer close(done)
+		_, _, _ = s.lanes.take(ctx, who, 1, 1, 0, func() (bool, time.Time) {
+			select {
+			case <-queued:
+			default:
+				close(queued)
+			}
+			return false, time.Time{}
+		})
+	}()
+	defer func() { cancel(); <-done }()
+	select {
+	case <-queued:
+	case <-time.After(5 * time.Second):
+		t.Fatal("queue waiter did not enter")
+	}
+	if w := ask("c"); w.Code != http.StatusTooManyRequests || !strings.Contains(w.Body.String(), "queue is full") {
+		t.Fatalf("c status = %d, want 429", w.Code)
+	}
+	var route int64
+	for _, call := range s.Recent() {
+		if call.Status == http.StatusTooManyRequests && strings.Contains(call.RequestBody, `"content":"c"`) {
+			if route != 0 {
+				t.Fatal("c has multiple recent-call entries")
+			}
+			route = call.Route
 		}
 	}
-	return n
-}
-
-// ledger429s is how many rejected 429 rows the ledger holds.
-func ledger429s() int {
-	n := 0
+	if route == 0 {
+		t.Fatal("c has no recent-call entry")
+	}
+	count := 0
 	for _, rec := range usage.Load(time.Time{}) {
-		if rec.Status == 429 && rec.Rejected {
-			n++
+		if rec.Session == "c" && rec.Status == http.StatusTooManyRequests && rec.Rejected {
+			count++
 		}
 	}
-	return n
+	if count != 1 {
+		t.Errorf("c has %d rejected 429 rows in the usage ledger, want 1", count)
+	}
 }
 
 // The contrast that makes this a defect rather than a design choice: a refusal
