@@ -589,8 +589,8 @@ func openCodeNewID(prefix string, descending bool, now time.Time) string {
 	return string(id)
 }
 
-// openCodeRealSession heuristically recognizes an incoming session by its
-// shape and small inverted counter; generated IDs can exceed that counter.
+// openCodeRealSession says whether id is a session id OpenCode could have
+// made: of its shape, with a small count in its low 12 bits (inverted).
 // Zen's free tier answers 403 FreeTierError to one that isn't, a hash cut
 // to the same shape among them (c9cu on Discord).
 func openCodeRealSession(id string) bool {

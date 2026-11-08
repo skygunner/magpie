@@ -17,6 +17,14 @@ mean upstream implements every former fork guarantee.
   / 2026-11-07 07:05:07 AEST; tested source `171e12415ddce084a3c9417e80cee808a5d1589a`.
   Source integration alone is not production acceptance evidence.
 
+## Candidate integration: v0.1.3295-p1
+
+Pinned upstream `0fc3455e2`; [semantic review](docs/fork/evidence/2026-11-08-3295/patch-review.md).
+Production remains 0.1.3190-p1 until final tests, isolated API comparison and 46-minute
+observation pass. Retained runtime differences touch 12 files after removing a comment-only
+delta. Preserve upstream cancellation attribution and new effort maps. Prior suspensions
+remain; Messages thinking-token accounting (#3430) arrives through upstream.
+
 ## Changes in v0.1.3190-p1
 
 - Suspend the #3035-associated bare Invalid request failover extension. Upstream

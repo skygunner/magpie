@@ -106,3 +106,18 @@ func TestNvidiaReasoningAfterMemberEffort(t *testing.T) {
 		}
 	}
 }
+
+// Upstream's member effort map must preserve the duplicate alias used by NVIDIA compatibility.
+func TestNvidiaReasoningAfterMemberEffortMap(t *testing.T) {
+	s, a, _ := ruled(t)
+	if err := provider.SetModelEfforts("a/small", []string{"high", "xhigh"}); err != nil {
+		t.Fatal(err)
+	}
+	setEffortMaps(t, map[string]map[string]string{"a/small": {"high": "xhigh"}})
+	postOK(t, s, "", chat("hi", nil, 0, `,"reasoning_effort":"high","reasoning":{"effort":"high"}`))
+	sent := sentBody(t, a)
+	alias, _ := sent["reasoning"].(map[string]any)
+	if sent["reasoning_effort"] != "xhigh" || alias["effort"] != "xhigh" {
+		t.Fatalf("mapped aliases diverged: %v", sent)
+	}
+}
