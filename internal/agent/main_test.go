@@ -47,10 +47,12 @@ func TestMain(m *testing.M) {
 	// nor where this Mac's Spotlight has an app (DeepSeek Harness.app
 	// outside /Applications, #2325)
 	spotlightApps = func(string) []string { return nil }
-	// whether OpenMausBot is open is never this machine's: one open there
-	// refused every test that turns magpie on for each agent; the tests
-	// about it say their own
+	// Running apps on this machine must not refuse every-agent tests;
+	// each agent's refusal test supplies its own running state (#5587).
 	ombRunning = func() bool { return false }
+	liveAgentRunning = func() bool { return false }
+	openPencilRunning = func() bool { return false }
+	newMaxRunning = func() bool { return false }
 	// a desktop app's Restart never quits or opens one of this machine's
 	// (the Codex app, Claude Desktop, WorkBuddy the developer runs); the
 	// restart tests stand in for each step
