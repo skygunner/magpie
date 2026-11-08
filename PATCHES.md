@@ -13,17 +13,24 @@ mean upstream implements every former fork guarantee.
   to successfully observed production source. `candidate/<version>` records a
   tested candidate; `deployed/<version>` is created only after acceptance and
   observation pass. Old `prod/*` tags retain their historical meaning.
-- Production is **0.1.3295-p1**, upstream v0.1.3295. Accepted 2026-11-08 05:08:40 UTC
-  / 2026-11-08 15:08:40 AEST; tested source `2fb297ebcd179ea488f4363a86c922f307d22449`.
+- Production is **0.1.3336-p1**, upstream v0.1.3336. Accepted 2026-11-08 17:04:38 UTC
+  / 2026-11-09 03:04:38 AEST; tested source `b7b5539de03005a071a57eceaa06fde3f7faecfa`.
   Source integration alone is not production acceptance evidence.
 
-## Candidate integration: v0.1.3336-p1
+## Changes in v0.1.3336-p1
 
-Pinned upstream c6bdc172a; production remains0.1.3295-p1 until acceptance and
-observation pass. [Review](docs/fork/evidence/2026-11-09-3336/patch-review.md).
-The eight retained issue behaviors are still needed against this tag; their
-functional delta is unchanged. Prior suspensions remain. Upstream streaming
-failure envelopes, gateway-key concurrency and model settings are used as merged.
+Pinned upstream `c6bdc172a`; [semantic review](docs/fork/evidence/2026-11-09-3336/patch-review.md).
+The eight retained issue behaviors remain necessary and their functional delta
+is unchanged: 12 files, plus a separate trace.go comment repair (13 non-test
+internal paths, +250/-44). No new runtime fork patch is added. Prior suspensions
+remain. Upstream streaming failure envelopes, gateway-key concurrency, model
+headers/settings and session context navigation are preserved.
+
+The selected eight browser fixtures pass 208 tests. One Go run passes 88 packages
+and 26,094 tests/subtests; Linux nogui build/vet, one selected race run and 80
+deployment tests pass. The complete GUI matrix was deliberately not run.
+The separate Cloudflare Workers AI plugin remains 0.0.5.
+[Actual scope and evidence](docs/fork/evidence/2026-11-09-3336/README.md).
 
 ## Test scope for rolling integration
 
@@ -36,32 +43,7 @@ Record unrelated upstream/UI failures separately. Test/documentation-only
 changes do not trigger another complete Go/build/replay cycle when the runtime
 and relevant inputs are unchanged. State the actual tested scope in the evidence.
 
-## Changes in v0.1.3295-p1
-
-Pinned upstream `0fc3455e2`; [semantic review](docs/fork/evidence/2026-11-08-3295/patch-review.md).
-Preserve upstream cancellation attribution, routing defaults and member effort maps.
-The mapped-effort handler regression protects synchronized NVIDIA reasoning aliases.
-Messages thinking-token accounting (#3430) is absorbed upstream; no extra patch.
-The eight retained issue behaviors remain necessary. Prior suspensions remain.
-
-Remove the OpenCode comment-only difference. Functional runtime differences touch
-12 files; including the separate trace.go comment repair, the full non-test
-internal diff is 13 files (+250/-44).
-
-Test repairs are recorded on `fix/gui-fixtures-3295`: posted #3476/#3479,
-view-entrance contrast measurement, #4715 platform pin and #3501 atomic tab read.
-The #5425 navigation guard also corrects five upstream setup omissions and one
-in our own Usage routing fixture. Original assertions and short action deadlines stay.
-The posted four-comment i18n ownership repair is credited to Gaoshou101.
-
-Final Go passes 88 packages and 25,914 tests/subtests; 8 build/vet checks, gateway
-race regressions repeated 20 times, update checks and 80 deployment tests pass.
-The original 1,275-file GUI matrix has 108 initially failing files; the final 12
-changed/guard fixtures pass 250 tests. See [scope and review](docs/fork/evidence/2026-11-08-3295/gui-review.json).
-Expanded GUI checks are **not fully green**. The separate Cloudflare Workers AI
-plugin remains 0.0.5. [Final source gate](docs/fork/evidence/2026-11-08-3295/gate-result.json).
-
-## This round's patch decisions (v0.1.3295-p1 production)
+## This round's patch decisions (v0.1.3336-p1 production)
 
 | Patch | Decision | Behavior / reason |
 | --- | --- | --- |
@@ -110,30 +92,27 @@ behavior; baseline failures do not automatically authorize deployment.
 
 ## Deployment history
 
-- Current accepted release: **0.1.3295-p1**, upstream v0.1.3295, source
-  [`2fb297ebc`](https://github.com/skygunner/magpie/tree/deployed%2F0.1.3295-p1).
-  Accepted 2026-11-08 05:08:40 UTC after 2761.013 seconds, 11 healthy samples
-  and three successful real inference probes. Acceptance and final snapshots
+- Current accepted release: **0.1.3336-p1**, upstream v0.1.3336, source
+  [`b7b5539de`](https://github.com/skygunner/magpie/tree/deployed%2F0.1.3336-p1).
+  Accepted 2026-11-08 17:04:38 UTC after 2761.072 seconds, 11 healthy samples
+  and 3 successful real inference probes. Acceptance and final snapshots
   match 268 models, 32 providers, 49 groups; zero unexpected fields.
   Zero restarts, OOM, 5xx and protocol errors. The exact accepted manifest is
-  published as 0.1.3295-p1 and latest; the old container and backup are retained.
+  published as 0.1.3336-p1 and latest; the old container and backup are retained.
 - [Full deployment history and earlier patch notes](docs/fork/history.md#deployment-history).
-- [Final source gate](docs/fork/evidence/2026-11-08-3295/gate-result.json),
-  [GUI review](docs/fork/evidence/2026-11-08-3295/gui-review.json),
-  [production result](docs/fork/evidence/2026-11-08-3295/deployment-result.json),
-  [published manifest/config digests](docs/fork/evidence/2026-11-08-3295/published-digest.json).
+- [Final source gate](docs/fork/evidence/2026-11-09-3336/gate-result.json),
+  [selected browser scope](docs/fork/evidence/2026-11-09-3336/gui-result.json),
+  [production result](docs/fork/evidence/2026-11-09-3336/deployment-result.json),
+  [published manifest/config digests](docs/fork/evidence/2026-11-09-3336/published-digest.json).
 
 ## Known boundaries
 
-- Expanded GUI checks are **not fully green**. The original 1,275-file matrix
-  ran on 575d7bda3 with 108 initially failing files. All failures have pristine 3295
-  comparisons and one candidate retry. Eleven changed fixtures plus the static
-  navigation guard pass 250 tests on the accepted source. Runtime, binary and the
-  other 1,264 fixtures are byte-identical to the original matrix. Case-level and
-  assertion-template matches, first-only failures and diagnostic limits are
-  separated in the [scoped review](docs/fork/evidence/2026-11-08-3295/gui-review.json).
-  The inherited duplicate panel Usage read (#4717) and other upstream layout,
-  scrolling and fixture lifecycle limits remain individually recorded.
+- This round's eight selected browser fixtures pass all 208 tests. A complete GUI
+  matrix and cross-platform desktop checks were not run. The previous broad 3295
+  findings remain [historical evidence](docs/fork/evidence/2026-11-08-3295/gui-review.json);
+  this scoped run does not establish whether every old finding persists or is fixed.
+  Physical Mac/WKWebView/trackpad behavior and exhaustive live-vendor coverage
+  remain outside this round's validation.
 
 - The fork's layered cooldown editor/API and non-streaming timeout/cancellation
   model policies are suspended. Current behavior follows upstream; the old

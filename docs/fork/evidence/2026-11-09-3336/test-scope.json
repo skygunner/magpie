@@ -1,0 +1,24 @@
+{
+  "source": "b7b5539de03005a071a57eceaa06fde3f7faecfa",
+  "full_go_runs": 1,
+  "build_vet_platforms": [
+    "linux/nogui"
+  ],
+  "race_repetitions": 1,
+  "gui_files": [
+    "click-scroll.test.cjs",
+    "view-open-wheel.test.cjs",
+    "usage-ledger-detail.test.cjs",
+    "usage-routing-visible.test.cjs",
+    "usage-speed-every-row.test.cjs",
+    "gateway-key-concurrency.test.cjs",
+    "model-limits.test.cjs",
+    "sessions-context-line.test.cjs"
+  ],
+  "gui_engines": [
+    "chromium",
+    "webkit"
+  ],
+  "full_gui_matrix": false,
+  "unrelated_ui_fixes": false
+}

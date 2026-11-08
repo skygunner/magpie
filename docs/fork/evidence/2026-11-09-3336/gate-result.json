@@ -1,0 +1,34 @@
+{
+  "verdict": "PASSED",
+  "commit": "b7b5539de03005a071a57eceaa06fde3f7faecfa",
+  "upstream": "v0.1.3336",
+  "upstream_commit": "c6bdc172a01e1eb8713c596e33e1ef703eb9b4ee",
+  "target_image_id": "sha256:8562f44398f107a2d052244155ec7620833b0e4161e38caf52dec0d6ccd5e2b4",
+  "at": "2026-11-08T16:15:52.613494+00:00",
+  "go": {
+    "source": "b7b5539de03005a071a57eceaa06fde3f7faecfa",
+    "passed_packages": 88,
+    "no_test_packages": 20,
+    "passing_tests_and_subtests": 26094
+  },
+  "linux_nogui_build_vet_checks": 2,
+  "race_runs": 1,
+  "race_repetitions": 1,
+  "deployment_transaction_tests": 80,
+  "gui_files": 8,
+  "gui_tests": 208,
+  "gui_failed": 0,
+  "full_gui_matrix": false,
+  "scope": "test-scope.json",
+  "acceptance_snapshot_counts": {
+    "models": 268,
+    "providers": 32,
+    "groups": 49
+  },
+  "cloudflare_plugin_version": "0.0.5",
+  "not_run": [
+    "full GUI matrix",
+    "Windows/Darwin desktop checks",
+    "all live vendor accounts"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "version": "0.1.3336-p1",
+  "repository": "bigshort/magpie-patched",
+  "source": "b7b5539de03005a071a57eceaa06fde3f7faecfa",
+  "digest": "sha256:8562f44398f107a2d052244155ec7620833b0e4161e38caf52dec0d6ccd5e2b4",
+  "manifest_digest": "sha256:8562f44398f107a2d052244155ec7620833b0e4161e38caf52dec0d6ccd5e2b4",
+  "accepted_docker_image_id": "sha256:8562f44398f107a2d052244155ec7620833b0e4161e38caf52dec0d6ccd5e2b4",
+  "config_digest": "sha256:eac9c0d723be30cd6eb8c1de933b549cc664bb46589043b62623f0fcde7eda7d",
+  "tags": {
+    "0.1.3336-p1": "sha256:8562f44398f107a2d052244155ec7620833b0e4161e38caf52dec0d6ccd5e2b4",
+    "latest": "sha256:8562f44398f107a2d052244155ec7620833b0e4161e38caf52dec0d6ccd5e2b4"
+  }
+}

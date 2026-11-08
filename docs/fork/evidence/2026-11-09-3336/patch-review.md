@@ -2,7 +2,7 @@
 
 Pinned upstream:c6bdc172a01e1eb8713c596e33e1ef703eb9b4ee. Integration base:1eeeeda55040bffede5cbc322b7efaa1c021410c.
 Previous accepted source:2fb297ebcd179ea488f4363a86c922f307d22449.
-51 upstream commits,237 changed paths. Candidate status is separate from production.
+51 upstream commits,237 changed paths. Tested source: b7b5539de03005a071a57eceaa06fde3f7faecfa. Accepted 2026-11-08 17:04:38 UTC; production evidence is recorded separately.
 
 ## Patch decisions
 
@@ -44,11 +44,14 @@ Kiro0.1.33 packages. No plugin package update is needed for these mover floors.
 
 ## Proportional validation
 
-Freeze one candidate source,then run Go once,Linux nogui build/vet,one selected
-race run,80 deployment tests and eight browser fixtures: click-scroll,
-view-open-wheel,usage-ledger-detail,usage-routing-visible,usage-speed-every-row,
-gateway-key-concurrency,model-limits and sessions-context-line. Browser fixtures
-run both engines with their existing language/width cases; Mesa software rendering
-is test-only. No complete GUI matrix,unrelated fixture repairs,or cross-platform
-desktop release testing is planned. Only a new relevant failure expands this scope.
-Actual results and image-bound production replay are recorded separately.
+The frozen source passed one Go run (88 packages, 26,094 tests/subtests),
+Linux nogui build/vet, one selected race run, 80 deployment tests and eight browser
+fixtures/208 tests. Both Chromium and WebKit pass their selected existing cases.
+Mesa software rendering is test-only. No complete GUI matrix, unrelated fixture
+repairs,or cross-platform desktop release checks ran.
+
+Image-bound replay and both production snapshots match 268 models, 32 providers
+and 49 groups. Production passed 2761.072 seconds of observation, 11 healthy
+samples and 3 real inference probes. The exact accepted image is published
+without rebuilding. See [source gate](gate-result.json),
+[production result](deployment-result.json) and [published digests](published-digest.json).

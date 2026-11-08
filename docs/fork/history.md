@@ -34,6 +34,32 @@ disabled state and scheduling fields were retained. Production remains
 
 ## Deployment history
 
+- **2026-11-09 AEST, 0.1.3336-p1 — accepted, observed and published.**
+  Accepted 2026-11-08 17:04:38 UTC / 2026-11-09 03:04:38 AEST; tested source
+  `b7b5539de03005a071a57eceaa06fde3f7faecfa`, pinned upstream v0.1.3336 (`c6bdc172a`).
+  The eight retained issue behaviors and their runtime delta are unchanged;
+  quota/timeout/cooldown suspensions remain. New upstream gateway-key concurrency,
+  model settings/headers, streaming failure envelopes and session context remain.
+  Issue #3174 has no ready new fix; #3392 now recommends a broader independently
+  verified third-party proposal, with our old narrow branch archived. Neither
+  expands this production round. No duplicate upstream comment or PR was posted.
+  One Go run passes 88 packages and 26,094 tests/subtests; Linux nogui build/vet,
+  one selected race run, 80 deployment tests and eight browser fixtures/208 tests
+  pass. Per user direction no complete GUI matrix, unrelated fixture repair or
+  cross-platform desktop release validation ran. Cloudflare Workers AI stays 0.0.5.
+  Isolated replay and production acceptance/final snapshots match 268 models,
+  32 providers and 49 groups. Observation passes 2761.072 seconds with
+  11 healthy samples and three real probes; zero restarts, OOM, 5xx or protocol
+  errors. Observed 499 records are agent cancellations, not protocol failures.
+  Published the exact accepted manifest as version and latest without rebuilding;
+  retained the previous stopped container/image and stopped-volume backup.
+  Production/stable and deployed tag point to tested source; integration/nightly
+  adds a documentation-only successor and does not alter the deployed image.
+  [Patch review](evidence/2026-11-09-3336/patch-review.md),
+  [scope and source gate](evidence/2026-11-09-3336/README.md),
+  [production result](evidence/2026-11-09-3336/deployment-result.json),
+  [published digests](evidence/2026-11-09-3336/published-digest.json).
+
 - **2026-11-08 AEST, 0.1.3295-p1 — accepted, observed and published.**
   Accepted 2026-11-08 05:08:40 UTC / 2026-11-08 15:08:40 AEST; tested source
   `2fb297ebcd179ea488f4363a86c922f307d22449`, pinned upstream v0.1.3295 (`0fc3455e2`).

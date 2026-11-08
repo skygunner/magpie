@@ -1,0 +1,64 @@
+{
+  "version": "0.1.3336-p1",
+  "run_id": "20261108T161632Z-c7c65bf5",
+  "job_exit": 0,
+  "verified_passed": true,
+  "non_json_log_lines": 0,
+  "samples": 11,
+  "successful_probes": 3,
+  "observation_probes": 2,
+  "last_event": "OBSERVATION_COMPLETE_COMMITTING_RESULT",
+  "last_sample": {
+    "event": "SAMPLE",
+    "at": "2026-11-08T17:04:37.728550+00:00",
+    "sample": 10,
+    "seconds": 2760.3,
+    "health": "healthy",
+    "restarts": 0,
+    "usage_counts": {
+      "200": 8,
+      "499": 2
+    },
+    "log_5xx": 0,
+    "protocol_error": 0
+  },
+  "failure_events": [],
+  "before_counts": {
+    "models": 268,
+    "providers": 32,
+    "groups": 49
+  },
+  "before_usage": {
+    "200": 8,
+    "499": 5
+  },
+  "current": {
+    "id": "573ea9fb5fa3c64264b152f5587493e3014cc27f17670355c6340b6daa1ef6d3",
+    "image_id": "sha256:8562f44398f107a2d052244155ec7620833b0e4161e38caf52dec0d6ccd5e2b4",
+    "state": "running",
+    "health": "healthy",
+    "restarts": 0,
+    "oom": false
+  },
+  "result": {
+    "outcome": "PASSED",
+    "reason": "clean_observation",
+    "at": "2026-11-08T17:04:38.521098+00:00",
+    "version": "0.1.3336-p1",
+    "old_id": "cbd7354f2ce52abf898e35cd45008e71a28dee9fd64c4fac1210ac54f3c0415c",
+    "target_image_id": "sha256:8562f44398f107a2d052244155ec7620833b0e4161e38caf52dec0d6ccd5e2b4",
+    "new_id": "573ea9fb5fa3c64264b152f5587493e3014cc27f17670355c6340b6daa1ef6d3",
+    "observation_seconds": 2761.072,
+    "usage_counts": {
+      "200": 8,
+      "499": 2
+    },
+    "log_5xx": 0,
+    "protocol_error": 0,
+    "baseline_5xx_ratio": 0.0
+  },
+  "plugin": {
+    "name": "@magpie-community/opencode-cloudflare-workers-ai-auth",
+    "version": "0.0.5"
+  }
+}
