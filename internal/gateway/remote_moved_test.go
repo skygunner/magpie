@@ -109,7 +109,7 @@ func TestRemoteProveAnswersOnlyTheKeysHolder(t *testing.T) {
 	if w := ask(provider.RemoteKeyID("sk-magpie-key-not-here")); w.Code != http.StatusNotFound {
 		t.Errorf("a key it hasn't: %d %s", w.Code, w.Body)
 	}
-	for _, hdr := range [][]string{{"Origin", "http://192.168.1.2:3425"}, {"User-Agent", "Mozilla/5.0"}, {"Sec-Fetch-Mode", "cors"}} {
+	for _, hdr := range [][]string{{"Origin", "http://192.168.1.2:3425"}, {"User-Agent", "Mozilla/5.0"}, {"Sec-Fetch-Site", "same-origin"}} {
 		if w := ask(provider.RemoteKeyID(secrets[0]), hdr...); w.Code == http.StatusOK {
 			t.Errorf("a browser (%s): %d", hdr[0], w.Code)
 		}

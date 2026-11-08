@@ -609,11 +609,11 @@ func rebound(r *http.Request) bool {
 	return !slices.ContainsFunc(callerKeys(r), func(k string) bool { _, ok := access.Authenticate(k); return ok })
 }
 
-// fromBrowser: the request carries what a browser puts on every request
-// and a page's script can't take off.
+// fromBrowser: a page's script can't remove these browser marks.
+// Sec-Fetch-Mode alone isn't one: Node's fetch sends it too (#5522).
 func fromBrowser(r *http.Request) bool {
 	return r.Header.Get("Origin") != "" || r.Header.Get("Sec-Fetch-Site") != "" ||
-		r.Header.Get("Sec-Fetch-Mode") != "" || strings.HasPrefix(r.UserAgent(), "Mozilla/")
+		strings.HasPrefix(r.UserAgent(), "Mozilla/")
 }
 
 // containerHostNames are the names container runtimes give the host.
