@@ -239,7 +239,7 @@ process.stdout.write = (chunk, enc, cb) => process.stderr.write(chunk, enc, cb)
 // none and failed where the vendor is reached only through one (larchsis
 // on 𝕏, Windows 11, a proxy set in magpie only). It is told to, unless
 // the plugin said otherwise.
-const own = (v, fd) => v === "inherit" || v === fd || v === (fd ? process.stdout : process.stdin)
+const own = (v, fd) => v === "inherit" || v === fd || v === (fd ? process.stdout : process.stdin) || v === (fd ? Bun.stdout : Bun.stdin)
 const PROXY_VARS = ["HTTPS_PROXY", "HTTP_PROXY", "ALL_PROXY"]
 function proxied(env) {
   env = { ...(env ?? process.env) }
