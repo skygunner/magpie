@@ -21,11 +21,9 @@ func (browserDown) OpenURL(string) error {
 	return errors.New(`exec: "rundll32": executable file not found in %PATH%`)
 }
 
-// A sign-in to an MCP server whose page the browser didn't open says so
-// with the page's link, still waiting for it, instead of saying to finish
-// in the browser and timing out ten minutes later (#2043). Opened, it says
-// nothing of it.
-func TestMCPSignInSaysTheBrowserDidntOpen(t *testing.T) {
+// A start returns its URL without opening it, so a canceled pending start
+// cannot open a stale authorization page (#3984).
+func TestMCPSignInStartDoesNotOpenBrowser(t *testing.T) {
 	sandboxHome(t)
 	f := mcpauthtest.New(t)
 	if _, err := library.SaveServer("", library.Server{Name: "cloudflare-api", Transport: "http", URL: f.URL}); err != nil {
@@ -48,11 +46,11 @@ func TestMCPSignInSaysTheBrowserDidntOpen(t *testing.T) {
 	if st.State != "waiting" || !strings.HasPrefix(st.URL, f.Server.URL) {
 		t.Fatalf("not waiting on its page: %+v", st)
 	}
-	if !strings.Contains(st.OpenError, "rundll32") {
-		t.Fatalf("the browser's not starting isn't said: %+v", st)
+	if st.OpenError != "" {
+		t.Fatalf("start tried to open the browser: %+v", st)
 	}
 	if st := start(webHost{}); st.OpenError != "" || st.URL == "" {
-		t.Fatalf("a browser that opened: %+v", st)
+		t.Fatalf("start did not return its URL: %+v", st)
 	}
 }
 

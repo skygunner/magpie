@@ -11,6 +11,8 @@ agents RTK, a CLI that cuts shell output down before the model reads it.
 
 ## Responsibilities and sources of truth
 
+MCP sign-in starts through `POST /api/library/mcp-signin`, which returns the attempt ID and authorization URL without opening it. The Library page opens the URL only while that exact attempt is current; a canceled start that returns later is canceled by ID. Desktop uses `POST /api/open`, whose failure is shown with the URL to open by hand; web opens the URL in the browser. Direct API callers must open the returned URL themselves; the repository has no CLI caller of this endpoint.
+
 | Part | Responsibility | Source |
 | --- | --- | --- |
 | library.json | `Library` holds the instruction sets, the MCP servers, the skills, the projects, skill groups and copy settings. `Applied` records what magpie last wrote into each agent, so it only ever takes away its own. The instruction texts and skill folders live under `Dir` (`library/` in magpie's config folder). | [`library.go`](../../internal/library/library.go) |

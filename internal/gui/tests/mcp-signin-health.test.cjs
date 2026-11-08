@@ -74,7 +74,58 @@ function server(lang, calls) {
   };
 }
 
+// A late start after Cancel belongs to its original attempt, not a later
+// sign-in to the same server (#3984).
 for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"])) {
+  test(engine + ": cancel while MCP sign-in starts", { timeout: 30000 }, async (t) => {
+    const browser = await (engine === "webkit" ? webkit.launch() : chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || "chromium" }));
+    let release = () => {};
+    t.after(async () => { release(); await browser.close(); });
+    const ctx = await browser.newContext();
+    await ctx.addInitScript(() => localStorage.setItem("magpie.libTab", "mcp"));
+    const page = await ctx.newPage();
+    const calls = [], starts = [];
+    let received;
+    const started = new Promise(resolve => { received = resolve; });
+    const gate = new Promise(resolve => { release = resolve; });
+    const base = server("en", calls);
+    await page.route("**/*", async route => {
+      const req = route.request(), url = new URL(req.url());
+      if (url.pathname === "/api/library/mcp-signin") {
+        starts.push(req.postDataJSON().name);
+        const number = starts.length;
+        if (number === 1) { received(); await gate; }
+        return route.fulfill({ json: { id: `attempt-${number}`, server: "notion", state: "waiting" } });
+      }
+      if (url.pathname.startsWith("/api/library/mcp-signin/attempt-")) {
+        calls.push(req.method() + " " + url.pathname);
+        return route.fulfill({ json: { id: url.pathname.split("/")[4], server: "notion", state: "waiting" } });
+      }
+      return base(route);
+    });
+    await page.goto("http://magpie.test/");
+    await page.locator('button[data-view="library"]').click();
+    const row = page.locator("#view-library .lib-server", { has: page.locator('.lib-health[data-server="notion"]') });
+    await row.locator(".name").click();
+    const box = page.locator("#modal .lib-signin");
+    await box.getByRole("button", { name: "Sign in", exact: true }).click();
+    await started;
+    await box.getByRole("button", { name: "Cancel", exact: true }).click();
+    await Promise.all([
+      box.locator(".lib-signin-line .note", { hasText: "Finish signing in in your browser…" }).waitFor({ timeout: 5000 }),
+      box.getByRole("button", { name: "Sign in", exact: true }).click(),
+    ]);
+    const canceled = page.waitForResponse(r => r.url().endsWith("/api/library/mcp-signin/attempt-1/cancel"));
+    release();
+    await canceled;
+    assert.equal(calls.filter(c => c === "POST /api/library/mcp-signin/attempt-1/cancel").length, 1);
+    assert.equal(calls.some(c => c.includes("attempt-2/cancel")), false);
+    assert.equal(await box.getByRole("button", { name: "Cancel", exact: true }).count(), 1);
+    const normalCancel = page.waitForResponse(r => r.url().endsWith("/api/library/mcp-signin/attempt-2/cancel"));
+    await box.getByRole("button", { name: "Cancel", exact: true }).click();
+    await normalCancel;
+    assert.equal(calls.filter(c => c === "POST /api/library/mcp-signin/attempt-2/cancel").length, 1);
+  });
   test(engine + ": a server's sign-in and its status agree", async (t) => {
     assert(["chromium", "webkit"].includes(engine), "BROWSER must be chromium or webkit");
     const browser = await (engine === "webkit" ? webkit.launch() : chromium.launch({ channel: process.env.PLAYWRIGHT_CHANNEL || "chromium" }));

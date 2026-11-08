@@ -2544,18 +2544,24 @@ magpie.plugin("library", (ctx) => {
   // didn't open (the link to open by hand) or the sign-in failed
   async function signInFromRow(s) {
     const name = s.name;
-    mcpSigning = { name, state: "starting" };
+    const attempt = mcpSigning = { name, state: "starting" };
     signMoved(name);
     try {
       const st = await api("library/mcp-signin", { name });
-      if (mcpSigning?.name !== name || mcpSigning.id) return; // canceled
-      if (web && st.url) api("open", { url: st.url }).catch(() => {});
+      if (mcpSigning !== attempt) {
+        if (st.id) api("library/mcp-signin/" + st.id + "/cancel", {}).catch(() => {});
+        return;
+      }
+      if (st.url) {
+        try { await api("open", { url: st.url }); } catch (e) { st.openError = e.message; }
+        if (mcpSigning !== attempt) { if (st.id) api("library/mcp-signin/" + st.id + "/cancel", {}).catch(() => {}); return; }
+      }
       mcpSigning = { ...st, name };
       signMoved(name);
       if (st.openError) editServer(s);
       followSignIn(st.id, name);
     } catch (e) {
-      if (mcpSigning?.name !== name) return;
+      if (mcpSigning !== attempt) return;
       mcpSigning = { name, state: "failed", error: t(e.message) };
       signMoved(name);
       editServer(s);
@@ -2595,10 +2601,11 @@ magpie.plugin("library", (ctx) => {
       if (sg && (sg.state === "starting" || sg.state === "waiting")) {
         line.append(el("span", "note", sg.state === "starting" ? t("Opening the sign-in…") : t("Finish signing in in your browser…")),
           button(t("Cancel"), "", async () => {
-            if (sg.id) await api("library/mcp-signin/" + sg.id + "/cancel", {}).catch(() => {});
+            if (mcpSigning !== sg) return;
             mcpSigning = null;
             draw();
             signMoved(name);
+            if (sg.id) await api("library/mcp-signin/" + sg.id + "/cancel", {}).catch(() => {});
           }));
       } else if (cur.signedIn && !cur.dead) {
         line.append(tag(t("Signed in"), "lib-signed"), el("span", "note", t("The agents given it use magpie's sign-in")), el("span", "grow"), button(t("Sign out"), "", signOut));
@@ -2622,24 +2629,29 @@ magpie.plugin("library", (ctx) => {
       if (sg?.state === "failed") box.append(el("div", "lib-signin-err", sg.error));
     };
     async function start() {
-      const was = name;
-      mcpSigning = { name, state: "starting" };
+      const attempt = mcpSigning = { name, state: "starting" };
       draw();
       try {
         if (ready) {
           const saved = await ready();
-          // canceled while it was saved
-          if (mcpSigning?.name !== was || mcpSigning.id) return;
+          if (mcpSigning !== attempt) return;
           name = saved;
-          mcpSigning = { name, state: "starting" };
+          attempt.name = name;
         }
         const st = await api("library/mcp-signin", { name });
-        if (web && st.url) api("open", { url: st.url }).catch(() => {});
+        if (mcpSigning !== attempt) {
+          if (st.id) api("library/mcp-signin/" + st.id + "/cancel", {}).catch(() => {});
+          return;
+        }
+        if (st.url) {
+          try { await api("open", { url: st.url }); } catch (e) { st.openError = e.message; }
+          if (mcpSigning !== attempt) { if (st.id) api("library/mcp-signin/" + st.id + "/cancel", {}).catch(() => {}); return; }
+        }
         mcpSigning = { ...st, name };
         draw();
         followSignIn(st.id, name);
       } catch (e) {
-        if (!mcpSigning) return; // canceled
+        if (mcpSigning !== attempt) return;
         // magpie's words in the reader's language, where it has them
         mcpSigning = { name, state: "failed", error: t(e.message) };
         draw();
