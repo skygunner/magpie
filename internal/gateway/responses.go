@@ -1532,7 +1532,11 @@ func buildResponses(r *Request, model, host string, rejectTemp bool) []byte {
 			tools = append(tools, responsesTool(t))
 		}
 		if r.WebSearch {
-			tools = append(tools, map[string]any{"type": "web_search"})
+			search := map[string]any{"type": "web_search"}
+			if len(r.WebAccess) > 0 {
+				search["external_web_access"] = r.WebAccess
+			}
+			tools = append(tools, search)
 			// the pages it found, which a client of another protocol is
 			// told of (OpenAI's option; xAI's API isn't known to take it,
 			// and Ark's refuses it, arkIncludes)

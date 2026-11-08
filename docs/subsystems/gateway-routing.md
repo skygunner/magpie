@@ -1577,10 +1577,11 @@ which is also what `codexSearchBy` falls back on when the backend's
 search fails. lucy_85908 on Discord: on a real Plus account 151 such
 searches left the 5-hour window at the same percent, about 2s each, while
 51 by gpt-6-luna through /responses took 1% of it, 7-15s each and about
-9k tokens in. The fallback model search is still made live: the cached
-mode reaches only the backend's search. Covered by
-`TestChatGPTAccountSearchesByItsWebSearch`, `TestResponsesWebSearchModeKept`
-and `TestCodexPagesRead`.
+9k tokens in. A Responses fallback model also receives the client's explicit
+`external_web_access` value, through `Request.WebAccess` after the internal
+Messages request is decoded; an absent value remains absent. Covered by
+`TestCachedSearchReachesCodexModel`, `TestChatGPTAccountSearchesByItsWebSearch`,
+`TestResponsesWebSearchModeKept` and `TestCodexPagesRead`.
 Covered by `TestCommandCodeSearchesForOtherModels`,
 `TestPluginSearchModelIsASearcher` and `TestSearcherChosen`.
 

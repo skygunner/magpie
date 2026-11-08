@@ -8558,6 +8558,9 @@ func (s *Server) translate(w http.ResponseWriter, r *http.Request, p provider.Pr
 		return writeError(w, from, 400, err.Error()), err.Error()
 	}
 	if request.WebSearch {
+		if v, ok := r.Context().Value(webAccessKey{}).(json.RawMessage); ok && len(request.WebAccess) == 0 {
+			request.WebAccess = v
+		}
 		// an API on which the provider searches by itself comes first;
 		// without one, its model is given magpie's search. A searcher
 		// asked for another model goes there too: on its first API
