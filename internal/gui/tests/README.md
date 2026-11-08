@@ -666,7 +666,7 @@ and WebKit, at 1280px, 640px and 420px, with no sideways scroll.
 `name-suffix-where-named.test.cjs` checks the setting that says whether a
 provider's name or "· routing group" follows a name in the agents' lists (#868)
 where names are given, in Chromium and WebKit, English and Chinese. The
-provider editor's Names, prices & levels has its three choices and says what the lists
+provider editor's Model settings has its three choices and says what the lists
 show. For the groups it is one setting for all of them, so it sits under the
 list on the Routing groups page (PAMI on Discord: in one group's editor it read
 as that group's): a group's editor has no choices, only what its group will be
@@ -848,6 +848,15 @@ Tools tab of the contents lists only tools; nothing scrolls sideways — in
 Chromium and WebKit, in English, Chinese, Japanese and German, at 1100px and
 420px. With the state answering after the history, the cards drawn by the
 agents' ids take their names once it is in, though the history is the same.
+
+`sessions-context-line.test.cjs` opens a session's details on the Sessions
+page (liang_yongxiang on Discord): one the gateway sent calls of asks
+`/api/context/session` once, with its first and last, and draws a Context
+line, a point a request telling its share of the window and the fullest
+share beside it, toned; a point clicked opens that request in Routing with
+its card; one the gateway kept no prompt of, or never saw, has no line, and
+the second isn't asked; opened again it is drawn without asking — in
+Chromium and WebKit, in all five languages, at 1100px and 420px.
 
 `tray-usages.test.cjs` picks several of the Usage page's cards for the menu
 bar in Settings: the menu keeps open as Codex and Claude Code are ticked
@@ -1531,7 +1540,7 @@ Chromium and WebKit, English and Chinese: Detect APIs' "Each picked model"
 posts provider/detect with every model picked (detectModels) and shows model
 by API, each a ✓ with the time or a ✗ with why; "Use these" sets the URLs
 that answered and gives each model that answered on one API only that API in
-Names, prices & levels, unsaved, sending nothing until the Save carries them as
+Model settings, unsaved, sending nothing until the Save carries them as
 modelPrefs, while a model answering on two stays Auto. A chip's right-click
 Test says the API it was asked on ("answered via Responses"). No click moves
 the page, nothing has a left-border accent, and every string has its

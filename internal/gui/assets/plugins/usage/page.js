@@ -457,7 +457,7 @@ function costHead(c, note, title) {
 // a request magpie sent a provider by itself to test it (SourceProbe)
 const probeWhy = () => t("magpie sent this itself to test the provider (Test, Detect APIs or a model list), not for an agent. It is not counted in any total.");
 const unpricedCalls = (n) => t(n === 1 ? "{n} call unpriced" : "{n} calls unpriced", { n: ledNum(n) });
-const unpricedCallsWhy = (n) => n ? t(n === 1 ? "{n} call had no known price and is not counted" : "{n} calls had no known price and are not counted", { n }) : t("Estimated at effective model prices. A model's price at one provider is set in that provider's Names, prices & levels and counts over its list price");
+const unpricedCallsWhy = (n) => n ? t(n === 1 ? "{n} call had no known price and is not counted" : "{n} calls had no known price and are not counted", { n }) : t("Estimated at effective model prices. A model's price at one provider is set in that provider's Model settings and counts over its list price");
 // renderCosts redraws whatever on the Usage page shows a cost, once the
 // currency changes — the numbers alone, not the page around them, so a
 // click on the setting never moves anything it isn't showing (#212)
@@ -2818,6 +2818,44 @@ function sessModelsText(s) {
   return sessModelNames(s.models.slice(0, 2).map((m) => m.model)) + (s.models.length > 2 ? " +" + (s.models.length - 2) : "") + (via ? " " + via : "");
 }
 
+// A session's line in its details, on the Sessions page and in the Usage
+// page's Sessions list (liang_yongxiang on Discord: Routing tells how full
+// one request's window was, the Sessions page told it of no turn): its
+// prompts request by request against its window, drawn as the Context tab
+// draws its sessions (context.js), and the fullest one's share. A point
+// opens its request in Routing, with its card. Asked of the server for a
+// session the gateway sent calls of (s.via) when its details are drawn,
+// kept a while so a redraw draws it at once; shown(false) when the gateway
+// kept none of its prompts.
+const sessCtxLines = new Map(); // agent/id -> { at, c, wait }
+const SESS_CTX_AGAIN = 30000;
+function sessCtxLine(s, shown) {
+  const box = el("span", "ctx-line");
+  const k = s.agent + "/" + s.id;
+  const draw = (c) => {
+    if (!c?.points?.length) { shown(false); return; }
+    const fmtK = window.ctxFmt, fill = c.window ? c.peak / c.window : 0;
+    const [tone] = window.ctxHealth(fill);
+    const peak = el("span", "ctx-sess-peak " + tone, c.window ? Math.round(fill * 100) + "%" : fmtK(c.peak));
+    peak.dataset.tt = t("Its largest prompt: {tokens} of {window}", { tokens: fmtK(c.peak), window: fmtK(c.window) });
+    box.replaceChildren(window.ctxSpark(c.points, c.latestId, c.window, (pt) => {
+      if (!featuresOff.has("routing")) window.openRoute(pt.id, pt.time, { context: true }).catch(statusErr);
+    }), peak);
+    shown(true);
+  };
+  let got = sessCtxLines.get(k);
+  if (got?.c !== undefined) draw(got.c);
+  else shown(false);
+  if (!got || (!got.wait && Date.now() - got.at > SESS_CTX_AGAIN)) {
+    got = { at: Date.now(), c: got?.c, wait: null };
+    const q = new URLSearchParams({ agent: s.agent, id: s.id, from: s.start || s.last || "", to: s.last || "" });
+    got.wait = api("context/session?" + q).then((d) => { got.c = d?.session || null; }, () => {}).finally(() => { got.wait = null; got.at = Date.now(); });
+    sessCtxLines.set(k, got);
+  }
+  got.wait?.then(() => { if (box.isConnected) draw(got.c); });
+  return box;
+}
+
 // sessUsageDetail adds to a session's details what it spent by model, and
 // what the gateway sent its calls to, at what reasoning; line(label, value)
 // adds a line of the details
@@ -2832,6 +2870,12 @@ function sessUsageDetail(d, s, line) {
     d.append(m);
   }
   (s.via || []).forEach((v, i) => line(i ? "" : t("Routed"), viaText(v) + " · " + t("{n} tokens", { n: fmtN(v.tokens) }) + (v.credited ? " · " + ledCredits(v).textContent : "")));
+  // how full its context was, request by request
+  if (s.via?.length && window.ctxSpark) {
+    const l = el("div", "sess-line sess-ctx");
+    l.append(el("span", "k", t("Context")), sessCtxLine(s, (on) => { l.hidden = !on; }));
+    d.append(l);
+  }
 }
 
 // one place a session's calls went through magpie, in words
@@ -3356,7 +3400,7 @@ function renderSessions() {
   const active = sessModel ? null : acts.filter((a) => byAgent(a) && byFolder(a)).reduce((n, a) => n + a.seconds, 0);
 
   const c = tot.cost ? fmtCost(tot) : "";
-  const unpricedNote = tot.unpriced ? t("Not counted: {models}, with no known price", { models: sessModelNames([...unpriced]) }) : t("Estimated at effective model prices. A model's price at one provider is set in that provider's Names, prices & levels and counts over its list price");
+  const unpricedNote = tot.unpriced ? t("Not counted: {models}, with no known price", { models: sessModelNames([...unpriced]) }) : t("Estimated at effective model prices. A model's price at one provider is set in that provider's Model settings and counts over its list price");
   // a session's models are counted, not its calls: the agents' files price by model
   const unpricedModels = tot.unpriced ? t(tot.unpriced === 1 ? "{n} model unpriced" : "{n} models unpriced", { n: tot.unpriced }) : "";
   costHead(c, unpricedModels, unpricedNote);

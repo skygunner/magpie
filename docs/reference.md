@@ -1793,7 +1793,7 @@ falls back to, because that is how a drawing is asked for.
 A relay whose one key serves some models on chat completions and others on
 Responses, Anthropic's messages or Gemini's generateContent can be told which
 API each model is asked on. It is the provider editor's **API this model is
-asked on**, under Names, prices & levels, and `magpie model api` sets the same
+asked on**, under Model settings, and `magpie model api` sets the same
 setting from the terminal, so a script can set many models:
 
 ```sh
@@ -1815,6 +1815,20 @@ no URL for, a model the provider doesn't list, or a flag in place of a model
 is refused, and when several models are named all are checked first, so a
 refused command writes nothing. A setting kept for a model the vendor no
 longer lists can still be taken off with `--reset`.
+
+A key's provider with a System One URL beside a conversation URL can set a
+model to `decide` (System One in the editor): the model becomes one of its
+decision models. It is asked on the System One URL by its own name, offered
+to routing groups as a decision model, and kept out of the conversation
+models, and a conversation turn for it is refused. This is how a relay that
+serves its decision model under a name of its own, such as an Ark endpoint
+id, is used for System One. Auto gives it back to the conversation models. A
+provider with no System One URL, one with only that URL, and a signed-in
+account refuse it.
+
+```sh
+magpie model api ark/ep-decide decide   # asked on System One
+```
 
 ### Routing groups
 
@@ -3032,9 +3046,13 @@ you press *Add*. `magpie import <link>` does the same in a terminal.
 | `catalog`   | models.dev provider id, for model names and reasoning levels       |
 | `website`, `keys` | the vendor's site and its API-key page (https)               |
 | `icon`      | an https picture of the vendor's own (PNG, JPEG, GIF, WebP, ICO, SVG, at most 1 MB). magpie downloads it once, after you confirm the import, into its icons folder; without one it falls back to the catalog's logo or a plain mark |
+| `balance`   | where the key's balance is read (https), on the host of one of the base URLs, asked with the key; `{key}` in it stands for the key. Without it magpie reads the vendors it knows and asks a relay new-api's and sub2api's balance paths |
+| `balance_path` | where the amount is in the JSON reply (`data.balance`, `$ data.quota / 500000`, `;` between several); needs `balance` |
+| `balance_method` | `GET` (the default) or `POST` with no body; needs `balance` |
 
 Base URLs must be https (plain http only to this machine or the local
-network). Web pages and GitHub don't link custom schemes reliably, so link
+network). A link sets no other header or token for the balance; one that
+needs it is set up in the provider's editor. Web pages and GitHub don't link custom schemes reliably, so link
 to `https://usemagpie.ai/import#<same parameters>` instead: it opens
 magpie, and offers the download when it is not installed. The parameters
 stay in the fragment, which browsers never send to a server. The full guide,
@@ -3087,6 +3105,17 @@ magpie update --mirror https://mirror.example/
 
 No mirror is used unless you give one, and the SHA-256 every download is
 checked against still comes from usemagpie.ai, never from the mirror.
+
+When github.com's download address fails (it answered 504 for every release
+file for hours on 2026-11-08) and no mirror is set, the app, `magpie update`
+and the installer download the same file through GitHub's API
+(`api.github.com/repos/yetone/magpie-releases/releases/assets/<id>`, asked
+with `Accept: application/octet-stream`). The file is checked as before: the
+feed's SHA-256, and on the Mac the installed app's signing team. A mirror you
+set keeps precedence, and no API route is tried through it. While the
+download address fails, usemagpie.ai's feed points each file at
+`usemagpie.ai/dl/<tag>/<file>`, which redirects to the API's address, so an
+older magpie can update too.
 
 Mac releases are signed and notarised; the Windows and Linux builds are not
 signed yet (Windows SmartScreen may ask before the first run). Every build

@@ -17,6 +17,25 @@ mean upstream implements every former fork guarantee.
   / 2026-11-08 15:08:40 AEST; tested source `2fb297ebcd179ea488f4363a86c922f307d22449`.
   Source integration alone is not production acceptance evidence.
 
+## Candidate integration: v0.1.3336-p1
+
+Pinned upstream c6bdc172a; production remains0.1.3295-p1 until acceptance and
+observation pass. [Review](docs/fork/evidence/2026-11-09-3336/patch-review.md).
+The eight retained issue behaviors are still needed against this tag; their
+functional delta is unchanged. Prior suspensions remain. Upstream streaming
+failure envelopes, gateway-key concurrency and model settings are used as merged.
+
+## Test scope for rolling integration
+
+User direction,2026-11-09: keep validation proportional to the change. Run the
+retained-patch and affected-path regressions, production Linux checks, image
+smoke, API snapshot acceptance, real inference and the existing observation.
+Playwright covers selected affected pages in both engines; a complete GUI matrix
+is reserved for a broad regression that needs it or an explicit request.
+Record unrelated upstream/UI failures separately. Test/documentation-only
+changes do not trigger another complete Go/build/replay cycle when the runtime
+and relevant inputs are unchanged. State the actual tested scope in the evidence.
+
 ## Changes in v0.1.3295-p1
 
 Pinned upstream `0fc3455e2`; [semantic review](docs/fork/evidence/2026-11-08-3295/patch-review.md).
