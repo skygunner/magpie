@@ -132,6 +132,15 @@ func TestOpenCodeClientIs225(t *testing.T) {
 	}
 }
 
+// A non-repository marker stops the upward search at the fixture's boundary
+// even when TMPDIR is inside a checkout (#5239).
+func outsideRepository(t *testing.T, dir string) {
+	t.Helper()
+	if err := os.WriteFile(filepath.Join(dir, ".git"), nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
+
 // OpenCode's project id (packages/core/src/project.ts): sha1 of
 // git-remote:host/path in a repository with a remote (origin, else the
 // first), else of directory: and the repository's root or the folder.
@@ -145,6 +154,7 @@ func TestOpenCodeProjectIs225s(t *testing.T) {
 	}
 	root := t.TempDir()
 	root, _ = filepath.EvalSymlinks(root)
+	outsideRepository(t, root)
 	repo := func(name, config string) string {
 		d := filepath.Join(root, name)
 		os.MkdirAll(filepath.Join(d, ".git"), 0o755)
@@ -179,6 +189,7 @@ func TestOpenCodeProjectIs225s(t *testing.T) {
 		}
 	}
 	home := t.TempDir()
+	outsideRepository(t, home)
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home)
 	home, _ = filepath.EvalSymlinks(home)
@@ -193,6 +204,7 @@ func TestOpenCodeProjectIs225s(t *testing.T) {
 func TestOpenCodeEnvironmentIs225s(t *testing.T) {
 	c := loadOpenCode225(t)
 	tmp := t.TempDir()
+	outsideRepository(t, tmp)
 	t.Setenv("TMPDIR", tmp)
 	t.Setenv("TEMP", tmp)
 	t.Setenv("TMP", tmp)
@@ -203,6 +215,7 @@ func TestOpenCodeEnvironmentIs225s(t *testing.T) {
 	}
 	dir := filepath.Join(t.TempDir(), "work")
 	os.MkdirAll(dir, 0o755)
+	outsideRepository(t, dir)
 	want := c.Environment
 	want = strings.ReplaceAll(want, "/Users/yetone/runs/zencap/home/work", dir)
 	want = strings.Replace(want, "Platform: darwin", "Platform: "+platform, 1)
