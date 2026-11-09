@@ -6220,8 +6220,10 @@ func (s *Server) passthrough(w http.ResponseWriter, r *http.Request, p provider.
 		body = toolPairsOut(body)
 		if mistral := p.Preset == "mistral" || p.Host() == "api.mistral.ai"; !mistral && (chatReplaysReasoning(buildHost(p), model) || chatReplaysReasoning(buildHost(p), upstream)) {
 			// a tool call the client kept no thinking for, which DeepSeek
-			// turns the whole request away for (#1462)
-			body = withReasoningOnToolTurns(body)
+			// turns the whole request away for (#1462), and one thinking a
+			// message carries in both spellings, which its serde reads as
+			// one field and turns away as a duplicate (#3165)
+			body = foldReasoningAliases(withReasoningOnToolTurns(body))
 		}
 		// a client that took the gateway for an Ollama server (its
 		// /api/tags and /api/show are answered in Ollama's shape) sends
