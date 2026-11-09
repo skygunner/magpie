@@ -31,8 +31,8 @@ func TestCodexSubagentModelsKept(t *testing.T) {
 	if n := len(CodexSubagentModels()); n < 200 {
 		t.Fatalf("Codex's subagents may go on %d models", n)
 	}
-	built := allocatedBy(func() { codexSubagentModels() })
-	kept := allocatedBy(func() { CodexSubagentModels() })
+	built := leastBytes(10, func() { codexSubagentModels() })
+	kept := leastBytes(10, func() { CodexSubagentModels() })
 	if kept*4 > built {
 		t.Fatalf("asking Codex's subagent models again allocated %d bytes, building them %d", kept, built)
 	}
