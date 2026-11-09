@@ -140,7 +140,7 @@ func toolLoopOf(msgs []Message) (toolLoop, bool) {
 		return toolLoop{}, false
 	}
 	last := turns[len(turns)-1]
-	if allWaits(last.calls) {
+	if allWaits(last.calls) || last.wait {
 		return toolLoop{}, false
 	}
 	n := 0
@@ -228,6 +228,33 @@ func isWait(c Part) bool {
 type exchange struct {
 	sum   uint64
 	calls []Part
+	wait  bool
+}
+
+// #3655: an empty-input read of the same live process is waiting, not work.
+func waitingOn(c Part, results []string) bool {
+	if c.Name != "write_stdin" {
+		return false
+	}
+	var a struct {
+		Chars   string `json:"chars"`
+		Session int64  `json:"session_id"`
+	}
+	if json.Unmarshal(c.Args, &a) != nil || a.Chars != "" || a.Session == 0 {
+		return false
+	}
+	running := fmt.Sprintf("Process running with session ID %d", a.Session)
+	for _, r := range results {
+		if strings.HasPrefix(r, "error\x00") {
+			return false
+		}
+		for _, line := range strings.Split(r, "\n") {
+			if line == running {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // exchanges are the turns of tool use msgs end in, oldest first, back to
@@ -290,13 +317,16 @@ func exchangeOf(asked, said []Part) (exchange, bool) {
 	if len(calls) == 0 || !hasResult {
 		return exchange{}, false
 	}
+	wait := len(rest) == 0
 	keys := make([]string, 0, len(calls)+1)
 	for _, c := range calls {
 		got := results[c.ID]
 		delete(results, c.ID)
 		keys = append(keys, c.Name+"\x00"+steadyArgs(c.Args)+"\x00"+strings.Join(got, "\x01"))
+		wait = wait && waitingOn(c, got)
 	}
 	for _, got := range results { // results of no call here
+		wait = false
 		keys = append(keys, "\x00\x00"+strings.Join(got, "\x01"))
 	}
 	slices.Sort(keys)
@@ -309,7 +339,7 @@ func exchangeOf(asked, said []Part) (exchange, bool) {
 		h.Write([]byte(k))
 		h.Write([]byte{0xfe})
 	}
-	return exchange{sum: h.Sum64(), calls: calls}, true
+	return exchange{sum: h.Sum64(), calls: calls, wait: wait}, true
 }
 
 // steadyArgs is a call's arguments with their keys in one order, as two
