@@ -3,10 +3,10 @@ package gateway
 import (
 	"bytes"
 	"encoding/json"
-	"regexp"
 
 	"github.com/tidwall/gjson"
 
+	"github.com/yetone/magpie/internal/lazyre"
 	"github.com/yetone/magpie/internal/provider"
 )
 
@@ -151,7 +151,7 @@ func formatRefused(model string) string { return "response_format:" + model }
 // says "guided_grammar … compile_grammar_error: No module named
 // 'xgrammar'" over a schema it was handed (its own field names name no
 // format at all).
-var formatRefusal = regexp.MustCompile(`(?i)response_format|json_schema|json_object|output_config\.format|text\.format|structured.output|response_?mime_?type|response_?json_?schema|response_?schema|guided_grammar|compile_grammar`)
+var formatRefusal = lazyre.New(`(?i)response_format|json_schema|json_object|output_config\.format|text\.format|structured.output|response_?mime_?type|response_?json_?schema|response_?schema|guided_grammar|compile_grammar`)
 
 // refusesFormat is whether an upstream's answer turned the request away
 // over its format.

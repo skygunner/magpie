@@ -68,7 +68,9 @@ Chromium and WebKit and every language: a wrong key is told so in the
 page's language and shows nothing; the right one shows its limit, its
 usage and most used model, picks that model, and gives Claude Code, Codex,
 OpenAI-compatible and curl setup at the address the page was opened at,
-with a placeholder until "Put my key in the setup" is ticked. A reload
+with a placeholder until "Put my key in the setup" is ticked. Claude
+Code's setup names the pick as ANTHROPIC_MODEL alone and each tier's
+model as the gateway's `tiers` says, leaving out a tier with none. A reload
 keeps the key in the tab, Forget takes it away, and no request carries the
 key in its address. A read-only key gets no setup. Gateway → Gateway keys
 shows the page's address (the LAN one, or `MAGPIE_PUBLIC_URL`) with a
@@ -391,6 +393,13 @@ one's editor. English and Chinese, Chromium and WebKit, with the API faked.
 the key's field and its placeholder is the field's hint, while a way labelled
 only "API key" keeps "<name> API key"; the provider's own icon shows on its
 row. English and Chinese, Chromium and WebKit, with the API faked.
+
+`plugin-ask-ways.test.cjs` checks a moved subscription whose plugin's
+first way asks a question first (Kiro's sign-in methods): the question
+offers "Other ways to sign in…", which shows every way, the API key among
+them, and a later question doesn't; the plugin's labels, messages and hints
+show in the window's language when it gives them by language, else as
+written. English and Chinese, Chromium and WebKit, with the API faked.
 
 `plugin-market.test.cjs` checks the Plugins tab: Discover lists the
 suggested plugins in their two sections, a card installs its plugin and
@@ -715,6 +724,13 @@ I set" (自定义名称不带供应商) between Off and On, lit by `plainOwnName
 then it post `settings/plain-names` with `mode: "on"` and `mode: "own"`,
 neither click scrolls the page, the hint isn't cut short and the three fit
 the row at 900px and 560px. English and Chinese, Chromium and WebKit.
+
+`agent-suffix.test.cjs` checks an agent's own "Provider in model names" in
+its Details (KillTry27355 on X): it reads "As in Settings · Off" while every
+agent's is Off, On posts `settings/agent-suffix` with `{agent, mode: "on"}`
+and then reads On, the first item posts `mode: ""` back, an agent whose list
+takes no names of magpie's (noNames) has no such row, and the page doesn't
+scroll sideways at 1180px and 390px. Every language, Chromium and WebKit.
 
 `bare-ids.test.cjs` checks Settings › Network and sharing › "Model ids
 without the provider" (love1sbug on X): off by default, On posts
@@ -2393,6 +2409,20 @@ compare the same completed API state rather than a loading-order difference.
 node --test internal/gui/tests/mobile-web.test.cjs internal/gui/tests/old-webkit.test.cjs
 ```
 
+`phone-no-sideways.test.cjs` (#4943) opens every top-level view, Usage's four
+tabs and Settings' tabs on an iPhone 13 in the dark theme, filled with long
+names (accounts, a group, sessions, model ids, 30 requests). The document and
+the open view are no wider than the phone, nothing runs past its sides outside
+a box that scrolls on its own, and no empty band is held sticky at the view's
+foot (bars of buttons held there are meant); the Requests table's stand-in
+scrollbar stays hidden on a touch screen.
+At 375px in all five languages and at 390 and 430 in English, Chromium and
+WebKit. `MAGPIE_ASSETS` points it at older assets to see it fail.
+
+```sh
+node --test internal/gui/tests/phone-no-sideways.test.cjs
+```
+
 ## Routing request metrics
 
 `routing-request-metrics.test.cjs` checks request-row cache hit rates (cache
@@ -2505,10 +2535,10 @@ node --test internal/gui/tests/cli-path.test.cjs
 ```
 
 `update-mirror.test.cjs` checks Settings › About › Download source (#893):
-the row says updates come from GitHub; Use a mirror… opens an address field,
+the row says updates come from usemagpie.ai, then GitHub; Use a mirror… opens an address field,
 an http:// address is refused with the reason in red and the draft kept, an
 https:// one saved with Enter posts `/api/settings/update-mirror` and is
-shown, and Use GitHub posts an empty mirror. A download that failed through
+shown, and Remove mirror posts an empty mirror. A download that failed through
 the mirror says so on the Version row and offers Download from GitHub, which
 posts the empty mirror then `/api/update/install`. No native select, no left
 border, no click scrolls. English and Chinese, Chromium and WebKit; the API

@@ -10,7 +10,6 @@ import (
 	"context"
 	"fmt"
 	"maps"
-	"regexp"
 	"slices"
 	"sort"
 	"strings"
@@ -19,6 +18,7 @@ import (
 	"time"
 
 	"github.com/yetone/magpie/internal/catalog"
+	"github.com/yetone/magpie/internal/lazyre"
 )
 
 // The routings besides the default, smart, in order.
@@ -74,7 +74,7 @@ func FreePlan(plan string) bool {
 }
 
 // pluginRouting is a routing a plugin serves: "<plugin>/<name>".
-var pluginRouting = regexp.MustCompile(`^[A-Za-z0-9._-]+/[A-Za-z0-9][A-Za-z0-9._-]*$`)
+var pluginRouting = lazyre.New(`^[A-Za-z0-9._-]+/[A-Za-z0-9][A-Za-z0-9._-]*$`)
 
 // PluginRouting says whether routing is one a plugin serves,
 // "<plugin>/<name>" (a JS gateway plugin's strategies). providers.json
@@ -114,6 +114,17 @@ func SetUseFirst(id string, on bool) error {
 		return err
 	}
 	p.UseFirst = on
+	return Save(*p)
+}
+
+// SetNoStandIn keeps another model's request off a provider, or lets it
+// stand in for any again (Provider.NoStandIn).
+func SetNoStandIn(id string, on bool) error {
+	p, err := Find(id)
+	if err != nil {
+		return err
+	}
+	p.NoStandIn = on
 	return Save(*p)
 }
 
@@ -301,6 +312,37 @@ var unwaited atomic.Int32
 func Unwaited() (release func()) {
 	unwaited.Add(1)
 	return sync.OnceFunc(func() { unwaited.Add(-1) })
+}
+
+// readsOut counts the allowance and usage reads a caller left running
+// in the background (Allowances past firstWait, SubscriptionUsage with a
+// stale copy to serve, a key's allowance), for a test to wait for at its
+// end: what such a read finds — Claude Code's sign-in in whatever home is
+// set by then — lands in the next test's caches otherwise (#3174).
+var readsOut struct {
+	sync.Mutex
+	n    int
+	idle chan struct{} // closed when n drops to 0
+}
+
+// goRead runs f as a read left out (readsOut).
+func goRead(f func()) {
+	readsOut.Lock()
+	if readsOut.n == 0 {
+		readsOut.idle = make(chan struct{})
+	}
+	readsOut.n++
+	readsOut.Unlock()
+	go func() {
+		defer func() {
+			readsOut.Lock()
+			if readsOut.n--; readsOut.n == 0 {
+				close(readsOut.idle)
+			}
+			readsOut.Unlock()
+		}()
+		f()
+	}()
 }
 
 // Allowance is an account's allowance windows as last known.
@@ -813,7 +855,7 @@ func Allowances(agent string) map[string]Allowance {
 		done = make(chan struct{})
 		c.loading[agent] = done
 		began := c.generation
-		go func() {
+		goRead(func() {
 			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 			defer cancel()
 			share := renewalShare(agent) // read before the lock: it reads providers.json
@@ -899,7 +941,7 @@ func Allowances(agent string) map[string]Allowance {
 				tellStarted(agent, user)
 			}
 			close(done)
-		}()
+		})
 	}
 	_, known := c.m[agent]
 	c.Unlock()
