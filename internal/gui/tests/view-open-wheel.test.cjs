@@ -22,6 +22,7 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 const { test } = require("node:test");
 const { chromium, webkit } = require("playwright");
+const reader = require("./reader.cjs");
 
 const assets = process.env.MAGPIE_OPEN_WHEEL_ASSETS || path.resolve(__dirname, "../assets");
 const now = new Date();
@@ -137,15 +138,15 @@ for (const engine of ["chromium", "webkit"]) {
         const view = p.locator("#view-" + name);
         // opened again: what it drew the first time is there while it reads again
         if (visit === "opened again") {
-          await p.locator(`#nav button[data-view="${name}"]`).click();
+          await reader.openPage(p, name);
           await p.waitForTimeout(1000);
-          await p.locator('#nav button[data-view="agents"]').click();
+          await reader.openPage(p, "agents");
           await p.waitForTimeout(300);
         }
         let release;
         gate.wait = new Promise((ok) => { release = ok; });
         gate.on = true;
-        await p.locator(`#nav button[data-view="${name}"]`).click();
+        await reader.openPage(p, name);
         await view.waitFor();
         await p.waitForTimeout(150);
         // every frame's place, and how far what was under the pointer the

@@ -1217,15 +1217,19 @@ Usage routing links pass their trusted click to `openRoute`. Navigation waits
 for the Routing view to open, reveals the selected story with `scrollOnPurpose`,
 and records the arrival so asynchronous page loads do not restore the old
 scroll position. Picking a request within Routing still preserves the reader’s
-position. `usage-routing-visible.test.cjs` covers an already-scrolled history
-view in both browser engines and all five languages.
+position. The link is the request page's *View routing* (`ledDetail`); a row's
+click opens the request page itself, not Routing. The page also lists the
+route's recorded attempts in order (its own `/api/gateway/route` read), each
+with its model, status, duration and error, or says none were recorded or the
+history is gone. `usage-routing-visible.test.cjs` and the attempt-chain case of
+`usage-ledger-detail.test.cjs` cover both engines and all five languages.
 
 ## Request outcome visibility
 
 The Usage request table keeps HTTP status separate from recorded errors:
 `200 · Protocol error` is a failed request observed by the gateway, while
-`200 · Client-reported error` comes from an existing reported record. Expanded
-protocol-error and client-reported rows name their source and keep the original
+`200 · Client-reported error` comes from an existing reported record. The
+request page's protocol-error and client-reported outcomes name their source and keep the original
 error text. Ordinary vendor and session-log errors keep upstream's existing
 labels. Reports remain separate
 records; this UI does not collect client logs or correlate reports with gateway
