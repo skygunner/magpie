@@ -34,6 +34,16 @@ disabled state and scheduling fields were retained. Production remains
 
 ## Deployment history
 
+- **2026-11-17 AEST, 0.1.3622-p1 — accepted and published (shortened observation).**
+  Accepted 2026-11-16 18:04:37 UTC; source `31af508decb1054c13cf94b25381d5c268fea28b`,
+  pinned upstream v0.1.3622 (`025123431c`). Image `sha256:cd3f4290fd…` published as
+  `bigshort/magpie-patched:0.1.3622-p1` and `latest`, not rebuilt. Acceptance and two
+  real-inference probes returned 200; samples 0–2 (up to 552s) healthy, zero restarts/OOM.
+  The full 46-minute observation was cut short by owner direction because the next
+  nightly round had started; the detached transaction continues on docker1 to write its
+  own result and release the host lock. The eight retained fixes remain; no isolated
+  replay (see the 2026-11-11 incident). [Evidence](evidence/2026-11-11-3622/README.md).
+
 - **2026-11-09 AEST, 0.1.3336-p1 — accepted, observed and published.**
   Accepted 2026-11-08 17:04:38 UTC / 2026-11-09 03:04:38 AEST; tested source
   `b7b5539de03005a071a57eceaa06fde3f7faecfa`, pinned upstream v0.1.3336 (`c6bdc172a`).

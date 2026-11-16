@@ -13,9 +13,21 @@ mean upstream implements every former fork guarantee.
   to successfully observed production source. `candidate/<version>` records a
   tested candidate; `deployed/<version>` is created only after acceptance and
   observation pass. Old `prod/*` tags retain their historical meaning.
-- Production is **0.1.3336-p1**, upstream v0.1.3336. Accepted 2026-11-08 17:04:38 UTC
-  / 2026-11-09 03:04:38 AEST; tested source `b7b5539de03005a071a57eceaa06fde3f7faecfa`.
+- Production is **0.1.3622-p1**, upstream v0.1.3622. Accepted 2026-11-16 18:04:37 UTC;
+  source `31af508decb1054c13cf94b25381d5c268fea28b`. Observation shortened by owner
+  direction (sample 2 healthy; next nightly round started) — see this round's evidence.
   Source integration alone is not production acceptance evidence.
+
+## Changes in v0.1.3622-p1
+
+Pinned upstream `025123431c`; [semantic review](docs/fork/evidence/2026-11-11-3622/patch-review.md).
+411 upstream commits; eight retained issue behaviors still necessary, prior suspensions
+unchanged, no new runtime fork patch. Upstream's lazyre refactor was carried into the
+retained patterns. Upstream's new Usage request page replaces the in-table expanding row;
+#3624's reveal, #3623's attempts and #3948's labels follow the page. A `chown` incident
+blocked the first switch; after owner-confirmed single-path repair the transaction
+accepted at 18:04:37 UTC and published `sha256:cd3f4290fd…`. Full 46-minute observation
+was shortened by owner direction. [Evidence](docs/fork/evidence/2026-11-11-3622/README.md).
 
 ## Changes in v0.1.3336-p1
 

@@ -1,0 +1,25 @@
+{
+  "tag": "0.1.3622-p1",
+  "upstream": "v0.1.3622",
+  "upstream_commit": "025123431c140a4988efc3d5c44546e8d73d16d3",
+  "source_commit": "31af508decb1054c13cf94b25381d5c268fea28b",
+  "image_id": "sha256:cd3f4290fd404ae7652711c780f73be7b9ad2f24c64f1264242ea22ff7e7b74a",
+  "docker_hub": {
+    "repository": "bigshort/magpie-patched",
+    "version_tag": "0.1.3622-p1",
+    "latest_tag": "latest",
+    "both_digests": "sha256:cd3f4290fd404ae7652711c780f73be7b9ad2f24c64f1264242ea22ff7e7b74a",
+    "rebuilt_during_promotion": false
+  },
+  "deploy_script_sha256": "eaaa9e265623fba0fc383d4209983252b642c646d822dbf731a30b4d92e669a2",
+  "accepted_at": "2026-11-16T18:04:37.513049+00:00",
+  "observation": {
+    "full_46min_completed": false,
+    "shortened_by": "owner direction (next nightly round started; avoid overlap)",
+    "samples_observed": [0, 1, 2],
+    "last_sample_seconds": 552.4,
+    "real_inference_probes": 2,
+    "restarts": 0,
+    "oom": false
+  }
+}
