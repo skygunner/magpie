@@ -82,9 +82,12 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
 
    await tab.waitForFunction(()=>document.querySelector("#view-routing").scrollTop>600);
    await tab.evaluate(()=>window.show("usage"));
-   const link=tab.locator(".led tbody tr").first().locator("td").first().locator("button");
    await tab.waitForFunction(()=>document.querySelectorAll(".led tbody tr").length===1);
    await tab.mouse.move(700,600); await tab.mouse.wheel(0,900);
+   // the request's own page carries the one link to its routing (#3624)
+   await tab.locator(".led tbody tr.led-row").first().click();
+   const link=tab.locator("#ledReqPane .led-route-link");
+   await link.waitFor();
    await link.click();
    await view.waitFor({state:"visible"});
    await tab.waitForFunction(()=>{

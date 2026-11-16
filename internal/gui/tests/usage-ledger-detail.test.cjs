@@ -276,8 +276,8 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
     const attempts = p.locator(".led-detail .led-attempts div");
     await attempts.first().waitFor();
     assert.deepEqual(await attempts.allTextContents(), ["1. codex/gpt-6.1-sol — 504 · 25 s · first-token timeout", "2. nvidia/stepfun/step-5 — 429 · 1.6 s"]);
+    await reader.closeRequest(p);
     missing = true;
-    await p.locator(".led-row").first().click();
     await p.locator(".led-row").first().click();
     await p.getByText("Attempt history unavailable", { exact: true }).waitFor();
   });

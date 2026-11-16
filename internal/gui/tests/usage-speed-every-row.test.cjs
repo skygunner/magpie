@@ -14,6 +14,7 @@ const fs = require("node:fs/promises");
 const path = require("node:path");
 const { test } = require("node:test");
 const { chromium, webkit } = require("playwright");
+const reader = require("./reader.cjs");
 
 const assets = path.resolve(__dirname, "../assets");
 const now = Date.now();
@@ -219,12 +220,12 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         assert.equal((await rows.nth(12).locator(".st").textContent()).trim(), words[1]);
         await rows.nth(10).click();
         assert((await p.locator(".led-detail").innerText()).includes(words[2]));
-        await rows.nth(10).click();
+        await reader.closeRequest(p);
         await rows.nth(11).click();
         const reported = await p.locator(".led-detail").innerText();
         assert(reported.includes(words[3]));
         assert(reported.includes("ProviderResponseError: missing choices"));
-        await rows.nth(11).click();
+        await reader.closeRequest(p);
         await rows.nth(1).click();
         assert((await p.locator(".led-detail").innerText()).includes(words[5]));
       } finally {
