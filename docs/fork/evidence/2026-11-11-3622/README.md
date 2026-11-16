@@ -13,9 +13,12 @@ that publishing proceed without waiting for the full 46-minute observation,
 because the next nightly integration/deployment round had already started and
 a 46-minute wait would overlap. The detached transaction was therefore NOT
 stopped — killing it would trigger its rollback and replace the new container
-with the old one. It continues to completion independently and will write its
-own result and release the host lock; the container, image and published tags
-are not touched by it.
+with the old one. It continued to completion independently: the full 46-minute
+observation finished at 18:50:38 UTC with result outcome PASSED
+(reason: clean_observation), 11 healthy samples (sample 0–10, last at 2760.3s),
+two observation inference probes (both 200) and zero restarts. The published
+image and tags were not touched by it; the host lock is released. The early
+publication was therefore confirmed by the full observation after the fact.
 
 Observed before publication:
 - Container `magpie` running, health=healthy, restarts=0, oom=false.
@@ -47,7 +50,9 @@ Observed before publication:
 
 ## Scope boundaries
 
-- Full 46-minute observation was cut short by explicit owner direction.
+- Publication was made early by explicit owner direction; the detached
+  transaction nevertheless completed the full 46-minute observation and
+  returned PASSED.
 - No full GUI matrix, Windows/Darwin desktop checks, or live vendor coverage.
 - No isolated config replay; see incident and rules above.
 - Raw snapshots, private round artifacts and rollback backup remain on docker1
