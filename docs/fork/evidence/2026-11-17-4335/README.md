@@ -69,7 +69,14 @@ semantics-changing rewrite for v0.1.4335.
 
 ## Production acceptance
 
-Pending the docker1 transaction result.
+Docker1 transaction PASSED (`clean_observation`) at
+2026-11-16T22:39:03Z, after 2761 s: 29 real inferences all 200, 0
+restarts, 0 OOM, 0 5xx, 0 protocol errors. Accepted container
+`2203968190d0`; published on docker1 as
+`bigshort/magpie-patched:0.1.4335-p1` and `:latest` from the same
+image ID (`4f647e2c95fb`), no rebuild. Git refs `production/stable`,
+`candidate/0.1.4335-p1` and `deployed/0.1.4335-p1` point at
+`2ff3cdcf1`.
 
 ## Scope boundaries
 
