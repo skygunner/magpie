@@ -62,6 +62,11 @@ Revisit a retained patch when upstream lands equivalent public behavior, or
 when a focused upstream proposal can replace the fork implementation without
 the registration, cancellation or retry semantics changing.
 
+Live re-check after deployment (GitHub API, 2026-11-17): every retained and
+suspended issue is still open, and upstream main had no new commits after
+the pinned v0.1.4335 at re-check time; the #3623 attempt-chain branch is
+this fork's own feature branch, still waiting on an upstream decision.
+
 ## Candidate delta after review
 
 The only runtime code change added during this round's gate is
