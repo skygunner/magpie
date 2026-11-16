@@ -34,6 +34,23 @@ disabled state and scheduling fields were retained. Production remains
 
 ## Deployment history
 
+- **2026-11-17 AEST, 0.1.4335-p1 candidate — merged, gated, built; deployment pending.**
+  Candidate source `f0a22204c4d202016802b73f0b46ac446d527a13`, pinned upstream
+  v0.1.4335 (`cb4ad12bd`); 1,153 upstream commits, four conflicts resolved
+  double-keep. All eight retained fixes remain necessary; suspended items stay
+  suspended; #3417 remains absorbed; #3430 is closed upstream. The clean-tag
+  worktree reproduces the four `internal/agent` failures; the standalone
+  gateway rerun completed its suite with only the known Go-version/WSL
+  failures; the wheel fixtures pass 186/186 after the budget repair. Candidate
+  image `sha256:4f647e2c95fbb7d38cb653a08ab2a304dd1a654cbad16cef79a7d6f8b356b656`
+  smoke-reports `magpie 0.1.4335-p1`. The deployment transaction runs on
+  docker1 with immutable old/new ID assertions; acceptance and observation
+  results are recorded in
+  [this round's evidence](evidence/2026-11-17-4335/README.md). The only new
+  fork code in the candidate is `forkPixelWheelBudget` in
+  `internal/gui/core_budget_test.go`, which accounts for the retained wheel
+  patch's bytes in the core script budget.
+
 - **2026-11-17 AEST, 0.1.3622-p1 — accepted and published (shortened observation).**
   Accepted 2026-11-16 18:04:37 UTC; source `31af508decb1054c13cf94b25381d5c268fea28b`,
   pinned upstream v0.1.3622 (`025123431c`). Image `sha256:cd3f4290fd…` published as

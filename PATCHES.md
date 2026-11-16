@@ -13,10 +13,21 @@ mean upstream implements every former fork guarantee.
   to successfully observed production source. `candidate/<version>` records a
   tested candidate; `deployed/<version>` is created only after acceptance and
   observation pass. Old `prod/*` tags retain their historical meaning.
-- Production is **0.1.3622-p1**, upstream v0.1.3622. Accepted 2026-11-16 18:04:37 UTC;
-  source `31af508decb1054c13cf94b25381d5c268fea28b`. Observation shortened by owner
-  direction (sample 2 healthy; next nightly round started) — see this round's evidence.
+- Production is **0.1.3622-p1**, upstream v0.1.3622, source
+  `31af508decb1054c13cf94b25381d5c268fea28b`. A 0.1.4335-p1 candidate has been
+  built from source `f0a22204c4d202016802b73f0b46ac446d527a13`; its gate and
+  deployment status live in
+  [this round's evidence](docs/fork/evidence/2026-11-17-4335/README.md).
   Source integration alone is not production acceptance evidence.
+
+## Changes in v0.1.4335-p1 (candidate)
+
+Pinned upstream `cb4ad12bd`; [semantic review](docs/fork/evidence/2026-11-17-4335/patch-review.md).
+1,153 upstream commits; four textual conflicts resolved to keep both sides'
+behaviors; all eight retained issue behaviors still necessary, prior
+suspensions unchanged. The only new fork code is the named
+`forkPixelWheelBudget` line in `internal/gui/core_budget_test.go` that
+accounts for #4385's retained wheel bytes in the core script budget.
 
 ## Changes in v0.1.3622-p1
 
@@ -71,7 +82,7 @@ and relevant inputs are unchanged. State the actual tested scope in the evidence
 | #3623 | retain | Expanded Usage details show ordered recorded attempts, including 499. |
 | Cooldown settings | suspend | Layered policy, changed defaults and release semantics compete with current upstream rest rules. Editor/API and runtime overrides are removed together. |
 | #3417 | absorbed | Upstream configurable Codex reset lead remains; fixed-lead fork stays removed. |
-| #4385 | retain | Restore the full interrupted pixel-wheel step from its origin, grouped per view; preserve native progress and keep touch/non-pixel restoration unchanged. Source `fix/webkit-delayed-wheel`. |
+| #4385 | retain | Restore the full interrupted pixel-wheel step from its origin, grouped per view; preserve native progress and keep touch/non-pixel restoration unchanged. Source `fix/webkit-delayed-wheel`. The 4335 round adds `forkPixelWheelBudget` to `internal/gui/core_budget_test.go` so the retained core bytes are explicit. |
 | build -pN | retain | Update checks and release notes compare the base version. |
 | plugins PR #366 | separate | Keep production Cloudflare Workers AI package 0.0.5. No package downgrade or test-only rebuild. |
 
