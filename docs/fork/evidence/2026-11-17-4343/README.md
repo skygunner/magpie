@@ -25,7 +25,7 @@ restarts, 0 OOM, 0 5xx, 0 protocol errors. Accepted container
 `ec792ef5b392` (image `5c7223d19dd6`); published on docker1 as
 `bigshort/magpie-patched:0.1.4343-p1` and `:latest` from the same image
 ID, no rebuild. Git refs `production/stable`, `candidate/0.1.4343-p1`
-and `deployed/0.1.4343-p1` point at `e1a2b3c4d` (the acceptance docs
+and `deployed/0.1.4343-p1` point at `6ce1087b1` (the acceptance docs
 commit on `integration/nightly`).
 
 ## Scope boundaries
