@@ -1,0 +1,1484 @@
+{
+ "1139": [
+  {
+   "branch": "fix/1139-issue-1139",
+   "sha": "d1ba11f3d533ea39a43d5d8e68d8bd88def0c2b7"
+  }
+ ],
+ "1258": [
+  {
+   "branch": "fix/1258-web-shutdown-current",
+   "sha": "e094d775c13ac24014d0227365d00df9e7c487b6"
+  }
+ ],
+ "1579": [
+  {
+   "branch": "fix/1579-test-tencent-cloud-test-cjs",
+   "sha": "20b35df5546b548739c38e67d7258031c4bd12e2"
+  }
+ ],
+ "1682": [
+  {
+   "branch": "fix/1682-pi-provider-plugins-skip-custom",
+   "sha": "ce71b1563006d95ebde6b780e627110baf3adb7f"
+  }
+ ],
+ "1728": [
+  {
+   "branch": "fix/1728-zenmux",
+   "sha": "9f35a852c15124b73c6f0ba7f1df4ba35051c851"
+  }
+ ],
+ "1747": [
+  {
+   "branch": "fix/1747-linux-guix-startup-writes-a",
+   "sha": "d0409dbbb4741859732026a268c61aab1a870c1f"
+  }
+ ],
+ "1841": [
+  {
+   "branch": "fix/1841-tests-internal-agent-tests-reset",
+   "sha": "917d9c5a9824e84b882b386370e6bb5c5ed52f54"
+  }
+ ],
+ "1848": [
+  {
+   "branch": "fix/1848-gateway-deepseek-tool-calls-written",
+   "sha": "540f568c16eca37a9acd691f4ea7b12c0fa7ce64"
+  }
+ ],
+ "1903": [
+  {
+   "branch": "fix/1903-setaside-leftbehind",
+   "sha": "76dc5c2e38a5c209957f090f0df586e8f7254999"
+  }
+ ],
+ "1955": [
+  {
+   "branch": "fix/1955-codex-native-model-list-falls",
+   "sha": "5040ec8a6b2d834c6c08fe44418e19343ca780ad"
+  }
+ ],
+ "1971": [
+  {
+   "branch": "fix/1971-rate-limit-test-clock",
+   "sha": "0fd2192a49a7ca76c466eaca3b3166b8463520de"
+  }
+ ],
+ "2099": [
+  {
+   "branch": "fix/2099-risk-wrap",
+   "sha": "68bbfcf5dcc7508a263483b3a5af6f2c23b5dbf3"
+  }
+ ],
+ "2117": [
+  {
+   "branch": "fix/2117-web-in-a-container-leave",
+   "sha": "6542183e9184c390de8d2998d76d8fcec2daa107"
+  }
+ ],
+ "2207": [
+  {
+   "branch": "fix/2207-socks-proxy-test-deterministic",
+   "sha": "a93c613a02a376e559f0884ad8cf1b865681927d"
+  }
+ ],
+ "2301": [
+  {
+   "branch": "fix/2301-minimax-code",
+   "sha": "1ce1eca899ac47e5434da67df98a8b0e4c133be3"
+  }
+ ],
+ "2323": [
+  {
+   "branch": "fix/2323-hermes-vision-mapping",
+   "sha": "2ba0337e22bdd429f0519251b7f31819fe09ba01"
+  }
+ ],
+ "2389": [
+  {
+   "branch": "fix/2389-systemone-state-redaction",
+   "sha": "05f768ef9bdb505b4eb02282ebae4a9d9de67cb7"
+  }
+ ],
+ "2541": [
+  {
+   "branch": "fix/2541-queue-ledger-identity",
+   "sha": "cdd25ad1f499b4b8773d86113ea9b0ac11aa52a5"
+  },
+  {
+   "branch": "fix/2541-queue-test-budget",
+   "sha": "7a3272084a159021057a0fd90ee36c18ef2df0c6"
+  }
+ ],
+ "2569": [
+  {
+   "branch": "fix/2569-sessions-opencode-zcode-and-dsh",
+   "sha": "8b9246b244240c69b441bac0457c785321b9b995"
+  }
+ ],
+ "2621": [
+  {
+   "branch": "fix/2621-tests-three-guarantees-lost-their",
+   "sha": "b66100d6080ca66ddfcfb326f654e03ecdc88277"
+  }
+ ],
+ "2629": [
+  {
+   "branch": "fix/2629-gui-tests-agent-bulk-visibility",
+   "sha": "7c0ede7db7d18c138deaaf5763db9b662b4a65d0"
+  }
+ ],
+ "2661": [
+  {
+   "branch": "fix/2661-tests-most-packages-don-t",
+   "sha": "6865746c3d8ea816decc601bb439c256f4b21245"
+  }
+ ],
+ "2669": [
+  {
+   "branch": "fix/2669-gui-after-the-codex-editor",
+   "sha": "f8ddfd8d3991e4b3cb220b6c04137bbe3ff22675"
+  }
+ ],
+ "2674": [
+  {
+   "branch": "fix/2674-blocklist-tail",
+   "sha": "92b3d82cf78b1b2ff93ffc07d83c999c2784a5f2"
+  }
+ ],
+ "2705": [
+  {
+   "branch": "fix/2705-usage-sessions-claude-desktop-3p",
+   "sha": "f0f279237564322f2e5983ff7f6edc9de521b310"
+  }
+ ],
+ "2728": [
+  {
+   "branch": "fix/2728-docs-strategy-test-budget",
+   "sha": "c01aa5a10e8771b0f9e89c7c17d8e340581c42b0"
+  }
+ ],
+ "2729": [
+  {
+   "branch": "fix/2729-gateway-deepseek-s-search-api",
+   "sha": "a8de723e5f0ff119f48a9e6326353e44e1aabc4d"
+  }
+ ],
+ "2730": [
+  {
+   "branch": "fix/2730-deepseek",
+   "sha": "d8758e88b47f443cada39bdee528ca1fdbf11dff"
+  }
+ ],
+ "2744": [
+  {
+   "branch": "fix/2744-issue-2744",
+   "sha": "e7482c606631086c8d1a73d5ba97bb24f5e755a8"
+  }
+ ],
+ "2746": [
+  {
+   "branch": "fix/2746-unlisted-by-group",
+   "sha": "e678dbc528a08e333318a268dbe2ce121bc93358"
+  }
+ ],
+ "2755": [
+  {
+   "branch": "fix/2755-led-format-tokens",
+   "sha": "b20f17d51b02a1a2f52083b9c7e2f4dfde0af1ce"
+  }
+ ],
+ "2761": [
+  {
+   "branch": "fix/2761-filememo-clock-seam",
+   "sha": "de2c656345d577ee2d346e49439e8b2e86db0911"
+  }
+ ],
+ "2768": [
+  {
+   "branch": "fix/2768-vs-code-copilot-chat-in",
+   "sha": "1a0c6e07141bbe277d9e4c2f91ada9f9c77e2817"
+  }
+ ],
+ "2771": [
+  {
+   "branch": "fix/2771-windows-magpie-does-not-discover",
+   "sha": "43cf96d55084802480329e92954cc45fd3ece2bb"
+  }
+ ],
+ "2773": [
+  {
+   "branch": "fix/2773-droid-magpie-written-custom-models",
+   "sha": "f95c87e6d5108d4d7792e52ea3a1584ab85c82f5"
+  }
+ ],
+ "2785": [
+  {
+   "branch": "fix/2785-magpie-does-not-memorize-its",
+   "sha": "c5a062f18b79fbb9effdd616ddc76959327472e3"
+  },
+  {
+   "branch": "fix/2785-window-monitor",
+   "sha": "fc5cb114a7022a1097cdec9ed3d3009de28f4210"
+  }
+ ],
+ "2789": [
+  {
+   "branch": "fix/2789-textcall-xml",
+   "sha": "1734b21d9daf1f82dace6368256a390f9c46658e"
+  }
+ ],
+ "2804": [
+  {
+   "branch": "fix/2804-linux-duplicate-tray-icon-on",
+   "sha": "7256f0d91a64c285831e38172d81906a31d890a9"
+  }
+ ],
+ "2808": [
+  {
+   "branch": "fix/2808-keychain-windows-reds-v2",
+   "sha": "e1f82fa096cb466c98ad8b9f4613f827ee0ec6d0"
+  },
+  {
+   "branch": "fix/2808-test-eight-codex-keychain-tests",
+   "sha": "eed3fc9d9acd5ac9a5a7088ccfafd41577bd5a9b"
+  }
+ ],
+ "2822": [
+  {
+   "branch": "fix/2822-chat-only-v1-models-responses",
+   "sha": "6b7425df8a715b706f637ec05e148f386950eda1"
+  }
+ ],
+ "2836": [
+  {
+   "branch": "fix/2836-google-openai-images-generations-imagen",
+   "sha": "1798d56014da6ec5cb1126d41d244a2921b85e20"
+  }
+ ],
+ "2838": [
+  {
+   "branch": "fix/2838-claude-subscription-upgraded-to-max",
+   "sha": "37aa42f9a80e5934595c56dd66f9f7bfae8f084e"
+  }
+ ],
+ "2867": [
+  {
+   "branch": "fix/2867-drift-detail-i18n",
+   "sha": "a6df7cec93739ce4aa70d6f019da645497ca95b1"
+  }
+ ],
+ "2868": [
+  {
+   "branch": "fix/2868-claude",
+   "sha": "af62119ab9318fc561001ab59cbef5f18207c2d2"
+  }
+ ],
+ "2878": [
+  {
+   "branch": "fix/2878-qoder-qoder",
+   "sha": "6efc6c1e84f1d8a3a62a5a8a7071c818d6371bd8"
+  }
+ ],
+ "3005": [
+  {
+   "branch": "fix/3005-local-session-rows",
+   "sha": "794850df980940a256261f3514d9d50a4012a5e1"
+  }
+ ],
+ "3013": [
+  {
+   "branch": "fix/3013-glm-window-quota",
+   "sha": "b1ab1dad53ec1f7bd2015581e9cf8ebb762a7372"
+  }
+ ],
+ "3017": [
+  {
+   "branch": "fix/3017-cindy-provider-suffix",
+   "sha": "cef69224d25ce170cf70fd5992577c7388963b42"
+  }
+ ],
+ "3058": [
+  {
+   "branch": "fix/3058-copilot-keychain-ask",
+   "sha": "df0a9b196eb148c7c38c2f663317bd3cce9fa89e"
+  }
+ ],
+ "3074": [
+  {
+   "branch": "fix/3074-plugin-a-request-s-body",
+   "sha": "466dbda7f3e34cfbfe1b59489b5835c4f1310cf6"
+  }
+ ],
+ "3107": [
+  {
+   "branch": "fix/3107-issue-3107",
+   "sha": "b60afa3090a6a6ed42364d893840e55fd893e1c3"
+  }
+ ],
+ "3108": [
+  {
+   "branch": "fix/3108-panic-when-autostarted-at-login",
+   "sha": "f34ad344f5c9615811589eb33c7cc52fb3d449af"
+  }
+ ],
+ "3122": [
+  {
+   "branch": "fix/3122-issue-3122",
+   "sha": "3a190d4728c0e7fd5479a0b046ee7aee02717f34"
+  }
+ ],
+ "3128": [
+  {
+   "branch": "fix/3128-provider-workbuddy",
+   "sha": "7a16a04bb3b232db3fb497b461656cba86d3e537"
+  }
+ ],
+ "3135": [
+  {
+   "branch": "fix/3135-codex-responses-eof-502",
+   "sha": "b4f9adf89f043043583452665145aeacb926cd98"
+  }
+ ],
+ "3136": [
+  {
+   "branch": "fix/3136-agent-magpie-preview-86-mb",
+   "sha": "98e5e7bc7cdff37d5aad1597cb90e8ba74122496"
+  }
+ ],
+ "3137": [
+  {
+   "branch": "fix/3137-proxy-advice-address",
+   "sha": "a9213cae7441cc467c2cd696550d17bc4526962b"
+  }
+ ],
+ "3141": [
+  {
+   "branch": "fix/3141-proc-look-clock",
+   "sha": "c62a23334fe681ab04ed5e54a1a767b5ba9794a3"
+  }
+ ],
+ "3157": [
+  {
+   "branch": "fix/3157-reduced-motion-decorative",
+   "sha": "d459527c976d0a1ea06edebd250a384b388cbcff"
+  }
+ ],
+ "3163": [
+  {
+   "branch": "fix/3163-issue-3163",
+   "sha": "690ee207c8b96319abce60a0814f118d63669908"
+  }
+ ],
+ "3165": [
+  {
+   "branch": "fix/3165-reasoning-faces",
+   "sha": "0b64bfe980be3d2681a60454425c0cf46dc019c6"
+  },
+  {
+   "branch": "fix/3165-reasoning-faces-current",
+   "sha": "b5e38e1cbdb6cecfe1ce8d1bdb34c362c14686ef"
+  }
+ ],
+ "3166": [
+  {
+   "branch": "fix/3166-responses-continuation",
+   "sha": "08a2d1f524d7cee84571dd2f16862e983b9b1a7c"
+  }
+ ],
+ "3174": [
+  {
+   "branch": "fix/3174-claude-signin-test-cache",
+   "sha": "de9593aca47a8fbfb0ec11764e53a37e86dc12f2"
+  }
+ ],
+ "3188": [
+  {
+   "branch": "fix/3188-sub2api-percent",
+   "sha": "0817d2e9624f1d7b6bde53e6c1b00f5cccd78ce0"
+  },
+  {
+   "branch": "fix/3188-sub2api-percent-r2",
+   "sha": "f4c5d3134fedf8eec8c4b2297cf91c7f078e5344"
+  }
+ ],
+ "3191": [
+  {
+   "branch": "fix/3191-gateway-request-body-write-can",
+   "sha": "043fe4effa17d02a3cff01861d217aea9058488e"
+  }
+ ],
+ "3197": [
+  {
+   "branch": "fix/3197-orphan-event",
+   "sha": "a5fa3228f996808dc8c2d1628fb89103bafadee4"
+  }
+ ],
+ "3202": [
+  {
+   "branch": "fix/3202-issue-3202",
+   "sha": "5302293b6bfb4d2d8ae05e0ca9ceff531531af33"
+  }
+ ],
+ "3206": [
+  {
+   "branch": "fix/3206-gateway-server-managed-tools-web",
+   "sha": "b9d5e58c864d15d07c048c8b0e6ac8c1bf942012"
+  }
+ ],
+ "3228": [
+  {
+   "branch": "fix/3228-windows-ntfs-cursor-480gb-500gb",
+   "sha": "ad2b0ce920824665d8c5cd021736ff8025fb9b8a"
+  }
+ ],
+ "3235": [
+  {
+   "branch": "fix/3235-qoder-cn",
+   "sha": "366eb4737680f04c30a99c3dcf23e5081d300f78"
+  }
+ ],
+ "3237": [
+  {
+   "branch": "fix/3237-remote-gemini",
+   "sha": "3bc416e7adbe8b8513096b41834f144b7e2c9141"
+  }
+ ],
+ "3248": [
+  {
+   "branch": "fix/3248-codeassist-restart",
+   "sha": "db55f831b2a848f01741249fe2af71bcbfccc96e"
+  }
+ ],
+ "3254": [
+  {
+   "branch": "fix/3254-accounts-switching-to-or-forgetting",
+   "sha": "4a73b8d71481e3fa3e2c7c252fab9516eb0f7ece"
+  }
+ ],
+ "3278": [
+  {
+   "branch": "fix/3278-day-window-budget",
+   "sha": "1386690f0c877035eee513a717081574bd82645a"
+  }
+ ],
+ "3302": [
+  {
+   "branch": "fix/3302-embedding-indices",
+   "sha": "02a461098b32babecff8eedf07c52dee1328c0b2"
+  }
+ ],
+ "3308": [
+  {
+   "branch": "fix/3308-panel-subagent-effort",
+   "sha": "2a75e5d381a5adefc1703b25c536203b85b49d78"
+  }
+ ],
+ "3310": [
+  {
+   "branch": "fix/3310-copilot-403-forbidden-magpie",
+   "sha": "0ef34f7e2ddb9d4c782402814f4f351d75b4e5ca"
+  }
+ ],
+ "3311": [
+  {
+   "branch": "fix/3311-panel-request-isolation",
+   "sha": "18f05d73e632a269d388d42279c9b39030e23a91"
+  }
+ ],
+ "3313": [
+  {
+   "branch": "fix/3313-magpie-mcp-image-nano-banana",
+   "sha": "5c8ef7fa691d224d5a5372e72231f324e2d0639e"
+  }
+ ],
+ "3320": [
+  {
+   "branch": "fix/3320-rtk-verdict",
+   "sha": "ff8cdd643b0a031efe9b584dc1307df69974dbd7"
+  }
+ ],
+ "3322": [
+  {
+   "branch": "fix/3322-issue-3322",
+   "sha": "878180034da964ecc130448b3ea82a0fc4bc0193"
+  }
+ ],
+ "3324": [
+  {
+   "branch": "fix/3324-history-viewer-day",
+   "sha": "0765619b9dcab40c71c245c84ccc2fa046e52ed6"
+  }
+ ],
+ "3331": [
+  {
+   "branch": "fix/3331-issue-3331",
+   "sha": "0bd3651de374eb007a14ed176a2448c2375192e4"
+  }
+ ],
+ "3365": [
+  {
+   "branch": "fix/3365-known-common-words",
+   "sha": "ad4ee842cfc17a814b6c3f3810437d8172a2842c"
+  }
+ ],
+ "3392": [
+  {
+   "branch": "fix/3392-xai-required-empty",
+   "sha": "16a4053b056abc610850c610c83981062a88a31f"
+  }
+ ],
+ "3397": [
+  {
+   "branch": "fix/3397-bun-proxy-default-port",
+   "sha": "eaae69f280006590caa1271c9f9f4b01a3ebd8dd"
+  }
+ ],
+ "3399": [
+  {
+   "branch": "fix/3399-kimi-thinking",
+   "sha": "d19b48b8dc46e84d477b4cbc54bd525dd539348e"
+  },
+  {
+   "branch": "fix/3399-kimi-thinking-2cdbe92",
+   "sha": "46bdcc6d9b19dba39b934bea123fd45e1a1610c6"
+  }
+ ],
+ "3456": [
+  {
+   "branch": "fix/3456-codearts-model-benefit",
+   "sha": "97317054d2a175c9018512ca09171ac45725a871"
+  }
+ ],
+ "3487": [
+  {
+   "branch": "fix/3487-quota-span-fixture-1767",
+   "sha": "b6f71ebd8e7824148fc658347ba0561505deb15e"
+  }
+ ],
+ "3512": [
+  {
+   "branch": "fix/3512-first-write-waits",
+   "sha": "1b6961621c954bb4f14d4c13f9c48bac751b9a4c"
+  }
+ ],
+ "3514": [
+  {
+   "branch": "fix/3514-subscription-claude-dsh-messages",
+   "sha": "9d68cb86b820619c64f41ab1c8d2ef5fed0ab27d"
+  }
+ ],
+ "3528": [
+  {
+   "branch": "fix/3528-search-usage-rows",
+   "sha": "f6064d5d6b1785760972ca2f6fe7f63e7776d747"
+  }
+ ],
+ "3541": [
+  {
+   "branch": "fix/3541-redact-local-hostname",
+   "sha": "8a62db2a13eb2b347fd1c257a9339afafbfb04b4"
+  }
+ ],
+ "3547": [
+  {
+   "branch": "fix/3547-marshalraw-go127-line-separators",
+   "sha": "0864a99ae42d47d1a3f4f4e76b5330fecf3759af"
+  }
+ ],
+ "3549": [
+  {
+   "branch": "fix/3549-image-budget-count",
+   "sha": "72123710272511e10d0a808065f3a2f78e7cd633"
+  }
+ ],
+ "3555": [
+  {
+   "branch": "fix/3555-unrest-owner",
+   "sha": "1fe501d29a4f1c16cd8e70efbcfe386a1f300cc8"
+  }
+ ],
+ "3556": [
+  {
+   "branch": "fix/3556-quota-retry-after-short",
+   "sha": "b0e05fc88bcb498096d0d5f7b97cbd7fd320d459"
+  }
+ ],
+ "3561": [
+  {
+   "branch": "fix/3561-privacy-model-proxy",
+   "sha": "8f20732e467648a893ad57e1ea3e83764ef1d635"
+  }
+ ],
+ "3566": [
+  {
+   "branch": "fix/3566-kimi-typed-ref-untyped-union",
+   "sha": "28919f45b30b0ad6a46aa251c83f6ccf9c4285a7"
+  }
+ ],
+ "3572": [
+  {
+   "branch": "fix/3572-antigravity-thought-signature",
+   "sha": "ba8d930541fd0de69c46e6b87a0cf582085b8a0b"
+  }
+ ],
+ "3574": [
+  {
+   "branch": "fix/3574-prose-password",
+   "sha": "5d1592b31a171761390c63a37ab21444ad9ae59e"
+  }
+ ],
+ "3615": [
+  {
+   "branch": "fix/3615-loop-guard-does-not-cover",
+   "sha": "125a5e087ef882a6223dff6645589b0ee33cdbd6"
+  }
+ ],
+ "3619": [
+  {
+   "branch": "fix/3619-model-scoped-rate-limit",
+   "sha": "bbd53987c389f89caba670c3d121f344d3d8b594"
+  }
+ ],
+ "3629": [
+  {
+   "branch": "fix/3629-masking-false-positives",
+   "sha": "d8a77d1379408b9b3f4b33124894a71b5dbfabbb"
+  }
+ ],
+ "3655": [
+  {
+   "branch": "fix/3655-pending-wait-not-a-loop",
+   "sha": "29218ae3bb351df8c9f9e78c12b664883d719d2f"
+  }
+ ],
+ "3664": [
+  {
+   "branch": "fix/3664-intent-effort-failover",
+   "sha": "2136cf04421d1e64e8334f94a22a8cbc677b2b9c"
+  }
+ ],
+ "3665": [
+  {
+   "branch": "fix/3665-bug-protocol-detection-for-custom",
+   "sha": "f476cbc8283ebf48c2d11214da5dfe7d796bf9c3"
+  }
+ ],
+ "3669": [
+  {
+   "branch": "fix/3669-minimax-cn-url",
+   "sha": "da00218e9bd1d857764dc5ee617e90532f25cd08"
+  }
+ ],
+ "3680": [
+  {
+   "branch": "fix/3680-wsl-probe-fresh-connection",
+   "sha": "1b93ee5c883344549c48ed1a152d5fe31f431b22"
+  }
+ ],
+ "3683": [
+  {
+   "branch": "fix/3683-mcp-oauth-callback",
+   "sha": "bccb4844dadaa0c271967610db964b4404329306"
+  }
+ ],
+ "3690": [
+  {
+   "branch": "fix/3690-claude-room-freed",
+   "sha": "56b4f3174abc0643854d4d82c1dc8a9b8660dc33"
+  }
+ ],
+ "3698": [
+  {
+   "branch": "fix/3698-prefix-off",
+   "sha": "6d7c04d0e427e34f16606661616c8ceb8f56d161"
+  }
+ ],
+ "3701": [
+  {
+   "branch": "fix/3701-held-clause",
+   "sha": "5253cad3f9961e7fa7cd28b9d704ecc509852de7"
+  }
+ ],
+ "3703": [
+  {
+   "branch": "fix/3703-bug-a-pinned-member-that-starts-failing-",
+   "sha": "67a6c020a674dd0ce704dde4c63d194caa077769"
+  }
+ ],
+ "3705": [
+  {
+   "branch": "fix/3705-remote-key-limit",
+   "sha": "6c8bd9bc98a75ef9ce37c80f0b5c22987857bc2e"
+  }
+ ],
+ "3708": [
+  {
+   "branch": "fix/3708-agy-settle",
+   "sha": "1c8f94dec43db6981e182146c32b513fadf659b6"
+  }
+ ],
+ "3713": [
+  {
+   "branch": "fix/3713-canonical-slug",
+   "sha": "5d71e01010c6919cac89009d0cc86b5d48c6de64"
+  }
+ ],
+ "3716": [
+  {
+   "branch": "fix/3716-options-field",
+   "sha": "62bb7d58883e8c8be8548396fc5d5b1b77aa882e"
+  }
+ ],
+ "3721": [
+  {
+   "branch": "fix/3721-siwc-quota",
+   "sha": "20ac3a6c1696f86e9b8b6a2bbf2514ccb9a9320a"
+  }
+ ],
+ "3722": [
+  {
+   "branch": "fix/3722-pii-a-masking-request-in",
+   "sha": "1a81f400891748f79f7355a9ed913c5ee2680a1c"
+  }
+ ],
+ "3723": [
+  {
+   "branch": "fix/3723-import-stamps",
+   "sha": "e232a77702ed3bcf310fc75f4ec526ca1d8944c2"
+  }
+ ],
+ "3724": [
+  {
+   "branch": "fix/3724-xfyun-spark-x2-6-a",
+   "sha": "3603d9190aaff61cb7d6736874d9d2a613f5483d"
+  }
+ ],
+ "3738": [
+  {
+   "branch": "fix/3738-free-model-rest-id",
+   "sha": "499f0249ac8820b9c032264005a233d7dc9d3351"
+  }
+ ],
+ "3742": [
+  {
+   "branch": "fix/3742-late-interrupt",
+   "sha": "fd442d4f97972547028709dd4e181867b948ece6"
+  }
+ ],
+ "3745": [
+  {
+   "branch": "fix/3745-bug-library-write-failure-banner-cannot-",
+   "sha": "1d3b657d3c7216eec282117d83b4ec0743b7121d"
+  }
+ ],
+ "3751": [
+  {
+   "branch": "fix/3751-codex-meta-length",
+   "sha": "7e061eda722b76a65f1fada3f6704808e2ebb8e8"
+  },
+  {
+   "branch": "fix/3751-codex-move-lock",
+   "sha": "5dc5057c1ba8a8c37b92caa645fc25741a259835"
+  }
+ ],
+ "3754": [
+  {
+   "branch": "fix/3754-wsl-profile-probe",
+   "sha": "979784f6e23a4fb0abe6707f63c9b99c1e91e08b"
+  }
+ ],
+ "3775": [
+  {
+   "branch": "fix/3775-token-count",
+   "sha": "c4fd6c4be066b803a60e590726839088948f8729"
+  }
+ ],
+ "3776": [
+  {
+   "branch": "fix/3776-jp-phone",
+   "sha": "ab40c7ea8a02f855aa8e8e51aa4a5df209be705d"
+  }
+ ],
+ "3785": [
+  {
+   "branch": "fix/3785-pool-tooltip",
+   "sha": "a5f315a3b60838903a2dd25a9c38f4ed840816df"
+  }
+ ],
+ "3790": [
+  {
+   "branch": "fix/3790-tencent-cloud-tokenhub-international-guangzhou",
+   "sha": "145879014bf5f780a0a9136b848d719f0bb418a5"
+  }
+ ],
+ "3792": [
+  {
+   "branch": "fix/3792-chat-error-no-start",
+   "sha": "b16a0651ededfa3f391e28e87100c10a0507ab9b"
+  }
+ ],
+ "3793": [
+  {
+   "branch": "fix/3793-as-sent-spawn-agent",
+   "sha": "f0d7a9cd6e61bbeb9ac2bd4e877818321c136ede"
+  }
+ ],
+ "3805": [
+  {
+   "branch": "fix/3805-ready-not-models",
+   "sha": "848a87efb8aa73c169b23d789c45ccb702dad476"
+  }
+ ],
+ "3812": [
+  {
+   "branch": "fix/3812-workdir-enterable",
+   "sha": "e29585369bffeec7ad8968eb52cdb9888cad0613"
+  }
+ ],
+ "3814": [
+  {
+   "branch": "fix/3814-inline-object-bytes",
+   "sha": "6276ec7d5017a5e69b26f980ec9f5271ab36982a"
+  }
+ ],
+ "3816": [
+  {
+   "branch": "fix/3816-plan-quota-readat",
+   "sha": "3c7725cba5d1d2511a197c54061124603bad364a"
+  }
+ ],
+ "3821": [
+  {
+   "branch": "fix/3821-hooks-discover",
+   "sha": "38b8f9b979ad2916f5a81a23c219a4dc067817ac"
+  }
+ ],
+ "3822": [
+  {
+   "branch": "fix/3822-codex-mcp-config",
+   "sha": "1f2d9385da06f24ee5ab5af2e5f4fc3f6bb11455"
+  }
+ ],
+ "3826": [
+  {
+   "branch": "fix/3826-zcode-levels-order",
+   "sha": "f26769d7e93bd636c8e6fc4d11969c58fd2afaad"
+  }
+ ],
+ "3828": [
+  {
+   "branch": "fix/3828-opencode-bin-path",
+   "sha": "127fee620b0b2c60ed553665d4f2438fb42f3236"
+  }
+ ],
+ "3834": [
+  {
+   "branch": "fix/3834-config-sync-can-create-a",
+   "sha": "b0263ae742d4afe160083b7008ae6ebd2f192588"
+  }
+ ],
+ "3838": [
+  {
+   "branch": "fix/3838-requests-key-plan-identity",
+   "sha": "a2c5ca2f8bce769b0a0b6634d0d2e48201a150c7"
+  }
+ ],
+ "3846": [
+  {
+   "branch": "fix/3846-mainview-view-param",
+   "sha": "61968cdba72620ba473fa0da31d1f71cf8e7968d"
+  }
+ ],
+ "3847": [
+  {
+   "branch": "fix/3847-nested-free-seat",
+   "sha": "198934f5e67e6ffdb0862618f737103389126bfa"
+  }
+ ],
+ "3848": [
+  {
+   "branch": "fix/3848-probe-timeout-flaky",
+   "sha": "ab6ec3f3fd18407ea6fd1cc73fb2f0a6a0a2f388"
+  }
+ ],
+ "3849": [
+  {
+   "branch": "fix/3849-codex-compaction-custom-tool-call",
+   "sha": "3befa94eeffc46bff09726d98105feba9b505247"
+  }
+ ],
+ "3851": [
+  {
+   "branch": "fix/3851-codex-identity-consistency",
+   "sha": "023450f799074c0c63f4c208f697c3484d990cd7"
+  }
+ ],
+ "3852": [
+  {
+   "branch": "fix/3852-zcode-reasoning-config",
+   "sha": "8dd2bbaeacc4a0c5cbe5be844b134da67c6f482c"
+  }
+ ],
+ "3858": [
+  {
+   "branch": "fix/3858-icon-tile-rule",
+   "sha": "8644ddcb2a0bd4c6d689ee5601273ae8a349bc82"
+  }
+ ],
+ "3860": [
+  {
+   "branch": "fix/3860-pii-flaky-test",
+   "sha": "50be2d633d9347abe8a21f4ab56ac0d6464a5de4"
+  }
+ ],
+ "3867": [
+  {
+   "branch": "fix/3867-kimi-untyped-enum",
+   "sha": "ef025ea6c8f7db8e37f042387648327ab6d49bcf"
+  }
+ ],
+ "3868": [
+  {
+   "branch": "fix/3868-reenable-openai-base-url",
+   "sha": "30c692d738ef6aa057ee045f9300a2db96f5e14b"
+  }
+ ],
+ "3871": [
+  {
+   "branch": "fix/3871-grok-encrypted-content",
+   "sha": "f9fa94c54725ac7b0740b47881d50bd16cf4d672"
+  }
+ ],
+ "3878": [
+  {
+   "branch": "fix/3878-redact-false-alarms",
+   "sha": "5feefccc1a9af5265f6bb729fc7ed52f0e14973d"
+  }
+ ],
+ "3883": [
+  {
+   "branch": "fix/3883-opencode2-stale-models",
+   "sha": "356c3f3278b0b71dac8ec9cee4b0e1bdc65b1dd5"
+  }
+ ],
+ "3884": [
+  {
+   "branch": "fix/3884-folder-vars-listed",
+   "sha": "2638e5cf4b97528372b6c3c31eaf41d1adb4211d"
+  }
+ ],
+ "3886": [
+  {
+   "branch": "fix/3886-fix",
+   "sha": "156161ff580951db3b7303f745c2ecd664e645a8"
+  }
+ ],
+ "3887": [
+  {
+   "branch": "fix/3887-web-search-call-encrypted",
+   "sha": "f4f122766ddbabe00d956cf752b5fdbc0227de1f"
+  }
+ ],
+ "3894": [
+  {
+   "branch": "fix/3894-chinese-ui-lost",
+   "sha": "3861da37204378bae74444da990c9aa4ce0380a9"
+  }
+ ],
+ "3897": [
+  {
+   "branch": "fix/3897-runs-as-i18n",
+   "sha": "161b13a1e8ea37f964479eba35baf75c99183710"
+  }
+ ],
+ "3899": [
+  {
+   "branch": "fix/3899-gui-omp-roles-5s-locator",
+   "sha": "00eb456e0b0e7ffc943e512ead8747c3c4da9061"
+  }
+ ],
+ "3902": [
+  {
+   "branch": "fix/3902-plugin-serves-chip",
+   "sha": "377acedb4f8ec4bafb4e40e4d921e9f459f7c9b5"
+  }
+ ],
+ "3903": [
+  {
+   "branch": "fix/3903-input-prediction-off",
+   "sha": "ddb4b7985b469ea2e9ffab80dcc32748d1c76777"
+  }
+ ],
+ "3909": [
+  {
+   "branch": "fix/3909-google-upstreams-large-requests-fail",
+   "sha": "8eaf63866f76a88b2ddb096e9bcc99295ebb7ed0"
+  },
+  {
+   "branch": "fix/3909-stale-upload-test-comment",
+   "sha": "1c4aa4e4cb7a3eef01ce93a654f2ecb2529fcdef"
+  }
+ ],
+ "3914": [
+  {
+   "branch": "fix/3914-seedream-ark",
+   "sha": "65def4bfa4c56179cb8f0dd73676c08568e31537"
+  }
+ ],
+ "3918": [
+  {
+   "branch": "fix/3918-omp-effort-routing",
+   "sha": "51e60b3bdec1f6f445b14da635443fcb8df963b1"
+  }
+ ],
+ "3925": [
+  {
+   "branch": "fix/3925-rerank-record-name",
+   "sha": "5e1ea3cf634b3880eeaf20cf7b1a6639124d6673"
+  }
+ ],
+ "3927": [
+  {
+   "branch": "fix/3927-plugins-magpie-plugin-add-a",
+   "sha": "0aecbae86030f286b8fa0b0ca17d41361e045433"
+  }
+ ],
+ "3928": [
+  {
+   "branch": "fix/3928-gui-an-npm-card-installs",
+   "sha": "7f9586649e29cd7e3e3217f0ada8259ea8f42f46"
+  }
+ ],
+ "3930": [
+  {
+   "branch": "fix/3930-gui-a-repository-s-card",
+   "sha": "dc9212d2b5ac1d1473a267bdf44af31720417846"
+  }
+ ],
+ "3984": [
+  {
+   "branch": "fix/3984-cancel-pending-mcp-signin",
+   "sha": "8e4b41570408f34b6ae254043757468e8c137e31"
+  }
+ ],
+ "4118": [
+  {
+   "branch": "fix/4118-pii-stale-miss",
+   "sha": "76ccec8852720c38e5c30908d2807677b6b31d8c"
+  }
+ ],
+ "4136": [
+  {
+   "branch": "fix/4136-wsl-probe-lock",
+   "sha": "788f18e38b92cdd1a3a1c1cff8cf846552850319"
+  }
+ ],
+ "4137": [
+  {
+   "branch": "fix/4137-davsync-read-cap",
+   "sha": "3ff971ddd56463a7bed3c8a2230ba8783ae57d23"
+  }
+ ],
+ "4141": [
+  {
+   "branch": "fix/4141-dav-put-version",
+   "sha": "3452982b8ad99aa3c74f86c326a65f5f53ad1844"
+  }
+ ],
+ "4144": [
+  {
+   "branch": "fix/4144-sessions-frame-tail",
+   "sha": "ba4f3ef69a0fbfd85c0250b9e8d8dcef0ba3866f"
+  }
+ ],
+ "4234": [
+  {
+   "branch": "fix/4234-account-list-test-budget",
+   "sha": "1a15ba47080ad6b3d6659495b1dad355b577e91b"
+  }
+ ],
+ "4235": [
+  {
+   "branch": "fix/4235-busy-test-handler-completion",
+   "sha": "6c1cc813ac37ab962595f7055a8bacd5913a3e6a"
+  }
+ ],
+ "4258": [
+  {
+   "branch": "fix/4258-agent-stash-durability",
+   "sha": "9b83ba67049afc9f9cf96c339c8c46a4f29dc0bd"
+  }
+ ],
+ "4333": [
+  {
+   "branch": "fix/4333-desktop-native-session-ids",
+   "sha": "ed2c1bf945e30fe78d692f081780aee221c4aa3c"
+  }
+ ],
+ "4428": [
+  {
+   "branch": "fix/4428-aside-gemini-keeps-chat",
+   "sha": "c5601602b584ff91ea8e0fa95b5e2fda80ae784d"
+  }
+ ],
+ "4592": [
+  {
+   "branch": "fix/4592-claude-switch-credential-first",
+   "sha": "ec847e8b57547260ea435db9e36e249b2f987482"
+  }
+ ],
+ "4603": [
+  {
+   "branch": "fix/4603-dpkg-fixture-windows-name",
+   "sha": "5d99f447736783b6c55d5b958be2c753dfd89033"
+  }
+ ],
+ "4672": [
+  {
+   "branch": "fix/4672-portable-vscode-extension-detection",
+   "sha": "bab5f9c084d8bf222b38ad1aaa03a6b75985cd6d"
+  }
+ ],
+ "4675": [
+  {
+   "branch": "fix/4675-last-stream-context-overflow",
+   "sha": "b8b3eced8ffbeb8b7feb1be7d7a459d6962ccd51"
+  }
+ ],
+ "4821": [
+  {
+   "branch": "fix/4821-quota-all-pools",
+   "sha": "27af07ad4fb3960515e1a1feab7375c230c4e3d7"
+  }
+ ],
+ "4829": [
+  {
+   "branch": "fix/4829-plugin-run-lifetime-no-rest",
+   "sha": "49786b5e05ec14aeb600d2eb3fd7c36cb40b2797"
+  }
+ ],
+ "4831": [
+  {
+   "branch": "fix/4831-wallet-balance-no-line",
+   "sha": "6a79386761c144abbd8c53a4b38adaf555877274"
+  }
+ ],
+ "4843": [
+  {
+   "branch": "fix/4843-status-lists-bound-addr",
+   "sha": "f27d107b388001d995952e46841da37d29ace040"
+  }
+ ],
+ "4855": [
+  {
+   "branch": "fix/4855-relay-error-frame",
+   "sha": "5d2adb0faaed1fd2f14717911ae71c64794533a7"
+  }
+ ],
+ "4870": [
+  {
+   "branch": "fix/4870-minimax-moved-datadir",
+   "sha": "f8b369d9f301ebc4a09d54ff16f7d05354db6393"
+  }
+ ],
+ "4872": [
+  {
+   "branch": "fix/4872-wsl-standin-gate",
+   "sha": "81745f4a7ee9fc3ac1dbfc77035b198d7a3b4178"
+  }
+ ],
+ "4874": [
+  {
+   "branch": "fix/4874-overlap-text-block-start",
+   "sha": "b20255c625196f0053d7b06d9dc6c64ad6b7b443"
+  }
+ ],
+ "4878": [
+  {
+   "branch": "fix/4878-rune-clip-current",
+   "sha": "5ba743116cb6f43a10de6024580f5fa96ab8c8c8"
+  },
+  {
+   "branch": "fix/4878-rune-safe-clip",
+   "sha": "3f9c641d0de5f0a05bb1b70db19f804400ff70ed"
+  }
+ ],
+ "4904": [
+  {
+   "branch": "fix/4904-import-folds-endpoint",
+   "sha": "ef20298d21582ebe93d01ba3ac1525f55829bca0"
+  }
+ ],
+ "4906": [
+  {
+   "branch": "fix/4906-mistral-translated-reasoning",
+   "sha": "29b0ea3087a46e1a1048a4a4133c0f93a33eaedd"
+  }
+ ],
+ "4921": [
+  {
+   "branch": "fix/4921-citation-offsets",
+   "sha": "fcea11649334b8a6b17a7efe6d4ccdc676afc112"
+  }
+ ],
+ "4942": [
+  {
+   "branch": "fix/4942-title-function-call",
+   "sha": "2880d2df8ac74cf3b44cdfced8559b4bf32d7987"
+  }
+ ],
+ "4945": [
+  {
+   "branch": "fix/4945-deepseek-parallel-tool-uses",
+   "sha": "8847ef602682f07a81be9f0653b0c306b0450fa5"
+  }
+ ],
+ "4953": [
+  {
+   "branch": "fix/4953-codex-input-base-instructions",
+   "sha": "560fff800899fce61dc7b4db9ef61a0511e4e234"
+  }
+ ],
+ "4955": [
+  {
+   "branch": "fix/4955-seedance-not-chat",
+   "sha": "a989e8e39752fbebcbb6f337768f36512ab54f6b"
+  }
+ ],
+ "4956": [
+  {
+   "branch": "fix/4956-4854-bridge-deferred-tool-names",
+   "sha": "3086a49605503c910bccd848cbe190549764ba37"
+  }
+ ],
+ "5018": [
+  {
+   "branch": "fix/5018-cached-search-model-wire",
+   "sha": "042f814a9a3c96a9704cf097793088d8944100f0"
+  }
+ ],
+ "5063": [
+  {
+   "branch": "fix/5063-bun-standard-stream-guard",
+   "sha": "09b8c01069242d850c6689618e410f57e68d4bbc"
+  }
+ ],
+ "5069": [
+  {
+   "branch": "fix/5069-desktop-test-windows-skip",
+   "sha": "1da2a7ebd0874a935386aa59aa13de6462116a5f"
+  }
+ ],
+ "5150": [
+  {
+   "branch": "fix/5150-lane-test-owner-isolation",
+   "sha": "3ade7c26741a0061475d2d8079bd01999ba6feb8"
+  }
+ ],
+ "5178": [
+  {
+   "branch": "fix/5178-provider-account-recovery",
+   "sha": "8a17b62e06a52c6dd8e67a01225b3b7dcb3001fb"
+  }
+ ],
+ "5204": [
+  {
+   "branch": "fix/5204-messages-unsigned-thinking",
+   "sha": "dbbc369b4ee8dc9344d298f21bee2c032f9b1364"
+  }
+ ],
+ "5239": [
+  {
+   "branch": "fix/5239-opencode-fixture-git-boundary",
+   "sha": "a4f6d0af59d229fc73506981a5a3453073796fde"
+  }
+ ],
+ "5240": [
+  {
+   "branch": "fix/5240-ignore-browser-skill-runtime-lock",
+   "sha": "7cd33dec457d8bc8f57d92071b854989b6580217"
+  }
+ ],
+ "5264": [
+  {
+   "branch": "fix/5264-signin-marker-complete",
+   "sha": "ff0c385ff0eafdb0df5432549706838818866207"
+  }
+ ],
+ "5271": [
+  {
+   "branch": "fix/5271-auth-lock-event-loop-witness",
+   "sha": "94d8550c8bddf965729ab21d528d5fb8a9d37104"
+  }
+ ],
+ "5290": [
+  {
+   "branch": "fix/5290-library-fixture-gotmpdir",
+   "sha": "c76d6b39fc1ce70b09ef4bcb5e6fbf589fffdf2d"
+  }
+ ],
+ "5327": [
+  {
+   "branch": "fix/5327-i18n-comment-ownership",
+   "sha": "ead4357767b3f5647df4cff1ce1d94bab6a37664"
+  }
+ ],
+ "5334": [
+  {
+   "branch": "fix/5334-closed-pipe-ending",
+   "sha": "8bbdb812e9c243f9c831f3ae843e729aa717c561"
+  }
+ ],
+ "5341": [
+  {
+   "branch": "fix/5341-connectex-keeps-last-quota",
+   "sha": "f572e15d5fb288df3a2db71d0d8dabbaad972144"
+  }
+ ],
+ "5342": [
+  {
+   "branch": "fix/5342-real-absolute-image-fixture",
+   "sha": "f09fc978998e844c834652e88f44681cc7b02796"
+  }
+ ],
+ "5343": [
+  {
+   "branch": "fix/5343-mise-script-permissions",
+   "sha": "9dd52caa1835b78f4e85a2a6f562d45ba8f1bc3a"
+  }
+ ],
+ "5344": [
+  {
+   "branch": "fix/5344-windows-claude-script-expectation",
+   "sha": "a3b84941734639435c316efd4340a30a4cc24eeb"
+  }
+ ],
+ "5348": [
+  {
+   "branch": "fix/5348-json-runtime-parity",
+   "sha": "102f2b1de6d718d62f0ae8fa53fd6ca469ecff50"
+  }
+ ],
+ "5359": [
+  {
+   "branch": "fix/5359-plugin-account-header-fields",
+   "sha": "aca455708d5a651590cc7be8620fa95e9e2742a6"
+  }
+ ],
+ "5376": [
+  {
+   "branch": "fix/5376-translated-phantom-tool-finish",
+   "sha": "12cd2055fc464c6edc9dc10262ab4b8752a60e20"
+  }
+ ],
+ "5425": [
+  {
+   "branch": "fix/5425-nav-timeout-siblings",
+   "sha": "10275d5a6e63f14f541d26ed122220ba49d3aad2"
+  }
+ ],
+ "5433": [
+  {
+   "branch": "fix/5433-register-mcp-stream-before-send",
+   "sha": "5acae7bee5cd87d816bd9ca8abcd24b9b3a82e94"
+  }
+ ],
+ "5435": [
+  {
+   "branch": "fix/5435-subagent-kept-fewest",
+   "sha": "50e61864b0dd85cf3ffbcacb551999d8bd7121ff"
+  }
+ ],
+ "5522": [
+  {
+   "branch": "fix/5522-node-fetch-browser-classification",
+   "sha": "98be68098a39e4ed13a8c47f48c353254e691872"
+  }
+ ],
+ "5526": [
+  {
+   "branch": "fix/5526-codex-image-relay-records",
+   "sha": "3478b2afa41fba34a3443dd30b2d8266cf8dcc80"
+  }
+ ],
+ "5528": [
+  {
+   "branch": "fix/5528-persist-update-check-time",
+   "sha": "63e205b1449df5bb3aab2ea45ddbd8847979fb96"
+  }
+ ],
+ "5541": [
+  {
+   "branch": "fix/5541-overlapping-held-catalog-refresh",
+   "sha": "333d97b4ab9633c28527a7ad433f06a42d76fb49"
+  }
+ ],
+ "5587": [
+  {
+   "branch": "fix/5587-agent-test-running-isolation",
+   "sha": "81421adfe5c003003a13ae6b4eb597d7b557f7d9"
+  }
+ ],
+ "5628": [
+  {
+   "branch": "fix/5628-reset-history-preservation",
+   "sha": "dcaea43244615808b3ff284303e71d12f9191166"
+  }
+ ],
+ "5656": [
+  {
+   "branch": "fix/5656-claude-bridge-history",
+   "sha": "6ce4b7c899b71024aa98b288a821315f46f8c701"
+  }
+ ],
+ "5676": [
+  {
+   "branch": "fix/5676-gateway-key-badges-no-shift",
+   "sha": "824152e8b57d1a02c1ad00ef04b348dae562d506"
+  }
+ ],
+ "5681": [
+  {
+   "branch": "fix/5681-session-tests-timezones",
+   "sha": "a61e2214355a882cf514071facaeba398c6609b2"
+  }
+ ],
+ "5684": [
+  {
+   "branch": "fix/5684-dsh-trailing-sentinels",
+   "sha": "dab6c4f8dad134341b7e6e94d0fdb5a5e01d0f9e"
+  }
+ ],
+ "5688": [
+  {
+   "branch": "fix/5688-plugin-page-options-limit",
+   "sha": "22c07066c65cc2a4e8cc016bdde13e2f4420bc1c"
+  }
+ ],
+ "5690": [
+  {
+   "branch": "fix/5690-gateway-stats-virtual-midnight",
+   "sha": "1554065af326bf6cfa4ad4dfa06200c560bfe069"
+  }
+ ],
+ "5696": [
+  {
+   "branch": "fix/5696-image-count-fallback",
+   "sha": "0b865efce37d8be361534686cbe99c86121f2681"
+  }
+ ],
+ "5708": [
+  {
+   "branch": "fix/5708-tray-motion-reduced-inflight",
+   "sha": "1184f194d4d9790d5b0077b6c9299db7dca3ac24"
+  }
+ ],
+ "5713": [
+  {
+   "branch": "fix/5713-search-history-chat",
+   "sha": "407201898c58222693b858a14210fe0a2e33441d"
+  }
+ ]
+}

@@ -1,0 +1,3572 @@
+[
+ {
+  "closed_at": null,
+  "comments": 5,
+  "created_at": "2026-11-08T16:17:25Z",
+  "number": 5713,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Responses→Chat：无 Claude 签名的 web_search_call 历史被静默删除（v0.1.3327）",
+  "user": "wudilyy999"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-08T13:54:01Z",
+  "number": 5708,
+  "state": "open",
+  "state_reason": null,
+  "title": "routing: the tray panel's stage stands still with motion reduced while a request is in flight",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-11-08T11:23:03Z",
+  "number": 5696,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: a vendor's image-count cap ends a routing group instead of failing over (Cloudflare: \"too many images in request (max 32)\")",
+  "user": "mikehasa"
+ },
+ {
+  "closed_at": "2026-11-11T00:51:25Z",
+  "comments": 2,
+  "created_at": "2026-11-08T09:10:19Z",
+  "number": 5690,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "TestGatewayModeStatsNameTheGatewaySessions is red in the first hour of a local day",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-08T08:55:19Z",
+  "number": 5688,
+  "state": "open",
+  "state_reason": null,
+  "title": "Plugin page options are capped at 64 KiB, and a page has no other write channel",
+  "user": "iuiiui"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-11-08T07:05:27Z",
+  "number": 5684,
+  "state": "open",
+  "state_reason": null,
+  "title": "兼容冲突问题 dsh route 重写会缩进其他工具的注释哨兵，与 One Memory 形成无限互相覆盖",
+  "user": "wang1078564969"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-08T06:56:25Z",
+  "number": 5681,
+  "state": "open",
+  "state_reason": null,
+  "title": "sessions: TestAgyGrows and TestCursor red under TZ=Pacific/Kiritimati",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-08T05:47:17Z",
+  "number": 5676,
+  "state": "open",
+  "state_reason": null,
+  "title": "gui: a gateway key's unset quotas badge takes room only under the pointer, so the row shifts on hover",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-08T01:15:06Z",
+  "number": 5656,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug]Claude Code 走订阅账号时，magpie 自己的中转运行会被误判为 \"bypassed\"",
+  "user": "Mingtha"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-07T15:07:42Z",
+  "number": 5628,
+  "state": "open",
+  "state_reason": null,
+  "title": "provider: a Codex reset use record whose read fails (not bad JSON) is written over, history lost, no copy kept",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-07T04:31:39Z",
+  "number": 5587,
+  "state": "open",
+  "state_reason": null,
+  "title": "agent: LiveAgent's, OpenPencil's and NewMax's running checks read the test machine, so one open there turns the every-agent tests red",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-06T14:21:49Z",
+  "number": 5541,
+  "state": "open",
+  "state_reason": null,
+  "title": "provider: another process's provider removal is routed past for up to heldFor while requests overlap",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-06T13:12:01Z",
+  "number": 5528,
+  "state": "open",
+  "state_reason": null,
+  "title": "update: the auto-update check clock is in memory, so every relaunch checks again at once",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-06T13:02:22Z",
+  "number": 5526,
+  "state": "open",
+  "state_reason": null,
+  "title": "Codex's own /images/generations relay isn't written to the Requests log or Routing",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-11-06T12:06:09Z",
+  "number": 5522,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: Node's fetch sends Sec-Fetch-Mode, so fromBrowser takes a keyed Node MCP client for a web page",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-11-06T02:29:36Z",
+  "number": 5435,
+  "state": "open",
+  "state_reason": null,
+  "title": "TestCodexSubagentModelsKept: allocation ratio counts other goroutines",
+  "user": "yetone"
+ },
+ {
+  "closed_at": "2026-11-11T02:50:10Z",
+  "comments": 2,
+  "created_at": "2026-11-06T02:18:10Z",
+  "number": 5433,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "library tests: TestRunServerAsks red once in a package run: the call's reply came before the server's roots/list ask",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-11-06T01:16:47Z",
+  "number": 5425,
+  "state": "open",
+  "state_reason": null,
+  "title": "gui tests: nav-timeout red on origin/main 84ad780b6, four files set a 5s default without a navigation minute (accounts-own-signin, accounts-switch-alone, icon-one-tone, provider-retrieval-only)",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-05T10:15:33Z",
+  "number": 5376,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: a translated Chat reply ending tool_calls with no call reaches Messages/Responses clients as tool_use (sibling of #4944)",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-05T08:32:20Z",
+  "number": 5359,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway/gui: cannot configure passHeaders or replyHeaders for plugin-backed providers in Web UI",
+  "user": "neighbads"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-05T07:40:35Z",
+  "number": 5348,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: fast JSON marshal parity tests fail on Go 1.27.3 (raw separators and invalid UTF-8)",
+  "user": "hhh2210"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-05T07:02:29Z",
+  "number": 5344,
+  "state": "open",
+  "state_reason": null,
+  "title": "agent: TestHowInstalledWindowsShim red on Windows: the npm update command differs from the test's expectation",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-05T07:02:26Z",
+  "number": 5343,
+  "state": "open",
+  "state_reason": null,
+  "title": "agent: TestMiseShimWindowsFiveAgents red on Windows: the npm update command differs from the test's expectation",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-05T07:02:23Z",
+  "number": 5342,
+  "state": "open",
+  "state_reason": null,
+  "title": "browsermcp: TestImageFromLeavesTheRest red on Windows: a Unix absolute path becomes \\\\work\\\\proj\\\\abs.png",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-05T07:02:19Z",
+  "number": 5341,
+  "state": "open",
+  "state_reason": null,
+  "title": "provider: TestCodexUsageSaysWhy/network red on Windows: connectex wording is not read as unreachable",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-05T06:02:53Z",
+  "number": 5334,
+  "state": "open",
+  "state_reason": null,
+  "title": "TestDeathSaysExitAndLastWords red under load on Linux: 'read |0: file already closed' wins over the exit status",
+  "user": "yetone"
+ },
+ {
+  "closed_at": "2026-11-09T12:14:13Z",
+  "comments": 2,
+  "created_at": "2026-11-05T05:23:18Z",
+  "number": 5327,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "gui tests: i18n-keys 'a plugin's words are its own' red on main 9d143eaca (search_row_archive_test.go says \"View routing\")",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-05T00:17:59Z",
+  "number": 5290,
+  "state": "open",
+  "state_reason": null,
+  "title": "test: Library subprocess fixtures fail the temporary HOME check on Linux",
+  "user": "AnacondaKC"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-11-04T16:33:18Z",
+  "number": 5271,
+  "state": "open",
+  "state_reason": null,
+  "title": "plugin: TestAuthLockWaitDoesNotFreezeTheHost counts timer ticks, red at 7 of 8 under load",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-11-04T15:02:15Z",
+  "number": 5264,
+  "state": "open",
+  "state_reason": null,
+  "title": "TestCancelledSignInEndsItsFetch: fetch-aborted read empty (\"\", want AbortError)",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-04T12:36:54Z",
+  "number": 5240,
+  "state": "open",
+  "state_reason": null,
+  "title": "library: a skill's own CLI writing its state file into the folder (browser-skill's .bsk.lock) reads as changed here",
+  "user": "rongyuio"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-11-04T12:23:27Z",
+  "number": 5239,
+  "state": "open",
+  "state_reason": null,
+  "title": "provider: TestOpenCodeProjectIs225s and TestOpenCodeEnvironmentIs225s red when a .git sits above the temp folder",
+  "user": "yinwu01"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-04T08:52:32Z",
+  "number": 5204,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug]从别的 provider 续聊过来后，relay 到严格的 Anthropic 兼容端点每轮 400：历史里的 unsigned thinking block 没有被处理",
+  "user": "donob-z"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-04T06:30:45Z",
+  "number": 5178,
+  "state": "open",
+  "state_reason": null,
+  "title": "routing: under auto session keeping, a provider's own accounts never go back to the first after it recovers",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-04T03:42:25Z",
+  "number": 5150,
+  "state": "open",
+  "state_reason": null,
+  "title": "test: TestLaneLimitRoutes reads the running gateway outside its sandbox",
+  "user": "turingcat"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-03T10:37:05Z",
+  "number": 5069,
+  "state": "open",
+  "state_reason": null,
+  "title": "internal/agent: TestDesktopHandlerNeedsItsEntryAndProgram red on Windows: no exe found for an entry there",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-03T09:47:48Z",
+  "number": 5063,
+  "state": "open",
+  "state_reason": null,
+  "title": "plugin host: a plugin's Bun.spawn given Bun.stdout gets the host's real stdout",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-03T05:41:43Z",
+  "number": 5018,
+  "state": "open",
+  "state_reason": null,
+  "title": "search: Codex's web_search = \"cached\" is not passed on when magpie searches for a model that can't",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-11-02T18:28:06Z",
+  "number": 4956,
+  "state": "open",
+  "state_reason": null,
+  "title": "Claude bridge: an unloaded deferred tool of another MCP server (mcp__linear__…) is answered by the run, not handed to the client",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-02T18:08:00Z",
+  "number": 4955,
+  "state": "open",
+  "state_reason": null,
+  "title": "catalog: an Ark key's Seedance models are listed as chat models",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-02T18:05:00Z",
+  "number": 4953,
+  "state": "open",
+  "state_reason": null,
+  "title": "新版 Codex 基础提示词经 Magpie 转发后被重复追加",
+  "user": "FjlI5"
+ },
+ {
+  "closed_at": "2026-11-02T18:05:38Z",
+  "comments": 2,
+  "created_at": "2026-11-02T18:00:11Z",
+  "number": 4952,
+  "state": "closed",
+  "state_reason": "not_planned",
+  "title": "Mixed routing groups mask the full request before an unmasked provider attempt",
+  "user": "skygunner"
+ },
+ {
+  "closed_at": null,
+  "comments": 7,
+  "created_at": "2026-11-02T15:36:52Z",
+  "number": 4945,
+  "state": "open",
+  "state_reason": null,
+  "title": "[gateway] DeepSeek chat path rejects parallel tool_use blocks: \"tool_use ids were found without tool_result blocks immediately after\"",
+  "user": "barryzzz"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-02T14:58:34Z",
+  "number": 4942,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: a thread_title request loses function_call when Codex offers set_thread_title",
+  "user": "Ricinix"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-11-02T12:40:10Z",
+  "number": 4923,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] 重置前用完(pace)路由不按\"即将到期\"排序：CodeArts / OfficeAce 每日签到积分（次日过期）在路由组/多账号里不被优先消耗",
+  "user": "Nine-Days06"
+ },
+ {
+  "closed_at": null,
+  "comments": 5,
+  "created_at": "2026-11-02T12:37:25Z",
+  "number": 4921,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: Codex thread permanently 400 when a relayed Responses upstream's url_citation annotations lack start_index/end_index",
+  "user": "cth123456"
+ },
+ {
+  "closed_at": "2026-11-13T17:59:59Z",
+  "comments": 7,
+  "created_at": "2026-11-02T09:39:23Z",
+  "number": 4906,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "[bug] Responses → Chat for Mistral: `deepseek-*` model gets `reasoning_content` echoed back → 422 extra_forbidden (Codex breaks after first tool call)",
+  "user": "MystryMocha"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-02T09:20:18Z",
+  "number": 4904,
+  "state": "open",
+  "state_reason": null,
+  "title": "Import: an app entry with an API the existing provider lacks (same key, same host) shows Already added and its endpoint is dropped",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-02T07:03:29Z",
+  "number": 4878,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: oneOffErr's clip() can cut a rune in two in the card's 300-byte reason",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-11-02T06:37:23Z",
+  "number": 4874,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: empty Anthropic text block loses its start when a tool block begins early",
+  "user": "JJasonSun"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-11-02T06:26:16Z",
+  "number": 4872,
+  "state": "open",
+  "state_reason": null,
+  "title": "agent: WSL detection off still launches wsl.exe via stand-in/classifier paths",
+  "user": "OldKing-lion"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-02T06:19:31Z",
+  "number": 4870,
+  "state": "open",
+  "state_reason": null,
+  "title": "minimax: a MiniMax Code Desktop data folder moved in its settings gets no switch (magpie writes ~/.minimax)",
+  "user": "yetone"
+ },
+ {
+  "closed_at": "2026-11-04T16:11:29Z",
+  "comments": 8,
+  "created_at": "2026-11-02T05:11:47Z",
+  "number": 4855,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "gateway: a plugin's in-stream error frame is relayed as data — its code/status never reach routing",
+  "user": "MYCF711"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-11-02T04:50:46Z",
+  "number": 4854,
+  "state": "open",
+  "state_reason": null,
+  "title": "Claude subscription bridge: a deferred client MCP tool fails on its own name, works as mcp__magpie__<name>",
+  "user": "jsk644102-art"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-02T03:31:36Z",
+  "number": 4843,
+  "state": "open",
+  "state_reason": null,
+  "title": "daemon status lists \"on the network\" addresses that --web isn't bound to",
+  "user": "z1edge"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-02T00:58:27Z",
+  "number": 4831,
+  "state": "open",
+  "state_reason": null,
+  "title": "quota history: a plugin wallet's Balance window draws a flat 100% left line",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-02T00:16:46Z",
+  "number": 4829,
+  "state": "open",
+  "state_reason": null,
+  "title": "routing: a plugin's Run-lifetime expiry rests the account for a minute although the account is fine",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 4,
+  "created_at": "2026-11-01T21:38:57Z",
+  "number": 4825,
+  "state": "open",
+  "state_reason": null,
+  "title": "quota history: a plugin's aside row with no used share draws a flat 100% line",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-01T20:00:32Z",
+  "number": 4821,
+  "state": "open",
+  "state_reason": null,
+  "title": "usage, gui: 菜单栏面板与路由组的「全部账号」汇总条被截断为 3 项，漏掉 Antigravity 的 Claude 7d 与 Gemini 4 Argon 7d 额度",
+  "user": "wsyzxjn"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-01T03:46:10Z",
+  "number": 4675,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: the last candidate's stream error event saying too long reaches the agent raw, not as context_length_exceeded",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-11-01T03:27:28Z",
+  "number": 4672,
+  "state": "open",
+  "state_reason": null,
+  "title": "agent: a Claude Code or Codex extension in a portable VS Code doesn't keep the CLI from showing as gone",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-31T16:14:05Z",
+  "number": 4603,
+  "state": "open",
+  "state_reason": null,
+  "title": "TestPackagedByDpkg red on Windows: fixture name magpie:amd64.list is an NTFS stream",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-31T14:50:11Z",
+  "number": 4592,
+  "state": "open",
+  "state_reason": null,
+  "title": "provider: switching to a saved Claude login writes its On marks before the credential, so a failed write leaves them wrong (sibling of #4563)",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-30T09:47:44Z",
+  "number": 4428,
+  "state": "open",
+  "state_reason": null,
+  "title": "agent: Aside's models.json still asks Gemini models on google-generative-ai, which fails if Aside passes its own fetch (sibling of 2f5a3f1c0)",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-30T06:33:23Z",
+  "number": 4385,
+  "state": "open",
+  "state_reason": null,
+  "title": "gui tests: click-scroll 'a wheel the page hears of after its scroll' red in WebKit on Linux at main 0911a65e7",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-30T01:21:41Z",
+  "number": 4333,
+  "state": "open",
+  "state_reason": null,
+  "title": "sessions: NativeIDs for claude-desktop doesn't count Claude Code sessions Desktop's Code tab ran",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 5,
+  "created_at": "2026-10-29T10:27:37Z",
+  "number": 4258,
+  "state": "open",
+  "state_reason": null,
+  "title": "agent: stash originals lost on restore failure and malformed stash replaced",
+  "user": "skygunner"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-29T08:53:19Z",
+  "number": 4235,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: TestBusy red under load (after the stream, Last is set but nothing counted)",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-29T08:52:55Z",
+  "number": 4234,
+  "state": "open",
+  "state_reason": null,
+  "title": "provider: TestAccountListFollowsTheVendor red under load (the fake vendor's list asked 0 times)",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 5,
+  "created_at": "2026-10-29T02:08:42Z",
+  "number": 4144,
+  "state": "open",
+  "state_reason": null,
+  "title": "sessions: 损坏 zstd 帧会静默卡住会话和用量尾部",
+  "user": "skygunner"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-29T01:31:11Z",
+  "number": 4141,
+  "state": "open",
+  "state_reason": null,
+  "title": "davsync: WebDAV 无条件写入未标记 Blind，首次竞争可能覆盖本地配置",
+  "user": "skygunner"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-29T01:23:06Z",
+  "number": 4137,
+  "state": "open",
+  "state_reason": null,
+  "title": "davsync: 超过 64 MiB 的备份被截断后可能覆盖完整远端备份",
+  "user": "skygunner"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-29T01:00:08Z",
+  "number": 4136,
+  "state": "open",
+  "state_reason": null,
+  "title": "wsl: 探测运行中的发行版时持包锁，/api/state 与 Sessions 被拖住数十秒",
+  "user": "skygunner"
+ },
+ {
+  "closed_at": null,
+  "comments": 6,
+  "created_at": "2026-10-28T19:33:27Z",
+  "number": 4118,
+  "state": "open",
+  "state_reason": null,
+  "title": "pii: stale cache misses after yielding can cause a false masking 503",
+  "user": "xiaobaifly7"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-28T05:18:29Z",
+  "number": 3984,
+  "state": "open",
+  "state_reason": null,
+  "title": "library: Cancel while an MCP server's sign-in is opening is undone when the start answers (mcp-oauth-app red under load)",
+  "user": "yinwu01"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-27T17:12:20Z",
+  "number": 3930,
+  "state": "open",
+  "state_reason": null,
+  "title": "gui: a repository's card never offers Sign in when it was installed by its URL or a git URL",
+  "user": "yinwu01"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-27T17:12:10Z",
+  "number": 3928,
+  "state": "open",
+  "state_reason": null,
+  "title": "gui: an npm card installs by the bare name, so npm's opencode-cursor-auth installs the community Cursor plugin",
+  "user": "yinwu01"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-27T17:12:06Z",
+  "number": 3927,
+  "state": "open",
+  "state_reason": null,
+  "title": "plugins: `magpie plugin add`, a backup's restore and a sync replace a plugin of the same package without saying so",
+  "user": "yinwu01"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-27T16:58:26Z",
+  "number": 3925,
+  "state": "open",
+  "state_reason": null,
+  "title": "masking: a rerank's record is filed as \"embeddings\"",
+  "user": "ati121"
+ },
+ {
+  "closed_at": null,
+  "comments": 7,
+  "created_at": "2026-10-27T15:30:10Z",
+  "number": 3918,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] omp 自动切换思考强度后，Routing 仍显示会话初始强度",
+  "user": "lghnb"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-27T14:18:17Z",
+  "number": 3914,
+  "state": "open",
+  "state_reason": null,
+  "title": "企业内网中转网关场景下，图片生成无法关闭水印（Seedream / Ark）",
+  "user": "fromb612"
+ },
+ {
+  "closed_at": null,
+  "comments": 5,
+  "created_at": "2026-10-27T13:04:49Z",
+  "number": 3909,
+  "state": "open",
+  "state_reason": null,
+  "title": "Google upstreams: large requests fail with \"http2: client connection lost\" on a slow uplink (health-check ping kills a live upload)",
+  "user": "yxd-ym"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-27T11:23:04Z",
+  "number": 3903,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] ChatGPT 客户端关闭输入框预测后仍存在输入框预测的行为",
+  "user": "jobscn"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-27T10:49:49Z",
+  "number": 3899,
+  "state": "open",
+  "state_reason": null,
+  "title": "GUI test: omp-roles (chromium de 390px) waits 5s for a locator, red under load",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-27T09:39:57Z",
+  "number": 3886,
+  "state": "open",
+  "state_reason": null,
+  "title": "插件搜索结果异常",
+  "user": "Peterpig"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-27T09:11:32Z",
+  "number": 3878,
+  "state": "open",
+  "state_reason": null,
+  "title": "redact: local-model false alarms a check should turn away (total_tokens counter, ISO timestamps in paths, base64)",
+  "user": "yetone"
+ },
+ {
+  "closed_at": "2026-11-03T03:24:53Z",
+  "comments": 1,
+  "created_at": "2026-10-27T06:30:29Z",
+  "number": 3851,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "gateway: inconsistent Codex client identity is forwarded when Desktop resumes a TUI thread",
+  "user": "7Sageer"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-27T06:24:57Z",
+  "number": 3849,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Codex 压缩对话时 vLLM 拒绝历史中的 custom_tool_call 输入项",
+  "user": "yorhaha"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-27T05:59:34Z",
+  "number": 3848,
+  "state": "open",
+  "state_reason": null,
+  "title": "proc: TestProbeTimeoutEndsWhatItStarted red once in a full run, the probe's child still there after 3s",
+  "user": "yinwu01"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-27T05:53:12Z",
+  "number": 3846,
+  "state": "open",
+  "state_reason": null,
+  "title": "gui: mainView passes the view name unchecked, so window/main can put any parameter in the window's address",
+  "user": "yinwu01"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-27T05:04:18Z",
+  "number": 3838,
+  "state": "open",
+  "state_reason": null,
+  "title": "usage: Requests 页的 Account 筛选不含 key 型 plan 的身份（kimi-code 的两把 key 选不了）",
+  "user": "davisjiahao"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-27T04:20:03Z",
+  "number": 3834,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Config sync can create a self-referential Remote magpie forwarding loop",
+  "user": "nickfan"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-27T03:23:39Z",
+  "number": 3828,
+  "state": "open",
+  "state_reason": null,
+  "title": "magpie fails to detect the local OpenCode 2 install and still reports OpenCode 1.17.18",
+  "user": "cloudusa"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-27T03:13:24Z",
+  "number": 3826,
+  "state": "open",
+  "state_reason": null,
+  "title": "配置 ZCode 之后，在 ZCode 里面展示的思考等乱序，需要手动在 ZCode里面手动调整",
+  "user": "royluoh"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-27T02:55:29Z",
+  "number": 3822,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug]codex中更改mcp配置在magpie中未生效",
+  "user": "99zhangpengxiang"
+ },
+ {
+  "closed_at": null,
+  "comments": 9,
+  "created_at": "2026-10-27T02:44:02Z",
+  "number": 3821,
+  "state": "open",
+  "state_reason": null,
+  "title": "纯网关 hook 插件（只有 magpie.hooks）不会出现在「发现 → 非官方插件 · GitHub」里：readTagged 未读 magpie.hooks",
+  "user": "MengXiangxi"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-27T02:05:58Z",
+  "number": 3816,
+  "state": "open",
+  "state_reason": null,
+  "title": "plan quotas: stamp readAt via readNow after a successful PlanQuotas read",
+  "user": "kudi68"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-27T01:52:03Z",
+  "number": 3814,
+  "state": "open",
+  "state_reason": null,
+  "title": "edit: disconnecting a plugin agent leaves an inline object it wrote into reformatted (not byte for byte)",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-27T01:31:07Z",
+  "number": 3812,
+  "state": "open",
+  "state_reason": null,
+  "title": "Claude Code spawn intermittently fails: 'fork/exec …/claude: permission denied' (502), file and permissions look fine",
+  "user": "zx3332352"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-27T01:01:13Z",
+  "number": 3805,
+  "state": "open",
+  "state_reason": null,
+  "title": "Routing page says a member no account lists is skipped, but the gateway still asks it",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-26T19:32:41Z",
+  "number": 3794,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Feature request] Fail over a routing group on an upstream tool-count limit (Kilo: 129 tools vs 128)",
+  "user": "skygunner"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-26T19:12:55Z",
+  "number": 3793,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: codex=as-sent still widens spawn_agent's description (spawnAgentModels), so the relay's body isn't Codex's",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-26T18:29:19Z",
+  "number": 3792,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: an error after a Chat reply already sent (loop cut) starts a new message, and fx stops at it",
+  "user": "yinwu01"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-26T17:58:48Z",
+  "number": 3791,
+  "state": "open",
+  "state_reason": null,
+  "title": "Feature request: opt-in model cooldown and capped exponential backoff for client cancellations (499)",
+  "user": "skygunner"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-26T17:53:33Z",
+  "number": 3790,
+  "state": "open",
+  "state_reason": null,
+  "title": "Tencent Cloud TokenHub International Guangzhou endpoint missing from provider presets",
+  "user": "skyArony"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-26T17:52:00Z",
+  "number": 3788,
+  "state": "open",
+  "state_reason": null,
+  "title": "Feature request: support non-streaming requests in the group FirstToken timeout",
+  "user": "skygunner"
+ },
+ {
+  "closed_at": null,
+  "comments": 4,
+  "created_at": "2026-10-26T17:30:27Z",
+  "number": 3785,
+  "state": "open",
+  "state_reason": null,
+  "title": "routing: a provider row's account list tooltip shows over its Routing and Stays buttons",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-26T16:42:02Z",
+  "number": 3776,
+  "state": "open",
+  "state_reason": null,
+  "title": "redact: a Japanese phone (+81 90-1234-5678) in a CSV is missed by the rules and AstrLink Guard",
+  "user": "yetone"
+ },
+ {
+  "closed_at": "2026-10-31T06:19:37Z",
+  "comments": 2,
+  "created_at": "2026-10-26T16:42:00Z",
+  "number": 3775,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "redact: AstrLink Guard takes a token count (<total_tokens>14902266) for a secret",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-26T13:47:07Z",
+  "number": 3754,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] WSL 探测失败被静默忽略：发行版登录 profile 出错后，WSL 里的 agent 全部消失且没有任何提示",
+  "user": "SunRt233"
+ },
+ {
+  "closed_at": "2026-10-31T11:37:48Z",
+  "comments": 5,
+  "created_at": "2026-10-26T13:28:25Z",
+  "number": 3751,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "sessions: 把 Codex 会话换到另一个 provider 会挪动 Codex 记下的字节偏移，Codex 开着这个会话时还会丢掉它之后写的内容",
+  "user": "yinwu01"
+ },
+ {
+  "closed_at": null,
+  "comments": 6,
+  "created_at": "2026-10-26T12:12:03Z",
+  "number": 3745,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Library write-failure banner cannot be dismissed or collapsed",
+  "user": "Zachary-wW"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-26T11:59:22Z",
+  "number": 3742,
+  "state": "open",
+  "state_reason": null,
+  "title": "middleware: a late timeout interrupt can stop the next call on the runtime",
+  "user": "yinwu01"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-26T11:11:27Z",
+  "number": 3738,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: free models shouldn't inherit account quota windows or rest the entire account on failure",
+  "user": "hheei"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-26T08:46:01Z",
+  "number": 3724,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] `xfyun/spark-x2.6`: a base64 image in a `function_call_output` is counted as a ~167k-token turn, and every later request in that conversation fails with upstream `400 invalid_prompt`",
+  "user": "fanyuxaun386"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-26T08:42:13Z",
+  "number": 3723,
+  "state": "open",
+  "state_reason": null,
+  "title": "middleware, agent plugins: an edit to a file the module imports isn't loaded until its entry file changes",
+  "user": "yinwu01"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-26T08:37:51Z",
+  "number": 3722,
+  "state": "open",
+  "state_reason": null,
+  "title": "pii: a masking request in a synctest bubble would leave srv.stop and the idle timer tied to it, and the next Stop outside it crashes",
+  "user": "yinwu01"
+ },
+ {
+  "closed_at": "2026-11-03T05:17:16Z",
+  "comments": 2,
+  "created_at": "2026-10-26T08:35:15Z",
+  "number": 3721,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "[Bug] ChatGPT API active account reads Codex quota via loginQuota; missing SIWC quota card (v0.1.1567)",
+  "user": "NoneMore"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-26T08:27:14Z",
+  "number": 3716,
+  "state": "open",
+  "state_reason": null,
+  "title": "Hermes 通过 Magpie 调用 Gemini 时，Google 因 options 字段返回 400",
+  "user": "fzh365"
+ },
+ {
+  "closed_at": null,
+  "comments": 8,
+  "created_at": "2026-10-26T08:02:46Z",
+  "number": 3713,
+  "state": "open",
+  "state_reason": "reopened",
+  "title": "ClinePass：记录和界面只有 upstream 的 provider 名，缺 canonicalSlug——分不出官方与私有池",
+  "user": "xdeers2"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-26T07:39:48Z",
+  "number": 3708,
+  "state": "open",
+  "state_reason": null,
+  "title": "sessions: TestAgyTitleLater red 2 of 200: a same-size write in the same mtime tick looks unchanged",
+  "user": "yinwu01"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-26T07:27:39Z",
+  "number": 3705,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: a Remote magpie's key-limit 429 (X-Magpie-Limit-Reset) never reaches remoteModelRest in the main loop",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-26T07:18:06Z",
+  "number": 3703,
+  "state": "open",
+  "state_reason": null,
+  "title": "Bug: a pinned member that starts failing keeps every request of that conversation",
+  "user": "SunflowersLwtech"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-26T07:07:49Z",
+  "number": 3701,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: a held refusal from another magpie says \"(out of its allowance: …)\" twice",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 4,
+  "created_at": "2026-10-26T07:02:09Z",
+  "number": 3698,
+  "state": "open",
+  "state_reason": null,
+  "title": "Disabled provider-qualified group member resolves to unselected model on another provider (group/pro -> commandcode)",
+  "user": "coderbiq"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-26T06:21:54Z",
+  "number": 3690,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: claudeRoom remakes its freed channel the way filememo did before #3632, so a Claude Code run in a synctest bubble would crash the next release outside it",
+  "user": "yinwu01"
+ },
+ {
+  "closed_at": null,
+  "comments": 4,
+  "created_at": "2026-10-26T05:44:34Z",
+  "number": 3684,
+  "state": "open",
+  "state_reason": null,
+  "title": "[opencode-zen-free] free flash models return finish_reason=tool_calls with an empty tool_calls array; tooling clients stall (GLM-5.3-flash-free, DeepSeek-V4.1-flash-free)",
+  "user": "Terryli246"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-26T05:20:56Z",
+  "number": 3683,
+  "state": "open",
+  "state_reason": null,
+  "title": "资料库，MCP OAuth登录，无法填写回调地址",
+  "user": "wyx1818"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-26T04:54:30Z",
+  "number": 3680,
+  "state": "open",
+  "state_reason": null,
+  "title": "TestServeWSLListensBesideLoopback is red on Go 1.27: its probe reuses a kept-alive connection after the WSL listener closes",
+  "user": "0xJchen"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-26T04:20:08Z",
+  "number": 3674,
+  "state": "open",
+  "state_reason": null,
+  "title": "Usage → Requests: a non-Codex agent's calls are counted twice (gateway + its own session file)",
+  "user": "chenyanzhang000"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-26T03:41:03Z",
+  "number": 3669,
+  "state": "open",
+  "state_reason": null,
+  "title": "minimax china version changed base url",
+  "user": "kshq1996"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-26T03:29:10Z",
+  "number": 3668,
+  "state": "open",
+  "state_reason": null,
+  "title": "Grok provider is always labeled SuperGrok, including when plan is absent",
+  "user": "zane668"
+ },
+ {
+  "closed_at": "2026-11-16T07:21:44Z",
+  "comments": 1,
+  "created_at": "2026-10-26T03:20:52Z",
+  "number": 3665,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "Bug: protocol detection for custom provider shows 'Post .../systemone: EOF' while endpoint responds 200 OK to curl",
+  "user": "lan5635"
+ },
+ {
+  "closed_at": "2026-10-30T05:58:27Z",
+  "comments": 2,
+  "created_at": "2026-10-26T03:16:55Z",
+  "number": 3664,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "[Bug] 路由组自动切换供应商后，意图决策的推理等级未生效",
+  "user": "NietzscheLi"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-26T02:57:08Z",
+  "number": 3661,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] ZCode Start Plan 模型过期后仍参与路由，导致订阅模型一并被暂停",
+  "user": "orion-nebula-dev"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-26T01:37:12Z",
+  "number": 3657,
+  "state": "open",
+  "state_reason": null,
+  "title": "[bug] 资源库：导入的技能取消勾选后，仍会被直读 ~/.agents/skills 的 Agent 使用",
+  "user": "Jandaes"
+ },
+ {
+  "closed_at": "2026-11-01T10:34:27Z",
+  "comments": 2,
+  "created_at": "2026-10-26T01:05:44Z",
+  "number": 3656,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "[Bug] 账号打码遮蔽自定义别名，并误遮蔽套餐名称",
+  "user": "faketrader"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-26T01:04:42Z",
+  "number": 3655,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] write_stdin 等待长任务被 tool-loop guard 误判，提前结束 Codex 当前轮次",
+  "user": "hibaliqya-yonma"
+ },
+ {
+  "closed_at": "2026-10-27T10:33:27Z",
+  "comments": 3,
+  "created_at": "2026-10-25T20:39:35Z",
+  "number": 3650,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "A usage window with no `used` reads as 0% — which also puts a spent account first in the routing order",
+  "user": "MYCF711"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-25T19:52:34Z",
+  "number": 3648,
+  "state": "open",
+  "state_reason": null,
+  "title": "make dev: the dev backend's own server still cuts a page request it took when a handover begins (#3568's cause)",
+  "user": "yinwu01"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-25T19:47:38Z",
+  "number": 3647,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: with TLS on, a handover still cuts a local connection whose first byte hasn't come yet",
+  "user": "yinwu01"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-25T19:41:44Z",
+  "number": 3645,
+  "state": "open",
+  "state_reason": null,
+  "title": "gui tests: routing-log-icons 'live request's story keeps its logos' times out waiting for .rt-steps li.wait under load (webkit zh)",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-25T16:44:56Z",
+  "number": 3636,
+  "state": "open",
+  "state_reason": null,
+  "title": "Gateway: explicit unsupported-parameter 400 stops a model group instead of trying its remaining members",
+  "user": "skygunner"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-25T16:44:55Z",
+  "number": 3635,
+  "state": "open",
+  "state_reason": null,
+  "title": "Gateway: NVIDIA's multi-parameter rejection bypasses optional-field compatibility for ZCode Chat requests",
+  "user": "skygunner"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-25T16:40:30Z",
+  "number": 3634,
+  "state": "open",
+  "state_reason": null,
+  "title": "gui test red under load: provider-add-gemini.test webkit en 420px times out clicking #addProvider",
+  "user": "yetone"
+ },
+ {
+  "closed_at": "2026-10-27T22:33:08Z",
+  "comments": 11,
+  "created_at": "2026-10-25T16:40:29Z",
+  "number": 3632,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "filememo: Forget closes a channel another synctest bubble made, so internal/provider crashes on main since 091153bf",
+  "user": "yinwu01"
+ },
+ {
+  "closed_at": "2026-11-03T08:12:21Z",
+  "comments": 1,
+  "created_at": "2026-10-25T16:25:05Z",
+  "number": 3630,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "修改供应商 ID 后，网关密钥里选好的模型没有跟着更新",
+  "user": "loscoy"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-25T16:19:12Z",
+  "number": 3629,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Masking personal data: systemd @.service units become EMAIL and 11-digit byte counters become PHONE",
+  "user": "321sssrt-bit"
+ },
+ {
+  "closed_at": "2026-10-28T14:03:06Z",
+  "comments": 5,
+  "created_at": "2026-10-25T16:05:05Z",
+  "number": 3628,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "internal/pii: go upgrade() outlives its test and races the next one's cleanup under -race (red on main)",
+  "user": "erickguan"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-25T15:32:19Z",
+  "number": 3624,
+  "state": "open",
+  "state_reason": null,
+  "title": "Usage → View routing loads a historical trace off-screen instead of bringing the selected request into view",
+  "user": "skygunner"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-25T15:31:53Z",
+  "number": 3623,
+  "state": "open",
+  "state_reason": null,
+  "title": "Usage: expose the full attempt/failover chain instead of pairing total attempts with only the final error",
+  "user": "skygunner"
+ },
+ {
+  "closed_at": null,
+  "comments": 5,
+  "created_at": "2026-10-25T15:24:34Z",
+  "number": 3622,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] plugins/package.json 与 bun.lock 脱节时，一次 bun add 让所有插件的安装与更新一起失败",
+  "user": "gkd2323c"
+ },
+ {
+  "closed_at": null,
+  "comments": 0,
+  "created_at": "2026-10-25T15:13:29Z",
+  "number": 3621,
+  "state": "open",
+  "state_reason": null,
+  "title": "Linux 自启：没有包自带的条目时，magpie 写进去的 Exec 是带版本号的真实路径，升级回收后失效",
+  "user": "yinwu01"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-25T15:04:21Z",
+  "number": 3620,
+  "state": "open",
+  "state_reason": null,
+  "title": "gui tests: routing-levels 'webkit zh: a group names the reasoning levels' times out at its 5s wait for the no-level message under load",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 6,
+  "created_at": "2026-10-25T14:57:39Z",
+  "number": 3619,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: SophNet's model-scoped 429 (\"Model tpm limit exceeded\") rests the whole key, greying out every model on it",
+  "user": "zisen123"
+ },
+ {
+  "closed_at": null,
+  "comments": 4,
+  "created_at": "2026-10-25T14:28:30Z",
+  "number": 3615,
+  "state": "open",
+  "state_reason": null,
+  "title": "loop guard does not cover tool-call loops: one session made 1088 successful requests in 5h and counted as 0 loops",
+  "user": "easonlao"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-25T14:08:40Z",
+  "number": 3614,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Routing: live request's Context window card says \"the model's window isn't known\" while the model's window is known",
+  "user": "zisen123"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-25T11:55:14Z",
+  "number": 3601,
+  "state": "open",
+  "state_reason": null,
+  "title": "redact: a secret found by its KEY= context is masked there only; the same value elsewhere goes as written",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-25T11:09:11Z",
+  "number": 3598,
+  "state": "open",
+  "state_reason": null,
+  "title": "library: `magpie library instructions set` says \"every agent already has it\" when no agent is given the instructions",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-25T11:03:26Z",
+  "number": 3597,
+  "state": "open",
+  "state_reason": null,
+  "title": "redact: a hash with a number before it (\"1 <sha1>\") is masked as a secret by the local model",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-25T10:20:55Z",
+  "number": 3595,
+  "state": "open",
+  "state_reason": null,
+  "title": "sessions: Antigravity CLI (agy) in a WSL distro: its conversations and calls aren't read",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-25T08:47:50Z",
+  "number": 3585,
+  "state": "open",
+  "state_reason": null,
+  "title": "redact: the local model's cues match inside words (tool_call cues a phone, telemetry too)",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-25T06:50:41Z",
+  "number": 3574,
+  "state": "open",
+  "state_reason": null,
+  "title": "redact: a short password after an English name in prose (password: abc12) is not masked",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 5,
+  "created_at": "2026-10-25T06:27:50Z",
+  "number": 3572,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: switching from Vertex Gemini to Antigravity sends a rejected thought signature",
+  "user": "Yaka88"
+ },
+ {
+  "closed_at": "2026-10-25T15:16:07Z",
+  "comments": 2,
+  "created_at": "2026-10-25T06:02:05Z",
+  "number": 3567,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "TestNoCommandBypassesProc red on main since 75e78a5a0: internal/tui/keep.go uses os/exec",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 5,
+  "created_at": "2026-10-25T05:50:51Z",
+  "number": 3566,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] gateway/Kimi: typed $ref target containing an untyped object oneOf still causes schema rejection",
+  "user": "congee949"
+ },
+ {
+  "closed_at": null,
+  "comments": 4,
+  "created_at": "2026-10-25T04:36:38Z",
+  "number": 3561,
+  "state": "open",
+  "state_reason": null,
+  "title": "privacy model: its download ignores Settings' Proxy (fails where a proxy is the only way out)",
+  "user": "yuancjun"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-25T03:44:07Z",
+  "number": 3556,
+  "state": "open",
+  "state_reason": null,
+  "title": "A held quota reply's Retry-After (up to 900s) outlives Try now: an agent that honours it waits anyway",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-25T03:36:19Z",
+  "number": 3555,
+  "state": "open",
+  "state_reason": null,
+  "title": "Try now lifts nothing when another magpie serves the gateway (unrest answers 400)",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-25T03:25:45Z",
+  "number": 3553,
+  "state": "open",
+  "state_reason": null,
+  "title": "Codex shows 258K instead of 272K for magpie models because catalog omits effective_context_window_percent",
+  "user": "greenfinchgreen-gif"
+ },
+ {
+  "closed_at": "2026-10-28T14:04:09Z",
+  "comments": 1,
+  "created_at": "2026-10-25T03:11:53Z",
+  "number": 3549,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "TestCodexFittedImagesPastTheBudget is red on go1.27.3: turn 3 makes 19 of 30, one image fewer kept than the budget says",
+  "user": "erickguan"
+ },
+ {
+  "closed_at": "2026-10-28T14:04:07Z",
+  "comments": 1,
+  "created_at": "2026-10-25T03:11:34Z",
+  "number": 3547,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "TestMarshalRawIsEncodingJSON and FuzzMarshalRaw are red on Go 1.27: encoding/json escapes U+2028/2029 with SetEscapeHTML(false) now",
+  "user": "erickguan"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-25T02:41:50Z",
+  "number": 3541,
+  "state": "open",
+  "state_reason": null,
+  "title": "redact: user@host.local is counted as an email",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-25T01:59:12Z",
+  "number": 3539,
+  "state": "open",
+  "state_reason": null,
+  "title": "ClinePass：钉住 DeepSeek 官方后出现嵌套 413，按 502 重试三次；此前 CPA 同渠道未遇到",
+  "user": "voidcraft-dev"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-25T00:34:59Z",
+  "number": 3531,
+  "state": "open",
+  "state_reason": null,
+  "title": "gui: the sidebar's gateway line keeps the old port after Settings › Gateway address › Apply",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-24T23:40:22Z",
+  "number": 3530,
+  "state": "open",
+  "state_reason": null,
+  "title": "sessions: Codex thread names and sqlite_home are read from CODEX_HOME only, not its other folders",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-24T23:37:09Z",
+  "number": 3529,
+  "state": "open",
+  "state_reason": null,
+  "title": "trae_checkin.go: a claim's credits and extra_credits are added, as the trae plugin did before 0.2.21",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-24T23:14:54Z",
+  "number": 3528,
+  "state": "open",
+  "state_reason": null,
+  "title": "usage: a web search sent to Kimi Code's or WorkBuddy's search service, or to a search API, leaves no row in Usage › Requests",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-24T18:54:45Z",
+  "number": 3519,
+  "state": "open",
+  "state_reason": null,
+  "title": "[bug] Remote magpie 指向纯 IPv6 地址时，IPv4 回退把主机锁 30 分钟，报 dial tcp4: lookup …: no such host",
+  "user": "Tinkler-i"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-24T17:36:00Z",
+  "number": 3514,
+  "state": "open",
+  "state_reason": null,
+  "title": "dsh: Claude Code 订阅的 Claude 模型被分到 Chat Completions 路由，thinking 签名与 cache_control 在 dsh↔网关之间丢失",
+  "user": "stofancy"
+ },
+ {
+  "closed_at": null,
+  "comments": 4,
+  "created_at": "2026-10-24T17:20:49Z",
+  "number": 3513,
+  "state": "open",
+  "state_reason": null,
+  "title": "draw: a ChatGPT account's gpt-image-2.5 ignores size on images/generations and images/edits",
+  "user": "kilo-s"
+ },
+ {
+  "closed_at": null,
+  "comments": 4,
+  "created_at": "2026-10-24T13:30:55Z",
+  "number": 3487,
+  "state": "open",
+  "state_reason": null,
+  "title": "Quota card: an unknown usage amount renders as a full allowance; a plugin span sent in ms is read as seconds, charting a window start at 2024-01-29",
+  "user": "skygunner"
+ },
+ {
+  "closed_at": "2026-11-06T12:17:25Z",
+  "comments": 5,
+  "created_at": "2026-10-24T11:20:10Z",
+  "number": 3475,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "[Bug] Claude Desktop 网关模式开了 Enable tool search 后，Copilot 拒绝 tool-search-tool-2025-10-19（400 unsupported beta header），每个会话第一个请求失败，工具搜索实际没生效",
+  "user": "mdwsk88"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-24T10:43:39Z",
+  "number": 3470,
+  "state": "open",
+  "state_reason": null,
+  "title": "sessions: hit rates from session files still count Kiro's uncounted cache as a miss",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-24T08:04:07Z",
+  "number": 3460,
+  "state": "open",
+  "state_reason": null,
+  "title": "plugins: a provider whose models are spoken to with @ai-sdk/google can't be tested (Test models off, provider test refuses CodeAssist)",
+  "user": "Yaka88"
+ },
+ {
+  "closed_at": null,
+  "comments": 5,
+  "created_at": "2026-10-24T07:30:29Z",
+  "number": 3456,
+  "state": "open",
+  "state_reason": null,
+  "title": "华为云这个报错",
+  "user": "szu-fan"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-24T07:19:37Z",
+  "number": 3455,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: a search magpie runs for a model gives Responses and Chat replies no url_citation annotations",
+  "user": "yetone"
+ },
+ {
+  "closed_at": "2026-11-10T03:54:04Z",
+  "comments": 2,
+  "created_at": "2026-10-24T05:40:46Z",
+  "number": 3449,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "Codex 经 magpie 网关时每次会话先尝试 WebSocket 被 426 拒、再回退 HTTP——每会话一条 ERROR 日志与启动延迟",
+  "user": "cyrushuang1995-cmyk"
+ },
+ {
+  "closed_at": "2026-10-24T08:38:42Z",
+  "comments": 5,
+  "created_at": "2026-10-24T04:19:14Z",
+  "number": 3447,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "[Bug] `web_search_20250305`: text 块始终没有 `citations[]`，依赖 `cited_text` 的客户端只能拿到 url+title（DSH 的 web_search 因此「搜到了但没有内容」）",
+  "user": "HuHong-Tao"
+ },
+ {
+  "closed_at": null,
+  "comments": 10,
+  "created_at": "2026-10-24T03:38:25Z",
+  "number": 3444,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Codex 官方模型经 Magpie 返回 502：WebSocket 收到 StatusMessageTooBig 关闭帧",
+  "user": "lostornot"
+ },
+ {
+  "closed_at": null,
+  "comments": 8,
+  "created_at": "2026-10-24T02:59:55Z",
+  "number": 3440,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Codex 官方订阅下「272K 时压缩」未生效，单次输入已达 359K",
+  "user": "Sinnhu"
+ },
+ {
+  "closed_at": "2026-11-10T02:52:28Z",
+  "comments": 7,
+  "created_at": "2026-10-24T02:45:24Z",
+  "number": 3439,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "即使网关没有打开局域网共享，也应该允许响应带有 X-Forwarded-For 头的请求",
+  "user": "yxd-ym"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-24T01:19:49Z",
+  "number": 3434,
+  "state": "open",
+  "state_reason": null,
+  "title": "bug(routing): Codex compaction can reclassify an unchanged native turn when transcript identity changes",
+  "user": "e2720515-cloud"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-24T01:10:30Z",
+  "number": 3433,
+  "state": "open",
+  "state_reason": null,
+  "title": "vscode 最新版本 codex 插件没有适配",
+  "user": "obstrux"
+ },
+ {
+  "closed_at": "2026-11-07T04:46:57Z",
+  "comments": 4,
+  "created_at": "2026-10-24T00:24:42Z",
+  "number": 3430,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "[Bug] 走 Messages API 的 Claude 回复，用量里的推理 token 恒为 0（aUsage 不读 output_tokens_details.thinking_tokens）",
+  "user": "mdwsk88"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-23T18:23:12Z",
+  "number": 3417,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Codex 仅开启「重置卡到期前使用」仍可能提前数天消耗卡片：隐藏的额度恢复判断违背独立开关语义及 #2078 的承诺",
+  "user": "skygunner"
+ },
+ {
+  "closed_at": null,
+  "comments": 6,
+  "created_at": "2026-10-23T18:13:52Z",
+  "number": 3401,
+  "state": "open",
+  "state_reason": null,
+  "title": "library: Reasonix Studio gets no MCP servers, skills or hooks",
+  "user": "FuchaZ"
+ },
+ {
+  "closed_at": null,
+  "comments": 5,
+  "created_at": "2026-10-23T17:19:31Z",
+  "number": 3399,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Kimi Code 新 K3.1 型号缺少思考能力声明，经 Magpie 接入报 400 disabled thinking mode",
+  "user": "kupakupar"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-23T17:10:49Z",
+  "number": 3397,
+  "state": "open",
+  "state_reason": null,
+  "title": "TestBunProxyLoginWithReservedCharacters is red with Bun 1.3: the request line names port 80",
+  "user": "yinwu01"
+ },
+ {
+  "closed_at": null,
+  "comments": 14,
+  "created_at": "2026-10-23T15:57:04Z",
+  "number": 3392,
+  "state": "open",
+  "state_reason": null,
+  "title": "「bug」　调用x.ai的bug，claude调用400错误、codex调用422错误",
+  "user": "kongkongklng"
+ },
+ {
+  "closed_at": null,
+  "comments": 4,
+  "created_at": "2026-10-23T11:39:08Z",
+  "number": 3375,
+  "state": "open",
+  "state_reason": null,
+  "title": "Magpie endpoint doesn't support API verification",
+  "user": "kevin-wamae"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-23T10:49:56Z",
+  "number": 3374,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Codex subagent tasks are ignored when sent as agent_message through Magpie 0.1.1333",
+  "user": "bigTsingLung"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-23T09:49:18Z",
+  "number": 3370,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Antigravity 适配层透传 JSON Schema 联合类型 type:[\"object\",\"array\"] + items，Google 严格校验必 400（带最小复现）",
+  "user": "yxr1995-maker"
+ },
+ {
+  "closed_at": null,
+  "comments": 8,
+  "created_at": "2026-10-23T09:12:17Z",
+  "number": 3365,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] redact：普通 key/版本号误判为 SECRET，示例密码导致 paperclip 在后续请求持续被替换",
+  "user": "Ethereal49"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-23T07:29:18Z",
+  "number": 3358,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Chat-to-Responses can silently complete Codex turns with no output or stop reason (v0.1.1327)",
+  "user": "Latias94"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-23T06:56:46Z",
+  "number": 3352,
+  "state": "open",
+  "state_reason": null,
+  "title": "Routing treats a readable balance as \"allowance not known\": providers with balance but no usage windows (e.g. MiniMax Code) always show unknown",
+  "user": "1234fsdc"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-23T06:28:31Z",
+  "number": 3349,
+  "state": "open",
+  "state_reason": null,
+  "title": "[bug] decide= on a plugin provider (commandcode-plan) reports saved but never persists — Command Code Jev unreachable without a custom-provider detour",
+  "user": "Arcadia822"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-23T06:06:06Z",
+  "number": 3345,
+  "state": "open",
+  "state_reason": null,
+  "title": "bug",
+  "user": "Sumeriasns"
+ },
+ {
+  "closed_at": "2026-10-24T17:44:13Z",
+  "comments": 3,
+  "created_at": "2026-10-23T04:56:21Z",
+  "number": 3339,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "[Bug] Antigravity: 模型列表暴露 gemini-4-argon-disabled，调用返回 404（ref #3027）",
+  "user": "dreamfarer-space"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-23T03:44:03Z",
+  "number": 3331,
+  "state": "open",
+  "state_reason": null,
+  "title": "BUG 本地会话的用量，无法获取到价格，所以也就无法显示费用",
+  "user": "westlinkin"
+ },
+ {
+  "closed_at": null,
+  "comments": 4,
+  "created_at": "2026-10-23T03:23:06Z",
+  "number": 3329,
+  "state": "open",
+  "state_reason": null,
+  "title": "dsh: comment markers between patch-list entries are dropped on rewrite, breaking comment-delimited managed blocks (Vibe Island)",
+  "user": "gushan1wood"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-23T02:56:35Z",
+  "number": 3324,
+  "state": "open",
+  "state_reason": null,
+  "title": "routing: Routing history's day files follow the server's day, not the viewer's",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-23T02:56:23Z",
+  "number": 3322,
+  "state": "open",
+  "state_reason": null,
+  "title": "[bug] macOS 打开上下文详情弹窗后，标题栏无法拖动窗口",
+  "user": "StudentWeis"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-23T02:31:24Z",
+  "number": 3320,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Windows RTK 统计可读仍持续显示沙箱警告，且页面不自动刷新",
+  "user": "Glanci-0525"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-23T00:37:18Z",
+  "number": 3313,
+  "state": "open",
+  "state_reason": null,
+  "title": "Magpie mcp image 无法调用 Nano Banana 生图 — 问题反馈",
+  "user": "kinhit"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-22T21:17:20Z",
+  "number": 3311,
+  "state": "open",
+  "state_reason": null,
+  "title": "gui tests: panel-usage window filter assertion shares the live panel request log",
+  "user": "skygunner"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-22T20:08:01Z",
+  "number": 3310,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Copilot 持续 403 forbidden：新会话直接请求成功，旧 Magpie 进程需重启恢复",
+  "user": "JavaBoy6"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-22T19:37:56Z",
+  "number": 3308,
+  "state": "open",
+  "state_reason": null,
+  "title": "gui: the tray panel's Claude Code subagent effort square isn't disabled when no subagent model is set",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-22T19:26:51Z",
+  "number": 3306,
+  "state": "open",
+  "state_reason": null,
+  "title": "sessions, usage: Pi's reasoning tokens are read as 0, so a reply whose reasoning didn't stream reads several times its speed (Gemini 1,282 tok/s)",
+  "user": "Adamcf123"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-22T18:13:24Z",
+  "number": 3303,
+  "state": "open",
+  "state_reason": null,
+  "title": "dsh 只用 npx 启动（PATH 上没有 dsh）时整行停在 CLI not found：配置目录已找到，模型和接线却给不了",
+  "user": "Moody-Sin"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-22T17:17:55Z",
+  "number": 3302,
+  "state": "open",
+  "state_reason": null,
+  "title": "Normalize missing `index: 0` in `/v1/embeddings` responses from upstream (e.g. Google Gemini)",
+  "user": "hheei"
+ },
+ {
+  "closed_at": null,
+  "comments": 6,
+  "created_at": "2026-10-22T15:16:05Z",
+  "number": 3289,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: a shorter rest overwrites a longer one, so a 1s 429 rest replaces a 30-min out-of-credit rest and the provider is retried every second",
+  "user": "wjq990112"
+ },
+ {
+  "closed_at": null,
+  "comments": 4,
+  "created_at": "2026-10-22T14:26:26Z",
+  "number": 3285,
+  "state": "open",
+  "state_reason": null,
+  "title": "plugin host: every auto-update restart (syscall.Exec) leaves the old Bun host a zombie",
+  "user": "Moody-Sin"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-22T14:14:52Z",
+  "number": 3284,
+  "state": "open",
+  "state_reason": null,
+  "title": "provider: TestOpenCodeSessionOnEveryCall red under a full run's load (decisions differ), green alone and in its package",
+  "user": "skygunner"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-22T14:02:03Z",
+  "number": 3282,
+  "state": "open",
+  "state_reason": null,
+  "title": "Pi 集成：Google 模型未配置为 google-generative-ai，仍继承 openai-completions",
+  "user": "XYenon"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-22T13:42:02Z",
+  "number": 3280,
+  "state": "open",
+  "state_reason": null,
+  "title": "test: TestClaudeClientCacheAbsentUnchanged is red wherever /bin/sh's echo leaves \\n as written (bash as sh), green on dash",
+  "user": "skygunner"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-22T13:21:47Z",
+  "number": 3278,
+  "state": "open",
+  "state_reason": null,
+  "title": "routing-day-window: \"the wide model's row was never drawn\" under load (chromium ja 420px)",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-22T12:57:01Z",
+  "number": 3277,
+  "state": "open",
+  "state_reason": null,
+  "title": "GUI test: codex-subagent-model reads the Routing story after a fixed 300ms wait, red under load",
+  "user": "yetone"
+ },
+ {
+  "closed_at": "2026-10-23T05:08:30Z",
+  "comments": 4,
+  "created_at": "2026-10-22T12:55:34Z",
+  "number": 3276,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "火山引擎返回的429重置时间不识别",
+  "user": "wyx1818"
+ },
+ {
+  "closed_at": null,
+  "comments": 5,
+  "created_at": "2026-10-22T11:31:10Z",
+  "number": 3266,
+  "state": "open",
+  "state_reason": null,
+  "title": "ZCode：5 小时额度重置后仍显示限流，旧 rate 状态未随额度恢复解除",
+  "user": "hibaliqya-yonma"
+ },
+ {
+  "closed_at": "2026-11-03T01:22:36Z",
+  "comments": 7,
+  "created_at": "2026-10-22T10:03:32Z",
+  "number": 3260,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "[Bug] Portable VS Code 能被识别，但使用了错误的 %APPDATA%\\Code\\User 数据目录",
+  "user": "YOUIMARK"
+ },
+ {
+  "closed_at": null,
+  "comments": 7,
+  "created_at": "2026-10-22T09:59:38Z",
+  "number": 3259,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: 流式下 narration-only 完成被改写为 `finish_reason: \"tool_calls\"`（mimo 系列必现，导致客户端误判丢工具调用并反复重试）",
+  "user": "mawag"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-22T09:55:44Z",
+  "number": 3258,
+  "state": "open",
+  "state_reason": null,
+  "title": "sessions: two agents told to share one folder under different spellings (a link, a letter's case on Windows) read its sessions twice: Pi and omp, Qoder and Qoder CN",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-22T09:37:42Z",
+  "number": 3255,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] panic: close of nil channel in sessions.refresh when PI_CODING_AGENT_DIR points to omp dir",
+  "user": "feiyuxiaoThu"
+ },
+ {
+  "closed_at": null,
+  "comments": 5,
+  "created_at": "2026-10-22T09:21:18Z",
+  "number": 3254,
+  "state": "open",
+  "state_reason": null,
+  "title": "accounts: switching to or forgetting a Claude account while Claude Code runs on its folder removes the folder under it",
+  "user": "jstar0"
+ },
+ {
+  "closed_at": null,
+  "comments": 5,
+  "created_at": "2026-10-22T08:59:12Z",
+  "number": 3251,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: 火山方舟月度额度用尽后每 15 分钟被重试一次 —— \"reset at … +0800 CST\" 不被 resetsWhen 读，套餐窗口也没进路由",
+  "user": "CNife"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-22T08:35:50Z",
+  "number": 3248,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway/antigravity: a reply restarted inside one Code Assist SSE stream reaches the agent spliced (gemini-4-argon, since 2026-10-21)",
+  "user": "stabruriss"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-22T08:27:51Z",
+  "number": 3246,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] ZCode 接入 magpie 后用一段时间会自动退出接入状态，需要手动重新接入",
+  "user": "qu-mou"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-22T05:26:56Z",
+  "number": 3237,
+  "state": "open",
+  "state_reason": null,
+  "title": "假如设置一个 provider 为远程的 magpie，如果此时远程有 gpt 和 gemini 的模型，转发 gemini 请求的时候，不能以 gemini 的协议转发。",
+  "user": "fflrichard"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-22T04:25:34Z",
+  "number": 3235,
+  "state": "open",
+  "state_reason": null,
+  "title": "Qoder CN 无法保存模型选择",
+  "user": "x0rz4"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-22T04:24:43Z",
+  "number": 3234,
+  "state": "open",
+  "state_reason": null,
+  "title": "TUI Agents page clips settings when an agent has many model fields (e.g. omp)",
+  "user": "marshalys"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-22T03:36:36Z",
+  "number": 3233,
+  "state": "open",
+  "state_reason": null,
+  "title": "GUI: 切换协议标签页后 Anthropic baseURL 被改成 /v1beta",
+  "user": "99iii"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-22T02:47:40Z",
+  "number": 3229,
+  "state": "open",
+  "state_reason": null,
+  "title": "gui tests: proto-menu-overflow reads the saved tray account before its POST arrives (red under load, passes alone)",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-22T02:45:36Z",
+  "number": 3228,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Windows (NTFS) 下读取 Cursor 会话引发天量磁盘写穿（单日累计写 >480GB / 读 >500GB）导致系统假死",
+  "user": "wizd"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-22T01:47:33Z",
+  "number": 3224,
+  "state": "open",
+  "state_reason": null,
+  "title": "[bug] Drift 误报：Claude Code 的 `exit` 记录不带斜杠前缀，被 lastJSONLTime 当成一次使用，反复提示 bypassed",
+  "user": "IceLine389"
+ },
+ {
+  "closed_at": null,
+  "comments": 4,
+  "created_at": "2026-10-22T00:40:27Z",
+  "number": 3213,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: Qoder's per-model queue 503 rests the whole account, so sibling models are refused without asking upstream",
+  "user": "liubai0106"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-21T19:27:13Z",
+  "number": 3206,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: server-managed tools (web_search/web_fetch) silently dropped on translated routes — 200 OK, no error or capability signal",
+  "user": "ObsidianArch02"
+ },
+ {
+  "closed_at": "2026-11-01T02:28:21Z",
+  "comments": 4,
+  "created_at": "2026-10-21T18:12:47Z",
+  "number": 3205,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "gateway: kimiToolRefTypes writes a type beside a $ref whose target is {format, description, $ref}",
+  "user": "yetone"
+ },
+ {
+  "closed_at": "2026-11-12T02:15:13Z",
+  "comments": 1,
+  "created_at": "2026-10-21T17:04:54Z",
+  "number": 3202,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "[Bug] 从「用量 → 请求 → 查看路由」后，无法恢复路由页之前的状态",
+  "user": "nodlles"
+ },
+ {
+  "closed_at": null,
+  "comments": 12,
+  "created_at": "2026-10-21T16:11:47Z",
+  "number": 3197,
+  "state": "open",
+  "state_reason": null,
+  "title": "Mid-stream upstream failure (Z.ai 502 / connection reset) leaves Pi with malformed SSE and hangs, even though failover works before the first byte",
+  "user": "YonQua"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-21T15:37:49Z",
+  "number": 3194,
+  "state": "open",
+  "state_reason": null,
+  "title": "Semgrep MCP OAuth fails with invalid_target (resource parameter rejected)",
+  "user": "mylastfree"
+ },
+ {
+  "closed_at": "2026-11-03T10:08:11Z",
+  "comments": 5,
+  "created_at": "2026-10-21T15:29:02Z",
+  "number": 3193,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "usage: a custom provider's balance meters (\"…%\" in the balance path) ignore the Left/Used switch",
+  "user": "pc418"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-21T15:17:45Z",
+  "number": 3191,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: request-body write can stall forever on a reused HTTP/2 connection — no timeout applies and the group never fails over",
+  "user": "LuwenOosten"
+ },
+ {
+  "closed_at": "2026-11-09T10:27:09Z",
+  "comments": 3,
+  "created_at": "2026-10-21T14:09:08Z",
+  "number": 3188,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "provider: read sub2api rate_limits marked \"unit\": \"percent\" as shares, not dollars",
+  "user": "wtj-0527"
+ },
+ {
+  "closed_at": null,
+  "comments": 15,
+  "created_at": "2026-10-21T12:59:03Z",
+  "number": 3183,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] 原生 Responses 中继缺少明文协作标记，Codex V2 子任务丢失（v0.1.1311）",
+  "user": "john-zeng-233"
+ },
+ {
+  "closed_at": "2026-11-12T14:45:37Z",
+  "comments": 3,
+  "created_at": "2026-10-21T11:40:46Z",
+  "number": 3176,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "rest-cap (and quotaRest) set on a subscription provider is silently ignored: withPicks doesn't carry RestCap/QuotaRest",
+  "user": "Arcadia822"
+ },
+ {
+  "closed_at": "2026-11-08T18:47:31Z",
+  "comments": 14,
+  "created_at": "2026-10-21T11:16:55Z",
+  "number": 3174,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "TestClaudeAccountServesModelsListedSinceItsFetch red in a full internal/provider run, green alone",
+  "user": "yetone"
+ },
+ {
+  "closed_at": "2026-10-22T11:36:29Z",
+  "comments": 4,
+  "created_at": "2026-10-21T11:15:51Z",
+  "number": 3173,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "gateway/antigravity: `items` 为 oneOf/anyOf 联合类型（无 type）时 Gemini 400 —— plainSchema 未兜底 items",
+  "user": "huaiqing-afk"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-21T10:51:57Z",
+  "number": 3169,
+  "state": "open",
+  "state_reason": null,
+  "title": "Routing context card: an uncounted prompt reads 1.5–1.6x its neighbours, with no anchor to the last counted value",
+  "user": "Sealt"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-21T10:13:03Z",
+  "number": 3166,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: a Responses upstream cut after the reply began ends the turn; no continuation path (prefillHow is empty for Responses)",
+  "user": "Parcheal"
+ },
+ {
+  "closed_at": null,
+  "comments": 13,
+  "created_at": "2026-10-21T10:02:54Z",
+  "number": 3165,
+  "state": "open",
+  "state_reason": null,
+  "title": "Chat passthrough for a \"deepseek\"-named upstream: injected `reasoning_content` collides with the client's echoed `reasoning` — 400 \"duplicate field \\`reasoning\\`",
+  "user": "wmfan2002-cloud"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-21T09:40:29Z",
+  "number": 3163,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] 资源库›技能：取消「查找技能」后输入框被清空，再点按钮静默无反应（无法重新打开选择页）",
+  "user": "chengbot-ai"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-21T08:50:14Z",
+  "number": 3157,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Feature] Classify looping animations as \"status\" vs \"decorative\", and only stop the latter when motion is reduced",
+  "user": "MisonL"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-21T08:42:13Z",
+  "number": 3156,
+  "state": "open",
+  "state_reason": null,
+  "title": "[bug] 修改路由组的模型列表后，实时路由里的组成员仍是旧的，重启 magpie 才更新",
+  "user": "AvatarGanymede"
+ },
+ {
+  "closed_at": null,
+  "comments": 7,
+  "created_at": "2026-10-21T08:18:22Z",
+  "number": 3153,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: an allowed_tools tool_choice is dropped before the Grok plugin can read it",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 10,
+  "created_at": "2026-10-21T08:02:12Z",
+  "number": 3152,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Tool calls fail when model emits whole floats (e.g. limit 8.0) - Codex strict int parsing",
+  "user": "1024MrL"
+ },
+ {
+  "closed_at": "2026-10-22T14:26:22Z",
+  "comments": 1,
+  "created_at": "2026-10-21T07:58:35Z",
+  "number": 3151,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "Library: Devin is incorrectly reported as having no user-wide instructions file",
+  "user": "ObsidianArch02"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-21T07:56:58Z",
+  "number": 3150,
+  "state": "open",
+  "state_reason": null,
+  "title": "404 for an unknown \"auto/…\" model reports a synthesized id (\"group/auto-deepseek-v4-1-flash\") instead of the id the client sent",
+  "user": "xiachaoxia-glitch"
+ },
+ {
+  "closed_at": "2026-10-30T00:56:08Z",
+  "comments": 4,
+  "created_at": "2026-10-21T06:53:15Z",
+  "number": 3148,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "Qoder IDE is detected as both \"VS Code\" and \"Qoder\" — duplicate agent entry",
+  "user": "Henvy-Mango"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-21T06:49:35Z",
+  "number": 3147,
+  "state": "open",
+  "state_reason": null,
+  "title": "Usage: read the agy model from conversations/*.db; agy calls are recorded with an empty model",
+  "user": "cyjme"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-21T06:25:08Z",
+  "number": 3144,
+  "state": "open",
+  "state_reason": null,
+  "title": "redact：本地 PII 模型把 reasoning_summary_delivery 的 sequential_cutoff 判成人名，导致 Codex 上游 400",
+  "user": "hibaliqya-yonma"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-21T06:24:28Z",
+  "number": 3143,
+  "state": "open",
+  "state_reason": null,
+  "title": "redact：Codex 的 function_call.namespace 被脱敏为占位符，导致上游 400、会话持续失败",
+  "user": "hibaliqya-yonma"
+ },
+ {
+  "closed_at": "2026-11-04T12:05:54Z",
+  "comments": 8,
+  "created_at": "2026-10-21T05:42:30Z",
+  "number": 3141,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "proc.Look keeps \"not found\" for a tool installed in the same clock tick as its folder's last change",
+  "user": "yinwu01"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-21T05:40:31Z",
+  "number": 3139,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] 无界面 `magpie serve` 首次单独刷新 Claude 卡成功后仍带 `asOf`，远端显示旧缓存（v0.1.1296）",
+  "user": "321sssrt-bit"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-21T05:27:45Z",
+  "number": 3137,
+  "state": "open",
+  "state_reason": null,
+  "title": "agent: Windows 上 Codex Desktop 跑在 WSL（NAT）时，\"Codex 经代理连 magpie\"警告的判断和修复建议都对不上实际情况",
+  "user": "cjyrainbow"
+ },
+ {
+  "closed_at": null,
+  "comments": 4,
+  "created_at": "2026-10-21T05:11:34Z",
+  "number": 3136,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] 断开 agent 的预览沙箱 magpie-preview-* 残留在临时目录，每个带一份 86 MB 的 bun",
+  "user": "OldSuns"
+ },
+ {
+  "closed_at": null,
+  "comments": 11,
+  "created_at": "2026-10-21T05:01:26Z",
+  "number": 3135,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Codex 原生 Responses 路由把上游 EOF 合成为 502，改变原生网络等待行为",
+  "user": "ARCJ137442"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-21T04:10:55Z",
+  "number": 3131,
+  "state": "open",
+  "state_reason": null,
+  "title": "【问题】OpenCode Zen Free 无法添加多账号：再次添加会替换第一个账号，而不是新增第二个",
+  "user": "yugaosi140"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-21T03:42:11Z",
+  "number": 3128,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] 路由组成员列表：不同 provider 的同名模型显示完全一样，无法分辨顺序（WorkBuddy 国内版 / 国际版）",
+  "user": "long1973m"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-21T03:05:53Z",
+  "number": 3122,
+  "state": "open",
+  "state_reason": null,
+  "title": "[bug] 资源库技能：只有一个来源时「按来源」不显示分组头（也没有分组 chips / 折叠）",
+  "user": "chengbot-ai"
+ },
+ {
+  "closed_at": null,
+  "comments": 4,
+  "created_at": "2026-10-21T03:05:36Z",
+  "number": 3121,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway/antigravity: union type [\"string\",\"array\"] keeps items but collapses to string — Gemini 400 on tool schema",
+  "user": "MurmuredVelpro"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-21T02:43:26Z",
+  "number": 3117,
+  "state": "open",
+  "state_reason": null,
+  "title": "用量 › 会话：Claude Desktop（3P 模式）的会话被归为 Claude Code，Desktop 标签下项目、时长、工具和 Skill 为空",
+  "user": "WardLu"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-21T01:32:29Z",
+  "number": 3108,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] panic when autostarted at login - Ubuntu",
+  "user": "realnovicedev"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-21T01:20:02Z",
+  "number": 3107,
+  "state": "open",
+  "state_reason": null,
+  "title": "[bug] 当没有加对应供应商的文本模型时无法使用其对应的生图模型",
+  "user": "kongxiangyiren"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-20T23:04:25Z",
+  "number": 3100,
+  "state": "open",
+  "state_reason": null,
+  "title": "provider: TestSignInDoneOnceTheAccountIsBack races a plugin refresh left by an earlier test (catalog.Changed)",
+  "user": "yetone"
+ },
+ {
+  "closed_at": "2026-11-02T03:05:11Z",
+  "comments": 8,
+  "created_at": "2026-10-20T20:22:58Z",
+  "number": 3097,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "gateway: Google 路由把未知顶层字段 options 原样转发上游，Gemini 模型恒定 400",
+  "user": "Davyricardo"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-20T18:51:15Z",
+  "number": 3095,
+  "state": "open",
+  "state_reason": null,
+  "title": "TestHoldReadsMigrationsOnce red under load: heldFor (1s) runs out between its two reads",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 4,
+  "created_at": "2026-10-20T13:42:26Z",
+  "number": 3076,
+  "state": "open",
+  "state_reason": null,
+  "title": "provider: rest-cap is ignored for subscription accounts (withPicks doesn't copy RestCap), so 529 overload benches most of a Codex pool",
+  "user": "binbinah"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-20T13:40:12Z",
+  "number": 3074,
+  "state": "open",
+  "state_reason": null,
+  "title": "plugin: a request's body is base64-encoded again for the host at 4x, and the queue it waits in counts entries rather than bytes",
+  "user": "zzjcool"
+ },
+ {
+  "closed_at": null,
+  "comments": 5,
+  "created_at": "2026-10-20T10:29:45Z",
+  "number": 3062,
+  "state": "open",
+  "state_reason": null,
+  "title": "A relay's \"Referenced reasoning item …\" refusal is not read as an unreadable item, so a Codex thread 400s on every turn",
+  "user": "jasonQin6"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-20T09:56:46Z",
+  "number": 3058,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Copilot CLI 已显示「不能接入」，magpie 仍反复请求 copilot-cli 钥匙串密码（v0.1.1295，macOS）",
+  "user": "chengbot-ai"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-20T08:17:29Z",
+  "number": 3043,
+  "state": "open",
+  "state_reason": null,
+  "title": "[BUG] 资源库 › 发现：MCP Registry 偶发 20s+ 延迟，撞上 20s 硬超时导致搜索 0 结果",
+  "user": "paulwalker9315-debug"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-20T07:31:08Z",
+  "number": 3035,
+  "state": "open",
+  "state_reason": null,
+  "title": "SenseNova turns Codex's structured-output requests away with guided_grammar compile_grammar_error — the refusal isn't recognized, the 400 reaches the client",
+  "user": "jasonQin6"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-20T06:11:42Z",
+  "number": 3027,
+  "state": "open",
+  "state_reason": null,
+  "title": "gemini-4-argon shows as magpie/antigravity/gemini-4-argon-disabled and is not working",
+  "user": "shenghsi"
+ },
+ {
+  "closed_at": "2026-10-31T03:42:44Z",
+  "comments": 7,
+  "created_at": "2026-10-20T05:38:28Z",
+  "number": 3020,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "[Bug] Claude Code 后台子代理的 <task-notification> 经 Magpie 后模型看不到（直连正常，A/B 可复现）",
+  "user": "WardLu"
+ },
+ {
+  "closed_at": null,
+  "comments": 6,
+  "created_at": "2026-10-20T05:16:35Z",
+  "number": 3017,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Cindy 的模型列表未显示 magpie 实际供应商来源，开启供应商后缀后仍统一标为 Magpie",
+  "user": "marsxxl"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-20T04:10:47Z",
+  "number": 3013,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: a GLM Coding Plan's key out of its window is read as a rate limit through the Anthropic endpoint, so a window reset by hand never lifts its rest",
+  "user": "ianfksyd"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-20T03:02:05Z",
+  "number": 3005,
+  "state": "open",
+  "state_reason": null,
+  "title": "【问题】用量页「本地会话」行：请求模型为空、供应商只显示 agent 内部 ID；且失败请求不展示原始错误信息",
+  "user": "yugaosi140"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-20T01:58:26Z",
+  "number": 2998,
+  "state": "open",
+  "state_reason": null,
+  "title": "agent: MiniMax Code 改了「数据目录」后，magpie 仍把 provider 写到 `~/.minimax`，因此桌面版的模型选择器里看不到",
+  "user": "NkAntony777"
+ },
+ {
+  "closed_at": null,
+  "comments": 5,
+  "created_at": "2026-10-19T12:21:45Z",
+  "number": 2953,
+  "state": "open",
+  "state_reason": null,
+  "title": "edit: writing a key under a JSON array turns the array into an object and drops its entries",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-19T11:54:58Z",
+  "number": 2949,
+  "state": "open",
+  "state_reason": null,
+  "title": "TestHeldClock: data race on time.Local under -race (ubuntu CI)",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-19T08:39:07Z",
+  "number": 2923,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: Kimi refuses a tool whose top-level schema has no type, and magpie doesn't recognise the refusal",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 7,
+  "created_at": "2026-10-19T01:47:56Z",
+  "number": 2878,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Qoder: 签到送的每日积分在路由组里用不了（额度不足），指定 qoder 模型却能正常用",
+  "user": "gtk96"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-18T22:45:53Z",
+  "number": 2868,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] 主模型用 Claude 订阅时，子代理的报告正文丢失（只收到“已发送”提示）",
+  "user": "WTHH031230"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-18T21:43:52Z",
+  "number": 2867,
+  "state": "open",
+  "state_reason": null,
+  "title": "agent: drift details besides Codex's proxied one are shown in English in every language",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-18T21:11:58Z",
+  "number": 2866,
+  "state": "open",
+  "state_reason": null,
+  "title": "[bug] Atom fallback can hide Chinese notes when translated headings stay English",
+  "user": "ReneXiong"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-18T13:03:20Z",
+  "number": 2838,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Claude subscription upgraded to Max still displays as Pro plan",
+  "user": "yiyiSmallti"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-18T12:34:30Z",
+  "number": 2836,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Google 供应商无法生图：OpenAI 兼容层将 /images/generations 映射为 Imagen predict， Gemini / Nano Banana 系列图像模型恒返回 404",
+  "user": "kinhit"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-18T10:15:15Z",
+  "number": 2822,
+  "state": "open",
+  "state_reason": null,
+  "title": "[bug] Chat-only 中转站在 /v1/models 声明了 responses（supported_endpoint_types），Magpie 仍只走 Chat，带工具的请求仍失败（#2670 后续）",
+  "user": "JJ-Lin"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-18T08:28:22Z",
+  "number": 2808,
+  "state": "open",
+  "state_reason": null,
+  "title": "test: eight Codex keychain tests fail on Windows (secret_auth_storage default) on main d783df46",
+  "user": "Kyou12138"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-18T08:15:25Z",
+  "number": 2804,
+  "state": "open",
+  "state_reason": null,
+  "title": "linux: duplicate tray icon on COSMIC — dropTrayName() re-registers an item the watcher kept",
+  "user": "mtul0729"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-18T04:02:15Z",
+  "number": 2789,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: trae-cn 长任务把工具调用写成 <call:tool>/<tool_call name=…> 等文字，未被回收成调用（200+stop，代理任务中断）",
+  "user": "turtle4512"
+ },
+ {
+  "closed_at": null,
+  "comments": 5,
+  "created_at": "2026-10-18T02:39:10Z",
+  "number": 2785,
+  "state": "open",
+  "state_reason": "reopened",
+  "title": "[UX] Magpie does not memorize its window position after startup",
+  "user": "pluo"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-17T23:30:49Z",
+  "number": 2777,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Daily check-in goes out through the global proxy, not the account's own (accountProxies ignored on the whole check-in path)",
+  "user": "a1286743184"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-17T21:55:13Z",
+  "number": 2773,
+  "state": "open",
+  "state_reason": null,
+  "title": "droid: magpie-written custom models expose no reasoning effort (clamped to none)",
+  "user": "kumamaki"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-17T20:00:32Z",
+  "number": 2771,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Windows Magpie does not discover DeepSeek Harness sessions stored in WSL",
+  "user": "li1how"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-17T20:00:24Z",
+  "number": 2768,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] VS Code Copilot Chat in WSL NAT receives an unreachable loopback endpoint and an unsuitable gateway key",
+  "user": "li1how"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-17T17:08:17Z",
+  "number": 2761,
+  "state": "open",
+  "state_reason": null,
+  "title": "usage: TestSummaryInvalidatesSameStampPrice fails under load (filememo trusts the stamp once it is 2s old)",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-17T16:50:30Z",
+  "number": 2759,
+  "state": "open",
+  "state_reason": null,
+  "title": "[bug] 在导入供应商时，导入来源目前有5个。在最右边的open code显示不全",
+  "user": "kindmesdilabso"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-17T16:30:42Z",
+  "number": 2755,
+  "state": "open",
+  "state_reason": null,
+  "title": "usage: the daily-consumption bar chart's tooltip shows raw thousand-separated integers while the rest of the page follows the 万/亿 unit setting",
+  "user": "tianxia3111"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-17T14:16:40Z",
+  "number": 2746,
+  "state": "open",
+  "state_reason": null,
+  "title": "gui: the model picker blames the provider for a group's listed=no, and names every group but the one hiding the model",
+  "user": "kudi68"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-17T13:59:32Z",
+  "number": 2744,
+  "state": "open",
+  "state_reason": null,
+  "title": "[bug]供应商某个模型额度用尽，整个供应商都被冻结",
+  "user": "Goalonez"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-17T13:33:08Z",
+  "number": 2741,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Command Code built-in: stealth/reflection models 400 on replayed turns — reasoning_content is not replayed via the API-key host",
+  "user": "geeknonerd"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-17T11:45:35Z",
+  "number": 2730,
+  "state": "open",
+  "state_reason": null,
+  "title": "[BUG] 路由组中使用模式匹配自动加入的官方deepseek无法排序",
+  "user": "liangxyz"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-17T11:37:07Z",
+  "number": 2729,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: DeepSeek's Search API (POST /v1/tools/search) isn't a search source, and searchHosts makes deepseek-flash look like it searches natively",
+  "user": "real-jacket"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-17T11:30:37Z",
+  "number": 2728,
+  "state": "open",
+  "state_reason": null,
+  "title": "middleware: TestDocsExample red under load (strategies.fewest-tokens: took too long)",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-17T09:14:05Z",
+  "number": 2705,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Usage → Sessions 重复统计 Claude Desktop 3p 会话：同时归入 Claude Code 和 Claude Desktop",
+  "user": "Celestia-Milara"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-17T05:59:42Z",
+  "number": 2674,
+  "state": "open",
+  "state_reason": null,
+  "title": "edit.BlockList drops block entries that follow a flow list in a dsh patch list",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-17T05:20:31Z",
+  "number": 2669,
+  "state": "open",
+  "state_reason": null,
+  "title": "gui: after the Codex editor's models filter is typed in and cleared, the first click on Cancel does nothing",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-17T03:47:33Z",
+  "number": 2661,
+  "state": "open",
+  "state_reason": null,
+  "title": "tests: most packages don't stop a test from reaching the network",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-16T22:09:19Z",
+  "number": 2629,
+  "state": "open",
+  "state_reason": null,
+  "title": "GUI tests: agent-bulk-visibility's fixed 5s wait and agent-connect-* cases near the 180s timeout go red under load",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-16T18:17:34Z",
+  "number": 2621,
+  "state": "open",
+  "state_reason": null,
+  "title": "tests: three guarantees lost their tests when Cursor's built-in was retired (#541, #1147, #1789)",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-16T11:21:04Z",
+  "number": 2569,
+  "state": "open",
+  "state_reason": null,
+  "title": "sessions: OpenCode, ZCode and dsh sessions count no tools or skills on the Sessions page",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-16T09:40:02Z",
+  "number": 2541,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: TestQueueRefusalIsInTheUsageLedger counts b's queue timeout as a second 429 under load",
+  "user": "yetone"
+ },
+ {
+  "closed_at": "2026-10-27T06:53:50Z",
+  "comments": 6,
+  "created_at": "2026-10-16T08:57:38Z",
+  "number": 2530,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "Codex：供应商设为 Usage only 后，登录账户的原生模型仍出现在选择列表中",
+  "user": "SavitarC"
+ },
+ {
+  "closed_at": null,
+  "comments": 6,
+  "created_at": "2026-10-16T03:09:43Z",
+  "number": 2473,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Claude Desktop Credentials Test 被误判为标题请求，命中已关闭 provider",
+  "user": "EchoTint"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-16T01:16:22Z",
+  "number": 2460,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: AutoVision ignores catalog-inferred image input for custom providers whose /models list contains only IDs",
+  "user": "qiangxinglin"
+ },
+ {
+  "closed_at": null,
+  "comments": 4,
+  "created_at": "2026-10-15T11:13:44Z",
+  "number": 2389,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: /v1/systemone sends its body upstream without redaction",
+  "user": "vianbara"
+ },
+ {
+  "closed_at": null,
+  "comments": 4,
+  "created_at": "2026-10-15T05:40:58Z",
+  "number": 2323,
+  "state": "open",
+  "state_reason": null,
+  "title": "[feat] Hermes 接 magpie 时带一个 provider 插件：图片直达模型，而不是先被描述一遍（补丁见内，引 #2318）",
+  "user": "sryimnoob123"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-15T03:20:38Z",
+  "number": 2301,
+  "state": "open",
+  "state_reason": null,
+  "title": "[bug] 在会话不显示 MiniMax Code 的会话",
+  "user": "LukeZ1988"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-15T02:14:14Z",
+  "number": 2287,
+  "state": "open",
+  "state_reason": null,
+  "title": "An unreadable plugins.json is carried in a backup or sync as no plugins",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 5,
+  "created_at": "2026-10-14T21:18:07Z",
+  "number": 2259,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: a group in the group's Affinity is never read — only the group the agent named keeps a conversation on its key",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 3,
+  "created_at": "2026-10-14T14:25:31Z",
+  "number": 2207,
+  "state": "open",
+  "state_reason": null,
+  "title": "test: TestPluginSOCKSProxy fails on Bun 1.4.3 (proxyconnect error instead of an HTTP 502), passes on the pinned 1.4.2",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-14T06:07:04Z",
+  "number": 2117,
+  "state": "open",
+  "state_reason": null,
+  "title": "web: in a container, leave out Agents and Library; keep the gateway and web UI on separate ports",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-14T04:56:10Z",
+  "number": 2099,
+  "state": "open",
+  "state_reason": null,
+  "title": "gui: a sign-in's risk step squeezes its warning to nothing at narrow widths, and German \"Trotzdem anmelden\" runs past the edge at 420",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 6,
+  "created_at": "2026-10-13T12:34:58Z",
+  "number": 2008,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: the per-seat rest ladder's caps, base and state are all hard-coded — 5 config keys and one file write (#1772 follow-up)",
+  "user": "Gaudi-XIX"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-13T08:33:49Z",
+  "number": 1971,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway test: TestRateLimitIsWaitedOut \"an hour away\" took 1.9s against its 1s bound under heavy load",
+  "user": "yetone"
+ },
+ {
+  "closed_at": "2026-11-10T02:01:55Z",
+  "comments": 3,
+  "created_at": "2026-10-13T07:39:29Z",
+  "number": 1955,
+  "state": "closed",
+  "state_reason": "completed",
+  "title": "Codex native model list falls back from 500K to stale 272K after an upstream timeout",
+  "user": "NorethSea"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-13T03:08:11Z",
+  "number": 1903,
+  "state": "open",
+  "state_reason": null,
+  "title": "library: a skill set aside across disks or with a stuck file is left half-emptied, and the error doesn't say where the whole copy went",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 2,
+  "created_at": "2026-10-12T17:27:51Z",
+  "number": 1848,
+  "state": "open",
+  "state_reason": null,
+  "title": "gateway: DeepSeek tool calls written as <｜tool▁calls▁begin｜> / <｜invoke name=…｜> in text aren't rescued",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-12T15:45:46Z",
+  "number": 1841,
+  "state": "open",
+  "state_reason": null,
+  "title": "tests: internal/agent tests reset HOME/USERPROFILE but not APPDATA/LOCALAPPDATA, so on Windows they read each other's files (#1827 triage)",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 5,
+  "created_at": "2026-10-12T06:55:40Z",
+  "number": 1747,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] Linux/Guix: startup writes a desktop entry whose Exec is the loader (os.Executable() under a wrapper), and always overwrites a packaged one",
+  "user": "ShineBreaker"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-12T05:21:58Z",
+  "number": 1728,
+  "state": "open",
+  "state_reason": null,
+  "title": "[bug] 本地测试的 ZenMux 插件已发现生图模型，但「设置 → 模型 → 生图模型」不显示",
+  "user": "hh0592821"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-12T00:06:25Z",
+  "number": 1682,
+  "state": "open",
+  "state_reason": null,
+  "title": "[bug] Pi provider plugins skip custom auth.apiKey.login",
+  "user": "loosekite"
+ },
+ {
+  "closed_at": null,
+  "comments": 1,
+  "created_at": "2026-10-11T05:18:21Z",
+  "number": 1579,
+  "state": "open",
+  "state_reason": null,
+  "title": "test: tencent-cloud.test.cjs (WebKit, en) failed once in a parallel GUI run",
+  "user": "yetone"
+ },
+ {
+  "closed_at": null,
+  "comments": 4,
+  "created_at": "2026-10-07T09:27:17Z",
+  "number": 1139,
+  "state": "open",
+  "state_reason": null,
+  "title": "[Bug] 更新最新版本后“自动跟随系统代理”失效，导致上游请求 502 超时",
+  "user": "byhooi"
+ },
+ {
+  "closed_at": null,
+  "comments": 5,
+  "created_at": "2026-10-07T05:40:04Z",
+  "number": 1105,
+  "state": "open",
+  "state_reason": "reopened",
+  "title": "[bug] OpenRouter 上的 gpt-image 等 images API 生图模型被发到 chat/completions，返回 404",
+  "user": "Ti800"
+ }
+]
