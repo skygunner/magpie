@@ -410,6 +410,9 @@ type AgentView struct {
 	ProjectMCP string `json:"projectMCP,omitempty"`
 	// ProjectSubagents is the folder in a project it reads subagents from
 	ProjectSubagents string `json:"projectSubagents,omitempty"`
+	// ProjectInstructions is the file in a project it reads the
+	// project's instructions from, when there is none yet
+	ProjectInstructions string `json:"projectInstructions,omitempty"`
 	// ProjectNoSSE: its project file can't take a server over SSE
 	ProjectNoSSE bool `json:"projectNoSSE,omitempty"`
 	// ProjectOff and ProjectSkillOff: a server, or a skill, it has from
@@ -512,6 +515,9 @@ type SkillView struct {
 	Manual bool `json:"manual,omitempty"`
 	// Router is "direct" for one the skill router leaves out (Skill.Router)
 	Router string `json:"router,omitempty"`
+	// Back are the agents it was brought in from: Remove gives it back
+	// to them as they had it (Skill.Home)
+	Back []string `json:"back,omitempty"`
 }
 
 // View is the Library page.
@@ -661,7 +667,8 @@ func readView(problems []Problem, glance bool) (*View, error) {
 	for _, t := range targets {
 		av := AgentView{ID: t.Agent.ID, Name: t.Agent.Name, Icon: t.Agent.Icon, Instructions: t.Instructions, Skills: t.Skills,
 			SkillsAlso: t.SkillsAlso, Note: t.Note, MCPVia: t.MCPVia, ProjectSkills: ProjectSkillsDir(t.Agent.ID), ProjectMCP: ProjectMCPFile(t.Agent.ID), ProjectSubagents: ProjectSubagentsDir(t.Agent.ID),
-			ProjectOff: slices.Contains(projectOffAgents, t.Agent.ID), ProjectSkillOff: slices.Contains(projectSkillOffAgents, t.Agent.ID),
+			ProjectInstructions: ProjectInstrFile(t.Agent.ID),
+			ProjectOff:          slices.Contains(projectOffAgents, t.Agent.ID), ProjectSkillOff: slices.Contains(projectSkillOffAgents, t.Agent.ID),
 			ProjectNoSSE: ProjectNoSSE(t.Agent.ID)}
 		if t.Skills != "" {
 			_, av.HowOwn = l.SkillHow[t.Agent.ID]
@@ -765,6 +772,13 @@ func readView(problems []Problem, glance bool) (*View, error) {
 		sv := SkillView{Name: s.Name, Bundle: s.Bundle, Agents: append([]string{}, s.Agents...), Icon: skillIcon(s), Problems: of("skill:" + s.Name), Repo: tr.repoOf(s), OffHere: s.OffHere, Note: s.Note, Router: s.Router}
 		if s.Source != nil {
 			sv.Source, sv.Kind = s.Source.String(), s.Source.Kind
+		}
+		if canPutBack(s) {
+			for _, e := range s.Home.Entries {
+				if !slices.Contains(sv.Back, e.Agent) {
+					sv.Back = append(sv.Back, e.Agent)
+				}
+			}
 		}
 		// linked from a folder elsewhere is what the library's entry is, not
 		// what was written down when it came in: a linked folder moved in by
