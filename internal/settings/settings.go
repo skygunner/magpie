@@ -2223,6 +2223,10 @@ func CheckProxy(p string) error {
 	if !strings.Contains(raw, "://") {
 		raw = "http://" + raw
 	}
+	if IsSSHAddress(raw) {
+		// a login goes with it, which an address alone can't hold
+		return fmt.Errorf("an SSH server is added as a saved proxy: Settings › Network › Add proxy › SSH")
+	}
 	u, err := url.Parse(raw)
 	if err != nil || u.Host == "" || !slices.Contains([]string{"http", "https", "socks5", "socks5h"}, u.Scheme) {
 		return fmt.Errorf("proxy must look like http://127.0.0.1:7890 or socks5://127.0.0.1:1080")
@@ -2281,6 +2285,11 @@ type SessionReads struct {
 	Asked  bool            `json:"asked"`
 	All    bool            `json:"all,omitempty"`
 	Agents map[string]bool `json:"agents,omitempty"`
+	// Kept: the agents turned off one by one (Keep off, Settings ›
+	// Privacy), not only left off among the first choice's list. An agent
+	// that is off, found here and not kept is asked about once more
+	// (baysonfox on X: Antigravity 2.0 left off beside agy CLI).
+	Kept map[string]bool `json:"kept,omitempty"`
 }
 
 // Reads says whether agent's session files may be read.
