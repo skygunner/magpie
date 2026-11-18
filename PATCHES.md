@@ -13,12 +13,12 @@ mean upstream implements every former fork guarantee.
   to successfully observed production source. `candidate/<version>` records a
   tested candidate; `deployed/<version>` is created only after acceptance and
   observation pass. Old `prod/*` tags retain their historical meaning.
-- Production is **0.1.3622-p1**, upstream v0.1.3622, source
-  `31af508decb1054c13cf94b25381d5c268fea28b`. A 0.1.4335-p1 candidate has been
-  built from source `f0a22204c4d202016802b73f0b46ac446d527a13`; its gate and
-  deployment status live in
-  [this round's evidence](docs/fork/evidence/2026-11-17-4335/README.md).
-  Source integration alone is not production acceptance evidence.
+- Production is **0.1.4480-p2**, upstream v0.1.4480, image source
+  `443cccd518133f49210aeaf5e0c7505cc511a1bb`. The eight production issue
+  patches and the -pN update comparison each passed a candidate-versus-upstream
+  behavioral check. The owner accepted the healthy p2 with real HTTP 200
+  inference and matching initial API snapshots after p1's full observation.
+  [Patch decisions, tests and deployment evidence](docs/fork/evidence/2026-11-19-4480/README.md).
 
 ## Changes in v0.1.4335-p1 (candidate)
 
@@ -66,7 +66,7 @@ Record unrelated upstream/UI failures separately. Test/documentation-only
 changes do not trigger another complete Go/build/replay cycle when the runtime
 and relevant inputs are unchanged. State the actual tested scope in the evidence.
 
-## This round's patch decisions (v0.1.3336-p1 production)
+## Retained and suspended patches
 
 | Patch | Decision | Behavior / reason |
 | --- | --- | --- |
@@ -115,7 +115,7 @@ behavior; baseline failures do not automatically authorize deployment.
 
 ## Deployment history
 
-- Current accepted release: **0.1.3336-p1**, upstream v0.1.3336, source
+- Historical release: **0.1.3336-p1**, upstream v0.1.3336, source
   [`b7b5539de`](https://github.com/skygunner/magpie/tree/deployed%2F0.1.3336-p1).
   Accepted 2026-11-08 17:04:38 UTC after 2761.072 seconds, 11 healthy samples
   and 3 successful real inference probes. Acceptance and final snapshots
@@ -130,7 +130,7 @@ behavior; baseline failures do not automatically authorize deployment.
 
 ## Known boundaries
 
-- This round's eight selected browser fixtures pass all 208 tests. A complete GUI
+- The 0.1.3336-p1 round's eight selected browser fixtures passed all 208 tests. A complete GUI
   matrix and cross-platform desktop checks were not run. The previous broad 3295
   findings remain [historical evidence](docs/fork/evidence/2026-11-08-3295/gui-review.json);
   this scoped run does not establish whether every old finding persists or is fixed.
