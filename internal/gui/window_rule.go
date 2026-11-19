@@ -85,6 +85,13 @@ func abs(n int) int {
 // window's Position: x, y of its top left corner, width and height.
 type area struct{ x, y, w, h int }
 
+// desk is a screen the main window can be left on: the platform's id for it
+// (Wails' Screen.ID) and its work area.
+type desk struct {
+	id string
+	at area
+}
+
 // openAt is where the main window, w×h, opens: at the place it was last
 // left (saved: x, y), moved as little as it takes to lie whole on the work
 // area of the screen holding most of it now (areas). Not ok — left where the
@@ -92,21 +99,51 @@ type area struct{ x, y, w, h int }
 // no screen there now holds any of it: the screen it was on is gone, the
 // screens were laid out again, or none is known. A window larger than the
 // area keeps its top left corner in it, title bar in reach.
-func openAt(saved []int, w, h int, areas []area) (x, y int, ok bool) {
+func openAt(saved []int, w, h int, desks []desk) (x, y int, ok bool) {
 	if len(saved) != 2 || w <= 0 || h <= 0 {
 		return 0, 0, false
 	}
 	x, y = saved[0], saved[1]
-	best, most := area{}, 0
-	for _, a := range areas {
-		if n := overlap(x, w, a.x, a.w) * overlap(y, h, a.y, a.h); n > most {
-			best, most = a, n
+	best, most := desk{}, 0
+	for _, d := range desks {
+		if n := overlap(x, w, d.at.x, d.at.w) * overlap(y, h, d.at.y, d.at.h); n > most {
+			best, most = d, n
 		}
 	}
 	if most == 0 {
 		return 0, 0, false
 	}
-	return within(x, w, best.x, best.w), within(y, h, best.y, best.h), true
+	return within(x, w, best.at.x, best.at.w), within(y, h, best.at.y, best.at.h), true
+}
+
+// screenFor is the id of the screen whose work area holds the point x, y,
+// "" when none does: the screen the main window is on as it settles.
+func screenFor(desks []desk, x, y int) string {
+	for _, d := range desks {
+		if holds(x, y, d.at) {
+			return d.id
+		}
+	}
+	return ""
+}
+
+// holds is whether a screen's work area holds the point x, y.
+func holds(x, y int, a area) bool {
+	return x >= a.x && x < a.x+a.w && y >= a.y && y < a.y+a.h
+}
+
+// putWhere is where a window w×h, last at x, y, opens to sit on the screen
+// named on: clamped into that screen's work area, as openAt clamps. Not ok
+// when the name names no screen there now (the screen gone, or an id the
+// platform does not carry across restarts), and the caller leaves the
+// window where it was put.
+func putWhere(on string, desks []desk, x, y, w, h int) (int, int, bool) {
+	for _, d := range desks {
+		if d.id == on {
+			return within(x, w, d.at.x, d.at.w), within(y, h, d.at.y, d.at.h), true
+		}
+	}
+	return 0, 0, false
 }
 
 // overlap is how much of the span from p, n long, lies in the one from
@@ -128,6 +165,17 @@ func settleAt(s *settings.Settings, x, y int) bool {
 		return false
 	}
 	s.WindowAt = []int{x, y}
+	return true
+}
+
+// settleScreen keeps in s the id of the screen the main window was left on,
+// and says whether s changed. An empty id — no screen holds it — keeps what
+// was kept: no screen is no news.
+func settleScreen(s *settings.Settings, on string) bool {
+	if on == "" || s.WindowScreen == on {
+		return false
+	}
+	s.WindowScreen = on
 	return true
 }
 

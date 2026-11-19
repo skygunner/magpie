@@ -404,6 +404,7 @@ func showHere(w *application.WebviewWindow, focus bool) {
 // be restored at all.
 func (h *host) placeMain(w *application.WebviewWindow) {
 	if h.placeAt(w) {
+		h.putOnScreen(w) // the screen it was left on, not the stale kept place's
 		w.EnableSizeConstraints()
 		w.Maximise()
 		w.EnableSizeConstraints()
@@ -456,30 +457,65 @@ func (h *host) putBack(w *application.WebviewWindow) bool {
 // or minimised, which are the screen's place and not one the user gave it
 // (Windows puts a minimised window at -32000, -32000).
 func (h *host) keepAt(w *application.WebviewWindow) {
-	if h.placed.Load() != w || !keepsPlace(runtime.GOOS, os.Getenv) || w.IsFullscreen() || w.IsMinimised() || w.IsMaximised() || !w.IsVisible() {
+	maxed := w.IsMaximised()
+	if h.placed.Load() != w || !keepsPlace(runtime.GOOS, os.Getenv) || w.IsFullscreen() || w.IsMinimised() || !w.IsVisible() {
 		return
 	}
-	if wd, _ := w.Size(); wd == 0 {
-		return // let go by lightweight mode
+	if !maxed {
+		if wd, _ := w.Size(); wd == 0 {
+			return // let go by lightweight mode
+		}
 	}
 	x, y := w.Position()
 	s, err := settings.LoadChecked()
 	if err != nil {
 		return // unreadable: left as it is, not written over
 	}
-	if settleAt(&s, x, y) {
+	changed := false
+	if !maxed {
+		// a maximised window's place is the screen's, not one the user gave
+		// it, so the place is kept only of one not maximised; the screen it
+		// is on is kept all the same, that being the one thing a maximised
+		// window can tell of itself — without it, a window left maximised
+		// on a second screen opened maximised on the main one (pluo on
+		// #2785)
+		changed = settleAt(&s, x, y)
+	}
+	if settleScreen(&s, screenFor(workAreas(h.app.Screen.GetAll()), x, y)) {
+		changed = true
+	}
+	if changed {
 		if err := settings.Save(s); err != nil {
 			log.Println("window: keeping its place:", err)
 		}
 	}
 }
 
-// workAreas is the screens' work areas as openAt takes them.
-func workAreas(screens []*application.Screen) []area {
-	var out []area
+// putOnScreen puts a window about to be maximised on the screen it was left
+// on (settings.WindowScreen), so the maximise zooms it there and not on the
+// screen its stale kept place falls on; the place under a maximised window
+// is never kept, the screen is. Nothing is done when no screen was kept, or
+// the one kept is gone (or an id the platform does not carry across
+// restarts): the window opens where placeAt put it, as before (#2785).
+func (h *host) putOnScreen(w *application.WebviewWindow) {
+	on := settings.Shared().WindowScreen
+	if on == "" {
+		return
+	}
+	wd, ht := w.Size()
+	x, y := w.Position()
+	if px, py, ok := putWhere(on, workAreas(h.app.Screen.GetAll()), x, y, wd, ht); ok {
+		w.SetPosition(px, py)
+	}
+}
+
+// workAreas is the screens as desks, id and work area, as openAt, screenFor
+// and putWhere take them.
+func workAreas(screens []*application.Screen) []desk {
+	var out []desk
 	for _, sc := range screens {
 		if sc != nil && sc.WorkArea.Width > 0 && sc.WorkArea.Height > 0 {
-			out = append(out, area{sc.WorkArea.X, sc.WorkArea.Y, sc.WorkArea.Width, sc.WorkArea.Height})
+			out = append(out, desk{sc.ID, area{sc.WorkArea.X, sc.WorkArea.Y, sc.WorkArea.Width, sc.WorkArea.Height}})
 		}
 	}
 	return out

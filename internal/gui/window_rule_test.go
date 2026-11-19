@@ -113,34 +113,97 @@ func TestSettle(t *testing.T) {
 // middle after every update), moved whole onto a screen there now; with
 // no place kept, or its screen gone, it is left to the system's centre.
 func TestOpenAt(t *testing.T) {
-	laptop := area{0, 25, 1512, 919}      // a Mac's work area under the menu bar
-	left := area{-1920, -200, 1920, 1040} // a monitor to its left, higher
-	right := area{1512, 0, 2560, 1400}    // one to its right
+	laptop := desk{"laptop", area{0, 25, 1512, 919}}    // a Mac's work area under the menu bar
+	left := desk{"left", area{-1920, -200, 1920, 1040}} // a monitor to its left, higher
+	right := desk{"right", area{1512, 0, 2560, 1400}}   // one to its right
 	for _, c := range []struct {
 		name  string
 		saved []int
 		w, h  int
-		areas []area
+		desks []desk
 		x, y  int
 		ok    bool
 	}{
-		{"nothing kept", nil, 800, 600, []area{laptop}, 0, 0, false},
-		{"malformed", []int{40}, 800, 600, []area{laptop}, 0, 0, false},
+		{"nothing kept", nil, 800, 600, []desk{laptop}, 0, 0, false},
+		{"malformed", []int{40}, 800, 600, []desk{laptop}, 0, 0, false},
 		{"no screen known", []int{100, 100}, 800, 600, nil, 0, 0, false},
-		{"where it was", []int{300, 140}, 800, 600, []area{laptop}, 300, 140, true},
-		{"on the left monitor", []int{-1500, -100}, 800, 600, []area{laptop, left}, -1500, -100, true},
-		{"its monitor gone", []int{-1500, -100}, 800, 600, []area{laptop}, 0, 0, false},
-		{"its right monitor gone", []int{2400, 300}, 800, 600, []area{laptop}, 0, 0, false},
-		{"over the edge, onto the screen with most of it", []int{1300, 200}, 800, 600, []area{laptop, right}, 1512, 200, true},
-		{"hanging off the bottom", []int{900, 700}, 800, 600, []area{laptop}, 712, 344, true},
-		{"under the menu bar", []int{100, 0}, 800, 600, []area{laptop}, 100, 25, true},
-		{"larger than the screen", []int{-50, 10}, 1600, 1000, []area{laptop}, 0, 25, true},
-		{"no size", []int{100, 100}, 0, 0, []area{laptop}, 0, 0, false},
+		{"where it was", []int{300, 140}, 800, 600, []desk{laptop}, 300, 140, true},
+		{"on the left monitor", []int{-1500, -100}, 800, 600, []desk{laptop, left}, -1500, -100, true},
+		{"its monitor gone", []int{-1500, -100}, 800, 600, []desk{laptop}, 0, 0, false},
+		{"its right monitor gone", []int{2400, 300}, 800, 600, []desk{laptop}, 0, 0, false},
+		{"over the edge, onto the screen with most of it", []int{1300, 200}, 800, 600, []desk{laptop, right}, 1512, 200, true},
+		{"hanging off the bottom", []int{900, 700}, 800, 600, []desk{laptop}, 712, 344, true},
+		{"under the menu bar", []int{100, 0}, 800, 600, []desk{laptop}, 100, 25, true},
+		{"larger than the screen", []int{-50, 10}, 1600, 1000, []desk{laptop}, 0, 25, true},
+		{"no size", []int{100, 100}, 0, 0, []desk{laptop}, 0, 0, false},
 	} {
-		x, y, ok := openAt(c.saved, c.w, c.h, c.areas)
+		x, y, ok := openAt(c.saved, c.w, c.h, c.desks)
 		if x != c.x || y != c.y || ok != c.ok {
 			t.Errorf("%s: openAt = %d, %d, %v; want %d, %d, %v", c.name, x, y, ok, c.x, c.y, c.ok)
 		}
+	}
+}
+
+// The screen the window was left on is kept, kept again unchanged, and
+// never overwritten by "none": no screen holding the point is no news.
+func TestSettleScreen(t *testing.T) {
+	var s settings.Settings
+	if !settleScreen(&s, "left") || s.WindowScreen != "left" {
+		t.Fatalf("not kept: %q", s.WindowScreen)
+	}
+	if settleScreen(&s, "left") {
+		t.Fatal("the same screen counted as a change")
+	}
+	if !settleScreen(&s, "right") || s.WindowScreen != "right" {
+		t.Fatalf("a new screen not kept: %q", s.WindowScreen)
+	}
+	if settleScreen(&s, "") {
+		t.Fatalf("no screen overwrote what was kept: %q", s.WindowScreen)
+	}
+}
+
+// The screen holding a point is found by its work area; none is "".
+func TestScreenFor(t *testing.T) {
+	laptop := desk{"laptop", area{0, 25, 1512, 919}}
+	left := desk{"left", area{-1920, -200, 1920, 1040}}
+	desks := []desk{laptop, left}
+	for _, c := range []struct {
+		x, y int
+		want string
+	}{
+		{300, 140, "laptop"},
+		{-1500, -100, "left"},
+		{-2000, 0, ""},
+		{100, 0, ""}, // above the laptop's work area, under the menu bar
+	} {
+		if got := screenFor(desks, c.x, c.y); got != c.want {
+			t.Errorf("screenFor(%d, %d) = %q, want %q", c.x, c.y, got, c.want)
+		}
+	}
+}
+
+// A window to be maximised is put on the screen it was left on, clamped
+// into its work area; a screen gone (or an id the platform does not carry
+// across restarts) leaves it where it was put.
+func TestPutWhere(t *testing.T) {
+	laptop := desk{"laptop", area{0, 25, 1512, 919}}
+	left := desk{"left", area{-1920, -200, 1920, 1040}}
+	desks := []desk{laptop, left}
+	x, y, ok := putWhere("left", desks, 300, 140, 1600, 1000)
+	if !ok || x != -1600 || y != -160 {
+		// moved as little as it takes to lie whole in the work area, as
+		// openAt moves a kept place
+		t.Errorf("onto the left screen: %d, %d, %v; want -1600, -160, true", x, y, ok)
+	}
+	x, y, ok = putWhere("left", desks, -2000, -300, 800, 600)
+	if !ok || x != -1920 || y != -200 {
+		t.Errorf("clamped into the work area: %d, %d, %v", x, y, ok)
+	}
+	if _, _, ok := putWhere("gone", desks, 300, 140, 800, 600); ok {
+		t.Error("a screen gone said ok")
+	}
+	if _, _, ok := putWhere("", desks, 300, 140, 800, 600); ok {
+		t.Error("no screen kept said ok")
 	}
 }
 

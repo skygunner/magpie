@@ -1299,6 +1299,17 @@ type Settings struct {
 	// minimised; not at all under Wayland, where a window can't place
 	// itself. gui's openAt moves it onto a screen there now.
 	WindowAt []int `json:"windowAt,omitempty"`
+	// WindowScreen is the screen the main window was last on, by the
+	// platform's id for it (Wails' Screen.ID: a display id on the Mac, an
+	// HMONITOR handle on Windows, an enumeration index on Linux), so it
+	// opens on that screen again (#2785) while the screen is still
+	// attached. Kept also while it is maximised, whose place is the
+	// screen's rather than one the user gave it — without it, a window
+	// left maximised on a second screen opened maximised on the main one
+	// again (pluo on #2785, v0.1.4351, macOS). An id the platform does not
+	// keep across restarts (Windows' handle) matches no screen, and the
+	// place alone is used.
+	WindowScreen string `json:"windowScreen,omitempty"`
 	// OnTop keeps the main window above other apps' windows, pinned from
 	// its title bar's pin (NovaStudiosss on X: Usage and Routing watched
 	// while working elsewhere). This computer's own, as the window's size
@@ -1822,7 +1833,7 @@ func (s *Settings) KeepOwn(cur Settings) {
 	s.UpdateProxy, s.UpdateProxyCustom = cur.UpdateProxy, cur.UpdateProxyCustom
 	s.UpdateSource = cur.UpdateSource
 	s.WindowMaximised, s.KeepAwake, s.KeepAwakeDisplay = cur.WindowMaximised, cur.KeepAwake, cur.KeepAwakeDisplay
-	s.WindowAt, s.OnTop = cur.WindowAt, cur.OnTop
+	s.WindowAt, s.WindowScreen, s.OnTop = cur.WindowAt, cur.WindowScreen, cur.OnTop
 	s.TrayUsages, s.TrayUsage, s.TrayUsageEvery, s.TrayNoLogos, s.TrayNoBird, s.TrayPace, s.TrayNoCost = cur.TrayUsages, cur.TrayUsage, cur.TrayUsageEvery, cur.TrayNoLogos, cur.TrayNoBird, cur.TrayPace, cur.TrayNoCost
 	s.TrayWindows, s.TrayNoNumber, s.TrayCurrency, s.TrayAnthropicMark = cur.TrayWindows, cur.TrayNoNumber, cur.TrayCurrency, cur.TrayAnthropicMark
 	s.GatewayMode = cur.GatewayMode
