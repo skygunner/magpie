@@ -1,0 +1,62 @@
+{
+ "2785": {
+  "id": 7009874663,
+  "author": "skygunner",
+  "issue": "2785",
+  "lang": "zh",
+  "created_at": "2026-11-19T13:01:41Z",
+  "url": "https://github.com/yetone/magpie/issues/2785#issuecomment-7009874663",
+  "sha256": "78c915143b0128afe02edb12256656b124aa28ca4ea7f86abf7cee7a5261faff",
+  "matches_draft": true
+ },
+ "4945": {
+  "id": 7009874983,
+  "author": "skygunner",
+  "issue": "4945",
+  "lang": "zh",
+  "created_at": "2026-11-19T13:01:42Z",
+  "url": "https://github.com/yetone/magpie/issues/4945#issuecomment-7009874983",
+  "sha256": "414ba73b854dcf99e3339c37bc9c666ed2082597123b872cbf9073d98ab89c5c",
+  "matches_draft": true
+ },
+ "5150": {
+  "id": 7009875350,
+  "author": "skygunner",
+  "issue": "5150",
+  "lang": "en",
+  "created_at": "2026-11-19T13:01:43Z",
+  "url": "https://github.com/yetone/magpie/issues/5150#issuecomment-7009875350",
+  "sha256": "092322e62ef7d7663c28241b85d9d67eafad704cd643365cac0716a4d1078e9a",
+  "matches_draft": true
+ },
+ "3655": {
+  "id": 7009875705,
+  "author": "skygunner",
+  "issue": "3655",
+  "lang": "zh",
+  "created_at": "2026-11-19T13:01:43Z",
+  "url": "https://github.com/yetone/magpie/issues/3655#issuecomment-7009875705",
+  "sha256": "3b36911e1831a21c36b4e06abe4752bb5cc3423fa37fbccae99e9a8d1b953ec8",
+  "matches_draft": true
+ },
+ "3331": {
+  "id": 7009876066,
+  "author": "skygunner",
+  "issue": "3331",
+  "lang": "zh",
+  "created_at": "2026-11-19T13:01:44Z",
+  "url": "https://github.com/yetone/magpie/issues/3331#issuecomment-7009876066",
+  "sha256": "74bfa4d4204d3c23df88329da51665367b3a4b5a2a965597b45ed2a582ee1789",
+  "matches_draft": true
+ },
+ "4385": {
+  "id": 7009876387,
+  "author": "skygunner",
+  "issue": "4385",
+  "lang": "en",
+  "created_at": "2026-11-19T13:01:45Z",
+  "url": "https://github.com/yetone/magpie/issues/4385#issuecomment-7009876387",
+  "sha256": "6d9e374e6c9ad3502f5b144a35d7e405c737fe38bd37f996eb2baa03e747064f",
+  "matches_draft": true
+ }
+}

@@ -1,0 +1,5 @@
+--- FAIL: TestPlaceholderNoteSkipsACallApart (0.00s)
+    placeholder_note_test.go:209: the note did not go to the message after the call's result: {"model":"m","messages":[{"role":"user","content":"run it"},{"role":"assistant","content":[{"type":"thinking","thinking":"hmm"},{"type":"tool_use","id":"t1","name":"Bash","input":{"cmd":"export K={{API_KEY_abcdefgh}}"}},{"text":"\n\nValues written like {{NAME_ab12cd34}} are placeholders for real values. Use them exactly as written, in replies and in tool calls alike: they are filled in with the real values before anything runs. Don't ask to verify them, and don't replace them with examples.","type":"text"}]},{"role":"user","content":[{"type":"tool_result","tool_use_id":"t1","content":"done; the key is {{API_KEY_abcdefgh}}"}]}]}
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.009s
+FAIL
