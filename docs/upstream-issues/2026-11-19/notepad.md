@@ -57,10 +57,24 @@ All posted in opener language and read back (posted-replies.json).
 - #2785 window family + settings guard: green (evidence/2785-*.log).
 - #4945: red on clean main, green at head (evidence/4945-*.log).
 
+## Delivered the same day (2026-11-19, second pass): #4144 rework
+
+The maintainer's three review points answered on the new direction:
+scanFrames resyncs past a damaged frame (bad magic / lengths past the
+file with a probe for a later frame / blocks that do not decode), no
+error out of parseDsh or readDshCalls, the tail stands past the damage
+and moves on; dsh-targeted version raises only (parseVersions dsh 4,
+callParseVersions dsh 1; callCacheVersion untouched). Tests build a file
+the way dsh writes one from the real fixture lines and damage the middle
+frame three ways; red on clean main (tail held), green at the head.
+Branch fix/4144-scanframes-resync head 7a1054161 (on upstream/main
+289184a40), pushed; reply 7010544232 (zh, read back).
+Evidence: evidence/4144/.
+
 ## Still pending
 
-- #4144 rework (committed 11-17): scanFrames read-past-corrupt-frame
-  resync + a test from a real damaged session file. Heaviest item; needs a
-  dedicated session.
+- #4144: a real damaged session file from a reporter's environment would
+  strengthen the fixture (offer renewed in the reply); otherwise closed
+  out on our side.
 - #3331/#3655 wait on maintainer pickup; #2785 awaits pluo's dual-display
   verification.

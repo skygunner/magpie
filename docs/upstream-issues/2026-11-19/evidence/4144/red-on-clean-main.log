@@ -1,0 +1,10 @@
+--- FAIL: TestFramesResyncPastDamaged (0.01s)
+    --- FAIL: TestFramesResyncPastDamaged/blocks_that_do_not_decode (0.00s)
+        frames_resync_test.go:84: blocks that do not decode: the tail did not move past the damage: &{Off:234 Skip:0 Size:234 Head:42376006f6d848cb1a1ce80615aec0d4 HeadSize:234 Hash:42376006f6d848cb1a1ce80615aec0d4}
+    --- FAIL: TestFramesResyncPastDamaged/a_start_that_is_no_frame's (0.00s)
+        frames_resync_test.go:84: a start that is no frame's: the tail did not move past the damage: &{Off:234 Skip:0 Size:234 Head:42376006f6d848cb1a1ce80615aec0d4 HeadSize:234 Hash:42376006f6d848cb1a1ce80615aec0d4}
+    --- FAIL: TestFramesResyncPastDamaged/lengths_that_run_past_the_file (0.00s)
+        frames_resync_test.go:84: lengths that run past the file: the tail did not move past the damage: &{Off:234 Skip:0 Size:234 Head:42376006f6d848cb1a1ce80615aec0d4 HeadSize:234 Hash:42376006f6d848cb1a1ce80615aec0d4}
+FAIL
+FAIL	github.com/yetone/magpie/internal/sessions	0.044s
+FAIL
