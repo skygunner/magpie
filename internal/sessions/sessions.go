@@ -1484,7 +1484,10 @@ const cacheVersion = 29
 // database names (agyStepModels), not "agy".
 // pi 1, raft 1, cindy 1: a pi-subagents tool result's model work is its
 // subagents', counted from their own files (piSubagentsRead).
-var parseVersions = map[string]int{"codex": 3, "zcode": 1, "dsh": 3, "antigravity": 2, "agy": 1, "pi": 1, "raft": 1, "cindy": 1}
+// dsh 4: a damaged frame is passed and the frames after it count (frames'
+// resync, #4144); a summary kept from before holds only what its read
+// reached, and reads again from the first.
+var parseVersions = map[string]int{"codex": 3, "zcode": 1, "dsh": 4, "antigravity": 2, "agy": 1, "pi": 1, "raft": 1, "cindy": 1}
 
 type cacheFile struct {
 	Version int    `json:"version"`

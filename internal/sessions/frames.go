@@ -183,10 +183,36 @@ func frameSize(f io.ReaderAt, off int64) int {
 	return int(at - off)
 }
 
+// resync is the start of the first frame at or after from, found from the
+// headers alone: -1 when the file holds none. Its end counts as none too —
+// a frame still being written is no place to go on from, and frameSize
+// reads it as none.
+func resync(f io.ReaderAt, from, size int64) int64 {
+	var h [4]byte
+	for at := from; at+4 <= size; at++ {
+		if _, err := f.ReadAt(h[:], at); err != nil {
+			return -1
+		}
+		m := binary.LittleEndian.Uint32(h[:])
+		if m != 0xFD2FB528 && m&0xFFFFFFF0 != 0x184D2A50 {
+			continue
+		}
+		if m&0xFFFFFFF0 == 0x184D2A50 || frameSize(f, at) > 0 {
+			return at
+		}
+	}
+	return -1
+}
+
 // scanFrames hands fn each whole line of a file of zstd frames, from the
 // frame at off, skip bytes into what that frame holds. It returns where to
 // go on from (the frame the first line not yet whole starts in, and how far
-// into it) and where the last whole frame read ends.
+// into it) and where the last whole frame read ends. A damaged frame — a
+// header that is no frame's, or blocks that do not decode — is passed:
+// lines the frames after it hold are read as before, where a stop would
+// have held the file's tail on the damage while it grew past (#4144). The
+// frame's own lines are lost, as nothing of a frame can be had without
+// decoding it.
 func scanFrames(path string, off, skip int64, fn func([]byte) bool) (next, nextSkip, end int64, err error) {
 	if scanHook != nil {
 		scanHook(path, off)
@@ -200,6 +226,10 @@ func scanFrames(path string, off, skip int64, fn func([]byte) bool) (next, nextS
 	if _, err = f.Seek(off, io.SeekStart); err != nil {
 		return
 	}
+	size := int64(0)
+	if fi, err := f.Stat(); err == nil {
+		size = fi.Size()
+	}
 	dec := frameDecoders.Get().(*zstd.Decoder)
 	defer frameDecoders.Put(dec)
 	r, release := lineReader(f, scanBuffer(f, off))
@@ -211,6 +241,23 @@ func scanFrames(path string, off, skip int64, fn func([]byte) bool) (next, nextS
 		var n int64
 		frame, n, err = readFrame(r, frame, frameSize(f, at))
 		if err != nil {
+			// not a frame at all, or lengths that run past the file: a
+			// frame start found later says the damage is real and the file
+			// carries on, and the read goes on from there — the frame's
+			// lines lost, a line carried from the frame before dropped with
+			// what it leaned on, and the tail moving again (#4144). None
+			// says the file ends here mid-frame, as an append in flight
+			// does: it waits for the next read, as before
+			if at2 := resync(f, at+1, size); at2 >= 0 {
+				if _, err = f.Seek(at2, io.SeekStart); err != nil {
+					return
+				}
+				r, release = lineReader(f, scanBuffer(f, at2))
+				defer release()
+				pending = pending[:0]
+				next, nextSkip, at = at2, 0, at2
+				continue
+			}
 			// the end, a frame still being written, or not one at all:
 			// what was read stands, the rest waits for the next read
 			err = nil
@@ -226,9 +273,14 @@ func scanFrames(path string, off, skip int64, fn func([]byte) bool) (next, nextS
 			continue
 		}
 		if out, err = dec.DecodeAll(frame, out[:0]); err != nil {
+			// headers whole, blocks that do not decode: the frame's lines
+			// are lost, and a stop here would hold the tail on them while
+			// the file grew past (#4144). The frame is skipped; the frames
+			// after it count as before
 			err = nil
-			end = start
-			return
+			pending = pending[:0]
+			next, nextSkip = at, 0
+			continue
 		}
 		from := int64(0)
 		if first {
