@@ -1,0 +1,13 @@
+--- FAIL: TestACreditsPoolUsedUpIsNoShareUsed (0.00s)
+    allowance_credits_pool_test.go:26: Credits used up, Add-on credits left: 100% used, want the Add-on pool's 44.4
+--- FAIL: TestAUsedUpDedicatedPackageIsNoShareUsed (0.00s)
+    allowance_credits_pool_test.go:87: dedicated package used up, Total credits left: 100% used, want the Total pool's 34.84
+FAIL
+FAIL	github.com/yetone/magpie/internal/provider	0.088s
+--- FAIL: TestGroupTriesAQoderAccountOnItsAddOnCredits (0.00s)
+    qoder_addon_routing_test.go:38: Credits used up, Add-on credits left: the group tries dsh-fe qoder-cn , want qoder-cn first
+--- FAIL: TestGroupTriesAQoderAccountOnItsTotalCredits (0.00s)
+    qoder_addon_routing_test.go:86: dedicated package used up, Total credits left: the group tries dsh-fe qoder-cn , want qoder-cn first
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.064s
+FAIL
