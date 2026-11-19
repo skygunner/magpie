@@ -89,6 +89,43 @@ func withPlaceholderNote(from provider.Protocol, body []byte) []byte {
 // holds says whether r's text has a placeholder.
 func holdsPlaceholder(r gjson.Result) bool { return r.Exists() && redact.HasPlaceholder(r.Raw) }
 
+// earliestApart is the index of the first element of the array r with a
+// placeholder whose block an appended note would not break. A note after an
+// assistant message's tool_use is translated into an item between the
+// function_call and the output the next message carries, and the upstream
+// reads the call as unanswered (#4945: a masked value in a tool call's
+// arguments put the note there) — such a message is passed over while a
+// later landing works; the same conversation's later turns pass it over the
+// same way, so the note never moves. -1 for none, and the caller falls back
+// to earliest.
+func earliestApart(r gjson.Result) int {
+	for i, e := range r.Array() {
+		if holdsPlaceholder(e) && !breaksApart(e) {
+			return i
+		}
+	}
+	return -1
+}
+
+// breaksApart is whether appending a note after e's content would come
+// between a function call and its result once translated: an assistant
+// message whose blocks hold a tool_use.
+func breaksApart(e gjson.Result) bool {
+	if e.Get("role").String() != "assistant" {
+		return false
+	}
+	blocks := e.Get("content")
+	if !blocks.IsArray() {
+		return false
+	}
+	for _, b := range blocks.Array() {
+		if b.Get("type").String() == "tool_use" {
+			return true
+		}
+	}
+	return false
+}
+
 // earliest is the index of the first element of the array r with a
 // placeholder, -1 for none.
 func earliest(r gjson.Result) int {
@@ -115,7 +152,10 @@ func withNoteAnthropic(body []byte) []byte {
 		}
 		return body
 	}
-	i := earliest(gjson.GetBytes(body, "messages"))
+	i := earliestApart(gjson.GetBytes(body, "messages"))
+	if i < 0 {
+		i = earliest(gjson.GetBytes(body, "messages"))
+	}
 	if i < 0 {
 		return body
 	}

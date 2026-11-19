@@ -186,3 +186,44 @@ func TestMaskedRequestTold(t *testing.T) {
 		t.Fatalf("told with nothing masked: %s", b3)
 	}
 }
+
+// A masked value inside a tool call's arguments puts the first
+// placeholder-holding message at the assistant turn that carries the call:
+// appending the note's text after the tool_use there would be translated
+// into an item between the function_call and the output the next message
+// carries, and the upstream reads the call as unanswered — "No tool output
+// found for tool call …" (#4945, ekoooli's captured body). The note goes to
+// a later message instead, and to the same one every turn; a call-carrying
+// assistant message with nothing later to hold it still takes the note, no
+// landing being better than none.
+func TestPlaceholderNoteSkipsACallApart(t *testing.T) {
+	key := "{{API_KEY_abcdefgh}}"
+	note := withNoteAnthropic([]byte(`{"model":"m","messages":[` +
+		`{"role":"user","content":"run it"},` +
+		`{"role":"assistant","content":[{"type":"thinking","thinking":"hmm"},{"type":"tool_use","id":"t1","name":"Bash","input":{"cmd":"export K=` + key + `"}}]},` +
+		`{"role":"user","content":[{"type":"tool_result","tool_use_id":"t1","content":"done; the key is ` + key + `"}]}]}`))
+	if strings.Contains(gjson.GetBytes(note, "messages.1").Raw, noteBlock) {
+		t.Fatalf("the note went beside the tool call: %s", note)
+	}
+	if !strings.Contains(gjson.GetBytes(note, "messages.2.content").Raw, "are placeholders for real values") {
+		t.Fatalf("the note did not go to the message after the call's result: %s", note)
+	}
+	// the same conversation a turn later lands it on the same message
+	note2 := withNoteAnthropic([]byte(`{"model":"m","messages":[` +
+		`{"role":"user","content":"run it"},` +
+		`{"role":"assistant","content":[{"type":"tool_use","id":"t1","name":"Bash","input":{"cmd":"export K=` + key + `"}}]},` +
+		`{"role":"user","content":[{"type":"tool_result","tool_use_id":"t1","content":"done; the key is ` + key + `"}]},` +
+		`{"role":"assistant","content":"ok"},` +
+		`{"role":"user","content":"go on"}]}`))
+	if !strings.Contains(gjson.GetBytes(note2, "messages.2.content").Raw, "are placeholders for real values") {
+		t.Fatalf("the note moved between turns: %s", note2)
+	}
+	// no message after the call to hold it: the call's own takes it, as
+	// before
+	only := withNoteAnthropic([]byte(`{"model":"m","messages":[` +
+		`{"role":"user","content":"run it"},` +
+		`{"role":"assistant","content":[{"type":"tool_use","id":"t1","name":"Bash","input":{"cmd":"export K=` + key + `"}}]}]}`))
+	if !strings.Contains(gjson.GetBytes(only, "messages.1.content").Raw, "are placeholders for real values") {
+		t.Fatalf("the note went nowhere with no other landing: %s", only)
+	}
+}
