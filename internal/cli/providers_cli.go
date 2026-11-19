@@ -679,7 +679,9 @@ func providerCmd(args []string) error {
 			}
 		}
 		if !ok {
-			os.Exit(1)
+			// through Main's exit, which ends the plugin host the test
+			// started (#7146)
+			return exitError{code: 1}
 		}
 		return nil
 	case "account-models", "account-model":
@@ -1492,10 +1494,11 @@ func applyPairs(p *provider.Provider, pairs []string) error {
 			if err != nil {
 				return err
 			}
-			if r == provider.Manual || r == provider.Cheapest || r == provider.FreeExpiring {
+			if r == provider.Manual || r == provider.Cheapest || r == provider.FreeExpiring || r == provider.SmallFirst {
 				// cheap: its keys and accounts all bill the provider's one
 				// price, so there is nothing to weigh; expiring weighs
-				// several subscriptions' free quota, a group's members
+				// several subscriptions' free quota, a group's members; fit
+				// weighs models' windows, and a provider's serve one
 				return fmt.Errorf("routing=%s is a group's: a provider's keys or accounts are routed smart, order, rotate, usage, pace, weight, free, fast or drain", r)
 			}
 			p.Routing = r
@@ -1790,7 +1793,17 @@ func serve() error {
 	go provider.KeepRemotesUpdated(ctx, version)
 	// the models a Remote magpie's agents are on, as the app follows them
 	go agent.KeepFollowingRemote(ctx, 30*time.Second)
+	drained := make(chan struct{})
+	// a SIGTERM (Kubernetes', Docker's, a service manager's) finishes the
+	// requests in flight first (serve_drain.go)
+	finish := stopGatewayOnSignalAs(func(sig os.Signal) {
+		drainOnSignal(s, sig)
+		stop()
+		<-drained
+	})
 	err := s.ListenAndServe(ctx)
+	close(drained)
+	finish()
 	if exe := follow.restartTo(); exe != "" {
 		// the plugin hosts end, waited for, first, as magpie web's
 		// reexec does (#3285)

@@ -140,7 +140,7 @@ line; agents connected to magpie lose it when it quits.
 | QwenPaw      | each agent's `agent.json` in its workspace (`~/.qwenpaw/workspaces/<agent>`, the agents listed in `config.json`), under `$QWENPAW_WORKING_DIR`, else a legacy `~/.copaw`, else `~/.qwenpaw` | model (a `magpie` custom provider in `providers/custom/magpie.json` under QwenPaw's secret folder, `$QWENPAW_SECRET_DIR` or `~/.qwenpaw.secret`, OpenAI Chat at the gateway with magpie's models; the agent's `active_model` set to it, what was there put back on Disconnect; one row per agent, `qwenpaw` the default and `qwenpaw#<id>` the others; an agent on an ACP backend isn't listed; restart QwenPaw after the first connect), effort (the agent's `thinking_level`; magpie's models with reasoning levels are declared `thinking_param_style: "effort"` so QwenPaw applies it) |
 | OpenClaw     | `openclaw.json` in `~/.openclaw` (`$OPENCLAW_CONFIG_PATH`, `$OPENCLAW_STATE_DIR`, `~/.openclaw-<profile>` for `$OPENCLAW_PROFILE`, `~` as `$OPENCLAW_HOME`) | model (a `magpie` provider in `models.providers`, `openai-completions`, with magpie's models in it; `agents.defaults.model`'s primary set to it, what was there put back on Disconnect; `magpie/*` added to a `modelPolicy.allow` that would refuse it; the user's own keys in the provider and its models kept; a chat already on a model keeps it until `/model default`) |
 | jcode        | `config.toml` in `$JCODE_HOME`, else `~/.jcode` | model (a `[providers.magpie]` profile, `openai-compatible`, with magpie's models in it; `[provider] default_provider`/`default_model` set to it, what was there put back on Disconnect; the user's own keys in the profile, such as `headers` and a model's `reasoning_effort`, kept; restart open jcode sessions after connecting) |
-| Dim (alpha, `dima`) | none of Dim's: magpie's own `dim.json` beside its settings, and a `dima` function in your shell profiles | model (Dim's documented start-up variables, set only for that run: `DIM_BASE_URL` the gateway's `/v1`, `DIM_API_FORMAT=openai-compatible`, `DIM_API_KEY`, `DIM_MODEL` and both token limits; Dim's home (`$DIMCODE_HOME`, else `~/.dimcode-alpha`), saved Providers and account are never read or written. Type `dima` in a new terminal; picking Dim's own again takes the function out) |
+| Dim (alpha, `dima`) | Dim's built-in **Magpie** provider, through Dim's own daemon (`$DIMCODE_HOME`, else `~/.dimcode-alpha`), and magpie's own `dim.json` beside its settings | model (Dim's Magpie provider gets the gateway's `/v1` and magpie's key, is turned on and made Dim's model, so a plain `dima` runs on magpie; no other provider is touched, and a key or address you set on the Magpie entry yourself is kept. Picking Dim's own again turns the entry off and puts back the model Dim was on. When Dim's daemon can't be reached, a `dima` function in your shell profiles starts it with `DIM_BASE_URL`, `DIM_API_KEY`, `DIM_MODEL` and the token limits for that run instead) |
 | Mistral Vibe | `config.toml` in `$VIBE_HOME`, else `~/.vibe` | model (a `[[providers]]` entry named magpie with the gateway's `/v1` and the key as an `Authorization` header in `extra_headers`, since Vibe reads keys only from the environment; one `[[models]]` entry per model, aliased `magpie/<provider>/<model>`; `active_model` set to the alias, what was there put back on Disconnect; a `thinking` level the user set on a model kept; restart open vibe sessions after connecting) |
 | MiniMax Code (mcode) | `~/.minimax/config.yaml` (`$MINIMAX_DATA_DIR`, or the folder the desktop app moved it to) | model (a `magpie` custom provider; magpie's models in its /model) |
 | Droid (Factory) | `~/.factory/settings.json` (`$FACTORY_HOME_OVERRIDE`) | model (magpie's models as BYOK `customModels`, in Droid's /model) |
@@ -166,6 +166,7 @@ line; agents connected to magpie lose it when it quits.
 | OpenMausBot  | `~/.openmausbot/config.json` (`$OMB_DATA_DIR`) | provider (a `magpie` engine in `instances`: OpenMausBot's own Claude endpoint shape, Claude Code with `ANTHROPIC_BASE_URL` at the gateway and magpie's models as its `endpointModels`, in its own `CLAUDE_CONFIG_DIR` under `providers/magpie`. With no `instances` saved, OpenMausBot's default engines are written beside it. OpenMausBot reads it when it starts) |
 | Avibe        | `~/.avibe/config/config.json` (`$AVIBE_HOME`; `~/.vibe_remote` from before 3.0), changed through its control socket `state/dispatch.sock` (Windows: `runtime/control-ipc/endpoint.json`) while it runs | provider (a `magpie` model source on its Models page: custom vendor, OpenAI chat completions at the gateway's `/v1`, with Avibe's own key; Avibe lists magpie's models from the gateway and adds the source to Vibey's, Claude Code's, Codex's and OpenCode's routes. Avibe has to be running to connect or disconnect it) |
 | Kun          | `~/.kun/data/model-connections.v2.json` (`$KUN_DATA_DIR`), changed through its runtime's admin API (`baseUrl` and `runtimeToken` of `runtime.json` in the same folder) while it runs | model (a `magpie` connection in Settings > Providers: HTTP, OpenAI chat completions at the gateway's `/v1`, with Kun's own key and the models picked for Kun; the model picked is Kun's default. Kun has to be running to connect or disconnect it) |
+| Nowledge Mem | `remote_llm.json` in its config folder (`~/Library/Application Support/co.nowledge.mem.desktop`, `%APPDATA%`, `$XDG_CONFIG_HOME`; `$NMEM_APP_CONFIG_DIR`), read only: changed through its backend's API on `127.0.0.1:14242` (`$NMEM_API_URL`) while it runs | model (Mem's own `magpie` provider at the gateway's `/v1` with Mem's own key, made its active AI and turned on; the provider and on/off Mem had come back on disconnect. Mem has to be running to connect or disconnect it) |
 | OpenHanako   | `~/.hanako/provider-catalog.json` + `agents/<id>/config.yaml` (`$HANA_HOME`; its local API while it runs) | model (the primary agent's; magpie's models as a provider) |
 | AtomCode     | `~/.atomcode/config.toml` (`$ATOMCODE_HOME`) | model, effort (a `magpie` provider account, one model table per catalog model as its own sign-in writes) |
 | Open Code Review | `~/.opencodereview/config.json` | model (a `magpie` custom provider made the one in use; its Claude Code, Codex, Cursor, Kimi Code and OpenCode plugins run the same `ocr`) |
@@ -470,11 +471,16 @@ whether Fast ran or not, so from it those are left empty too. The JSON
 log keeps them as `tier_asked`, `tier_sent` and `tier_served`, and each
 try in `/v1/magpie/route` has `tier` and `tier_served`. A request's row
 on the Requests page shows them as Service tier (asked, sent when it
-differs, answered). The last column,
-`upstream_stop`, is why the upstream said its reply ended, in its own
+differs, answered). Then
+`upstream_stop`, why the upstream said its reply ended, in its own
 words (`stop`, `tool_calls`, `end_turn`, a Responses reply's
-`completed`), empty when it said none. A request's row on the Requests
-page shows it as Upstream stop reason.
+`completed`), empty when it said none; a request's row on the Requests
+page shows it as Upstream stop reason. After `credits`, the last column,
+`sent_model`, is the model id the request went out to the vendor under,
+when it is another than `model`: a name set for the model upstream, or the
+variant a plugin picked for the effort (Antigravity's
+`gemini-3.1-pro-high` for `gemini-3.1-pro` at high). A request's row shows it
+as Sent, and each try in `/v1/magpie/route` has it as `wire`.
 
 **Output speed** (tok/s on the Usage and Routing pages, `magpie usage`) is
 all output tokens the vendor counted, reasoning and tool calls included, over
@@ -2370,6 +2376,17 @@ each of these groups ordered by the share used.
   time window sends a member first at its hours, and a Pause rule leaves
   one out at its hours. The Routing page says why the first went first:
   "costs least on Ollama now — $0.150 in, $0.600 out a million tokens".
+- **Small context first** (routing groups only): each request goes to the
+  member with the smallest context window that holds it, so the big ones
+  are kept for the long requests only they can take. A member whose window
+  the request is longer than is left out before it is asked, as under every
+  routing, and asked only once every one with room is out of its
+  allowance. Members of one size go as Smart orders them, a member all but
+  used up still goes after those with room, and one whose window isn't
+  known goes after every known one. The window is the one you set for the
+  model, else the model list's. The Routing page says why the first went
+  first: "Composer 2.5's 200K context window is the smallest that holds
+  this request".
 
 The routings besides Smart are the built-in plugin `rotation` (Routing
 strategies in Plugins › Built-in). It stays on while a provider or group is
@@ -2394,6 +2411,7 @@ depends on the routing:
 | Use before expiry | Only between accounts in the same pace band that magpie sent the same tokens lately, in practice none since magpie started. |
 | Speed first | Only between those within a tenth of each other's speed, and among those not measured lately. |
 | Cheapest first | Only between those that cost the same now, and among those with no known price. |
+| Small context first | Only between those whose context windows are the same size, after Smart's order, and among those whose window isn't known. |
 
 For Claude Code and Codex, *Make first* also signs the agent in to that
 account, because the account the agent is signed in to is first. With
@@ -2875,6 +2893,28 @@ computer Claude Code runs on:
 `"statusLine": {"type": "command", "command": "curl -fsS -m 1 -H 'Authorization: Bearer <gateway key>' --data-binary @- http://<host>:3425/v1/magpie/statusline || true"}`.
 `magpie web` shows this command with its own address under Settings → About.
 
+Codex's TUI has a footer of the same kind from 0.171.0-alpha.12 on: a
+status line provider, a stdio MCP server whose tool says it draws one.
+`magpie statusline --codex` is that server. Codex reads it about once a
+second and passes the thread's id; it answers the model the thread's latest
+turn went to, then the account of that provider that answered last, with
+its windows, or a relay key's balance:
+`→ relay/glm-5  relay $4.20`, or `→ codex/gpt-5.5  codex me@example.com 5h 37% 7d 12%`.
+With no route it shows the account that answered last of all, and with the
+gateway not running it shows nothing. It is off until the status line square
+on Codex's row (or `magpie codex statusline on`) turns it on. That writes
+three things into `~/.codex/config.toml`: `[features] tui_extensions_statusline = true`,
+`[mcp_servers.quota_line]` running this magpie by its full path with
+`args = ["statusline", "--codex"]` and `env_vars = ["MAGPIE_ADDR"]` (Codex hands a server only a few variables of its own), and
+`[tui] status_line_provider = { server = "quota_line", tool = "statusline" }`.
+Off, or Disconnect, takes out only those, and the flag only when magpie
+wrote it. The square isn't offered while the user has a provider of their
+own picked, a `quota_line` server of their own or the flag turned off. It
+is also not offered until a Codex CLI here is 0.171.0-alpha.12 or newer:
+0.170.0 accepts the keys and draws nothing. Codex lists the server's tool
+to the model like any MCP tool's. Its name and description say only what it
+shows. The Codex app has no such footer.
+
 `magpie heap [<file>]` is for a report of magpie holding too much memory: a
 macOS `sample` of the app shows Go's frames as `???`. It asks the running
 magpie that serves the gateway (the app, the menu bar, `magpie serve` or
@@ -3329,15 +3369,21 @@ it starts agy untouched. A terminal open already takes the command the
 Launch row copies. Stepping out (`magpie agy default`) takes the block out
 again. `magpie agy env` prints what `agy run` adds.
 
-**Dim** alpha (`dima`, npm's `dimcode-alpha`) is started on magpie the
-way Dim documents for any OpenAI-compatible endpoint: `DIM_BASE_URL`,
-`DIM_API_FORMAT=openai-compatible`, `DIM_API_KEY`, `DIM_MODEL`,
-`DIM_MAX_CONTEXT_TOKENS` and `DIM_MAX_OUTPUT_TOKENS`, for that run only.
-Picking a catalog model (`magpie dim <model>`) keeps it in magpie's own
-`dim.json` and puts a marked `dima` function in your shell profiles, which
-runs `magpie dim run`; Dim's own folder, saved Providers and account are
-not touched. `magpie dim default` takes the file and the function out
-again, and `magpie dim env` prints what `dim run` adds. No WSL twin.
+**Dim** alpha (`dima`, npm's `dimcode-alpha`) has a built-in provider
+named Magpie. Picking a catalog model (`magpie dim <model>`) fills it in
+through Dim's daemon, the way Dim's own app does: the gateway's `/v1`
+(`http://127.0.0.1:3425/v1`, or the port magpie is on), magpie's key, the
+provider turned on, and the model made Dim's pick, with its token limits
+when the gateway doesn't know them. A plain `dima`, or Dim's app, then runs
+on magpie. Dim's other providers are never touched. A key or address you
+set on the Magpie entry yourself is kept; magpie only picks the model.
+`magpie dim default` turns the entry off, clears the key magpie put there
+and puts back the model Dim was on before. The pick is kept in magpie's own
+`dim.json`. Only when Dim's daemon can't be reached does magpie fall back to
+a marked `dima` function in your shell profiles, which runs `magpie dim run`
+with `DIM_BASE_URL`, `DIM_API_FORMAT=openai-compatible`, `DIM_API_KEY`,
+`DIM_MODEL`, `DIM_MAX_CONTEXT_TOKENS` and `DIM_MAX_OUTPUT_TOKENS` for that
+run; `magpie dim env` prints them. No WSL twin.
 
 agy installed in a WSL distro is listed as Antigravity CLI · WSL
 <distro>, found by `~/.gemini/antigravity-cli` or the `agy` command there.
@@ -3821,6 +3867,37 @@ commands find it from a shell that doesn't have `MAGPIE_ADDR` (a systemd
 service's); `--addr host:port` names it by hand, and `magpie status --json`
 prints the role, pid, version and address for a watchdog. Bind-mounting a folder at `/config` in place of a
 named volume works too; it has to be writable by uid 65532.
+
+On SIGTERM (`docker stop`, a Kubernetes rolling update, a service manager),
+`magpie serve` and `magpie web` drain rather than cut what they serve:
+`GET /` answers 503 at once, so `magpie healthcheck` fails and a readiness
+probe takes the pod out of its Service; in a Kubernetes pod the gateway
+keeps accepting for 5s while that reaches kube-proxy and the ingress; then
+it stops accepting and gives the requests in flight, streams included, up
+to `MAGPIE_DRAIN` to finish (seconds or a duration such as `90s`; `0`
+ends as before, after 2s). Unset, it is 20s in a Kubernetes pod, which
+fits the default `terminationGracePeriodSeconds` of 30 with room for
+magpie to save its state after, and 7s elsewhere, inside `docker stop`'s
+10s; raise it together with the grace the platform gives (`docker stop
+-t`, Compose's `stop_grace_period`) for longer turns. Ctrl+C and SIGHUP still
+end it at once. In Kubernetes, probe readiness with
+`exec: {command: [/magpie, healthcheck]}`: an `httpGet` probe comes from
+outside the container and would need a gateway key.
+
+A rolling update (`maxSurge: 1`, `maxUnavailable: 0`) overlaps the new pod
+with the old one on one `/config` volume and drops nothing: both answer
+requests, and each sign-in renewal and saved file is locked across them
+(flock, and host.js's renewal locks, which name the pod beside the pid since
+pods share pid numbers). The work only one magpie may do, what
+`ListenAndServe` starts after binding (renewing saved sign-ins, check-ins,
+retiring moves, plugin and Bun updates, `WhileServing`), runs only in the
+magpie holding `gateway.serving.lock` in the config folder: the old pod
+until its gateway ends, then the new one, which asks each second. A
+ReadWriteOnce volume needs the new pod on the old one's node, so the
+example Deployment in the Docker page has a required `podAffinity` on its
+own label with `topologyKey: kubernetes.io/hostname`. A pod on a version
+before v0.1.4526 doesn't take the lock: update from it once with
+`strategy: Recreate`.
 
 #### NAS with agents on other machines
 
