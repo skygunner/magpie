@@ -30,6 +30,15 @@ not the next watermark.
   the ordinary-window behavior, not a confirmed root cause: it has not
   been verified on a real Mac. Investigate and reproduce before asserting
   the cause or claiming the patch resolves this report.
+  Follow-up delivered after the sweep: [skygunner's reply](https://github.com/yetone/magpie/issues/2785#issuecomment-7029353823)
+  (`2026-11-20T03:22:44Z`) corrects the earlier root-cause claim and asks
+  whether `windowAt` exists before restart and whether ordinary exit followed
+  by restart also centers the window. Awaiting the reporter's answers and
+  real-Mac verification; neither the cause nor a fix for ordinary-window
+  restoration is confirmed. The API readback is in
+  [evidence/2785/2785-readback.json](evidence/2785/2785-readback.json);
+  its `body` UTF-8 bytes (without an added newline) have SHA-256
+  `a4026f1d964ea12a10bad084f2751dfc307778d6c8f178b19620f1f6939a002d`.
 - **#2878 — credit pools.** The new comment reports branch
   `fix/2878-credit-pools` at `79f50f6e9`; the commit-message updates leave
   the file tree unchanged from `d174c5e41`. The focused validation and
