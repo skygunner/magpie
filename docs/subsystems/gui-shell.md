@@ -153,6 +153,25 @@ endpoint, by the upstream that answered (`summaryUpstream` in
 OTel attributes carry the evidence without response text. The existing burst and held-content limits in
 `DecodeOf` still apply, and hidden reasoning does not enter average speed.
 
+A group's speed (`Totals.Speed`) and floor (`Totals.Floor`) are the median
+of its replies' own, each as its row tells it, not their summed tokens over
+their summed time: a few replies held for minutes before their first token,
+by a rate limit or a sleeping computer, filled the summed time, and a
+ranking row read ≥31 tok/s where its rows read ≥80-105 (FallMonkey on X).
+`Totals.Rates` ([`speed_rank.go`](../../internal/usage/speed_rank.go))
+counts them in the speed ranking's 2% bins, `rates.s` and `rates.f` in
+JSON; a group of one reply tells that reply's own figure. Rates are shared
+between copies of a sum and never changed in place: adding makes new ones.
+A chart's parts don't send them; `settle` puts each part's median in
+`Part.TPS` (`tps`). The page's `ledSpeed` and `ledFloor` in `app.js` take
+the same median (`ledHistMedian`), and Other's row adds the histograms up
+(`ledRatesPlus`). The sums (`DecodeOut` over `DecodeMs`) stay for a
+magpie before rates. `TestGroupSpeedIsTheMedianOfItsReplies` has the
+reporter's shape. The Routing page's session "Avg. speed" stays summed
+tokens over summed time, as its tooltip says, beside the same over each
+request's whole time, for comparing with tools that time a request whole;
+its window already leaves out the wait for the first token.
+
 A streamed request's duration (`Millis`, which ends every speed window)
 ends when its last try's reply ended, not when `serve` returns: what the
 gateway writes down after an answer (`answered`'s sticks, the provider's
@@ -1082,13 +1101,23 @@ restarted (elis_pina on X). Nor is it asked with downloads on a click
 (`keepsStaged`): the copy clicked for is what goes in (sakamotokurome on
 X). From 0.1.4051 to this change a restart never asked with a copy
 waiting (canlee886 on X); the cost now is that a click may wait for a
-download. The header's Update and the tray restart by themselves once it
-is in; Settings' Version card shows the download, and a second click on
-its Restart to update goes into it without asking again (app.js has no
-room left in its budget for the card to follow by itself). See
+download. A click's restart that the feed's answer or the download
+holds up is carried through by the app itself (`waitIdle` from the
+install route, `waitFor`), not by the page: the route answers `checking`
+or `downloading` with `waiting`, the waiting copy isn't shown as `ready`
+meanwhile (`jsonIn`), and the restart is made once the newest is in, the
+gateway idle (or at once after Restart now, `waitNow`). Settings' Version
+card shows the check and the download and, once the app is gone, that it
+is restarting (`again` in `renderUpdate`); the header's Update shows them
+and then the wait. Before, the route answered a bare `checking` once
+`recheck`'s 10 s ran out, the card read the waiting copy as `ready` again
+and offered the same Restart to update, so the click did nothing and only
+a second one restarted (canlee886 on X, 0.1.4582 with 0.1.4617 waiting).
+A download that fails ends the wait and the card says why (`error`). See
 `TestRestartTakesTheNewestOut`, `TestUpdateStagedGivesWayToNewer`,
-`TestRestartAfterItsDownloadDoesNotAskAgain` and
-`TestRestartPutsInTheClickedDownload`.
+`TestRestartAfterItsDownloadDoesNotAskAgain`,
+`TestRestartPutsInTheClickedDownload`,
+`TestRestartClickOutlastsASlowFeed` and `update-restart-check.test.cjs`.
 
 One download runs at a time (`begin` refuses a check while one is under
 way). A check that comes meanwhile sets `again` (`supersede`), and once
