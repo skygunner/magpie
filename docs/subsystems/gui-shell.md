@@ -42,6 +42,13 @@ three.
 
 ## Constraints and failure behavior
 
+### Restoring a window before screen discovery
+
+On macOS the first window can show before Wails' screen cache has anything
+in it (#2785, pluo). `putBack` then reads AppKit's work areas on the main
+thread, in the logical points Wails keeps a window's absolute position in.
+`openAt` still leaves a place no display holds centred.
+
 ### First opening of an agent's Details
 
 In the main window, `expandLink` in

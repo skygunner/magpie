@@ -7,6 +7,29 @@ package gui
 #cgo LDFLAGS: -framework Cocoa -framework WebKit
 #import <Cocoa/Cocoa.h>
 #import <WebKit/WebKit.h>
+#include <stdlib.h>
+
+// screenWorkAreas gives every display's work area in the logical points
+// Wails uses for a window's absolute position: from the primary screen's
+// upper left, y down. AppKit's own origin is the lower left, y up.
+static NSRect *screenWorkAreas(NSUInteger *count) {
+	NSArray<NSScreen *> *screens = [NSScreen screens];
+	NSUInteger n = screens.count;
+	*count = n;
+	if (n == 0) return NULL;
+	NSRect *rects = malloc(n * sizeof(NSRect));
+	if (rects == NULL) {
+		*count = 0;
+		return NULL;
+	}
+	CGFloat top = NSMaxY(screens.firstObject.frame);
+	for (NSUInteger i = 0; i < n; i++) {
+		NSRect rect = screens[i].visibleFrame;
+		rect.origin.y = top - NSMaxY(rect);
+		rects[i] = rect;
+	}
+	return rects;
+}
 
 static WKWebView *findWebView(NSView *v) {
 	if ([v isKindOfClass:[WKWebView class]]) return (WKWebView *)v;
@@ -37,7 +60,29 @@ static void dropWebView(void *win) {
 */
 import "C"
 
-import "github.com/wailsapp/wails/v3/pkg/application"
+import (
+	"unsafe"
+
+	"github.com/wailsapp/wails/v3/pkg/application"
+)
+
+// nativeWorkAreas reads AppKit's work areas, for the first show that comes
+// before Wails' screen cache (#2785); on the main thread, as NSScreen asks.
+func nativeWorkAreas() []area {
+	var count C.NSUInteger
+	rects := C.screenWorkAreas(&count)
+	if rects == nil {
+		return nil
+	}
+	defer C.free(unsafe.Pointer(rects))
+	out := make([]area, 0, int(count))
+	for _, rect := range unsafe.Slice(rects, int(count)) {
+		if width, height := int(rect.size.width), int(rect.size.height); width > 0 && height > 0 {
+			out = append(out, area{int(rect.origin.x), int(rect.origin.y), width, height})
+		}
+	}
+	return out
+}
 
 // dropWebView ends w's webview before it is closed; on the main thread.
 func dropWebView(w *application.WebviewWindow) {

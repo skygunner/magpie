@@ -444,7 +444,7 @@ func (h *host) putBack(w *application.WebviewWindow) bool {
 		return false // an unreadable file is no place known
 	}
 	wd, ht := w.Size()
-	x, y, ok := openAt(s.WindowAt, wd, ht, workAreas(h.app.Screen.GetAll()))
+	x, y, ok := openAt(s.WindowAt, wd, ht, workAreas(h.app.Screen.GetAll(), nativeWorkAreas))
 	if ok {
 		w.SetPosition(x, y)
 	}
@@ -474,13 +474,18 @@ func (h *host) keepAt(w *application.WebviewWindow) {
 	}
 }
 
-// workAreas is the screens' work areas as openAt takes them.
-func workAreas(screens []*application.Screen) []area {
+// workAreas is the screens' work areas as openAt takes them. Wails fills its
+// cache while the app finishes launching, after the window may first be
+// shown (#2785, pluo): with none read yet, native has the platform's own.
+func workAreas(screens []*application.Screen, native func() []area) []area {
 	var out []area
 	for _, sc := range screens {
 		if sc != nil && sc.WorkArea.Width > 0 && sc.WorkArea.Height > 0 {
 			out = append(out, area{sc.WorkArea.X, sc.WorkArea.Y, sc.WorkArea.Width, sc.WorkArea.Height})
 		}
+	}
+	if len(out) == 0 {
+		return native()
 	}
 	return out
 }
