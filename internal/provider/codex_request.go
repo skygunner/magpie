@@ -361,6 +361,15 @@ func codexBody(body []byte) []byte {
 		} else {
 			input = append([]any{DeveloperMessage(own)}, input...)
 		}
+	} else if codex != "" && codexInputStartsWithCodex(input, codex) {
+		// a translated turn (Claude Code over /v1/messages onto a model
+		// that reads its instructions after the input) carries the
+		// client's own copy of Codex's base prompt as the first developer
+		// message and no instructions, so the first-line pass-through
+		// above never runs and Codex's copy would go on top of the
+		// client's (#4953, wuyak: 62 tokens on 5.6, 5,426 on 6.2 for the
+		// same short request)
+		codex = ""
 	}
 	if codex != "" && InstructionsAfterInput(model) {
 		// GPT-6.2 reads top-level instructions after the input, so they
@@ -454,6 +463,44 @@ var gptVersionRE = lazyre.New(`^gpt-(\d+)(?:\.(\d+))?(?:$|-)`)
 func DeveloperMessage(text string) map[string]any {
 	return map[string]any{"type": "message", "role": "developer",
 		"content": []any{map[string]any{"type": "input_text", "text": text}}}
+}
+
+// codexInputStartsWithCodex says the input's first developer message is
+// the client's own copy of Codex's base prompt: its first line is
+// Codex's. It is the first-line pass-through for a turn that carries its
+// instructions in the input rather than as instructions, and nothing
+// else: a message whose first line differs is the client's own prompt and
+// is left alone.
+func codexInputStartsWithCodex(input []any, codex string) bool {
+	line := firstLine(codex)
+	if line == "" {
+		return false
+	}
+	for _, raw := range input {
+		it, ok := raw.(map[string]any)
+		if !ok {
+			return false
+		}
+		if it["type"] == "additional_tools" {
+			continue
+		}
+		if it["role"] != "developer" {
+			return false
+		}
+		var text string
+		switch content := it["content"].(type) {
+		case string:
+			text = content
+		case []any:
+			if len(content) != 1 {
+				return false
+			}
+			part, _ := content[0].(map[string]any)
+			text, _ = part["text"].(string)
+		}
+		return firstLine(text) == line
+	}
+	return false
 }
 
 // conversationKey names the conversation a request belongs to, for a client

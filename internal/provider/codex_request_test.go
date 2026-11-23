@@ -189,6 +189,62 @@ func TestCodexBodyLiteGetsNoInstructions(t *testing.T) {
 	}
 }
 
+// A translated turn carries the client's own copy of Codex's base prompt
+// as the first developer message and no instructions (Claude Code over
+// /v1/messages onto a model that reads its instructions after the input).
+// Codex's own copy must not go on top of it (#4953, wuyak).
+func TestCodexBodyTranslatedFirstLineGetsNoSecondCopy(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("CODEX_HOME", dir)
+	t.Setenv("XDG_CACHE_HOME", t.TempDir())
+	os.WriteFile(filepath.Join(dir, "models_cache.json"), []byte(`{"models":[{"slug":"gpt-6.2","model_messages":{"instructions_template":"You are Codex, a coding agent.\n{{ personality }}"}},{"slug":"gpt-5.6","model_messages":{"instructions_template":"You are Codex, a coding agent.\n{{ personality }}"}}]}`), 0o644)
+
+	count := func(body string) int {
+		var m struct {
+			Instructions string `json:"instructions"`
+			Input        []any  `json:"input"`
+		}
+		if err := json.Unmarshal(codexBody([]byte(body)), &m); err != nil {
+			t.Fatal(err)
+		}
+		n := 0
+		if m.Instructions != "" {
+			n++
+		}
+		for _, raw := range m.Input {
+			it, _ := raw.(map[string]any)
+			if it["role"] != "developer" {
+				continue
+			}
+			part, _ := it["content"].([]any)[0].(map[string]any)
+			if strings.HasPrefix(part["text"].(string), "You are Codex, a coding agent.") {
+				n++
+			}
+		}
+		return n
+	}
+	// the client's copy is the base prompt: one copy, Codex's not added
+	if n := count(`{"model":"gpt-6.2","input":[
+	  {"type":"message","role":"developer","content":[{"type":"input_text","text":"You are Codex, a coding agent.\nclient's own rest."}]},
+	  {"type":"message","role":"user","content":[{"type":"input_text","text":"hi"}]}]}`); n != 1 {
+		t.Errorf("client's copy: %d base prompts, want 1", n)
+	}
+	// a client's own prompt that only happens to be developer: Codex's still added
+	if n := count(`{"model":"gpt-6.2","input":[
+	  {"type":"message","role":"developer","content":[{"type":"input_text","text":"You are Pi, not Codex."}]},
+	  {"type":"message","role":"user","content":[{"type":"input_text","text":"hi"}]}]}`); n != 1 {
+		t.Errorf("client's own prompt: %d base prompts, want 1", n)
+	}
+	// 5.6 keeps its first-line pass-through as instructions
+	var m struct {
+		Instructions string `json:"instructions"`
+	}
+	json.Unmarshal(codexBody([]byte(`{"model":"gpt-5.6","instructions":"You are Codex, a coding agent.\nclient's own rest.","input":[]}`)), &m)
+	if m.Instructions != "You are Codex, a coding agent.\nclient's own rest." {
+		t.Errorf("5.6 pass-through: %q", m.Instructions)
+	}
+}
+
 // A conversation whose client names none gets a key of its own, the same on
 // every turn; a client's own key stays.
 func TestCodexPromptCacheKey(t *testing.T) {
