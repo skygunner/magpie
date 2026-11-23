@@ -13,11 +13,11 @@ mean upstream implements every former fork guarantee.
   to successfully observed production source. `candidate/<version>` records a
   tested candidate; `deployed/<version>` is created only after acceptance and
   observation pass. Old `prod/*` tags retain their historical meaning.
-- Production is **0.1.4662-p1**, upstream v0.1.4662, image source
-  `cd25f5290a1289a31f1817fe406410578797e320`. All eight retained issue
+- Production is **0.1.4717-p1**, upstream v0.1.4717, image source
+  `ca8d2f52f7f25da0d09fdb49d6b43e506d9c1252`. All eight retained issue
   behaviors and the -pN comparison passed their candidate-versus-upstream
   checks. The initial API snapshots matched and real inference returned 200.
-  [Patch decisions, tests and deployment evidence](docs/fork/evidence/2026-11-22-4662/README.md).
+  [Patch decisions, upstream GUI budget failure and deployment evidence](docs/fork/evidence/2026-11-23-4717/README.md).
 
 ## Changes in v0.1.4335-p1 (candidate)
 
