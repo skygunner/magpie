@@ -13,14 +13,12 @@ mean upstream implements every former fork guarantee.
   to successfully observed production source. `candidate/<version>` records a
   tested candidate; `deployed/<version>` is created only after acceptance and
   observation pass. Old `prod/*` tags retain their historical meaning.
-- Production is **0.1.4717-p3**, upstream v0.1.4717, image source
-  `6ac60187e3a308724221f139bde94e331d369bd3`. A model on its account or
-  key rests one minute after the first missed group streaming deadline. Retried
-  after expiry, repeated slow starts double the rest up to one hour.
-  The acceptance and final snapshots matched. Three real inference probes
-  passed during the 46-minute rollout with zero restarts, logged 5xx or protocol
-  errors. The [Raccoon reasoning fix](https://github.com/skygunner/magpie/pull/1)
-  and the [previous patch set](docs/fork/evidence/2026-11-23-4717/README.md) are included.
+- Production is **0.1.4759-p1**, upstream v0.1.4759, image source
+  `5595cf78152ff44d9bbd845ffb7e1bbf4e843e31`. It includes the eight retained
+  issue patches, patched-build version comparison, the Raccoon reasoning fix
+  for #7668 and the one-minute-to-one-hour slow-start ladder. Both snapshots
+  matched and three real inference probes passed during 46 minutes of
+  observation. [Patch checks, browser baseline and published image](docs/fork/evidence/2026-11-25-4759/README.md).
 
 ## Changes in v0.1.4335-p1 (candidate)
 
