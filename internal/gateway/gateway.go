@@ -7278,6 +7278,9 @@ func (s *Server) passthrough(w http.ResponseWriter, r *http.Request, p provider.
 		// Kimi and OpenAI turn the whole request away for: what a fork
 		// at an earlier turn or a stopped reply leaves (Paidaixinbao on X)
 		body = toolPairsOut(body)
+		if p.PluginProvider() == "raccoon" && p.OwnModelID(upstream) == "sn-sensenova-6-8-flash-p" {
+			body = withoutDuplicateReasoning(body)
+		}
 		if mistral := p.VendorPreset() == "mistral" || p.VendorHost() == "api.mistral.ai"; !mistral && (chatReplaysReasoning(buildHost(p), model) || chatReplaysReasoning(buildHost(p), upstream)) {
 			// a tool call the client kept no thinking for, which DeepSeek
 			// turns the whole request away for (#1462)

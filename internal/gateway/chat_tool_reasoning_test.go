@@ -3,6 +3,7 @@ package gateway
 import (
 	"encoding/json"
 	"fmt"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
@@ -212,4 +213,66 @@ func TestSelfHostedDeepSeekGetsReasoningOnce(t *testing.T) {
 func TestKimiReasoningDetailsWithReasoningGoOnce(t *testing.T) {
 	m := `{"messages":[{"role":"assistant","content":"91 = 7 x 13.","reasoning":"7*13=91.","reasoning_details":[{"type":"reasoning.text","text":"7*13=91.","index":0}]}]}`
 	sameJSON(t, sentMessages(t, reasoningDetailsAsContent([]byte(m)))[0], `{"role":"assistant","content":"91 = 7 x 13.","reasoning_content":"7*13=91."}`)
+}
+
+// Hermes replays the same thinking under both Chat names through a LAN gateway.
+func TestRaccoonReasoningRelay(t *testing.T) {
+	const model = "sn-sensenova-6-8-flash-p"
+	const turns = `{"model":"group/smart-split","messages":[{"role":"user","content":"hi"},
+		{"role":"assistant","content":null,"tool_calls":[` + timeCall + `],"reasoning":"think","reasoning_content":"th\u0069nk","reasoning_details":[{"text":"detail"}]},
+		{"role":"tool","tool_call_id":"call_1","content":"12:00"},{"role":"user","content":"anything else?"},
+		{"role":"assistant","content":"bye","reasoning":"one"},{"role":"assistant","content":"done","reasoning_content":"two"}]}`
+	f := &fake{t: t, reply: chatWholeOK, ctype: "application/json"}
+	up := setup(t, provider.Chat, f)
+	for _, tc := range []struct {
+		plugin, model string
+		dedup         bool
+	}{
+		{"raccoon", model, true},
+		{"raccoon", "sn-sensenova-6-8-flash-lite", false},
+		{"other", model, false},
+	} {
+		t.Run(tc.plugin+"/"+tc.model, func(t *testing.T) {
+			p := provider.PluginForTest("renamed", tc.plugin)
+			p.Chat, p.Key = up.URL+"/v1", "k"
+			f.calls, f.refuse = 0, nil
+			if tc.dedup {
+				f.refuse = func(body []byte) (int, string) {
+					if code, _ := selfHostedRefuseDuplicate(body); code != 0 {
+						return 400, `{"error":{"message":"inference request is invalid"}}`
+					}
+					return 0, ""
+				}
+			}
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("POST", "/v1/chat/completions", strings.NewReader(turns))
+			status, msg, done := New().passthrough(w, r, p, provider.Chat, tc.model, []byte(turns), &Usage{})
+			if !done || status != 200 || f.calls != 1 {
+				t.Fatalf("status %d after %d calls: %s", status, f.calls, msg)
+			}
+			msgs := sentMessages(t, f.got)
+			want := sentMessages(t, []byte(turns))
+			if len(msgs) != len(want) {
+				t.Fatalf("sent %d messages, want %d", len(msgs), len(want))
+			}
+			if tc.dedup {
+				want[1] = json.RawMessage(`{"role":"assistant","content":null,"tool_calls":[` + timeCall + `],"reasoning_content":"think","reasoning_details":[{"text":"detail"}]}`)
+			}
+			for i := range want {
+				sameJSON(t, msgs[i], string(want[i]))
+			}
+		})
+	}
+}
+
+func TestDistinctReasoningKept(t *testing.T) {
+	const body = `{"reasoning":{"effort":"high"},"messages":[
+		{"role":"assistant","reasoning":"trace","reasoning_content":"other"},
+		{"role":"assistant","reasoning":"a\\nb","reasoning_content":"a\nb"},
+		{"role":"assistant","reasoning":null,"reasoning_content":""},
+		{"role":"assistant","reasoning":["trace"],"reasoning_content":["trace"]},
+		{"role":"tool","reasoning":"tool text","reasoning_content":"tool text"}]}`
+	if got := withoutDuplicateReasoning([]byte(body)); string(got) != body {
+		t.Errorf("distinct or non-assistant reasoning changed: %s", got)
+	}
 }
