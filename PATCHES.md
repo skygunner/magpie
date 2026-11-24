@@ -13,14 +13,14 @@ mean upstream implements every former fork guarantee.
   to successfully observed production source. `candidate/<version>` records a
   tested candidate; `deployed/<version>` is created only after acceptance and
   observation pass. Old `prod/*` tags retain their historical meaning.
-- Production is **0.1.4717-p2**, upstream v0.1.4717, image source
-  `827ff42e2895f61bae622969e6bedec1d6157a91`. Raccoon's SenseNova Flash
-  now receives one copy of identical assistant reasoning during Chat replay.
-  The pinned model completed the Hermes SDK's streaming probe in one request.
-  Both deployment snapshots matched across the switch and the 46-minute
-  observation finished with zero restarts, logged 5xx or protocol errors.
-  [Reproduction and verification](https://github.com/skygunner/magpie/pull/1) ·
-  [Previous release and retained patches](docs/fork/evidence/2026-11-23-4717/README.md).
+- Production is **0.1.4717-p3**, upstream v0.1.4717, image source
+  `6ac60187e3a308724221f139bde94e331d369bd3`. A model on its account or
+  key rests one minute after the first missed group streaming deadline. Retried
+  after expiry, repeated slow starts double the rest up to one hour.
+  The acceptance and final snapshots matched. Three real inference probes
+  passed during the 46-minute rollout with zero restarts, logged 5xx or protocol
+  errors. The [Raccoon reasoning fix](https://github.com/skygunner/magpie/pull/1)
+  and the [previous patch set](docs/fork/evidence/2026-11-23-4717/README.md) are included.
 
 ## Changes in v0.1.4335-p1 (candidate)
 
