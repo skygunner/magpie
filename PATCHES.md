@@ -85,6 +85,8 @@ and relevant inputs are unchanged. State the actual tested scope in the evidence
 | Cooldown settings | suspend | Layered policy, changed defaults and release semantics compete with current upstream rest rules. Editor/API and runtime overrides are removed together. |
 | #3417 | absorbed | Upstream configurable Codex reset lead remains; fixed-lead fork stays removed. |
 | #4385 | retain | Restore the full interrupted pixel-wheel step from its origin, grouped per view; preserve native progress and keep touch/non-pixel restoration unchanged. Source `fix/webkit-delayed-wheel`. The 4335 round adds `forkPixelWheelBudget` to `internal/gui/core_budget_test.go` so the retained core bytes are explicit. |
+| #7668 | retain | On Raccoon SenseNova Flash streaming Chat replay, collapse identical assistant reasoning aliases and preserve distinct values and tool history. |
+| Slow first token | retain | On the same model and account/key, start at one minute, double after each expired rest, and cap at one hour. Preserve provider opt-outs and lower caps. |
 | build -pN | retain | Update checks and release notes compare the base version. |
 | plugins PR #366 | separate | Keep production Cloudflare Workers AI package 0.0.5. No package downgrade or test-only rebuild. |
 
