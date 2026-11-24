@@ -13,11 +13,14 @@ mean upstream implements every former fork guarantee.
   to successfully observed production source. `candidate/<version>` records a
   tested candidate; `deployed/<version>` is created only after acceptance and
   observation pass. Old `prod/*` tags retain their historical meaning.
-- Production is **0.1.4717-p1**, upstream v0.1.4717, image source
-  `ca8d2f52f7f25da0d09fdb49d6b43e506d9c1252`. All eight retained issue
-  behaviors and the -pN comparison passed their candidate-versus-upstream
-  checks. The initial API snapshots matched and real inference returned 200.
-  [Patch decisions, upstream GUI budget failure and deployment evidence](docs/fork/evidence/2026-11-23-4717/README.md).
+- Production is **0.1.4717-p2**, upstream v0.1.4717, image source
+  `827ff42e2895f61bae622969e6bedec1d6157a91`. Raccoon's SenseNova Flash
+  now receives one copy of identical assistant reasoning during Chat replay.
+  The pinned model completed the Hermes SDK's streaming probe in one request.
+  Both deployment snapshots matched across the switch and the 46-minute
+  observation finished with zero restarts, logged 5xx or protocol errors.
+  [Reproduction and verification](https://github.com/skygunner/magpie/pull/1) ·
+  [Previous release and retained patches](docs/fork/evidence/2026-11-23-4717/README.md).
 
 ## Changes in v0.1.4335-p1 (candidate)
 
