@@ -9,6 +9,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/yetone/magpie/internal/provider"
@@ -62,7 +63,7 @@ func (k *keyedSlow) reset() {
 // A model that keeps failing to start on one account rests there (小八 on
 // Discord: a WorkBuddy account's kimi-k3-1 stalled 58 times, past the
 // group's first-token time, and magpie asked it first again each time, 15
-// times in 17 minutes). Once nobody rests; twice in a row, that model on
+// times in 17 minutes). From the first slow start, that model on
 // that account rests, and a success in between starts the count again.
 // The same model on another key and another model on the same key are
 // asked as before.
@@ -87,20 +88,9 @@ func TestSlowStartsRestTheModelOnItsAccount(t *testing.T) {
 		return r.Tries[0]
 	}
 
-	if tr := ask("group/g"); up.first() != "k1/m" || tr.Fail != failSlow || tr.Rest != nil {
-		t.Fatalf("once: first %s, %+v", up.first(), tr)
-	}
-	up.slow.Store(false)
-	if tr := ask("group/g"); up.first() != "k1/m" || tr.Status != 200 {
-		t.Fatalf("answered: first %s, %+v", up.first(), tr)
-	}
-	up.slow.Store(true)
-	if tr := ask("group/g"); tr.Fail != failSlow || tr.Rest != nil {
-		t.Fatalf("an answer in between starts the count again: %+v", tr)
-	}
 	tr := ask("group/g")
-	if tr.Fail != failSlow || tr.Rest == nil || tr.Rest.Why != failSlow || tr.Rest.Model != "m" || tr.Rest.Key != k1m || tr.Rest.Failures != 2 {
-		t.Fatalf("twice in a row: %+v (rest %+v)", tr, tr.Rest)
+	if up.first() != "k1/m" || tr.Fail != failSlow || tr.Rest == nil || tr.Rest.Why != failSlow || tr.Rest.Model != "m" || tr.Rest.Key != k1m || tr.Rest.Failures != 1 {
+		t.Fatalf("first slow start: %+v", tr)
 	}
 	if d := time.Until(tr.Rest.Until); d <= 0 || d > fallbackCooldown {
 		t.Fatalf("rests %s, want up to %s", d, fallbackCooldown)
@@ -118,12 +108,12 @@ func TestSlowStartsRestTheModelOnItsAccount(t *testing.T) {
 		t.Fatalf("another model on the key: first %s", up.first())
 	}
 
-	// a third slow start (asked again once its rest is over) rests longer
+	// a second slow start (asked again once its rest is over) rests longer
 	restingUntil.Lock()
 	restingUntil.m[k1m] = time.Now().Add(-time.Second)
 	restingUntil.Unlock()
 	tr = ask("group/g")
-	if tr.Rest == nil || tr.Rest.By != "backoff" || tr.Rest.Failures != 3 || time.Until(tr.Rest.Until) <= fallbackCooldown {
+	if tr.Rest == nil || tr.Rest.By != "backoff" || tr.Rest.Failures != 2 || time.Until(tr.Rest.Until) <= fallbackCooldown {
 		t.Fatalf("again: %+v (rest %+v)", tr, tr.Rest)
 	}
 	// and an answer ends it
@@ -133,9 +123,34 @@ func TestSlowStartsRestTheModelOnItsAccount(t *testing.T) {
 	up.slow.Store(false)
 	ask("group/g")
 	up.slow.Store(true)
-	if tr := ask("group/g"); tr.Rest != nil {
+	if tr := ask("group/g"); tr.Rest == nil || tr.Rest.Failures != 1 || tr.Rest.By != "cooldown" {
 		t.Fatalf("after an answer: rest %+v", tr.Rest)
 	}
+}
+
+func TestSlowStartBackoffToOneHour(t *testing.T) {
+	fresh(t)
+	synctest.Test(t, func(t *testing.T) {
+		c := candidate{p: provider.Provider{ID: "a"}, model: "m", rest: "a"}
+		for i, minutes := range []int{1, 2, 4, 8, 16, 32, 60, 60} {
+			now := time.Now()
+			r, ok := restSlow(c, now)
+			if !ok || r.Failures != i+1 || r.Until.Sub(now) != time.Duration(minutes)*time.Minute {
+				t.Fatalf("attempt %d: %+v", i+1, r)
+			}
+			time.Sleep(time.Second)
+			probe, _ := restSlow(c, time.Now())
+			if probe.Failures != r.Failures || !probe.Until.Equal(r.Until) {
+				t.Fatalf("probe changed rest: %+v", probe)
+			}
+			time.Sleep(time.Until(r.Until) + 30*time.Second)
+		}
+		time.Sleep(slowForget)
+		r, _ := restSlow(c, time.Now())
+		if r.Failures != 1 || time.Until(r.Until) != time.Minute {
+			t.Fatalf("after idle: %+v", r)
+		}
+	})
 }
 
 // A request its client gives up on while the model hasn't begun counts no

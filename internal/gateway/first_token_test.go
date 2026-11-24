@@ -47,7 +47,7 @@ func slowOn(t *testing.T, id string, h http.Handler) {
 
 // A member that hasn't begun its answer within the group's first-token
 // time is let go before any of it reaches the agent, and the next one
-// answers; the slow one doesn't rest. The last one is always waited for.
+// answers; the slow one rests. The last one is always waited for.
 func TestGroupFirstTokenFailsOver(t *testing.T) {
 	fresh(t)
 	a := &slowStart{wait: 10 * time.Second}
@@ -67,7 +67,7 @@ func TestGroupFirstTokenFailsOver(t *testing.T) {
 		t.Fatalf("%d %s (a %d, b %d)", code, body, a.n, b.n)
 	}
 	r := s.trace.routes[len(s.trace.routes)-1]
-	if len(r.Tries) != 2 || r.Tries[0].Fail != failSlow || r.Tries[0].Rest != nil || r.Tries[1].Status != 200 {
+	if len(r.Tries) != 2 || r.Tries[0].Fail != failSlow || r.Tries[0].Rest == nil || r.Tries[0].Rest.Failures != 1 || r.Tries[1].Status != 200 {
 		t.Fatalf("tries: %+v", r.Tries)
 	}
 	recs := usage.Load(time.Time{})
