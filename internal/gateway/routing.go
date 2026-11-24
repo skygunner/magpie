@@ -48,10 +48,10 @@ var routed = struct {
 }{used: map[string]tokenUse{}, failures: map[string]int{}, slow: map[string]slowRun{}, answered: map[string]time.Time{}}
 
 // slowRun is a model's slow starts in a row on one account or key, and
-// when the last of them was.
+// when the last slow-start rest ends.
 type slowRun struct {
-	n  int
-	at time.Time
+	n     int
+	until time.Time
 }
 
 type tokenUse struct {
@@ -280,11 +280,10 @@ const (
 	// afternoon without anyone acting; the Routing page lifts it at once
 	// (Unrest) for a user whose appeal went through
 	restrictedRest = 2 * time.Hour
-	// slowRests is how many slow starts in a row (restSlow) rest a model
-	// on an account or key, and slowForget how long after the last one
-	// the next starts a new run
-	slowRests  = 2
-	slowForget = 30 * time.Minute
+	// Forget an idle streak after its rest ends, so waiting out a long
+	// cooldown still lets the next slow start climb the ladder.
+	slowForget  = 30 * time.Minute
+	maxSlowRest = time.Hour
 )
 
 // creditLadder is how long a key its vendor says is out of money sits
@@ -2235,49 +2234,36 @@ func remoteModelRest(c candidate, why string, header http.Header) bool {
 	return why == failQuota || why == failCredit || why == failRate || why == failRestricted || why == failVerify
 }
 
-// restSlow counts a slow start — let go for no first token in its group's
-// FirstToken — against the candidate's model on its account or key
-// (restID), and rests that model there from the slowRests'th in a row: a
-// minute, twice as long each time after, up to the provider's rest cap.
-// One alone rests nothing, a long prompt being slow to start anywhere; a
-// run ends when the model answers there (servedCandidate) or slowForget
-// passes with none. Its other models and the account's other mates are
-// asked as before (小八 on Discord: WorkBuddy's kimi-k3-1 and glm-5.3,
-// out of a per-model token limit the vendor never named, stalled 15 times
-// in 17 minutes, each request waiting 30s for it before the fallback
-// answered). A slow start while it rests for one keeps the count where it
-// is, so one request's tries don't stretch it. A provider set never to
-// rest after a failure that says nothing of why (RestCapOff) isn't
-// rested, nor its slow starts counted.
+// restSlow backs off the model on this account or key from its first missed
+// first-token deadline. Overlapping attempts share the active rest.
 func restSlow(c candidate, now time.Time) (Rest, bool) {
 	if c.p.NoFailRest() {
 		return Rest{}, false
 	}
 	id := c.restID()
-	prev, resting := restOf(id)
 	routed.Lock()
+	if prev, resting := restOf(id); resting && prev.Why == failSlow {
+		routed.Unlock()
+		return prev, true
+	}
 	run := routed.slow[id]
-	if now.Sub(run.at) >= slowForget {
+	if now.Sub(run.until) >= slowForget {
 		run.n = 0
 	}
-	if !resting || prev.Why != failSlow || run.n == 0 {
-		run.n++
-	}
-	run.at = now
+	run.n++
+	d := min(fallbackCooldown<<min(run.n-1, 6), c.p.RestCapOr(maxSlowRest), maxSlowRest)
+	run.until = onWall(now.Add(d))
 	routed.slow[id] = run
-	routed.Unlock()
-	if run.n < slowRests {
-		return Rest{}, false
-	}
-	d, by := min(fallbackCooldown<<min(run.n-slowRests, 10), c.p.RestCapOr(longestRetry)), "cooldown"
-	if run.n > slowRests {
+	by := "cooldown"
+	if run.n > 1 {
 		by = "backoff"
 	}
-	r := Rest{Why: failSlow, Status: http.StatusGatewayTimeout, Until: onWall(now.Add(d)), By: by, Failures: run.n, Key: id, Model: c.model}
+	r := Rest{Why: failSlow, Status: http.StatusGatewayTimeout, Until: run.until, By: by, Failures: run.n, Key: id, Model: c.model}
 	if a := c.p.Account; a != nil {
 		r.agent, r.user = a.UsageAgent(), a.User
 	}
 	restingUntil.Lock()
+	routed.Unlock()
 	if until, ok := restingUntil.m[id]; ok && until.After(r.Until) {
 		// resting longer already, for what another failure said
 		kept := restingUntil.note[id]

@@ -52,17 +52,9 @@ func TestRestsKeepTheWallClock(t *testing.T) {
 	}
 
 	slow := candidate{p: provider.Provider{ID: "codex", Account: &provider.Account{Agent: "codex", User: "slow@example.com"}}, model: "gpt-6-astra", rest: "codex@slow@example.com"}
-	rested := false
-	for i := 0; i < slowRests+1; i++ {
-		if r, ok := restSlow(slow, time.Now()); ok {
-			rested = true
-			if monotonic(r.Until) {
-				t.Errorf("a slow start's rest to %v counts on the monotonic clock", r.Until)
-			}
-		}
-	}
-	if !rested {
-		t.Fatal("slow starts never rested: the test proves nothing")
+	r, ok := restSlow(slow, time.Now())
+	if !ok || monotonic(r.Until) {
+		t.Fatalf("first slow start must rest on wall time: %+v", r)
 	}
 
 	restSearchKey("tavily", "k1", time.Hour, "rate limited", time.Now())
