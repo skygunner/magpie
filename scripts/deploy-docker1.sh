@@ -11,6 +11,27 @@ script_path=$(readlink -f -- "${BASH_SOURCE[0]}") || exit 1
 if [[ ${EUID} -ne 0 ]]; then
   exec sudo -n -- /bin/bash "$script_path" "$@"
 fi
+if [[ $# == 1 && $1 == --enable-https ]]; then
+  set -e
+  [[ $(hostname -s) == docker1 && ! -e /var/lib/magpie-deploy/BLOCKED ]]
+  exec 9>> /var/lib/magpie-deploy/deploy.lock
+  flock -n 9
+  docker=(/usr/bin/docker --host unix:///var/run/docker.sock)
+  id=$("${docker[@]}" inspect --format '{{.Id}}' magpie)
+  state=$("${docker[@]}" exec "$id" /magpie https status)
+  if [[ $state == 'HTTPS off' ]]; then
+    "${docker[@]}" exec "$id" /magpie https on
+  elif [[ $state != 'HTTPS on'* ]]; then
+    exit 1
+  fi
+  ca=/var/lib/docker/volumes/magpie-config/_data/magpie/mtls/ca.pem
+  if ! curl -fsS --retry 5 --retry-all-errors --max-time 4 --noproxy '*' --cacert "$ca" \
+      --resolve docker1.home.arpa:3425:127.0.0.1 https://docker1.home.arpa:3425/magpie-ca.crt | cmp -s - "$ca"; then
+    if [[ $state == 'HTTPS off' ]]; then "${docker[@]}" exec "$id" /magpie https off; fi
+    exit 1
+  fi
+  exit 0
+fi
 exec /usr/bin/python3 -I -B - "$script_path" "$@" <<'MAGPIE_EMBEDDED_PYTHON'
 # MAGPIE_PYTHON_BEGIN
 #!/usr/bin/python3
@@ -30,6 +51,7 @@ import os
 from pathlib import Path
 import re
 import signal
+import ssl
 import stat
 import subprocess
 import sys
@@ -237,13 +259,15 @@ def copy_candidate_configs(payload):
 class LocalRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         require(urllib.parse.urlsplit(newurl).netloc == urllib.parse.urlsplit(req.full_url).netloc
-                and urllib.parse.urlsplit(newurl).scheme == 'http', 'cross_origin_redirect')
+                and urllib.parse.urlsplit(newurl).scheme == urllib.parse.urlsplit(req.full_url).scheme, 'cross_origin_redirect')
         require(req.data is None, 'inference_redirect')
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
 def http_work(action, payload):
-    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}), LocalRedirect(),
+    ca = payload.get('ca')
+    tls = [urllib.request.HTTPSHandler(context=ssl.create_default_context(cafile=ca))] if ca else []
+    opener = urllib.request.build_opener(*tls, urllib.request.ProxyHandler({}), LocalRedirect(),
                                          urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
 
     def request(url, key=None, body=None, raw=False):
@@ -258,7 +282,8 @@ def http_work(action, payload):
             require(len(data) <= 32 * 1024 * 1024 and response.status == 200, 'http_bad_response')
             return data if raw else json.loads(data)
 
-    gateway, console = 'http://127.0.0.1:3425', 'http://127.0.0.1:3430'
+    origin = 'https://127.0.0.1' if ca else 'http://127.0.0.1'
+    gateway, console = origin + ':3425', origin + ':3430'
     if action == 'inference':
         # Exactly one POST; neither redirects nor application retries are allowed.
         data = request(gateway + '/v1/chat/completions', key=payload['key'], body={
@@ -319,7 +344,8 @@ class Deployment:
     def __init__(self, args, system=None, root=ROOT):
         self.a, self.io, self.root = args, system or System(), root
         self.version = args.image.removeprefix('magpie:')
-        self.directory = root / self.version
+        self.refresh_https = getattr(args, 'refresh_https_url', False)
+        self.directory = root / (self.version + '-https-url' if self.refresh_https else self.version)
         self.token = uuid.uuid4().hex
         self.candidate = 'magpie-candidate-' + self.token
         self.old_name = 'magpie-pre-' + self.version + '-' + self.token
@@ -374,7 +400,7 @@ class Deployment:
     def snapshot(self, watch=None):
         # Baseline may find one usable key. Every later comparison uses exactly that key.
         keys = [self.key] if hasattr(self, 'key') else self.keys
-        return self.io.worker('snapshot', {'web_key': self.web_key, 'keys': keys}, watch=watch)
+        return self.io.worker('snapshot', {'web_key': self.web_key, 'keys': keys, **self.probe_tls}, watch=watch)
 
     def preflight(self):
         require(not (self.root / 'BLOCKED').exists(), 'deployment_blocked')
@@ -392,7 +418,10 @@ class Deployment:
         require(not self.a.target_image_id or image['Id'] == self.a.target_image_id, 'target_image_missing_or_changed')
         require(re.fullmatch(r'sha256:[0-9a-f]{64}', image['Id']), 'invalid_target_image_id')
         self.a.target_image_id = image['Id']
-        require(self.a.old_image_id != self.a.target_image_id, 'target_already_running')
+        if self.refresh_https:
+            require(self.a.old_image_id == self.a.target_image_id, 'url_refresh_requires_current_image')
+        else:
+            require(self.a.old_image_id != self.a.target_image_id, 'target_already_running')
         require(image['Config'].get('Healthcheck'), 'target_has_no_healthcheck')
         # Refuse configurations the small run template does not reproduce.
         require(config['User'] == 'nonroot' and config['Cmd'] ==
@@ -412,11 +441,18 @@ class Deployment:
         require(self.volume.is_absolute() and self.volume.is_dir() and not self.volume.is_symlink(),
                 'invalid_volume_path')
         self.volume_idle([self.a.old_container_id])
+        settings = self.volume / 'magpie/settings.json'
+        self.probe_tls = {}
+        if settings.exists() and json.loads(settings.read_bytes()).get('https') is True:
+            self.probe_tls = {'ca': str(self.volume / 'magpie/mtls/ca.pem')}
         env = config['Env']
         require(isinstance(env, list) and all(isinstance(v, str) and re.fullmatch(r'[A-Za-z_][A-Za-z0-9_]*=[^\x00\r\n]*', v)
                                              for v in env), 'env_file_unrepresentable')
         values = dict(v.split('=', 1) for v in env)
         require(values.get('MAGPIE_WEB_KEY'), 'missing_web_key')
+        if self.refresh_https:
+            require(self.probe_tls and values.get('MAGPIE_PUBLIC_URL') == 'http://10.0.0.31:3425',
+                    'url_refresh_requires_active_https_and_old_url')
         self.web_key = values['MAGPIE_WEB_KEY']
         entries = json.loads((self.volume / 'magpie/caller-keys.json').read_bytes())
         require(isinstance(entries, list), 'caller_keys_schema')
@@ -438,6 +474,9 @@ class Deployment:
         usage = self.usage(then, reset=True)
         self.baseline_ratio = self.ratio(usage['counts'])
         write_private(self.directory / 'container.json', json.dumps(self.old).encode())
+        if self.probe_tls:
+            env = ['MAGPIE_PUBLIC_URL=https://docker1.home.arpa:3425'
+                   if v == 'MAGPIE_PUBLIC_URL=http://10.0.0.31:3425' else v for v in env]
         write_private(self.directory / 'runtime.env', ('\n'.join(env) + '\n').encode())
         write_private(self.directory / 'baseline.json', json.dumps(dict(snapshot=self.prior,
                       captured=self.io.now(), usage=usage, old_id=self.a.old_container_id,
@@ -563,7 +602,7 @@ class Deployment:
         require(self.docker('exec', self.new_id, 'magpie', 'version').decode().strip() == 'magpie ' + self.version,
                 'binary_version_mismatch')
         self.compare_snapshot('acceptance')
-        self.io.worker('inference', {'key': self.key}, watch=self.watch)
+        self.io.worker('inference', {'key': self.key, **self.probe_tls}, watch=self.watch)
         emit('REAL_INFERENCE', phase='acceptance', status=200)
         self.check()
         accepted = self.io.mono()
@@ -579,7 +618,7 @@ class Deployment:
                      log_5xx=self.log_fives, protocol_error=self.protocol)
                 sample += 1
             if probes < len(probe_times) and self.io.mono() - accepted >= probe_times[probes]:
-                self.io.worker('inference', {'key': self.key}, watch=self.watch)
+                self.io.worker('inference', {'key': self.key, **self.probe_tls}, watch=self.watch)
                 probes += 1
                 emit('REAL_INFERENCE', phase='observation', probe=probes, status=200)
                 self.check()
@@ -792,6 +831,7 @@ def main():
     parser.add_argument('--old-container-id', help='optional assertion, full container ID')
     parser.add_argument('--old-image-id', help='optional assertion, full sha256 ID')
     parser.add_argument('--expected-snapshot', help='private reviewed baseline/candidate snapshots bound to target image ID')
+    parser.add_argument('--refresh-https-url', action='store_true', help='republish the running HTTPS gateway with its TLS URL, using the same image')
     args = parser.parse_args()
     signal.signal(signal.SIGTERM, terminated)
     signal.signal(signal.SIGINT, terminated)

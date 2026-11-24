@@ -330,6 +330,20 @@ class TransactionTests(unittest.TestCase):
         self.assertFalse(any(c[0]=='/usr/bin/find' or '-xzf' in c for c in self.io.calls))
         self.assertNotIn('OBSERVATION_PASSED',self.output.getvalue())
 
+    def test_refresh_https_url_uses_same_image_and_separate_receipt(self):
+        self.args.refresh_https_url = True
+        self.args.old_image_id = TARGET
+        self.io.containers[OLD]['Image'] = TARGET
+        self.io.containers[OLD]['Config']['Env'][1] = 'MAGPIE_PUBLIC_URL=http://10.0.0.31:3425'
+        (self.io.volume/'magpie/settings.json').write_text('{"https":true}')
+        self.assertEqual(self.execute(), 0)
+        self.assertTrue(self.deploy.directory.name.endswith('-https-url'))
+
+    def test_https_setting_selects_magpie_ca_for_deployment(self):
+        (self.io.volume/'magpie'/'settings.json').write_text('{"https": true}')
+        self.assertEqual(self.execute(), 0)
+        self.assertEqual(self.deploy.probe_tls, {'ca': str(self.io.volume/'magpie/mtls/ca.pem')})
+
     def test_clean_full_observation_permissions_and_no_secret_echo(self):
         self.assertEqual(self.execute(),0)
         self.assertEqual(self.result['outcome'],'PASSED')
@@ -597,7 +611,7 @@ class TransactionTests(unittest.TestCase):
     def test_candidate_snapshot_manifest_names_actual_optional_files(self):
         self.io.mode='inference_failed'
         for name in ('settings.json','plugin-auth.json','migrations.json','plugins.yml'):
-            (self.io.volume/'magpie'/name).write_text(SENTINEL)
+            (self.io.volume/'magpie'/name).write_text(json.dumps({'value': SENTINEL}) if name == 'settings.json' else SENTINEL)
         self.assertEqual(self.execute(),1)
         self.assert_restored()
         directory=self.deploy.directory/'candidate-config'
@@ -901,6 +915,11 @@ class PrimitiveTests(unittest.TestCase):
             path.write_text(json.dumps({'t':(BASE_TIME+dt.timedelta(seconds=1)).isoformat(),'status':503})+'\n')
             result=g.read_usage({'path':str(path),'start':BASE_TIME.isoformat(),'stop':BASE_TIME.isoformat()})
             self.assertEqual(result['counts'],{'503':1})
+
+    def test_tls_probe_refuses_same_host_downgrade(self):
+        req = urllib.request.Request('https://127.0.0.1:3430/')
+        with self.assertRaises(g.Failure):
+            g.LocalRedirect().redirect_request(req, None, 302, '', {}, 'http://127.0.0.1:3430/')
 
     def test_redirects_cannot_leak_key_or_repeat_post(self):
         handler=g.LocalRedirect()
