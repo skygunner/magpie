@@ -1,0 +1,8 @@
+--- FAIL: TestOpenAtBeforeScreenCache (0.00s)
+    --- FAIL: TestOpenAtBeforeScreenCache/no_cache (0.00s)
+        window_restore_test.go:27: openAt = 0, 0, false; want 2113, 44, true
+    --- FAIL: TestOpenAtBeforeScreenCache/nothing_usable_in_the_cache (0.00s)
+        window_restore_test.go:27: openAt = 0, 0, false; want 2113, 44, true
+FAIL
+FAIL	github.com/yetone/magpie/internal/gui	0.141s
+FAIL

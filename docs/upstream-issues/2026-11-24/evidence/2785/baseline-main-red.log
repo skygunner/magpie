@@ -1,0 +1,5 @@
+--- FAIL: TestCoreScriptBudget (0.00s)
+    core_budget_test.go:73: the core's scripts are 1279029 bytes of code, over their budget of 1278640: put the page's code in its plugin, or raise the budget and say why (comments aren't counted, so cutting them doesn't help)
+FAIL
+FAIL	github.com/yetone/magpie/internal/gui	0.326s
+FAIL

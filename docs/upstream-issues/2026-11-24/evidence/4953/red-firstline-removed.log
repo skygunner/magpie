@@ -1,0 +1,5 @@
+--- FAIL: TestCodexBodyTranslatedFirstLineGetsNoSecondCopy (0.00s)
+    codex_request_test.go:230: client's copy: 2 base prompts, want 1
+FAIL
+FAIL	github.com/yetone/magpie/internal/provider	0.068s
+FAIL

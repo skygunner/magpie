@@ -1,0 +1,7 @@
+--- FAIL: TestClaudeSignInRunsTheNewestClaudeCode (3.82s)
+    signin_claude_newest_test.go:76: Couldn't log in: That code wasn't accepted. It may be incomplete, expired, already used, or from an earlier sign-in attempt. Sign in again to get a new code.
+--- FAIL: TestClaudeSignInSaysClaudeCodeIsTooOld (3.11s)
+    signin_claude_newest_test.go:97: signed in through a Claude Code with no --claudeai
+FAIL
+FAIL	github.com/yetone/magpie/internal/provider	7.008s
+FAIL
