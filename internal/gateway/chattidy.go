@@ -887,6 +887,26 @@ func asReasoningContent(m map[string]json.RawMessage, think string) {
 	delete(m, "reasoning")
 }
 
+// Hermes can replay one assistant turn's thinking under both names on a LAN gateway.
+// Raccoon's SenseNova Flash accepts that text in reasoning_content alone.
+func withoutDuplicateReasoning(body []byte) []byte {
+	return editMessages(body, []string{"reasoning"}, func(m map[string]json.RawMessage) bool {
+		if !jsonStringIs(m["role"], "assistant") {
+			return false
+		}
+		alias, ok := unquoteJSON(m["reasoning"])
+		if !ok {
+			return false
+		}
+		text, ok := unquoteJSON(m["reasoning_content"])
+		if !ok || text != alias {
+			return false
+		}
+		delete(m, "reasoning")
+		return true
+	})
+}
+
 // silentAssistantsOut is withoutSilentAssistants for a Chat request
 // relayed as the client sent it (#2599): an agent that speaks Chat keeps
 // the turn it cut off as {"role":"assistant","content":""} (or null, with
