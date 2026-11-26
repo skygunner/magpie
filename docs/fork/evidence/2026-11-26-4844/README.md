@@ -59,7 +59,24 @@ streaming test, the two JSON serialization checks, and the GUI
 when rerun directly. Targeted gateway race tests also passed on Go
 1.26.8, as did the Linux headless vet check.
 
-The candidate image on docker1 is
-`sha256:aae80e87207af90d0d1996b8c9acfcb801e3d0158cbb52ecf4eadab022b0ef32`.
-Production cutover is pending the owner's authorization to reuse the
-root-owned audited entry with the existing sudoers configuration.
+## Production acceptance and Docker Hub
+
+The owner authorized the switch using the SHA-256-verified, root-owned
+deployment entry. The transaction kept the old container and a backup of
+the production volume. The new container passed acceptance at 11:24:54 UTC
+on November 26. Authenticated before and after snapshots matched across
+263 models, 53 groups and 36 providers. The first sample reported healthy
+with zero restarts, logged 5xx and protocol errors.
+
+The workstation verified the existing HTTPS gateway on
+https://docker1.home.arpa:3425/v1 using its existing CA trust and credentials.
+The route returned 263 models and real inference returned HTTP 200 with
+nonempty content. The gateway CA fingerprint matched its pre-switch value.
+The HTTPS console on port 3430 passed TLS verification and returned the
+expected unauthenticated HTTP 401. The observer was stopped after short
+acceptance, before the 46-minute observation and final snapshot.
+
+Production container cfba568a770fd42f62e9c12db3184ca4a34ba37b48a7500eaa24997b4f7939bd
+ran image `sha256:aae80e87207af90d0d1996b8c9acfcb801e3d0158cbb52ecf4eadab022b0ef32`.
+Both Docker Hub tags, bigshort/magpie-patched:0.1.4844-p1 and :latest,
+returned manifest bytes matching that digest after publication.

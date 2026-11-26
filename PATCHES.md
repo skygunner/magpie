@@ -13,12 +13,12 @@ mean upstream implements every former fork guarantee.
   to successfully observed production source. `candidate/<version>` records a
   tested candidate; `deployed/<version>` is created only after acceptance and
   observation pass. Old `prod/*` tags retain their historical meaning.
-- Production is **0.1.4759-p1**, upstream v0.1.4759, image source
-  `5595cf78152ff44d9bbd845ffb7e1bbf4e843e31`. It includes the eight retained
-  issue patches, patched-build version comparison, the Raccoon reasoning fix
-  for #7668 and the one-minute-to-one-hour slow-start ladder. Both snapshots
-  matched and three real inference probes passed during 46 minutes of
-  observation. [Patch checks, browser baseline and published image](docs/fork/evidence/2026-11-25-4759/README.md).
+- Production is **0.1.4844-p1**, upstream v0.1.4844, image source
+  `cbf17aaef17bcbd197d04b8e06894385d98da028`. The eight carried issue
+  fixes, patched version comparison, #7668 and the per-model slow-start
+  ladder passed their regression checks. Authenticated snapshots matched
+  and real inference returned HTTP 200 through the existing HTTPS gateway.
+  [Patch checks, HTTPS acceptance and image publication](docs/fork/evidence/2026-11-26-4844/README.md).
 
 ## Changes in v0.1.4335-p1 (candidate)
 
