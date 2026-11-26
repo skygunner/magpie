@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/yetone/magpie/internal/edit"
 )
 
 // codexAppReads has the Codex app (and a CLI) read every config when app
@@ -216,8 +218,9 @@ func TestCodexDesktopListKeepsTheirs(t *testing.T) {
 // new project too. Its app-server reads the list only as it starts, so
 // magpie keeps when it named the list (DeskAt), for one running from
 // before to be restarted: the time it was named, kept while the list is
-// unknown or its file rewritten, zero once the key is gone, and new when
-// it is named again.
+// unknown or its file rewritten with the same models, new when the file
+// lists other models, zero once the key is gone, and new when it is named
+// again.
 func TestCodexDesktopListNamedAt(t *testing.T) {
 	home, read := codexHome(t, `{"tokens":{"access_token":"x","id_token":"x.e30.x"}}`, `model = "gpt-5.5"`+"\n")
 	app := true
@@ -242,14 +245,26 @@ func TestCodexDesktopListNamedAt(t *testing.T) {
 	if !strings.Contains(read(), "magpie-desktop-models.json") || at.Before(before) || at.After(time.Now()) {
 		t.Fatalf("named at %v, want after %v\n%s", at, before, read())
 	}
-	// a new list in the file is no new naming: the app's next launch reads it
-	list = `{"models":[{"slug":"gpt-6-sol"},{"slug":"fake/m2"}]}`
+	// the same models with other text, or in another order, are no new
+	// list for a running app-server: the app's next launch reads them
+	list = `{"models":[{"slug":"fake/m1","display_name":"M1"},{"slug":"gpt-6-sol","default_reasoning_level":"high"}]}`
 	if err := cx.Sync(); err != nil {
 		t.Fatal(err)
 	}
 	if !cx.DeskAt().Equal(at) {
-		t.Fatalf("named at %v after a new list, want %v", cx.DeskAt(), at)
+		t.Fatalf("named at %v after the same models, want %v", cx.DeskAt(), at)
 	}
+	// ashh on Discord: a provider added or removed in magpie never reached
+	// the running app's picker. Other models in the file are a new list,
+	// for the app-server from before to be restarted
+	list = `{"models":[{"slug":"gpt-6-sol"},{"slug":"fake/m2"}]}`
+	if err := cx.Sync(); err != nil {
+		t.Fatal(err)
+	}
+	if again := cx.DeskAt(); !again.After(at) {
+		t.Fatalf("named at %v after other models, want after %v", again, at)
+	}
+	at = cx.DeskAt()
 	// magpie API: the list goes, and with it the time
 	if err := cx.Fields[0].Set("fake/m1"); err != nil {
 		t.Fatal(err)
@@ -270,4 +285,76 @@ func TestCodexDesktopListNamedAt(t *testing.T) {
 	if again := cx.DeskAt(); !again.After(at) {
 		t.Fatalf("named again at %v, want after %v\n%s", again, at, read())
 	}
+}
+
+// wbssg0401 on X: the Codex app's new conversation listed GPT alone, while
+// the CLI and the threads from before had magpie's models. The app shows
+// its own presets for Codex's built-in provider unless the config names
+// model_catalog_json, and magpie named its list only with a joined or
+// beside mark in the stash. A base URL on magpie's gateway with neither
+// (written by hand, or the mark lost) has the gateway hand Codex magpie's
+// models all the same, so the app gets the list too; one written for
+// account failover alone does not, and neither does a Codex with no app.
+func TestCodexDesktopListUnmarkedBaseURL(t *testing.T) {
+	for _, model := range []string{"fake/m1", "gpt-5.5"} {
+		t.Run(model, func(t *testing.T) {
+			home, read := codexHome(t, `{"tokens":{"access_token":"x","id_token":"x.e30.x"}}`, `model = "`+model+`"`+"\n")
+			dir := filepath.Join(home, ".codex")
+			desk := filepath.Join(dir, "magpie-desktop-models.json")
+			app := true
+			codexAppReads(t, &app)
+			list := `{"models":[{"slug":"gpt-6-sol"},{"slug":"fake/m1"}]}`
+			deskListIs(t, &list)
+			if err := edit.SetTOMLTop(filepath.Join(dir, "config.toml"), edit.KV{Path: "openai_base_url", Value: here(home).codexURL()}); err != nil {
+				t.Fatal(err)
+			}
+			cx := codex(home)
+			if cx.Joined() || cx.Beside() {
+				t.Fatalf("marked: joined %v, beside %v", cx.Joined(), cx.Beside())
+			}
+			if err := cx.Sync(); err != nil {
+				t.Fatal(err)
+			}
+			cfg := read()
+			if !strings.Contains(cfg, "magpie-desktop-models.json") || strings.Contains(cfg, "model_provider =") {
+				t.Fatalf("on magpie's gateway with no mark, no list named for the app:\n%s", cfg)
+			}
+			if b, err := os.ReadFile(desk); err != nil || string(b) != list {
+				t.Fatalf("the app's list: %q %v", b, err)
+			}
+			// the app gone: the key and the file go
+			app = false
+			if err := cx.Sync(); err != nil {
+				t.Fatal(err)
+			}
+			if cfg := read(); strings.Contains(cfg, "model_catalog_json") {
+				t.Fatalf("the app gone:\n%s", cfg)
+			}
+			if _, err := os.Stat(desk); !os.IsNotExist(err) {
+				t.Fatalf("the app gone: the list stays: %v", err)
+			}
+		})
+	}
+	t.Run("failover", func(t *testing.T) {
+		home, read := codexHome(t, `{"tokens":{"access_token":"x","id_token":"x.e30.x"}}`, `model = "gpt-5.5"`+"\n")
+		dir := filepath.Join(home, ".codex")
+		app := true
+		codexAppReads(t, &app)
+		list := `{"models":[{"slug":"gpt-6-sol"},{"slug":"fake/m1"}]}`
+		deskListIs(t, &list)
+		if err := edit.SetTOMLTop(filepath.Join(dir, "config.toml"), edit.KV{Path: "openai_base_url", Value: here(home).codexURL()}); err != nil {
+			t.Fatal(err)
+		}
+		stash(map[string]string{"codex.failover": "1"})
+		cx := codex(home)
+		if err := cx.Sync(); err != nil {
+			t.Fatal(err)
+		}
+		if cfg := read(); strings.Contains(cfg, "model_catalog_json") {
+			t.Fatalf("failover alone:\n%s", cfg)
+		}
+		if _, err := os.Stat(filepath.Join(dir, "magpie-desktop-models.json")); !os.IsNotExist(err) {
+			t.Fatalf("failover alone: a list written: %v", err)
+		}
+	})
 }

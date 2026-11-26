@@ -850,6 +850,10 @@ type fetched struct {
 // of the agents' model lists and of a model's own protocol setting.
 func (p Provider) fetchOne(ctx context.Context) (fetched, error) {
 	ctx = p.ownRequests(ctx, probelog.KindList) // a detection's list too
+	if p.SignsWithAccessKey() {
+		// Mantle's list, signed as its requests are (#7687)
+		ctx = catalog.WithListSigner(ctx, func(r *http.Request) error { return p.signAWS(r, nil) })
+	}
 	if u := strings.TrimSpace(p.ModelsURL); u != "" {
 		// asked where the user said, and nowhere else: the base URLs
 		// list nothing, or the wrong thing
@@ -2114,20 +2118,74 @@ func (p Provider) Thinks(model string) bool {
 }
 
 // PaidBesideFree says model costs its subscription's credits while the
-// subscription serves other models at no cost to them (catalog.Model's
-// Free: WorkBuddy's "x0.00", Qoder's is_free, Cline's free models). Its
-// credits running out then says nothing of those: they draw on none
-// (Creat.wu on Discord). False for a model not on the list, or where no
-// model is free.
+// subscription serves other models at no cost to them (costsNothing:
+// WorkBuddy's "x0.00", Qoder's is_free, Cline's free models, OpenCode Go's
+// and Zen's). Its credits or windows running out then say nothing of
+// those: they draw on none (Creat.wu on Discord; Go's "If you reach the
+// usage limit, you can continue using the free models", #7496). False for
+// a model not on the list, or where no model is free.
 func (p Provider) PaidBesideFree(model string) bool {
-	listed, paid, free := false, false, false
+	listed, free, freeToo, _ := p.freeBeside(model)
+	return listed && !free && freeToo
+}
+
+// FreeBesidePaid says model is one OpenCode serves at no cost
+// (costsNothing) beside models that cost: a refusal of it for credit or
+// quota is its own, as it draws on neither, and says nothing of the
+// others (ggbdpq, #7496). OpenCode's alone: WorkBuddy refuses even its
+// 0-rate models to an account with no package, a refusal of the account.
+func (p Provider) FreeBesidePaid(model string) bool {
+	listed, free, _, paidToo := p.freeBeside(model)
+	return listed && free && paidToo && p.IsOpenCode()
+}
+
+// ModelsRestAlone says a credit or quota refusal of any model on p's list
+// rests that model alone, never p's key as a whole: each is paid beside
+// free ones (PaidBesideFree) or free beside paid ones (FreeBesidePaid),
+// as at OpenCode Go and Zen. A magpie before v0.1.4818 rested such a key
+// whole, as nothing marked OpenCode's free models; a ladder rest or a
+// notice it left under the whole key held, or showed out, the free models
+// the key still serves (xzhih on X, #7773).
+func (p Provider) ModelsRestAlone() bool {
+	free, paid := false, false
 	for _, m := range p.Available() {
-		if strings.EqualFold(m.ID, model) {
-			listed, paid = true, !m.Free
+		if p.costsNothing(m) {
+			free = true
+		} else {
+			paid = true
 		}
-		free = free || m.Free
 	}
-	return listed && paid && free
+	return free && paid && p.IsOpenCode()
+}
+
+// freeBeside is whether p lists model, whether it costs nothing there
+// (costsNothing), and whether p lists another model that does, and one
+// that doesn't.
+func (p Provider) freeBeside(model string) (listed, free, freeToo, paidToo bool) {
+	for _, m := range p.Available() {
+		f := p.costsNothing(m)
+		switch {
+		case strings.EqualFold(m.ID, model):
+			listed, free = true, f
+		case f:
+			freeToo = true
+		default:
+			paidToo = true
+		}
+	}
+	return listed, free, freeToo, paidToo
+}
+
+// costsNothing says p serves m at no cost to its allowance or credits by
+// its vendor's word: catalog.Model's Free (WorkBuddy's "x0.00", Qoder's
+// is_free, Cline's free models, OpenCode Go's "monthly_usage": null), or,
+// at OpenCode, one of Zen's free models (OpenCodeFree) or of Go's
+// (openCodeGoFree), for a list saved before Go's word was read from it.
+// Not the user's CountFree, which says how Usage counts the provider and
+// nothing of what the vendor holds back, nor another vendor's $0 price:
+// a free tier priced 0 may still draw on the key's limits.
+func (p Provider) costsNothing(m catalog.Model) bool {
+	return m.Free || p.IsOpenCode() && (p.OpenCodeFree(m.ID) || p.openCodeGoFree(m.ID))
 }
 
 // FreeModel says model costs nothing on p: its vendor serves it at no cost
@@ -3424,31 +3482,41 @@ func pricedNamesTo(dst []string, model string) []string {
 }
 
 // geminiTrialBase is the Gemini model the lower-cased id l is the trial
-// access of (ownsh1p on X: Usage showed gemini-4-argon-trial with tokens and
-// no cost): the id without its -trial, at an effort after it too
-// (gemini-4-argon-trial-high). Google's Antigravity models page
+// access, or the tiered id, of: the id without its -trial or -tiered, at an
+// effort after it too (gemini-4-argon-trial-high, gemini-4-hydrogen-tiered-high).
+//
+// -trial (ownsh1p on X: Usage showed gemini-4-argon-trial with tokens and
+// no cost): Google's Antigravity models page
 // (https://antigravity.google/docs/models/, read 2026-11-16) gives Gemini 4
 // Argon to "paid Google AI Pro plans or on trial with eligible premium
 // devices": the same model, reached on a trial, so its calls are estimated
-// at the model's list price as a paid plan's are. Only a gemini- id: a
-// -trial of another vendor's (ZCode's glm-5.3-trial, grok-4.7-trial) is
-// that vendor's own offer and keeps no price it doesn't list.
+// at the model's list price as a paid plan's are.
+//
+// -tiered (kekao on Discord: gemini-4-hydrogen-tiered-high showed no
+// price): Antigravity's one id of a model that thinks at the level the
+// request asks (collapseAntigravityModels), named "<model> (Tiered)", so
+// it is priced as that model.
+//
+// Only a gemini- id: a -trial or -tiered of another vendor's (ZCode's
+// glm-5.3-trial, grok-4.7-trial) is that vendor's own offer and keeps no
+// price it doesn't list.
 func geminiTrialBase(l string) (string, bool) {
-	if !strings.Contains(l, "-trial") {
+	if !strings.Contains(l, "-tri") && !strings.Contains(l, "-tie") {
 		return "", false // every model of every provider's list is priced on each poll
 	}
 	last := l[strings.LastIndexByte(l, '/')+1:]
 	if !strings.HasPrefix(last, "gemini-") {
 		return "", false
 	}
-	if base, ok := strings.CutSuffix(l, "-trial"); ok {
-		return base, true
-	}
-	i := strings.LastIndexByte(l, '-')
-	switch l[i+1:] {
-	case "minimal", "low", "medium", "high", "xhigh":
-		if base, ok := strings.CutSuffix(l[:i], "-trial"); ok {
-			return base + l[i:], true
+	for _, word := range []string{"-trial", "-tiered"} {
+		if base, ok := strings.CutSuffix(l, word); ok {
+			return base, true
+		}
+		// at an effort after it, Antigravity's extra-high too
+		if e, ok := effortBase(l); ok {
+			if base, ok := strings.CutSuffix(e, word); ok {
+				return base + l[len(e):], true
+			}
 		}
 	}
 	return "", false
@@ -3934,6 +4002,20 @@ func imagesIn(p *Provider, m catalog.Model, s settings.Settings) (bool, *bool) {
 // with what the user set taken over the vendor's list and models.dev.
 func entryFor(p Provider, m catalog.Model, s settings.Settings) Entry {
 	return sharedEntry(&p, m, s)
+}
+
+// EntriesOf is each of ms, models of p, as the catalog carries a model it
+// lists (sharedEntry): its name, levels, window and reply limit with the
+// user's settings over the vendor's list, the settings read once for them
+// all. ms may go past what agents are offered: the gateway's account list
+// tells every model of p's Available() in /v1/models' shape.
+func EntriesOf(p Provider, ms []catalog.Model) []Entry {
+	s := settings.Load()
+	out := make([]Entry, 0, len(ms))
+	for _, m := range ms {
+		out = append(out, sharedEntry(&p, m, s))
+	}
+	return out
 }
 
 // sharedEntry is entryFor that keeps p itself in the entry, so every model of

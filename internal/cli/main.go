@@ -105,7 +105,7 @@ const usage = `magpie — one place to pick every agent's model
                                   or only the models ticked for it, a new one off until it is ticked
   magpie search [add <api> <key>|rm <api>]   Tavily, Brave, Exa, Firecrawl, You.com, DeepSeek, Doubao Search (Volcengine), Yuanbao Search (Tencent Cloud), TinyFish or SearXNG for web search when no provider can search
   magpie groups                   routing groups: several models agents pick as one, group/<id>
-  magpie group add <name> models=<m1>,<m2> [routing=smart|order|rotate|usage|pace|weight|free|fast|cheap|drain|expiring|fit] [stays=auto|session|turn|off]
+  magpie group add <name> models=<m1>,<m2> [routing=smart|order|rotate|usage|pace|weight|free|fast|cheap|drain|pace-drain|expiring|fit] [stays=auto|session|turn|off]
   magpie group <id> | set <id> k=v… | rm <id>   show, change or remove one (magpie group help for more)
   magpie accounts [agent] [--json]  every subscription magpie knows, with each one's allowance used and when it resets
   magpie accounts add <agent>     sign in to one more Claude, ChatGPT or Google (Gemini CLI, Antigravity) subscription
@@ -537,6 +537,9 @@ func run(args []string) error {
 	// and its auto mode classifier, on a sonnet tier that follows a main
 	// model /model has moved, to the model it moved to
 	gateway.ClassifierStandIn = agent.ClassifierStandIn
+	// and its Explore and Plan subagents, which inherit the lead's model
+	// past CLAUDE_CODE_SUBAGENT_MODEL, to the model set for its subagents
+	gateway.ClaudeSubagent = agent.ClaudeSubagent
 	// a Codex that reaches magpie for account failover alone is handed
 	// only its own models (#1385)
 	gateway.CodexOwnOnly = agent.CodexOwnOnly

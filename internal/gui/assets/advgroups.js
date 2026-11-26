@@ -5,12 +5,16 @@
 // when Advanced holds rows of two groups or more. app.js's groupAdvanced
 // imports this when an editor first opens, so it weighs nothing on the
 // core.
+// The editor's models in their order (modelorder.js) come with it, so an
+// editor's chips are drawn by maker from the first and never move (#7051's
+// wait covers both).
+import "./modelorder.js";
 (() => {
   const GROUPS = [
     ["Routing", ["Routing", "Rate limited", "Stays", "Resets", "Warm up", "Check in", "Claude Code", "Fallback", "Rests", "Errors"]],
     ["Models", ["Context window", "Max output", "Compaction", "Compact at", "Images", "Web search"]],
     ["Limits and cost", ["Requests at once", "Accounts at once", "Requests per minute", "Queue size", "Gateway keys", "Price rate", "Top-up rate", "Free for me", "Billing", "Rate windows", "Account balance", "Balance URL", "Balance field"]],
-    ["Connection", ["Headers", "Extra body", "Reply headers", "Request headers to pass", "Proxy", "Upstream", "Key header", "User-Agent", "Codex client", "Masking", "Certificate", "HTTP version", "WebSocket", "Agents"]],
+    ["Connection", ["Access key ID", "Headers", "Extra body", "Reply headers", "Request headers to pass", "Proxy", "Upstream", "Key header", "User-Agent", "Codex client", "Masking", "Certificate", "HTTP version", "WebSocket", "Agents"]],
   ];
   window.advGroups = function (box) {
     if (box.dataset.grouped) return;
