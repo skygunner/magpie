@@ -113,9 +113,15 @@ behavior; baseline failures do not automatically authorize deployment.
    with a host lock, stopped-volume backup, immutable container/image assertions,
    acceptance, three real inference probes and 46-minute observation. Any failure
    rolls back and verifies the previous container; preserve candidate config.
-6. Promote production/stable and deployed/<version>, and publish the exact image
-   digest as a version and latest only after exit 0, this run's PASSED result,
-   matching live IDs and fresh healthy checks. Never rebuild during promotion.
+6. Publish the exact healthy production image to Docker Hub as part of each
+   rollout after initial acceptance and real inference. Push the version and
+   `latest`, update the [Docker Hub overview](docs/fork/docker-hub.md) with
+   the running version, source, and the issue, PR or fork commit and behavior
+   of each carried fix. Read back both public manifest digests and the public
+   overview before reporting publication. If observation rolls production
+   back, point `latest` and the overview back to the verified running image.
+7. Promote `production/stable` and `deployed/<version>` after the transaction
+   exits successfully with a matching PASSED result and healthy live IDs.
 
 ## Deployment history
 
