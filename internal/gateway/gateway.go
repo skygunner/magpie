@@ -7274,6 +7274,7 @@ func (s *Server) passthrough(w http.ResponseWriter, r *http.Request, p provider.
 	upstream := provider.UpstreamNameAsIn(wiresOf(r.Context()), p.ID, model, p.SentIDAt(model, sentEffortIf(p, model, proto, body)))
 	body = rewriteModel(body, upstream)
 	if proto == provider.Chat {
+		body = unreasonChatRelay(body)
 		body = withMistralCacheKey(p, r.Header, body)
 	}
 	if proto == provider.Responses {

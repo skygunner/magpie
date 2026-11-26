@@ -299,3 +299,20 @@ func TestReasonedIDWithoutItsReasoning(t *testing.T) {
 		t.Fatalf("forgotten reasoning: %+v", r.Messages)
 	}
 }
+
+func TestChatRelayUnwrapsCarriedCallID(t *testing.T) {
+	const own = "call-00000000-0000-0000-0000-000000000000-26"
+	const carried = own + "__rk16__0123456789abcdef"
+	f := &fake{t: t, reply: chatWholeOK, ctype: "application/json"}
+	up := setup(t, provider.Chat, f)
+	chatProvider(t, up.URL, provider.Provider{ID: "relay", Models: []string{"model"}})
+	code, reply := postTo(t, New(), "/v1/chat/completions", fmt.Sprintf(`{"model":"relay/model","messages":[
+		{"role":"assistant","tool_calls":[{"id":%q,"type":"function","function":{"name":"read","arguments":"{}"}},{"id":"plain","type":"function","function":{"name":"read","arguments":"{}"}}]},
+		{"role":"tool","tool_call_id":%q,"content":%q},{"role":"tool","tool_call_id":"plain","content":"ok"}]}`, carried, carried, carried))
+	if code != 200 || f.calls != 1 {
+		t.Fatalf("status %d after %d calls: %s", code, f.calls, reply)
+	}
+	got := sentMessages(t, f.got)
+	sameJSON(t, got[0], fmt.Sprintf(`{"role":"assistant","tool_calls":[{"id":%q,"type":"function","function":{"name":"read","arguments":"{}"}},{"id":"plain","type":"function","function":{"name":"read","arguments":"{}"}}]}`, own))
+	sameJSON(t, got[1], fmt.Sprintf(`{"role":"tool","tool_call_id":%q,"content":%q}`, own, carried))
+}
