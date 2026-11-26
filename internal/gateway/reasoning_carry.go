@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/tidwall/gjson"
+
 	"github.com/yetone/magpie/internal/provider"
 )
 
@@ -81,11 +83,10 @@ func reasonedID(id string, items []json.RawMessage) string {
 // the reasoning items it refers to (none when magpie no longer has them).
 // Any other id comes back as it is.
 func unreasonedID(id string) (string, []json.RawMessage) {
-	at := len(id) - reasonKeyLen - len(reasonTail)
-	if at < 1 || id[at:at+len(reasonTail)] != reasonTail {
+	own, key := splitReasonedID(id)
+	if key == "" {
 		return id, nil
 	}
-	own, key := id[:at], id[at+len(reasonTail):]
 	var items []json.RawMessage
 	if kept := keptSignature(key); kept != "" {
 		if json.Unmarshal([]byte(kept), &items) != nil {
@@ -93,6 +94,48 @@ func unreasonedID(id string) (string, []json.RawMessage) {
 		}
 	}
 	return own, items
+}
+
+func splitReasonedID(id string) (string, string) {
+	at := len(id) - reasonKeyLen - len(reasonTail)
+	if at < 1 || id[at:at+len(reasonTail)] != reasonTail {
+		return id, ""
+	}
+	return id[:at], id[at+len(reasonTail):]
+}
+
+// A native Chat relay bypasses unreasonCalls. Remove the carry reference
+// only in the outgoing call and result IDs, keeping the history for fallback.
+func unreasonChatRelay(body []byte) []byte {
+	if !bodyHas(body, reasonTail) {
+		return body
+	}
+	var out []byte
+	last := 0
+	unwrap := func(v gjson.Result) {
+		own, key := splitReasonedID(v.Str)
+		if key == "" || v.Index < last || !at(body, v) {
+			return
+		}
+		out = append(out, body[last:v.Index]...)
+		quoted, _ := json.Marshal(own)
+		out = append(out, quoted...)
+		last = v.Index + len(v.Raw)
+	}
+	for _, msg := range gjson.GetBytes(body, "messages").Array() {
+		switch msg.Get("role").Str {
+		case "assistant":
+			for _, call := range msg.Get("tool_calls").Array() {
+				unwrap(call.Get("id"))
+			}
+		case "tool":
+			unwrap(msg.Get("tool_call_id"))
+		}
+	}
+	if last == 0 {
+		return body
+	}
+	return append(out, body[last:]...)
 }
 
 // carryReasoning is dec for a client of from, with the sealed reasoning a
