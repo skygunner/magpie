@@ -6856,7 +6856,7 @@ func (s *Server) forwardOnce(ctx context.Context, p provider.Provider, to provid
 			// display to the provider
 			extra = s.withoutRefusedShapes(p, adaptiveThinking(extra))
 		}
-		body = extra
+		body = openAIReasoningTemperature(p, to, extra)
 	}
 	if !countsTokens(path) {
 		// the tier it goes at, the user's own fields in it (#1784)
@@ -9603,6 +9603,26 @@ func loadsInPlace(p provider.Provider) bool {
 	}
 	h := p.VendorHost()
 	return !p.IsPlugin() && !p.IsAzure() && (h == "api.openai.com" || strings.HasSuffix(h, ".api.openai.com"))
+}
+
+// Luna and Terra default to medium reasoning and accept only default sampling
+// while reasoning on the OpenAI API. Fit the final body for this attempt (#7867).
+func openAIReasoningTemperature(p provider.Provider, to provider.Protocol, body []byte) []byte {
+	if (to != provider.Chat && to != provider.Responses) || p.Account != nil || p.IsPlugin() || provider.HostOf(p.Base(to)) != "api.openai.com" {
+		return body
+	}
+	t := gjson.GetBytes(body, "temperature")
+	if t.Type != gjson.Number || t.Float() == 1 || t.Float() < 0 || t.Float() > 2 {
+		return body
+	}
+	switch modelOf(body) {
+	case "gpt-6-luna", "gpt-6.1-terra":
+		switch bodyEffort(to, body) {
+		case "", "low", "medium", "high", "xhigh", "max":
+			return withoutFields(body, "temperature")
+		}
+	}
+	return body
 }
 
 // cacheKeyField is the client's prompt cache key as a request carries it
