@@ -83,6 +83,7 @@ and relevant inputs are unchanged. State the actual tested scope in the evidence
 | #7668 | retain | On Raccoon SenseNova Flash streaming Chat replay, collapse identical assistant reasoning aliases and preserve distinct values and tool history. |
 | [#7864](https://github.com/yetone/magpie/issues/7864) | retain | Restore the original assistant call and tool result IDs on native Chat relay. Source `fix/chat-reasoning-carry-id`. Check `TestChatRelayUnwrapsCarriedCallID` on each production candidate. |
 | [#7867](https://github.com/yetone/magpie/issues/7867) | retain | Omit custom temperature on direct OpenAI Luna and Terra reasoning attempts. Check `TestOpenAIReasoningTemperature` each round. Source `fix/openai-reasoning-temperature`. |
+| [#8028](https://github.com/yetone/magpie/issues/8028) | retain | Skip Raccoon GLM Flash for group JSON schema output; preserve the schema for other members. Check `TestRaccoonSchemaGroup`. |
 | Slow first token | retain | On the same model and account/key, start at one minute, double after each expired rest, and cap at one hour. Preserve provider opt-outs and lower caps. |
 | build -pN | retain | Update checks and release notes compare the base version. |
 | plugins PR #366 | separate | Keep production Cloudflare Workers AI package 0.0.5. No package downgrade or test-only rebuild. |
