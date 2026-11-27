@@ -1,0 +1,14 @@
+--- FAIL: TestNoProxyModesAndCIDR (0.00s)
+    lan_test.go:182: 10.0.0.5:3425 with NoProxy=none: got (<nil>, <nil>), want proxy 127.0.0.1:7890
+    lan_test.go:182: 172.20.1.1:8080 with NoProxy=none: got (<nil>, <nil>), want proxy 127.0.0.1:7890
+    lan_test.go:182: 192.168.131.20:3425 with NoProxy=none: got (<nil>, <nil>), want proxy 127.0.0.1:7890
+    lan_test.go:182: 169.254.1.1:8080 with NoProxy=none: got (<nil>, <nil>), want proxy 127.0.0.1:7890
+    lan_test.go:182: 100.101.102.103:3425 with NoProxy=none: got (<nil>, <nil>), want proxy 127.0.0.1:7890
+    lan_test.go:182: [fd7a:115c:a1e0::1]:3425 with NoProxy=none: got (<nil>, <nil>), want proxy 127.0.0.1:7890
+    lan_test.go:182: server.lan:3425 with NoProxy=none: got (<nil>, <nil>), want proxy 127.0.0.1:7890
+    lan_test.go:182: corp.internal:8080 with NoProxy=none: got (<nil>, <nil>), want proxy 127.0.0.1:7890
+    lan_test.go:182: nas.tail1234.ts.net:3425 with NoProxy=none: got (<nil>, <nil>), want proxy 127.0.0.1:7890
+    lan_test.go:182: mac-mini.local:3425 with NoProxy=none: got (<nil>, <nil>), want proxy 127.0.0.1:7890
+FAIL
+FAIL	github.com/yetone/magpie/internal/netproxy	0.014s
+FAIL

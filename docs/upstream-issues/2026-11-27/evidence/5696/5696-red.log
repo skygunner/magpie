@@ -1,0 +1,6 @@
+--- FAIL: TestImageCapLearnedFromAgnesWords (0.00s)
+    image_count_fallback_test.go:161: no cap learned from {"object":"error","message":"Image count 7 exceeds limit 4 per request.","type":"BadRequestError","param":null,"code":400}
+    image_count_fallback_test.go:161: no cap learned from {"error":{"message":"Image count 12 exceeds limit 32 per request."}}
+FAIL
+FAIL	github.com/yetone/magpie/internal/gateway	0.024s
+FAIL

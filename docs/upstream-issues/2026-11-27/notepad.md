@@ -80,3 +80,39 @@ in evidence/readbacks.json).
 - #3434→#7388/#7425: evaluate wizardpc-com's thread-affinity branch, then
   decide the Claude Code variant.
 - #3927→#7577: extend `fix/3927-...` with restore/sync options apply.
+
+## Second sweep of 2026-11-27 (watermark `2026-11-26T14:03:02Z`)
+
+Fetch in `/tmp/magpie-issue-sweep.Rh9UZJa5`: all 1,071 JSON files, zero
+missing; started `2026-11-27T12:36:48Z`, finished `2026-11-27T12:46:22Z`.
+For the next sweep, use **`2026-11-27T12:36:48Z`** as the watermark.
+
+- Three new comments: #1139 (comicchang, the community branch), #5696
+  (aEgoist, the Agnes phrasing, twice with plugin cross-refs). Four of our
+  11-27 replies read back as known. 15 timeline events: cross-references
+  to new upstream issues #7909/#7971/#7891/#7927/#7993; #4855's class was
+  fixed upstream by `2a47b5a47` (plugins#1563); #5359's referenced commit
+  is our own rebase `634a41fd4`. `upstream/main` moved to `ad69092c0`.
+- **#5696 — Agnes phrasing delivered.** Rebased the branch onto
+  `ad69092c0` (shape word joins the lazyre list main grew; docs row beside
+  main's LAN-reach row) and added Agnes AI's words as a learned cap.
+  Branch `fix/5696-image-count-fallback` now `206c9bdb3` (force-pushed
+  over `0b865efce`). `TestImageCapLearnedFromAgnesWords` red with the
+  phrasing set aside, green with it; package suite green except the known
+  `TestClaudeClientCacheAbsentUnchanged` environment red (#3280), shown
+  equal on a tree without these changes. Reply: comment `7218953336`.
+- **#1139 — comicchang's branch verified and endorsed.** Their
+  `fix/proxy-lan-bypass` (`1849425db`, base `bcb136c9e`) absorbs our
+  loopback fix and adds the NoProxy Auto/Off/Custom design (16 files,
+  761 lines). Harm check clean (no new deps, no new addresses or
+  credential flows); `go build`/`go vet` clean; targeted tests green
+  (netproxy, settings, settingsapi full packages, plugin LAN/NoProxy).
+  Ablation witness: breaking the `none` mode in `Func` turns
+  `TestNoProxyModesAndCIDR` red (`nas.tail1234.ts.net:3425 … want proxy`),
+  green restored. Reply (zh) endorses it as taking precedence over our
+  loopback-only branch, notes the rebase-to-main need, leaves attribution
+  to the maintainer: comment `7218953724` (edited once to fix a
+  "comicchang" typo). Both replies read back verbatim; SHA-256 in
+  evidence/readbacks-round2.json.
+- Fork PR #3's referenced commit check: #4385 citation comes from the
+  other session's integration PR — untouched, per the standing rule.
