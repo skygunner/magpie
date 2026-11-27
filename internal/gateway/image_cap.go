@@ -59,6 +59,7 @@ var imageCapWords = []imageCapRefusal{
 	{lazyre.New(`(?i)too many images: maximum allowed for model \S+ is (\d+)`), true},
 	{lazyre.New(`100milionseek: At most (\d+) images per request \(MAX_IMAGES\)`), false},
 	{lazyre.New(`Coarena: A request may carry at most (\d+) images\.`), false},
+	{lazyre.New(`(?i)Image count \d+ exceeds limit (\d+) per request`), false},
 }
 
 // imageOverCap stands where an image over the cap was left out. It goes

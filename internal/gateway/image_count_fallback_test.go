@@ -150,6 +150,22 @@ func TestImageCountGroupFallback(t *testing.T) {
 	}
 }
 
+// Agnes AI's words for an over-cap request are learned like the others'
+// (aEgoist on #5696: deduplicated images count, distinct ones don't).
+func TestImageCapLearnedFromAgnesWords(t *testing.T) {
+	for _, b := range []string{
+		`{"object":"error","message":"Image count 7 exceeds limit 4 per request.","type":"BadRequestError","param":null,"code":400}`,
+		`{"error":{"message":"Image count 12 exceeds limit 32 per request."}}`,
+	} {
+		if n := learnedImageCap(provider.Provider{}, []byte(b)); n == 0 {
+			t.Errorf("no cap learned from %s", b)
+		}
+	}
+	if n := learnedImageCap(provider.Provider{}, []byte(`{"error":{"message":"Image count exceeds limit per request."}}`)); n != 0 {
+		t.Errorf("learned %d from words naming no number", n)
+	}
+}
+
 func TestImageCountRefusalControls(t *testing.T) {
 	for _, tc := range []struct {
 		status       int
