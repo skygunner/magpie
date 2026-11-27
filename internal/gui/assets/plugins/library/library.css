@@ -331,6 +331,7 @@ input.lib-setname:focus { border-color: var(--accent); box-shadow: 0 0 0 3px col
 .lib-problems-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; }
 .lib-problems-head b { flex: 1 1 10em; font-weight: 600; min-width: 0; overflow-wrap: break-word; }
 .lib-problems-head .action { flex: none; margin-left: auto; }
+.lib-problems-head .lib-problems-all { margin-left: auto; height: 24px; }
 .lib-problems-head .lib-x { margin: -4px -6px -4px -2px; color: var(--muted); }
 .lib-problems-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--amber); }
 .lib-problems ul { list-style: none; margin: 6px 0 0; padding: 0 0 0 15px; display: grid; gap: 4px; }
@@ -480,6 +481,9 @@ input.lib-setname:focus { border-color: var(--accent); box-shadow: 0 0 0 3px col
 .lib-pick { display: flex; align-items: flex-start; gap: 10px; padding: 7px 6px; border-radius: 8px; cursor: default; }
 .lib-pick:hover:not(.dim) { background: var(--pill); }
 .lib-pick.dim { opacity: .55; }
+/* a row is a label, and an editor sets its labels (a form's names) right:
+   in a sheet the row still reads from its tick (AXmake110 on X) */
+.editor label.lib-pick { text-align: start; }
 .lib-pick input { margin: 2px 0 0; accent-color: var(--fg); flex: none; }
 .lib-pick .who { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .lib-pick .name { font-size: 13px; font-weight: 500; }
@@ -950,6 +954,8 @@ body.window .lib-list .lib-row { --lib-indent: 38px; }
 .lib-serverhead .note + .lib-viewpick { margin-left: 0; }
 /* a row's note, the user's own words, over the muted line it stands for */
 .lib-row .sub.lib-subnote { color: var(--fg-2); }
+.lib-row .sub.lib-twins { white-space: normal; overflow-wrap: anywhere; color: var(--muted); }
+.lib-row .sub.lib-twins[hidden] { display: none; }
 /* a skill's note, over its SKILL.md */
 .lib-skillnote { display: flex; flex-direction: column; gap: 4px; }
 .lib-reader .lib-skillnote label { text-align: left; padding-top: 0; }
@@ -1090,25 +1096,14 @@ input.lib-memq:focus, input.lib-memtags:focus, input.lib-memwhy:focus { border-c
 .lib-ag.profiles.open { background: var(--pill); }
 
 /* billion-context.json's settings: the nudge step a small number field in
-   the row, its philosophy under an Advanced disclosure drawn as the
-   editors' (.editor .more) is: a chevron that turns, the label beside it */
+   the row; under Advanced (advFold) a card as the one above, the
+   philosophy's row its name, words, note and Save at the card's padding */
 .lib-bili-set .lib-bili-growth { width: 96px; font: inherit; font-size: 12.5px; font-variant-numeric: tabular-nums; text-align: right; padding: 4px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--fg); }
 .lib-bili-set .lib-bili-growth:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .lib-bili-set .lib-bili-model { max-width: 40%; }
 .lib-bili-set .lib-bili-model > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lib-bili-more { margin-top: 10px; }
-.lib-bili-more > summary { font-size: 12px; line-height: 18px; color: var(--fg-2); list-style: none; display: inline-flex; align-items: center; gap: 5px; padding: 3px 0; border-radius: 4px; cursor: pointer; transition: color .12s ease; }
-.lib-bili-more > summary::-webkit-details-marker { display: none; }
-.lib-bili-more > summary::before { content: ""; flex: none; width: 10px; height: 10px; background: var(--muted); transition: transform .2s cubic-bezier(.23, 1, .32, 1), background-color .12s ease;
-  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M3.6 1.6 7 5 3.6 8.4' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
-          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M3.6 1.6 7 5 3.6 8.4' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat; }
-.lib-bili-more[open] > summary::before { transform: rotate(90deg); }
-.lib-bili-more > summary:hover { color: var(--fg); }
-.lib-bili-more > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-@media (prefers-reduced-motion: reduce) { .lib-bili-more > summary, .lib-bili-more > summary::before { transition: none; } }
-.lib-bili-more > .lib-bili-marks { margin: 8px 0 0 15px; }
-.lib-bili-phil { display: grid; gap: 6px; padding: 8px 0 0 15px; }
-.lib-bili-phil > .name { font-size: 12.5px; color: var(--fg-2); }
+.lib-bili-phil { flex-direction: column; align-items: stretch; gap: 6px; }
+.lib-bili-phil .lib-rtk-note { margin: 0; }
 .lib-bili-phil .lib-acts { justify-content: flex-end; }
 /* the servers turned off, folded below the ones on, as Providers' */
 #view-library .lib-offhead .fold:disabled { cursor: default; opacity: 1; }

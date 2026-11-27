@@ -165,6 +165,18 @@ type effortFailed struct{ error }
 
 func (e effortFailed) Unwrap() error { return e.error }
 
+// intentFailed is a decision model that rated how hard the turn is but
+// declined, or didn't answer, which kind the message is (OpenAI's
+// Decisions API answering the question {"type":"refusal"}): the effort
+// holds, and the turn's route says why no intent came of it, as for a
+// classifier that couldn't say. It answered, so it isn't left to rest,
+// nor its answer kept for the next turn with the same words.
+// (zyh6036 on X: such turns went to the group's first member, the route
+// saying the classifier said none.)
+type intentFailed struct{ error }
+
+func (e intentFailed) Unwrap() error { return e.error }
+
 // cutShort is the waitSpent of a classifier given wait, what was left of
 // the request's classifier wait full, that didn't answer in it.
 func cutShort(model string, wait, full time.Duration) error {
@@ -223,6 +235,16 @@ func classify(ask classifier, held access.Identity, model string, intents []stri
 		// the intent alone, said this time and not kept: the effort is
 		// asked again with the next turn
 		c.v, c.err = v, nil
+		if was, ok := classified.last[model]; !ok || was.err != err.Error() {
+			log.Printf("routing: the classifier %s couldn't say: %s", model, err)
+		}
+		classified.last[model] = classifyFailure{err: err.Error(), at: time.Now()}
+		delete(classified.failed, rest)
+		return v, false, err
+	}
+	if errors.As(err, new(intentFailed)) {
+		// the effort alone, said this time and not kept, nor rested for
+		c.v = v
 		if was, ok := classified.last[model]; !ok || was.err != err.Error() {
 			log.Printf("routing: the classifier %s couldn't say: %s", model, err)
 		}
@@ -595,8 +617,14 @@ func (s *Server) askWaited(ctx context.Context) classifier {
 	// the caller's accounts (a gateway key's, the group the request names)
 	// hold its classifier's calls too, as they hold magpie's other calls
 	// for it (accountHolds): only the accounts, not the key's models, as
-	// the classifier is the group's pick, not the caller's
+	// the classifier is the group's pick, not the caller's. They are
+	// magpie's own requests: with those set to some accounts (OwnAgent),
+	// those hold them in place of the agent's
 	caller := access.Caller(ctx)
+	own := provider.AgentAccounts(OwnAgent)
+	if len(own) > 0 {
+		caller = beforeAgent(ctx)
+	}
 	return func(held access.Identity, model string, intents []string, prev before, effort bool, text string) (verdict, error) {
 		mu.Lock()
 		now := time.Now()
@@ -609,7 +637,11 @@ func (s *Server) askWaited(ctx context.Context) classifier {
 			return verdict{}, waitSpent{fmt.Errorf("%s not asked: the request's classifier wait of %s was spent by the routing group above or a classifier before it", model, classifyTimeout())}
 		}
 		defer noteWait(ctx, "decision model")()
-		who := access.Identity{Accounts: caller.Accounts, Group: caller.Group}.HeldToGroup(held.Group, held.Accounts)
+		who := access.Identity{Accounts: caller.Accounts, Group: caller.Group}
+		if len(own) > 0 {
+			who = who.HeldToAgent(OwnAgent, own)
+		}
+		who = who.HeldToGroup(held.Group, held.Accounts)
 		if prev.Then <= 0 {
 			return s.askClassifierIn(left, who, model, intents, prev, effort, text)
 		}
@@ -644,8 +676,23 @@ func (s *Server) askClassifierIn(wait time.Duration, who access.Identity, model 
 	// an OpenAI key's gpt-6-luna: asked at OpenAI's Decisions API, as Jev
 	// is at System One (zyh6036 on X), not through chat
 	if p, m, ok := provider.Resolve(model); ok {
-		if _, ok := p.OpenAIDecider(m); ok {
-			return s.askDecider(wait, who, p, m, intents, prev, effort, text)
+		if d, ok := p.OpenAIDecider(m); ok && !decisionsRefusedNow(d) {
+			t0 := time.Now()
+			v, err := s.askDecider(wait, who, p, m, intents, prev, effort, text)
+			var refused decideRefused
+			if !errors.As(err, &refused) || !decisionsUnserved(d, refused.status, refused.body) {
+				return v, err
+			}
+			// Decisions doesn't serve the key (a project without it, a
+			// request it reads otherwise): gpt-6-luna is asked through
+			// chat, as before, in what is left of the wait, and for an
+			// hour (zyh6036 on X: no turn was told, each went to the
+			// group's first member)
+			noteDecisionsRefused(d)
+			log.Printf("routing: OpenAI's Decisions API didn't serve %s (%v): asked through chat for %s", model, err, decisionsOffFor)
+			if wait -= time.Since(t0); wait <= 0 {
+				return verdict{}, err
+			}
 		}
 	}
 	// a group of decision models: each in turn (decide_group.go)

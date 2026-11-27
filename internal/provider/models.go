@@ -723,7 +723,7 @@ func fetchNewGo(timeout time.Duration) {
 	}
 	run(func() {
 		defer newFetches.Unlock()
-		fetchDue(due, timeout)
+		fetchDue(context.Background(), due, timeout)
 	})
 }
 
@@ -752,13 +752,13 @@ func FetchNew(timeout time.Duration) (missing bool) {
 	defer newRunning.Add(-1)
 	newFetches.Lock()
 	defer newFetches.Unlock()
-	return fetchNewHeld(timeout)
+	return fetchNewHeld(context.Background(), timeout)
 }
 
 // fetchNewHeld is FetchNew with newFetches held.
-func fetchNewHeld(timeout time.Duration) (missing bool) {
+func fetchNewHeld(ctx context.Context, timeout time.Duration) (missing bool) {
 	due, skipped := newDue(All())
-	if fetchDue(due, timeout) {
+	if fetchDue(ctx, due, timeout) {
 		missing = true
 	}
 	// one waiting to be asked again, unless another's fetch listed it
@@ -807,20 +807,23 @@ func newDue(ps []Provider) (due, skipped []newFetch) {
 
 // fetchDue asks each of due for its list, each for at most timeout, and
 // reports whether one failed; newFetches held.
-func fetchDue(due []newFetch, timeout time.Duration) (failed bool) {
+func fetchDue(ctx context.Context, due []newFetch, timeout time.Duration) (failed bool) {
 	for _, f := range due {
+		if ctx.Err() != nil {
+			return true
+		}
 		p := f.p
 		// listed since by another's fetch, as a plugin's accounts are
 		if _, ok := p.Listed(); ok && !f.decide {
 			continue
 		}
 		newFetches.m[p.ID] = time.Now()
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		fctx, cancel := context.WithTimeout(ctx, timeout)
 		var err error
 		if f.decide && p.Account == nil {
-			_, err = p.fetchDecide(p.ownRequests(p.Via(ctx), probelog.KindList))
+			_, err = p.fetchDecide(p.ownRequests(p.Via(fctx), probelog.KindList))
 		} else {
-			_, err = p.Fetch(ctx)
+			_, err = p.Fetch(fctx)
 		}
 		if err != nil {
 			log.Println(p.ID + ": " + err.Error())
@@ -1449,9 +1452,10 @@ func (p Provider) fixV1(ctx context.Context, base, at string) string {
 
 // servesAtBase reports whether p's OpenAI URL that is base has its
 // endpoint there: a POST of an empty body to base/chat/completions (or
-// /responses) that is answered with anything but 404 or 405 — a 400 for the
-// missing model, a 401 for the key — names a route that exists. A request
-// that fails to connect says nothing, and is taken as the URL being right.
+// /responses) that is answered with anything but 404, 405 or a web page
+// served 200 — a 400 for the missing model, a 401 for the key — names a
+// route that exists. A request that fails to connect says nothing, and is
+// taken as the URL being right.
 func (p Provider) servesAtBase(ctx context.Context, base string) bool {
 	for _, e := range []struct{ at, end string }{{p.Chat, "/chat/completions"}, {p.Responses, "/responses"}} {
 		if strings.TrimRight(strings.TrimSpace(e.at), "/") != base {
@@ -1472,9 +1476,16 @@ func (p Provider) servesAtBase(ctx context.Context, base string) bool {
 			cancel()
 			return true
 		}
-		io.Copy(io.Discard, io.LimitReader(res.Body, 1<<16))
+		// a relay's site answers any path its API isn't at 200 with its
+		// own page (new-api's and one-api's web app): no route of the
+		// API's (sarosaka1023 on X)
+		res = NotAnAPIReply(res, "")
+		b, _ := io.ReadAll(io.LimitReader(res.Body, 1<<16))
 		res.Body.Close()
 		cancel()
+		if res.StatusCode == http.StatusBadGateway && ServedPage(string(b)) {
+			continue
+		}
 		if res.StatusCode != http.StatusNotFound && res.StatusCode != http.StatusMethodNotAllowed {
 			return true
 		}

@@ -146,6 +146,7 @@ const usage = `magpie — one place to pick every agent's model
                                   version and listen address, also in <config folder>/gateway.json
   magpie mtls [on|off|issue <device>|list|revoke <device>]
                                   require a client certificate magpie issued from other computers (mTLS)
+  magpie lan [on|off]             share the gateway with other computers on this network, or keep it on this computer (127.0.0.1)
   magpie https [on|off|import <files>|remove|ca]
                                   other computers call magpie at https://, with your certificate or one magpie's own CA signs
   magpie heap [<file>]            a Go heap profile of the running magpie, with its memory numbers, for a report of it using too much memory
@@ -154,7 +155,7 @@ const usage = `magpie — one place to pick every agent's model
   magpie log [--path] [-n N] [-f]  where magpie's logs are, to send with a report: the app's (app.log), the service's; -n prints the app log's last N lines, -f follows it
   magpie gateway-key list|add <name> [--read-only]|rotate <id> [--key -]|remove <id>   manage the keys clients use to call a shared gateway
   magpie gateway-key limit <id> [list|off|reset [n]|remove <n>|[add] day|week|month|<N>d|<N>h --tokens N --cost USD --cache-reads --model openai/*]   a key's own limits, and what it used; --model counts only those models
-  magpie gateway-key models <id> [all|<provider>/<model>|<provider>/* ...]   the models a key may use, every one unless it names some
+  magpie gateway-key models <id> [all|none|<provider>/<model>|<provider>/* ...]   the models a key may use, every one unless it names some; none: MCP servers only
   magpie gateway-key accounts <id> [all|<provider>/<account>|<provider>/!<account>|@<group>|!@<group> ...]   the accounts a key may use, or keeps out
   magpie gateway-key groups [add <name> <account>...|set <group> <account>...|rename <group> <name>|remove <group>]   named account groups a key's accounts can name
   magpie gateway-key quotas <id> [on|off]   whether a key held to a budget, models or accounts is told the quotas of what it may use
@@ -428,6 +429,11 @@ func run(args []string) error {
 		// else is read or moved
 		return mtlsCmd(args[1:])
 	}
+	if len(args) > 0 && args[0] == "lan" {
+		// Share on local network: the setting, which the serving gateway
+		// follows, nothing else
+		return lanCmd(args[1:])
+	}
 	if len(args) > 0 && args[0] == "https" {
 		// HTTPS for other computers: the setting, the certificate and
 		// magpie's CA, nothing else
@@ -543,6 +549,9 @@ func run(args []string) error {
 	// a Codex that reaches magpie for account failover alone is handed
 	// only its own models (#1385)
 	gateway.CodexOwnOnly = agent.CodexOwnOnly
+	// a Claude Code or Claude Desktop whose user turned its tool search
+	// off is given the router's tools on demand (#7349)
+	gateway.HubSearchOff = agent.HubSearchOff
 	// what magpie writes into an agent's TOML, YAML or dotenv config says
 	// so in a comment, for whoever reads it once magpie is gone
 	agent.MarkWritten()
