@@ -3449,6 +3449,13 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request, from provider.Pro
 	if isGroup {
 		// a routing group: every member's keys or accounts weighed together
 		cands, pl = s.planGroup(g, ms, from)
+		var compatible bool
+		if cands, pl, compatible = raccoonSchemaGroup(from, body, cands, pl); !compatible {
+			call.Status, call.Error = 400, "no group member supports the requested JSON schema"
+			writeError(w, from, call.Status, call.Error)
+			turnedAway()
+			return
+		}
 		group = groupRef(g, ms)
 		group.Paused = paused
 		scope, mode, rotate = provider.GroupPrefix+g.ID, g.Affinity, routingOf(g.Routing) == provider.Rotate
