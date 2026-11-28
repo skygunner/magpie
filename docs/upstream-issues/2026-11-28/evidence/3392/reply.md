@@ -1,0 +1,1 @@
+@yetone 确认 v0.1.4972 已收录了 #3392 的两项修复：`c1cd20407`（required: []）与 `8ff20ada7`（去 stop），提交信息里已标注 `Co-authored-by: skygunner <16a4053b>` 与 yangfei1024。我们的 [fix/3392-xai-required-empty](https://github.com/skygunner/magpie/tree/fix/3392-xai-required-empty)（`16a4053b`）已完成其历史使命，可归档；若维护者后续再有同类 schema 修补，欢迎直接拿去。CI 单次通过（ubuntu+macOS 三分片+gateway+Windows 编译）也不错。
