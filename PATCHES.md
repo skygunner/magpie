@@ -13,9 +13,9 @@ mean upstream implements every former fork guarantee.
   to successfully observed production source. `candidate/<version>` records a
   tested candidate; `deployed/<version>` is created only after acceptance and
   observation pass. Old `prod/*` tags retain their historical meaning.
-- Production is **0.1.4844-p3**, upstream v0.1.4844, image source
-  `5752c2bbc66a5ae217d3abb63212654686366447`. Docker Hub tags `0.1.4844-p3` and
-  `latest` serve the accepted image. [Deployment and publication evidence](docs/fork/evidence/2026-11-26-4844-p3/README.md).
+- Production is **0.1.4984-p1**, upstream v0.1.4984, image source
+  `ced88b9d5567db1cd7580cee677aac5eb0a03377`. Docker Hub tags `0.1.4984-p1` and `latest` serve the accepted image.
+  [Production, regression and publication evidence](docs/fork/evidence/2026-11-28-4984/README.md).
 
 ## Changes in v0.1.4335-p1 (candidate)
 

@@ -18,12 +18,13 @@ on the `integration/nightly` branch.
 
 ## Current production image
 
-`0.1.4844-p3` and `latest` point to the same accepted image. The upstream base is [v0.1.4844](https://github.com/yetone/magpie/releases/tag/v0.1.4844). [Exact build source](https://github.com/skygunner/magpie/commit/5752c2bbc66a5ae217d3abb63212654686366447).
+`0.1.4984-p1` and `latest` point to the same accepted image. The upstream base is [v0.1.4984](https://github.com/yetone/magpie/releases/tag/v0.1.4984). [Exact build source](https://github.com/skygunner/magpie/commit/ced88b9d5567db1cd7580cee677aac5eb0a03377).
 
 ### Hotfixes carried in this image
 
 | Issue or change | Behavior |
 | --- | --- |
+| [#8028](https://github.com/yetone/magpie/issues/8028) · [Fork PR #4](https://github.com/skygunner/magpie/pull/4) | Skip the Raccoon GLM Flash group member for Chat or Responses JSON schema output. Forward the original schema to another eligible member; JSON object requests can still use Raccoon. |
 | [#7867](https://github.com/yetone/magpie/issues/7867) · OpenAI reasoning temperature | GPT-6 Luna and GPT-6.1 Terra API-key attempts omit a custom temperature during reasoning. Explicit none and other providers keep the requested temperature. |
 | [#7864](https://github.com/yetone/magpie/issues/7864) · Tool call IDs on Chat relay | Restore the original ID on assistant tool calls and matching tool results when forwarding carried Responses reasoning to Chat. This avoids a 400 from the upstream 64-character ID limit. |
 | [#7668](https://github.com/yetone/magpie/issues/7668) · Raccoon reasoning replay | Collapse duplicate reasoning aliases on SenseNova Flash streaming Chat replay while retaining distinct reasoning and tool history. |
@@ -36,7 +37,7 @@ on the `integration/nightly` branch.
 | [#3624](https://github.com/yetone/magpie/issues/3624) · Usage navigation | Reveal the selected trace and its routing story when opening a request from Usage. |
 | [#4385](https://github.com/yetone/magpie/issues/4385) · Interrupted wheel scrolling | Restore the full interrupted pixel-wheel step from its original position in the WebKit UI. |
 | [Fork PR #2](https://github.com/skygunner/magpie/pull/2) · Slow first token | Back off the affected model on the same account or key from its first missed streaming deadline. The first rest is one minute, doubling up to one hour. Provider opt-outs and lower caps still apply. |
-| [Fork commit b3cbe9e7c](https://github.com/skygunner/magpie/commit/b3cbe9e7c) · Patched build versions | Compare a fork build such as `0.1.4844-p3` with upstream releases using its base version, including release-note ranges. This fork-specific change is tracked by commit. |
+| [Fork commit b3cbe9e7c](https://github.com/skygunner/magpie/commit/b3cbe9e7c) · Patched build versions | Compare a fork build such as `0.1.4984-p1` with upstream releases using its base version, including release-note ranges. This fork-specific change is tracked by commit. |
 
 The separate Cloudflare Workers AI plugin is installed in the persistent volume. Its [plugin PR #366](https://github.com/magpie-community/plugins/pull/366) is tracked separately from the image. The [fork manifest](https://github.com/skygunner/magpie/blob/integration/nightly/PATCHES.md) records retained, suspended and absorbed patches.
 
